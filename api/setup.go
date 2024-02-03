@@ -14,6 +14,8 @@ func Setup(app *fiber.App, holder models.Holder) error {
 	api.Get("/logout", routes.Logout)
 	api.Post("/register", routes.Register)
 
+	api.Post("/search", routes.Search)
+
 	admin := api.Group("/admin", middleware.HasPermissions(holder, "STAFF"))
 	permissions := admin.Group("/permissions")
 
