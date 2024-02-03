@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/url"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/irevenko/go-nyaa/nyaa"
 )
@@ -33,7 +35,7 @@ func Search(ctx *fiber.Ctx) error {
 
 func (s *SearchRequest) ToNyaa() nyaa.SearchOptions {
 	n := nyaa.SearchOptions{}
-	n.Query = s.Query
+	n.Query = url.QueryEscape(s.Query)
 	if s.Provider != "" {
 		n.Provider = s.Provider
 	} else {
