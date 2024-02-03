@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,6 +22,21 @@ func main() {
 	engine := html.New("./web/views", ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+
+			var e *fiber.Error
+			if errors.As(err, &e) {
+				code = e.Code
+			}
+
+			if code == fiber.StatusNotFound {
+				return c.Render("404", nil)
+			}
+
+			c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
+			return c.Status(code).SendString(err.Error())
+		},
 	})
 
 	h, err := createHolder()
