@@ -7,7 +7,6 @@ require (
 	github.com/gofiber/storage v1.3.3
 	github.com/gofiber/storage/sqlite3/v2 v2.1.0
 	github.com/gofiber/template/html/v2 v2.1.0
-	github.com/lib/pq v1.10.9
 )
 
 require (

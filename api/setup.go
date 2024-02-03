@@ -5,8 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/middelware"
 	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
-
-	_ "github.com/lib/pq"
 )
 
 func Setup(app *fiber.App, holder models.Holder) error {
