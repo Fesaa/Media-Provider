@@ -119,12 +119,20 @@ func (d *DatabaseImpl) CreateUser(username, password string) (*models.User, *str
 	}
 	defer stmt.Close()
 
-	r, err := stmt.Exec(username, password)
+	_, err = stmt.Exec(username, password)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	id, err := r.LastInsertId()
+	stmt, err = tx.Prepare("SELECT id FROM users WHERE username = $1")
+	if err != nil {
+		return nil, nil, err
+	}
+	defer stmt.Close()
+
+	idRow := stmt.QueryRow(username)
+	var id int
+	err = idRow.Scan(&id)
 	if err != nil {
 		return nil, nil, err
 	}

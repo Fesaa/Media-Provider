@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,8 +14,9 @@ import (
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/storage/sqlite3/v2"
 	"github.com/gofiber/template/html/v2"
+
+	_ "github.com/lib/pq"
 )
 
 var holder models.Holder
@@ -41,6 +44,7 @@ func main() {
 
 	h, err := createHolder()
 	if err != nil {
+		slog.Error("Cannot create holder")
 		panic(err)
 	}
 	holder = h
@@ -51,16 +55,19 @@ func main() {
 
 	err = api.Setup(app, holder)
 	if err != nil {
+		slog.Error("Cannot setup api")
 		panic(err)
 	}
 
 	err = frontend.Register(app)
 	if err != nil {
+		slog.Error("Cannot register frontend")
 		panic(err)
 	}
 
 	e := app.Listen(":3000")
 	if e != nil {
+		slog.Error("Cannot start server")
 		panic(e)
 	}
 
@@ -77,11 +84,12 @@ func setHolder(ctx *fiber.Ctx) error {
 }
 
 func createHolder() (models.Holder, error) {
-	s := sqlite3.New(sqlite3.Config{
-		Database: "./mp-db.db",
-		Table:    "storageprovider",
-	})
-	holder, err := impl.New(s, s.Conn())
+	pool, err := sql.Open("postgres", os.Getenv("DB_URL"))
+	if err != nil {
+		return nil, err
+	}
+
+	holder, err := impl.New(pool)
 	if err != nil {
 		return nil, err
 	}

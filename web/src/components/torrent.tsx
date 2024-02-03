@@ -62,11 +62,11 @@ export default function Torrent(props: { torrent: TorrentInfo }) {
         <div className="center relative inline-block select-none whitespace-nowrap rounded-lg bg-pink-500 px-3.5 py-2 align-baseline font-sans text-xs font-bold uppercase leading-none text-white">
           <div className="mt-px">Downloads: {props.torrent.Downloads}</div>
         </div>
-        <a
-          href="#"
-          className="inline-flex items-center justify-center rounded-lg bg-blue-700 p-5 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        >
+        <a className="inline-flex items-center justify-center rounded-lg bg-blue-700 p-5 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
           Read more
+        </a>
+        <a className="inline-flex items-center justify-center rounded-lg bg-purple-700 p-5 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+          Download
         </a>
       </div>
     </div>

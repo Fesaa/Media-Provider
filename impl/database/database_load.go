@@ -3,7 +3,7 @@ package database
 import "errors"
 
 func (d *DatabaseImpl) loadStmt() error {
-	q, err := d.db.Prepare("SELECT id, username, password FROM users JOIN tokens ON users.id = tokens.user_id WHERE tokens.token = $1 AND tokens.expires > DATETIME();")
+	q, err := d.db.Prepare("SELECT id, username, password FROM users JOIN tokens ON users.id = tokens.user_id WHERE tokens.token = $1 AND tokens.expires > NOW();")
 	if err != nil {
 		return errors.New("Error preparing statement userByToken: " + err.Error())
 	}
