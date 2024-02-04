@@ -1,11 +1,23 @@
 package routes
 
 import (
+	"fmt"
 	"log/slog"
+	"sync"
+	"time"
 
 	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
 )
+
+var lock *sync.RWMutex = &sync.RWMutex{}
+
+type SpeedData struct {
+	t     time.Time
+	bytes int64
+}
+
+var speedMap map[string]SpeedData = make(map[string]SpeedData)
 
 func Download(ctx *fiber.Ctx) error {
 	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
@@ -78,16 +90,49 @@ func Stats(ctx *fiber.Ctx) error {
 
 	torrents := torrentProvider.GetRunningTorrents()
 	info := make(map[string]interface{})
-	for key, value := range torrents {
+	for key, torrent := range torrents {
+		c := torrent.Stats().BytesReadData
+		progress := c.Int64()
+		var speed float64 = 0
+
+		lock.RLock()
+		s, ok := speedMap[key]
+		lock.RUnlock()
+		if ok {
+			bytesDiff := progress - s.bytes
+			timeDiff := time.Now().Sub(s.t).Seconds()
+			speed = float64(float64(bytesDiff) / timeDiff)
+		}
+
+		lock.Lock()
+		speedMap[key] = SpeedData{
+			t:     time.Now(),
+			bytes: progress,
+		}
+		lock.Unlock()
+
 		info[key] = map[string]interface{}{
-			"InfoHash":  value.InfoHash().HexString(),
-			"Name":      value.Name(),
-			"Size":      value.Length(),
-			"Progress":  value.BytesCompleted(),
-			"Completed": percent(value.BytesCompleted(), value.Length()),
+			"InfoHash":  torrent.InfoHash().HexString(),
+			"Name":      torrent.Name(),
+			"Size":      torrent.Length(),
+			"Progress":  progress,
+			"Completed": percent(progress, torrent.Length()),
+			"Speed":     humanReadableSpeed(speed),
 		}
 	}
 	return ctx.JSON(info)
+}
+
+func humanReadableSpeed(speed float64) string {
+	if speed < 1024 {
+		return fmt.Sprintf("%f B/s", speed)
+	}
+	speed /= 1024
+	if speed < 1024 {
+		return fmt.Sprintf("%f KB/s", speed)
+	}
+	speed /= 1024
+	return fmt.Sprintf("%f MB/s", speed)
 }
 
 func percent(a, b int64) int64 {
