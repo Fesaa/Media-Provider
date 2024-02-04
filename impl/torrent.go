@@ -83,7 +83,7 @@ func (t *TorrentImpl) cleaner() {
 		t.lock.RLock()
 		i := 0
 		for infoHash, torrent := range t.torrents {
-			if torrent.BytesCompleted() == torrent.Length() {
+			if torrent.BytesCompleted() == torrent.Length() && torrent.BytesCompleted() > 0 {
 				i++
 				t.lock.RUnlock()
 				t.RemoveDownload(infoHash)

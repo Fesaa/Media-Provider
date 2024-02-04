@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build:dev": "node esbuild.js",
+    "build:prod": "node esbuild_prod.js",
     "tailwind:dev": "npx tailwindcss -i ./src/style.css -o ./public/generated/style.css --watch",
+    "tailwind:prod": "npx tailwindcss -i ./src/style.css -o ./public/generated/style.css",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

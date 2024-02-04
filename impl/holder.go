@@ -15,7 +15,11 @@ type HolderImpl struct {
 
 func New() (models.Holder, error) {
 	conf := torrent.NewDefaultClientConfig()
-	conf.DataDir = os.Getenv("TORRENT_DIR")
+	dir :=  os.Getenv("TORRENT_DIR")
+	if dir == "" {
+		dir = "temp"
+	}
+	conf.DataDir = dir
 	conf.ListenPort = rand.Intn(65535-49152) + 49152
 
 	client, err := newTorrent(conf)
