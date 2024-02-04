@@ -32,6 +32,7 @@ COPY --from=npm-stage /app/views/ /app/web/views
 
 RUN apt-get update && apt-get install -y ca-certificates && apt install -y cifs-utils psmisc
 RUN mkdir /app/mount
+RUN chmod +x /app/mount.sh
 
 EXPOSE 80
 
