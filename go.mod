@@ -5,10 +5,9 @@ go 1.21.5
 require (
 	github.com/anacrolix/torrent v1.53.3
 	github.com/gofiber/fiber/v2 v2.52.0
-	github.com/gofiber/storage v1.3.3
-	github.com/gofiber/storage/sqlite3/v2 v2.1.0
 	github.com/gofiber/template/html/v2 v2.1.0
 	github.com/irevenko/go-nyaa v0.0.0-20210412095257-194e1b4cce55
+	github.com/lib/pq v1.10.9
 )
 
 require (
@@ -60,11 +59,9 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/klauspost/compress v1.17.5 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
-	github.com/mattn/go-sqlite3 v1.14.18 // indirect
 	github.com/mmcdole/gofeed v1.2.1 // indirect
 	github.com/mmcdole/goxpp v1.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

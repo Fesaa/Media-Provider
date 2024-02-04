@@ -65,7 +65,7 @@ func main() {
 		panic(err)
 	}
 
-	e := app.Listen(":3000")
+	e := app.Listen(os.Getenv("PORT"))
 	if e != nil {
 		slog.Error("Cannot start server")
 		panic(e)

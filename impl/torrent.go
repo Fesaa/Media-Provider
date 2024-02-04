@@ -2,7 +2,10 @@ package impl
 
 import (
 	"errors"
+	"fmt"
+	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/types/infohash"
@@ -32,6 +35,7 @@ func (t *TorrentImpl) AddDownload(infoHashString string) (*torrent.Torrent, erro
 
 	go func() {
 		<-torrentInfo.GotInfo()
+		slog.Info(fmt.Sprintf("Info received for %s, starting download.", torrentInfo.Name()))
 		torrentInfo.DownloadAll()
 	}()
 
@@ -46,6 +50,7 @@ func (t *TorrentImpl) RemoveDownload(infoHashString string) error {
 		return errors.New("torrent does not exist, or has already completed")
 	}
 
+	slog.Info(fmt.Sprintf("Dropping torrent %s. Had %d / %d", torrent.Name(), torrent.BytesCompleted(), torrent.Length()))
 	torrent.Drop()
 	t.lock.Lock()
 	delete(t.torrents, infoHashString)
@@ -63,9 +68,31 @@ func newTorrent(c *torrent.ClientConfig) (*TorrentImpl, error) {
 		return nil, err
 	}
 
-	return &TorrentImpl{
+	impl := &TorrentImpl{
 		client:   client,
 		torrents: make(map[string]*torrent.Torrent),
 		lock:     &sync.RWMutex{},
-	}, nil
+	}
+	go impl.cleaner()
+
+	return impl, nil
+}
+
+func (t *TorrentImpl) cleaner() {
+	for range time.Tick(time.Second * 5) {
+		t.lock.RLock()
+		i := 0
+		for infoHash, torrent := range t.torrents {
+			if torrent.BytesCompleted() == torrent.Length() {
+				i++
+				t.lock.RUnlock()
+				t.RemoveDownload(infoHash)
+				t.lock.RLock()
+			}
+		}
+		if i > 0 {
+			slog.Info(fmt.Sprintf("Removed %d completed torrents", i))
+		}
+		t.lock.RUnlock()
+	}
 }
