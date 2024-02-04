@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
 	"log/slog"
 	"os"
@@ -42,7 +41,7 @@ func main() {
 		},
 	})
 
-	h, err := createHolder()
+	h, err := impl.New()
 	if err != nil {
 		slog.Error("Cannot create holder")
 		panic(err)
@@ -81,17 +80,4 @@ func main() {
 func setHolder(ctx *fiber.Ctx) error {
 	ctx.Locals(models.HolderKey, holder)
 	return ctx.Next()
-}
-
-func createHolder() (models.Holder, error) {
-	pool, err := sql.Open("postgres", os.Getenv("DB_URL"))
-	if err != nil {
-		return nil, err
-	}
-
-	holder, err := impl.New(pool)
-	if err != nil {
-		return nil, err
-	}
-	return holder, nil
 }
