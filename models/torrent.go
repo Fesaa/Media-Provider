@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/anacrolix/torrent"
@@ -18,8 +17,7 @@ type Torrent struct {
 	key     string
 	baseDir string
 
-	lock     *sync.RWMutex
-	speedMap map[string]SpeedData
+	lastSpeed SpeedData
 }
 
 type TorrentInfo struct {
@@ -41,11 +39,13 @@ type TorrentProvider interface {
 
 func NewTorrent(t *torrent.Torrent, baseDir string) *Torrent {
 	return &Torrent{
-		t:        t,
-		key:      t.InfoHash().HexString(),
-		baseDir:  baseDir,
-		lock:     &sync.RWMutex{},
-		speedMap: make(map[string]SpeedData),
+		t:       t,
+		key:     t.InfoHash().HexString(),
+		baseDir: baseDir,
+		lastSpeed: SpeedData{
+			t:     time.Now(),
+			bytes: 0,
+		},
 	}
 }
 
@@ -58,21 +58,14 @@ func (t *Torrent) GetInfo() TorrentInfo {
 	progress := c.Int64()
 	var speed int64 = 0
 
-	t.lock.RLock()
-	s, ok := t.speedMap[t.key]
-	t.lock.RUnlock()
-	if ok {
-		bytesDiff := progress - s.bytes
-		timeDiff := time.Since(s.t).Seconds()
-		speed = int64(float64(bytesDiff) / timeDiff)
-	}
+	bytesDiff := progress - t.lastSpeed.bytes
+	timeDiff := time.Since(t.lastSpeed.t).Seconds()
+	speed = int64(float64(bytesDiff) / timeDiff)
 
-	t.lock.Lock()
-	t.speedMap[t.key] = SpeedData{
+	t.lastSpeed = SpeedData{
 		t:     time.Now(),
 		bytes: progress,
 	}
-	t.lock.Unlock()
 
 	return TorrentInfo{
 		InfoHash:  t.key,
