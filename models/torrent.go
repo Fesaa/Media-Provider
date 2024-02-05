@@ -34,7 +34,7 @@ type TorrentProvider interface {
 	GetBackingClient() *torrent.Client
 
 	AddDownload(infoHash string) (*Torrent, error)
-	RemoveDownload(infoHash string) error
+	RemoveDownload(infoHash string, deleteFiles bool) error
 	GetRunningTorrents() map[string]*Torrent
 }
 

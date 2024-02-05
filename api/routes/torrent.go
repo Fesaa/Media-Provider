@@ -54,7 +54,7 @@ func Stop(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	err := torrentProvider.RemoveDownload(infoHash)
+	err := torrentProvider.RemoveDownload(infoHash, true)
 	if err != nil {
 		slog.Error(err.Error())
 		return fiber.ErrInternalServerError
