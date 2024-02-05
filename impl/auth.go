@@ -3,9 +3,9 @@ package impl
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"os"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -20,17 +20,9 @@ type AuthImpl struct {
 
 func newAuth() *AuthImpl {
 	return &AuthImpl{
-		pass:   getEnv("PASS", "admin"),
+		pass:   utils.GetEnv("PASS", "admin"),
 		tokens: make(map[string]time.Time),
 	}
-}
-
-func getEnv(key string, defaultValue ...string) string {
-	e, b := os.LookupEnv(key)
-	if !b && len(defaultValue) > 0 {
-		return defaultValue[0]
-	}
-	return e
 }
 
 func (v *AuthImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
