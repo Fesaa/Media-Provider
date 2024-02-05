@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
-	"github.com/Fesaa/Media-Provider/middelware"
+	middleware "github.com/Fesaa/Media-Provider/middelware"
 	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
 )

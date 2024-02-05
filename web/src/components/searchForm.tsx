@@ -10,9 +10,8 @@ export default function SearchForm() {
 
   const [results, setResults] = useState([]);
 
-  let lastData: String | null = null;
-
   function onSubmit(e: FormEvent) {
+    console.log("Getting torrents")
     e.preventDefault();
 
     const data = JSON.stringify({
@@ -21,14 +20,6 @@ export default function SearchForm() {
       category,
       sort_by,
     });
-
-    if (lastData === data) {
-      document
-        .getElementById("search-results")!
-        .scrollIntoView({ behavior: "smooth" });
-      return;
-    }
-    lastData = data;
 
     axios
       .post("/api/search", data, {
