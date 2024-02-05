@@ -3,6 +3,7 @@ package routes
 import (
 	"net/url"
 
+	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/gofiber/fiber/v2"
 	"github.com/irevenko/go-nyaa/nyaa"
 )
@@ -23,9 +24,31 @@ func Search(ctx *fiber.Ctx) error {
 		})
 	}
 
-	nyaaSearch := searchRequest.ToNyaa()
+	switch searchRequest.Provider {
+	case "nyaa":
+		return nyaaSearch(ctx, searchRequest)
+	case "yts":
+		return ytsSearch(ctx, searchRequest)
+	default:
+		return &fiber.Error{
+			Code:    fiber.ErrBadRequest.Code,
+			Message: "Invalid provider, can't process request.",
+		}
+	}
+}
 
-	torrents, err := nyaa.Search(nyaaSearch)
+func ytsSearch(ctx *fiber.Ctx, r SearchRequest) error {
+	ytsS := r.ToYTS()
+	req, err := yts.Search(ytsS)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(req.Data.Movies)
+}
+
+func nyaaSearch(ctx *fiber.Ctx, r SearchRequest) error {
+	nyaaS := r.ToNyaa()
+	torrents, err := nyaa.Search(nyaaS)
 	if err != nil {
 		return err
 	}
@@ -55,4 +78,12 @@ func (s *SearchRequest) ToNyaa() nyaa.SearchOptions {
 	}
 
 	return n
+}
+
+func (s *SearchRequest) ToYTS() yts.YTSSearchOptions {
+	y := yts.YTSSearchOptions{}
+	y.Query = s.Query
+	y.SortBy = s.SortBy
+	y.Page = 1
+	return y
 }
