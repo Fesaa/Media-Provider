@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import NavBar from "./components/navbar";
 import axios from "axios";
@@ -15,10 +15,14 @@ function Application() {
       .catch((err) => console.error(err));
   }
 
+  useEffect(() => {
+    updateInfo();
+  }, []);
+
   return (
-    <div>
+    <div className="bg-gray-50 dark:bg-gray-900">
       <NavBar current="Home" />
-      <section className="bg-gray-50 p-10 dark:bg-gray-900">
+      <section className="pt-5">
         <div className="mx-10 flex flex-col px-6 py-8 md:h-screen lg:py-0">
           <div
             onClick={updateInfo}

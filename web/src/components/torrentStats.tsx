@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import PopUpNotification from "./notification";
 
@@ -42,7 +42,10 @@ export default function Torrent(props: { TKey: string; torrent: TorrentStat }) {
   }
 
   return (
-    <div className="flex max-w-sm flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
+    <div
+      className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
+      style={{ width: "300px" }}
+    >
       <h5 className="mb-2 font-bold tracking-tight text-gray-900 dark:text-white">
         {truncateString(props.torrent.Name.replace(/\./g, " "), 50)}
       </h5>
