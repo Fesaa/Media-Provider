@@ -58,7 +58,7 @@ function Login() {
                       htmlFor="remember"
                       className="text-gray-500 dark:text-gray-300"
                     >
-                      Remember me
+                      Remember me for 7 days
                     </label>
                   </div>
                 </div>

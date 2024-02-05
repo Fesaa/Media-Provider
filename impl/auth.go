@@ -31,8 +31,12 @@ func (v *AuthImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, nil
 	}
 
-	_, ok := v.tokens[token]
-	return ok, nil
+	t, ok := v.tokens[token]
+	if !ok {
+		return false, nil
+	}
+
+	return time.Since(t) > time.Hour*24*7, nil
 }
 
 type LoginBody struct {
