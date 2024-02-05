@@ -4,12 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
+	"github.com/anacrolix/torrent/metainfo"
+	"github.com/anacrolix/torrent/storage"
 	"github.com/anacrolix/torrent/types/infohash"
 )
 
@@ -17,7 +22,9 @@ type TorrentImpl struct {
 	client *torrent.Client
 
 	torrents map[string]*models.Torrent
+	baseDirs map[string]string
 	lock     *sync.RWMutex
+	lockDir  *sync.RWMutex
 	dir      string
 }
 
@@ -25,17 +32,18 @@ func (t *TorrentImpl) GetBackingClient() *torrent.Client {
 	return t.client
 }
 
-func (t *TorrentImpl) AddDownload(infoHashString string) (*models.Torrent, error) {
+func (t *TorrentImpl) AddDownload(infoHashString string, baseDir string) (*models.Torrent, error) {
+	infoHashString = strings.ToLower(infoHashString)
 	infoHash := infohash.FromHexString(infoHashString)
+
 	torrentInfo, new := t.client.AddTorrentInfoHash(infoHash)
 	if !new {
 		return nil, errors.New("torrent already exists")
 	}
 
-	torrent := models.NewTorrent(torrentInfo)
-	t.lock.Lock()
-	t.torrents[infoHashString] = torrent
-	t.lock.Unlock()
+	torrent := models.NewTorrent(torrentInfo, baseDir)
+	safeSet(t.torrents, infoHashString, torrent, t.lock)
+	safeSet(t.baseDirs, infoHashString, baseDir, t.lockDir)
 
 	go func() {
 		<-torrentInfo.GotInfo()
@@ -47,43 +55,38 @@ func (t *TorrentImpl) AddDownload(infoHashString string) (*models.Torrent, error
 }
 
 func (t *TorrentImpl) RemoveDownload(infoHashString string, deleteFiles bool) error {
-	t.lock.RLock()
-	tor, ok := t.torrents[infoHashString]
-	t.lock.RUnlock()
+	infoHashString = strings.ToLower(infoHashString)
+
+	tor, ok := safeGet(t.torrents, infoHashString, t.lock)
 	if !ok {
 		return errors.New("torrent does not exist, or has already completed")
 	}
 
+	// We may assume that it is present as long as the torrent is present
+	baseDir, _ := safeGet(t.baseDirs, infoHashString, t.lockDir)
+
 	torrent := tor.GetTorrent()
 	slog.Info(fmt.Sprintf("Dropping torrent %s. Had %d / %d", torrent.Name(), torrent.BytesCompleted(), torrent.Length()))
 	torrent.Drop()
-	t.lock.Lock()
-	delete(t.torrents, infoHashString)
-	t.lock.Unlock()
+
+	safeDelete(t.torrents, infoHashString, t.lock)
+	safeDelete(t.baseDirs, infoHashString, t.lockDir)
 	if deleteFiles {
-		t.deleteTorrentFiles(torrent)
+		t.deleteTorrentFiles(torrent, baseDir)
 	}
 	return nil
 }
 
-// This doesn't delete the dir the files are downloaded at. Only the files inside it.
-// Not sure how to get the correct dir all the time, so leaving it be for now.
-func (t *TorrentImpl) deleteTorrentFiles(tor *torrent.Torrent) {
+func (t *TorrentImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
 	if tor == nil {
 		return
 	}
-	for _, file := range tor.Files() {
-		// I/O should be done async to speed it up
-		// Passing the file, so it's not scope locked
-		go func(file *torrent.File) {
-			path := t.dir + "/" + file.Path()
-			err := os.Remove(path)
-			if err != nil {
-				// This will log quite a bit if the torrent is deleted early on.
-				// This is fine, we still want to log all of it for visibility in case a file is not deleted.
-				slog.Error(fmt.Sprintf("Error deleting file %s: %s", path, err))
-			}
-		}(file)
+
+	dir := t.dir + "/" + baseDir + "/" + tor.InfoHash().HexString()
+	slog.Info(fmt.Sprintf("Deleting dir %s", dir))
+	err := os.RemoveAll(dir)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error deleting dir %s: %s", dir, err))
 	}
 }
 
@@ -91,20 +94,44 @@ func (t *TorrentImpl) GetRunningTorrents() map[string]*models.Torrent {
 	return t.torrents
 }
 
-func newTorrent(c *torrent.ClientConfig) (*TorrentImpl, error) {
-	client, err := torrent.NewClient(c)
+// Appending the infohash allows us to always cleanup the torrent files on delete
+// This does however mean that if the torrent has it's own upper dir, it'll be layered
+func (t *TorrentImpl) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMaker {
+	return func(baseDir string, info *metainfo.Info, infoHash metainfo.Hash) string {
+		d, ok := safeGet(t.baseDirs, infoHash.HexString(), t.lockDir)
+		if !ok {
+			return baseDir + "/" + infoHash.HexString()
+		}
+		return baseDir + "/" + d + "/" + infoHash.HexString()
+	}
+}
+
+func newTorrent() (*TorrentImpl, error) {
+	dir := utils.GetEnv("TORRENT_DIR", "temp")
+
+	impl := &TorrentImpl{
+		torrents: make(map[string]*models.Torrent),
+		baseDirs: make(map[string]string),
+		lock:     &sync.RWMutex{},
+		lockDir:  &sync.RWMutex{},
+		dir:      dir,
+	}
+
+	opts := storage.NewFileClientOpts{
+		ClientBaseDir:   dir,
+		TorrentDirMaker: impl.GetTorrentDirFilePathMaker(),
+	}
+	conf := torrent.NewDefaultClientConfig()
+	conf.DefaultStorage = storage.NewFileOpts(opts)
+	conf.ListenPort = rand.Intn(65535-49152) + 49152
+
+	client, err := torrent.NewClient(conf)
 	if err != nil {
 		return nil, err
 	}
+	impl.client = client
 
-	impl := &TorrentImpl{
-		client:   client,
-		torrents: make(map[string]*models.Torrent),
-		lock:     &sync.RWMutex{},
-		dir:      c.DataDir,
-	}
 	go impl.cleaner()
-
 	return impl, nil
 }
 
@@ -126,4 +153,23 @@ func (t *TorrentImpl) cleaner() {
 		}
 		t.lock.RUnlock()
 	}
+}
+
+func safeGet[K comparable, T any](m map[K]T, k K, lock *sync.RWMutex) (T, bool) {
+	lock.RLock()
+	defer lock.RUnlock()
+	v, ok := m[k]
+	return v, ok
+}
+
+func safeSet[K comparable, T any](m map[K]T, k K, v T, lock *sync.RWMutex) {
+	lock.Lock()
+	defer lock.Unlock()
+	m[k] = v
+}
+
+func safeDelete[K comparable, T any](m map[K]T, k K, lock *sync.RWMutex) {
+	lock.Lock()
+	defer lock.Unlock()
+	delete(m, k)
 }

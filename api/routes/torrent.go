@@ -25,8 +25,15 @@ func Download(ctx *fiber.Ctx) error {
 		slog.Error("No infoHash provided")
 		return fiber.ErrBadRequest
 	}
+	baseDir := ctx.Query("base_dir")
+	if baseDir == "" {
+		slog.Error("No baseDir provided")
+		return fiber.ErrBadRequest
+	}
 
-	_, err := torrentProvider.AddDownload(infoHash)
+	slog.Info("Adding download for infoHash: " + infoHash + " with baseDir: " + baseDir)
+
+	_, err := torrentProvider.AddDownload(infoHash, baseDir)
 	if err != nil {
 		slog.Error(err.Error())
 		return fiber.ErrInternalServerError

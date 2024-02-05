@@ -40,17 +40,18 @@ function shadowColour(torrent: TorrentInfo): String {
   return "shadow-lg shadow-green-500";
 }
 
-export default function Torrent(props: { torrent: TorrentInfo }) {
+export default function Torrent(props: { torrent: TorrentInfo, baseDir: string }) {
   const [open, setOpen] = useState(false);
 
   function download(
     hash: string,
+    baseDir: string
   ): (e: React.MouseEvent<HTMLAnchorElement>) => void {
     return (e) => {
       e.preventDefault();
 
       axios
-        .get(`/api/download/${hash}`)
+        .get(`/api/download/${hash}?base_dir=${baseDir}`)
         .then((res) => {
           if (res.status == 202) {
             setOpen(true);
@@ -88,7 +89,7 @@ export default function Torrent(props: { torrent: TorrentInfo }) {
         </div>
         }
         <a
-          onClick={download(props.torrent.InfoHash)}
+          onClick={download(props.torrent.InfoHash, props.baseDir)}
           className="inline-flex items-center justify-center rounded-lg bg-purple-700 p-5 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
         >
           Download

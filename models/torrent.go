@@ -14,8 +14,9 @@ type SpeedData struct {
 }
 
 type Torrent struct {
-	t   *torrent.Torrent
-	key string
+	t       *torrent.Torrent
+	key     string
+	baseDir string
 
 	lock     *sync.RWMutex
 	speedMap map[string]SpeedData
@@ -33,15 +34,16 @@ type TorrentInfo struct {
 type TorrentProvider interface {
 	GetBackingClient() *torrent.Client
 
-	AddDownload(infoHash string) (*Torrent, error)
+	AddDownload(infoHash string, baseDir string) (*Torrent, error)
 	RemoveDownload(infoHash string, deleteFiles bool) error
 	GetRunningTorrents() map[string]*Torrent
 }
 
-func NewTorrent(t *torrent.Torrent) *Torrent {
+func NewTorrent(t *torrent.Torrent, baseDir string) *Torrent {
 	return &Torrent{
 		t:        t,
 		key:      t.InfoHash().HexString(),
+		baseDir:  baseDir,
 		lock:     &sync.RWMutex{},
 		speedMap: make(map[string]SpeedData),
 	}
@@ -61,7 +63,7 @@ func (t *Torrent) GetInfo() TorrentInfo {
 	t.lock.RUnlock()
 	if ok {
 		bytesDiff := progress - s.bytes
-		timeDiff := time.Now().Sub(s.t).Seconds()
+		timeDiff := time.Since(s.t).Seconds()
 		speed = int64(float64(bytesDiff) / timeDiff)
 	}
 
