@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/api"
-	"github.com/Fesaa/Media-Provider/frontend"
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
@@ -58,7 +57,7 @@ func main() {
 		panic(err)
 	}
 
-	err = frontend.Register(app)
+	err = RegisterFrontEnd(app)
 	if err != nil {
 		slog.Error("Cannot register frontend")
 		panic(err)
