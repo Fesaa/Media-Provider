@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import PopUpNotification from "./notification";
 
@@ -8,7 +8,16 @@ type TorrentStat = {
   Name: string;
   Progress: number;
   Size: number;
+  Speed: string;
 };
+
+function truncateString(inputString: string, maxLength: number): string {
+  if (inputString.length > maxLength) {
+    return inputString.slice(0, maxLength) + "...";
+  } else {
+    return inputString;
+  }
+}
 
 export default function Torrent(props: { TKey: string; torrent: TorrentStat }) {
   const [open, setOpen] = useState(false);
@@ -33,11 +42,19 @@ export default function Torrent(props: { TKey: string; torrent: TorrentStat }) {
   }
 
   return (
-    <div className="max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
+    <div className="flex max-w-sm flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
       <h5 className="mb-2 font-bold tracking-tight text-gray-900 dark:text-white">
-        {props.torrent.Name.replace(/\./g, " ")}
+        {truncateString(props.torrent.Name.replace(/\./g, " "), 50)}
       </h5>
 
+      <div className="mb-1 flex justify-between">
+        <span className="text-base font-medium text-blue-700 dark:text-white">
+          Progress
+        </span>
+        <span className="text-sm font-medium text-blue-700 dark:text-white">
+          {props.torrent.Completed}% @ {props.torrent.Speed}
+        </span>
+      </div>
       <div className="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
         <div
           className="h-2.5 rounded-full bg-blue-600"
@@ -47,7 +64,7 @@ export default function Torrent(props: { TKey: string; torrent: TorrentStat }) {
 
       <a
         onClick={remove(props.TKey)}
-        className="inline-flex items-center justify-center rounded-lg bg-red-700 p-5 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        className="m-3 items-center justify-end rounded-lg bg-red-700 p-5 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
       >
         Stop download
       </a>

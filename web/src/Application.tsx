@@ -31,9 +31,11 @@ function Application() {
             Update torrent info
           </div>
 
-          {Object.entries(info).map((i: any) => (
-            <Torrent key={i[1].Infohash} torrent={i[1]} TKey={i[0]} />
-          ))}
+          <div className="m-5 flex flex-row flex-wrap gap-5">
+            {Object.entries(info).map((i: any) => (
+              <Torrent key={i[1].Infohash} torrent={i[1]} TKey={i[0]} />
+            ))}
+          </div>
         </div>
       </section>
     </div>

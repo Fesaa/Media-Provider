@@ -93,7 +93,7 @@ func Stats(ctx *fiber.Ctx) error {
 	for key, torrent := range torrents {
 		c := torrent.Stats().BytesReadData
 		progress := c.Int64()
-		var speed float64 = 0
+		var speed int64 = 0
 
 		lock.RLock()
 		s, ok := speedMap[key]
@@ -101,7 +101,7 @@ func Stats(ctx *fiber.Ctx) error {
 		if ok {
 			bytesDiff := progress - s.bytes
 			timeDiff := time.Now().Sub(s.t).Seconds()
-			speed = float64(float64(bytesDiff) / timeDiff)
+			speed = int64(float64(bytesDiff) / timeDiff)
 		}
 
 		lock.Lock()
@@ -123,16 +123,16 @@ func Stats(ctx *fiber.Ctx) error {
 	return ctx.JSON(info)
 }
 
-func humanReadableSpeed(speed float64) string {
+func humanReadableSpeed(speed int64) string {
 	if speed < 1024 {
-		return fmt.Sprintf("%f B/s", speed)
+		return fmt.Sprintf("%d B/s", speed)
 	}
 	speed /= 1024
 	if speed < 1024 {
-		return fmt.Sprintf("%f KB/s", speed)
+		return fmt.Sprintf("%d KB/s", speed)
 	}
 	speed /= 1024
-	return fmt.Sprintf("%f MB/s", speed)
+	return fmt.Sprintf("%d MB/s", speed)
 }
 
 func percent(a, b int64) int64 {
