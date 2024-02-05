@@ -11,6 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 
@@ -22,52 +23,25 @@ var holder models.Holder
 func main() {
 	engine := html.New("./web/views", ".html")
 	app := fiber.New(fiber.Config{
-		Views: engine,
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			code := fiber.StatusInternalServerError
-
-			var e *fiber.Error
-			if errors.As(err, &e) {
-				code = e.Code
-			}
-
-			if code == fiber.StatusNotFound {
-				return c.Render("404", nil)
-			}
-
-			c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
-			return c.Status(code).SendString(err.Error())
-		},
+		Views:        engine,
+		ErrorHandler: errorHandler,
 	})
 
-	h, err := impl.New()
+	var err error
+	holder, err = impl.New()
 	if err != nil {
 		slog.Error("Cannot create holder")
 		panic(err)
 	}
-	holder = h
 
 	app.Use(setHolder)
 	app.Hooks().OnShutdown(holder.Shutdown)
 	app.Static("/", "./web/public")
 
-	err = api.Setup(app, holder)
-	if err != nil {
-		slog.Error("Cannot setup api")
-		panic(err)
-	}
+	api.Setup(app, holder)
+	RegisterFrontEnd(app)
 
-	err = RegisterFrontEnd(app)
-	if err != nil {
-		slog.Error("Cannot register frontend")
-		panic(err)
-	}
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "80"
-	}
-
+	port := utils.GetEnv("PORT", "80")
 	e := app.Listen(":" + port)
 	if e != nil {
 		slog.Error("Cannot start server")
@@ -79,6 +53,22 @@ func main() {
 	<-sc
 
 	app.ShutdownWithTimeout(time.Second * 30)
+}
+
+func errorHandler(c *fiber.Ctx, err error) error {
+	code := fiber.StatusInternalServerError
+
+	var e *fiber.Error
+	if errors.As(err, &e) {
+		code = e.Code
+	}
+
+	if code == fiber.StatusNotFound {
+		return c.Render("404", nil)
+	}
+
+	c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
+	return c.Status(code).SendString(err.Error())
 }
 
 func setHolder(ctx *fiber.Ctx) error {

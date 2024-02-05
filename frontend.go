@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterFrontEnd(app *fiber.App) error {
+func RegisterFrontEnd(app *fiber.App) {
 
 	app.Get("/", middleware.AuthHandler, home)
 	app.Get("/anime", middleware.AuthHandler, anime)
@@ -18,8 +18,6 @@ func RegisterFrontEnd(app *fiber.App) error {
 	app.Get("/login", login)
 
 	app.Get("/status/404", status404)
-
-	return nil
 }
 
 func status404(ctx *fiber.Ctx) error {

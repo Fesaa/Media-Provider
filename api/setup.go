@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Setup(app *fiber.App, holder models.Holder) error {
+func Setup(app *fiber.App, holder models.Holder) {
 	api := app.Group("/api")
 
 	api.Post("/login", routes.Login)
@@ -18,5 +18,4 @@ func Setup(app *fiber.App, holder models.Holder) error {
 	api.Get("/download/:infoHash", middleware.AuthHandler, routes.Download)
 	api.Get("/stop/:infoHash", middleware.AuthHandler, routes.Stop)
 
-	return nil
 }
