@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/models"
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/types/infohash"
 )
@@ -14,7 +15,7 @@ import (
 type TorrentImpl struct {
 	client *torrent.Client
 
-	torrents map[string]*torrent.Torrent
+	torrents map[string]*models.Torrent
 	lock     *sync.RWMutex
 }
 
@@ -22,15 +23,16 @@ func (t *TorrentImpl) GetBackingClient() *torrent.Client {
 	return t.client
 }
 
-func (t *TorrentImpl) AddDownload(infoHashString string) (*torrent.Torrent, error) {
+func (t *TorrentImpl) AddDownload(infoHashString string) (*models.Torrent, error) {
 	infoHash := infohash.FromHexString(infoHashString)
 	torrentInfo, new := t.client.AddTorrentInfoHash(infoHash)
 	if !new {
 		return nil, errors.New("torrent already exists")
 	}
 
+	torrent := models.NewTorrent(torrentInfo)
 	t.lock.Lock()
-	t.torrents[infoHashString] = torrentInfo
+	t.torrents[infoHashString] = torrent
 	t.lock.Unlock()
 
 	go func() {
@@ -39,17 +41,18 @@ func (t *TorrentImpl) AddDownload(infoHashString string) (*torrent.Torrent, erro
 		torrentInfo.DownloadAll()
 	}()
 
-	return torrentInfo, nil
+	return torrent, nil
 }
 
 func (t *TorrentImpl) RemoveDownload(infoHashString string) error {
 	t.lock.RLock()
-	torrent, ok := t.torrents[infoHashString]
+	tor, ok := t.torrents[infoHashString]
 	t.lock.RUnlock()
 	if !ok {
 		return errors.New("torrent does not exist, or has already completed")
 	}
 
+	torrent := tor.GetTorrent()
 	slog.Info(fmt.Sprintf("Dropping torrent %s. Had %d / %d", torrent.Name(), torrent.BytesCompleted(), torrent.Length()))
 	torrent.Drop()
 	t.lock.Lock()
@@ -58,7 +61,7 @@ func (t *TorrentImpl) RemoveDownload(infoHashString string) error {
 	return nil
 }
 
-func (t *TorrentImpl) GetRunningTorrents() map[string]*torrent.Torrent {
+func (t *TorrentImpl) GetRunningTorrents() map[string]*models.Torrent {
 	return t.torrents
 }
 
@@ -70,7 +73,7 @@ func newTorrent(c *torrent.ClientConfig) (*TorrentImpl, error) {
 
 	impl := &TorrentImpl{
 		client:   client,
-		torrents: make(map[string]*torrent.Torrent),
+		torrents: make(map[string]*models.Torrent),
 		lock:     &sync.RWMutex{},
 	}
 	go impl.cleaner()
@@ -82,7 +85,8 @@ func (t *TorrentImpl) cleaner() {
 	for range time.Tick(time.Second * 5) {
 		t.lock.RLock()
 		i := 0
-		for infoHash, torrent := range t.torrents {
+		for infoHash, tor := range t.torrents {
+			torrent := tor.GetTorrent()
 			if torrent.BytesCompleted() == torrent.Length() && torrent.BytesCompleted() > 0 {
 				i++
 				t.lock.RUnlock()
