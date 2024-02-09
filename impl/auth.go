@@ -36,7 +36,7 @@ func (v *AuthImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, nil
 	}
 
-	return time.Since(t) > time.Hour*24*7, nil
+	return time.Since(t) < time.Hour*24*7, nil
 }
 
 type LoginBody struct {
