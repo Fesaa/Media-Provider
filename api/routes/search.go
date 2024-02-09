@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"fmt"
+	"log/slog"
 	"net/url"
 
 	"github.com/Fesaa/Media-Provider/yts"
@@ -41,8 +43,10 @@ func ytsSearch(ctx *fiber.Ctx, r SearchRequest) error {
 	ytsS := r.ToYTS()
 	req, err := yts.Search(ytsS)
 	if err != nil {
+		slog.Error("Error searching yts", err)
 		return err
 	}
+	slog.Info(fmt.Sprintf("Found %d movies", len(req.Data.Movies)))
 	return ctx.JSON(req.Data.Movies)
 }
 
@@ -50,9 +54,10 @@ func nyaaSearch(ctx *fiber.Ctx, r SearchRequest) error {
 	nyaaS := r.ToNyaa()
 	torrents, err := nyaa.Search(nyaaS)
 	if err != nil {
+		slog.Error("Error searching nyaa", err)
 		return err
 	}
-
+	slog.Info(fmt.Sprintf("Found %d torrents", len(torrents)))
 	return ctx.JSON(torrents)
 }
 

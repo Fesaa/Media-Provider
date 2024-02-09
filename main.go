@@ -11,6 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/mount"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 
@@ -20,6 +21,9 @@ import (
 var holder models.Holder
 
 func main() {
+	mount.Init()
+	mount.Mount(true)
+
 	engine := html.New("./web/views", ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
