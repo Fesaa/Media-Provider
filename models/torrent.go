@@ -77,16 +77,21 @@ func (t *Torrent) GetInfo() TorrentInfo {
 	}
 }
 
-func humanReadableSpeed(speed int64) string {
+func humanReadableSpeed(s int64) string {
+	speed := float64(s)
 	if speed < 1024 {
-		return fmt.Sprintf("%d B/s", speed)
+		return fmt.Sprintf("%d B/s", round(speed, 2))
 	}
 	speed /= 1024
 	if speed < 1024 {
-		return fmt.Sprintf("%d KB/s", speed)
+		return fmt.Sprintf("%d KB/s", round(speed, 2))
 	}
 	speed /= 1024
-	return fmt.Sprintf("%d MB/s", speed)
+	return fmt.Sprintf("%d MB/s", round(speed, 2))
+}
+
+func round(num float64, dec int) float64 {
+	return float64(int(num*float64(dec*10))) / float64(dec*10)
 }
 
 func percent(a, b int64) int64 {
