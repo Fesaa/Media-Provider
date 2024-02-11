@@ -20,7 +20,7 @@ COPY . ./
 RUN go mod download
 RUN go build -o /media-provider
 
-FROM ubuntu:latest
+FROM debian:stable-slim
 
 WORKDIR /app
 
