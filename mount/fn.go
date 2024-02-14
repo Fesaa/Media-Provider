@@ -10,6 +10,9 @@ import (
 
 var mounted bool = false
 
+// Tries mounting the network drive.
+// If reset is true, it will try unmounting the drive first.
+// If the (un)mount fails, the program will exit.
 func Mount(reset bool) {
 	if mounted && reset {
 		Unmount()
@@ -41,6 +44,8 @@ func Mount(reset bool) {
 	mounted = true
 }
 
+// Tries unmounting the network drive.
+// If the unmount fails, the program will exit.
 func Unmount() {
 	if !mounted {
 		return

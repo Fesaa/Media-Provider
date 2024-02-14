@@ -7,11 +7,14 @@ import (
 	"github.com/anacrolix/torrent"
 )
 
+// Contains the amount of download bytes at a certain time
 type SpeedData struct {
 	t     time.Time
 	bytes int64
 }
 
+// Wrapper around the torrent.Torrent struct
+// Providers some specific functionality
 type Torrent struct {
 	t       *torrent.Torrent
 	key     string
@@ -20,6 +23,8 @@ type Torrent struct {
 	lastSpeed SpeedData
 }
 
+// Contains information about a torrent
+// This is the information that is sent to the client
 type TorrentInfo struct {
 	InfoHash  string `json:"InfoHash"`
 	Name      string `json:"Name"`
@@ -29,11 +34,21 @@ type TorrentInfo struct {
 	Speed     string `json:"Speed"`
 }
 
+// Wrapper around the torrent.Client struct
 type TorrentProvider interface {
+	// Returns the the torrent.Client
 	GetBackingClient() *torrent.Client
 
+	// Adds a new download to the client.
+	// The baseDir is the directory where the files will be downloaded to.
+	// Should not include specific location, just the base directory. The torrent hash will be appended to it.
+	// Returns the torrent that was added
 	AddDownload(infoHash string, baseDir string) (*Torrent, error)
+
+	// Removes a download from the wrapper, optionally deleting the files
 	RemoveDownload(infoHash string, deleteFiles bool) error
+
+	// Returns a map of all running torrents, indexed by their info hash
 	GetRunningTorrents() map[string]*Torrent
 }
 
@@ -49,10 +64,12 @@ func NewTorrent(t *torrent.Torrent, baseDir string) *Torrent {
 	}
 }
 
+// Returns the wrapped torrent.Torrent
 func (t *Torrent) GetTorrent() *torrent.Torrent {
 	return t.t
 }
 
+// Returns useful information about the torrent
 func (t *Torrent) GetInfo() TorrentInfo {
 	c := t.t.Stats().BytesReadData
 	progress := c.Int64()

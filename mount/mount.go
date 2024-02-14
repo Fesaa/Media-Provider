@@ -6,6 +6,8 @@ import (
 
 var user, pass, domain, url string
 
+// Initializes the mount package.
+// It will panic if any of the required environment variables are not set.
 func Init() {
 	var check bool
 

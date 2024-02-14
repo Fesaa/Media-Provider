@@ -14,12 +14,20 @@ import (
 	"github.com/Fesaa/Media-Provider/mount"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
-
-	_ "github.com/lib/pq"
 )
 
 var holder models.Holder
 
+// Following env variables are required:
+// USER, DOMAIN, URL, PASS
+//
+// The following env variables are optional:
+//
+// PORT: 80
+//
+// PASSWORD: admin
+//
+// TORRENT_DIR: temp
 func main() {
 	mount.Init()
 	mount.Mount(true)
