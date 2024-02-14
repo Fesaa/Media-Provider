@@ -20,7 +20,7 @@ type AuthImpl struct {
 
 func newAuth() *AuthImpl {
 	return &AuthImpl{
-		pass:   utils.GetEnv("PASS", "admin"),
+		pass:   utils.GetEnv("PASSWORD", "admin"),
 		tokens: make(map[string]time.Time),
 	}
 }
@@ -55,6 +55,11 @@ func (v *AuthImpl) Login(ctx *fiber.Ctx) error {
 	if password == "" {
 		return badRequest("Password is required")
 	}
+
+	if password != v.pass {
+		return badRequest("Invalid password")
+	}
+
 	sessionOnly := body.Remember == ""
 
 	token := generateSecureToken(32)
