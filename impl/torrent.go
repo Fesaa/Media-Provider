@@ -11,21 +11,25 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/mount"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/storage"
 	"github.com/anacrolix/torrent/types/infohash"
+	"golang.org/x/sys/unix"
 )
 
 type TorrentImpl struct {
 	client *torrent.Client
 
 	torrents map[string]*models.Torrent
-	baseDirs map[string]string
-	lock     *sync.RWMutex
-	lockDir  *sync.RWMutex
-	dir      string
+
+	clientBaseDir string
+	baseDirs      map[string]string
+	lock          *sync.RWMutex
+	lockDir       *sync.RWMutex
+	dir           string
 }
 
 func (t *TorrentImpl) GetBackingClient() *torrent.Client {
@@ -35,6 +39,20 @@ func (t *TorrentImpl) GetBackingClient() *torrent.Client {
 func (t *TorrentImpl) AddDownload(infoHashString string, baseDir string) (*models.Torrent, error) {
 	infoHashString = strings.ToLower(infoHashString)
 	infoHash := infohash.FromHexString(infoHashString)
+
+	if len(t.torrents) == 0 && !writable(t.clientBaseDir+"/"+baseDir) {
+		slog.Info("Base dir is not writable, attempting remount.")
+		mount.Unmount()
+		mount.Mount(false)
+		slog.Info("Remounted, checking if base dir is writable.")
+		if !writable(t.clientBaseDir + "/" + baseDir) {
+			go func() {
+				time.Sleep(time.Duration(10) * time.Second)
+				os.Exit(1)
+			}()
+			return nil, errors.New("base dir is not writable after remount, exiting program soon.")
+		}
+	}
 
 	torrentInfo, new := t.client.AddTorrentInfoHash(infoHash)
 	if !new {
@@ -111,10 +129,12 @@ func newTorrent() (*TorrentImpl, error) {
 
 	impl := &TorrentImpl{
 		torrents: make(map[string]*models.Torrent),
-		baseDirs: make(map[string]string),
-		lock:     &sync.RWMutex{},
-		lockDir:  &sync.RWMutex{},
-		dir:      dir,
+
+		clientBaseDir: dir,
+		baseDirs:      make(map[string]string),
+		lock:          &sync.RWMutex{},
+		lockDir:       &sync.RWMutex{},
+		dir:           dir,
 	}
 
 	opts := storage.NewFileClientOpts{
@@ -153,6 +173,10 @@ func (t *TorrentImpl) cleaner() {
 		}
 		t.lock.RUnlock()
 	}
+}
+
+func writable(path string) bool {
+	return unix.Access(path, unix.W_OK) == nil
 }
 
 func safeGet[K comparable, T any](m map[K]T, k K, lock *sync.RWMutex) (T, bool) {

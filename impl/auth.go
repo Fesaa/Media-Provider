@@ -20,7 +20,7 @@ type AuthImpl struct {
 
 func newAuth() *AuthImpl {
 	return &AuthImpl{
-		pass:   utils.GetEnv("PASS", "admin"),
+		pass:   utils.GetEnv("PASSWORD", "admin"),
 		tokens: make(map[string]time.Time),
 	}
 }
@@ -36,7 +36,7 @@ func (v *AuthImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, nil
 	}
 
-	return time.Since(t) > time.Hour*24*7, nil
+	return time.Since(t) < time.Hour*24*7, nil
 }
 
 type LoginBody struct {
@@ -55,6 +55,11 @@ func (v *AuthImpl) Login(ctx *fiber.Ctx) error {
 	if password == "" {
 		return badRequest("Password is required")
 	}
+
+	if password != v.pass {
+		return badRequest("Invalid password")
+	}
+
 	sessionOnly := body.Remember == ""
 
 	token := generateSecureToken(32)

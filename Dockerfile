@@ -7,7 +7,7 @@ RUN npm install
 
 COPY web ./
 
-RUN npm run build:prod 
+RUN npm run build:prod
 RUN npm run tailwind:prod
 
 
@@ -20,20 +20,18 @@ COPY . ./
 RUN go mod download
 RUN go build -o /media-provider
 
-FROM ubuntu:latest
+FROM debian:stable-slim
 
 WORKDIR /app
 
 COPY --from=go-stage /media-provider /app/media-provider
-COPY --from=go-stage /app/mount.sh /app/mount.sh
 COPY --from=npm-stage /app/public/ /app/web/public
 COPY --from=npm-stage /app/views/ /app/web/views
 
 
 RUN apt-get update && apt-get install -y ca-certificates && apt install -y cifs-utils psmisc
 RUN mkdir /app/mount
-RUN chmod +x /app/mount.sh
 
 EXPOSE 80
 
-CMD ["sh", "-c", "./mount.sh && ./media-provider"]
+CMD ["sh", "-c", "./media-provider"]
