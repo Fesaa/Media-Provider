@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -36,9 +37,63 @@ func (t *TorrentImpl) GetBackingClient() *torrent.Client {
 	return t.client
 }
 
-func (t *TorrentImpl) AddDownload(infoHashString string, baseDir string) (*models.Torrent, error) {
-	infoHashString = strings.ToLower(infoHashString)
-	infoHash := infohash.FromHexString(infoHashString)
+func (t *TorrentImpl) AddDownload(infoHash string, baseDir string) (*models.Torrent, error) {
+	err := t.checkMount(baseDir)
+	if err != nil {
+		return nil, err
+	}
+
+	torrentInfo, new := t.client.AddTorrentInfoHash(infohash.FromHexString(strings.ToLower(infoHash)))
+	if !new {
+		return nil, errors.New("torrent already exists")
+	}
+
+	return t.processTorrent(torrentInfo, baseDir), nil
+}
+
+func (t *TorrentImpl) AddDownloadFromUrl(url string, baseDir string) (*models.Torrent, error) {
+	err := t.checkMount(baseDir)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		slog.Error("Failed to get torrent file from url: " + url + " with status code: " + res.Status)
+		return nil, errors.New("failed to get torrent file from url: " + url + " with status code: " + res.Status)
+	}
+
+	mi, err := metainfo.Load(res.Body)
+	torrentInfo, err := t.client.AddTorrent(mi)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.processTorrent(torrentInfo, baseDir), nil
+}
+
+func (t *TorrentImpl) processTorrent(torrentInfo *torrent.Torrent, dir string) *models.Torrent {
+	torrent := models.NewTorrent(torrentInfo, dir)
+	safeSet(t.torrents, torrentInfo.InfoHash().String(), torrent, t.lock)
+	safeSet(t.baseDirs, torrentInfo.InfoHash().String(), dir, t.lockDir)
+
+	go func() {
+		<-torrentInfo.GotInfo()
+		slog.Info(fmt.Sprintf("Info received for %s, starting download.", torrentInfo.Name()))
+		torrentInfo.DownloadAll()
+	}()
+	return torrent
+}
+
+func (t *TorrentImpl) checkMount(baseDir string) error {
+	if !mount.WantsMount() {
+		return nil
+	}
 
 	if len(t.torrents) == 0 && !writable(t.clientBaseDir+"/"+baseDir) {
 		slog.Info("Base dir is not writable, attempting remount.")
@@ -50,26 +105,11 @@ func (t *TorrentImpl) AddDownload(infoHashString string, baseDir string) (*model
 				time.Sleep(time.Duration(10) * time.Second)
 				os.Exit(1)
 			}()
-			return nil, errors.New("base dir is not writable after remount, exiting program soon.")
+			return errors.New("base dir is not writable after remount, exiting program soon.")
 		}
 	}
 
-	torrentInfo, new := t.client.AddTorrentInfoHash(infoHash)
-	if !new {
-		return nil, errors.New("torrent already exists")
-	}
-
-	torrent := models.NewTorrent(torrentInfo, baseDir)
-	safeSet(t.torrents, infoHashString, torrent, t.lock)
-	safeSet(t.baseDirs, infoHashString, baseDir, t.lockDir)
-
-	go func() {
-		<-torrentInfo.GotInfo()
-		slog.Info(fmt.Sprintf("Info received for %s, starting download.", torrentInfo.Name()))
-		torrentInfo.DownloadAll()
-	}()
-
-	return torrent, nil
+	return nil
 }
 
 func (t *TorrentImpl) RemoveDownload(infoHashString string, deleteFiles bool) error {

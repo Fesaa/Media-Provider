@@ -14,6 +14,7 @@ func RegisterFrontEnd(app *fiber.App) error {
 	app.Get("/", middleware.AuthHandler, home)
 	app.Get("/anime", middleware.AuthHandler, anime)
 	app.Get("/movies", middleware.AuthHandler, movies)
+	app.Get("/lime", middleware.AuthHandler, lime)
 
 	app.Get("/login", login)
 
@@ -24,6 +25,10 @@ func RegisterFrontEnd(app *fiber.App) error {
 
 func status404(ctx *fiber.Ctx) error {
 	return ctx.Render("404", fiber.Map{})
+}
+
+func lime(ctx *fiber.Ctx) error {
+	return ctx.Render("lime", fiber.Map{})
 }
 
 func anime(ctx *fiber.Ctx) error {

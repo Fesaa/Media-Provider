@@ -7,6 +7,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type DownloadRequest struct {
+	Info    string `json:"info"`
+	BaseDir string `json:"base_dir"`
+	Url     bool   `json:"url"`
+}
+
 func Download(ctx *fiber.Ctx) error {
 	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
 	if !ok {
@@ -20,20 +26,21 @@ func Download(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	infoHash := ctx.Params("infoHash")
-	if infoHash == "" {
-		slog.Error("No infoHash provided")
-		return fiber.ErrBadRequest
-	}
-	baseDir := ctx.Query("base_dir")
-	if baseDir == "" {
-		slog.Error("No baseDir provided")
+	var req DownloadRequest
+	err := ctx.BodyParser(&req)
+	if err != nil {
+		slog.Error(err.Error())
 		return fiber.ErrBadRequest
 	}
 
-	slog.Info("Adding download for infoHash: " + infoHash + " with baseDir: " + baseDir)
+	if req.Url {
+		slog.Info("Adding down for url: " + req.Info + " with baseDir: " + req.BaseDir)
+		_, err = torrentProvider.AddDownloadFromUrl(req.Info, req.BaseDir)
+	} else {
+		slog.Info("Adding download for infoHash: " + req.Info + " with baseDir: " + req.BaseDir)
+		_, err = torrentProvider.AddDownload(req.Info, req.BaseDir)
+	}
 
-	_, err := torrentProvider.AddDownload(infoHash, baseDir)
 	if err != nil {
 		slog.Error(err.Error())
 		return fiber.ErrInternalServerError

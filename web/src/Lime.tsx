@@ -1,13 +1,13 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import NavBar from "./components/navbar";
-import MoviesForm from "./components/moviesForm";
+import LimeForm from "./components/LimeForm";
 
 function Search() {
   return (
     <div>
-      <NavBar current="Movies" />
-      <MoviesForm />
+      <NavBar current="Lime" />
+      <LimeForm />
     </div>
   );
 }

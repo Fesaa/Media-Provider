@@ -174,7 +174,7 @@ export default function MoviesForm() {
         <ul className="mx-auto flex flex-wrap gap-4">
           {results.map((t: any) => (
             <li key={t.InfoHash} className="p-4">
-              <Torrent torrent={t} baseDir="Movies" />
+              <Torrent torrent={t} baseDir="Movies" url={false} />
             </li>
           ))}
         </ul>

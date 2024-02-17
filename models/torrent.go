@@ -45,6 +45,12 @@ type TorrentProvider interface {
 	// Returns the torrent that was added
 	AddDownload(infoHash string, baseDir string) (*Torrent, error)
 
+	// Adds a new download from a url to the client.
+	// The baseDir is the directory where the files will be downloaded to.
+	// Should not include specific location, just the base directory. The torrent hash will be appended to it.
+	// Returns the torrent that was added
+	AddDownloadFromUrl(url string, baseDir string) (*Torrent, error)
+
 	// Removes a download from the wrapper, optionally deleting the files
 	RemoveDownload(infoHash string, deleteFiles bool) error
 

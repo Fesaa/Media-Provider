@@ -40,3 +40,7 @@ func Init() {
 		panic("URL not found. Please set URL environment variable")
 	}
 }
+
+func WantsMount() bool {
+	return doMount
+}

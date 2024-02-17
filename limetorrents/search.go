@@ -22,8 +22,12 @@ func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 }
 
 func parseResults(torrents *goquery.Selection) []SearchResult {
-	results := make([]SearchResult, 0, torrents.Length()-1)
+	// Either no results or only the header
+	if torrents.Length() < 2 {
+		return []SearchResult{}
+	}
 
+	results := make([]SearchResult, torrents.Length()-1)
 	torrents.Each(func(i int, s *goquery.Selection) {
 		if i == 0 {
 			return

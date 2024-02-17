@@ -15,7 +15,7 @@ func Setup(app *fiber.App, holder models.Holder) error {
 
 	api.Post("/search", middleware.AuthHandler, routes.Search)
 	api.Get("/stats", middleware.AuthHandler, routes.Stats)
-	api.Get("/download/:infoHash", middleware.AuthHandler, routes.Download)
+	api.Post("/download/", middleware.AuthHandler, routes.Download)
 	api.Get("/stop/:infoHash", middleware.AuthHandler, routes.Stop)
 
 	return nil
