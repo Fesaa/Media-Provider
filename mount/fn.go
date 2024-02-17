@@ -14,6 +14,9 @@ var mounted bool = false
 // If reset is true, it will try unmounting the drive first.
 // If the (un)mount fails, the program will exit.
 func Mount(reset bool) {
+	if !doMount {
+		return
+	}
 	if mounted && reset {
 		Unmount()
 	}
@@ -47,7 +50,7 @@ func Mount(reset bool) {
 // Tries unmounting the network drive.
 // If the unmount fails, the program will exit.
 func Unmount() {
-	if !mounted {
+	if !mounted || !doMount {
 		return
 	}
 

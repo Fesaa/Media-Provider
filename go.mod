@@ -7,6 +7,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/gofiber/template/html/v2 v2.1.0
 	github.com/irevenko/go-nyaa v0.0.0-20210412095257-194e1b4cce55
+	golang.org/x/sys v0.16.0
 )
 
 require (

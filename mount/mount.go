@@ -6,10 +6,19 @@ import (
 
 var user, pass, domain, url string
 
+// If doMount is set to false, the mount package will not attempt to mount the share.
+// And a local temp will be used to download to. This is useful for testing.
+var doMount bool = true
+
 // Initializes the mount package.
 // It will panic if any of the required environment variables are not set.
 func Init() {
-	var check bool
+	if os.Getenv("MOUNT") == "false" {
+		doMount = false
+		return
+	}
+
+	var check bool = false
 
 	user, check = os.LookupEnv("USER")
 	if !check {
