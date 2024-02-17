@@ -1,5 +1,7 @@
 package limetorrents
 
+import "strings"
+
 type Category string
 
 const (
@@ -12,6 +14,27 @@ const (
 	TV             = "tv"
 	OTHER          = "other"
 )
+
+func ConvertCategory(c string) Category {
+	switch strings.ToLower(c) {
+	case "anime":
+		return ANIME
+	case "applications":
+		return APPS
+	case "games":
+		return GAMES
+	case "movies":
+		return MOVIE
+	case "music":
+		return MUSIC
+	case "tv":
+		return TV
+	case "other":
+		return OTHER
+	default:
+		return ALL
+	}
+}
 
 type SearchResult struct {
 	Name  string

@@ -36,14 +36,14 @@ func parseResults(torrents *goquery.Selection) []SearchResult {
 		seed := s.Find("td:nth-child(4)").Text()
 		leach := s.Find("td:nth-child(5)").Text()
 
-		results = append(results, SearchResult{
+		results[i-1] = SearchResult{
 			Name:  name,
 			Url:   url,
 			Size:  size,
 			Seed:  seed,
 			Leach: leach,
 			Added: added,
-		})
+		}
 	})
 
 	return results
