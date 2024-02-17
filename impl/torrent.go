@@ -69,11 +69,14 @@ func (t *TorrentImpl) AddDownloadFromUrl(url string, baseDir string) (*models.To
 	}
 
 	mi, err := metainfo.Load(res.Body)
+
+	// client.AddTorrent starts downloading, so we need to add the baseDir to the map before calling it
+	safeSet(t.baseDirs, mi.HashInfoBytes().HexString(), baseDir, t.lockDir)
+
 	torrentInfo, err := t.client.AddTorrent(mi)
 	if err != nil {
 		return nil, err
 	}
-
 	return t.processTorrent(torrentInfo, baseDir), nil
 }
 
