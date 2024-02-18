@@ -17,6 +17,7 @@ export type TorrentInfo = {
   GUID: string;
   CategoryID: string;
   InfoHash: string;
+  CoverImage: string;
 };
 
 function shadowColour(torrent: TorrentInfo): String {
@@ -40,18 +41,28 @@ function shadowColour(torrent: TorrentInfo): String {
   return "shadow-lg shadow-green-500";
 }
 
-export default function Torrent(props: { torrent: TorrentInfo, baseDir: string }) {
+export default function Torrent(props: {
+  torrent: TorrentInfo;
+  baseDir: string;
+  url: Boolean;
+}) {
   const [open, setOpen] = useState(false);
 
   function download(
     hash: string,
-    baseDir: string
+    baseDir: string,
   ): (e: React.MouseEvent<HTMLAnchorElement>) => void {
     return (e) => {
       e.preventDefault();
 
+      const req = {
+        info: hash,
+        base_dir: baseDir,
+        url: props.url,
+      };
+
       axios
-        .get(`/api/download/${hash}?base_dir=${baseDir}`)
+        .post(`/api/download`, req)
         .then((res) => {
           if (res.status == 202) {
             setOpen(true);
@@ -70,6 +81,13 @@ export default function Torrent(props: { torrent: TorrentInfo, baseDir: string }
         shadowColour(props.torrent)
       }
     >
+      {props.torrent.CoverImage != "" && (
+        <img
+          className="mx-auto h-32 w-32 rounded-full"
+          src={props.torrent.CoverImage}
+          alt=""
+        />
+      )}
       <h5 className="mb-2 font-bold tracking-tight text-gray-900 dark:text-white">
         {props.torrent.Name.replace(/\./g, " ")}
       </h5>
@@ -83,13 +101,18 @@ export default function Torrent(props: { torrent: TorrentInfo, baseDir: string }
         <div className="center relative inline-block select-none whitespace-nowrap rounded-lg bg-green-500 px-3.5 py-2 align-baseline font-sans text-xs font-bold uppercase leading-none text-white">
           <div className="mt-px">Seeders: {props.torrent.Seeders}</div>
         </div>
-        {props.torrent.Downloads != "" && 
-        <div className="center relative inline-block select-none whitespace-nowrap rounded-lg bg-pink-500 px-3.5 py-2 align-baseline font-sans text-xs font-bold uppercase leading-none text-white">
-          <div className="mt-px">Downloads: {props.torrent.Downloads}</div>
-        </div>
-        }
+        {props.torrent.Downloads != "" && (
+          <div className="center relative inline-block select-none whitespace-nowrap rounded-lg bg-pink-500 px-3.5 py-2 align-baseline font-sans text-xs font-bold uppercase leading-none text-white">
+            <div className="mt-px">Downloads: {props.torrent.Downloads}</div>
+          </div>
+        )}
         <a
-          onClick={download(props.torrent.InfoHash, props.baseDir)}
+          onClick={download(
+            props.torrent.InfoHash != ""
+              ? props.torrent.InfoHash
+              : props.torrent.Link,
+            props.baseDir,
+          )}
           className="inline-flex items-center justify-center rounded-lg bg-purple-700 p-5 px-3 py-2 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
         >
           Download

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/url"
 
+	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/gofiber/fiber/v2"
 	"github.com/irevenko/go-nyaa/nyaa"
@@ -31,12 +32,26 @@ func Search(ctx *fiber.Ctx) error {
 		return nyaaSearch(ctx, searchRequest)
 	case "yts":
 		return ytsSearch(ctx, searchRequest)
+	case "limetorrents":
+		return limeTorrensSearch(ctx, searchRequest)
 	default:
 		return &fiber.Error{
 			Code:    fiber.ErrBadRequest.Code,
 			Message: "Invalid provider, can't process request.",
 		}
 	}
+}
+
+func limeTorrensSearch(ctx *fiber.Ctx, r SearchRequest) error {
+	limeS := r.ToLimeTorrents()
+	torrents, err := limetorrents.Search(limeS)
+	if err != nil {
+		slog.Error("Error searching limetorrents", err)
+		return err
+	}
+
+	slog.Info(fmt.Sprintf("Found %d torrents", len(torrents)))
+	return ctx.JSON(torrents)
 }
 
 func ytsSearch(ctx *fiber.Ctx, r SearchRequest) error {
@@ -91,4 +106,12 @@ func (s *SearchRequest) ToYTS() yts.YTSSearchOptions {
 	y.SortBy = s.SortBy
 	y.Page = 1
 	return y
+}
+
+func (s *SearchRequest) ToLimeTorrents() limetorrents.SearchOptions {
+	return limetorrents.SearchOptions{
+		Category: limetorrents.ConvertCategory(s.Category),
+		Query:    s.Query,
+		Page:     1,
+	}
 }

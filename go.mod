@@ -7,7 +7,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/gofiber/template/html/v2 v2.1.0
 	github.com/irevenko/go-nyaa v0.0.0-20210412095257-194e1b4cce55
-	github.com/lib/pq v1.10.9
+	golang.org/x/sys v0.16.0
 )
 
 require (
@@ -102,7 +102,6 @@ require (
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

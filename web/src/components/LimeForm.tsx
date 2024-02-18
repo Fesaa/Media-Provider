@@ -1,24 +1,31 @@
 import React, { FormEvent, useState } from "react";
 import axios from "axios";
-import Torrent from "./torrent";
+import Torrent, { TorrentInfo } from "./torrent";
 
-export default function SearchForm() {
-  const [provider, setProvider] = useState("nyaa");
+type LimeTorrent = {
+  Name: string;
+  Url: string;
+  Seed: string;
+  Leech: string;
+  Size: string;
+  Added: string;
+};
+
+export default function MoviesForm() {
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
-  const [sort_by, setSortBy] = useState("downloads");
+  const [category, setCategory] = useState("ALL");
+  const [dir, setDir] = useState("Movies");
 
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<TorrentInfo[]>([]);
 
   function onSubmit(e: FormEvent) {
     console.log("Getting torrents");
     e.preventDefault();
 
     const data = JSON.stringify({
-      provider,
+      provider: "limetorrents",
       query,
       category,
-      sort_by,
     });
 
     axios
@@ -31,7 +38,29 @@ export default function SearchForm() {
         if (res.data == null) {
           return;
         }
-        setResults(res.data);
+
+        const limeTorrents: LimeTorrent[] = res.data;
+        const torrents: TorrentInfo[] = limeTorrents.map((torrent) => {
+          return {
+            Category: "",
+            Name: torrent.Name,
+            Description: "",
+            Date: torrent.Added,
+            Size: torrent.Size,
+            Seeders: torrent.Seed,
+            Leechers: torrent.Leech,
+            Downloads: "",
+            IsTrusted: "",
+            IsRemake: "",
+            Link: torrent.Url,
+            GUID: "",
+            CategoryID: "",
+            InfoHash: "",
+            CoverImage: "",
+          };
+        });
+
+        setResults(torrents);
         document
           .getElementById("search-results")!
           .scrollIntoView({ behavior: "smooth" });
@@ -69,47 +98,6 @@ export default function SearchForm() {
                 <div className="flex flex-wrap justify-around">
                   <div>
                     <label
-                      htmlFor="provider"
-                      className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                      Provider
-                    </label>
-                    <select
-                      name="provider"
-                      id="provider"
-                      className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                      onChange={(e) => setProvider(e.target.value)}
-                      defaultValue={"nyaa"}
-                    >
-                      <option value={"nyaa"}>Nyaa</option>
-                      {/*<option value={"sukebei"}> Sukebei </option>*/}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="sortby"
-                      className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-                    >
-                      Sort By
-                    </label>
-                    <select
-                      name="sort_by"
-                      id="sortby"
-                      className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                      onChange={(e) => setSortBy(e.target.value)}
-                    >
-                      <option value={"downloads"}> Downloads </option>
-                      <option value={"date"}> Date </option>
-                      <option value={"size"}> Size </option>
-                      <option value={"seeders"}> Seeders </option>
-                      <option value={"leechers"}> Leechers </option>
-                      <option value={"comments"}> Comments </option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
                       htmlFor="category"
                       className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
                     >
@@ -121,18 +109,32 @@ export default function SearchForm() {
                       className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                       onChange={(e) => setCategory(e.target.value)}
                     >
-                      <option value={"all"}>All categories</option>
-                      <option value={"anime"}> Anime </option>
-                      <option value={"anime-amv"}> - Music Video </option>
-                      <option value={"anime-eng"}> - English Translated</option>
-                      <option value={"anime-non-eng"}>
-                        {" "}
-                        - Non-English Translated
-                      </option>
-                      <option value={"anime-raw"}> - Raw </option>
-                      <option value={"audio"}> Audio </option>
-                      <option value={"audio-lossless"}> - Lossless </option>
-                      <option value={"audio-lossy"}> - Lossy </option>
+                      <option value={"ALL"}> All </option>
+                      <option value={"ANIME"}> Anime </option>
+                      <option value={"MOVIES"}> Movies </option>
+                      <option value={"TV"}> Likes </option>
+                      <option value={"OTHER"}> Date Added </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap justify-around">
+                  <div>
+                    <label
+                      htmlFor="dir"
+                      className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                      Directory
+                    </label>
+                    <select
+                      name="dir"
+                      id="dir"
+                      className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                      onChange={(e) => setDir(e.target.value)}
+                    >
+                      <option value={"Movies"}> Movies </option>
+                      <option value={"Anime"}> Anime </option>
+                      <option value={"Series"}> Series </option>
                     </select>
                   </div>
                 </div>
@@ -154,9 +156,9 @@ export default function SearchForm() {
         className="flex items-center justify-center justify-items-center"
       >
         <ul className="mx-auto flex flex-wrap gap-4">
-          {results.map((t: any) => (
-            <li key={t.InfoHash} className="p-4">
-              <Torrent torrent={t} baseDir="Anime" url={false} />
+          {results.map((t: TorrentInfo) => (
+            <li key={t.Link} className="p-4">
+              <Torrent torrent={t} baseDir={dir} url={true} />
             </li>
           ))}
         </ul>
