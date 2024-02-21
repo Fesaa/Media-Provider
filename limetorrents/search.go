@@ -3,6 +3,7 @@ package limetorrents
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -43,6 +44,7 @@ func parseResults(torrents *goquery.Selection) []SearchResult {
 		results[i-1] = SearchResult{
 			Name:  name,
 			Url:   url,
+			Hash:  hashFromUrl(url),
 			Size:  size,
 			Seed:  seed,
 			Leach: leach,
@@ -51,6 +53,12 @@ func parseResults(torrents *goquery.Selection) []SearchResult {
 	})
 
 	return results
+}
+
+func hashFromUrl(url string) string {
+	s1 := strings.Split(url, "torrent/")
+	s2 := strings.Split(s1[1], ".torrent")
+	return s2[0]
 }
 
 func getSearch(url string) (*goquery.Document, error) {

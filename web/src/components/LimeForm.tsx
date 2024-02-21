@@ -5,8 +5,9 @@ import Torrent, { TorrentInfo } from "./torrent";
 type LimeTorrent = {
   Name: string;
   Url: string;
+  Hash: string;
   Seed: string;
-  Leech: string;
+  Leach: string;
   Size: string;
   Added: string;
 };
@@ -48,14 +49,14 @@ export default function MoviesForm() {
             Date: torrent.Added,
             Size: torrent.Size,
             Seeders: torrent.Seed,
-            Leechers: torrent.Leech,
+            Leechers: torrent.Leach,
             Downloads: "",
             IsTrusted: "",
             IsRemake: "",
             Link: torrent.Url,
             GUID: "",
             CategoryID: "",
-            InfoHash: "",
+            InfoHash: torrent.Hash,
             CoverImage: "",
           };
         });
@@ -158,7 +159,7 @@ export default function MoviesForm() {
         <ul className="mx-auto flex flex-wrap gap-4">
           {results.map((t: TorrentInfo) => (
             <li key={t.Link} className="p-4">
-              <Torrent torrent={t} baseDir={dir} url={true} />
+              <Torrent torrent={t} baseDir={dir} url={false} />
             </li>
           ))}
         </ul>
