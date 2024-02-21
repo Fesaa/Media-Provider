@@ -78,24 +78,24 @@ func (t *Torrent) GetTorrent() *torrent.Torrent {
 // Returns useful information about the torrent
 func (t *Torrent) GetInfo() TorrentInfo {
 	c := t.t.Stats().BytesReadData
-	progress := c.Int64()
+	bytesRead := c.Int64()
 	var speed int64 = 0
 
-	bytesDiff := progress - t.lastSpeed.bytes
+	bytesDiff := bytesRead - t.lastSpeed.bytes
 	timeDiff := time.Since(t.lastSpeed.t).Seconds()
 	speed = int64(float64(bytesDiff) / timeDiff)
 
 	t.lastSpeed = SpeedData{
 		t:     time.Now(),
-		bytes: progress,
+		bytes: bytesRead,
 	}
 
 	return TorrentInfo{
 		InfoHash:  t.key,
 		Name:      t.t.Name(),
 		Size:      t.t.Length(),
-		Progress:  progress,
-		Completed: percent(progress, t.t.Length()),
+		Progress:  t.t.BytesCompleted(),
+		Completed: percent(t.t.BytesCompleted(), t.t.Length()),
 		Speed:     humanReadableSpeed(speed),
 	}
 }
