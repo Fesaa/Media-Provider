@@ -69,6 +69,9 @@ func (t *TorrentImpl) AddDownloadFromUrl(url string, baseDir string) (*models.To
 	}
 
 	mi, err := metainfo.Load(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load metainfo from url: %s, error: %s", url, err)
+	}
 
 	// client.AddTorrent starts downloading, so we need to add the baseDir to the map before calling it
 	safeSet(t.baseDirs, mi.HashInfoBytes().HexString(), baseDir, t.lockDir)
@@ -108,7 +111,7 @@ func (t *TorrentImpl) checkMount(baseDir string) error {
 				time.Sleep(time.Duration(10) * time.Second)
 				os.Exit(1)
 			}()
-			return errors.New("base dir is not writable after remount, exiting program soon.")
+			return errors.New("base dir is not writable after remount, exiting program soon")
 		}
 	}
 

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/Fesaa/Media-Provider/models"
@@ -11,6 +12,10 @@ type DownloadRequest struct {
 	Info    string `json:"info"`
 	BaseDir string `json:"base_dir"`
 	Url     bool   `json:"url"`
+}
+
+func (d DownloadRequest) DebugString() string {
+	return fmt.Sprintf("{Info: %s, BaseDir: %s, Url: %t}", d.Info, d.BaseDir, d.Url)
 }
 
 func Download(ctx *fiber.Ctx) error {
@@ -29,7 +34,7 @@ func Download(ctx *fiber.Ctx) error {
 	var req DownloadRequest
 	err := ctx.BodyParser(&req)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error(fmt.Sprintf("Error parsing request body into DownloadRequest : %w", err))
 		return fiber.ErrBadRequest
 	}
 
@@ -42,7 +47,7 @@ func Download(ctx *fiber.Ctx) error {
 	}
 
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error(fmt.Sprintf("Error adding download: %w for %s", err, req.DebugString()))
 		return fiber.ErrInternalServerError
 	}
 
@@ -70,7 +75,7 @@ func Stop(ctx *fiber.Ctx) error {
 
 	err := torrentProvider.RemoveDownload(infoHash, true)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error(fmt.Sprintf("Error stopping download: %w for infoHash: %s", err, infoHash))
 		return fiber.ErrInternalServerError
 	}
 
