@@ -27,32 +27,28 @@ func parseResults(torrents *goquery.Selection) []SearchResult {
 	if torrents.Length() < 2 {
 		return []SearchResult{}
 	}
+	results := goquery.Map(torrents, searchFromNode)
+	// Don't return the header
+	return results[1:]
+}
 
-	results := make([]SearchResult, torrents.Length()-1)
-	torrents.Each(func(i int, s *goquery.Selection) {
-		if i == 0 {
-			return
-		}
+func searchFromNode(i int, s *goquery.Selection) SearchResult {
+	name := s.Find("td:nth-child(1) a").Text()
+	url, _ := s.Find("td:nth-child(1) a").Attr("href")
+	added := s.Find("td:nth-child(2)").Text()
+	size := s.Find("td:nth-child(3)").Text()
+	seed := s.Find("td:nth-child(4)").Text()
+	leach := s.Find("td:nth-child(5)").Text()
 
-		name := s.Find("td:nth-child(1) a").Text()
-		url, _ := s.Find("td:nth-child(1) a").Attr("href")
-		added := s.Find("td:nth-child(2)").Text()
-		size := s.Find("td:nth-child(3)").Text()
-		seed := s.Find("td:nth-child(4)").Text()
-		leach := s.Find("td:nth-child(5)").Text()
-
-		results[i-1] = SearchResult{
-			Name:  name,
-			Url:   url,
-			Hash:  hashFromUrl(url),
-			Size:  size,
-			Seed:  seed,
-			Leach: leach,
-			Added: added,
-		}
-	})
-
-	return results
+	return SearchResult{
+		Name:  name,
+		Url:   url,
+		Hash:  hashFromUrl(url),
+		Size:  size,
+		Seed:  seed,
+		Leach: leach,
+		Added: added,
+	}
 }
 
 func hashFromUrl(url string) string {
