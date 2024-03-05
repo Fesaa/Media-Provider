@@ -52,6 +52,9 @@ func searchFromNode(i int, s *goquery.Selection) SearchResult {
 }
 
 func hashFromUrl(url string) string {
+	if url == "" {
+		return ""
+	}
 	s1 := strings.Split(url, "torrent/")
 	s2 := strings.Split(s1[1], ".torrent")
 	return s2[0]

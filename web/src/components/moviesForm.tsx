@@ -1,46 +1,7 @@
 import React, { FormEvent, useState } from "react";
 import axios from "axios";
-import Torrent, { TorrentInfo } from "./torrent";
-
-type YTSTorrent = {
-  url: string;
-  hash: string;
-  quality: string;
-  type: string;
-  seeds: number;
-  peers: number;
-  size: string;
-  dateUploaded: string;
-  dateUploadedUnix: number;
-};
-
-type YTSTorrents = {
-  torrents: YTSTorrent[];
-  dateUploaded: string;
-  dateUploadedUnix: number;
-};
-
-type YTSMovie = {
-  id: number;
-  url: string;
-  imbdCode: string;
-  title: string;
-  titleEnglish: string;
-  titleLong: string;
-  slug: string;
-  year: number;
-  rating: number;
-  genres: string[];
-  summary: string;
-  descriptionFull: string;
-  lang: string;
-  backgroundImage: string;
-  small_cover_image: string;
-  medium_cover_image: string;
-  large_cover_image: string;
-  state: string;
-  torrents: YTSTorrent[];
-};
+import TorrentTable, { TorrentInfo } from "./torrentTable";
+import { YTSMovie, YTSTorrent } from "../response/SearchResults";
 
 export default function MoviesForm() {
   const [query, setQuery] = useState("");
@@ -49,7 +10,6 @@ export default function MoviesForm() {
   const [results, setResults] = useState<TorrentInfo[]>([]);
 
   function onSubmit(e: FormEvent) {
-    console.log("Getting torrents");
     e.preventDefault();
 
     const data = JSON.stringify({
@@ -74,7 +34,6 @@ export default function MoviesForm() {
           const torrent =
             movie.torrents.find((t) => t.quality === "1080p") ||
             movie.torrents[0];
-          console.log(movie.medium_cover_image);
           return {
             Category: movie.genres.join(", "),
             Name: movie.title,
@@ -103,7 +62,7 @@ export default function MoviesForm() {
   }
 
   return (
-    <div className="justify-items-center">
+    <div className="justify-items-center bg-gray-50 dark:bg-gray-900">
       <section className="bg-gray-50 dark:bg-gray-900">
         <div className="mx-auto flex flex-col items-center justify-center px-6 py-8 md:h-screen lg:py-0">
           <div className="w-full rounded-lg bg-white shadow sm:max-w-md md:mt-0 xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800">
@@ -171,13 +130,10 @@ export default function MoviesForm() {
         id="search-results"
         className="flex items-center justify-center justify-items-center"
       >
-        <ul className="mx-auto flex flex-wrap gap-4">
-          {results.map((t: any) => (
-            <li key={t.InfoHash} className="p-4">
-              <Torrent torrent={t} baseDir="Movies" url={false} />
-            </li>
-          ))}
-        </ul>
+        <TorrentTable
+          torrents={results}
+          options={{ baseDir: "Movies", url: false }}
+        />
       </section>
     </div>
   );

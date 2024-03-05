@@ -1,6 +1,6 @@
 import React, { FormEvent, useState } from "react";
 import axios from "axios";
-import Torrent from "./torrent";
+import TorrentTable from "./torrentTable";
 
 export default function SearchForm() {
   const [provider, setProvider] = useState("nyaa");
@@ -40,7 +40,7 @@ export default function SearchForm() {
   }
 
   return (
-    <div className="justify-items-center">
+    <div className="justify-items-center bg-gray-50 dark:bg-gray-900">
       <section className="bg-gray-50 dark:bg-gray-900">
         <div className="mx-auto flex flex-col items-center justify-center px-6 py-8 md:h-screen lg:py-0">
           <div className="w-full rounded-lg bg-white shadow sm:max-w-md md:mt-0 xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800">
@@ -153,13 +153,10 @@ export default function SearchForm() {
         id="search-results"
         className="flex items-center justify-center justify-items-center"
       >
-        <ul className="mx-auto flex flex-wrap gap-4">
-          {results.map((t: any) => (
-            <li key={t.InfoHash} className="p-4">
-              <Torrent torrent={t} baseDir="Anime" url={false} />
-            </li>
-          ))}
-        </ul>
+        <TorrentTable
+          torrents={results}
+          options={{ baseDir: "Anime", url: false }}
+        />
       </section>
     </div>
   );

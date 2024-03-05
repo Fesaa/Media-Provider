@@ -13,6 +13,8 @@ function Application() {
       .get("/api/stats")
       .then((res) => setInfo(res.data))
       .catch((err) => console.error(err));
+
+    setTimeout(updateInfo, 1000);
   }
 
   useEffect(() => {
@@ -37,7 +39,9 @@ function Application() {
 
           <div className="m-5 flex flex-row flex-wrap gap-5">
             {Object.entries(info).map((i: any) => (
-              <Torrent key={i[1].Infohash} torrent={i[1]} TKey={i[0]} />
+              <div key={i[1].Infohash}>
+                <Torrent torrent={i[1]} TKey={i[0]} refreshFunc={updateInfo} />
+              </div>
             ))}
           </div>
         </div>
