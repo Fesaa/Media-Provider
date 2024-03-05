@@ -1,6 +1,5 @@
 import React, { FormEvent, useState } from "react";
 import axios from "axios";
-import Torrent from "./torrent";
 import { LimeTorrent } from "../response/SearchResults";
 import TorrentTable, { TorrentInfo } from "./torrentTable";
 
