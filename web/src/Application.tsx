@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import NavBar from "./components/navbar";
 import axios from "axios";
 import Torrent from "./components/torrentStats";
-import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 
 function Application() {
   const [info, setInfo] = useState({});
@@ -14,9 +13,10 @@ function Application() {
       .then((res) => setInfo(res.data))
       .catch((err) => console.error(err));
 
-      if (repeat) {
-        setTimeout(updateInfo, 1000);
-      }
+    if (repeat) {
+      const wait = Object.keys(info).length > 0 ? 10000 : 1000;
+      setTimeout(updateInfo, wait);
+    }
   }
 
   useEffect(() => {
