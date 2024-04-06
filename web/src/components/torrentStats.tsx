@@ -21,7 +21,7 @@ function truncateString(inputString: string, maxLength: number): string {
 export default function Torrent(props: {
   TKey: string;
   torrent: TorrentStat;
-  refreshFunc: Function;
+  refreshFunc: (repeat: boolean) => void;
 }) {
   const [title, setTitle] = useState("");
   const [success, setSuccess] = useState(false);
@@ -36,7 +36,7 @@ export default function Torrent(props: {
 
       try {
         const response = await axios.get(`/api/stop/${hash}`);
-        props.refreshFunc();
+        props.refreshFunc(false);
 
         if (response.status == 200) {
           setTitle("Download stopped");

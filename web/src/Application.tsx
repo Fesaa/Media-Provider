@@ -8,17 +8,19 @@ import { ArrowPathRoundedSquareIcon } from "@heroicons/react/24/outline";
 function Application() {
   const [info, setInfo] = useState({});
 
-  async function updateInfo() {
+  async function updateInfo(repeat: boolean) {
     axios
       .get("/api/stats")
       .then((res) => setInfo(res.data))
       .catch((err) => console.error(err));
 
-    setTimeout(updateInfo, 1000);
+      if (repeat) {
+        setTimeout(updateInfo, 1000);
+      }
   }
 
   useEffect(() => {
-    updateInfo();
+    updateInfo(true);
   }, []);
 
   return (
@@ -26,17 +28,6 @@ function Application() {
       <NavBar current="Home" />
       <section className="pt-5">
         <div className="mx-10 flex flex-col px-6 py-8 md:h-screen lg:py-0">
-          <div
-            onClick={updateInfo}
-            className="mx-auto flex flex-row gap-4 rounded bg-blue-200 p-4 dark:bg-white"
-          >
-            <ArrowPathRoundedSquareIcon
-              className="h-6 w-6 text-green-600"
-              aria-hidden="true"
-            />
-            Update torrent info
-          </div>
-
           <div className="m-5 flex flex-row flex-wrap gap-5">
             {Object.entries(info).map((i: any) => (
               <div key={i[1].Infohash}>
