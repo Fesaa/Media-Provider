@@ -15,12 +15,14 @@ FROM golang:1.21 as go-stage
 
 WORKDIR /app
 
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY . ./
 
-RUN go mod download
-RUN go build -o /media-provider
+RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static"'
 
-FROM debian:stable-slim
+FROM alpine:latest
 
 WORKDIR /app
 
@@ -29,9 +31,9 @@ COPY --from=npm-stage /app/public/ /app/web/public
 COPY --from=npm-stage /app/views/ /app/web/views
 
 
-RUN apt-get update && apt-get install -y ca-certificates && apt install -y cifs-utils psmisc
+RUN apk add --no-cache ca-certificates cifs-utils psmisc
 RUN mkdir /app/mount
 
 EXPOSE 80
 
-CMD ["sh", "-c", "./media-provider"]
+CMD ["./media-provider"]
