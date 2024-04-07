@@ -16,7 +16,7 @@ function Application() {
 
     if (repeat) {
       const wait = Object.keys(info).length > 0 ? 10000 : 1000;
-      setTimeout(updateInfo, wait);
+      setTimeout(() => updateInfo(repeat), wait);
     }
   }
 
