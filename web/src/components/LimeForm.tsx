@@ -79,9 +79,8 @@ export default function MoviesForm() {
                     onChange={(e) => setQuery(e.target.value)}
                   />
                 </div>
-
-                <div className="flex flex-wrap justify-around">
-                  <div>
+                <div className="flex flex-col md:flex-row grow justify-around">
+                  <div className="flex flex-wrap justify-start">
                     <label
                       htmlFor="category"
                       className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
@@ -101,10 +100,8 @@ export default function MoviesForm() {
                       <option value={"OTHER"}> Date Added </option>
                     </select>
                   </div>
-                </div>
 
-                <div className="flex flex-wrap justify-around">
-                  <div>
+                  <div className="flex flex-wrap justify-start">
                     <label
                       htmlFor="dir"
                       className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"

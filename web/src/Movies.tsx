@@ -7,7 +7,9 @@ function Search() {
   return (
     <div>
       <NavBar current="Movies" />
-      <MoviesForm />
+      <main>
+        <MoviesForm />
+      </main>
     </div>
   );
 }

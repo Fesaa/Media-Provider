@@ -1,13 +1,15 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import NavBar from "./components/navbar";
-import SearchForm from "./components/searchForm";
+import AnimeForm from "./components/animeForm";
 
 function Search() {
   return (
     <div>
       <NavBar current="Search" />
-      <SearchForm />
+      <main>
+        <AnimeForm />
+      </main>
     </div>
   );
 }

@@ -81,15 +81,15 @@ export default function TorrentTable(props: {
         </button>
 
         {props.torrents.length > 0 && (
-          <table className="my-10 ml-10 mr-10">
+          <table className="my-10 ml-10 mr-10 overflow-x-auto">
             <thead>
               <tr className="rounded-lg bg-blue-400">
                 <th className="p-5">Name</th>
-                <th className="p-5">Date</th>
-                <th className="p-5">Size</th>
-                <th className="p-5">Downloads</th>
-                <th className="p-5">Seeds</th>
-                <th className="p-5">Leeches</th>
+                <th className="p-5 hidden md:table-cell">Date</th>
+                <th className="p-5 hidden md:table-cell">Size</th>
+                <th className="p-5 hidden md:table-cell">Downloads</th>
+                <th className="p-5 hidden md:table-cell">Seeds</th>
+                <th className="p-5 hidden md:table-cell">Leeches</th>
                 <th className="p-5"></th>
               </tr>
             </thead>
@@ -99,12 +99,22 @@ export default function TorrentTable(props: {
                   className="odd:bg-white even:bg-amber-50"
                   key={torrent.InfoHash}
                 >
-                  <td className="p-2">{torrent.Name}</td>
-                  <td className="p-2 text-center">{torrent.Date}</td>
-                  <td className="p-2 text-center">{torrent.Size}</td>
-                  <td className="p-2 text-center">{torrent.Downloads}</td>
-                  <td className="p-2 text-center">{torrent.Seeders}</td>
-                  <td className="p-2 text-center">{torrent.Leechers}</td>
+                  <td className="p-2 text-sm">{torrent.Name}</td>
+                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                    {torrent.Date}
+                  </td>
+                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                    {torrent.Size}
+                  </td>
+                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                    {torrent.Downloads}
+                  </td>
+                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                    {torrent.Seeders}
+                  </td>
+                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                    {torrent.Leechers}
+                  </td>
                   <td>
                     <ArrowDownTrayIcon
                       type="button"

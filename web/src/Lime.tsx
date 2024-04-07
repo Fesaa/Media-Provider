@@ -7,7 +7,9 @@ function Search() {
   return (
     <div>
       <NavBar current="Lime" />
-      <LimeForm />
+      <main>
+        <LimeForm />
+      </main>
     </div>
   );
 }
