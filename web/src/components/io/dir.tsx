@@ -1,14 +1,19 @@
-import { ClipboardIcon, FolderMinusIcon, FolderPlusIcon, PlusIcon } from "@heroicons/react/16/solid";
+import {
+  ClipboardIcon,
+  FolderMinusIcon,
+  FolderPlusIcon,
+  PlusIcon,
+} from "@heroicons/react/16/solid";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 
 function getDirName(s: string): string {
-    const parts = s.split("/");
-    if (parts.length < 2) {
-        return s
-    }
+  const parts = s.split("/");
+  if (parts.length < 2) {
+    return s;
+  }
 
-    return parts[-1];
+  return parts[-1];
 }
 
 /**
@@ -18,141 +23,172 @@ function getDirName(s: string): string {
  * @see https://stackoverflow.com/a/53951634/938822
  */
 function copyToClipboard(string) {
-    let textarea;
-    let result;
+  let textarea;
+  let result;
 
-    try {
-        textarea = document.createElement('textarea');
-        textarea.setAttribute('readonly', true);
-        textarea.setAttribute('contenteditable', true);
-        textarea.style.position = 'fixed'; // prevent scroll from jumping to the bottom when focus is set.
-        textarea.value = string;
+  try {
+    textarea = document.createElement("textarea");
+    textarea.setAttribute("readonly", true);
+    textarea.setAttribute("contenteditable", true);
+    textarea.style.position = "fixed"; // prevent scroll from jumping to the bottom when focus is set.
+    textarea.value = string;
 
-        document.body.appendChild(textarea);
+    document.body.appendChild(textarea);
 
-        textarea.focus();
-        textarea.select();
+    textarea.focus();
+    textarea.select();
 
-        const range = document.createRange();
-        range.selectNodeContents(textarea);
+    const range = document.createRange();
+    range.selectNodeContents(textarea);
 
-        const sel = window.getSelection();
-        if (sel != null) {
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-    
-        textarea.setSelectionRange(0, textarea.value.length);
-        result = document.execCommand('copy');
-    } catch (err) {
-        console.error(err);
-        result = null;
-    } finally {
-        document.body.removeChild(textarea);
+    const sel = window.getSelection();
+    if (sel != null) {
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
 
-    // manual copy fallback using prompt
+    textarea.setSelectionRange(0, textarea.value.length);
+    result = document.execCommand("copy");
+  } catch (err) {
+    console.error(err);
+    result = null;
+  } finally {
+    document.body.removeChild(textarea);
+  }
+
+  // manual copy fallback using prompt
+  if (!result) {
+    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+    const copyHotkey = isMac ? "⌘C" : "CTRL+C";
+    result = prompt(`Press ${copyHotkey}`, string); // eslint-disable-line no-alert
     if (!result) {
-        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-        const copyHotkey = isMac ? '⌘C' : 'CTRL+C';
-        result = prompt(`Press ${copyHotkey}`, string); // eslint-disable-line no-alert
-        if (!result) {
-            return false;
-        }
+      return false;
     }
-    return true;
+  }
+  return true;
 }
 
-export default function Dir(props: { base: string, name: string, depth: number }) {
-    const [open, setOpen] = useState<boolean>(false);
-    const [subs, setSubs] = useState<string[]>([]);
+export default function Dir(props: {
+  base: string;
+  name: string;
+  depth: number;
+}) {
+  const [open, setOpen] = useState<boolean>(false);
+  const [subs, setSubs] = useState<string[]>([]);
 
-    useEffect(() => {
-        if (!open) {
-            setSubs([]);
+  useEffect(() => {
+    if (!open) {
+      setSubs([]);
+    }
+  }, [open]);
+
+  async function loadSubs() {
+    axios
+      .get(`/api/io/ls?dir=${props.base}`)
+      .catch((err) => console.error(err))
+      .then((res) => {
+        if (res == null) {
+          return;
         }
-    }, [open])
 
-    async function loadSubs() {
-        axios.get(`/api/io/ls?dir=${props.base}`)
-            .catch(err => console.error(err))
-            .then(res => {
-                if (res == null) {
-                    return;
-                }
+        if (res.data == null) {
+          setOpen(true);
+          return;
+        }
 
-                if (res.data == null) {
-                    setOpen(true);
-                    return;
-                }
+        setSubs(res.data);
+        setOpen(true);
+      });
+  }
 
-                setSubs(res.data)
-                setOpen(true);
-            })
+  async function createSubDir() {
+    let dirName = prompt("Directory name");
+    if (dirName == null || dirName == "") {
+      return;
     }
 
-    async function createSubDir() {
-        let dirName = prompt("Directory name");
-        if (dirName == null || dirName == "") {
-            return
-        }
+    const data = {
+      baseDir: props.base,
+      newDir: dirName,
+    };
 
-        const data = {
-            baseDir: props.base,
-            newDir: dirName
-        }
+    axios
+      .post("/api/io/create", data)
+      .catch((err) => console.error(err))
+      .then((res) => {
+        setOpen(false);
+      });
+  }
 
-        axios.post("/api/io/create", data)
-            .catch(err => console.error(err))
-            .then(res => {
-                setOpen(false);
-            })
+  function iconFactory() {
+    if (open) {
+      return <FolderMinusIcon className="w-6 h-6" />;
     }
 
-    function iconFactory() {
-        if (open) {
-            return <FolderMinusIcon className="w-6 h-6" />;
-        }
+    return <FolderPlusIcon className="w-6 h-6" />;
+  }
 
-        return <FolderPlusIcon className="w-6 h-6" />;
+  function callBackFactory() {
+    if (open) {
+      return () => setOpen(false);
     }
 
-    function callBackFactory() {
-        if (open) {
-            return () => setOpen(false);
-        }
+    return () => loadSubs();
+  }
 
-        return () => loadSubs();
-    }
-
-
-    return <div className="flex flex-col">
-        <div className="flex flex-row space-x-4 text-center items-center">
-            <div onClick={callBackFactory()} className="flex flex-row space-x-4 text-center items-center">
-                {iconFactory()}
-                {getDirName(props.name)}
-            </div>
-
-            <ClipboardIcon className="w-4 h-4" onClick={() => {
-                let path = props.base;
-                if (path.startsWith("/")) {
-                    path = path.substring(1);
-                }
-                copyToClipboard(path);
-            }} />
+  return (
+    <div className="flex flex-col">
+      <div className="flex flex-row space-x-4 text-center items-center">
+        <div
+          onClick={callBackFactory()}
+          className="flex flex-row space-x-4 text-center items-center"
+        >
+          {iconFactory()}
+          {getDirName(props.name)}
         </div>
 
-        {open && subs.map(dir => {
-            return <div className={`flex flex-row`} style={{ marginLeft: props.depth * 10 }} key={dir}>
-                <Dir base={props.base + "/" + dir} name={dir} depth={props.depth + 1} />
-            </div>
-        })}
+        <ClipboardIcon
+          className="w-4 h-4"
+          onClick={() => {
+            let path = props.base;
+            if (path.startsWith("/")) {
+              path = path.substring(1);
+            }
+            copyToClipboard(path);
+          }}
+        />
+      </div>
 
+      <div className="max-h-64 overflow-x-hidden overflow-y-auto">
         {open &&
-            <div className={`flex flex-row text-center items-center`} style={{ marginLeft: props.depth * 10 }} onClick={createSubDir}>
-                <PlusIcon className="w-6 h-6" /> <span className="text-sm hover:underline hover:cursor-pointer" >Add new folder</span>
-            </div>
-        }
-
+          subs.map((dir) => {
+            return (
+              <div
+                className={`flex flex-row`}
+                style={{ marginLeft: props.depth * 10 }}
+                key={dir}
+              >
+                <Dir
+                  base={props.base + "/" + dir}
+                  name={dir}
+                  depth={props.depth + 1}
+                />
+              </div>
+            );
+          })}
+        {open && (
+          <div
+            className={`flex flex-row text-center items-center`}
+            style={{ marginLeft: props.depth * 10 }}
+            onClick={createSubDir}
+          >
+            <PlusIcon className="w-6 h-6" />{" "}
+            <span className="text-sm hover:underline hover:cursor-pointer">
+              Add new folder
+            </span>
+          </div>
+        )}
+      </div>
     </div>
+  );
 }
