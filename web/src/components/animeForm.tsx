@@ -1,12 +1,14 @@
 import React, { FormEvent, useState } from "react";
 import axios from "axios";
 import TorrentTable from "./torrentTable";
+import DirFormComponent from "./io/form";
 
 export default function AnimeForm() {
   const provider = "nyaa";
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [sort_by, setSortBy] = useState("downloads");
+  const [customDir, setCustomDir] = useState<string>("");
 
   const [results, setResults] = useState([]);
 
@@ -118,6 +120,8 @@ export default function AnimeForm() {
                   </div>
                 </div>
 
+                <DirFormComponent setter={setCustomDir} base="Anime" name="Anime" />
+
                 <button
                   type="submit"
                   className="focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
@@ -136,7 +140,7 @@ export default function AnimeForm() {
       >
         <TorrentTable
           torrents={results}
-          options={{ baseDir: "Anime", url: false }}
+          options={{ baseDir: customDir.trim() === "" ? "Anime" : customDir, url: false }}
         />
       </section>
     </div>

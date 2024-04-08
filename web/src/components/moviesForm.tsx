@@ -2,10 +2,12 @@ import React, { FormEvent, useState } from "react";
 import axios from "axios";
 import TorrentTable, { TorrentInfo } from "./torrentTable";
 import { YTSMovie, YTSTorrent } from "../response/SearchResults";
+import DirFormComponent from "./io/form";
 
 export default function MoviesForm() {
   const [query, setQuery] = useState("");
   const [sort_by, setSortBy] = useState("title");
+  const [customDir, setCustomDir] = useState<string>("");
 
   const [results, setResults] = useState<TorrentInfo[]>([]);
 
@@ -114,6 +116,8 @@ export default function MoviesForm() {
                   </div>
                 </div>
 
+                <DirFormComponent setter={setCustomDir} base="Movies" name="Movies" />
+
                 <button
                   type="submit"
                   className="focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
@@ -132,7 +136,7 @@ export default function MoviesForm() {
       >
         <TorrentTable
           torrents={results}
-          options={{ baseDir: "Movies", url: false }}
+          options={{ baseDir: customDir.trim() === "" ? "Movies" : customDir, url: false }}
         />
       </section>
     </div>
