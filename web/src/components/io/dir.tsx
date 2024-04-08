@@ -37,9 +37,11 @@ function copyToClipboard(string) {
         range.selectNodeContents(textarea);
 
         const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-
+        if (sel != null) {
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    
         textarea.setSelectionRange(0, textarea.value.length);
         result = document.execCommand('copy');
     } catch (err) {
