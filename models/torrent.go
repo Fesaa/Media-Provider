@@ -56,6 +56,8 @@ type TorrentProvider interface {
 
 	// Returns a map of all running torrents, indexed by their info hash
 	GetRunningTorrents() map[string]*Torrent
+
+	GetBaseDir() string
 }
 
 func NewTorrent(t *torrent.Torrent, baseDir string) *Torrent {

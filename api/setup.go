@@ -18,4 +18,6 @@ func Setup(app *fiber.App, holder models.Holder) {
 	api.Post("/download/", middleware.AuthHandler, routes.Download)
 	api.Get("/stop/:infoHash", middleware.AuthHandler, routes.Stop)
 
+	api.Get("/io/ls", middleware.AuthHandler, routes.ListDirs)
+	api.Post("/io/create", middleware.AuthHandler, routes.CreateDir)
 }

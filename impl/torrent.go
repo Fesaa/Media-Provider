@@ -37,6 +37,10 @@ func (t *TorrentImpl) GetBackingClient() *torrent.Client {
 	return t.client
 }
 
+func (t *TorrentImpl) GetBaseDir() string {
+	return t.clientBaseDir
+}
+
 func (t *TorrentImpl) AddDownload(infoHash string, baseDir string) (*models.Torrent, error) {
 	err := t.checkMount(baseDir)
 	if err != nil {
