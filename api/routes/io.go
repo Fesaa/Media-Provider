@@ -11,12 +11,12 @@ import (
 )
 
 type ListDirsRequest struct {
-	Dir string `query:"dir"`
+	Dir string `json:"dir"`
 }
 
 func ListDirs(ctx *fiber.Ctx) error {
 	var req ListDirsRequest
-	if err := ctx.QueryParser(&req); err != nil {
+	if err := ctx.BodyParser(&req); err != nil {
 		slog.Error("Error parsing query params:", "err", err)
 		return fiber.ErrBadRequest
 	}

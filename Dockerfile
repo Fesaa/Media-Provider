@@ -18,7 +18,16 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . ./
+COPY ./api ./api
+COPY ./impl ./impl
+COPY ./limetorrents ./limetorrents
+COPY ./middelware ./middelware
+COPY ./models ./models
+COPY ./mount ./mount
+COPY ./utils ./utils
+COPY ./yts ./yts
+COPY ./frontend.go ./frontend.go
+COPY ./main.go ./
 
 RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static"'
 

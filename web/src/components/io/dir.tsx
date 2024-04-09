@@ -83,8 +83,11 @@ export default function Dir(props: {
   }, [open]);
 
   async function loadSubs() {
+    const data = {
+      dir: props.base,
+    };
     axios
-      .get(`/api/io/ls?dir=${props.base}`)
+      .post(`/api/io/ls`, data)
       .catch((err) => console.error(err))
       .then((res) => {
         if (res == null) {
@@ -159,7 +162,7 @@ export default function Dir(props: {
         />
       </div>
 
-      <div className="max-h-64 overflow-x-hidden overflow-y-auto">
+      <div className="max-h-64 overflow-x-auto overflow-y-auto">
         {open &&
           subs.map((dir) => {
             return (
