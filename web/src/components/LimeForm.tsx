@@ -14,6 +14,9 @@ export default function MoviesForm() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (query == "") {
+      return;
+    }
 
     const data = JSON.stringify({
       provider: "limetorrents",
@@ -64,7 +67,11 @@ export default function MoviesForm() {
               <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
                 Search for content to download
               </h1>
-              <form className="space-y-4 md:space-y-6" onSubmit={onSubmit}>
+              <form
+                className="space-y-4 md:space-y-6"
+                onSubmit={onSubmit}
+                noValidate={true}
+              >
                 <div>
                   <label
                     htmlFor="query"
@@ -143,7 +150,10 @@ export default function MoviesForm() {
       >
         <TorrentTable
           torrents={results}
-          options={{ baseDir: customDir.trim() === "" ? dir : customDir, url: false }}
+          options={{
+            baseDir: customDir.trim() === "" ? dir : customDir,
+            url: false,
+          }}
         />
       </section>
     </div>

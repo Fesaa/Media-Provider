@@ -13,8 +13,10 @@ export default function AnimeForm() {
   const [results, setResults] = useState([]);
 
   function onSubmit(e: FormEvent) {
-    console.log("Getting torrents");
     e.preventDefault();
+    if (query == "") {
+      return;
+    }
 
     const data = JSON.stringify({
       provider,
@@ -50,7 +52,11 @@ export default function AnimeForm() {
               <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
                 Search Anime to download
               </h1>
-              <form className="space-y-4 md:space-y-6" onSubmit={onSubmit}>
+              <form
+                className="space-y-4 md:space-y-6"
+                onSubmit={onSubmit}
+                noValidate={true}
+              >
                 <div>
                   <label
                     htmlFor="query"
@@ -120,7 +126,11 @@ export default function AnimeForm() {
                   </div>
                 </div>
 
-                <DirFormComponent setter={setCustomDir} base="Anime" name="Anime" />
+                <DirFormComponent
+                  setter={setCustomDir}
+                  base="Anime"
+                  name="Anime"
+                />
 
                 <button
                   type="submit"
@@ -140,7 +150,10 @@ export default function AnimeForm() {
       >
         <TorrentTable
           torrents={results}
-          options={{ baseDir: customDir.trim() === "" ? "Anime" : customDir, url: false }}
+          options={{
+            baseDir: customDir.trim() === "" ? "Anime" : customDir,
+            url: false,
+          }}
         />
       </section>
     </div>
