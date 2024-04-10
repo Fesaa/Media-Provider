@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { XCircleIcon } from "@heroicons/react/16/solid";
 
 type TorrentStat = {
   Completed: number;
@@ -37,8 +38,9 @@ export default function Torrent(props: {
       try {
         const response = await axios.get(`/api/stop/${hash}`);
         props.refreshFunc(false);
+        console.log(response);
 
-        if (response.status == 200) {
+        if (response.status == 202) {
           setTitle("Download stopped");
           setSuccess(true);
         } else {
@@ -54,9 +56,7 @@ export default function Torrent(props: {
   return (
     <div>
       <div>
-        <button
-          type="button"
-          onClick={(e) => setSuccess(false)}
+        <div
           className="fixed right-4 top-4 z-50 rounded-md bg-green-500 px-4 py-2 text-white transition hover:bg-green-600"
           style={success ? { display: "block" } : { display: "none" }}
         >
@@ -65,12 +65,14 @@ export default function Torrent(props: {
               <i className="bx bx-check"></i>
             </span>
             <p className="font-bold">{title}</p>
+            <XCircleIcon
+              className="w-4 h-4"
+              onClick={(_) => setSuccess(false)}
+            />
           </div>
-        </button>
+        </div>
 
-        <button
-          type="button"
-          onClick={(e) => setError(false)}
+        <div
           className="fixed right-4 top-4 z-50 rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
           style={error ? { display: "block" } : { display: "none" }}
         >
@@ -79,8 +81,9 @@ export default function Torrent(props: {
               <i className="bx bx-check"></i>
             </span>
             <p className="font-bold">{errorTitle}</p>
+            <XCircleIcon className="w-4 h-4" onClick={(_) => setError(false)} />
           </div>
-        </button>
+        </div>
         <div
           className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
           style={{ width: "300px" }}
