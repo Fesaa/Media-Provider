@@ -13,6 +13,7 @@ func RegisterFrontEnd(app *fiber.App) {
 
 	app.Get("/", middleware.AuthHandler, home)
 	app.Get("/anime", middleware.AuthHandler, anime)
+	app.Get("/manga", middleware.AuthHandler, manga)
 	app.Get("/movies", middleware.AuthHandler, movies)
 	app.Get("/lime", middleware.AuthHandler, lime)
 
@@ -31,6 +32,10 @@ func lime(ctx *fiber.Ctx) error {
 
 func anime(ctx *fiber.Ctx) error {
 	return ctx.Render("anime", fiber.Map{})
+}
+
+func manga(ctx *fiber.Ctx) error {
+	return ctx.Render("manga", fiber.Map{})
 }
 
 func movies(ctx *fiber.Ctx) error {
