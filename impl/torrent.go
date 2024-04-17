@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,8 @@ import (
 	"github.com/anacrolix/torrent/types/infohash"
 	"golang.org/x/sys/unix"
 )
+
+var reg = regexp.MustCompile("[^a-zA-Z0-9_-]")
 
 type TorrentImpl struct {
 	client *torrent.Client
@@ -141,8 +144,53 @@ func (t *TorrentImpl) RemoveDownload(infoHashString string, deleteFiles bool) er
 	safeDelete(t.baseDirs, infoHashString, t.lockDir)
 	if deleteFiles {
 		t.deleteTorrentFiles(torrent, baseDir)
+	} else {
+		t.cleanup(torrent, baseDir)
 	}
 	return nil
+}
+
+func (t *TorrentImpl) cleanup(tor *torrent.Torrent, baseDir string) {
+	if tor == nil {
+		return
+	}
+
+	dir := t.dir + "/" + baseDir + "/" + tor.InfoHash().HexString()
+
+	info, err := os.ReadDir(dir)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error reading dir %s: %s", dir, err))
+		return
+	}
+
+	if len(info) == 0 {
+		return
+	}
+
+	subDir := info[0]
+	if len(info) != 1 || !subDir.IsDir() {
+		cleanName := reg.ReplaceAllString(tor.Name(), "_")
+		t.renameHash(dir, baseDir, cleanName)
+		return
+	}
+
+	err = os.Rename(dir+"/"+subDir.Name(), t.dir+"/"+baseDir+"/"+tor.Name())
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error renaming dir %s to %s: %s", dir+"/"+subDir.Name(), tor.Name(), err))
+		return
+	}
+
+	err = os.Remove(dir)
+	if err != nil {
+		slog.Warn(fmt.Sprintf("Error removing dir %s: %s", dir, err))
+	}
+}
+
+func (t *TorrentImpl) renameHash(dir, baseDir, cleanName string) {
+	err := os.Rename(dir, t.dir+"/"+baseDir+"/"+cleanName)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error renaming dir %s to %s: %s", dir, cleanName, err))
+	}
 }
 
 func (t *TorrentImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
@@ -163,7 +211,6 @@ func (t *TorrentImpl) GetRunningTorrents() map[string]*models.Torrent {
 }
 
 // Appending the infohash allows us to always cleanup the torrent files on delete
-// This does however mean that if the torrent has it's own upper dir, it'll be layered
 func (t *TorrentImpl) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMaker {
 	return func(baseDir string, info *metainfo.Info, infoHash metainfo.Hash) string {
 		d, ok := safeGet(t.baseDirs, infoHash.HexString(), t.lockDir)
