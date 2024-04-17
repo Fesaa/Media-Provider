@@ -32,7 +32,6 @@ COPY --from=npm-stage /app/views/ /app/web/views
 
 
 RUN apk add --no-cache ca-certificates cifs-utils psmisc
-RUN mkdir /app/mount
 
 EXPOSE 80
 

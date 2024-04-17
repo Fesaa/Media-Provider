@@ -12,13 +12,11 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/models"
-	"github.com/Fesaa/Media-Provider/mount"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/storage"
 	"github.com/anacrolix/torrent/types/infohash"
-	"golang.org/x/sys/unix"
 )
 
 type TorrentImpl struct {
@@ -42,11 +40,6 @@ func (t *TorrentImpl) GetBaseDir() string {
 }
 
 func (t *TorrentImpl) AddDownload(infoHash string, baseDir string) (*models.Torrent, error) {
-	err := t.checkMount(baseDir)
-	if err != nil {
-		return nil, err
-	}
-
 	torrentInfo, new := t.client.AddTorrentInfoHash(infohash.FromHexString(strings.ToLower(infoHash)))
 	if !new {
 		return nil, errors.New("torrent already exists")
@@ -56,11 +49,6 @@ func (t *TorrentImpl) AddDownload(infoHash string, baseDir string) (*models.Torr
 }
 
 func (t *TorrentImpl) AddDownloadFromUrl(url string, baseDir string) (*models.Torrent, error) {
-	err := t.checkMount(baseDir)
-	if err != nil {
-		return nil, err
-	}
-
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -98,28 +86,6 @@ func (t *TorrentImpl) processTorrent(torrentInfo *torrent.Torrent, dir string) *
 		torrentInfo.DownloadAll()
 	}()
 	return torrent
-}
-
-func (t *TorrentImpl) checkMount(baseDir string) error {
-	if !mount.WantsMount() {
-		return nil
-	}
-
-	if len(t.torrents) == 0 && !writable(t.clientBaseDir+"/"+baseDir) {
-		slog.Info("Base dir is not writable, attempting remount.")
-		mount.Unmount()
-		mount.Mount(false)
-		slog.Info("Remounted, checking if base dir is writable.")
-		if !writable(t.clientBaseDir + "/" + baseDir) {
-			go func() {
-				time.Sleep(time.Duration(10) * time.Second)
-				os.Exit(1)
-			}()
-			return errors.New("base dir is not writable after remount, exiting program soon")
-		}
-	}
-
-	return nil
 }
 
 func (t *TorrentImpl) RemoveDownload(infoHashString string, deleteFiles bool) error {
@@ -223,10 +189,6 @@ func (t *TorrentImpl) cleaner() {
 		}
 		t.lock.RUnlock()
 	}
-}
-
-func writable(path string) bool {
-	return unix.Access(path, unix.W_OK) == nil
 }
 
 func safeGet[K comparable, T any](m map[K]T, k K, lock *sync.RWMutex) (T, bool) {

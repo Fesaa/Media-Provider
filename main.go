@@ -11,7 +11,6 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
-	"github.com/Fesaa/Media-Provider/mount"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
@@ -19,9 +18,6 @@ import (
 
 var holder models.Holder
 
-// Following env variables are required:
-// USER, DOMAIN, URL, PASS
-//
 // The following env variables are optional:
 //
 // PORT: 80
@@ -30,9 +26,6 @@ var holder models.Holder
 //
 // TORRENT_DIR: temp
 func main() {
-	mount.Init()
-	mount.Mount(true)
-
 	engine := html.New("./web/views", ".html")
 	app := fiber.New(fiber.Config{
 		Views:        engine,
