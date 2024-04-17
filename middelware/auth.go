@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -26,7 +27,7 @@ func AuthHandler(ctx *fiber.Ctx) error {
 		return ctx.Status(500).SendString("Internal Server Error. Error while checking authentication")
 	}
 	if !isAuthenticated {
-		return ctx.Redirect("/login")
+		return ctx.Redirect(utils.GetEnv("BASE_URL", "") + "/login")
 	}
 
 	return ctx.Next()

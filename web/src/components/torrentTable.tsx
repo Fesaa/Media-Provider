@@ -36,7 +36,10 @@ export default function TorrentTable(props: {
     };
 
     try {
-      const response = await axios.post("/api/download", requestBody);
+      const response = await axios.post(
+        `${BASE_URL}/api/download`,
+        requestBody,
+      );
       if (response.status == 202) {
         setTitle("Torrent started downloading!");
         setSuccess(true);

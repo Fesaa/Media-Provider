@@ -9,6 +9,11 @@
 
     <body class="bg-zinc-50">
         <div id="application"></div>
-        <script src="generated/Lime.js"></script>
+        <script>
+            const BASE_URL = {{.path }};
+            const script =document.createElement('script');
+            script.src = BASE_URL + `generated/Lime.js`;
+            document.body.appendChild(script);
+        </script>
     </body>
 </html>

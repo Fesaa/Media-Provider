@@ -18,6 +18,8 @@ import (
 )
 
 var holder models.Holder
+var baseURL string
+var baseURLMap fiber.Map
 
 // Following env variables are required:
 // USER, DOMAIN, URL, PASS
@@ -29,9 +31,15 @@ var holder models.Holder
 // PASSWORD: admin
 //
 // TORRENT_DIR: temp
+//
+// BASE_URL: /
 func main() {
 	mount.Init()
 	mount.Mount(true)
+	baseURL = utils.GetEnv("BASE_URL", "")
+	baseURLMap = fiber.Map{
+		"path": baseURL,
+	}
 
 	engine := html.New("./web/views", ".html")
 	app := fiber.New(fiber.Config{
@@ -48,10 +56,12 @@ func main() {
 
 	app.Use(setHolder)
 	app.Hooks().OnShutdown(holder.Shutdown)
-	app.Static("/", "./web/public")
+	app.Static(baseURL, "./web/public")
 
-	api.Setup(app, holder)
-	RegisterFrontEnd(app)
+	router := app.Group(baseURL)
+
+	api.Setup(router, holder)
+	RegisterFrontEnd(router)
 
 	port := utils.GetEnv("PORT", "80")
 	e := app.Listen(":" + port)

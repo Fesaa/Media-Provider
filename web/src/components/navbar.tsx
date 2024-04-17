@@ -2,12 +2,16 @@ import React, { Fragment } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 
+function wrapper(s: string): string {
+  return `${BASE_URL}${s}`;
+}
+
 export const navigation = [
-  { name: "Home", href: "/", current: false },
-  { name: "Anime", href: "/anime", current: false },
-  { name: "Manga", href: "/manga", current: false },
-  { name: "Movies", href: "/movies", current: false },
-  { name: "Lime", href: "/lime", current: false },
+  { name: "Home", href: wrapper("/"), current: false },
+  { name: "Anime", href: wrapper("/anime"), current: false },
+  { name: "Manga", href: wrapper("/manga"), current: false },
+  { name: "Movies", href: wrapper("/movies"), current: false },
+  { name: "Lime", href: wrapper("/lime"), current: false },
 ];
 
 function classNames(...classes) {

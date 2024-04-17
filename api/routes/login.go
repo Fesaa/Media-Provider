@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -26,5 +27,5 @@ func Login(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Redirect("/")
+	return ctx.Redirect(utils.GetEnv("BASE_URL", "") + "/")
 }

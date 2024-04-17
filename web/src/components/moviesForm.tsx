@@ -24,7 +24,7 @@ export default function MoviesForm() {
     });
 
     axios
-      .post("/api/search", data, {
+      .post(`${BASE_URL}/api/search`, data, {
         headers: {
           "Content-Type": "application/json",
         },

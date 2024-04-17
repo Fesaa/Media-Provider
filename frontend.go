@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterFrontEnd(app *fiber.App) {
+func RegisterFrontEnd(app fiber.Router) {
 
 	app.Get("/", middleware.AuthHandler, home)
 	app.Get("/anime", middleware.AuthHandler, anime)
@@ -23,27 +23,27 @@ func RegisterFrontEnd(app *fiber.App) {
 }
 
 func status404(ctx *fiber.Ctx) error {
-	return ctx.Render("404", fiber.Map{})
+	return ctx.Render("404", baseURLMap)
 }
 
 func lime(ctx *fiber.Ctx) error {
-	return ctx.Render("lime", fiber.Map{})
+	return ctx.Render("lime", baseURLMap)
 }
 
 func anime(ctx *fiber.Ctx) error {
-	return ctx.Render("anime", fiber.Map{})
+	return ctx.Render("anime", baseURLMap)
 }
 
 func manga(ctx *fiber.Ctx) error {
-	return ctx.Render("manga", fiber.Map{})
+	return ctx.Render("manga", baseURLMap)
 }
 
 func movies(ctx *fiber.Ctx) error {
-	return ctx.Render("movies", fiber.Map{})
+	return ctx.Render("movies", baseURLMap)
 }
 
 func home(ctx *fiber.Ctx) error {
-	return ctx.Render("index", fiber.Map{})
+	return ctx.Render("index", baseURLMap)
 }
 
 func login(ctx *fiber.Ctx) error {
@@ -66,8 +66,8 @@ func login(ctx *fiber.Ctx) error {
 	}
 
 	if auth {
-		return ctx.Redirect("/")
+		return ctx.Redirect(baseURL + "/")
 	}
 
-	return ctx.Render("login", nil)
+	return ctx.Render("login", baseURLMap)
 }

@@ -87,7 +87,7 @@ export default function Dir(props: {
       dir: props.base,
     };
     axios
-      .post(`/api/io/ls`, data)
+      .post(`${BASE_URL}/api/io/ls`, data)
       .catch((err) => console.error(err))
       .then((res) => {
         if (res == null) {
@@ -116,7 +116,7 @@ export default function Dir(props: {
     };
 
     axios
-      .post("/api/io/create", data)
+      .post(`${BASE_URL}/api/io/create`, data)
       .catch((err) => console.error(err))
       .then((res) => {
         setOpen(false);

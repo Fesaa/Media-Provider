@@ -10,7 +10,7 @@ function Application() {
 
   async function updateInfo(repeat: boolean) {
     axios
-      .get("/api/stats")
+      .get(`${BASE_URL}/api/stats`)
       .then((res) => setInfo(res.data))
       .catch((err) => console.error(err));
 
@@ -52,7 +52,7 @@ function Application() {
               </p>
               <ul className="flex flex-col justify-start items-start space-y-2 mt-2">
                 {navigation
-                  .filter((i) => i.href != "/")
+                  .filter((i) => i.href != `${BASE_URL}/`)
                   .map((nav) => (
                     <li
                       key={nav.name}

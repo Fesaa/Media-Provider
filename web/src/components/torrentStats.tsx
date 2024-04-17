@@ -36,7 +36,7 @@ export default function Torrent(props: {
       e.preventDefault();
 
       try {
-        const response = await axios.get(`/api/stop/${hash}`);
+        const response = await axios.get(`${BASE_URL}/api/stop/${hash}`);
         props.refreshFunc(false);
         console.log(response);
 

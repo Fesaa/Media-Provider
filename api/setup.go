@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Setup(app *fiber.App, holder models.Holder) {
+func Setup(app fiber.Router, holder models.Holder) {
 	api := app.Group("/api")
 
 	api.Post("/login", routes.Login)
