@@ -3,6 +3,7 @@ import axios from "axios";
 import TorrentTable, { TorrentInfo } from "./torrentTable";
 import { YTSMovie, YTSTorrent } from "../response/SearchResults";
 import DirFormComponent from "./io/form";
+import NotificationHandler from "../notifications/handler";
 
 export default function MoviesForm() {
   const [query, setQuery] = useState("");
@@ -14,6 +15,7 @@ export default function MoviesForm() {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (query == "") {
+      NotificationHandler.addErrorNotificationByTitle("Query cannot be empty");
       return;
     }
 
@@ -31,6 +33,7 @@ export default function MoviesForm() {
       })
       .then((res) => {
         if (res.data == null) {
+          NotificationHandler.addErrorNotificationByTitle("No results found");
           return;
         }
 

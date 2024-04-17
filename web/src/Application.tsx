@@ -4,6 +4,7 @@ import NavBar, { navigation } from "./components/navbar";
 import axios from "axios";
 import Torrent from "./components/torrentStats";
 import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
+import NotificationHandler from "./notifications/handler";
 
 function Application() {
   const [info, setInfo] = useState({});
@@ -28,6 +29,7 @@ function Application() {
     <div>
       <NavBar current="Home" />
       <main className="bg-gray-50 dark:bg-gray-900">
+        <NotificationHandler />
         <section className="pt-5">
           <div className="mx-10 flex flex-col px-6 py-8 lg:py-0">
             <div className="m-5 flex flex-row flex-wrap gap-5">

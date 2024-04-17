@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { XCircleIcon } from "@heroicons/react/16/solid";
+import NotificationHandler from "../notifications/handler";
+import SuccesNotification from "../notifications/succes";
+import ErrorNotification from "../notifications/error";
 
 type TorrentStat = {
   Completed: number;
@@ -24,11 +27,6 @@ export default function Torrent(props: {
   torrent: TorrentStat;
   refreshFunc: (repeat: boolean) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [errorTitle, setErrorTitle] = useState("");
-  const [error, setError] = useState(false);
-
   function remove(
     hash: string,
   ): (e: React.MouseEvent<HTMLAnchorElement>) => void {
@@ -41,11 +39,14 @@ export default function Torrent(props: {
         console.log(response);
 
         if (response.status == 202) {
-          setTitle("Download stopped");
-          setSuccess(true);
+          NotificationHandler.addSuccesNotificationByTitle("Download stopped"")
         } else {
-          setErrorTitle("Error stopping download" + response.statusText);
-          setError(true);
+          NotificationHandler.addNotification(
+            new ErrorNotification({
+              title: "Error stopping download",
+              description: response.data,
+            }),
+          );
         }
       } catch (e) {
         console.log(e);
@@ -56,34 +57,6 @@ export default function Torrent(props: {
   return (
     <div>
       <div>
-        <div
-          className="fixed right-4 top-4 z-50 rounded-md bg-green-500 px-4 py-2 text-white transition hover:bg-green-600"
-          style={success ? { display: "block" } : { display: "none" }}
-        >
-          <div className="flex items-center space-x-2">
-            <span className="text-3xl">
-              <i className="bx bx-check"></i>
-            </span>
-            <p className="font-bold">{title}</p>
-            <XCircleIcon
-              className="w-4 h-4"
-              onClick={(_) => setSuccess(false)}
-            />
-          </div>
-        </div>
-
-        <div
-          className="fixed right-4 top-4 z-50 rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
-          style={error ? { display: "block" } : { display: "none" }}
-        >
-          <div className="flex items-center space-x-2">
-            <span className="text-3xl">
-              <i className="bx bx-check"></i>
-            </span>
-            <p className="font-bold">{errorTitle}</p>
-            <XCircleIcon className="w-4 h-4" onClick={(_) => setError(false)} />
-          </div>
-        </div>
         <div
           className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
           style={{ width: "300px" }}

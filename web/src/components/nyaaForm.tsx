@@ -2,6 +2,7 @@ import React, { FormEvent, useState } from "react";
 import axios from "axios";
 import TorrentTable from "./torrentTable";
 import DirFormComponent from "./io/form";
+import NotificationHandler from "../notifications/handler";
 
 export type CategoryRecord = {
   key: string;
@@ -24,6 +25,7 @@ export default function NyaaForm(props: {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (query == "") {
+      NotificationHandler.addErrorNotificationByTitle("Query cannot be empty");
       return;
     }
 
@@ -42,6 +44,7 @@ export default function NyaaForm(props: {
       })
       .then((res) => {
         if (res.data == null) {
+          NotificationHandler.addErrorNotificationByTitle("No results found");
           return;
         }
         setResults(res.data);

@@ -2,12 +2,14 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import NavBar from "./components/navbar";
 import AnimeForm from "./components/animeForm";
+import NotificationHandler from "./notifications/handler";
 
 function Search() {
   return (
     <div>
       <NavBar current="Search" />
       <main>
+        <NotificationHandler />
         <AnimeForm />
       </main>
     </div>

@@ -1,6 +1,9 @@
 import { ArrowDownTrayIcon } from "@heroicons/react/16/solid";
 import axios from "axios";
-import React, { useState } from "react";
+import React from "react";
+import NotificationHandler from "../notifications/handler";
+import SuccesNotification from "../notifications/succes";
+import ErrorNotification from "../notifications/error";
 
 export type TorrentInfo = {
   Name: string;
@@ -23,11 +26,6 @@ export default function TorrentTable(props: {
   torrents: TorrentInfo[];
   options: DownloadOptions;
 }) {
-  const [title, setTitle] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [errorTitle, setErrorTitle] = useState("");
-  const [error, setError] = useState(false);
-
   async function downloadTorrent(infoHash: string): Promise<void> {
     const requestBody = {
       info: infoHash,
@@ -41,48 +39,30 @@ export default function TorrentTable(props: {
         requestBody,
       );
       if (response.status == 202) {
-        setTitle("Torrent started downloading!");
-        setSuccess(true);
+        NotificationHandler.addSuccesNotificationByTitle(
+          "Torrent is downloading!",
+        );
       } else {
-        setErrorTitle("Error downloading torrent: " + response.statusText);
-        setError(true);
+        NotificationHandler.addNotification(
+          new ErrorNotification({
+            title: "Error while downloading downloading!",
+            description: response.data,
+          }),
+        );
       }
     } catch (err) {
-      console.error("Error downloading torrent", err);
+      NotificationHandler.addNotification(
+        new ErrorNotification({
+          title: "Error while downloading downloading!",
+          description: err,
+        }),
+      );
     }
   }
 
   return (
     <div>
       <div>
-        <button
-          type="button"
-          onClick={(e) => setSuccess(false)}
-          className="fixed right-4 top-4 z-50 rounded-md bg-green-500 px-4 py-2 text-white transition hover:bg-green-600"
-          style={success ? { display: "block" } : { display: "none" }}
-        >
-          <div className="flex items-center space-x-2">
-            <span className="text-3xl">
-              <i className="bx bx-check"></i>
-            </span>
-            <p className="font-bold">{title}</p>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={(e) => setError(false)}
-          className="fixed right-4 top-4 z-50 rounded-md bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
-          style={error ? { display: "block" } : { display: "none" }}
-        >
-          <div className="flex items-center space-x-2">
-            <span className="text-3xl">
-              <i className="bx bx-check"></i>
-            </span>
-            <p className="font-bold">{errorTitle}</p>
-          </div>
-        </button>
-
         {props.torrents.length > 0 && (
           <table className="my-10 ml-10 mr-10 overflow-x-auto">
             <thead>
