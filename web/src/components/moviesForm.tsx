@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from "react";
 import axios from "axios";
 import TorrentTable, { TorrentInfo } from "./torrentTable";
-import { YTSMovie, YTSTorrent } from "../response/SearchResults";
+import { YTSMovie } from "../response/SearchResults";
 import DirFormComponent from "./io/form";
 import NotificationHandler from "../notifications/handler";
 

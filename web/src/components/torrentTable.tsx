@@ -2,7 +2,6 @@ import { ArrowDownTrayIcon } from "@heroicons/react/16/solid";
 import axios from "axios";
 import React from "react";
 import NotificationHandler from "../notifications/handler";
-import SuccesNotification from "../notifications/succes";
 import ErrorNotification from "../notifications/error";
 
 export type TorrentInfo = {

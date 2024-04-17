@@ -1,8 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import axios from "axios";
-import { XCircleIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "../notifications/handler";
-import SuccesNotification from "../notifications/succes";
 import ErrorNotification from "../notifications/error";
 
 type TorrentStat = {
@@ -39,7 +37,7 @@ export default function Torrent(props: {
         console.log(response);
 
         if (response.status == 202) {
-          NotificationHandler.addSuccesNotificationByTitle("Download stopped"")
+          NotificationHandler.addSuccesNotificationByTitle("Download stopped");
         } else {
           NotificationHandler.addNotification(
             new ErrorNotification({
