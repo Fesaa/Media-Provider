@@ -9,7 +9,9 @@ class NotificationHandler extends React.Component {
 
   constructor(props: any) {
     super(props);
+    const copy = NotificationHandler.notifications;
     NotificationHandler.instance = this;
+    NotificationHandler.notifications = copy;
   }
 
   private static forceUpdate() {
