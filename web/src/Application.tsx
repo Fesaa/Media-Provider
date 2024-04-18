@@ -17,6 +17,12 @@ function Application() {
     await axios
       .get(`${BASE_URL}/api/stats`)
       .then((res) => {
+        if (res == null || res.status != 200) {
+          NotificationHandler.addErrorNotificationByTitle("Unable to load stats");
+          setInfo({});
+          return;
+        }
+
         setInfo(res.data);
         if (Object.keys(res.data).length > 0) {
           waitLong = false;
