@@ -54,18 +54,28 @@ function Application() {
       <main className="bg-gray-50 dark:bg-gray-900">
         <NotificationHandler />
         <section className="pt-5">
-          <div className="mx-10 flex flex-col px-6 py-8 lg:py-0">
-            <div className="m-5 flex flex-row flex-wrap gap-5">
-              {Object.entries(info).map((i: any) => (
-                <div key={i[1]}>
+          <div className="flex flex-col justify-center items-center p-5 overflow-x-auto">
+            {Object.keys(info).length > 0 && <table className="bg-white border border-gray-300">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Size</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Completed</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(info).map((i: any) => (
                   <Torrent
+                    key={i[1]}
                     torrent={i[1]}
                     TKey={i[0]}
                     refreshFunc={updateInfo}
                   />
-                </div>
-              ))}
-            </div>
+                ))}
+              </tbody>
+
+            </table>}
           </div>
           {Object.keys(info).length == 0 && (
             <div className="flex flex-col items-center justify-center">
