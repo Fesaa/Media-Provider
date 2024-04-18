@@ -80,7 +80,7 @@ export default function NavBar(props: { current: string }) {
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
                 <a
                   className="text-gray-300 text-sm font-medium"
-                  href="/api/logout"
+                  href={`${BASE_URL}/api/logout`}
                 >
                   Log out
                 </a>
