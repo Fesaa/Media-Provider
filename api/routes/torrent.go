@@ -38,6 +38,11 @@ func Download(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	if req.BaseDir == "" {
+		slog.Warn("Torrent was downloaded to empty baseDir, returning error.")
+		return fiber.ErrBadRequest
+	}
+
 	if req.Url {
 		slog.Info("Adding down for url: " + req.Info + " with baseDir: " + req.BaseDir)
 		_, err = torrentProvider.AddDownloadFromUrl(req.Info, req.BaseDir)
