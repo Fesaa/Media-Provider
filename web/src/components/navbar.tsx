@@ -1,31 +1,35 @@
-import React, { Fragment } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-
-function wrapper(s: string): string {
-  return `${BASE_URL}${s}`;
-}
-
-export const navigation = [
-  { name: "Home", href: wrapper("/"), current: false },
-  { name: "Anime", href: wrapper("/anime"), current: false },
-  { name: "Manga", href: wrapper("/manga"), current: false },
-  { name: "Movies", href: wrapper("/movies"), current: false },
-  { name: "Lime", href: wrapper("/lime"), current: false },
-];
+import NotificationHandler from "../notifications/handler";
+import { NavigationItem, defaultNavigation, getNavigationItems } from "../utils/features";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function NavBar(props: { current: string }) {
-  navigation.map((item) => {
-    if (item.name === props.current) {
-      item.current = true;
-    } else {
-      item.current = false;
-    }
-  });
+  const [navigation, setNavigation] = useState<NavigationItem[]>([])
+  useEffect(() => {
+    getNavigationItems()
+      .catch(err => NotificationHandler.addErrorNotificationByTitle(err.message))
+      .then(nav => {
+        if (nav == null) {
+          setNavigation(defaultNavigation);
+          return;
+        }
+        setNavigation(nav);
+      })
+  }, []);
+  useEffect(() => {
+    navigation.map((item) => {
+      if (item.name === props.current) {
+        item.current = true;
+      } else {
+        item.current = false;
+      }
+    });
+  }, [navigation])
 
   return (
     <Disclosure as="nav" className="bg-gray-800">

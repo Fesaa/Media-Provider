@@ -18,6 +18,8 @@ func Setup(app fiber.Router, holder models.Holder) {
 	api.Post("/download/", middleware.AuthHandler, routes.Download)
 	api.Get("/stop/:infoHash", middleware.AuthHandler, routes.Stop)
 
+	api.Get("/features", middleware.AuthHandler, routes.EnabledFeatures)
+
 	api.Post("/io/ls", middleware.AuthHandler, routes.ListDirs)
 	api.Post("/io/create", middleware.AuthHandler, routes.CreateDir)
 }

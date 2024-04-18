@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import NavBar, { navigation } from "./components/navbar";
+import NavBar from "./components/navbar";
 import axios from "axios";
 import Torrent from "./components/torrentStats";
 import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "./notifications/handler";
+import { NavigationItem, defaultNavigation, getNavigationItems } from "./utils/features";
 
 function Application() {
   const [info, setInfo] = useState({});
+  const [navigation, setNavigation] = useState<NavigationItem[]>([])
 
   async function updateInfo(repeat: boolean) {
     axios
@@ -23,6 +25,15 @@ function Application() {
 
   useEffect(() => {
     updateInfo(true);
+    getNavigationItems()
+      .catch(err => NotificationHandler.addErrorNotificationByTitle(err.message))
+      .then(nav => {
+        if (nav == null) {
+          setNavigation(defaultNavigation);
+          return;
+        }
+        setNavigation(nav);
+      })
   }, []);
 
   return (

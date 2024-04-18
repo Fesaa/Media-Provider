@@ -6,17 +6,25 @@ import (
 
 	middleware "github.com/Fesaa/Media-Provider/middelware"
 	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
 func RegisterFrontEnd(app fiber.Router) {
 
 	app.Get("/", middleware.AuthHandler, home)
-	app.Get("/anime", middleware.AuthHandler, anime)
-	app.Get("/manga", middleware.AuthHandler, manga)
-	app.Get("/movies", middleware.AuthHandler, movies)
-	app.Get("/lime", middleware.AuthHandler, lime)
-
+	if utils.FeatureEnabled("anime") {
+		app.Get("/anime", middleware.AuthHandler, anime)
+	}
+	if utils.FeatureEnabled("manga") {
+		app.Get("/manga", middleware.AuthHandler, manga)
+	}
+	if utils.FeatureEnabled("movies") {
+		app.Get("/movies", middleware.AuthHandler, movies)
+	}
+	if utils.FeatureEnabled("lime") {
+		app.Get("/lime", middleware.AuthHandler, lime)
+	}
 	app.Get("/login", login)
 
 	app.Get("/status/404", status404)
