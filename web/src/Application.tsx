@@ -12,14 +12,14 @@ function Application() {
   const [navigation, setNavigation] = useState<NavigationItem[]>([])
 
   async function updateInfo(repeat: boolean) {
-    var waitLong = false;
+    var waitLong = true;
 
     await axios
       .get(`${BASE_URL}/api/stats`)
       .then((res) => {
-        if (res.data) {
-          setInfo(res.data);
-          waitLong = true;
+        setInfo(res.data);
+        if (Object.keys(res.data).length > 0) {
+          waitLong = false;
         }
 
       })
@@ -29,7 +29,7 @@ function Application() {
       });
 
     if (repeat) {
-      const wait = waitLong ? 1000 : 10000;
+      const wait = waitLong ? 10000 : 1000;
       setTimeout(() => updateInfo(repeat), wait);
     }
 
