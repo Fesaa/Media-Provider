@@ -23,7 +23,6 @@ COPY ./impl ./impl
 COPY ./limetorrents ./limetorrents
 COPY ./middelware ./middelware
 COPY ./models ./models
-COPY ./mount ./mount
 COPY ./utils ./utils
 COPY ./yts ./yts
 COPY ./frontend.go ./frontend.go
