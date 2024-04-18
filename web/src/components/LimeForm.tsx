@@ -1,17 +1,43 @@
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
 import axios from "axios";
 import { LimeTorrent } from "../response/SearchResults";
 import TorrentTable, { TorrentInfo } from "./torrentTable";
 import DirFormComponent from "./io/form";
 import NotificationHandler from "../notifications/handler";
 
-export default function MoviesForm() {
+export default function LimeForm() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("ALL");
-  const [dir, setDir] = useState("Movies");
+  const [dir, setDir] = useState("");
+  const [dirs, setDirs] = useState([]);
   const [customDir, setCustomDir] = useState<string>("");
 
   const [results, setResults] = useState<TorrentInfo[]>([]);
+
+  function onLoad() {
+    const data = {
+      dir: "",
+    };
+    axios.post(`${BASE_URL}/api/io/ls`, data)
+      .catch(err => {
+        NotificationHandler.addErrorNotificationByTitle("Could not load root dirs.");
+        console.error(err)
+      }).then(res => {
+        if (res == null) {
+          NotificationHandler.addErrorNotificationByTitle("No root dirs found");
+          return;
+        }
+        if (res.data == null) {
+          NotificationHandler.addErrorNotificationByTitle("No root dirs found");
+          return;
+        }
+
+        setDirs(res.data);
+        if (res.data.length > 0) {
+          setDir(res.data[0]);
+        }
+      })
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -33,7 +59,7 @@ export default function MoviesForm() {
         },
       })
       .then((res) => {
-        if (res.data == null) {
+        if (res.data == null || res.data.length == 0) {
           NotificationHandler.addErrorNotificationByTitle("No results found");
           return;
         }
@@ -60,6 +86,8 @@ export default function MoviesForm() {
       })
       .catch((err) => console.error(err));
   }
+
+  useEffect(onLoad, []);
 
   return (
     <div className="justify-items-center bg-gray-50 dark:bg-gray-900">
@@ -108,8 +136,8 @@ export default function MoviesForm() {
                       <option value={"ALL"}> All </option>
                       <option value={"ANIME"}> Anime </option>
                       <option value={"MOVIES"}> Movies </option>
-                      <option value={"TV"}> Likes </option>
-                      <option value={"OTHER"}> Date Added </option>
+                      <option value={"TV"}> Tv </option>
+                      <option value={"OTHER"}> Other </option>
                     </select>
                   </div>
 
@@ -124,11 +152,15 @@ export default function MoviesForm() {
                       name="dir"
                       id="dir"
                       className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                      onChange={(e) => setDir(e.target.value)}
+                      onChange={(e) => {
+                        if (e.target.value != "") {
+                          setDir(e.target.value);
+                        }
+                      }}
                     >
-                      <option value={"Movies"}> Movies </option>
-                      <option value={"Anime"}> Anime </option>
-                      <option value={"Series"}> Series </option>
+                      {dirs.map(dirName => {
+                        return <option key={dirName} value={dirName}> {dirName} </option>
+                      })}
                     </select>
                   </div>
                 </div>

@@ -32,31 +32,22 @@ export default function TorrentTable(props: {
       url: props.options.url,
     };
 
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/api/download`,
-        requestBody,
-      );
-      if (response.status == 202) {
-        NotificationHandler.addSuccesNotificationByTitle(
-          "Torrent is downloading!",
-        );
-      } else {
-        NotificationHandler.addNotification(
-          new ErrorNotification({
-            title: "Error while downloading downloading!",
-            description: response.data,
-          }),
-        );
-      }
-    } catch (err) {
-      NotificationHandler.addNotification(
-        new ErrorNotification({
-          title: "Error while downloading downloading!",
-          description: err,
-        }),
-      );
-    }
+    axios.post(`${BASE_URL}/api/download`, requestBody)
+      .catch(err => {
+        console.error(err);
+        NotificationHandler.addErrorNotificationByTitle("Error while downloading downloading!");
+      })
+      .then(res => {
+        if (res == null) {
+          return;
+        }
+
+        if (res.status == 202) {
+          NotificationHandler.addSuccesNotificationByTitle("Torrent is downloading!",);
+        } else {
+          NotificationHandler.addErrorNotificationByTitle("Error while downloading!");
+        }
+      })
   }
 
   return (

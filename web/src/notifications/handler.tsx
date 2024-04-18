@@ -51,7 +51,9 @@ class NotificationHandler extends React.Component {
   render(): React.ReactNode {
     return (
       <div className="fixed top-4 md:top-10 right-4 flex flex-row space-y-4">
-        {NotificationHandler.notifications.map((comp) => comp.render())}
+        {NotificationHandler.notifications.map((comp, i) => <div key={i}>
+          {comp.render()}
+        </div>)}
       </div>
     );
   }
