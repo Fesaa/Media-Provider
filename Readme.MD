@@ -28,7 +28,7 @@ Features
 \* Wants a dir with the same name from root. (anime => TORRENT_DIR/Anime). Currently not changeable
 
 ## Docker compose
-This is the entry in my compose file. You can disable 
+This is the entry in my compose file. 
 ```yaml
   media-provider:
     image: media-provider
