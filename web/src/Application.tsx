@@ -12,15 +12,27 @@ function Application() {
   const [navigation, setNavigation] = useState<NavigationItem[]>([])
 
   async function updateInfo(repeat: boolean) {
-    axios
+    var waitLong = false;
+
+    await axios
       .get(`${BASE_URL}/api/stats`)
-      .then((res) => setInfo(res.data))
-      .catch((err) => console.error(err));
+      .then((res) => {
+        if (res.data) {
+          setInfo(res.data);
+          waitLong = true;
+        }
+
+      })
+      .catch((err) => {
+        console.log(err)
+        NotificationHandler.addErrorNotificationByTitle("Unable to load stats: " + err.message);
+      });
 
     if (repeat) {
-      const wait = Object.keys(info).length > 0 ? 10000 : 1000;
+      const wait = waitLong ? 1000 : 10000;
       setTimeout(() => updateInfo(repeat), wait);
     }
+
   }
 
   useEffect(() => {
@@ -45,7 +57,7 @@ function Application() {
           <div className="mx-10 flex flex-col px-6 py-8 lg:py-0">
             <div className="m-5 flex flex-row flex-wrap gap-5">
               {Object.entries(info).map((i: any) => (
-                <div key={i[1].Infohash}>
+                <div key={i[1]}>
                   <Torrent
                     torrent={i[1]}
                     TKey={i[0]}
