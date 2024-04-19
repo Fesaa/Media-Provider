@@ -13,10 +13,10 @@ type TorrentStat = {
 };
 
 function bytesToSize(bytes: number): string {
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  if (bytes === 0) return '0 Byte';
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  if (bytes === 0) return "0 Byte";
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + " " + sizes[i];
 }
 
 export default function Torrent(props: {
@@ -27,22 +27,29 @@ export default function Torrent(props: {
   const torrent = props.torrent;
 
   async function remove(hash: string) {
-    axios.get(`${BASE_URL}/api/stop/${hash}`)
-      .catch(e => {
+    axios
+      .get(`${BASE_URL}/api/stop/${hash}`)
+      .catch((e) => {
         console.log(e);
-        NotificationHandler.addErrorNotificationByTitle("Error stopping download");
+        NotificationHandler.addErrorNotificationByTitle(
+          "Error stopping download",
+        );
       })
-      .then(res => {
+      .then((res) => {
         if (res == null) {
-          NotificationHandler.addErrorNotificationByTitle("Error stopping download");
-          return
+          NotificationHandler.addErrorNotificationByTitle(
+            "Error stopping download",
+          );
+          return;
         }
         if (res.status == 202) {
           NotificationHandler.addSuccesNotificationByTitle("Download stopped");
         } else {
-          NotificationHandler.addErrorNotificationByTitle("Error stopping download");
+          NotificationHandler.addErrorNotificationByTitle(
+            "Error stopping download",
+          );
         }
-      })
+      });
   }
 
   return (
@@ -51,13 +58,13 @@ export default function Torrent(props: {
       key={torrent.InfoHash}
     >
       <td className="p-2 text-sm">
-        <div className="">
-          {torrent.Name}
-        </div>
+        <div className="">{torrent.Name}</div>
       </td>
-      <td className="p-2 text-sm text-center hidden md:table-cell">{bytesToSize(props.torrent.Size)}</td>
+      <td className="p-2 text-sm text-center hidden md:table-cell">
+        {bytesToSize(props.torrent.Size)}
+      </td>
       <td className="p-2 text-sm text-center">
-        {props.torrent.Completed}%
+        {props.torrent.Completed}% @ {props.torrent.Speed}
         <div className="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700  md:block">
           <div
             className="h-2.5 rounded-full bg-blue-600"
@@ -69,7 +76,7 @@ export default function Torrent(props: {
         <TrashIcon
           className="h-8 w-8"
           type="button"
-          onClick={e => remove(torrent.InfoHash)}
+          onClick={(e) => remove(torrent.InfoHash)}
           style={{ cursor: "pointer" }}
         />
       </td>
