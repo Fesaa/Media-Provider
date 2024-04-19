@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React from "react";
 import SuccesNotification from "./succes";
 import ErrorNotification from "./error";
 
@@ -50,10 +50,10 @@ class NotificationHandler extends React.Component {
 
   render(): React.ReactNode {
     return (
-      <div className="fixed top-4 md:top-10 right-4 flex flex-row space-y-4">
-        {NotificationHandler.notifications.map((comp, i) => <div key={i}>
-          {comp.render()}
-        </div>)}
+      <div className="fixed top-4 md:top-10 right-4 flex flex-col space-y-4">
+        {NotificationHandler.notifications.map((comp, i) => (
+          <div key={i}>{comp.render()}</div>
+        ))}
       </div>
     );
   }
