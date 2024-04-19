@@ -51,7 +51,7 @@ func limeTorrensSearch(ctx *fiber.Ctx, r SearchRequest) error {
 	}
 
 	slog.Info(fmt.Sprintf("Found %d torrents", len(torrents)))
-	return ctx.JSON(torrents)
+	return ctx.JSON(fromLime(torrents))
 }
 
 func ytsSearch(ctx *fiber.Ctx, r SearchRequest) error {
@@ -62,7 +62,7 @@ func ytsSearch(ctx *fiber.Ctx, r SearchRequest) error {
 		return err
 	}
 	slog.Info(fmt.Sprintf("Found %d movies", len(req.Data.Movies)))
-	return ctx.JSON(req.Data.Movies)
+	return ctx.JSON(fromYTS(req.Data.Movies))
 }
 
 func nyaaSearch(ctx *fiber.Ctx, r SearchRequest) error {

@@ -1,35 +1,57 @@
-import React, { Fragment, useEffect, useState } from "react";
-import { Disclosure, Menu, Transition } from "@headlessui/react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import NotificationHandler from "../notifications/handler";
-import { NavigationItem, defaultNavigation, getNavigationItems } from "../utils/features";
+import { Page } from "../form/types";
+import axios from "axios";
+
+export type NavigationItem = {
+  name: string;
+  href: string;
+  current: boolean;
+};
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function NavBar(props: { current: string }) {
-  const [navigation, setNavigation] = useState<NavigationItem[]>([])
-  useEffect(() => {
-    getNavigationItems()
-      .catch(err => NotificationHandler.addErrorNotificationByTitle(err.message))
-      .then(nav => {
-        if (nav == null) {
-          setNavigation(defaultNavigation);
-          return;
-        }
-        setNavigation(nav);
-      })
-  }, []);
-  useEffect(() => {
-    navigation.map((item) => {
-      if (item.name === props.current) {
-        item.current = true;
-      } else {
-        item.current = false;
+export default function Header() {
+  const [navigation, setNavigation] = useState<NavigationItem[]>([]);
+
+  async function loadNavigation() {
+    const queryParameters = new URLSearchParams(window.location.search);
+    const index = queryParameters.get("index");
+    try {
+      const res = await axios.get(`${BASE_URL}/api/pages`);
+      if (res == null || res.data == null) {
+        return;
       }
-    });
-  }, [navigation])
+
+      const pages: Page[] = res.data;
+      let nav = [
+        {
+          name: "Home",
+          href: `${BASE_URL}/`,
+          current: index == null,
+        },
+      ];
+      nav.push(
+        ...pages.map((page, i) => {
+          return {
+            name: page.title,
+            href: `${BASE_URL}/page?index=${i}`,
+            current: String(i) == index,
+          };
+        }),
+      );
+      setNavigation(nav);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  useEffect(() => {
+    loadNavigation();
+  }, []);
 
   return (
     <Disclosure as="nav" className="bg-gray-800">

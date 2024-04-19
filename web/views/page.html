@@ -13,7 +13,9 @@
         <div id="application"></div>
         <script>
             const BASE_URL = {{.path }};
+            const script =document.createElement('script');
+            script.src = BASE_URL + `generated/Page.js`;
+            document.body.appendChild(script);
         </script>
-        <script src="generated/Manga.js"></script>
     </body>
 </html>

@@ -4,14 +4,20 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 )
 
 var base_url string = "https://www.limetorrents.lol/search/%s/%s/%d/"
+var cache utils.Cache[[]SearchResult] = *utils.NewCache[[]SearchResult](5 * time.Minute)
 
 func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	url := formatUrl(searchOptions)
+	if res := cache.Get(url); res != nil {
+		return *res, nil
+	}
 
 	doc, err := getSearch(url)
 	if err != nil {
@@ -19,7 +25,9 @@ func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	}
 
 	torrents := doc.Find(".table2 tbody tr")
-	return parseResults(torrents), nil
+	res := parseResults(torrents)
+	cache.Set(url, res)
+	return res, nil
 }
 
 func parseResults(torrents *goquery.Selection) []SearchResult {

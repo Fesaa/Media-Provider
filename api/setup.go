@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
-	middleware "github.com/Fesaa/Media-Provider/middelware"
+	"github.com/Fesaa/Media-Provider/middleware"
 	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,7 +18,8 @@ func Setup(app fiber.Router, holder models.Holder) {
 	api.Post("/download/", middleware.AuthHandler, routes.Download)
 	api.Get("/stop/:infoHash", middleware.AuthHandler, routes.Stop)
 
-	api.Get("/features", middleware.AuthHandler, routes.EnabledFeatures)
+	api.Get("/pages", middleware.AuthHandler, routes.Pages)
+	api.Get("/pages/:index", middleware.AuthHandler, routes.Page)
 
 	api.Post("/io/ls", middleware.AuthHandler, routes.ListDirs)
 	api.Post("/io/create", middleware.AuthHandler, routes.CreateDir)

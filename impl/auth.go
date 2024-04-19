@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -20,7 +20,7 @@ type AuthImpl struct {
 
 func newAuth() *AuthImpl {
 	return &AuthImpl{
-		pass:   utils.GetEnv("PASSWORD", "admin"),
+		pass:   config.OrDefault(config.C.Password, "admin"),
 		tokens: make(map[string]time.Time),
 	}
 }

@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/models"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/storage"
@@ -188,7 +188,7 @@ func (t *TorrentImpl) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMak
 }
 
 func newTorrent() (*TorrentImpl, error) {
-	dir := utils.GetEnv("TORRENT_DIR", "temp")
+	dir := config.OrDefault(config.C.RootDir, "temp")
 
 	impl := &TorrentImpl{
 		torrents: make(map[string]*models.Torrent),

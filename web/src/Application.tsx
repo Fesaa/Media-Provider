@@ -1,19 +1,46 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import NavBar from "./components/navbar";
 import axios from "axios";
 import Torrent from "./components/torrentStats";
 import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "./notifications/handler";
-import {
-  NavigationItem,
-  defaultNavigation,
-  getNavigationItems,
-} from "./utils/features";
+import Header, { NavigationItem } from "./components/navigation/header";
 
 function Application() {
   const [info, setInfo] = useState({});
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
+
+  async function loadNavigation() {
+    const queryParameters = new URLSearchParams(window.location.search);
+    const index = queryParameters.get("index");
+    try {
+      const res = await axios.get(`${BASE_URL}/api/pages`);
+      if (res == null || res.data == null) {
+        return;
+      }
+
+      const pages: Page[] = res.data;
+      let nav = [
+        {
+          name: "Home",
+          href: `${BASE_URL}/`,
+          current: index == null,
+        },
+      ];
+      nav.push(
+        ...pages.map((page, i) => {
+          return {
+            name: page.title,
+            href: `${BASE_URL}/page?index=${i}`,
+            current: String(i) == index,
+          };
+        }),
+      );
+      setNavigation(nav);
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
   async function updateInfo(repeat: boolean) {
     var waitLong = true;
@@ -49,22 +76,12 @@ function Application() {
 
   useEffect(() => {
     updateInfo(true);
-    getNavigationItems()
-      .catch((err) =>
-        NotificationHandler.addErrorNotificationByTitle(err.message),
-      )
-      .then((nav) => {
-        if (nav == null) {
-          setNavigation(defaultNavigation);
-          return;
-        }
-        setNavigation(nav);
-      });
+    loadNavigation();
   }, []);
 
   return (
     <div>
-      <NavBar current="Home" />
+      <Header />
       <main className="bg-gray-50 dark:bg-gray-900">
         <NotificationHandler />
         <section className="pt-5">

@@ -3,8 +3,8 @@ package routes
 import (
 	"log/slog"
 
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/models"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -26,5 +26,5 @@ func Logout(ctx *fiber.Ctx) error {
 		return ctx.Status(500).SendString("Could not logout. Please try again. " + err.Error())
 	}
 
-	return ctx.Redirect(utils.GetEnv("BASE_URL", "") + "/login")
+	return ctx.Redirect(config.C.RootURL + "/login")
 }

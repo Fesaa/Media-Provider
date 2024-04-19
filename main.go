@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/api"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 )
@@ -19,6 +19,12 @@ import (
 var holder models.Holder
 var baseURL string
 var baseURLMap fiber.Map
+
+func init() {
+	if err := config.LoadConfig("config.yaml"); err != nil {
+		panic(err)
+	}
+}
 
 // The following env variables are optional:
 //
@@ -30,7 +36,7 @@ var baseURLMap fiber.Map
 //
 // BASE_URL: /
 func main() {
-	baseURL = utils.GetEnv("BASE_URL", "")
+	baseURL = config.OrDefault(config.C.RootURL, "")
 	baseURLMap = fiber.Map{
 		"path": baseURL,
 	}
@@ -56,7 +62,7 @@ func main() {
 	api.Setup(router, holder)
 	RegisterFrontEnd(router)
 
-	port := utils.GetEnv("PORT", "80")
+	port := config.OrDefault(config.C.Port, "80")
 	e := app.Listen(":" + port)
 	if e != nil {
 		slog.Error("Cannot start server")

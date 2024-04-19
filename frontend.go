@@ -4,27 +4,15 @@ import (
 	"errors"
 	"log/slog"
 
-	middleware "github.com/Fesaa/Media-Provider/middelware"
+	"github.com/Fesaa/Media-Provider/middleware"
 	"github.com/Fesaa/Media-Provider/models"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
 func RegisterFrontEnd(app fiber.Router) {
 
 	app.Get("/", middleware.AuthHandler, home)
-	if utils.FeatureEnabled("anime") {
-		app.Get("/anime", middleware.AuthHandler, anime)
-	}
-	if utils.FeatureEnabled("manga") {
-		app.Get("/manga", middleware.AuthHandler, manga)
-	}
-	if utils.FeatureEnabled("movies") {
-		app.Get("/movies", middleware.AuthHandler, movies)
-	}
-	if utils.FeatureEnabled("lime") {
-		app.Get("/lime", middleware.AuthHandler, lime)
-	}
+	app.Get("/page", middleware.AuthHandler, page)
 	app.Get("/login", login)
 
 	app.Get("/status/404", status404)
@@ -34,20 +22,8 @@ func status404(ctx *fiber.Ctx) error {
 	return ctx.Render("404", baseURLMap)
 }
 
-func lime(ctx *fiber.Ctx) error {
-	return ctx.Render("lime", baseURLMap)
-}
-
-func anime(ctx *fiber.Ctx) error {
-	return ctx.Render("anime", baseURLMap)
-}
-
-func manga(ctx *fiber.Ctx) error {
-	return ctx.Render("manga", baseURLMap)
-}
-
-func movies(ctx *fiber.Ctx) error {
-	return ctx.Render("movies", baseURLMap)
+func page(ctx *fiber.Ctx) error {
+	return ctx.Render("page", baseURLMap)
 }
 
 func home(ctx *fiber.Ctx) error {
