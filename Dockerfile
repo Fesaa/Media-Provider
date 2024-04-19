@@ -21,7 +21,7 @@ RUN go mod download
 COPY ./api ./api
 COPY ./impl ./impl
 COPY ./limetorrents ./limetorrents
-COPY ./middelware ./middelware
+COPY ./middleware ./middleware
 COPY ./models ./models
 COPY ./utils ./utils
 COPY ./yts ./yts
