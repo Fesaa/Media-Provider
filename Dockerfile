@@ -22,6 +22,7 @@ COPY ./api ./api
 COPY ./impl ./impl
 COPY ./limetorrents ./limetorrents
 COPY ./middleware ./middleware
+COPY ./config ./config
 COPY ./models ./models
 COPY ./utils ./utils
 COPY ./yts ./yts
