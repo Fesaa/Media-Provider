@@ -5,40 +5,17 @@ Torrenting content with copy right is theft, bla bla, this is all educational, b
 
 ## Config
 
-All these should be set with a environment variable
-
-General config
-
-| Key | Description | Default |
-| ---- | ----- | ---- |
-| PORT | port | 80 |
-| PASSWORD | login pass | admin |
-| TORRENT_DIR | Root dir | temp |
-| BASE_URL | service url from root | / |
-
-Features
-
-| Key | Description | Default |
-| --- | ----- | ---- |
-| anime | Nyaa anime search tab* | enabled |
-| manga | Nyaa manga search tab* | enabled |
-| movies | YTS search tab* | enabled |
-| lime | Lime search tab | enabled |
-
-\* Wants a dir with the same name from root. (anime => TORRENT_DIR/Anime). Currently not changeable
+Is done via `config.yaml`, the layout can be found in [types.go](config/types.go). And example can be found [here](config.yaml.example)
 
 ## Docker compose
-This is the entry in my compose file. 
+This is the entry in my compose file.
 ```yaml
   media-provider:
     image: media-provider
     restart: "on-failure:3"
     networks:
       - backend
-    environment:
-      - "TORRENT_DIR=/media"
-      - "BASE_URL=/mp"
     volumes:
+      - ./config.yaml:/app/config.yaml
       - /Media:/media
-
 ```
