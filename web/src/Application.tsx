@@ -5,11 +5,15 @@ import axios from "axios";
 import Torrent from "./components/torrentStats";
 import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "./notifications/handler";
-import { NavigationItem, defaultNavigation, getNavigationItems } from "./utils/features";
+import {
+  NavigationItem,
+  defaultNavigation,
+  getNavigationItems,
+} from "./utils/features";
 
 function Application() {
   const [info, setInfo] = useState({});
-  const [navigation, setNavigation] = useState<NavigationItem[]>([])
+  const [navigation, setNavigation] = useState<NavigationItem[]>([]);
 
   async function updateInfo(repeat: boolean) {
     var waitLong = true;
@@ -18,7 +22,9 @@ function Application() {
       .get(`${BASE_URL}/api/stats`)
       .then((res) => {
         if (res == null || res.status != 200) {
-          NotificationHandler.addErrorNotificationByTitle("Unable to load stats");
+          NotificationHandler.addErrorNotificationByTitle(
+            "Unable to load stats",
+          );
           setInfo({});
           return;
         }
@@ -27,31 +33,33 @@ function Application() {
         if (Object.keys(res.data).length > 0) {
           waitLong = false;
         }
-
       })
       .catch((err) => {
-        console.log(err)
-        NotificationHandler.addErrorNotificationByTitle("Unable to load stats: " + err.message);
+        console.log(err);
+        NotificationHandler.addErrorNotificationByTitle(
+          "Unable to load stats: " + err.message,
+        );
       });
 
     if (repeat) {
       const wait = waitLong ? 10000 : 1000;
       setTimeout(() => updateInfo(repeat), wait);
     }
-
   }
 
   useEffect(() => {
     updateInfo(true);
     getNavigationItems()
-      .catch(err => NotificationHandler.addErrorNotificationByTitle(err.message))
-      .then(nav => {
+      .catch((err) =>
+        NotificationHandler.addErrorNotificationByTitle(err.message),
+      )
+      .then((nav) => {
         if (nav == null) {
           setNavigation(defaultNavigation);
           return;
         }
         setNavigation(nav);
-      })
+      });
   }, []);
 
   return (
@@ -61,27 +69,34 @@ function Application() {
         <NotificationHandler />
         <section className="pt-5">
           <div className="flex flex-col justify-center items-center p-5 overflow-x-auto">
-            {Object.keys(info).length > 0 && <table className="bg-white border border-gray-300">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Size</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Completed</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(info).map((i: any) => (
-                  <Torrent
-                    key={i[1]}
-                    torrent={i[1]}
-                    TKey={i[0]}
-                    refreshFunc={updateInfo}
-                  />
-                ))}
-              </tbody>
-
-            </table>}
+            {Object.keys(info).length > 0 && (
+              <table className="bg-white border border-gray-300">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                      Size
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Completed
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(info).map((i: any) => (
+                    <Torrent
+                      key={i[0]}
+                      torrent={i[1]}
+                      TKey={i[0]}
+                      refreshFunc={updateInfo}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
           {Object.keys(info).length == 0 && (
             <div className="flex flex-col items-center justify-center">
