@@ -5,5 +5,6 @@ const esbuild = require("esbuild");
     entryPoints: ["src/*.tsx", "src/components/*.tsx"],
     outdir: "public/generated",
     bundle: true,
+    minify: true,
   });
 })();
