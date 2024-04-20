@@ -54,12 +54,13 @@ func (t *TorrentImpl) AddDownload(infoHash string, baseDir string) (*models.Torr
 func (t *TorrentImpl) AddDownloadFromUrl(url string, baseDir string) (*models.Torrent, error) {
 	res, err := http.Get(url)
 	if err != nil {
+		slog.Error("Failed to get torrent file from url", "url", url, "err", err)
 		return nil, err
 	}
 
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		slog.Error("Failed to get torrent file from url: " + url + " with status code: " + res.Status)
+		slog.Error("Failed to get torrent file from url", "url", url, "status", res.Status)
 		return nil, errors.New("failed to get torrent file from url: " + url + " with status code: " + res.Status)
 	}
 
@@ -85,7 +86,7 @@ func (t *TorrentImpl) processTorrent(torrentInfo *torrent.Torrent, dir string) *
 
 	go func() {
 		<-torrentInfo.GotInfo()
-		slog.Info(fmt.Sprintf("Info received for %s, starting download.", torrentInfo.Name()))
+		slog.Info("Starting download", "name", torrentInfo.Name(), "infoHash", torrentInfo.InfoHash().HexString())
 		torrentInfo.DownloadAll()
 	}()
 	return torrent
@@ -103,7 +104,12 @@ func (t *TorrentImpl) RemoveDownload(infoHashString string, deleteFiles bool) er
 	baseDir, _ := safeGet(t.baseDirs, infoHashString, t.lockDir)
 
 	torrent := tor.GetTorrent()
-	slog.Info(fmt.Sprintf("Dropping torrent %s. Had %d / %d", torrent.Name(), torrent.BytesCompleted(), torrent.Length()))
+	slog.Info("Dropping torrent",
+		"name", torrent.Name(),
+		"infoHash", torrent.InfoHash().HexString(),
+		"deleteFiles", deleteFiles,
+		"downloaded", torrent.BytesCompleted(),
+		"total", torrent.Length())
 	torrent.Drop()
 
 	safeDelete(t.torrents, infoHashString, t.lock)
@@ -125,7 +131,7 @@ func (t *TorrentImpl) cleanup(tor *torrent.Torrent, baseDir string) {
 
 	info, err := os.ReadDir(dir)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error reading dir %s: %s", dir, err))
+		slog.Error("Error reading directory", "dir", dir, "err", err)
 		return
 	}
 
@@ -142,20 +148,20 @@ func (t *TorrentImpl) cleanup(tor *torrent.Torrent, baseDir string) {
 
 	err = os.Rename(dir+"/"+subDir.Name(), t.dir+"/"+baseDir+"/"+tor.Name())
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error renaming dir %s to %s: %s", dir+"/"+subDir.Name(), tor.Name(), err))
+		slog.Error("Error renaming directory", "from", dir+"/"+subDir.Name(), "to", tor.Name(), "err", err)
 		return
 	}
 
 	err = os.Remove(dir)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("Error removing dir %s: %s", dir, err))
+		slog.Error("Error removing directory", "dir", dir, "err", err)
 	}
 }
 
 func (t *TorrentImpl) renameHash(dir, baseDir, cleanName string) {
 	err := os.Rename(dir, t.dir+"/"+baseDir+"/"+cleanName)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error renaming dir %s to %s: %s", dir, cleanName, err))
+		slog.Error("Error renaming directory", "from", dir, "to", cleanName, "err", err)
 	}
 }
 
@@ -165,10 +171,10 @@ func (t *TorrentImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
 	}
 
 	dir := t.dir + "/" + baseDir + "/" + tor.InfoHash().HexString()
-	slog.Info(fmt.Sprintf("Deleting dir %s", dir))
+	slog.Info("Deleting directory", "dir", dir)
 	err := os.RemoveAll(dir)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error deleting dir %s: %s", dir, err))
+		slog.Error("Error deleting directory", "dir", dir, "err", err)
 	}
 }
 

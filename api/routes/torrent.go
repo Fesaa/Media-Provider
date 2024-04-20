@@ -44,10 +44,10 @@ func Download(ctx *fiber.Ctx) error {
 	}
 
 	if req.Url {
-		slog.Info("Adding down for url: " + req.Info + " with baseDir: " + req.BaseDir)
+		slog.Info("Adding download from url", "url", req.Info, "baseDir", req.BaseDir)
 		_, err = torrentProvider.AddDownloadFromUrl(req.Info, req.BaseDir)
 	} else {
-		slog.Info("Adding download for infoHash: " + req.Info + " with baseDir: " + req.BaseDir)
+		slog.Info("Adding download from infoHash", "infoHash", req.Info, "baseDir", req.BaseDir)
 		_, err = torrentProvider.AddDownload(req.Info, req.BaseDir)
 	}
 
@@ -80,7 +80,7 @@ func Stop(ctx *fiber.Ctx) error {
 
 	err := torrentProvider.RemoveDownload(infoHash, true)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error stopping download: %w for infoHash: %s", err, infoHash))
+		slog.Error("Error stopping download", "infoHash", infoHash, "err", err)
 		return fiber.ErrInternalServerError
 	}
 

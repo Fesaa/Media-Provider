@@ -25,3 +25,21 @@ func LoadConfig(path string) error {
 	}
 	return yaml.Unmarshal(data, &C)
 }
+
+func SetPages(pages []Page) {
+	C.Pages = pages
+}
+
+func ReloadPages(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var c Config
+	if err := yaml.Unmarshal(data, &c); err != nil {
+		return err
+	}
+
+	C.Pages = c.Pages
+	return nil
+}

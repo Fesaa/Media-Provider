@@ -46,11 +46,11 @@ func limeTorrensSearch(ctx *fiber.Ctx, r SearchRequest) error {
 	limeS := r.ToLimeTorrents()
 	torrents, err := limetorrents.Search(limeS)
 	if err != nil {
-		slog.Error("Error searching limetorrents", err)
+		slog.Error("Error searching limetorrents", "err", err)
 		return err
 	}
 
-	slog.Info(fmt.Sprintf("Found %d torrents", len(torrents)))
+	slog.Info(fmt.Sprintf("Found torrents", "amount", len(torrents)))
 	return ctx.JSON(fromLime(torrents))
 }
 
@@ -58,10 +58,10 @@ func ytsSearch(ctx *fiber.Ctx, r SearchRequest) error {
 	ytsS := r.ToYTS()
 	req, err := yts.Search(ytsS)
 	if err != nil {
-		slog.Error("Error searching yts", err)
+		slog.Error("Error searching yts", "err", err)
 		return err
 	}
-	slog.Info(fmt.Sprintf("Found %d movies", len(req.Data.Movies)))
+	slog.Info(fmt.Sprintf("Found movies", "amount", len(req.Data.Movies)))
 	return ctx.JSON(fromYTS(req.Data.Movies))
 }
 
@@ -69,10 +69,10 @@ func nyaaSearch(ctx *fiber.Ctx, r SearchRequest) error {
 	nyaaS := r.ToNyaa()
 	torrents, err := nyaa.Search(nyaaS)
 	if err != nil {
-		slog.Error("Error searching nyaa", err)
+		slog.Error("Error searching nyaa", "err", err)
 		return err
 	}
-	slog.Info(fmt.Sprintf("Found %d torrents", len(torrents)))
+	slog.Info(fmt.Sprintf("Found torrents", "amount", len(torrents)))
 	return ctx.JSON(torrents)
 }
 

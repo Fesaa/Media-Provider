@@ -21,6 +21,11 @@ func Setup(app fiber.Router, holder models.Holder) {
 	api.Get("/pages", middleware.AuthHandler, routes.Pages)
 	api.Get("/pages/:index", middleware.AuthHandler, routes.Page)
 
-	api.Post("/io/ls", middleware.AuthHandler, routes.ListDirs)
-	api.Post("/io/create", middleware.AuthHandler, routes.CreateDir)
+	io := api.Group("/io")
+	io.Post("/ls", middleware.AuthHandler, routes.ListDirs)
+	io.Post("/create", middleware.AuthHandler, routes.CreateDir)
+
+	config := api.Group("/config")
+	config.Post("/reload", middleware.AuthHandler, routes.ReloadPages)
+	config.Get("/", middleware.AuthHandler, routes.GetConfig)
 }
