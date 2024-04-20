@@ -13,6 +13,7 @@ import (
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
 )
 
@@ -26,15 +27,6 @@ func init() {
 	}
 }
 
-// The following env variables are optional:
-//
-// PORT: 80
-//
-// PASSWORD: admin
-//
-// TORRENT_DIR: temp
-//
-// BASE_URL: /
 func main() {
 	baseURL = config.OrDefault(config.C.RootURL, "")
 	baseURLMap = fiber.Map{
@@ -45,6 +37,11 @@ func main() {
 		Views:        engine,
 		ErrorHandler: errorHandler,
 	})
+
+	app.Use(logger.New(logger.Config{
+		TimeFormat: "2006/01/02 15:04:05",
+		Format:     "${time} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
+	}))
 
 	var err error
 	holder, err = impl.New()

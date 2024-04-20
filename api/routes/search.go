@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"log/slog"
 	"net/url"
 
@@ -50,7 +49,7 @@ func limeTorrensSearch(ctx *fiber.Ctx, r SearchRequest) error {
 		return err
 	}
 
-	slog.Info(fmt.Sprintf("Found torrents", "amount", len(torrents)))
+	slog.Info("Found torrents", "amount", len(torrents))
 	return ctx.JSON(fromLime(torrents))
 }
 
@@ -61,7 +60,7 @@ func ytsSearch(ctx *fiber.Ctx, r SearchRequest) error {
 		slog.Error("Error searching yts", "err", err)
 		return err
 	}
-	slog.Info(fmt.Sprintf("Found movies", "amount", len(req.Data.Movies)))
+	slog.Info("Found movies", "amount", len(req.Data.Movies))
 	return ctx.JSON(fromYTS(req.Data.Movies))
 }
 
@@ -72,7 +71,7 @@ func nyaaSearch(ctx *fiber.Ctx, r SearchRequest) error {
 		slog.Error("Error searching nyaa", "err", err)
 		return err
 	}
-	slog.Info(fmt.Sprintf("Found torrents", "amount", len(torrents)))
+	slog.Info("Found torrents", "amount", len(torrents))
 	return ctx.JSON(torrents)
 }
 

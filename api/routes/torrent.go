@@ -34,7 +34,7 @@ func Download(ctx *fiber.Ctx) error {
 	var req DownloadRequest
 	err := ctx.BodyParser(&req)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error parsing request body into DownloadRequest : %w", err))
+		slog.Error("Error parsing request body into DownloadRequest", "err", err)
 		return fiber.ErrBadRequest
 	}
 
@@ -52,7 +52,7 @@ func Download(ctx *fiber.Ctx) error {
 	}
 
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error adding download: %w for %s", err, req.DebugString()))
+		slog.Error("Error adding download", "err", err, "debug_info", req.DebugString())
 		return fiber.ErrInternalServerError
 	}
 
