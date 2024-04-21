@@ -5,6 +5,7 @@ import Torrent from "./components/torrentStats";
 import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "./notifications/handler";
 import Header, { NavigationItem } from "./components/navigation/header";
+import { Page } from "./components/form/types";
 
 function Application() {
   const [info, setInfo] = useState({});

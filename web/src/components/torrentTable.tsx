@@ -54,22 +54,22 @@ export default function TorrentTable(props: {
     <div>
       <div>
         {props.torrents.length > 0 && (
-          <table className="my-10 ml-10 mr-10 overflow-x-auto">
+          <table className="bg-white border border-gray-300 ml-10 my-10 mr-10">
             <thead>
-              <tr className="rounded-lg bg-blue-400">
-                <th className="p-5">Name</th>
-                <th className="p-5 hidden md:table-cell">Date</th>
-                <th className="p-5 hidden md:table-cell">Size</th>
-                <th className="p-5 hidden md:table-cell">Downloads</th>
-                <th className="p-5 hidden md:table-cell">Seeds</th>
-                <th className="p-5 hidden md:table-cell">Leeches</th>
-                <th className="p-5"></th>
+              <tr className="">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Size</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Downloads</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Seeds</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Leeches</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"></th>
               </tr>
             </thead>
             <tbody>
               {props.torrents.map((torrent) => (
                 <tr
-                  className="odd:bg-white even:bg-amber-50"
+                  className="even:bg-white border-gray-300 hover:bg-gray-300"
                   key={torrent.InfoHash}
                 >
                   <td className="p-2 text-sm">{torrent.Name}</td>
