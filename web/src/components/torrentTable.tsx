@@ -54,7 +54,7 @@ export default function TorrentTable(props: {
     <div>
       <div>
         {props.torrents.length > 0 && (
-          <table className="bg-white border border-gray-300 ml-10 my-10 mr-10">
+          <table className="bg-white border border-gray-300 m-2 md:m-10 ">
             <thead>
               <tr className="">
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
@@ -69,26 +69,26 @@ export default function TorrentTable(props: {
             <tbody>
               {props.torrents.map((torrent) => (
                 <tr
-                  className="even:bg-white border-gray-300 hover:bg-gray-300"
+                  className="even:bg-white border-gray-300 hover:bg-gray-300 border"
                   key={torrent.InfoHash}
                 >
-                  <td className="p-2 text-sm">{torrent.Name}</td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                  <td className="p-2 text-sm border">{torrent.Name.replace(".", " ")}</td>
+                  <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Date}
                   </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                  <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Size}
                   </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                  <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Downloads}
                   </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                  <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Seeders}
                   </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell">
+                  <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Leechers}
                   </td>
-                  <td>
+                  <td className="border">
                     <ArrowDownTrayIcon
                       type="button"
                       onClick={(e) => {

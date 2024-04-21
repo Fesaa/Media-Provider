@@ -84,9 +84,9 @@ export default function SearchForm(props: SearchProps) {
   }, []);
 
   return (
-    <div className="justify-items-center bg-gray-50 dark:bg-gray-900">
-      <section className="bg-gray-50 dark:bg-gray-900">
-        <div className="mx-auto flex flex-col items-center justify-center px-6 py-8 md:h-screen lg:py-0">
+    <div className="justify-items-center bg-gray-50 dark:bg-gray-900 h-screen">
+      <section className="md:p-5">
+        <div className="flex flex-row justify-center px-6 py-8 lg:py-0">
           <div className="w-full rounded-lg bg-white shadow sm:max-w-md md:mt-0 xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800">
             <div className="space-y-4 p-6 sm:p-8 md:space-y-6">
               <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
@@ -114,7 +114,7 @@ export default function SearchForm(props: SearchProps) {
                   />
                 </div>
 
-                <div className="flex flex-wrap justify-around">
+                <div className="flex flex-wrap flex-col justify-around">
                   {sortBys && sortBys.length > 0 && (
                     <div>
                       <label
@@ -186,8 +186,7 @@ export default function SearchForm(props: SearchProps) {
                         {dirs.map((dirName) => {
                           return (
                             <option key={dirName} value={dirName}>
-                              {" "}
-                              {dirName}{" "}
+                              {dirName}
                             </option>
                           );
                         })}

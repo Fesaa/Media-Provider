@@ -88,7 +88,7 @@ function Application() {
         <section className="pt-5">
           <div className="flex flex-col justify-center items-center p-5 overflow-x-auto">
             {Object.keys(info).length > 0 && (
-              <table className="bg-white border border-gray-300">
+              <table className="bg-white border border-gray-300 m-2 md:m-10">
                 <thead>
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">

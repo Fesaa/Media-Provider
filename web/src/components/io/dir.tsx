@@ -6,6 +6,7 @@ import {
 } from "@heroicons/react/16/solid";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import NotificationHandler from "../../notifications/handler";
 
 function getDirName(s: string): string {
   const parts = s.split("/");
@@ -88,7 +89,10 @@ export default function Dir(props: {
     };
     axios
       .post(`${BASE_URL}/api/io/ls`, data)
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error(err);
+        NotificationHandler.addErrorNotificationByTitle("Failed to load directory");
+      })
       .then((res) => {
         if (res == null) {
           return;
