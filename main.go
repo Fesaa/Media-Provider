@@ -12,6 +12,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
@@ -28,6 +29,9 @@ func init() {
 }
 
 func main() {
+	if utils.GetBoolEnv("debug", false) {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
 	baseURL = config.OrDefault(config.C.RootURL, "")
 	baseURLMap = fiber.Map{
 		"path": baseURL,
@@ -41,6 +45,9 @@ func main() {
 	app.Use(logger.New(logger.Config{
 		TimeFormat: "2006/01/02 15:04:05",
 		Format:     "${time} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
+		Next: func(c *fiber.Ctx) bool {
+			return !utils.GetBoolEnv("debug", false)
+		},
 	}))
 
 	var err error
