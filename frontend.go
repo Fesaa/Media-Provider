@@ -11,8 +11,8 @@ import (
 
 func RegisterFrontEnd(app fiber.Router) {
 
-	app.Get("/", middleware.AuthHandler, home)
-	app.Get("/page", middleware.AuthHandler, page)
+	app.Get("/", middleware.AuthHandlerRedirect, home)
+	app.Get("/page", middleware.AuthHandlerRedirect, page)
 	app.Get("/login", login)
 
 	app.Get("/status/404", status404)
