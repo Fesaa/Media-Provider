@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -115,9 +116,9 @@ func (t *TorrentImpl) RemoveDownload(infoHashString string, deleteFiles bool) er
 	safeDelete(t.torrents, infoHashString, t.lock)
 	safeDelete(t.baseDirs, infoHashString, t.lockDir)
 	if deleteFiles {
-		t.deleteTorrentFiles(torrent, baseDir)
+		go t.deleteTorrentFiles(torrent, baseDir)
 	} else {
-		t.cleanup(torrent, baseDir)
+		go t.cleanup(torrent, baseDir)
 	}
 	return nil
 }
@@ -126,42 +127,42 @@ func (t *TorrentImpl) cleanup(tor *torrent.Torrent, baseDir string) {
 	if tor == nil {
 		return
 	}
-
-	dir := t.dir + "/" + baseDir + "/" + tor.InfoHash().HexString()
-
-	info, err := os.ReadDir(dir)
+	hashDir := path.Join(t.dir, baseDir, tor.InfoHash().HexString())
+	info, err := os.ReadDir(hashDir)
 	if err != nil {
-		slog.Error("Error reading directory", "dir", dir, "err", err)
+		slog.Error("Error reading directory", "dir", hashDir, "err", err)
 		return
 	}
 
 	if len(info) == 0 {
+		slog.Info("Torrent contained no files, removing directory")
+		if err := os.Remove(hashDir); err != nil {
+			slog.Error("Error removing directory", "dir", hashDir, "err", err)
+		}
 		return
 	}
 
-	subDir := info[0]
-	if len(info) != 1 || !subDir.IsDir() {
-		cleanName := reg.ReplaceAllString(tor.Name(), "_")
-		t.renameHash(dir, baseDir, cleanName)
+	firstDirEntry := info[0]
+	if len(info) == 1 && firstDirEntry.IsDir() {
+		slog.Info("Torrent contained only one directory, moving contents up")
+		src := path.Join(hashDir, firstDirEntry.Name())
+		dest := path.Join(t.dir, baseDir, firstDirEntry.Name())
+		if err := os.Rename(src, dest); err != nil {
+			slog.Error("Error renaming directory", "from", src, "to", dest, "err", err)
+			return
+		}
+		if err := os.Remove(hashDir); err != nil {
+			slog.Error("Error removing old hash directory", "dir", hashDir, "err", err)
+		}
 		return
 	}
 
-	err = os.Rename(dir+"/"+subDir.Name(), t.dir+"/"+baseDir+"/"+tor.Name())
-	if err != nil {
-		slog.Error("Error renaming directory", "from", dir+"/"+subDir.Name(), "to", tor.Name(), "err", err)
+	slog.Info("Torrent containe multiple entries or just one file, renaming hash directory")
+	src := hashDir
+	dest := path.Join(t.dir, baseDir, tor.Name())
+	if err := os.Rename(src, dest); err != nil {
+		slog.Error("Error renaming directory", "from", src, "to", dest, "err", err)
 		return
-	}
-
-	err = os.Remove(dir)
-	if err != nil {
-		slog.Error("Error removing directory", "dir", dir, "err", err)
-	}
-}
-
-func (t *TorrentImpl) renameHash(dir, baseDir, cleanName string) {
-	err := os.Rename(dir, t.dir+"/"+baseDir+"/"+cleanName)
-	if err != nil {
-		slog.Error("Error renaming directory", "from", dir, "to", cleanName, "err", err)
 	}
 }
 
@@ -170,7 +171,7 @@ func (t *TorrentImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
 		return
 	}
 
-	dir := t.dir + "/" + baseDir + "/" + tor.InfoHash().HexString()
+	dir := path.Join(t.dir, baseDir, tor.InfoHash().HexString())
 	slog.Info("Deleting directory", "dir", dir)
 	err := os.RemoveAll(dir)
 	if err != nil {
@@ -187,9 +188,9 @@ func (t *TorrentImpl) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMak
 	return func(baseDir string, info *metainfo.Info, infoHash metainfo.Hash) string {
 		d, ok := safeGet(t.baseDirs, infoHash.HexString(), t.lockDir)
 		if !ok {
-			return baseDir + "/" + infoHash.HexString()
+			return path.Join(baseDir, infoHash.HexString())
 		}
-		return baseDir + "/" + d + "/" + infoHash.HexString()
+		return path.Join(baseDir, d, infoHash.HexString())
 	}
 }
 
