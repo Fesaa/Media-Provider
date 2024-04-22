@@ -11,7 +11,7 @@ RUN npm run build:prod
 RUN npm run tailwind:prod
 
 
-FROM golang:1.21 as go-stage
+FROM golang:1.22.2 as go-stage
 
 WORKDIR /app
 
