@@ -10,6 +10,10 @@ import (
 func Setup(app fiber.Router, holder models.Holder) {
 	api := app.Group("/api")
 
+	api.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+
 	api.Post("/login", routes.Login)
 	api.Get("/logout", routes.Logout)
 
