@@ -44,6 +44,4 @@ RUN apk add --no-cache ca-certificates cifs-utils psmisc
 
 EXPOSE 80
 
-HEALTHCHECK --interval=60s --retries=2 --start-period=5s CMD curl --fail http://localhost/api/health || exit 1
-
 CMD ["./media-provider"]
