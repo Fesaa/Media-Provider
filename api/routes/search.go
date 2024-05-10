@@ -72,7 +72,7 @@ func nyaaSearch(ctx *fiber.Ctx, r SearchRequest) error {
 		return err
 	}
 	slog.Info("Found torrents", "amount", len(torrents))
-	return ctx.JSON(torrents)
+	return ctx.JSON(fromNyaa(torrents))
 }
 
 func (s *SearchRequest) ToNyaa() nyaa.SearchOptions {

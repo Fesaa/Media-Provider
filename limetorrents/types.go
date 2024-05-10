@@ -37,13 +37,14 @@ func ConvertCategory(c string) Category {
 }
 
 type SearchResult struct {
-	Name  string
-	Url   string
-	Hash  string
-	Size  string
-	Seed  string
-	Leach string
-	Added string
+	Name    string
+	Url     string
+	Hash    string
+	Size    string
+	Seed    string
+	Leach   string
+	Added   string
+	PageUrl string
 }
 
 type SearchOptions struct {

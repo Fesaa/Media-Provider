@@ -1,8 +1,10 @@
-import { ArrowDownTrayIcon } from "@heroicons/react/16/solid";
+import {
+  ArrowDownTrayIcon,
+  InformationCircleIcon,
+} from "@heroicons/react/16/solid";
 import axios from "axios";
-import React from "react";
+import React, { useState } from "react";
 import NotificationHandler from "../notifications/handler";
-import ErrorNotification from "../notifications/error";
 
 export type TorrentInfo = {
   Name: string;
@@ -14,6 +16,8 @@ export type TorrentInfo = {
   Downloads: string;
   Link: string;
   InfoHash: string;
+  ImageUrl: string;
+  RefUrl: string;
 };
 
 export type DownloadOptions = {
@@ -25,6 +29,9 @@ export default function TorrentTable(props: {
   torrents: TorrentInfo[];
   options: DownloadOptions;
 }) {
+  const [open, setOpen] = useState<boolean>(false);
+  const [imageUrl, setImageUrl] = useState<string>("");
+
   async function downloadTorrent(infoHash: string): Promise<void> {
     const requestBody = {
       info: infoHash,
@@ -32,37 +39,57 @@ export default function TorrentTable(props: {
       url: props.options.url,
     };
 
-    axios.post(`${BASE_URL}/api/download`, requestBody)
-      .catch(err => {
+    axios
+      .post(`${BASE_URL}/api/download`, requestBody)
+      .catch((err) => {
         console.error(err);
-        NotificationHandler.addErrorNotificationByTitle("Error while downloading downloading!");
+        NotificationHandler.addErrorNotificationByTitle(
+          "Error while downloading downloading!",
+        );
       })
-      .then(res => {
+      .then((res) => {
         if (res == null) {
           return;
         }
 
         if (res.status == 202) {
-          NotificationHandler.addSuccesNotificationByTitle("Torrent is downloading!",);
+          NotificationHandler.addSuccesNotificationByTitle(
+            "Torrent is downloading!",
+          );
         } else {
-          NotificationHandler.addErrorNotificationByTitle("Error while downloading!");
+          NotificationHandler.addErrorNotificationByTitle(
+            "Error while downloading!",
+          );
         }
-      })
+      });
   }
 
   return (
     <div>
+      {open && <div></div>}
       <div>
         {props.torrents.length > 0 && (
           <table className="bg-white border border-gray-300 m-2 md:m-10 ">
             <thead>
               <tr className="">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Size</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Downloads</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Seeds</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">Leeches</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                  Size
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                  Downloads
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                  Seeds
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                  Leeches
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"></th>
               </tr>
             </thead>
@@ -72,7 +99,26 @@ export default function TorrentTable(props: {
                   className="even:bg-white border-gray-300 hover:bg-gray-300 border"
                   key={torrent.InfoHash}
                 >
-                  <td className="p-2 text-sm border">{torrent.Name.replace(".", " ")}</td>
+                  <td className="p-2 text-sm border">
+                    <div className="flex flex-row text-center space-x-2">
+                      <a
+                        href={torrent.RefUrl}
+                        target="_blank"
+                        className="hover:cursor-pointer hover:underline"
+                      >
+                        {torrent.Name.replace(".", " ")}
+                      </a>
+                      {torrent.ImageUrl && (
+                        <InformationCircleIcon
+                          className="w-4 h-4"
+                          onClick={() => {
+                            setImageUrl(torrent.ImageUrl);
+                            setOpen(true);
+                          }}
+                        />
+                      )}
+                    </div>
+                  </td>
                   <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Date}
                   </td>

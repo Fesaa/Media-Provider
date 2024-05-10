@@ -5,6 +5,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/yts"
+	"github.com/irevenko/go-nyaa/types"
 )
 
 type TorrentInfo struct {
@@ -17,6 +18,8 @@ type TorrentInfo struct {
 	Downloads   string `json:"Downloads"`
 	Link        string `json:"Link"`
 	InfoHash    string `json:"InfoHash"`
+	ImageUrl    string `json:"ImageUrl"`
+	RefUrl      string `json:"RefUrl"`
 }
 
 func fromLime(torrents []limetorrents.SearchResult) []TorrentInfo {
@@ -32,6 +35,8 @@ func fromLime(torrents []limetorrents.SearchResult) []TorrentInfo {
 			Downloads:   "N/A",
 			Link:        t.Url,
 			InfoHash:    t.Hash,
+			ImageUrl:    "",
+			RefUrl:      t.PageUrl,
 		}
 	}
 	return torrentsInfo
@@ -61,9 +66,31 @@ func fromYTS(movies []yts.YTSMovie) []TorrentInfo {
 			Downloads:   "",
 			Link:        torrent.Url,
 			InfoHash:    torrent.Hash,
+			ImageUrl:    movie.MediumCoverImage,
+			RefUrl:      movie.Url,
 		}
 	}
 	return torrents
+}
+
+func fromNyaa(torrents []types.Torrent) []TorrentInfo {
+	torrentsInfo := make([]TorrentInfo, len(torrents))
+	for i, t := range torrents {
+		torrentsInfo[i] = TorrentInfo{
+			Name:        t.Name,
+			Description: t.Description,
+			Date:        t.Date,
+			Size:        t.Size,
+			Seeders:     t.Seeders,
+			Leechers:    t.Leechers,
+			Downloads:   t.Downloads,
+			Link:        t.Link,
+			InfoHash:    t.InfoHash,
+			ImageUrl:    "",
+			RefUrl:      t.GUID,
+		}
+	}
+	return torrentsInfo
 }
 
 func stringify(i int) string {
