@@ -55,7 +55,12 @@ export default function SearchForm(props: SearchProps) {
           return;
         }
 
-        setTorrents(res.data);
+        const torrents: TorrentInfo[] = res.data;
+        if (torrents.length == 0) {
+          NotificationHandler.addErrorNotificationByTitle("No results found");
+          return;
+        }
+        setTorrents(torrents);
         document
           .getElementById("search-results")!
           .scrollIntoView({ behavior: "smooth" });
