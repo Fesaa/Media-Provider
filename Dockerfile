@@ -40,7 +40,7 @@ COPY --from=npm-stage /app/public/ /app/web/public
 COPY --from=npm-stage /app/views/ /app/web/views
 
 
-RUN apk add --no-cache ca-certificates cifs-utils psmisc
+RUN apk add --no-cache ca-certificates curl
 
 EXPOSE 80
 
