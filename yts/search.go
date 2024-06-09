@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -34,8 +35,10 @@ func (o YTSSearchOptions) toURL() string {
 
 func Search(options YTSSearchOptions) (*YTSSearchResult, error) {
 	url := options.toURL()
+	slog.Info("Searing YTS for movies.", "url", url)
 
 	if res := cache.Get(url); res != nil {
+		slog.Debug("Cache hit", "url", url)
 		return res, nil
 	}
 

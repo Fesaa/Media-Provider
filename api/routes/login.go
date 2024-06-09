@@ -12,13 +12,13 @@ import (
 func Login(ctx *fiber.Ctx) error {
 	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
 	if !ok {
-		slog.Error("Holder not present while handling login")
+		slog.Debug("Holder not present while handling login")
 		return errors.New("Internal Server Error.\nHolder was not present. Please contact the administrator.")
 	}
 
 	authProvider := holder.GetAuthProvider()
 	if authProvider == nil {
-		slog.Error("No AuthProvider found while handling login")
+		slog.Debug("No AuthProvider found while handling login")
 		return errors.New("Internal Server Error. \nNo AuthProvider found. Please contact the administrator.")
 	}
 

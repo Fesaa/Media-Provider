@@ -6,7 +6,7 @@ import (
 
 type HolderImpl struct {
 	auth    *AuthImpl
-	torrent *TorrentImpl
+	torrent *torrentProviderImpl
 }
 
 func New() (models.Holder, error) {

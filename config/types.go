@@ -1,12 +1,21 @@
 package config
 
+import "log/slog"
+
 // TODO: Validation
 type Config struct {
-	Port     string `yaml:"port"`
-	Password string `yaml:"password"`
-	RootDir  string `yaml:"root_dir"`
-	RootURL  string `yaml:"root_url"`
-	Pages    []Page `yaml:"pages"`
+	Port          string        `yaml:"port"`
+	Password      string        `yaml:"password"`
+	RootDir       string        `yaml:"root_dir"`
+	RootURL       string        `yaml:"root_url"`
+	Pages         []Page        `yaml:"pages"`
+	LoggingConfig LoggingConfig `yaml:"logging"`
+}
+
+type LoggingConfig struct {
+	LogLevel slog.Level `yaml:"log_level"`
+	Source   bool       `yaml:"source"`
+	Handler  string     `yaml:"handler"`
 }
 
 type Page struct {

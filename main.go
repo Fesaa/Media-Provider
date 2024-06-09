@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/impl"
 	"github.com/Fesaa/Media-Provider/models"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
@@ -26,13 +26,27 @@ func init() {
 	if err := config.LoadConfig("config.yaml"); err != nil {
 		panic(err)
 	}
+
+	opt := &slog.HandlerOptions{
+		AddSource:   config.I().LoggingConfig.Source,
+		Level:       config.I().LoggingConfig.LogLevel,
+		ReplaceAttr: nil,
+	}
+	var h slog.Handler
+	switch strings.ToUpper(config.I().LoggingConfig.Handler) {
+	case "TEXT":
+		h = slog.NewTextHandler(os.Stdout, opt)
+	case "JSON":
+		h = slog.NewJSONHandler(os.Stdout, opt)
+	default:
+		panic("invalid logging handler: " + config.I().LoggingConfig.Handler)
+	}
+	slog.SetDefault(slog.New(h))
 }
 
 func main() {
-	if utils.GetBoolEnv("debug", false) {
-		slog.SetLogLoggerLevel(slog.LevelDebug)
-	}
 	baseURL = config.OrDefault(config.C.RootURL, "")
+	slog.Info("Starting Media-Provider", "baseURL", baseURL)
 	baseURLMap = fiber.Map{
 		"path": baseURL,
 	}
@@ -42,18 +56,19 @@ func main() {
 		ErrorHandler: errorHandler,
 	})
 
+	slog.Debug("Adding http call logging")
 	app.Use(logger.New(logger.Config{
 		TimeFormat: "2006/01/02 15:04:05",
 		Format:     "${time} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
 		Next: func(c *fiber.Ctx) bool {
-			return !utils.GetBoolEnv("debug", false)
+			return config.I().LoggingConfig.LogLevel == slog.LevelDebug
 		},
 	}))
 
 	var err error
 	holder, err = impl.New()
 	if err != nil {
-		slog.Error("Cannot create holder")
+		slog.Error("Unable to create holder, exiting application", "error", err)
 		panic(err)
 	}
 
@@ -69,7 +84,7 @@ func main() {
 	port := config.OrDefault(config.C.Port, "80")
 	e := app.Listen(":" + port)
 	if e != nil {
-		slog.Error("Cannot start server")
+		slog.Error("Unable to start server, exiting application", "error", e)
 		panic(e)
 	}
 
@@ -77,7 +92,11 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	app.ShutdownWithTimeout(time.Second * 30)
+	err = app.ShutdownWithTimeout(time.Second * 30)
+	if err != nil {
+		slog.Error("An error occurred during shutdown", "error", err)
+		return
+	}
 }
 
 func errorHandler(c *fiber.Ctx, err error) error {

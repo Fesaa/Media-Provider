@@ -8,6 +8,10 @@ import (
 
 var C Config
 
+func I() Config {
+	return C
+}
+
 func OrDefault(value string, defaultValue ...string) string {
 	if value == "" {
 		if len(defaultValue) > 0 {

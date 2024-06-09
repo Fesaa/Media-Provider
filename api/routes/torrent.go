@@ -21,13 +21,13 @@ func (d DownloadRequest) DebugString() string {
 func Download(ctx *fiber.Ctx) error {
 	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
 	if !ok {
-		slog.Error("Holder not found in context")
+		slog.Debug("Holder not found in context")
 		return fiber.ErrInternalServerError
 	}
 
 	torrentProvider := holder.GetTorrentProvider()
 	if torrentProvider == nil {
-		slog.Error("Torrent provider not found in holder")
+		slog.Debug("torrentImpl provider not found in holder")
 		return fiber.ErrInternalServerError
 	}
 
@@ -39,20 +39,18 @@ func Download(ctx *fiber.Ctx) error {
 	}
 
 	if req.BaseDir == "" {
-		slog.Warn("Torrent was downloaded to empty baseDir, returning error.")
+		slog.Warn("Trying to download Torrent to empty baseDir, returning error.")
 		return fiber.ErrBadRequest
 	}
 
 	if req.Url {
-		slog.Info("Adding download from url", "url", req.Info, "baseDir", req.BaseDir)
 		_, err = torrentProvider.AddDownloadFromUrl(req.Info, req.BaseDir)
 	} else {
-		slog.Info("Adding download from infoHash", "infoHash", req.Info, "baseDir", req.BaseDir)
 		_, err = torrentProvider.AddDownload(req.Info, req.BaseDir)
 	}
 
 	if err != nil {
-		slog.Error("Error adding download", "err", err, "debug_info", req.DebugString())
+		slog.Error("Error adding download", "error", err, "debug_info", req.DebugString())
 		return fiber.ErrInternalServerError
 	}
 
@@ -62,13 +60,13 @@ func Download(ctx *fiber.Ctx) error {
 func Stop(ctx *fiber.Ctx) error {
 	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
 	if !ok {
-		slog.Error("Holder not found in context")
+		slog.Debug("Holder not found in context")
 		return fiber.ErrInternalServerError
 	}
 
 	torrentProvider := holder.GetTorrentProvider()
 	if torrentProvider == nil {
-		slog.Error("Torrent provider not found in holder")
+		slog.Debug("torrentImpl provider not found in holder")
 		return fiber.ErrInternalServerError
 	}
 
@@ -80,7 +78,7 @@ func Stop(ctx *fiber.Ctx) error {
 
 	err := torrentProvider.RemoveDownload(infoHash, true)
 	if err != nil {
-		slog.Error("Error stopping download", "infoHash", infoHash, "err", err)
+		slog.Error("Error stopping download", "infoHash", infoHash, "error", err)
 		return fiber.ErrInternalServerError
 	}
 
@@ -96,14 +94,14 @@ func Stats(ctx *fiber.Ctx) error {
 
 	torrentProvider := holder.GetTorrentProvider()
 	if torrentProvider == nil {
-		slog.Error("Torrent provider not found in holder")
+		slog.Error("torrentImpl provider not found in holder")
 		return fiber.ErrInternalServerError
 	}
 
 	torrents := torrentProvider.GetRunningTorrents()
-	info := make(map[string]models.TorrentInfo, len(torrents))
-	for key, torrent := range torrents {
+	info := make(map[string]models.TorrentInfo, torrents.Len())
+	torrents.ForEachSafe(func(key string, torrent models.Torrent) {
 		info[key] = torrent.GetInfo()
-	}
+	})
 	return ctx.JSON(info)
 }

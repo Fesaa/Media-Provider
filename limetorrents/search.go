@@ -2,6 +2,7 @@ package limetorrents
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -17,7 +18,9 @@ var cache utils.Cache[[]SearchResult] = *utils.NewCache[[]SearchResult](5 * time
 
 func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	url := formatUrl(searchOptions)
+	slog.Info("Searching lime", "url", url)
 	if res := cache.Get(url); res != nil {
+		slog.Debug("Cache hit", "url", url)
 		return *res, nil
 	}
 
@@ -69,7 +72,13 @@ func hashFromUrl(url string) string {
 		return ""
 	}
 	s1 := strings.Split(url, "torrent/")
+	if len(s1) < 2 {
+		return ""
+	}
 	s2 := strings.Split(s1[1], ".torrent")
+	if len(s2) == 0 {
+		return ""
+	}
 	return s2[0]
 }
 

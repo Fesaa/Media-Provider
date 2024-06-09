@@ -17,19 +17,19 @@ type ListDirsRequest struct {
 func ListDirs(ctx *fiber.Ctx) error {
 	var req ListDirsRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		slog.Error("Error parsing query params:", "err", err)
+		slog.Warn("Error parsing query params:", "err", err)
 		return fiber.ErrBadRequest
 	}
 
 	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
 	if !ok {
-		slog.Error("Holder not present while handling login")
+		slog.Debug("Holder not present while handling login")
 		return errors.New("Internal Server Error.\nHolder was not present. Please contact the administrator.")
 	}
 
 	tp := holder.GetTorrentProvider()
 	if tp == nil {
-		slog.Error("No TorrentProvider found while handling login")
+		slog.Debug("No TorrentProvider found while handling login")
 		return errors.New("Internal Server Error. \nNo TorrentProvider found. Please contact the administrator.")
 	}
 
@@ -57,24 +57,24 @@ type CreateDirRequest struct {
 func CreateDir(ctx *fiber.Ctx) error {
 	var req CreateDirRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		slog.Error("Error parsing query params:", "err", err)
+		slog.Warn("Error parsing query params:", "err", err)
 		return fiber.ErrBadRequest
 	}
 
 	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
 	if !ok {
-		slog.Error("Holder not present while handling login")
+		slog.Debug("Holder not present while handling login")
 		return errors.New("Internal Server Error.\nHolder was not present. Please contact the administrator.")
 	}
 
 	tp := holder.GetTorrentProvider()
 	if tp == nil {
-		slog.Error("No TorrentProvider found while handling login")
+		slog.Debug("No TorrentProvider found while handling login")
 		return errors.New("Internal Server Error. \nNo TorrentProvider found. Please contact the administrator.")
 	}
 
-	path := path.Join(tp.GetBaseDir(), req.BaseDir, req.NewDir)
-	err := os.Mkdir(path, 0755)
+	p := path.Join(tp.GetBaseDir(), req.BaseDir, req.NewDir)
+	err := os.Mkdir(p, 0755)
 	if err != nil {
 		slog.Error("Error creating dir:", "err", err)
 		return fiber.ErrInternalServerError

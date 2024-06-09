@@ -10,6 +10,7 @@ import (
 )
 
 func RegisterFrontEnd(app fiber.Router) {
+	slog.Debug("Registering Front End")
 
 	app.Get("/", middleware.AuthHandlerRedirect, home)
 	app.Get("/page", middleware.AuthHandlerRedirect, page)
@@ -33,19 +34,19 @@ func home(ctx *fiber.Ctx) error {
 func login(ctx *fiber.Ctx) error {
 	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
 	if !ok {
-		slog.Error("Holder not present while handling login")
+		slog.Debug("Holder not present while handling login")
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
 
 	authProvider := holder.GetAuthProvider()
 	if authProvider == nil {
-		slog.Error("No AuthProvider found while handling login")
+		slog.Debug("No AuthProvider found while handling login")
 		return ctx.SendStatus(fiber.StatusInternalServerError)
 	}
 
 	auth, err := authProvider.IsAuthenticated(ctx)
 	if err != nil {
-		slog.Error("Error while checking if user is authenticated: " + err.Error())
+		slog.Error("Error checking if user is authenticated ", "error", err)
 		return errors.New("")
 	}
 

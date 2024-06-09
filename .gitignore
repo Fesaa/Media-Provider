@@ -3,3 +3,4 @@ node_modules/
 generated/
 temp/
 config.yaml
+.idea
