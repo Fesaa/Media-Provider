@@ -3,7 +3,10 @@ name: Test 3rd party requests
 on:
   push:
     branches:
-      - "main"
+      - "master"
+    paths:
+      - "yts"
+      - "limetorrents"
 
 jobs:
   test:
