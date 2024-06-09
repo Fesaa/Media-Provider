@@ -85,11 +85,7 @@ func (t *TorrentImpl) processTorrent(torrentInfo *torrent.Torrent, dir string) *
 	safeSet(t.torrents, torrentInfo.InfoHash().String(), torrent, t.lock)
 	safeSet(t.baseDirs, torrentInfo.InfoHash().String(), dir, t.lockDir)
 
-	go func() {
-		<-torrentInfo.GotInfo()
-		slog.Info("Starting download", "name", torrentInfo.Name(), "infoHash", torrentInfo.InfoHash().HexString())
-		torrentInfo.DownloadAll()
-	}()
+	torrent.LoadInfo()
 	return torrent
 }
 
@@ -104,6 +100,10 @@ func (t *TorrentImpl) RemoveDownload(infoHashString string, deleteFiles bool) er
 	// We may assume that it is present as long as the torrent is present
 	baseDir, _ := safeGet(t.baseDirs, infoHashString, t.lockDir)
 
+	err := tor.CancelInfo()
+	if err != nil {
+		slog.Error("Unable to cancel info loading", "err", err)
+	}
 	torrent := tor.GetTorrent()
 	slog.Info("Dropping torrent",
 		"name", torrent.Name(),

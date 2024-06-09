@@ -1,7 +1,9 @@
 package models
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/anacrolix/torrent"
@@ -20,6 +22,8 @@ type Torrent struct {
 	key     string
 	baseDir string
 
+	ctx       context.Context
+	cancel    context.CancelFunc
 	lastSpeed SpeedData
 }
 
@@ -75,6 +79,34 @@ func NewTorrent(t *torrent.Torrent, baseDir string) *Torrent {
 // Returns the wrapped torrent.Torrent
 func (t *Torrent) GetTorrent() *torrent.Torrent {
 	return t.t
+}
+
+func (t *Torrent) LoadInfo() {
+	if t.cancel != nil {
+		slog.Debug("Torrent has already started loading info", "name", t.t.Name(), "infoHash", t.t.InfoHash().HexString())
+		return
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.ctx = ctx
+	t.cancel = cancel
+	go func() {
+		select {
+		case <-t.ctx.Done():
+			return
+		case <-t.t.GotInfo():
+			slog.Info("Starting download", "name", t.t.Name(), "infoHash", t.t.InfoHash().HexString())
+			t.t.DownloadAll()
+		}
+	}()
+}
+
+func (t *Torrent) CancelInfo() error {
+	if t.cancel == nil {
+		return fmt.Errorf("torrent is not downloading")
+	}
+	t.cancel()
+	return nil
 }
 
 // Returns useful information about the torrent
