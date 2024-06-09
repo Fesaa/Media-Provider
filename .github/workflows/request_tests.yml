@@ -1,0 +1,23 @@
+name: Test Project
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22.2"
+
+      - name: Test YTS
+        run: go test -v ./yts
+
+      - name: Test Lime
+        run: go test -v ./limetorrents
