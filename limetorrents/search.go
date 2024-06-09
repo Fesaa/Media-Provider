@@ -18,7 +18,7 @@ var cache utils.Cache[[]SearchResult] = *utils.NewCache[[]SearchResult](5 * time
 
 func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	url := formatUrl(searchOptions)
-	slog.Info("Searching lime", "url", url)
+	slog.Info("Searching lime for torrents", "url", url)
 	if res := cache.Get(url); res != nil {
 		slog.Debug("Cache hit", "url", url)
 		return *res, nil
