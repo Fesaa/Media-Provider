@@ -35,7 +35,7 @@ func (o YTSSearchOptions) toURL() string {
 
 func Search(options YTSSearchOptions) (*YTSSearchResult, error) {
 	url := options.toURL()
-	slog.Info("Searing YTS for movies.", "url", url)
+	slog.Info("Searing YTS for movies", "url", url)
 
 	if res := cache.Get(url); res != nil {
 		slog.Debug("Cache hit", "url", url)
