@@ -5,8 +5,9 @@ on:
     branches:
       - "master"
     paths:
-      - "yts"
-      - "limetorrents"
+      - "yts/**"
+      - "limetorrents/**"
+      - ".github/workflow/request_tests.yml"
 
 jobs:
   test:
