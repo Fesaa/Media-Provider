@@ -1,8 +1,10 @@
 name: Publish Image to Docker Hub
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - "master"
+    paths-ignore:
+      - ".github/**"
 
 jobs:
   push_to_registry:
