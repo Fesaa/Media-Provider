@@ -1,8 +1,8 @@
-name: publish_docker_image.yml
+name: Publish Image to Docker Hub
 on:
-  push:
-    branches:
-      - 'master'
+  release:
+    types:
+      - published
 
 jobs:
   push_to_registry:
