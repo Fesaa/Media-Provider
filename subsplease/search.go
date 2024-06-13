@@ -23,13 +23,13 @@ func (o SearchOptions) toURL() string {
 	return fmt.Sprintf(URL, url.QueryEscape(o.Query))
 }
 
-func Search(options SearchOptions) (*SearchResult, error) {
+func Search(options SearchOptions) (SearchResult, error) {
 	u := options.toURL()
 	slog.Debug("Search SubsPlease for anime", "url", u)
 
 	if res := cache.Get(u); res != nil {
 		slog.Debug("Cache hit", "url", u)
-		return res, nil
+		return *res, nil
 	}
 
 	req, err := http.Get(u)
@@ -50,5 +50,5 @@ func Search(options SearchOptions) (*SearchResult, error) {
 	}
 
 	cache.Set(u, r)
-	return &r, nil
+	return r, nil
 }

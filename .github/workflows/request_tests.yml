@@ -25,3 +25,6 @@ jobs:
 
       - name: Test Lime
         run: go test -v ./limetorrents
+
+      - name: Test Subs Please
+        run: go test -v ./subsplease

@@ -10,13 +10,13 @@ import (
 	"log/slog"
 )
 
-func subsPleaseNormalizer(torrents *subsplease.SearchResult) []TorrentInfo {
+func subsPleaseNormalizer(torrents subsplease.SearchResult) []TorrentInfo {
 	if torrents == nil {
 		return []TorrentInfo{}
 	}
 
 	torrentsInfo := make([]TorrentInfo, 0)
-	for name, data := range *torrents {
+	for name, data := range torrents {
 		if len(data.Downloads) == 0 {
 			continue
 		}
