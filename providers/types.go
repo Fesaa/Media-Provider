@@ -1,7 +1,5 @@
 package providers
 
-import "github.com/Fesaa/Media-Provider/config"
-
 type TorrentInfo struct {
 	Name        string `json:"Name"`
 	Description string `json:"Description"`
@@ -16,12 +14,21 @@ type TorrentInfo struct {
 	RefUrl      string `json:"RefUrl"`
 }
 
+type SearchProvider string
+
+const (
+	NYAA       SearchProvider = "nyaa"
+	YTS        SearchProvider = "yts"
+	LIME       SearchProvider = "limetorrents"
+	SUBSPLEASE SearchProvider = "subsplease"
+)
+
 type SearchRequest struct {
-	Provider config.SearchProvider `json:"provider,omitempty"`
-	Query    string                `json:"query"`
-	Category string                `json:"category,omitempty"`
-	SortBy   string                `json:"sort_by,omitempty"`
-	Filter   string                `json:"filter,omitempty"`
+	Provider SearchProvider `json:"provider,omitempty"`
+	Query    string         `json:"query"`
+	Category string         `json:"category,omitempty"`
+	SortBy   string         `json:"sort_by,omitempty"`
+	Filter   string         `json:"filter,omitempty"`
 }
 
 type searchProvider interface {

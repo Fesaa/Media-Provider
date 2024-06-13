@@ -1,6 +1,9 @@
 package config
 
-import "log/slog"
+import (
+	"github.com/Fesaa/Media-Provider/providers"
+	"log/slog"
+)
 
 type Config interface {
 	GetPort() string
@@ -25,21 +28,12 @@ type Page interface {
 }
 
 type SearchConfig interface {
-	GetProvider() SearchProvider
+	GetProvider() providers.SearchProvider
 	GetCategories() []Category
 	GetSortBys() []SortBy
 	GetRootDirs() []string
 	GetCustomRootDir() string
 }
-
-type SearchProvider string
-
-const (
-	NYAA       SearchProvider = "nyaa"
-	YTS        SearchProvider = "yts"
-	LIME       SearchProvider = "limetorrents"
-	SUBSPLEASE SearchProvider = "subsplease"
-)
 
 type Category Pair
 type SortBy Pair

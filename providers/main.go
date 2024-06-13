@@ -1,6 +1,8 @@
 package providers
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func Search(req SearchRequest) ([]TorrentInfo, error) {
 	s, ok := providers[req.Provider]
@@ -9,4 +11,9 @@ func Search(req SearchRequest) ([]TorrentInfo, error) {
 	}
 
 	return s.Search(req)
+}
+
+func HasProvider(provider SearchProvider) bool {
+	_, ok := providers[provider]
+	return ok
 }

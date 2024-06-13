@@ -1,23 +1,22 @@
 package providers
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/irevenko/go-nyaa/nyaa"
 )
 
-var providers = map[config.SearchProvider]searchProvider{}
+var providers = map[SearchProvider]searchProvider{}
 
 func init() {
-	register(config.NYAA, nyaaTransformer, nyaa.Search, nyaaNormalizer)
-	register(config.LIME, limeTransformer, limetorrents.Search, limeNormalizer)
-	register(config.YTS, ytsTransformer, yts.Search, ytsNormalizer)
-	register(config.SUBSPLEASE, subsPleaseTransformer, subsplease.Search, subsPleaseNormalizer)
+	register(NYAA, nyaaTransformer, nyaa.Search, nyaaNormalizer)
+	register(LIME, limeTransformer, limetorrents.Search, limeNormalizer)
+	register(YTS, ytsTransformer, yts.Search, ytsNormalizer)
+	register(SUBSPLEASE, subsPleaseTransformer, subsplease.Search, subsPleaseNormalizer)
 }
 
-func register[T, S any](name config.SearchProvider, t requestTransformerFunc[S], s searchFunc[S, T], n responseNormalizerFunc[T]) {
+func register[T, S any](name SearchProvider, t requestTransformerFunc[S], s searchFunc[S, T], n responseNormalizerFunc[T]) {
 	providers[name] = &searchProviderImpl[T, S]{
 		transformer: t,
 		normalizer:  n,
