@@ -1,13 +1,12 @@
-name: Test 3rd party requests
+name: Run Tests
 
 on:
   push:
     branches:
       - "master"
-    paths:
-      - "yts/**"
-      - "limetorrents/**"
-      - ".github/workflow/request_tests.yml"
+  pull_request:
+    types:
+      - ready_for_review
 
 jobs:
   test:
@@ -25,3 +24,9 @@ jobs:
 
       - name: Test Lime
         run: go test -v ./limetorrents
+
+      - name: Test Subs Please
+        run: go test -v ./subsplease
+
+      - name: Test config
+        run: go test -v ./config
