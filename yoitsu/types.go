@@ -1,4 +1,4 @@
-package models
+package yoitsu
 
 import (
 	"github.com/Fesaa/Media-Provider/utils"
@@ -16,6 +16,7 @@ type TorrentInfo struct {
 	Speed     string `json:"Speed"`
 }
 
+// Torrent wrapper around torrent.Torrent
 type Torrent interface {
 	// GetTorrent returns the wrapped torrent.Torrent
 	GetTorrent() *torrent.Torrent
@@ -29,8 +30,8 @@ type Torrent interface {
 	GetInfo() TorrentInfo
 }
 
-// TorrentProvider wrapper around the torrent.Client struct
-type TorrentProvider interface {
+// Yoitsu wrapper around the torrent.Client struct
+type Yoitsu interface {
 	// GetBackingClient returns the torrent.Client
 	GetBackingClient() *torrent.Client
 

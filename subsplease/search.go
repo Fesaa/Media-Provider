@@ -1,48 +1,38 @@
-package yts
+package subsplease
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/utils"
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"time"
-
-	"github.com/Fesaa/Media-Provider/utils"
 )
 
-const URL string = "https://yts.mx/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
+const URL string = "https://subsplease.org/api/?f=search&tz=Europe/Brussels&s=%s"
 
 var cache = *utils.NewCache[SearchResult](5 * time.Minute)
 
 type SearchOptions struct {
-	Query  string
-	SortBy string
-	Page   int
+	Query string
 }
 
 func (o SearchOptions) toURL() string {
-	if o.Page == 0 {
-		o.Page = 1
-	}
-
-	if o.SortBy == "" {
-		o.SortBy = "title"
-	}
-
-	return fmt.Sprintf(URL, o.Query, o.Page, o.SortBy)
+	return fmt.Sprintf(URL, url.QueryEscape(o.Query))
 }
 
 func Search(options SearchOptions) (*SearchResult, error) {
-	url := options.toURL()
-	slog.Debug("Searing YTS for movies", "url", url)
+	u := options.toURL()
+	slog.Debug("Search SubsPlease for anime", "url", u)
 
-	if res := cache.Get(url); res != nil {
-		slog.Debug("Cache hit", "url", url)
+	if res := cache.Get(u); res != nil {
+		slog.Debug("Cache hit", "url", u)
 		return res, nil
 	}
 
-	req, err := http.Get(url)
+	req, err := http.Get(u)
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +49,6 @@ func Search(options SearchOptions) (*SearchResult, error) {
 		return nil, err
 	}
 
-	cache.Set(url, r)
+	cache.Set(u, r)
 	return &r, nil
 }

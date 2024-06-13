@@ -1,31 +1,40 @@
-package impl
+package auth
 
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"time"
-
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/gofiber/fiber/v2"
+	"time"
 )
 
 const (
 	TokenCookieName = "token"
 )
 
-type AuthImpl struct {
+var authProvider AuthProvider
+
+func Init() {
+	authProvider = newAuth()
+}
+
+func I() AuthProvider {
+	return authProvider
+}
+
+type authImpl struct {
 	pass   string
 	tokens map[string]time.Time
 }
 
-func newAuth() *AuthImpl {
-	return &AuthImpl{
-		pass:   config.OrDefault(config.C.Password, "admin"),
+func newAuth() AuthProvider {
+	return &authImpl{
 		tokens: make(map[string]time.Time),
+		pass:   config.OrDefault(config.I().GetPassWord(), "admin"),
 	}
 }
 
-func (v *AuthImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
+func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	token := ctx.Cookies(TokenCookieName)
 	if token == "" {
 		return false, nil
@@ -39,13 +48,8 @@ func (v *AuthImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	return time.Since(t) < time.Hour*24*7, nil
 }
 
-type LoginBody struct {
-	Password string `json:"password"`
-	Remember string `json:"remember,omitempty"`
-}
-
-func (v *AuthImpl) Login(ctx *fiber.Ctx) error {
-	body := LoginBody{}
+func (v *authImpl) Login(ctx *fiber.Ctx) error {
+	body := LoginRequest{}
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		return err
@@ -74,7 +78,7 @@ func (v *AuthImpl) Login(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func (v *AuthImpl) Logout(ctx *fiber.Ctx) error {
+func (v *authImpl) Logout(ctx *fiber.Ctx) error {
 	ctx.Cookie(&fiber.Cookie{
 		Name:    TokenCookieName,
 		Expires: time.Now().Add(-(time.Hour * 5)),

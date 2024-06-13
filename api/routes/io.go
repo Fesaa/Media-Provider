@@ -1,12 +1,11 @@
 package routes
 
 import (
-	"errors"
+	"github.com/Fesaa/Media-Provider/yoitsu"
 	"log/slog"
 	"os"
 	"path"
 
-	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -20,20 +19,7 @@ func ListDirs(ctx *fiber.Ctx) error {
 		slog.Warn("Error parsing query params:", "err", err)
 		return fiber.ErrBadRequest
 	}
-
-	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
-	if !ok {
-		slog.Debug("Holder not present while handling login")
-		return errors.New("Internal Server Error.\nHolder was not present. Please contact the administrator.")
-	}
-
-	tp := holder.GetTorrentProvider()
-	if tp == nil {
-		slog.Debug("No TorrentProvider found while handling login")
-		return errors.New("Internal Server Error. \nNo TorrentProvider found. Please contact the administrator.")
-	}
-
-	entries, err := os.ReadDir(tp.GetBaseDir() + "/" + req.Dir)
+	entries, err := os.ReadDir(yoitsu.I().GetBaseDir() + "/" + req.Dir)
 	if err != nil {
 		slog.Error("Error reading dir:", "err", err)
 		return fiber.ErrInternalServerError
@@ -61,19 +47,7 @@ func CreateDir(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
-	if !ok {
-		slog.Debug("Holder not present while handling login")
-		return errors.New("Internal Server Error.\nHolder was not present. Please contact the administrator.")
-	}
-
-	tp := holder.GetTorrentProvider()
-	if tp == nil {
-		slog.Debug("No TorrentProvider found while handling login")
-		return errors.New("Internal Server Error. \nNo TorrentProvider found. Please contact the administrator.")
-	}
-
-	p := path.Join(tp.GetBaseDir(), req.BaseDir, req.NewDir)
+	p := path.Join(yoitsu.I().GetBaseDir(), req.BaseDir, req.NewDir)
 	err := os.Mkdir(p, 0755)
 	if err != nil {
 		slog.Error("Error creating dir:", "err", err)

@@ -1,45 +1,55 @@
-package impl
+package yoitsu
 
 import (
 	"errors"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/anacrolix/torrent"
+	"github.com/anacrolix/torrent/metainfo"
+	"github.com/anacrolix/torrent/storage"
+	"github.com/anacrolix/torrent/types/infohash"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 	"time"
-
-	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/models"
-	"github.com/anacrolix/torrent"
-	"github.com/anacrolix/torrent/metainfo"
-	"github.com/anacrolix/torrent/storage"
-	"github.com/anacrolix/torrent/types/infohash"
 )
 
-var reg = regexp.MustCompile("[^a-zA-Z0-9_-]")
+var yoitsu Yoitsu
 
-type torrentProviderImpl struct {
+func I() Yoitsu {
+	return yoitsu
+}
+
+func Init() {
+	var err error
+	yoitsu, err = newYoitsu()
+	if err != nil {
+		slog.Error("Error initializing yoitsu:", "err", err)
+		panic(err)
+	}
+}
+
+type yoitsuImpl struct {
 	client        *torrent.Client
-	torrents      *utils.SafeMap[string, models.Torrent]
+	torrents      *utils.SafeMap[string, Torrent]
 	clientBaseDir string
 	baseDirs      *utils.SafeMap[string, string]
 	dir           string
 }
 
-func (t *torrentProviderImpl) GetBackingClient() *torrent.Client {
+func (t *yoitsuImpl) GetBackingClient() *torrent.Client {
 	return t.client
 }
 
-func (t *torrentProviderImpl) GetBaseDir() string {
+func (t *yoitsuImpl) GetBaseDir() string {
 	return t.clientBaseDir
 }
 
-func (t *torrentProviderImpl) AddDownload(infoHash string, baseDir string) (models.Torrent, error) {
+func (t *yoitsuImpl) AddDownload(infoHash string, baseDir string) (Torrent, error) {
 	slog.Info("Adding torrent", "baseDir", baseDir, "infoHash", infoHash)
 	torrentInfo, newTorrent := t.client.AddTorrentInfoHash(infohash.FromHexString(strings.ToLower(infoHash)))
 	if !newTorrent {
@@ -49,7 +59,7 @@ func (t *torrentProviderImpl) AddDownload(infoHash string, baseDir string) (mode
 	return t.processTorrent(torrentInfo, baseDir), nil
 }
 
-func (t *torrentProviderImpl) AddDownloadFromUrl(url string, baseDir string) (models.Torrent, error) {
+func (t *yoitsuImpl) AddDownloadFromUrl(url string, baseDir string) (Torrent, error) {
 	slog.Info("Adding torrent", "baseDir", baseDir, "url", url)
 	res, err := http.Get(url)
 	if err != nil {
@@ -76,15 +86,15 @@ func (t *torrentProviderImpl) AddDownloadFromUrl(url string, baseDir string) (mo
 	return t.processTorrent(torrentInfo, baseDir), nil
 }
 
-func (t *torrentProviderImpl) processTorrent(torrentInfo *torrent.Torrent, dir string) models.Torrent {
-	newTorrent := NewTorrent(torrentInfo, dir)
+func (t *yoitsuImpl) processTorrent(torrentInfo *torrent.Torrent, dir string) Torrent {
+	newTorrent := newTorrent(torrentInfo, dir)
 	t.torrents.Set(torrentInfo.InfoHash().String(), newTorrent)
 	t.baseDirs.Set(torrentInfo.InfoHash().String(), dir)
 	newTorrent.WaitForInfoAndDownload()
 	return newTorrent
 }
 
-func (t *torrentProviderImpl) RemoveDownload(infoHashString string, deleteFiles bool) error {
+func (t *yoitsuImpl) RemoveDownload(infoHashString string, deleteFiles bool) error {
 	infoHashString = strings.ToLower(infoHashString)
 
 	tor, ok := t.torrents.Get(infoHashString)
@@ -99,26 +109,26 @@ func (t *torrentProviderImpl) RemoveDownload(infoHashString string, deleteFiles 
 	if err != nil {
 		slog.Error("Unable to cancel info loading", "err", err)
 	}
-	torrent := tor.GetTorrent()
+	backingTorrent := tor.GetTorrent()
 	slog.Info("Dropping torrent",
-		"name", torrent.Name(),
-		"infoHash", torrent.InfoHash().HexString(),
+		"name", backingTorrent.Name(),
+		"infoHash", backingTorrent.InfoHash().HexString(),
 		"deleteFiles", deleteFiles,
-		"downloaded", torrent.BytesCompleted(),
-		"total", torrent.Length())
-	torrent.Drop()
+		"downloaded", backingTorrent.BytesCompleted(),
+		"total", backingTorrent.Length())
+	backingTorrent.Drop()
 
 	t.torrents.Delete(infoHashString)
 	t.baseDirs.Delete(infoHashString)
 	if deleteFiles {
-		go t.deleteTorrentFiles(torrent, baseDir)
+		go t.deleteTorrentFiles(backingTorrent, baseDir)
 	} else {
-		go t.cleanup(torrent, baseDir)
+		go t.cleanup(backingTorrent, baseDir)
 	}
 	return nil
 }
 
-func (t *torrentProviderImpl) cleanup(tor *torrent.Torrent, baseDir string) {
+func (t *yoitsuImpl) cleanup(tor *torrent.Torrent, baseDir string) {
 	if tor == nil {
 		return
 	}
@@ -162,7 +172,7 @@ func (t *torrentProviderImpl) cleanup(tor *torrent.Torrent, baseDir string) {
 	}
 }
 
-func (t *torrentProviderImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
+func (t *yoitsuImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
 	if tor == nil {
 		return
 	}
@@ -176,12 +186,12 @@ func (t *torrentProviderImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir s
 	}
 }
 
-func (t *torrentProviderImpl) GetRunningTorrents() *utils.SafeMap[string, models.Torrent] {
+func (t *yoitsuImpl) GetRunningTorrents() *utils.SafeMap[string, Torrent] {
 	return t.torrents
 }
 
 // GetTorrentDirFilePathMaker appending the infohash allows us to always clean up the torrent files on delete
-func (t *torrentProviderImpl) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMaker {
+func (t *yoitsuImpl) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMaker {
 	return func(baseDir string, info *metainfo.Info, infoHash metainfo.Hash) string {
 		d, ok := t.baseDirs.Get(infoHash.HexString())
 		if !ok {
@@ -191,11 +201,11 @@ func (t *torrentProviderImpl) GetTorrentDirFilePathMaker() storage.TorrentDirFil
 	}
 }
 
-func newTorrent() (*torrentProviderImpl, error) {
-	dir := config.OrDefault(config.C.RootDir, "temp")
+func newYoitsu() (Yoitsu, error) {
+	dir := config.OrDefault(config.I().GetRootDir(), "temp")
 
-	impl := &torrentProviderImpl{
-		torrents:      utils.NewSafeMap[string, models.Torrent](),
+	impl := &yoitsuImpl{
+		torrents:      utils.NewSafeMap[string, Torrent](),
 		clientBaseDir: dir,
 		baseDirs:      utils.NewSafeMap[string, string](),
 		dir:           dir,
@@ -219,10 +229,10 @@ func newTorrent() (*torrentProviderImpl, error) {
 	return impl, nil
 }
 
-func (t *torrentProviderImpl) cleaner() {
+func (t *yoitsuImpl) cleaner() {
 	for range time.Tick(time.Second * 5) {
 		i := 0
-		t.torrents.ForEach(func(s string, m models.Torrent) {
+		t.torrents.ForEach(func(s string, m Torrent) {
 			tor := m.GetTorrent()
 			if tor.BytesCompleted() == tor.Length() && tor.BytesCompleted() > 0 {
 				i++

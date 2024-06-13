@@ -2,42 +2,44 @@ package config
 
 import "log/slog"
 
-// TODO: Validation
-type Config struct {
-	Port          string        `yaml:"port"`
-	Password      string        `yaml:"password"`
-	RootDir       string        `yaml:"root_dir"`
-	RootURL       string        `yaml:"root_url"`
-	Pages         []Page        `yaml:"pages"`
-	LoggingConfig LoggingConfig `yaml:"logging"`
+type Config interface {
+	GetPort() string
+	GetPassWord() string
+	GetRootDir() string
+	GetRootURl() string
+	GetPages() Pages
+	GetLoggingConfig() LoggingConfig
 }
 
-type LoggingConfig struct {
-	LogLevel slog.Level `yaml:"log_level"`
-	Source   bool       `yaml:"source"`
-	Handler  string     `yaml:"handler"`
+type LoggingConfig interface {
+	GetLogLevel() slog.Level
+	GetSource() bool
+	GetHandler() string
 }
 
-type Page struct {
-	Title        string       `yaml:"title" json:"title"`
-	SearchConfig SearchConfig `yaml:"search" json:"search"`
+type Pages []Page
+
+type Page interface {
+	GetTitle() string
+	GetSearchConfig() SearchConfig
+}
+
+type SearchConfig interface {
+	GetProvider() SearchProvider
+	GetCategories() []Category
+	GetSortBys() []SortBy
+	GetRootDirs() []string
+	GetCustomRootDir() string
 }
 
 type SearchProvider string
 
 const (
-	NYAA SearchProvider = "nyaa"
-	YTS  SearchProvider = "yts"
-	LIME SearchProvider = "lime"
+	NYAA       SearchProvider = "nyaa"
+	YTS        SearchProvider = "yts"
+	LIME       SearchProvider = "limetorrents"
+	SUBSPLEASE SearchProvider = "subsplease"
 )
-
-type SearchConfig struct {
-	Provider      SearchProvider `yaml:"provider" json:"provider"`
-	Categories    []Category     `yaml:"categories" json:"categories"`
-	SortBys       []SortBy       `yaml:"sorts" json:"sorts"`
-	RootDirs      []string       `yaml:"root_dirs" json:"root_dirs"`
-	CustomRootDir string         `yaml:"custom_root_dir" json:"custom_root_dir"`
-}
 
 type Category Pair
 type SortBy Pair

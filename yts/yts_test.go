@@ -6,7 +6,7 @@ import (
 )
 
 func TestReq(t *testing.T) {
-	opt := YTSSearchOptions{
+	opt := SearchOptions{
 		Query:  url.QueryEscape("Star Wars"),
 		SortBy: "Seeders",
 		Page:   0,

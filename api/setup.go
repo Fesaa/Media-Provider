@@ -2,12 +2,11 @@ package api
 
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
-	"github.com/Fesaa/Media-Provider/middleware"
-	"github.com/Fesaa/Media-Provider/models"
+	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/gofiber/fiber/v2"
 )
 
-func Setup(app fiber.Router, holder models.Holder) {
+func Setup(app fiber.Router) {
 	api := app.Group("/api")
 
 	api.Get("/health", func(c *fiber.Ctx) error {
@@ -17,19 +16,18 @@ func Setup(app fiber.Router, holder models.Holder) {
 	api.Post("/login", routes.Login)
 	api.Get("/logout", routes.Logout)
 
-	api.Post("/search", middleware.AuthHandler, routes.Search)
-	api.Get("/stats", middleware.AuthHandler, routes.Stats)
-	api.Post("/download/", middleware.AuthHandler, routes.Download)
-	api.Get("/stop/:infoHash", middleware.AuthHandler, routes.Stop)
+	api.Post("/search", auth.Middleware(), routes.Search)
+	api.Get("/stats", auth.Middleware(), routes.Stats)
+	api.Post("/download/", auth.Middleware(), routes.Download)
+	api.Get("/stop/:infoHash", auth.Middleware(), routes.Stop)
 
-	api.Get("/pages", middleware.AuthHandler, routes.Pages)
-	api.Get("/pages/:index", middleware.AuthHandler, routes.Page)
+	api.Get("/pages", auth.Middleware(), routes.Pages)
+	api.Get("/pages/:index", auth.Middleware(), routes.Page)
 
 	io := api.Group("/io")
-	io.Post("/ls", middleware.AuthHandler, routes.ListDirs)
-	io.Post("/create", middleware.AuthHandler, routes.CreateDir)
+	io.Post("/ls", auth.Middleware(), routes.ListDirs)
+	io.Post("/create", auth.Middleware(), routes.CreateDir)
 
 	config := api.Group("/config")
-	config.Post("/reload", middleware.AuthHandler, routes.ReloadPages)
-	config.Get("/", middleware.AuthHandler, routes.GetConfig)
+	config.Get("/", auth.Middleware(), routes.GetConfig)
 }

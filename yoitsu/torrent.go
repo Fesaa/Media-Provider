@@ -1,13 +1,11 @@
-package impl
+package yoitsu
 
 import (
 	"context"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/models"
+	"github.com/anacrolix/torrent"
 	"log/slog"
 	"time"
-
-	"github.com/anacrolix/torrent"
 )
 
 // SpeedData contains the amount of download bytes at a certain time
@@ -28,7 +26,7 @@ type torrentImpl struct {
 	lastSpeed SpeedData
 }
 
-func NewTorrent(t *torrent.Torrent, baseDir string) models.Torrent {
+func newTorrent(t *torrent.Torrent, baseDir string) Torrent {
 	return &torrentImpl{
 		t:       t,
 		key:     t.InfoHash().HexString(),
@@ -46,7 +44,7 @@ func (t *torrentImpl) GetTorrent() *torrent.Torrent {
 
 func (t *torrentImpl) WaitForInfoAndDownload() {
 	if t.cancel != nil {
-		slog.Debug("torrentImpl has already started loading info", "name", t.t.Name(), "infoHash", t.t.InfoHash().HexString())
+		slog.Debug("Yoitsu has already started loading info", "name", t.t.Name(), "infoHash", t.t.InfoHash().HexString())
 		return
 	}
 
@@ -73,7 +71,7 @@ func (t *torrentImpl) Cancel() error {
 	return nil
 }
 
-func (t *torrentImpl) GetInfo() models.TorrentInfo {
+func (t *torrentImpl) GetInfo() TorrentInfo {
 	c := t.t.Stats().BytesReadData
 	bytesRead := c.Int64()
 	var speed int64 = 0
@@ -87,7 +85,7 @@ func (t *torrentImpl) GetInfo() models.TorrentInfo {
 		bytes: bytesRead,
 	}
 
-	return models.TorrentInfo{
+	return TorrentInfo{
 		InfoHash:  t.key,
 		Name:      t.t.Name(),
 		Size:      t.t.Length(),
