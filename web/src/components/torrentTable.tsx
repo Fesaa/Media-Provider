@@ -64,6 +64,17 @@ export default function TorrentTable(props: {
       });
   }
 
+  function hasAtLeast(f: (torrent: TorrentInfo) => string): boolean {
+    return props.torrents.map(f).some(str => str !== null && str !== undefined && str.trim() !== '');
+  }
+
+
+  const showDate = hasAtLeast(torrent => torrent.Date);
+  const showSize = hasAtLeast(torrent => torrent.Size);
+  const showDownloads = hasAtLeast(torrent => torrent.Downloads);
+  const showSeeders = hasAtLeast(torrent => torrent.Seeders);
+  const showLeechers = hasAtLeast(torrent => torrent.Leechers);
+
   return (
     <div>
       {open && <div></div>}
@@ -75,21 +86,26 @@ export default function TorrentTable(props: {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                {showDate &&  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
                   Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                </th>}
+                {showSize && <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
                   Size
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                </th>}
+                {showDownloads && <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
                   Downloads
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                </th>}
+                {showSeeders && <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
                   Seeds
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
+                </th>}
+                {showLeechers && <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
                   Leeches
-                </th>
+                </th>}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"></th>
               </tr>
             </thead>
@@ -119,21 +135,21 @@ export default function TorrentTable(props: {
                       )}
                     </div>
                   </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell border">
+                  {showDate && <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Date}
-                  </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell border">
+                  </td>}
+                  {showSize && <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Size}
-                  </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell border">
+                  </td>}
+                  {showDownloads && <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Downloads}
-                  </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell border">
+                  </td>}
+                  {showSeeders && <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Seeders}
-                  </td>
-                  <td className="p-2 text-sm text-center hidden md:table-cell border">
+                  </td>}
+                  {showLeechers && <td className="p-2 text-sm text-center hidden md:table-cell border">
                     {torrent.Leechers}
-                  </td>
+                  </td>}
                   <td className="border">
                     <ArrowDownTrayIcon
                       type="button"

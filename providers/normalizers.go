@@ -1,28 +1,48 @@
-package routes
+package providers
 
 import (
 	"fmt"
-
 	"github.com/Fesaa/Media-Provider/limetorrents"
+	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
+	"github.com/anacrolix/torrent/metainfo"
 	"github.com/irevenko/go-nyaa/types"
+	"log/slog"
 )
 
-type TorrentInfo struct {
-	Name        string `json:"Name"`
-	Description string `json:"Description"`
-	Date        string `json:"Date"`
-	Size        string `json:"Size"`
-	Seeders     string `json:"Seeders"`
-	Leechers    string `json:"Leechers"`
-	Downloads   string `json:"Downloads"`
-	Link        string `json:"Link"`
-	InfoHash    string `json:"InfoHash"`
-	ImageUrl    string `json:"ImageUrl"`
-	RefUrl      string `json:"RefUrl"`
+func subsPleaseNormalizer(torrents *subsplease.SearchResult) []TorrentInfo {
+	if torrents == nil {
+		return []TorrentInfo{}
+	}
+
+	torrentsInfo := make([]TorrentInfo, 0)
+	for name, data := range *torrents {
+		if len(data.Downloads) == 0 {
+			continue
+		}
+		download := data.Downloads[len(data.Downloads)-1]
+		m, err := metainfo.ParseMagnetUri(download.Magnet)
+		if err != nil {
+			slog.Debug("Couldn't parse magnet uri", "error", err, "info", fmt.Sprintf("%+v", data))
+		}
+		torrentsInfo = append(torrentsInfo, TorrentInfo{
+			Name:        name,
+			Description: "",
+			Date:        data.ReleaseDate,
+			Size:        "",
+			Seeders:     "",
+			Leechers:    "",
+			Downloads:   "",
+			Link:        "",
+			InfoHash:    m.InfoHash.HexString(),
+			ImageUrl:    data.ImageURL,
+			RefUrl:      data.ReferenceURL(),
+		})
+	}
+	return torrentsInfo
 }
 
-func fromLime(torrents []limetorrents.SearchResult) []TorrentInfo {
+func limeNormalizer(torrents []limetorrents.SearchResult) []TorrentInfo {
 	torrentsInfo := make([]TorrentInfo, len(torrents))
 	for i, t := range torrents {
 		torrentsInfo[i] = TorrentInfo{
@@ -42,10 +62,11 @@ func fromLime(torrents []limetorrents.SearchResult) []TorrentInfo {
 	return torrentsInfo
 }
 
-func fromYTS(movies []yts.YTSMovie) []TorrentInfo {
+func ytsNormalizer(data *yts.SearchResult) []TorrentInfo {
+	movies := data.Data.Movies
 	torrents := make([]TorrentInfo, len(movies))
 	for i, movie := range movies {
-		var torrent *yts.YTSTorrent = nil
+		var torrent *yts.Torrent = nil
 		for _, t := range movie.Torrents {
 			if t.Quality == "1080p" {
 				torrent = &t
@@ -73,7 +94,7 @@ func fromYTS(movies []yts.YTSMovie) []TorrentInfo {
 	return torrents
 }
 
-func fromNyaa(torrents []types.Torrent) []TorrentInfo {
+func nyaaNormalizer(torrents []types.Torrent) []TorrentInfo {
 	torrentsInfo := make([]TorrentInfo, len(torrents))
 	for i, t := range torrents {
 		torrentsInfo[i] = TorrentInfo{

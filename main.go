@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/yoitsu"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -11,14 +13,11 @@ import (
 
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/impl"
-	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
 )
 
-var holder models.Holder
 var baseURL string
 var baseURLMap fiber.Map
 
@@ -28,60 +27,51 @@ func init() {
 	}
 
 	opt := &slog.HandlerOptions{
-		AddSource:   config.I().LoggingConfig.Source,
-		Level:       config.I().LoggingConfig.LogLevel,
+		AddSource:   config.I().GetLoggingConfig().GetSource(),
+		Level:       config.I().GetLoggingConfig().GetLogLevel(),
 		ReplaceAttr: nil,
 	}
 	var h slog.Handler
-	switch strings.ToUpper(config.I().LoggingConfig.Handler) {
+	switch strings.ToUpper(config.I().GetLoggingConfig().GetHandler()) {
 	case "TEXT":
 		h = slog.NewTextHandler(os.Stdout, opt)
 	case "JSON":
 		h = slog.NewJSONHandler(os.Stdout, opt)
 	default:
-		panic("invalid logging handler: " + config.I().LoggingConfig.Handler)
+		panic("Invalid logging handler: " + config.I().GetLoggingConfig().GetHandler())
 	}
 	slog.SetDefault(slog.New(h))
-}
 
-func main() {
-	baseURL = config.OrDefault(config.C.RootURL, "")
-	slog.Info("Starting Media-Provider", "baseURL", baseURL)
+	baseURL = config.OrDefault(config.I().GetRootURl(), "")
 	baseURLMap = fiber.Map{
 		"path": baseURL,
 	}
+	auth.Init()
+	yoitsu.Init()
+}
+
+func main() {
+	slog.Info("Starting Media-Provider", "baseURL", baseURL)
 	engine := html.New("./web/views", ".html")
 	app := fiber.New(fiber.Config{
 		Views:        engine,
 		ErrorHandler: errorHandler,
 	})
 
-	slog.Debug("Adding http call logging")
 	app.Use(logger.New(logger.Config{
 		TimeFormat: "2006/01/02 15:04:05",
 		Format:     "${time} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
 		Next: func(c *fiber.Ctx) bool {
-			return config.I().LoggingConfig.LogLevel != slog.LevelDebug
+			return config.I().GetLoggingConfig().GetLogLevel() != slog.LevelDebug
 		},
 	}))
 
-	var err error
-	holder, err = impl.New()
-	if err != nil {
-		slog.Error("Unable to create holder, exiting application", "error", err)
-		panic(err)
-	}
-
-	app.Use(setHolder)
-	app.Hooks().OnShutdown(holder.Shutdown)
 	app.Static(baseURL, "./web/public")
-
 	router := app.Group(baseURL)
-
-	api.Setup(router, holder)
+	api.Setup(router)
 	RegisterFrontEnd(router)
 
-	port := config.OrDefault(config.C.Port, "80")
+	port := config.OrDefault(config.I().GetPort(), "80")
 	e := app.Listen(":" + port)
 	if e != nil {
 		slog.Error("Unable to start server, exiting application", "error", e)
@@ -92,7 +82,7 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	err = app.ShutdownWithTimeout(time.Second * 30)
+	err := app.ShutdownWithTimeout(time.Second * 30)
 	if err != nil {
 		slog.Error("An error occurred during shutdown", "error", err)
 		return
@@ -113,9 +103,4 @@ func errorHandler(c *fiber.Ctx, err error) error {
 
 	c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
 	return c.Status(code).SendString(err.Error())
-}
-
-func setHolder(ctx *fiber.Ctx) error {
-	ctx.Locals(models.HolderKey, holder)
-	return ctx.Next()
 }

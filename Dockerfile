@@ -3,6 +3,7 @@ FROM node:18 AS npm-stage
 WORKDIR /app
 
 COPY web/package.json web/package-lock.json ./
+RUN npx update-browserslist-db@latest
 RUN npm install
 
 COPY web ./
@@ -19,12 +20,13 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY ./api ./api
-COPY ./impl ./impl
-COPY ./limetorrents ./limetorrents
-COPY ./middleware ./middleware
+COPY ./auth ./auth
 COPY ./config ./config
-COPY ./models ./models
+COPY ./limetorrents ./limetorrents
+COPY ./providers ./providers
+COPY ./subsplease ./subsplease
 COPY ./utils ./utils
+COPY ./yoitsu ./yoitsu
 COPY ./yts ./yts
 COPY ./frontend.go ./frontend.go
 COPY ./main.go ./
@@ -41,7 +43,5 @@ COPY --from=npm-stage /app/views/ /app/web/views
 
 
 RUN apk add --no-cache ca-certificates curl
-
-EXPOSE 80
 
 CMD ["./media-provider"]

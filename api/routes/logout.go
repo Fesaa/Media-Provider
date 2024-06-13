@@ -1,21 +1,15 @@
 package routes
 
 import (
+	"github.com/Fesaa/Media-Provider/auth"
 	"log/slog"
 
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/models"
 	"github.com/gofiber/fiber/v2"
 )
 
 func Logout(ctx *fiber.Ctx) error {
-	holder, ok := ctx.Locals(models.HolderKey).(models.Holder)
-	if !ok {
-		slog.Debug("Holder not present while handling logout")
-		return ctx.Status(500).SendString("Internal Server Error.\nHolder was not present. Please contact the administrator.")
-	}
-
-	authProvider := holder.GetAuthProvider()
+	authProvider := auth.I()
 	if authProvider == nil {
 		slog.Debug("No AuthProvider found while handling logout")
 		return ctx.Status(500).SendString("Internal Server Error. \nNo AuthProvider found. Please contact the administrator.")
@@ -26,5 +20,5 @@ func Logout(ctx *fiber.Ctx) error {
 		return ctx.Status(500).SendString("Could not logout. Please try again. " + err.Error())
 	}
 
-	return ctx.Redirect(config.C.RootURL + "/login")
+	return ctx.Redirect(config.I().GetRootURl() + "/login")
 }

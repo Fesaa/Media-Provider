@@ -1,42 +1,38 @@
 package config
 
-import "log/slog"
-
-// TODO: Validation
-type Config struct {
-	Port          string        `yaml:"port"`
-	Password      string        `yaml:"password"`
-	RootDir       string        `yaml:"root_dir"`
-	RootURL       string        `yaml:"root_url"`
-	Pages         []Page        `yaml:"pages"`
-	LoggingConfig LoggingConfig `yaml:"logging"`
-}
-
-type LoggingConfig struct {
-	LogLevel slog.Level `yaml:"log_level"`
-	Source   bool       `yaml:"source"`
-	Handler  string     `yaml:"handler"`
-}
-
-type Page struct {
-	Title        string       `yaml:"title" json:"title"`
-	SearchConfig SearchConfig `yaml:"search" json:"search"`
-}
-
-type SearchProvider string
-
-const (
-	NYAA SearchProvider = "nyaa"
-	YTS  SearchProvider = "yts"
-	LIME SearchProvider = "lime"
+import (
+	"github.com/Fesaa/Media-Provider/providers"
+	"log/slog"
 )
 
-type SearchConfig struct {
-	Provider      SearchProvider `yaml:"provider" json:"provider"`
-	Categories    []Category     `yaml:"categories" json:"categories"`
-	SortBys       []SortBy       `yaml:"sorts" json:"sorts"`
-	RootDirs      []string       `yaml:"root_dirs" json:"root_dirs"`
-	CustomRootDir string         `yaml:"custom_root_dir" json:"custom_root_dir"`
+type Config interface {
+	GetPort() string
+	GetPassWord() string
+	GetRootDir() string
+	GetRootURl() string
+	GetPages() Pages
+	GetLoggingConfig() LoggingConfig
+}
+
+type LoggingConfig interface {
+	GetLogLevel() slog.Level
+	GetSource() bool
+	GetHandler() string
+}
+
+type Pages []Page
+
+type Page interface {
+	GetTitle() string
+	GetSearchConfig() SearchConfig
+}
+
+type SearchConfig interface {
+	GetProvider() providers.SearchProvider
+	GetCategories() []Category
+	GetSortBys() []SortBy
+	GetRootDirs() []string
+	GetCustomRootDir() string
 }
 
 type Category Pair

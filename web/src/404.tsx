@@ -10,7 +10,7 @@ function Status404() {
           Sorry, the page you're looking for can't be found.
         </p>
         <a
-          href="/"
+          href={`${BASE_URL}`}
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
         >
           Go Home

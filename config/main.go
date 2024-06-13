@@ -1,15 +1,17 @@
 package config
 
 import (
+	"fmt"
+	"github.com/Fesaa/Media-Provider/providers"
 	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
-var C Config
+var c configImpl
 
 func I() Config {
-	return C
+	return c
 }
 
 func OrDefault(value string, defaultValue ...string) string {
@@ -22,28 +24,25 @@ func OrDefault(value string, defaultValue ...string) string {
 	return value
 }
 
+func validate() error {
+	for i, page := range c.Pages {
+		if !providers.HasProvider(page.SearchConfig.Provider) {
+			return fmt.Errorf("page %d (%s) has an invalid provider '%s'", i, page.Title, page.SearchConfig.Provider)
+		}
+	}
+
+	return nil
+}
+
 func LoadConfig(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(data, &C)
-}
-
-func SetPages(pages []Page) {
-	C.Pages = pages
-}
-
-func ReloadPages(path string) error {
-	data, err := os.ReadFile(path)
+	err = yaml.Unmarshal(data, &c)
 	if err != nil {
 		return err
 	}
-	var c Config
-	if err := yaml.Unmarshal(data, &c); err != nil {
-		return err
-	}
 
-	C.Pages = c.Pages
-	return nil
+	return validate()
 }

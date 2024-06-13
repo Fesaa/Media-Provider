@@ -6,22 +6,22 @@ import (
 )
 
 func Pages(ctx *fiber.Ctx) error {
-	return ctx.JSON(config.C.Pages)
+	return ctx.JSON(config.I().GetPages())
 }
 
 func Page(ctx *fiber.Ctx) error {
-	index, error := ctx.ParamsInt("index", -1)
-	if error != nil || index == -1 {
+	index, err := ctx.ParamsInt("index", -1)
+	if err != nil || index == -1 {
 		return ctx.Status(400).JSON(fiber.Map{
 			"error": "Invalid index",
 		})
 	}
 
-	if index >= len(config.C.Pages) {
+	if index >= len(config.I().GetPages()) {
 		return ctx.Status(404).JSON(fiber.Map{
 			"error": "Page not found",
 		})
 	}
 
-	return ctx.JSON(config.C.Pages[index])
+	return ctx.JSON(config.I().GetPages()[index])
 }
