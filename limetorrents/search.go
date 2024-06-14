@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -102,5 +103,5 @@ func getSearch(url string) (*goquery.Document, error) {
 }
 
 func formatUrl(s SearchOptions) string {
-	return fmt.Sprintf(SEARCH_URL, s.Category, s.Query, s.Page)
+	return fmt.Sprintf(SEARCH_URL, s.Category, url.QueryEscape(s.Query), s.Page)
 }
