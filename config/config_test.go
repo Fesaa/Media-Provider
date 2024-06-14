@@ -14,7 +14,7 @@ func TestConfig(t *testing.T) {
 		t.Fatal(fmt.Errorf("wrong root url: %s wanted behind-me", I().GetRootURl()))
 	}
 
-	if len(I().GetPages()) != 4 {
-		t.Fatal(fmt.Errorf("wrong number of pages: %d wanted 4", I().GetPages()))
+	if len(I().GetPages()) != 5 {
+		t.Fatal(fmt.Errorf("wrong number of pages: %d wanted 5", len(I().GetPages())))
 	}
 }
