@@ -7,9 +7,11 @@ logging:
   source: false
   handler: "json"
 pages:
-  - title: "Anime (Nyaa)"
+  - title: "Anime"
     search:
-      provider: "nyaa"
+      providers:
+        - "nyaa"
+        - "subsplease"
       search_modifiers:
         categories:
           title: "Category"
@@ -42,15 +44,10 @@ pages:
       root_dirs:
         - "Anime"
       custom_root_dir: "Anime"
-  - title: "Anime (SubsPlease)"
-    search:
-      provider: "subsplease"
-      root_dirs:
-        - "Anime"
-      custom_root_dir: "Anime"
   - title: "Mangadex"
     search:
-      provider: "mangadex"
+      providers:
+        - "mangadex"
       search_modifiers:
         includeTags:
           title: "Include Tags"
@@ -105,7 +102,8 @@ pages:
       custom_root_dir: "Manga"
   - title: "Manga & Light Novels"
     search:
-      provider: "nyaa"
+      providers:
+       - "nyaa"
       search_modifiers:
         categories:
           title: "Category"
@@ -141,7 +139,8 @@ pages:
       custom_root_dir: ""
   - title: "Movies"
     search:
-      provider: "yts"
+      providers:
+       - "yts"
       search_modifiers:
         sortBys:
           title: "Sort By"
@@ -168,7 +167,8 @@ pages:
       custom_root_dir: "Movies"
   - title: "Lime"
     search:
-      provider: "limetorrents"
+      providers:
+        - "limetorrents"
       search_modifiers:
         categories:
           title: "Category"

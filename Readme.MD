@@ -18,6 +18,8 @@ The project currently supports the following providers (websites), to fetch cont
 Is done via `config.yaml`, and must be placed at `/app/config.yaml` when using Docker. Media-Provider works by provider `pages` in the config which will each give you a tab on the website.
 
 Each page has a `title` used as name. And a search config. You can find an example [here](config.yaml.example), and the structs [here](config/impl.go) & [here](config/types.go) if you want to do more.
+You may use several providers per page, the `search_config` doesn't have to be correct for both, it'll filter out correctly.
+However, if both use the same key, it may cause problems.
 
 ### Search modifiers
 Search modifiers are essentials to how you want to search for content. You can provide filters, etc... per page. You can find information per provider in their respective Readme's. 
