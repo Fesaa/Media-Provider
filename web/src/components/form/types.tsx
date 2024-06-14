@@ -7,10 +7,8 @@ export interface Page {
   search: SearchConfig;
 }
 
-export type SearchProvider = "nyaa" | "yts" | "lime";
-
 export interface SearchConfig {
-  provider: SearchProvider;
+  providers: string[];
   search_modifiers: { [key: string]: Modifier };
   root_dirs: string[];
   custom_root_dir: string;

@@ -14,7 +14,7 @@ import (
 var tags = utils.NewSafeMap[string, string]()
 
 func mapTags(in []string, skip bool) ([]string, error) {
-	mappedTags := make([]string, len(in))
+	mappedTags := make([]string, 0)
 	for _, tag := range in {
 		id, ok := tags.Get(tag)
 		if !ok {

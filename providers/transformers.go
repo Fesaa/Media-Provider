@@ -58,30 +58,28 @@ func limeTransformer(s SearchRequest) limetorrents.SearchOptions {
 	}
 }
 
-func nyaaTransformer(s SearchRequest) nyaa.SearchOptions {
-	n := nyaa.SearchOptions{}
-	n.Query = url.QueryEscape(s.Query)
-	if s.Provider != "" {
-		n.Provider = string(s.Provider)
-	} else {
-		n.Provider = "nyaa"
-	}
-	categories, ok := s.Modifiers["categories"]
-	if ok && len(categories) > 0 {
-		n.Category = categories[0]
-	}
+func nyaaTransformer(p string) requestTransformerFunc[nyaa.SearchOptions] {
+	return func(s SearchRequest) nyaa.SearchOptions {
+		n := nyaa.SearchOptions{}
+		n.Query = url.QueryEscape(s.Query)
+		n.Provider = p
+		categories, ok := s.Modifiers["categories"]
+		if ok && len(categories) > 0 {
+			n.Category = categories[0]
+		}
 
-	sortBys, ok := s.Modifiers["sortBys"]
-	if ok && len(sortBys) > 0 {
-		n.SortBy = sortBys[0]
-	}
+		sortBys, ok := s.Modifiers["sortBys"]
+		if ok && len(sortBys) > 0 {
+			n.SortBy = sortBys[0]
+		}
 
-	filters, ok := s.Modifiers["filters"]
-	if ok && len(filters) > 0 {
-		n.Filter = filters[0]
-	}
+		filters, ok := s.Modifiers["filters"]
+		if ok && len(filters) > 0 {
+			n.Filter = filters[0]
+		}
 
-	return n
+		return n
+	}
 }
 
 func ytsTransformer(s SearchRequest) yts.SearchOptions {

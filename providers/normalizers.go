@@ -32,6 +32,7 @@ func mangadexNormalizer(mangas *mangadex.MangaSearchResponse) []Info {
 			Date:        strconv.Itoa(data.Attributes.Year),
 			InfoHash:    data.Id,
 			RefUrl:      data.RefURL(),
+			Provider:    config.MANGADEX,
 		})
 	}
 
@@ -59,6 +60,7 @@ func subsPleaseNormalizer(torrents subsplease.SearchResult) []Info {
 			InfoHash: m.InfoHash.HexString(),
 			ImageUrl: data.ImageURL,
 			RefUrl:   data.ReferenceURL(),
+			Provider: config.SUBSPLEASE,
 		})
 	}
 	return torrentsInfo
@@ -79,6 +81,7 @@ func limeNormalizer(torrents []limetorrents.SearchResult) []Info {
 			InfoHash:    t.Hash,
 			ImageUrl:    "",
 			RefUrl:      t.PageUrl,
+			Provider:    config.LIME,
 		}
 	}
 	return torrentsInfo
@@ -111,29 +114,33 @@ func ytsNormalizer(data *yts.SearchResult) []Info {
 			InfoHash:    torrent.Hash,
 			ImageUrl:    movie.MediumCoverImage,
 			RefUrl:      movie.Url,
+			Provider:    config.YTS,
 		}
 	}
 	return torrents
 }
 
-func nyaaNormalizer(torrents []types.Torrent) []Info {
-	torrentsInfo := make([]Info, len(torrents))
-	for i, t := range torrents {
-		torrentsInfo[i] = Info{
-			Name:        t.Name,
-			Description: t.Description,
-			Date:        t.Date,
-			Size:        t.Size,
-			Seeders:     t.Seeders,
-			Leechers:    t.Leechers,
-			Downloads:   t.Downloads,
-			Link:        t.Link,
-			InfoHash:    t.InfoHash,
-			ImageUrl:    "",
-			RefUrl:      t.GUID,
+func nyaaNormalizer(provider config.Provider) responseNormalizerFunc[[]types.Torrent] {
+	return func(torrents []types.Torrent) []Info {
+		torrentsInfo := make([]Info, len(torrents))
+		for i, t := range torrents {
+			torrentsInfo[i] = Info{
+				Name:        t.Name,
+				Description: t.Description,
+				Date:        t.Date,
+				Size:        t.Size,
+				Seeders:     t.Seeders,
+				Leechers:    t.Leechers,
+				Downloads:   t.Downloads,
+				Link:        t.Link,
+				InfoHash:    t.InfoHash,
+				ImageUrl:    "",
+				RefUrl:      t.GUID,
+				Provider:    provider,
+			}
 		}
+		return torrentsInfo
 	}
-	return torrentsInfo
 }
 
 func stringify(i int) string {

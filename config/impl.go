@@ -2,6 +2,7 @@ package config
 
 import (
 	"log/slog"
+	"slices"
 )
 
 type configImpl struct {
@@ -31,7 +32,7 @@ func (c configImpl) GetRootURl() string {
 
 func (c configImpl) HasProvider(provider Provider) bool {
 	for _, p := range c.Pages {
-		if p.SearchConfig.Provider == provider {
+		if slices.Contains(p.SearchConfig.Provider, provider) {
 			return true
 		}
 	}
@@ -82,13 +83,13 @@ func (p pageImpl) GetSearchConfig() SearchConfig {
 }
 
 type searchConfigImpl struct {
-	Provider        Provider            `yaml:"provider" json:"provider"`
+	Provider        []Provider          `yaml:"providers" json:"providers"`
 	SearchModifiers map[string]Modifier `yaml:"search_modifiers" json:"search_modifiers"`
 	RootDirs        []string            `yaml:"root_dirs" json:"root_dirs"`
 	CustomRootDir   string              `yaml:"custom_root_dir" json:"custom_root_dir"`
 }
 
-func (s searchConfigImpl) GetProvider() Provider {
+func (s searchConfigImpl) GetProvider() []Provider {
 	return s.Provider
 }
 

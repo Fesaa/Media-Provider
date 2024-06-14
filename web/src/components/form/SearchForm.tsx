@@ -6,7 +6,7 @@ import axios from "axios";
 import DirFormComponent from "../io/form";
 
 interface SearchRequest {
-  provider: string;
+  provider: string[];
   query: string;
   modifiers: { [key: string]: Modifier };
 }
@@ -52,7 +52,7 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({ options, onChange }) => {
 
 export default function SearchForm(props: SearchProps) {
   const title = props.page.title;
-  const searchProvider = props.page.search.provider;
+  const searchProvider = props.page.search.providers;
   const modifiers = props.page.search.search_modifiers;
   const dirs = props.page.search.root_dirs;
   const customRootDir = props.page.search.custom_root_dir;
@@ -252,7 +252,6 @@ export default function SearchForm(props: SearchProps) {
         className="flex items-center justify-center justify-items-center"
       >
         <TorrentTable
-            provider={searchProvider}
             torrents={torrents}
             options={{
               baseDir: customRequestDir != "" ? customRequestDir : requestDir,

@@ -28,7 +28,7 @@ type Page interface {
 }
 
 type SearchConfig interface {
-	GetProvider() Provider
+	GetProvider() []Provider
 	GetSearchModifiers() map[string]Modifier
 	GetRootDirs() []string
 	GetCustomRootDir() string

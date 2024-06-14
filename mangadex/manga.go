@@ -193,7 +193,7 @@ func (m *mangaImpl) GetInfo() config.Info {
 		Provider:  config.MANGADEX,
 		InfoHash:  m.id,
 		Name:      m.Title(),
-		Size:      strconv.Itoa(len(m.chapters.Data)) + "Chapters",
+		Size:      strconv.Itoa(len(m.chapters.Data)) + " Chapters",
 		Progress:  0,
 		Completed: utils.Percent(int64(m.chaptersDownload), int64(len(m.chapters.Data))),
 		Speed:     "",

@@ -8,12 +8,22 @@ import (
 
 func Search(req SearchRequest) ([]Info, error) {
 	slog.Debug("Searching...", "req", fmt.Sprintf("%+v", req))
-	s, ok := providers[req.Provider]
-	if !ok {
-		return nil, fmt.Errorf("provider %q not supported", req.Provider)
+	data := make([]Info, 0)
+	for _, p := range req.Provider {
+		s, ok := providers[p]
+		if !ok {
+			return nil, fmt.Errorf("provider %q not supported", req.Provider)
+		}
+
+		search, err := s.Search(req)
+		if err != nil {
+			return nil, err
+		}
+
+		data = append(data, search...)
 	}
 
-	return s.Search(req)
+	return data, nil
 }
 
 func Download(req DownloadRequest) error {
