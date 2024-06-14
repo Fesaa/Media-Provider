@@ -23,6 +23,7 @@ COPY ./api ./api
 COPY ./auth ./auth
 COPY ./config ./config
 COPY ./limetorrents ./limetorrents
+COPY ./mangadex ./mangadex
 COPY ./providers ./providers
 COPY ./subsplease ./subsplease
 COPY ./utils ./utils
