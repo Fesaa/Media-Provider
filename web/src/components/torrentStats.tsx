@@ -4,6 +4,7 @@ import NotificationHandler from "../notifications/handler";
 import { TrashIcon } from "@heroicons/react/16/solid";
 
 type TorrentStat = {
+  Provider: string;
   Completed: number;
   InfoHash: string;
   Name: string;
@@ -11,13 +12,6 @@ type TorrentStat = {
   Size: number;
   Speed: string;
 };
-
-function bytesToSize(bytes: number): string {
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-  if (bytes === 0) return "0 Byte";
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + " " + sizes[i];
-}
 
 export default function Torrent(props: {
   TKey: string;
@@ -27,8 +21,15 @@ export default function Torrent(props: {
   const torrent = props.torrent;
 
   async function remove(hash: string) {
+    console.log(torrent.Provider)
+    const data = {
+      provider: torrent.Provider,
+      id: hash,
+      delete_files: true,
+    }
+
     axios
-      .get(`${BASE_URL}/api/stop/${hash}`)
+      .post(`${BASE_URL}/api/stop/`, data)
       .catch((e) => {
         console.log(e);
         NotificationHandler.addErrorNotificationByTitle(
@@ -61,10 +62,10 @@ export default function Torrent(props: {
         <div className="">{torrent.Name}</div>
       </td>
       <td className="p-2 text-sm text-center hidden md:table-cell">
-        {bytesToSize(props.torrent.Size)}
+        {props.torrent.Size}
       </td>
       <td className="p-2 text-sm text-center">
-        {props.torrent.Completed}% @ {props.torrent.Speed}
+        {props.torrent.Completed} % {props.torrent.Speed && `@ ${props.torrent.Speed}`}
         <div className="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700  md:block">
           <div
             className="h-2.5 rounded-full bg-blue-600"

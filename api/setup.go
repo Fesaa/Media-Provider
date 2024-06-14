@@ -19,7 +19,7 @@ func Setup(app fiber.Router) {
 	api.Post("/search", auth.Middleware(), routes.Search)
 	api.Get("/stats", auth.Middleware(), routes.Stats)
 	api.Post("/download/", auth.Middleware(), routes.Download)
-	api.Get("/stop/:infoHash", auth.Middleware(), routes.Stop)
+	api.Post("/stop/", auth.Middleware(), routes.Stop)
 
 	api.Get("/pages", auth.Middleware(), routes.Pages)
 	api.Get("/pages/:index", auth.Middleware(), routes.Page)

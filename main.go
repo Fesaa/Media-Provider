@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"log/slog"
 	"os"
@@ -48,6 +49,7 @@ func init() {
 	}
 	auth.Init()
 	yoitsu.Init()
+	mangadex.Init()
 }
 
 func main() {

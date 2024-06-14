@@ -5,16 +5,24 @@ Torrenting content with copy right is theft, bla bla, this is all educational, b
 
 ## Support
 
-The project currently supports the following providers (websites), to fetch torrents from.
+The project currently supports the following providers (websites), to fetch content from. 
 
-- Lime torrents
-- Nyaa
-- YTS
-- SubsPlease
+- [Lime torrents](limetorrents/Readme.MD)
+- [Nyaa](nyaaReadme.MD)
+- [YTS](yts/Readme.MD)
+- [SubsPlease](subsplease/Readme.MD)
+- [Mangadex](mangadex/Readme.MD)
 
 ## Config
 
-Is done via `config.yaml`, the layout can be found in [types.go](config/types.go) & [impl.go](config/impl.go). And example can be found [here](config.yaml.example)
+Is done via `config.yaml`, and must be placed at `/app/config.yaml` when using Docker. Media-Provider works by provider `pages` in the config which will each give you a tab on the website.
+
+Each page has a `title` used as name. And a search config. You can find an example [here](config.yaml.example), and the structs [here](config/impl.go) & [here](config/types.go) if you want to do more.
+You may use several providers per page, the `search_config` doesn't have to be correct for both, it'll filter out correctly.
+However, if both use the same key, it may cause problems.
+
+### Search modifiers
+Search modifiers are essentials to how you want to search for content. You can provide filters, etc... per page. You can find information per provider in their respective Readme's. 
 
 ## Docker compose
 This is the entry in my compose file.

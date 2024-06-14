@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-	"github.com/Fesaa/Media-Provider/providers"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -24,7 +22,8 @@ func OrDefault(value string, defaultValue ...string) string {
 	return value
 }
 
-func validate() error {
+// Ignoring for now, to not get import cycles
+/*func validate() error {
 	for i, page := range c.Pages {
 		if !providers.HasProvider(page.SearchConfig.Provider) {
 			return fmt.Errorf("page %d (%s) has an invalid provider '%s'", i, page.Title, page.SearchConfig.Provider)
@@ -32,7 +31,7 @@ func validate() error {
 	}
 
 	return nil
-}
+}*/
 
 func LoadConfig(path string) error {
 	data, err := os.ReadFile(path)
@@ -44,5 +43,5 @@ func LoadConfig(path string) error {
 		return err
 	}
 
-	return validate()
+	return nil
 }

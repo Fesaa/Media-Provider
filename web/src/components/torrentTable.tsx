@@ -18,6 +18,7 @@ export type TorrentInfo = {
   InfoHash: string;
   ImageUrl: string;
   RefUrl: string;
+  Provider: string;
 };
 
 export type DownloadOptions = {
@@ -32,11 +33,11 @@ export default function TorrentTable(props: {
   const [open, setOpen] = useState<boolean>(false);
   const [imageUrl, setImageUrl] = useState<string>("");
 
-  async function downloadTorrent(infoHash: string): Promise<void> {
+  async function downloadTorrent(infoHash: string, provider: string): Promise<void> {
     const requestBody = {
+      provider: provider,
       info: infoHash,
       base_dir: props.options.baseDir,
-      url: props.options.url,
     };
 
     axios
@@ -154,7 +155,7 @@ export default function TorrentTable(props: {
                     <ArrowDownTrayIcon
                       type="button"
                       onClick={(e) => {
-                        downloadTorrent(torrent.InfoHash);
+                        downloadTorrent(torrent.InfoHash, torrent.Provider);
                       }}
                       style={{ cursor: "pointer" }}
                     />

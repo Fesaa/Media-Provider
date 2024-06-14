@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/Fesaa/Media-Provider/providers"
 	"log/slog"
+	"slices"
 )
 
 type configImpl struct {
@@ -28,6 +28,15 @@ func (c configImpl) GetRootDir() string {
 
 func (c configImpl) GetRootURl() string {
 	return c.RootURL
+}
+
+func (c configImpl) HasProvider(provider Provider) bool {
+	for _, p := range c.Pages {
+		if slices.Contains(p.SearchConfig.Provider, provider) {
+			return true
+		}
+	}
+	return false
 }
 
 func (c configImpl) GetPages() Pages {
@@ -74,25 +83,19 @@ func (p pageImpl) GetSearchConfig() SearchConfig {
 }
 
 type searchConfigImpl struct {
-	Provider      providers.SearchProvider `yaml:"provider" json:"provider"`
-	Categories    []Category               `yaml:"categories" json:"categories"`
-	SortBys       []SortBy                 `yaml:"sorts" json:"sorts"`
-	RootDirs      []string                 `yaml:"root_dirs" json:"root_dirs"`
-	CustomRootDir string                   `yaml:"custom_root_dir" json:"custom_root_dir"`
+	Provider        []Provider          `yaml:"providers" json:"providers"`
+	SearchModifiers map[string]Modifier `yaml:"search_modifiers" json:"search_modifiers"`
+	RootDirs        []string            `yaml:"root_dirs" json:"root_dirs"`
+	CustomRootDir   string              `yaml:"custom_root_dir" json:"custom_root_dir"`
 }
 
-func (s searchConfigImpl) GetProvider() providers.SearchProvider {
+func (s searchConfigImpl) GetProvider() []Provider {
 	return s.Provider
 }
 
-func (s searchConfigImpl) GetCategories() []Category {
-	return s.Categories
+func (s searchConfigImpl) GetSearchModifiers() map[string]Modifier {
+	return s.SearchModifiers
 }
-
-func (s searchConfigImpl) GetSortBys() []SortBy {
-	return s.SortBys
-}
-
 func (s searchConfigImpl) GetRootDirs() []string {
 	return s.RootDirs
 }
