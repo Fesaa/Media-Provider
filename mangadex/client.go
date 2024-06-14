@@ -60,7 +60,7 @@ func (m *mangadexClientImpl) RemoveDownload(id string, deleteFiles bool) error {
 		return fmt.Errorf("manga not found: %s", id)
 	}
 
-	slog.Info("Dropping manga", "title", manga.Title(), "id", manga.Id())
+	slog.Info("Dropping manga", "title", manga.Title(), "id", manga.Id(), "deleteFiles", deleteFiles)
 	go func() {
 		m.mangas.Delete(id)
 		manga.Cancel()
