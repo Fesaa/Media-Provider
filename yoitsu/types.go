@@ -1,6 +1,7 @@
 package yoitsu
 
 import (
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 )
@@ -8,12 +9,13 @@ import (
 // TorrentInfo contains information about a torrent
 // This is the information that is sent to the client
 type TorrentInfo struct {
-	InfoHash  string `json:"InfoHash"`
-	Name      string `json:"Name"`
-	Size      int64  `json:"Size"`
-	Progress  int64  `json:"Progress"`
-	Completed int64  `json:"Completed"`
-	Speed     string `json:"Speed"`
+	Provider  config.Provider `json:"Provider"`
+	InfoHash  string          `json:"InfoHash"`
+	Name      string          `json:"Name"`
+	Size      int64           `json:"Size"`
+	Progress  int64           `json:"Progress"`
+	Completed int64           `json:"Completed"`
+	Speed     string          `json:"Speed"`
 }
 
 // Torrent wrapper around torrent.Torrent
@@ -39,13 +41,7 @@ type Yoitsu interface {
 	// The baseDir is the directory where the files will be downloaded to.
 	// Should not include specific location, just the base directory. The torrent hash will be appended to it.
 	// Returns the torrent that was added
-	AddDownload(infoHash string, baseDir string) (Torrent, error)
-
-	// AddDownloadFromUrl adds a new download from a url to the client.
-	// The baseDir is the directory where the files will be downloaded to.
-	// Should not include specific location, just the base directory. The torrent hash will be appended to it.
-	// Returns the torrent that was added
-	AddDownloadFromUrl(url string, baseDir string) (Torrent, error)
+	AddDownload(infoHash string, baseDir string, provider config.Provider) (Torrent, error)
 
 	// RemoveDownload removes a download from the wrapper, optionally deleting the files
 	RemoveDownload(infoHash string, deleteFiles bool) error

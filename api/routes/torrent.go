@@ -31,15 +31,17 @@ func Download(ctx *fiber.Ctx) error {
 }
 
 func Stop(ctx *fiber.Ctx) error {
-	infoHash := ctx.Params("infoHash")
-	if infoHash == "" {
-		slog.Error("No infoHash provided")
+	var req providers.StopRequest
+	err := ctx.BodyParser(&req)
+	if err != nil {
+		slog.Error("Error parsing request body into StopRequest", "err", err)
 		return fiber.ErrBadRequest
 	}
+	id := ctx.Params("id")
 
-	err := yoitsu.I().RemoveDownload(infoHash, true)
+	err = providers.Stop(req)
 	if err != nil {
-		slog.Error("Error stopping download", "infoHash", infoHash, "error", err)
+		slog.Error("Error stopping download", "id", id, "error", err)
 		return fiber.ErrInternalServerError
 	}
 

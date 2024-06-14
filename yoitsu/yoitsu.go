@@ -2,7 +2,6 @@ package yoitsu
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
@@ -11,7 +10,6 @@ import (
 	"github.com/anacrolix/torrent/types/infohash"
 	"log/slog"
 	"math/rand"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -49,45 +47,17 @@ func (t *yoitsuImpl) GetBaseDir() string {
 	return t.clientBaseDir
 }
 
-func (t *yoitsuImpl) AddDownload(infoHash string, baseDir string) (Torrent, error) {
+func (t *yoitsuImpl) AddDownload(infoHash string, baseDir string, provider config.Provider) (Torrent, error) {
 	slog.Info("Adding torrent", "baseDir", baseDir, "infoHash", infoHash)
 	torrentInfo, newTorrent := t.client.AddTorrentInfoHash(infohash.FromHexString(strings.ToLower(infoHash)))
 	if !newTorrent {
 		return nil, errors.New("torrent already exists")
 	}
-
-	return t.processTorrent(torrentInfo, baseDir), nil
+	return t.processTorrent(torrentInfo, baseDir, provider), nil
 }
 
-func (t *yoitsuImpl) AddDownloadFromUrl(url string, baseDir string) (Torrent, error) {
-	slog.Info("Adding torrent", "baseDir", baseDir, "url", url)
-	res, err := http.Get(url)
-	if err != nil {
-		return nil, errors.New("failed to download torrent from url" + url + ": " + err.Error())
-	}
-
-	defer res.Body.Close()
-	if res.StatusCode != 200 {
-		return nil, errors.New("failed to get torrent file from url: " + url + " with status code: " + res.Status)
-	}
-
-	mi, err := metainfo.Load(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load metainfo from url: %s, error: %s", url, err)
-	}
-
-	// client.AddTorrent starts downloading, so we need to add the baseDir to the map before calling it
-	t.baseDirs.Set(mi.HashInfoBytes().HexString(), baseDir)
-
-	torrentInfo, err := t.client.AddTorrent(mi)
-	if err != nil {
-		return nil, err
-	}
-	return t.processTorrent(torrentInfo, baseDir), nil
-}
-
-func (t *yoitsuImpl) processTorrent(torrentInfo *torrent.Torrent, dir string) Torrent {
-	newTorrent := newTorrent(torrentInfo, dir)
+func (t *yoitsuImpl) processTorrent(torrentInfo *torrent.Torrent, dir string, provider config.Provider) Torrent {
+	newTorrent := newTorrent(torrentInfo, dir, provider)
 	t.torrents.Set(torrentInfo.InfoHash().String(), newTorrent)
 	t.baseDirs.Set(torrentInfo.InfoHash().String(), dir)
 	newTorrent.WaitForInfoAndDownload()

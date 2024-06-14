@@ -37,7 +37,14 @@ func (d DownloadRequest) DebugString() string {
 	return fmt.Sprintf("{Hash: %s, BaseDir: %s, Url: %t}", d.Hash, d.BaseDir)
 }
 
+type StopRequest struct {
+	Provider    config.Provider `json:"provider"`
+	Id          string          `json:"id"`
+	DeleteFiles bool            `json:"delete_files"`
+}
+
 type provider interface {
 	Search(request SearchRequest) ([]TorrentInfo, error)
 	Download(request DownloadRequest) error
+	Stop(StopRequest) error
 }

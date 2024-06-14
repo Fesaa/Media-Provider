@@ -3,6 +3,7 @@ package yoitsu
 import (
 	"context"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/anacrolix/torrent"
 	"log/slog"
 	"time"
@@ -17,20 +18,22 @@ type SpeedData struct {
 // torrentImpl wrapper around the torrent.Torrent struct
 // Providers some specific functionality
 type torrentImpl struct {
-	t       *torrent.Torrent
-	key     string
-	baseDir string
+	t        *torrent.Torrent
+	key      string
+	baseDir  string
+	provider config.Provider
 
 	ctx       context.Context
 	cancel    context.CancelFunc
 	lastSpeed SpeedData
 }
 
-func newTorrent(t *torrent.Torrent, baseDir string) Torrent {
+func newTorrent(t *torrent.Torrent, baseDir string, provider config.Provider) Torrent {
 	return &torrentImpl{
-		t:       t,
-		key:     t.InfoHash().HexString(),
-		baseDir: baseDir,
+		t:        t,
+		key:      t.InfoHash().HexString(),
+		baseDir:  baseDir,
+		provider: provider,
 		lastSpeed: SpeedData{
 			t:     time.Now(),
 			bytes: 0,
@@ -86,6 +89,7 @@ func (t *torrentImpl) GetInfo() TorrentInfo {
 	}
 
 	return TorrentInfo{
+		Provider:  t.provider,
 		InfoHash:  t.key,
 		Name:      t.t.Name(),
 		Size:      t.t.Length(),

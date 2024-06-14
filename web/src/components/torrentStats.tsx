@@ -4,6 +4,7 @@ import NotificationHandler from "../notifications/handler";
 import { TrashIcon } from "@heroicons/react/16/solid";
 
 type TorrentStat = {
+  Provider: string;
   Completed: number;
   InfoHash: string;
   Name: string;
@@ -27,8 +28,15 @@ export default function Torrent(props: {
   const torrent = props.torrent;
 
   async function remove(hash: string) {
+    console.log(torrent.Provider)
+    const data = {
+      provider: torrent.Provider,
+      id: hash,
+      delete_files: true,
+    }
+
     axios
-      .get(`${BASE_URL}/api/stop/${hash}`)
+      .post(`${BASE_URL}/api/stop/`, data)
       .catch((e) => {
         console.log(e);
         NotificationHandler.addErrorNotificationByTitle(
