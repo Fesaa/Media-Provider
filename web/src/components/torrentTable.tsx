@@ -26,6 +26,7 @@ export type DownloadOptions = {
 };
 
 export default function TorrentTable(props: {
+  provider: string
   torrents: TorrentInfo[];
   options: DownloadOptions;
 }) {
@@ -34,9 +35,9 @@ export default function TorrentTable(props: {
 
   async function downloadTorrent(infoHash: string): Promise<void> {
     const requestBody = {
+      provider: props.provider,
       info: infoHash,
       base_dir: props.options.baseDir,
-      url: props.options.url,
     };
 
     axios

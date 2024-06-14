@@ -223,10 +223,11 @@ export default function SearchForm(props: SearchProps) {
         className="flex items-center justify-center justify-items-center"
       >
         <TorrentTable
-          torrents={torrents}
-          options={{
-            baseDir: customRequestDir != "" ? customRequestDir : requestDir,
-            url: false,
+            provider={searchProvider}
+            torrents={torrents}
+            options={{
+              baseDir: customRequestDir != "" ? customRequestDir : requestDir,
+              url: false,
           }}
         />
       </section>
