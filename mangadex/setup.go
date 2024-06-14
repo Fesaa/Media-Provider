@@ -6,13 +6,11 @@ import (
 	"net/http"
 )
 
-func Init() error {
+func Init() {
 	err := loadTags()
 	if err != nil {
-		return err
+		panic(err)
 	}
-
-	return nil
 }
 
 func loadTags() error {

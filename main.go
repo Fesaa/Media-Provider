@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"log/slog"
 	"os"
@@ -48,6 +49,11 @@ func init() {
 	}
 	auth.Init()
 	yoitsu.Init()
+
+	// This makes an API request, lets not make it, if we don't have to.
+	if config.I().HasProvider(config.MANGADEX) {
+		mangadex.Init()
+	}
 }
 
 func main() {

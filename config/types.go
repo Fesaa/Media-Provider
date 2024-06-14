@@ -10,6 +10,7 @@ type Config interface {
 	GetRootDir() string
 	GetRootURl() string
 	GetPages() Pages
+	HasProvider(Provider) bool
 	GetLoggingConfig() LoggingConfig
 }
 
@@ -41,6 +42,7 @@ const (
 	YTS        Provider = "yts"
 	LIME       Provider = "limetorrents"
 	SUBSPLEASE Provider = "subsplease"
+	MANGADEX   Provider = "mangadex"
 )
 
 type Category Pair

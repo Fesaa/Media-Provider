@@ -29,6 +29,15 @@ func (c configImpl) GetRootURl() string {
 	return c.RootURL
 }
 
+func (c configImpl) HasProvider(provider Provider) bool {
+	for _, p := range c.Pages {
+		if p.SearchConfig.Provider == provider {
+			return true
+		}
+	}
+	return false
+}
+
 func (c configImpl) GetPages() Pages {
 	pages := make([]Page, len(c.Pages))
 	for i, page := range c.Pages {
