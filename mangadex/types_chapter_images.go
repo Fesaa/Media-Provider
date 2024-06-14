@@ -11,7 +11,15 @@ type ChapterImageSearchResponse struct {
 func (s *ChapterImageSearchResponse) FullImageUrls() []string {
 	urls := make([]string, len(s.Chapter.Data))
 	for i, image := range s.Chapter.Data {
-		urls[i] = fmt.Sprintf("%s/%s/%s", s.BaseUrl, s.Chapter.Hash, image)
+		urls[i] = fmt.Sprintf("%s/data/%s/%s", s.BaseUrl, s.Chapter.Hash, image)
+	}
+	return urls
+}
+
+func (s *ChapterImageSearchResponse) ImageUrls() []string {
+	urls := make([]string, len(s.Chapter.DataSaver))
+	for i, image := range s.Chapter.DataSaver {
+		urls[i] = fmt.Sprintf("%s/data-saver/%s/%s", s.BaseUrl, s.Chapter.Hash, image)
 	}
 	return urls
 }

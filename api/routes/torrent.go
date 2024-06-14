@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"log/slog"
@@ -50,9 +52,14 @@ func Stop(ctx *fiber.Ctx) error {
 
 func Stats(ctx *fiber.Ctx) error {
 	torrents := yoitsu.I().GetRunningTorrents()
-	info := make(map[string]yoitsu.TorrentInfo, torrents.Len())
+	info := make(map[string]config.Info, torrents.Len())
 	torrents.ForEachSafe(func(key string, torrent yoitsu.Torrent) {
 		info[key] = torrent.GetInfo()
 	})
+
+	manga := mangadex.I().GetCurrentManga()
+	if manga != nil {
+		info[manga.Id()] = manga.GetInfo()
+	}
 	return ctx.JSON(info)
 }

@@ -29,8 +29,7 @@ type Page interface {
 
 type SearchConfig interface {
 	GetProvider() Provider
-	GetCategories() []Category
-	GetSortBys() []SortBy
+	GetSearchModifiers() map[string]Modifier
 	GetRootDirs() []string
 	GetCustomRootDir() string
 }
@@ -45,8 +44,11 @@ const (
 	MANGADEX   Provider = "mangadex"
 )
 
-type Category Pair
-type SortBy Pair
+type Modifier struct {
+	Title  string `yaml:"title" json:"title"`
+	Multi  bool   `yaml:"multi" json:"multi"`
+	Values []Pair `yaml:"values" json:"values"`
+}
 
 type Pair struct {
 	Key  string `yaml:"key" json:"key"`

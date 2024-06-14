@@ -11,18 +11,18 @@ export type SearchProvider = "nyaa" | "yts" | "lime";
 
 export interface SearchConfig {
   provider: SearchProvider;
-  categories: Category[];
-  sorts: SortBy[];
+  search_modifiers: { [key: string]: Modifier };
   root_dirs: string[];
   custom_root_dir: string;
 }
 
-export interface Category {
-  key: string;
-  name: string;
+export interface Modifier {
+  title: string
+  multi: boolean
+  values: Pair[]
 }
 
-export interface SortBy {
+export interface Pair {
   key: string;
   name: string;
 }

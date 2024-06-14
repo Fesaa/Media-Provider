@@ -1,6 +1,28 @@
 package mangadex
 
-type ChapterSearchResponse MangaDexResponse[ChapterSearchData]
+type ChapterSearchResponse MangaDexResponse[[]ChapterSearchData]
+
+func (c ChapterSearchResponse) FilterOneEnChapter() ChapterSearchResponse {
+	c2 := c
+	newData := make([]ChapterSearchData, 0)
+
+	lastChapter := ""
+	lastVolume := ""
+	for _, data := range c.Data {
+		if data.Attributes.Volume == lastVolume && data.Attributes.Chapter == lastChapter {
+			continue
+		}
+		if data.Attributes.TranslatedLanguage != "en" {
+			continue
+		}
+		newData = append(newData, data)
+		lastChapter = data.Attributes.Chapter
+		lastVolume = data.Attributes.Volume
+	}
+
+	c2.Data = newData
+	return c2
+}
 
 type ChapterSearchData struct {
 	Id            string            `json:"id"`

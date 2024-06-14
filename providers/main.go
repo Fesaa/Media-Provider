@@ -6,7 +6,7 @@ import (
 	"log/slog"
 )
 
-func Search(req SearchRequest) ([]TorrentInfo, error) {
+func Search(req SearchRequest) ([]Info, error) {
 	slog.Debug("Searching...", "req", fmt.Sprintf("%+v", req))
 	s, ok := providers[req.Provider]
 	if !ok {

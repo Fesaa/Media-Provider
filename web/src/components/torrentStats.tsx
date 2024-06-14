@@ -13,13 +13,6 @@ type TorrentStat = {
   Speed: string;
 };
 
-function bytesToSize(bytes: number): string {
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-  if (bytes === 0) return "0 Byte";
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + " " + sizes[i];
-}
-
 export default function Torrent(props: {
   TKey: string;
   torrent: TorrentStat;
@@ -69,10 +62,10 @@ export default function Torrent(props: {
         <div className="">{torrent.Name}</div>
       </td>
       <td className="p-2 text-sm text-center hidden md:table-cell">
-        {bytesToSize(props.torrent.Size)}
+        {props.torrent.Size}
       </td>
       <td className="p-2 text-sm text-center">
-        {props.torrent.Completed}% @ {props.torrent.Speed}
+        {props.torrent.Completed} {props.torrent.Speed && `% @ ${props.torrent.Speed}`}
         <div className="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700  md:block">
           <div
             className="h-2.5 rounded-full bg-blue-600"

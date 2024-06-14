@@ -6,18 +6,6 @@ import (
 	"github.com/anacrolix/torrent"
 )
 
-// TorrentInfo contains information about a torrent
-// This is the information that is sent to the client
-type TorrentInfo struct {
-	Provider  config.Provider `json:"Provider"`
-	InfoHash  string          `json:"InfoHash"`
-	Name      string          `json:"Name"`
-	Size      int64           `json:"Size"`
-	Progress  int64           `json:"Progress"`
-	Completed int64           `json:"Completed"`
-	Speed     string          `json:"Speed"`
-}
-
 // Torrent wrapper around torrent.Torrent
 type Torrent interface {
 	// GetTorrent returns the wrapped torrent.Torrent
@@ -29,7 +17,7 @@ type Torrent interface {
 	// Cancel stops WaitForInfoAndDownload, returns an error if it wasn't started yet
 	Cancel() error
 	// GetInfo returns useful information about the torrent
-	GetInfo() TorrentInfo
+	GetInfo() config.Info
 }
 
 // Yoitsu wrapper around the torrent.Client struct

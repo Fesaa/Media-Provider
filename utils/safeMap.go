@@ -7,11 +7,24 @@ type SafeMap[K comparable, V any] struct {
 	m    map[K]V
 }
 
-func NewSafeMap[K comparable, V any]() *SafeMap[K, V] {
+func NewSafeMap[K comparable, V any](m ...map[K]V) *SafeMap[K, V] {
+	var startMap map[K]V
+	if len(m) > 0 {
+		startMap = m[0]
+	} else {
+		startMap = make(map[K]V)
+	}
 	return &SafeMap[K, V]{
-		m:    make(map[K]V),
+		m:    startMap,
 		lock: sync.RWMutex{},
 	}
+}
+
+func (s *SafeMap[K, V]) Has(k K) bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	_, ok := s.m[k]
+	return ok
 }
 
 func (s *SafeMap[K, V]) Get(k K) (V, bool) {

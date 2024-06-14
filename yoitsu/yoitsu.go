@@ -32,11 +32,10 @@ func Init() {
 }
 
 type yoitsuImpl struct {
-	client        *torrent.Client
-	torrents      *utils.SafeMap[string, Torrent]
-	clientBaseDir string
-	baseDirs      *utils.SafeMap[string, string]
-	dir           string
+	client   *torrent.Client
+	torrents *utils.SafeMap[string, Torrent]
+	baseDirs *utils.SafeMap[string, string]
+	dir      string
 }
 
 func (t *yoitsuImpl) GetBackingClient() *torrent.Client {
@@ -44,7 +43,7 @@ func (t *yoitsuImpl) GetBackingClient() *torrent.Client {
 }
 
 func (t *yoitsuImpl) GetBaseDir() string {
-	return t.clientBaseDir
+	return t.dir
 }
 
 func (t *yoitsuImpl) AddDownload(infoHash string, baseDir string, provider config.Provider) (Torrent, error) {
@@ -175,10 +174,9 @@ func newYoitsu() (Yoitsu, error) {
 	dir := config.OrDefault(config.I().GetRootDir(), "temp")
 
 	impl := &yoitsuImpl{
-		torrents:      utils.NewSafeMap[string, Torrent](),
-		clientBaseDir: dir,
-		baseDirs:      utils.NewSafeMap[string, string](),
-		dir:           dir,
+		torrents: utils.NewSafeMap[string, Torrent](),
+		baseDirs: utils.NewSafeMap[string, string](),
+		dir:      dir,
 	}
 
 	opts := storage.NewFileClientOpts{

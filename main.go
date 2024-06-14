@@ -49,11 +49,7 @@ func init() {
 	}
 	auth.Init()
 	yoitsu.Init()
-
-	// This makes an API request, lets not make it, if we don't have to.
-	if config.I().HasProvider(config.MANGADEX) {
-		mangadex.Init()
-	}
+	mangadex.Init()
 }
 
 func main() {

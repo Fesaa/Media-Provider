@@ -2,20 +2,48 @@ package providers
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/limetorrents"
+	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/irevenko/go-nyaa/types"
 	"log/slog"
+	"strconv"
 )
 
-func subsPleaseNormalizer(torrents subsplease.SearchResult) []TorrentInfo {
-	if torrents == nil {
-		return []TorrentInfo{}
+func mangadexNormalizer(mangas *mangadex.MangaSearchResponse) []Info {
+	if mangas == nil {
+		return []Info{}
 	}
 
-	torrentsInfo := make([]TorrentInfo, 0)
+	info := make([]Info, 0)
+	for _, data := range mangas.Data {
+		enTitle := data.Attributes.EnTitle()
+		if enTitle == "" {
+			continue
+		}
+
+		info = append(info, Info{
+			Name:        enTitle,
+			Description: data.Attributes.EnDescription(),
+			Size:        config.OrDefault(data.Attributes.LastVolume, "unknown") + " Volumes",
+			Date:        strconv.Itoa(data.Attributes.Year),
+			InfoHash:    data.Id,
+			RefUrl:      data.RefURL(),
+		})
+	}
+
+	return info
+}
+
+func subsPleaseNormalizer(torrents subsplease.SearchResult) []Info {
+	if torrents == nil {
+		return []Info{}
+	}
+
+	torrentsInfo := make([]Info, 0)
 	for name, data := range torrents {
 		if len(data.Downloads) == 0 {
 			continue
@@ -25,27 +53,21 @@ func subsPleaseNormalizer(torrents subsplease.SearchResult) []TorrentInfo {
 		if err != nil {
 			slog.Debug("Couldn't parse magnet uri", "error", err, "info", fmt.Sprintf("%+v", data))
 		}
-		torrentsInfo = append(torrentsInfo, TorrentInfo{
-			Name:        name,
-			Description: "",
-			Date:        data.ReleaseDate,
-			Size:        "",
-			Seeders:     "",
-			Leechers:    "",
-			Downloads:   "",
-			Link:        "",
-			InfoHash:    m.InfoHash.HexString(),
-			ImageUrl:    data.ImageURL,
-			RefUrl:      data.ReferenceURL(),
+		torrentsInfo = append(torrentsInfo, Info{
+			Name:     name,
+			Date:     data.ReleaseDate,
+			InfoHash: m.InfoHash.HexString(),
+			ImageUrl: data.ImageURL,
+			RefUrl:   data.ReferenceURL(),
 		})
 	}
 	return torrentsInfo
 }
 
-func limeNormalizer(torrents []limetorrents.SearchResult) []TorrentInfo {
-	torrentsInfo := make([]TorrentInfo, len(torrents))
+func limeNormalizer(torrents []limetorrents.SearchResult) []Info {
+	torrentsInfo := make([]Info, len(torrents))
 	for i, t := range torrents {
-		torrentsInfo[i] = TorrentInfo{
+		torrentsInfo[i] = Info{
 			Name:        t.Name,
 			Description: "",
 			Date:        t.Added,
@@ -62,9 +84,9 @@ func limeNormalizer(torrents []limetorrents.SearchResult) []TorrentInfo {
 	return torrentsInfo
 }
 
-func ytsNormalizer(data *yts.SearchResult) []TorrentInfo {
+func ytsNormalizer(data *yts.SearchResult) []Info {
 	movies := data.Data.Movies
-	torrents := make([]TorrentInfo, len(movies))
+	torrents := make([]Info, len(movies))
 	for i, movie := range movies {
 		var torrent *yts.Torrent = nil
 		for _, t := range movie.Torrents {
@@ -77,7 +99,7 @@ func ytsNormalizer(data *yts.SearchResult) []TorrentInfo {
 			torrent = &movie.Torrents[0]
 		}
 
-		torrents[i] = TorrentInfo{
+		torrents[i] = Info{
 			Name:        movie.Title,
 			Description: movie.DescriptionFull,
 			Date:        stringify(movie.Year),
@@ -94,10 +116,10 @@ func ytsNormalizer(data *yts.SearchResult) []TorrentInfo {
 	return torrents
 }
 
-func nyaaNormalizer(torrents []types.Torrent) []TorrentInfo {
-	torrentsInfo := make([]TorrentInfo, len(torrents))
+func nyaaNormalizer(torrents []types.Torrent) []Info {
+	torrentsInfo := make([]Info, len(torrents))
 	for i, t := range torrents {
-		torrentsInfo[i] = TorrentInfo{
+		torrentsInfo[i] = Info{
 			Name:        t.Name,
 			Description: t.Description,
 			Date:        t.Date,

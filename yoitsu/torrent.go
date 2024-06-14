@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"log/slog"
 	"time"
@@ -74,7 +75,7 @@ func (t *torrentImpl) Cancel() error {
 	return nil
 }
 
-func (t *torrentImpl) GetInfo() TorrentInfo {
+func (t *torrentImpl) GetInfo() config.Info {
 	c := t.t.Stats().BytesReadData
 	bytesRead := c.Int64()
 	var speed int64 = 0
@@ -88,32 +89,13 @@ func (t *torrentImpl) GetInfo() TorrentInfo {
 		bytes: bytesRead,
 	}
 
-	return TorrentInfo{
+	return config.Info{
 		Provider:  t.provider,
 		InfoHash:  t.key,
 		Name:      t.t.Name(),
-		Size:      t.t.Length(),
+		Size:      utils.BytesToSize(float64(t.t.Length())),
 		Progress:  t.t.BytesCompleted(),
-		Completed: percent(t.t.BytesCompleted(), t.t.Length()),
-		Speed:     humanReadableSpeed(speed),
+		Completed: utils.Percent(t.t.BytesCompleted(), t.t.Length()),
+		Speed:     utils.HumanReadableSpeed(speed),
 	}
-}
-
-func humanReadableSpeed(s int64) string {
-	speed := float64(s)
-	if speed < 1024 {
-		return fmt.Sprintf("%.2f B/s", speed)
-	}
-	speed /= 1024
-	if speed < 1024 {
-		return fmt.Sprintf("%.2f KB/s", speed)
-	}
-	speed /= 1024
-	return fmt.Sprintf("%.2f MB/s", speed)
-}
-
-func percent(a, b int64) int64 {
-	b = max(b, 1)
-	ratio := (float64)(a) / (float64)(b)
-	return (int64)(ratio * 100)
 }

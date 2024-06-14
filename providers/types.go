@@ -5,7 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 )
 
-type TorrentInfo struct {
+type Info struct {
 	Name        string `json:"Name"`
 	Description string `json:"Description"`
 	Date        string `json:"Date"`
@@ -20,11 +20,9 @@ type TorrentInfo struct {
 }
 
 type SearchRequest struct {
-	Provider config.Provider `json:"provider"`
-	Query    string          `json:"query"`
-	Category string          `json:"category,omitempty"`
-	SortBy   string          `json:"sort_by,omitempty"`
-	Filter   string          `json:"filter,omitempty"`
+	Provider  config.Provider     `json:"provider"`
+	Query     string              `json:"query"`
+	Modifiers map[string][]string `json:"modifiers,omitempty"`
 }
 
 type DownloadRequest struct {
@@ -44,7 +42,7 @@ type StopRequest struct {
 }
 
 type provider interface {
-	Search(request SearchRequest) ([]TorrentInfo, error)
+	Search(request SearchRequest) ([]Info, error)
 	Download(request DownloadRequest) error
 	Stop(StopRequest) error
 }

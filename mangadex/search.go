@@ -7,6 +7,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 var tags = utils.NewSafeMap[string, string]()
@@ -26,84 +28,68 @@ func mapTags(in []string, skip bool) ([]string, error) {
 	return mappedTags, nil
 }
 
+func GetManga(id string) (*GetMangaResponse, error, time.Duration) {
+	url := getMangaURL(id)
+	slog.Debug("Getting manga info", "id", id, "url", url)
+	var getMangaResponse GetMangaResponse
+	return do(url, &getMangaResponse)
+}
+
 func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 	url, err := searchMangaURL(options)
 	if err != nil {
 		return nil, err
 	}
 	slog.Debug("Searching Mangadex for Manga", "options", fmt.Sprintf("%#v", options), "url", url)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status: %s", resp.Status)
-	}
-	defer resp.Body.Close()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
 	var searchResponse MangaSearchResponse
-	if err := json.Unmarshal(data, &searchResponse); err != nil {
-		return nil, err
-	}
-
-	return &searchResponse, nil
+	a, b, _ := do(url, &searchResponse)
+	return a, b
 }
 
-func GetChapters(id string) (*ChapterSearchResponse, error) {
+func GetChapters(id string) (*ChapterSearchResponse, error, time.Duration) {
 	url := chapterURL(id)
-
 	slog.Debug("Getting chapters", "id", id, "url", url)
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
 	var searchResponse ChapterSearchResponse
-	if err := json.Unmarshal(data, &searchResponse); err != nil {
-		return nil, err
-	}
-	return &searchResponse, nil
+	return do(url, &searchResponse)
 }
 
-func GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
+func GetChapterImages(id string) (*ChapterImageSearchResponse, error, time.Duration) {
 	url := chapterImageUrl(id)
-
 	slog.Debug("Getting chapter images", "id", id, "url", url)
+	var searchResponse ChapterImageSearchResponse
+	return do(url, &searchResponse)
+}
+
+func do[T any](url string, out *T) (*T, error, time.Duration) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, err, 0
+	}
+
+	if resp.StatusCode == http.StatusTooManyRequests {
+		unixRateLimitEnd := resp.Header.Get("X-RateLimit-Retry-After")
+		if unixRateLimitEnd == "" {
+			return nil, fmt.Errorf("too many requests"), 1 * time.Minute
+		}
+		unix, err := strconv.ParseInt(unixRateLimitEnd, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("too many requests"), 1 * time.Minute
+		}
+		return nil, fmt.Errorf("too many requests"), time.Now().Sub(time.Unix(unix, 0))
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status: %s", resp.Status)
+		return nil, fmt.Errorf("bad status: %s", resp.Status), 0
 	}
 
 	defer resp.Body.Close()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, err, 0
 	}
 
-	var searchResponse ChapterImageSearchResponse
-	if err := json.Unmarshal(data, &searchResponse); err != nil {
-		return nil, err
+	if err := json.Unmarshal(data, out); err != nil {
+		return nil, err, 0
 	}
-	return &searchResponse, nil
+	return out, nil, 0
 }

@@ -1,12 +1,19 @@
 package mangadex
 
-type MangaSearchResponse MangaDexResponse[MangaSearchData]
+import "fmt"
+
+type MangaSearchResponse MangaDexResponse[[]MangaSearchData]
+type GetMangaResponse MangaDexResponse[MangaSearchData]
 
 type MangaSearchData struct {
 	Id            string          `json:"id"`
 	Type          string          `json:"type"`
 	Attributes    MangaAttributes `json:"attributes"`
 	Relationships []Relationship  `json:"relationships"`
+}
+
+func (a *MangaSearchData) RefURL() string {
+	return fmt.Sprintf("https://mangadex.org/title/%s/", a.Id)
 }
 
 type MangaAttributes struct {
@@ -19,6 +26,22 @@ type MangaAttributes struct {
 	Status           MangaStatus       `json:"status"`
 	Year             int               `json:"year"`
 	ContentRating    ContentRating     `json:"contentRating"`
+}
+
+func (a *MangaAttributes) EnTitle() string {
+	enTitle, ok := a.Title["en"]
+	if ok {
+		return enTitle
+	}
+	return ""
+}
+
+func (a *MangaAttributes) EnDescription() string {
+	enDescription, ok := a.Description["en"]
+	if ok {
+		return enDescription
+	}
+	return ""
 }
 
 type PublicationDemographic string
@@ -37,6 +60,6 @@ const (
 	JOSEIN  PublicationDemographic = "josein"
 
 	SAFE       ContentRating = "safe"
-	SUGGESTIVE ContentRating = "suggested"
+	SUGGESTIVE ContentRating = "suggestive"
 	EROTICA    ContentRating = "erotica"
 )

@@ -11,6 +11,8 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
+
+	m = newClient()
 }
 
 func loadTags() error {
