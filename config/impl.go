@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/Fesaa/Media-Provider/providers"
 	"log/slog"
 )
 
@@ -74,14 +73,14 @@ func (p pageImpl) GetSearchConfig() SearchConfig {
 }
 
 type searchConfigImpl struct {
-	Provider      providers.SearchProvider `yaml:"provider" json:"provider"`
-	Categories    []Category               `yaml:"categories" json:"categories"`
-	SortBys       []SortBy                 `yaml:"sorts" json:"sorts"`
-	RootDirs      []string                 `yaml:"root_dirs" json:"root_dirs"`
-	CustomRootDir string                   `yaml:"custom_root_dir" json:"custom_root_dir"`
+	Provider      Provider   `yaml:"provider" json:"provider"`
+	Categories    []Category `yaml:"categories" json:"categories"`
+	SortBys       []SortBy   `yaml:"sorts" json:"sorts"`
+	RootDirs      []string   `yaml:"root_dirs" json:"root_dirs"`
+	CustomRootDir string     `yaml:"custom_root_dir" json:"custom_root_dir"`
 }
 
-func (s searchConfigImpl) GetProvider() providers.SearchProvider {
+func (s searchConfigImpl) GetProvider() Provider {
 	return s.Provider
 }
 

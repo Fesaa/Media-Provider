@@ -1,5 +1,10 @@
 package providers
 
+import (
+	"fmt"
+	"github.com/Fesaa/Media-Provider/config"
+)
+
 type TorrentInfo struct {
 	Name        string `json:"Name"`
 	Description string `json:"Description"`
@@ -14,23 +19,25 @@ type TorrentInfo struct {
 	RefUrl      string `json:"RefUrl"`
 }
 
-type SearchProvider string
-
-const (
-	NYAA       SearchProvider = "nyaa"
-	YTS        SearchProvider = "yts"
-	LIME       SearchProvider = "limetorrents"
-	SUBSPLEASE SearchProvider = "subsplease"
-)
-
 type SearchRequest struct {
-	Provider SearchProvider `json:"provider,omitempty"`
-	Query    string         `json:"query"`
-	Category string         `json:"category,omitempty"`
-	SortBy   string         `json:"sort_by,omitempty"`
-	Filter   string         `json:"filter,omitempty"`
+	Provider config.Provider `json:"provider"`
+	Query    string          `json:"query"`
+	Category string          `json:"category,omitempty"`
+	SortBy   string          `json:"sort_by,omitempty"`
+	Filter   string          `json:"filter,omitempty"`
 }
 
-type searchProvider interface {
+type DownloadRequest struct {
+	Provider config.Provider `json:"provider"`
+	Hash     string          `json:"info"`
+	BaseDir  string          `json:"base_dir"`
+}
+
+func (d DownloadRequest) DebugString() string {
+	return fmt.Sprintf("{Hash: %s, BaseDir: %s, Url: %t}", d.Hash, d.BaseDir)
+}
+
+type provider interface {
 	Search(request SearchRequest) ([]TorrentInfo, error)
+	Download(request DownloadRequest) error
 }
