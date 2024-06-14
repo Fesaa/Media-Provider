@@ -2,7 +2,6 @@ package mangadex
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/utils"
 	"net/url"
 )
 
@@ -38,12 +37,8 @@ func searchMangaURL(s SearchOptions) (string, error) {
 		base += "&excludedTagsMode=OR"
 	}
 
-	base = addRange(base, "status", utils.Map(s.Status, func(t MangaStatus) string {
-		return string(t)
-	}))
-	base = addRange(base, "contentRating", utils.Map(s.ContentRating, func(t ContentRating) string {
-		return string(t)
-	}))
+	base = addRange(base, "status", s.Status)
+	base = addRange(base, "contentRating", s.ContentRating)
 	base += "&availableTranslatedLanguage[]=en"
 	return base, nil
 }

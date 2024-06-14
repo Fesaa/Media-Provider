@@ -19,12 +19,13 @@ type Manga interface {
 }
 
 type SearchOptions struct {
-	Query            string
-	IncludedTags     []string
-	ExcludedTags     []string
-	Status           []MangaStatus
-	ContentRating    []ContentRating
-	SkipNotFoundTags bool
+	Query                  string
+	IncludedTags           []string
+	ExcludedTags           []string
+	Status                 []string
+	ContentRating          []string
+	PublicationDemographic []string
+	SkipNotFoundTags       bool
 }
 
 type MangaDexResponse[T any] struct {

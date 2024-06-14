@@ -23,9 +23,9 @@ type MangaAttributes struct {
 	OriginalLanguage string            `json:"originalLanguage"`
 	LastVolume       string            `json:"lastVolume"`
 	LastChapter      string            `json:"lastChapter"`
-	Status           MangaStatus       `json:"status"`
+	Status           string            `json:"status"`
 	Year             int               `json:"year"`
-	ContentRating    ContentRating     `json:"contentRating"`
+	ContentRating    string            `json:"contentRating"`
 }
 
 func (a *MangaAttributes) EnTitle() string {
@@ -43,23 +43,3 @@ func (a *MangaAttributes) EnDescription() string {
 	}
 	return ""
 }
-
-type PublicationDemographic string
-type MangaStatus string
-type ContentRating string
-
-const (
-	ONGOING   MangaStatus = "ongoing"
-	COMPLETED MangaStatus = "completed"
-	HIATUS    MangaStatus = "hiatus"
-	CANCELLED MangaStatus = "cancelled"
-
-	SHOUNEN PublicationDemographic = "shounen"
-	SHOUJO  PublicationDemographic = "shounjo"
-	SEINEN  PublicationDemographic = "seinen"
-	JOSEIN  PublicationDemographic = "josein"
-
-	SAFE       ContentRating = "safe"
-	SUGGESTIVE ContentRating = "suggestive"
-	EROTICA    ContentRating = "erotica"
-)

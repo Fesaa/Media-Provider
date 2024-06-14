@@ -37,6 +37,7 @@ type SearchConfig interface {
 type Provider string
 
 const (
+	SUKEBEI    Provider = "sukebei"
 	NYAA       Provider = "nyaa"
 	YTS        Provider = "yts"
 	LIME       Provider = "limetorrents"

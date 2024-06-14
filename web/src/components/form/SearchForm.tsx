@@ -127,6 +127,15 @@ export default function SearchForm(props: SearchProps) {
     } else {
       setRequestDir(customRootDir);
     }
+
+    if (modifiers) {
+      Object.entries(modifiers).forEach(([key, modifier]) => {
+        if (!modifier.multi && modifier.values.length > 0) {
+          handleModifierChange(key, modifier.values[0].key)
+        }
+      })
+    }
+
   }, []);
 
   return (
@@ -177,7 +186,6 @@ export default function SearchForm(props: SearchProps) {
                               />
                           ) :
                       <select
-                          value=''
                           onChange={(e) => handleModifierChange(key, e.target.value)}
                           className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm"
                       >

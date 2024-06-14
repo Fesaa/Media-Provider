@@ -4,7 +4,6 @@ import (
 	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/subsplease"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/irevenko/go-nyaa/nyaa"
 	"net/url"
@@ -26,15 +25,15 @@ func mangadexTransformer(s SearchRequest) mangadex.SearchOptions {
 	}
 	st, ok := s.Modifiers["status"]
 	if ok {
-		ms.Status = utils.Map(st, func(t string) mangadex.MangaStatus {
-			return mangadex.MangaStatus(t)
-		})
+		ms.Status = st
 	}
 	cr, ok := s.Modifiers["contentRating"]
 	if ok {
-		ms.ContentRating = utils.Map(cr, func(t string) mangadex.ContentRating {
-			return mangadex.ContentRating(t)
-		})
+		ms.ContentRating = cr
+	}
+	pd, ok := s.Modifiers["publicationDemographic"]
+	if ok {
+		ms.PublicationDemographic = pd
 	}
 
 	return ms
@@ -88,7 +87,7 @@ func nyaaTransformer(s SearchRequest) nyaa.SearchOptions {
 func ytsTransformer(s SearchRequest) yts.SearchOptions {
 	y := yts.SearchOptions{}
 	y.Query = s.Query
-	sortBys, ok := s.Modifiers["categories"]
+	sortBys, ok := s.Modifiers["sortBys"]
 	if ok && len(sortBys) > 0 {
 		y.SortBy = sortBys[0]
 	}
