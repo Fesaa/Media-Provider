@@ -17,7 +17,8 @@ type Torrent interface {
 	// Cancel stops WaitForInfoAndDownload, returns an error if it wasn't started yet
 	Cancel() error
 	// GetInfo returns useful information about the torrent
-	GetInfo() config.Info
+	GetInfo() config.InfoStat
+	GetDownloadDir() string
 }
 
 // Yoitsu wrapper around the torrent.Client struct

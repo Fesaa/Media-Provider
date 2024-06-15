@@ -5,18 +5,46 @@ import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "./notifications/handler";
 import Header from "./components/navigation/header";
 import {getStats, loadNavigation} from "./utils/http";
-import {NavigationItem, Stats} from "./utils/types";
+import {NavigationItem, SpeedData, Stats} from "./utils/types";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 
 declare const BASE_URL: string;
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 function Application() {
   const [info, setInfo] = useState<Stats>({});
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
+  const [speedData, setSpeedDate] = useState<{[key: string]: SpeedData[]}>({});
 
   async function updateInfo(repeat: boolean) {
     let waitLong = true;
     await getStats().then(stats => {
       setInfo(stats);
+
+      const curData = speedData;
+      Object.entries(stats).forEach(([key, data]) => {
+        curData[key] = [...(curData[key] || []), data.speed];
+      })
+      setSpeedDate(curData);
+
       if (Object.keys(stats).length > 0) {
         waitLong = false;
       }
@@ -40,35 +68,16 @@ function Application() {
       <main className="bg-gray-50 dark:bg-gray-900">
         <NotificationHandler />
         <section className="pt-5">
-          <div className="flex flex-col justify-center items-center p-5 overflow-x-auto">
-            {Object.keys(info).length > 0 && (
-              <table className="bg-white border border-gray-300 m-2 md:m-10">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b hidden md:table-cell">
-                      Size
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      Completed
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(info).map(([key, stat]) => (
-                    <InfoLine
-                      key={key}
-                      infoStat={stat}
-                      TKey={key}
-                      refreshFunc={updateInfo}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            )}
+          <div className="flex flex-col flex-grow py-5 px-5 md:mx-20 space-y-2">
+            {Object.entries(info).map(([key, stat]) => (
+                <InfoLine
+                    key={key}
+                    infoStat={stat}
+                    speeds={speedData[key] || []}
+                    TKey={key}
+                    refreshFunc={updateInfo}
+                />
+            ))}
           </div>
           {Object.keys(info).length == 0 && (
             <div className="flex flex-col items-center justify-center">

@@ -18,6 +18,7 @@ type LoggingConfig interface {
 	GetLogLevel() slog.Level
 	GetSource() bool
 	GetHandler() string
+	LogHttp() bool
 }
 
 type Page interface {

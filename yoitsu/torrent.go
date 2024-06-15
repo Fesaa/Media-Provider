@@ -7,14 +7,9 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"log/slog"
+	"path"
 	"time"
 )
-
-// SpeedData contains the amount of download bytes at a certain time
-type SpeedData struct {
-	t     time.Time
-	bytes int64
-}
 
 // torrentImpl wrapper around the torrent.Torrent struct
 // Providers some specific functionality
@@ -24,9 +19,11 @@ type torrentImpl struct {
 	baseDir  string
 	provider config.Provider
 
-	ctx       context.Context
-	cancel    context.CancelFunc
-	lastSpeed SpeedData
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	lastTime time.Time
+	lastRead int64
 }
 
 func newTorrent(t *torrent.Torrent, baseDir string, provider config.Provider) Torrent {
@@ -35,10 +32,8 @@ func newTorrent(t *torrent.Torrent, baseDir string, provider config.Provider) To
 		key:      t.InfoHash().HexString(),
 		baseDir:  baseDir,
 		provider: provider,
-		lastSpeed: SpeedData{
-			t:     time.Now(),
-			bytes: 0,
-		},
+		lastTime: time.Now(),
+		lastRead: 0,
 	}
 }
 
@@ -75,27 +70,27 @@ func (t *torrentImpl) Cancel() error {
 	return nil
 }
 
-func (t *torrentImpl) GetInfo() config.Info {
+func (t *torrentImpl) GetDownloadDir() string {
+	return path.Join(t.baseDir, t.key)
+}
+
+func (t *torrentImpl) GetInfo() config.InfoStat {
 	c := t.t.Stats().BytesReadData
 	bytesRead := c.Int64()
-	var speed int64 = 0
+	bytesDiff := bytesRead - t.lastRead
+	timeDiff := max(time.Since(t.lastTime).Seconds(), 1)
+	speed := int64(float64(bytesDiff) / timeDiff)
+	t.lastRead = bytesRead
+	t.lastTime = time.Now()
 
-	bytesDiff := bytesRead - t.lastSpeed.bytes
-	timeDiff := time.Since(t.lastSpeed.t).Seconds()
-	speed = int64(float64(bytesDiff) / timeDiff)
-
-	t.lastSpeed = SpeedData{
-		t:     time.Now(),
-		bytes: bytesRead,
-	}
-
-	return config.Info{
-		Provider:  t.provider,
-		InfoHash:  t.key,
-		Name:      t.t.Name(),
-		Size:      utils.BytesToSize(float64(t.t.Length())),
-		Progress:  t.t.BytesCompleted(),
-		Completed: utils.Percent(t.t.BytesCompleted(), t.t.Length()),
-		Speed:     utils.HumanReadableSpeed(speed),
+	return config.InfoStat{
+		Provider:    t.provider,
+		Id:          t.key,
+		Name:        t.t.Name(),
+		Size:        utils.BytesToSize(float64(t.t.Length())),
+		Progress:    utils.Percent(t.t.BytesCompleted(), t.t.Length()),
+		SpeedType:   config.BYTES,
+		Speed:       config.SpeedData{T: time.Now().Unix(), Speed: speed},
+		DownloadDir: t.GetDownloadDir(),
 	}
 }

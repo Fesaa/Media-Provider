@@ -37,18 +37,25 @@ type NavigationItem = {
     current: boolean;
 };
 
-type InfoStat = {
-    Provider: string;
-    Completed: number;
-    InfoHash: string;
-    Name: string;
-    Progress: number;
-    Size: number;
-    Speed: string;
-};
+interface InfoStat {
+    provider: string;
+    id: string;
+    name: string;
+    size: string;
+    progress: number;
+    speed_type: string;
+    speed: SpeedData;
+    download_dir: string;
+}
+
+interface SpeedData {
+    time: number;
+    speed: number;
+}
 
 interface SubDirsRequest {
     dir: string;
+    files: boolean;
 }
 
 interface NewDirRequest {
@@ -56,6 +63,11 @@ interface NewDirRequest {
     newDir: string;
 }
 
+interface DirEntry {
+    name: string;
+    dir: boolean;
+}
+
 type Stats = { [key: string]: InfoStat };
 
-export {SearchRequest, ContentInfo, NavigationItem, InfoStat, Stats, StopRequest, DownloadRequest, SubDirsRequest, NewDirRequest}
+export {SearchRequest, ContentInfo, NavigationItem, InfoStat, Stats, StopRequest, DownloadRequest, SubDirsRequest, NewDirRequest, SpeedData, DirEntry}

@@ -23,7 +23,7 @@ export default function DirFormComponent(props: { base: string, name: string, se
             />
             <GlobeAltIcon className="w-8 h-8 hover:cursor-pointer" onClick={_ => setShowPopup(!showPopup)} />
         </div>
-        {showPopup && <DirBrowser base={props.base} name={props.name} />}
+        {showPopup && <DirBrowser base={props.base} name={props.name} showFiles={false} addFiles={true} copy={true} />}
     </div>
 }
 

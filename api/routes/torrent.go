@@ -53,7 +53,7 @@ func Stop(ctx *fiber.Ctx) error {
 
 func Stats(ctx *fiber.Ctx) error {
 	torrents := yoitsu.I().GetRunningTorrents()
-	info := make(map[string]config.Info, torrents.Len())
+	info := make(map[string]config.InfoStat, torrents.Len())
 	torrents.ForEachSafe(func(key string, torrent yoitsu.Torrent) {
 		info[key] = torrent.GetInfo()
 	})

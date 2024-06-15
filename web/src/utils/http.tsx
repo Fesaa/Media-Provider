@@ -1,7 +1,7 @@
 import {Page} from "../components/form/types";
 import axios from "axios";
 import {
-    ContentInfo,
+    ContentInfo, DirEntry,
     DownloadRequest,
     InfoStat,
     NavigationItem, NewDirRequest,
@@ -117,7 +117,7 @@ async function startDownload(downloadRequest: DownloadRequest): Promise<void> {
         })
 }
 
-async function getSubDirs(req: SubDirsRequest): Promise<string[]> {
+async function getSubDirs(req: SubDirsRequest): Promise<DirEntry[]> {
     return axios.post(`${BASE_URL}/api/io/ls`, req)
         .then(res => {
             if (!res) {
@@ -126,7 +126,7 @@ async function getSubDirs(req: SubDirsRequest): Promise<string[]> {
             if (!res.data) {
                 return []
             }
-            return res.data as string[]
+            return res.data as DirEntry[]
         })
 }
 

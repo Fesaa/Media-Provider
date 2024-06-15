@@ -65,7 +65,7 @@ func main() {
 		TimeFormat: "2006/01/02 15:04:05",
 		Format:     "${time} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
 		Next: func(c *fiber.Ctx) bool {
-			return config.I().GetLoggingConfig().GetLogLevel() != slog.LevelDebug
+			return !config.I().GetLoggingConfig().LogHttp()
 		},
 	}))
 

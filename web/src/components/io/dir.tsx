@@ -5,8 +5,9 @@ import {
 import React, {ReactNode, useEffect, useState} from "react";
 import NotificationHandler from "../../notifications/handler";
 import {createNewDir, getSubDirs} from "../../utils/http";
-import {NewDirRequest} from "../../utils/types";
+import {DirEntry, NewDirRequest} from "../../utils/types";
 import {copyToClipboard} from "../../utils/copy";
+import {DocumentIcon} from "@heroicons/react/24/outline";
 
 function getDirName(s: string): string {
   const parts = s.split("/");
@@ -27,29 +28,36 @@ function getDirUp(s: string) {
 
 }
 
-function dirLine(s: string, callBack: () => void): ReactNode {
+function dirLine(s: string, dir: boolean, copy: boolean, callBack: () => void): ReactNode {
   return <div
       key={s}
       className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom"
   >
     <div className="space-x-2 flex flex-row items-center">
-      <FolderIcon className="w-6 h-6 text-blue-500" />
+        {dir ? <FolderIcon className="w-6 h-6 text-blue-500" /> : <DocumentIcon className="w-6 h-6 text-blue-500" /> }
       <span
           className="hover:cursor-pointer hover:underline"
-          onClick={() => callBack()}
+          onClick={() => {
+              if (dir) {
+                  callBack()
+              }
+          }}
       >
         {getDirName(s)}
       </span>
     </div>
-    <ClipboardIcon className="w-4 h-4 hover:cursor-pointer" onClick={() => copyToClipboard(s)} />
+      {(dir && copy) && <ClipboardIcon className="w-4 h-4 hover:cursor-pointer" onClick={() => copyToClipboard(s)} />}
   </div>
 }
 
 export default function Dir(props: {
   base: string;
+  addFiles: boolean,
+  showFiles: boolean,
+  copy: boolean,
   root?: boolean;
 }) {
-  const [subs, setSubs] = useState<string[]>([]);
+  const [subs, setSubs] = useState<DirEntry[]>([]);
   const [curRoot, setCurRoot] = useState<string>(props.base);
   const [root, setRoot] = useState<boolean>(props.root || true);
 
@@ -59,7 +67,7 @@ export default function Dir(props: {
   }, [curRoot]);
 
   function loadSubs(dir: string) {
-    getSubDirs({dir}).then(setSubs)
+    getSubDirs({dir, files: props.showFiles}).then(setSubs)
         .catch(err => {
           console.debug(err)
           NotificationHandler.addErrorNotificationByTitle("Failed to load subdirectories")
@@ -79,25 +87,25 @@ export default function Dir(props: {
         console.debug(err)
         NotificationHandler.addErrorNotificationByTitle("Failed to create new directory")
     }).then(() => (
-        setSubs([...subs, dirName])
+        setSubs([...subs, {name: dirName, dir: true}])
     ))
   }
 
   return (
       <div className="flex flex-col">
-        <span className="text-xl mb-5 flex flex-grow text-center">{props.base}</span>
+        <span className="text-xl mb-5 flex flex-grow text-center break-all">{props.base}</span>
         <div className="flex flex-col">
           <div className="text-left text-xl"></div>
-          {!root && dirLine('...', () => {
+          {!root && dirLine('...', true, props.copy, () => {
             setCurRoot(getDirUp(curRoot))
           })}
-          {subs.map(dir => {
-            return dirLine(curRoot + "/" + dir, () => {
-              setCurRoot(curRoot + "/" + dir)
+          {subs.map(entry => {
+            return dirLine(curRoot + "/" + entry.name, entry.dir, props.copy, () => {
+              setCurRoot(curRoot + "/" + entry.name)
             })
           })}
         </div>
-        {<div className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom">
+        {props.addFiles && <div className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom">
           <div className={`flex flex-row text-center items-center`} onClick={createSubDir}>
             <PlusIcon className="w-6 h-6 text-green-500"/>{" "}
             <span className="text-sm hover:underline hover:cursor-pointer">
