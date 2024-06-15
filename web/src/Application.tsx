@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import InfoLine from "./components/torrentStats";
+import InfoLine from "./components/infoLine";
 import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "./notifications/handler";
 import Header from "./components/navigation/header";

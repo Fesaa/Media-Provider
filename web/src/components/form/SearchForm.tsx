@@ -1,11 +1,11 @@
 import React, { FormEvent, useEffect, useState } from "react";
 import {SearchProps} from "./types";
-import TorrentTable, { TorrentInfo } from "../torrentTable";
 import NotificationHandler from "../../notifications/handler";
 import DirFormComponent from "../io/form";
-import {SearchRequest} from "../../utils/types";
+import {ContentInfo, SearchRequest} from "../../utils/types";
 import {searchContent} from "../../utils/http";
 import {GetModifierComponent} from "./modifiers";
+import SearchLine from "../searchLine";
 
 
 
@@ -21,7 +21,7 @@ export default function SearchForm(props: SearchProps) {
   const [customRequestDir, setCustomRequestDir] = useState<string>("");
   const [selectedModifiers, setSelectedModifiers] = useState<{ [key: string]: string[] }>({});
 
-  const [searchInfo, setSearchInfo] = useState<TorrentInfo[]>([]);
+  const [searchInfo, setSearchInfo] = useState<ContentInfo[]>([]);
 
   function handleModifierChange(modifierKey: string, newValue: string | string[]) {
     setSelectedModifiers((prev) => {
@@ -168,15 +168,13 @@ export default function SearchForm(props: SearchProps) {
 
       <section
         id="search-results"
-        className="flex items-center justify-center justify-items-center"
+        className="flex flex-col space-y-2"
       >
-        <TorrentTable
-            torrents={searchInfo}
-            options={{
-              baseDir: customRequestDir != "" ? customRequestDir : requestDir,
-              url: false,
-          }}
-        />
+        {searchInfo.length > 0 && searchInfo.map((content, i) => {
+          return <div key={content.InfoHash + "_" + i} className="flex-grow">
+            <SearchLine content={content} baseDir={customRequestDir != "" ? customRequestDir : requestDir} />
+          </div>
+        })}
       </section>
     </div>
   );
