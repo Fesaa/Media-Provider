@@ -5,6 +5,8 @@ import {
 import axios from "axios";
 import React, { useState } from "react";
 import NotificationHandler from "../notifications/handler";
+import {DownloadRequest} from "../utils/types";
+import {startDownload} from "../utils/http";
 
 export type TorrentInfo = {
   Name: string;
@@ -34,35 +36,19 @@ export default function TorrentTable(props: {
   const [imageUrl, setImageUrl] = useState<string>("");
 
   async function downloadTorrent(infoHash: string, provider: string): Promise<void> {
-    const requestBody = {
+    const downloadRequest: DownloadRequest = {
       provider: provider,
-      info: infoHash,
+      id: infoHash,
       base_dir: props.options.baseDir,
     };
 
-    axios
-      .post(`${BASE_URL}/api/download`, requestBody)
-      .catch((err) => {
-        console.error(err);
-        NotificationHandler.addErrorNotificationByTitle(
-          "Error while downloading downloading!",
-        );
-      })
-      .then((res) => {
-        if (res == null) {
-          return;
-        }
-
-        if (res.status == 202) {
-          NotificationHandler.addSuccesNotificationByTitle(
-            "Torrent is downloading!",
-          );
-        } else {
-          NotificationHandler.addErrorNotificationByTitle(
-            "Error while downloading!",
-          );
-        }
-      });
+    startDownload(downloadRequest)
+        .then(() => {
+            NotificationHandler.addSuccesNotificationByTitle("Content is downloading!");
+        })
+        .catch(err => {
+            NotificationHandler.addErrorNotificationByTitle(err.message);
+        })
   }
 
   function hasAtLeast(f: (torrent: TorrentInfo) => string): boolean {
@@ -114,7 +100,7 @@ export default function TorrentTable(props: {
               {props.torrents.map((torrent) => (
                 <tr
                   className="even:bg-white border-gray-300 hover:bg-gray-300 border"
-                  key={torrent.InfoHash}
+                  key={torrent.InfoHash + "_" + torrent.Provider}
                 >
                   <td className="p-2 text-sm border">
                     <div className="flex flex-row text-center space-x-2">

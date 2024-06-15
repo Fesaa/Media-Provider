@@ -6,10 +6,10 @@ import (
 )
 
 func yoitsuDownloader(req DownloadRequest) error {
-	_, err := yoitsu.I().AddDownload(req.Hash, req.BaseDir, req.Provider)
+	_, err := yoitsu.I().AddDownload(req.Id, req.BaseDir, req.Provider)
 	return err
 }
 
 func mangadexDownloader(req DownloadRequest) error {
-	return mangadex.I().Download(req.Hash, req.BaseDir)
+	return mangadex.I().Download(req.Id, req.BaseDir)
 }

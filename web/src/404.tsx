@@ -1,6 +1,8 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+declare const BASE_URL: string;
+
 function Status404() {
   return (
     <div className="flex h-screen items-center justify-center bg-gray-200">
@@ -10,7 +12,7 @@ function Status404() {
           Sorry, the page you're looking for can't be found.
         </p>
         <a
-          href={`${BASE_URL}`}
+          href={`${BASE_URL}/`}
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
         >
           Go Home

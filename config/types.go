@@ -47,7 +47,7 @@ const (
 
 type Modifier struct {
 	Title  string `yaml:"title" json:"title"`
-	Multi  bool   `yaml:"multi" json:"multi"`
+	Type   string `yaml:"type" json:"type"`
 	Values []Pair `yaml:"values" json:"values"`
 }
 

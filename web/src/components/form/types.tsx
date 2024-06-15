@@ -16,7 +16,7 @@ export interface SearchConfig {
 
 export interface Modifier {
   title: string
-  multi: boolean
+  type: string
   values: Pair[]
 }
 

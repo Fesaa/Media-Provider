@@ -1,53 +1,12 @@
 import React, { FormEvent, useEffect, useState } from "react";
-import {Modifier, Pair, SearchProps} from "./types";
+import {SearchProps} from "./types";
 import TorrentTable, { TorrentInfo } from "../torrentTable";
 import NotificationHandler from "../../notifications/handler";
-import axios from "axios";
 import DirFormComponent from "../io/form";
+import {SearchRequest} from "../../utils/types";
+import {searchContent} from "../../utils/http";
+import {GetModifierComponent} from "./modifiers";
 
-interface SearchRequest {
-  provider: string[];
-  query: string;
-  modifiers: { [key: string]: Modifier };
-}
-
-interface CheckboxGroupProps {
-  options: Pair[];
-  onChange: (values: string[]) => void;
-}
-
-const CheckboxGroup: React.FC<CheckboxGroupProps> = ({ options, onChange }) => {
-  const [checkedItems, setCheckedItems] = useState<string[]>([]);
-
-  const handleCheckboxChange = (value: string) => {
-    const newCheckedItems = checkedItems.includes(value)
-        ? checkedItems.filter(item => item !== value)
-        : [...checkedItems, value];
-    setCheckedItems(newCheckedItems);
-    onChange(newCheckedItems);
-  };
-
-  return (
-      <>
-        <div className="grid grid-cols-2 gap-4">
-          {options.map(option => (
-              <div key={option.key} className="flex items-center">
-                <input
-                    type="checkbox"
-                    id={option.key}
-                    value={option.name}
-                    checked={checkedItems.includes(option.key)}
-                    onChange={() => handleCheckboxChange(option.key)}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-600 focus:border-primary-600 shadow-sm focus:ring focus:ring-opacity-50 h-4 w-4 mr-2"
-                />
-                <label htmlFor={option.key} className="">{option.name}</label>
-              </div>
-          ))}
-        </div>
-      </>
-
-  );
-};
 
 
 export default function SearchForm(props: SearchProps) {
@@ -60,11 +19,11 @@ export default function SearchForm(props: SearchProps) {
   const [query, setQuery] = useState<string>("");
   const [requestDir, setRequestDir] = useState<string>("");
   const [customRequestDir, setCustomRequestDir] = useState<string>("");
-  const [selectedModifiers, setSelectedModifiers] = useState<{ [key: string]: string[] }>();
+  const [selectedModifiers, setSelectedModifiers] = useState<{ [key: string]: string[] }>({});
 
-  const [torrents, setTorrents] = useState<TorrentInfo[]>([]);
+  const [searchInfo, setSearchInfo] = useState<TorrentInfo[]>([]);
 
-  const handleModifierChange = (modifierKey: string, newValue: string | string[]) => {
+  function handleModifierChange(modifierKey: string, newValue: string | string[]) {
     setSelectedModifiers((prev) => {
       if (!prev) {
         prev = {};
@@ -76,13 +35,11 @@ export default function SearchForm(props: SearchProps) {
       }
       return {...prev};
     });
-  };
+  }
 
   async function searchTorrents() {
     if (query == "") {
-      NotificationHandler.addErrorNotificationByTitle(
-        "Search query cannot be empty",
-      );
+      NotificationHandler.addErrorNotificationByTitle("Search query cannot be empty");
       return;
     }
 
@@ -91,29 +48,17 @@ export default function SearchForm(props: SearchProps) {
       query: query,
       modifiers: selectedModifiers,
     };
-
-    axios
-      .post(`${BASE_URL}/api/search`, searchReq)
-      .catch((err) => {
-        NotificationHandler.addErrorNotificationByTitle(err.message);
-        return null;
-      })
-      .then((res) => {
-        if (res == null || res.data == null) {
-          NotificationHandler.addErrorNotificationByTitle("No results found");
-          return;
-        }
-
-        const torrents: TorrentInfo[] = res.data;
-        if (torrents.length == 0) {
-          NotificationHandler.addErrorNotificationByTitle("No results found");
-          return;
-        }
-        setTorrents(torrents);
-        document
-          .getElementById("search-results")!
-          .scrollIntoView({ behavior: "smooth" });
-      });
+    searchContent(searchReq)
+        .then(res => {
+          setSearchInfo(res);
+          document
+              .getElementById("search-results")!
+              .scrollIntoView({ behavior: "smooth" });
+        })
+        .catch(err => {
+            NotificationHandler.addErrorNotificationByTitle(err.message);
+            return null;
+        })
   }
 
   async function onSubmit(e: FormEvent) {
@@ -130,12 +75,11 @@ export default function SearchForm(props: SearchProps) {
 
     if (modifiers) {
       Object.entries(modifiers).forEach(([key, modifier]) => {
-        if (!modifier.multi && modifier.values.length > 0) {
+        if (modifier.type == "dropdown" && modifier.values.length > 0) {
           handleModifierChange(key, modifier.values[0].key)
         }
       })
     }
-
   }, []);
 
   return (
@@ -169,37 +113,13 @@ export default function SearchForm(props: SearchProps) {
                   />
                 </div>
 
-                <div className="flex flex-wrap flex-col justify-around">
+                {modifiers && Object.entries(modifiers).map(([key, modifier]) => {
+                  return <div key={key} className="">
+                    {GetModifierComponent(key, modifier, handleModifierChange)}
+                  </div>
+                })}
 
-                  {modifiers && Object.entries(modifiers).map(([key, modifier]) => {
-                    return <div key={key}>
-                      <label
-                          htmlFor={key}
-                          className="mb-2 mt-5 block text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        {modifier.title}
-                      </label>
-                      {modifier.multi ? (
-                              <CheckboxGroup
-                                  options={modifier.values}
-                                  onChange={(values) => handleModifierChange(key, values)}
-                              />
-                          ) :
-                      <select
-                          onChange={(e) => handleModifierChange(key, e.target.value)}
-                          className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm"
-                      >
-                        {modifier.values.map((pair) => (
-                            <option key={pair.key} value={pair.key}>
-                              {pair.name}
-                            </option>
-                        ))}
-                      </select>
-                      }
-                    </div>
-                  })}
-
-                  {dirs && dirs.length > 1 && (
+                {dirs && dirs.length > 1 && <div className="flex flex-wrap flex-col justify-around">
                     <div className="flex flex-wrap justify-start">
                       <label
                         htmlFor="dir"
@@ -226,8 +146,7 @@ export default function SearchForm(props: SearchProps) {
                         })}
                       </select>
                     </div>
-                  )}
-                </div>
+                </div>}
 
                 <DirFormComponent
                   setter={setCustomRequestDir}
@@ -252,7 +171,7 @@ export default function SearchForm(props: SearchProps) {
         className="flex items-center justify-center justify-items-center"
       >
         <TorrentTable
-            torrents={torrents}
+            torrents={searchInfo}
             options={{
               baseDir: customRequestDir != "" ? customRequestDir : requestDir,
               url: false,

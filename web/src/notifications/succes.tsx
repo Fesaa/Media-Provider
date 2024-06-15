@@ -7,7 +7,7 @@ class SuccesNotification extends React.Component {
   constructor(props: { title: string; description: string | null }) {
     super(props);
     this.title = props.title;
-    this.description = props.description;
+    this.description = props.description || "";
   }
 
   render() {

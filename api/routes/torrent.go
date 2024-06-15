@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/providers"
@@ -25,7 +26,7 @@ func Download(ctx *fiber.Ctx) error {
 
 	err = providers.Download(req)
 	if err != nil {
-		slog.Error("Error adding download", "error", err, "debug_info", req.DebugString())
+		slog.Error("Error adding download", "error", err, "debug_info", fmt.Sprintf("%#v", req))
 		return fiber.ErrInternalServerError
 	}
 

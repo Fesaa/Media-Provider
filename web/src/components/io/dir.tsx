@@ -1,12 +1,12 @@
 import {
-  ClipboardIcon,
-  FolderMinusIcon,
-  FolderPlusIcon,
+  ClipboardIcon, FolderIcon,
   PlusIcon,
 } from "@heroicons/react/16/solid";
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, {ReactNode, useEffect, useState} from "react";
 import NotificationHandler from "../../notifications/handler";
+import {createNewDir, getSubDirs} from "../../utils/http";
+import {NewDirRequest} from "../../utils/types";
+import {copyToClipboard} from "../../utils/copy";
 
 function getDirName(s: string): string {
   const parts = s.split("/");
@@ -14,98 +14,56 @@ function getDirName(s: string): string {
     return s;
   }
 
-  return parts[-1];
+  return parts[parts.length - 1];
 }
 
-/**
- * Copy a string to clipboard
- * @param  {String} string         The string to be copied to clipboard
- * @return {Boolean}               returns a boolean correspondent to the success of the copy operation.
- * @see https://stackoverflow.com/a/53951634/938822
- */
-function copyToClipboard(string) {
-  let textarea;
-  let result;
-
-  try {
-    textarea = document.createElement("textarea");
-    textarea.setAttribute("readonly", true);
-    textarea.setAttribute("contenteditable", true);
-    textarea.style.position = "fixed"; // prevent scroll from jumping to the bottom when focus is set.
-    textarea.value = string;
-
-    document.body.appendChild(textarea);
-
-    textarea.focus();
-    textarea.select();
-
-    const range = document.createRange();
-    range.selectNodeContents(textarea);
-
-    const sel = window.getSelection();
-    if (sel != null) {
-      sel.removeAllRanges();
-      sel.addRange(range);
+function getDirUp(s: string) {
+    const parts = s.split("/");
+    if (parts.length < 2) {
+        return s;
     }
 
-    textarea.setSelectionRange(0, textarea.value.length);
-    result = document.execCommand("copy");
-  } catch (err) {
-    console.error(err);
-    result = null;
-  } finally {
-    document.body.removeChild(textarea);
-  }
+    return parts.slice(0, parts.length - 1).join("/");
 
-  // manual copy fallback using prompt
-  if (!result) {
-    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
-    const copyHotkey = isMac ? "⌘C" : "CTRL+C";
-    result = prompt(`Press ${copyHotkey}`, string); // eslint-disable-line no-alert
-    if (!result) {
-      return false;
-    }
-  }
-  return true;
+}
+
+function dirLine(s: string, callBack: () => void): ReactNode {
+  return <div
+      key={s}
+      className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom"
+  >
+    <div className="space-x-2 flex flex-row items-center">
+      <FolderIcon className="w-6 h-6 text-blue-500" />
+      <span
+          className="hover:cursor-pointer hover:underline"
+          onClick={() => callBack()}
+      >
+        {getDirName(s)}
+      </span>
+    </div>
+    <ClipboardIcon className="w-4 h-4 hover:cursor-pointer" onClick={() => copyToClipboard(s)} />
+  </div>
 }
 
 export default function Dir(props: {
   base: string;
-  name: string;
-  depth: number;
+  root?: boolean;
 }) {
-  const [open, setOpen] = useState<boolean>(false);
   const [subs, setSubs] = useState<string[]>([]);
+  const [curRoot, setCurRoot] = useState<string>(props.base);
+  const [root, setRoot] = useState<boolean>(props.root || true);
 
   useEffect(() => {
-    if (!open) {
-      setSubs([]);
-    }
-  }, [open]);
+    loadSubs(curRoot)
+    setRoot(curRoot == props.base)
+  }, [curRoot]);
 
-  async function loadSubs() {
-    const data = {
-      dir: props.base,
-    };
-    axios
-      .post(`${BASE_URL}/api/io/ls`, data)
-      .catch((err) => {
-        console.error(err);
-        NotificationHandler.addErrorNotificationByTitle("Failed to load directory");
-      })
-      .then((res) => {
-        if (res == null) {
-          return;
-        }
-
-        if (res.data == null) {
-          setOpen(true);
-          return;
-        }
-
-        setSubs(res.data);
-        setOpen(true);
-      });
+  function loadSubs(dir: string) {
+    getSubDirs({dir}).then(setSubs)
+        .catch(err => {
+          console.debug(err)
+          NotificationHandler.addErrorNotificationByTitle("Failed to load subdirectories")
+        })
   }
 
   async function createSubDir() {
@@ -113,89 +71,39 @@ export default function Dir(props: {
     if (dirName == null || dirName == "") {
       return;
     }
-
-    const data = {
-      baseDir: props.base,
+    const req: NewDirRequest = {
+      baseDir: curRoot,
       newDir: dirName,
     };
-
-    axios
-      .post(`${BASE_URL}/api/io/create`, data)
-      .catch((err) => console.error(err))
-      .then((res) => {
-        setOpen(false);
-      });
-  }
-
-  function iconFactory() {
-    if (open) {
-      return <FolderMinusIcon className="w-6 h-6" />;
-    }
-
-    return <FolderPlusIcon className="w-6 h-6" />;
-  }
-
-  function callBackFactory() {
-    if (open) {
-      return () => setOpen(false);
-    }
-
-    return () => loadSubs();
+    createNewDir(req).catch(err => {
+        console.debug(err)
+        NotificationHandler.addErrorNotificationByTitle("Failed to create new directory")
+    }).then(() => (
+        setSubs([...subs, dirName])
+    ))
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="flex flex-row space-x-4 text-center items-center">
-        <div
-          onClick={callBackFactory()}
-          className="flex flex-row space-x-4 text-center items-center"
-        >
-          {iconFactory()}
-          {getDirName(props.name)}
-        </div>
-
-        <ClipboardIcon
-          className="w-4 h-4"
-          onClick={() => {
-            let path = props.base;
-            if (path.startsWith("/")) {
-              path = path.substring(1);
-            }
-            copyToClipboard(path);
-          }}
-        />
-      </div>
-
-      <div className="max-h-64 overflow-x-auto overflow-y-auto">
-        {open &&
-          subs.map((dir) => {
-            return (
-              <div
-                className={`flex flex-row`}
-                style={{ marginLeft: props.depth * 10 }}
-                key={dir}
-              >
-                <Dir
-                  base={props.base + "/" + dir}
-                  name={dir}
-                  depth={props.depth + 1}
-                />
-              </div>
-            );
+      <div className="flex flex-col">
+        <span className="text-xl mb-5 flex flex-grow text-center">{props.base}</span>
+        <div className="flex flex-col">
+          <div className="text-left text-xl"></div>
+          {!root && dirLine('...', () => {
+            setCurRoot(getDirUp(curRoot))
           })}
-        {open && (
-          <div
-            className={`flex flex-row text-center items-center`}
-            style={{ marginLeft: props.depth * 10 }}
-            onClick={createSubDir}
-          >
-            <PlusIcon className="w-6 h-6" />{" "}
+          {subs.map(dir => {
+            return dirLine(curRoot + "/" + dir, () => {
+              setCurRoot(curRoot + "/" + dir)
+            })
+          })}
+        </div>
+        {<div className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom">
+          <div className={`flex flex-row text-center items-center`} onClick={createSubDir}>
+            <PlusIcon className="w-6 h-6 text-green-500"/>{" "}
             <span className="text-sm hover:underline hover:cursor-pointer">
               Add new folder
             </span>
           </div>
-        )}
-      </div>
-    </div>
-  );
+        </div>}
+      </div>);
 }

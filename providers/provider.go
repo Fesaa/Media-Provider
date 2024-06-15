@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/irevenko/go-nyaa/nyaa"
+	"log/slog"
 )
 
 var providers = map[config.Provider]provider{}
@@ -56,6 +57,7 @@ func (s *providerImpl[T, S]) Search(req SearchRequest) ([]Info, error) {
 	t := s.transformer(req)
 	data, err := s.searcher(t)
 	if err != nil {
+		slog.Debug("Error while searching", "error", err)
 		return nil, err
 	}
 	return s.normalizer(data), nil

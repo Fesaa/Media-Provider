@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 )
 
@@ -28,12 +27,8 @@ type SearchRequest struct {
 
 type DownloadRequest struct {
 	Provider config.Provider `json:"provider"`
-	Hash     string          `json:"info"`
+	Id       string          `json:"id"`
 	BaseDir  string          `json:"base_dir"`
-}
-
-func (d DownloadRequest) DebugString() string {
-	return fmt.Sprintf("{Hash: %s, BaseDir: %s, Url: %t}", d.Hash, d.BaseDir)
 }
 
 type StopRequest struct {

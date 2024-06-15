@@ -1,74 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import axios from "axios";
-import Torrent from "./components/torrentStats";
+import InfoLine from "./components/torrentStats";
 import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "./notifications/handler";
-import Header, { NavigationItem } from "./components/navigation/header";
-import { Page } from "./components/form/types";
+import Header from "./components/navigation/header";
+import {getStats, loadNavigation} from "./utils/http";
+import {NavigationItem, Stats} from "./utils/types";
+
+declare const BASE_URL: string;
 
 function Application() {
-  const [info, setInfo] = useState({});
+  const [info, setInfo] = useState<Stats>({});
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
 
-  async function loadNavigation() {
-    const queryParameters = new URLSearchParams(window.location.search);
-    const index = queryParameters.get("index");
-    try {
-      const res = await axios.get(`${BASE_URL}/api/pages`);
-      if (res == null || res.data == null) {
-        return;
-      }
-
-      const pages: Page[] = res.data;
-      let nav = [
-        {
-          name: "Home",
-          href: `${BASE_URL}/`,
-          current: index == null,
-        },
-      ];
-      nav.push(
-        ...pages.map((page, i) => {
-          return {
-            name: page.title,
-            href: `${BASE_URL}/page?index=${i}`,
-            current: String(i) == index,
-          };
-        }),
-      );
-      setNavigation(nav);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
   async function updateInfo(repeat: boolean) {
-    var waitLong = true;
-
-    await axios
-      .get(`${BASE_URL}/api/stats`)
-      .then((res) => {
-        if (res == null || res.status != 200) {
-          NotificationHandler.addErrorNotificationByTitle(
-            "Unable to load stats",
-          );
-          setInfo({});
-          return;
-        }
-
-        setInfo(res.data);
-        if (Object.keys(res.data).length > 0) {
-          waitLong = false;
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        NotificationHandler.addErrorNotificationByTitle(
-          "Unable to load stats: " + err.message,
-        );
-      });
-
+    let waitLong = true;
+    await getStats().then(stats => {
+      setInfo(stats);
+      if (Object.keys(stats).length > 0) {
+        waitLong = false;
+      }
+    }).catch((err) => {
+      NotificationHandler.addErrorNotificationByTitle("Unable to load stats: " + err.message);
+    })
     if (repeat) {
       const wait = waitLong ? 10000 : 1000;
       setTimeout(() => updateInfo(repeat), wait);
@@ -76,8 +30,8 @@ function Application() {
   }
 
   useEffect(() => {
+    loadNavigation(null).then(setNavigation);
     updateInfo(true);
-    loadNavigation();
   }, []);
 
   return (
@@ -104,11 +58,11 @@ function Application() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(info).map((i: any) => (
-                    <Torrent
-                      key={i[0]}
-                      torrent={i[1]}
-                      TKey={i[0]}
+                  {Object.entries(info).map(([key, stat]) => (
+                    <InfoLine
+                      key={key}
+                      infoStat={stat}
+                      TKey={key}
                       refreshFunc={updateInfo}
                     />
                   ))}
@@ -119,10 +73,10 @@ function Application() {
           {Object.keys(info).length == 0 && (
             <div className="flex flex-col items-center justify-center">
               <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-                No torrents found
+                No content found
               </h1>
               <p className="text-gray-500 dark:text-gray-400">
-                Add a torrent to get started
+                Add a content to get started
               </p>
               <ul className="flex flex-col justify-start items-start space-y-2 mt-2">
                 {navigation
@@ -130,7 +84,7 @@ function Application() {
                   .map((nav) => (
                     <li
                       key={nav.name}
-                      className="flex flex-row items-center justify-center text-center"
+                      className="flex flex-row items-center justify-center text-center space-x-2"
                     >
                       <ChevronDoubleRightIcon className="w-4 h-4" />
                       <a
