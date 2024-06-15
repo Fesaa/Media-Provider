@@ -13,6 +13,8 @@ import (
 
 var tags = utils.NewSafeMap[string, string]()
 
+var cache = utils.NewCache[MangaSearchResponse](5 * time.Minute)
+
 func mapTags(in []string, skip bool) ([]string, error) {
 	mappedTags := make([]string, 0)
 	for _, tag := range in {
@@ -41,8 +43,15 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 		return nil, err
 	}
 	slog.Debug("Searching Mangadex for Manga", "options", fmt.Sprintf("%#v", options), "url", url)
+	if hit := cache.Get(url); hit != nil {
+		slog.Debug("Cache hit", "url", url)
+		return hit, nil
+	}
+
 	var searchResponse MangaSearchResponse
 	a, b, _ := do(url, &searchResponse)
+
+	cache.Set(url, *a)
 	return a, b
 }
 

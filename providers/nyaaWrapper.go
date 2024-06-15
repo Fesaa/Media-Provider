@@ -20,6 +20,7 @@ func nyaaSearch(opts nyaa.SearchOptions) ([]types.Torrent, error) {
 	slog.Debug(fmt.Sprintf("Searching %s", opts.Provider), "key", key)
 
 	if hit := cache.Get(key); hit != nil {
+		slog.Debug("Cache hit", "key", key)
 		return *hit, nil
 	}
 
