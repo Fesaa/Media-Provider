@@ -81,7 +81,7 @@ class MultiSelectModifier extends React.Component<ModifierProps, MultiSelectStat
                 </div>
             </div>
             {this.state.showOptions && (
-                <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="grid grid-cols-3 gap-4 mt-4 max-h-48 overflow-auto">
                     {this.props.modifier.values.map(option => (
                         <div key={option.key} className="flex items-center hover:cursor-pointer">
                             <input

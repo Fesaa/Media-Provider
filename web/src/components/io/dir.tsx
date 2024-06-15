@@ -94,8 +94,7 @@ export default function Dir(props: {
   return (
       <div className="flex flex-col">
         <span className="text-xl mb-5 flex flex-grow text-center break-all">{props.base}</span>
-        <div className="flex flex-col">
-          <div className="text-left text-xl"></div>
+        <div className="flex flex-col max-h-48 overflow-auto">
           {!root && dirLine('...', true, props.copy, () => {
             setCurRoot(getDirUp(curRoot))
           })}

@@ -12,7 +12,7 @@ import (
 
 func validateConfig() {
 	if err := validateRootConfig(config.I()); err != nil {
-		slog.Warn("Error validating config: %s", err)
+		slog.Warn("Error validating config", "err", err)
 		panic(err)
 	}
 
