@@ -68,9 +68,9 @@ class MultiSelectModifier extends React.Component<ModifierProps, MultiSelectStat
 
     render() {
         return <div>
-            <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{this.props.modifier.title}</h2>
-                <div onClick={() => this.toggleOptions()} className="px-4 py-2 rounded">
+            <div className="flex items-center justify-between hover:cursor-pointer" onClick={() => this.toggleOptions()}>
+                <h2 className="text-lg font-semibold">{this.props.modifier.title} ({this.state.checkedItems.length}) </h2>
+                <div className="px-4 py-2 rounded">
                     {this.state.showOptions ? <ChevronUpIcon
                         className="-mr-1 h-5 w-5 text-gray-400"
                         aria-hidden="true"
@@ -83,7 +83,7 @@ class MultiSelectModifier extends React.Component<ModifierProps, MultiSelectStat
             {this.state.showOptions && (
                 <div className="grid grid-cols-3 gap-4 mt-4">
                     {this.props.modifier.values.map(option => (
-                        <div key={option.key} className="flex items-center">
+                        <div key={option.key} className="flex items-center hover:cursor-pointer">
                             <input
                                 type="checkbox"
                                 id={option.key}
@@ -92,7 +92,7 @@ class MultiSelectModifier extends React.Component<ModifierProps, MultiSelectStat
                                 onChange={(e) => this.handleCheckboxChange(option.key)}
                                 className="rounded border-gray-300 text-primary-600 focus:ring-primary-600 focus:border-primary-600 shadow-sm focus:ring focus:ring-opacity-50 h-4 w-4 mr-2"
                             />
-                            <label htmlFor={option.key} className="text-xs">{option.name}</label>
+                            <label htmlFor={option.key} className="text-xs hover:cursor-pointer">{option.name}</label>
                         </div>
                     ))}
                 </div>
