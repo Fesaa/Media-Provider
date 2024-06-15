@@ -39,7 +39,7 @@ func (c configImpl) HasProvider(provider Provider) bool {
 	return false
 }
 
-func (c configImpl) GetPages() Pages {
+func (c configImpl) GetPages() []Page {
 	pages := make([]Page, len(c.Pages))
 	for i, page := range c.Pages {
 		pages[i] = page

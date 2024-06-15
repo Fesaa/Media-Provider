@@ -42,6 +42,7 @@ func init() {
 		panic("Invalid logging handler: " + config.I().GetLoggingConfig().GetHandler())
 	}
 	slog.SetDefault(slog.New(h))
+	validateConfig()
 
 	baseURL = config.OrDefault(config.I().GetRootURl(), "")
 	baseURLMap = fiber.Map{

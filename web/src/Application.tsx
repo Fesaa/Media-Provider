@@ -76,7 +76,7 @@ function Application() {
                 No content found
               </h1>
               <p className="text-gray-500 dark:text-gray-400">
-                Add a content to get started
+                Add content to get started
               </p>
               <ul className="flex flex-col justify-start items-start space-y-2 mt-2">
                 {navigation
