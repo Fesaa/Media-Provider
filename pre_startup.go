@@ -31,9 +31,6 @@ func validateRootConfig(c config.Config) error {
 	if strings.HasSuffix(c.GetRootURl(), "/") {
 		return fmt.Errorf("invalid root url: %s", c.GetRootURl())
 	}
-	if strings.HasPrefix(c.GetRootURl(), "/") {
-		return fmt.Errorf("invalid root url: %s", c.GetRootURl())
-	}
 	ok, err := dirExists(c.GetRootDir())
 	if err != nil {
 		return err
