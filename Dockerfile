@@ -29,8 +29,7 @@ COPY ./subsplease ./subsplease
 COPY ./utils ./utils
 COPY ./yoitsu ./yoitsu
 COPY ./yts ./yts
-COPY ./frontend.go ./frontend.go
-COPY ./main.go ./
+COPY ./*.go ./
 
 RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static"'
 

@@ -16,25 +16,36 @@ import (
 )
 
 type mangaImpl struct {
-	id               string
-	baseDir          string
-	info             MangaSearchData
-	chapters         ChapterSearchResponse
-	chaptersDownload int
-	ctx              context.Context
-	cancel           context.CancelFunc
-	wg               *sync.WaitGroup
+	id                 string
+	baseDir            string
+	info               *MangaSearchData
+	chapters           ChapterSearchResponse
+	chaptersDownloaded int
+	imagesDownloaded   int
+	ctx                context.Context
+	cancel             context.CancelFunc
+	wg                 *sync.WaitGroup
+
+	lastTime time.Time
+	lastRead int
 }
 
 func newManga(id string, baseDir string) Manga {
 	return &mangaImpl{
-		id:               id,
-		baseDir:          baseDir,
-		chaptersDownload: 0,
+		id:                 id,
+		baseDir:            baseDir,
+		chaptersDownloaded: 0,
+		imagesDownloaded:   0,
+		lastRead:           0,
+		lastTime:           time.Now(),
 	}
 }
 
 func (m *mangaImpl) Title() string {
+	if m.info == nil {
+		return ""
+	}
+
 	return m.info.Attributes.EnTitle()
 }
 
@@ -71,7 +82,7 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 			m.cancel()
 			return
 		}
-		m.info = mangaInfo.Data
+		m.info = &mangaInfo.Data
 
 		chapters, err, _ := GetChapters(m.id)
 		if err != nil || chapters == nil {
@@ -133,26 +144,75 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 		return err
 	}
 	urls := imageInfo.FullImageUrls()
+
+	wg := sync.WaitGroup{}
+	errCh := make(chan error, 1)
+	sem := make(chan struct{}, 4)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	for i, url := range urls {
 		select {
 		case <-m.ctx.Done():
 			return nil
+		case <-ctx.Done():
+			wg.Wait()
+			return fmt.Errorf("chapter download was cancelled from within")
 		default:
-			if err := m.downloadImage(i, chapter, url); err != nil {
-				return err
-			}
-			i++
-			if i%4 == 0 {
-				time.Sleep(1 * time.Second)
+			wg.Add(1)
+			go func(i int, url string) {
+				defer wg.Done()
+				sem <- struct{}{}
+				go func() { <-sem }()
+				if err := m.downloadImage(i, chapter, url); err != nil {
+					select {
+					case errCh <- err:
+						cancel()
+					default:
+					}
+				}
+			}(i, url)
+		}
+
+		if (i+1)%4 == 0 && i > 0 {
+			select {
+			case <-time.After(1 * time.Second):
+			case err := <-errCh:
+				wg.Wait()
+				for len(sem) > 0 {
+					<-sem
+				}
+				return fmt.Errorf("encountered an error while downloading images: %w", err)
+			case <-ctx.Done():
+				wg.Wait()
+				return fmt.Errorf("chapter download was cancelled from within")
 			}
 		}
+
+		select {
+		case err := <-errCh:
+			wg.Wait()
+			for len(sem) > 0 {
+				<-sem
+			}
+			return fmt.Errorf("encountered an error while downloading images: %w", err)
+		default:
+		}
 	}
-	m.chaptersDownload++
+
+	wg.Wait()
+	select {
+	case err := <-errCh:
+		return err
+	default:
+	}
+
+	m.chaptersDownloaded++
 	return nil
 }
 
 func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url string) error {
-	//slog.Debug("Downloading image", "id", m.id, "chapter", m.chapterName(chapter), "url", url)
+	slog.Debug("Downloading image", "id", m.id, "chapter", m.chapterName(chapter), "url", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -173,6 +233,7 @@ func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url stri
 		return err
 	}
 
+	m.imagesDownloaded++
 	return nil
 }
 
@@ -188,14 +249,29 @@ func (m *mangaImpl) Id() string {
 	return m.id
 }
 
-func (m *mangaImpl) GetInfo() config.Info {
-	return config.Info{
-		Provider:  config.MANGADEX,
-		InfoHash:  m.id,
-		Name:      m.Title(),
-		Size:      strconv.Itoa(len(m.chapters.Data)) + " Chapters",
-		Progress:  0,
-		Completed: utils.Percent(int64(m.chaptersDownload), int64(len(m.chapters.Data))),
-		Speed:     "",
+func (m *mangaImpl) GetDownloadDir() string {
+	title := m.Title()
+	if title == "" {
+		return ""
+	}
+	return path.Join(m.baseDir, title)
+}
+
+func (m *mangaImpl) GetInfo() config.InfoStat {
+	volumeDiff := m.imagesDownloaded - m.lastRead
+	timeDiff := max(time.Since(m.lastTime).Seconds(), 1)
+	speed := max(int64(float64(volumeDiff)/timeDiff), 1)
+	m.lastRead = m.imagesDownloaded
+	m.lastTime = time.Now()
+
+	return config.InfoStat{
+		Provider:    config.MANGADEX,
+		Id:          m.id,
+		Name:        m.Title(),
+		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
+		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
+		SpeedType:   config.IMAGES,
+		Speed:       config.SpeedData{T: time.Now().Unix(), Speed: speed},
+		DownloadDir: m.GetDownloadDir(),
 	}
 }

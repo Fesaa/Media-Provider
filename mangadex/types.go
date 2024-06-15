@@ -15,7 +15,8 @@ type Manga interface {
 	GetBaseDir() string
 	Cancel()
 	WaitForInfoAndDownload()
-	GetInfo() config.Info
+	GetInfo() config.InfoStat
+	GetDownloadDir() string
 }
 
 type SearchOptions struct {

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/providers"
@@ -25,7 +26,7 @@ func Download(ctx *fiber.Ctx) error {
 
 	err = providers.Download(req)
 	if err != nil {
-		slog.Error("Error adding download", "error", err, "debug_info", req.DebugString())
+		slog.Error("Error adding download", "error", err, "debug_info", fmt.Sprintf("%#v", req))
 		return fiber.ErrInternalServerError
 	}
 
@@ -52,7 +53,7 @@ func Stop(ctx *fiber.Ctx) error {
 
 func Stats(ctx *fiber.Ctx) error {
 	torrents := yoitsu.I().GetRunningTorrents()
-	info := make(map[string]config.Info, torrents.Len())
+	info := make(map[string]config.InfoStat, torrents.Len())
 	torrents.ForEachSafe(func(key string, torrent yoitsu.Torrent) {
 		info[key] = torrent.GetInfo()
 	})

@@ -4,34 +4,22 @@ import NotificationHandler from "./notifications/handler";
 import Header from "./components/navigation/header";
 import { Page } from "./components/form/types";
 import SearchForm from "./components/form/SearchForm";
-import axios from "axios";
+import {getPage} from "./utils/http";
+
+declare const BASE_URL: string;
 
 function PageFunc() {
   const queryParameters = new URLSearchParams(window.location.search);
   const index = queryParameters.get("index");
   if (index == null || index == "") {
-    // TODO Redirect to 404
-    console.error("No index provided");
+    window.location.href = `${BASE_URL}/404`
     return;
   }
 
   const [page, setPage] = useState<Page | null>(null);
 
   useEffect(() => {
-    axios
-      .get(`${BASE_URL}/api/pages/${index}`)
-      .catch((error) => {
-        console.error(error);
-        // TODO Redirect to 404
-      })
-      .then((res) => {
-        if (res == null || res.data == null) {
-          // TODO Redirect to 404
-          return;
-        }
-
-        setPage(res.data);
-      });
+    getPage(parseInt(index)).then(setPage)
   }, []);
 
   return (

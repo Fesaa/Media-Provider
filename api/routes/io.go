@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/Fesaa/Media-Provider/yoitsu"
+	"github.com/Fesaa/Media-Provider/config"
 	"log/slog"
 	"os"
 	"path"
@@ -10,7 +10,13 @@ import (
 )
 
 type ListDirsRequest struct {
-	Dir string `json:"dir"`
+	Dir       string `json:"dir"`
+	ShowFiles bool   `json:"files"`
+}
+
+type DirEntry struct {
+	Name string `json:"name"`
+	Dir  bool   `json:"dir"`
 }
 
 func ListDirs(ctx *fiber.Ctx) error {
@@ -19,20 +25,23 @@ func ListDirs(ctx *fiber.Ctx) error {
 		slog.Warn("Error parsing query params:", "err", err)
 		return fiber.ErrBadRequest
 	}
-	entries, err := os.ReadDir(yoitsu.I().GetBaseDir() + "/" + req.Dir)
+
+	base := config.OrDefault(config.I().GetRootDir(), "temp")
+	entries, err := os.ReadDir(path.Join(base, req.Dir))
 	if err != nil {
 		slog.Error("Error reading dir:", "err", err)
 		return fiber.ErrInternalServerError
 	}
 
-	var dirs []string
+	var out []DirEntry
 	for _, entry := range entries {
-		if entry.IsDir() {
-			dirs = append(dirs, entry.Name())
+		if !entry.IsDir() && !req.ShowFiles {
+			continue
 		}
+		out = append(out, DirEntry{entry.Name(), entry.IsDir()})
 	}
 
-	return ctx.JSON(dirs)
+	return ctx.JSON(out)
 }
 
 type CreateDirRequest struct {
@@ -47,7 +56,8 @@ func CreateDir(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	p := path.Join(yoitsu.I().GetBaseDir(), req.BaseDir, req.NewDir)
+	base := config.OrDefault(config.I().GetRootDir(), "temp")
+	p := path.Join(base, req.BaseDir, req.NewDir)
 	err := os.Mkdir(p, 0755)
 	if err != nil {
 		slog.Error("Error creating dir:", "err", err)

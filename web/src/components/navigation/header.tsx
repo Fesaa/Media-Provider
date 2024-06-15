@@ -1,56 +1,22 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Page } from "../form/types";
-import axios from "axios";
+import {loadNavigation} from "../../utils/http";
+import {NavigationItem} from "../../utils/types";
 
-export type NavigationItem = {
-  name: string;
-  href: string;
-  current: boolean;
-};
+declare const BASE_URL: string;
 
-function classNames(...classes) {
+function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function Header() {
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
-
-  async function loadNavigation() {
-    const queryParameters = new URLSearchParams(window.location.search);
-    const index = queryParameters.get("index");
-    try {
-      const res = await axios.get(`${BASE_URL}/api/pages`);
-      if (res == null || res.data == null) {
-        return;
-      }
-
-      const pages: Page[] = res.data;
-      let nav = [
-        {
-          name: "Home",
-          href: `${BASE_URL}/`,
-          current: index == null,
-        },
-      ];
-      nav.push(
-        ...pages.map((page, i) => {
-          return {
-            name: page.title,
-            href: `${BASE_URL}/page?index=${i}`,
-            current: String(i) == index,
-          };
-        }),
-      );
-      setNavigation(nav);
-    } catch (e) {
-      console.error(e);
-    }
-  }
+  const queryParameters = new URLSearchParams(window.location.search);
+  const index = queryParameters.get("index") != null ? parseInt(queryParameters.get("index")!) : null
 
   useEffect(() => {
-    loadNavigation();
+    loadNavigation(index).then(setNavigation);
   }, []);
 
   return (
@@ -75,7 +41,7 @@ export default function Header() {
                 <div className="flex flex-shrink-0 items-center">
                   <img
                     className="h-8 w-auto"
-                    src="assets/media_logo.svg"
+                    src={`${BASE_URL}/assets/media_logo.svg`}
                     alt="Logo"
                   />
                 </div>

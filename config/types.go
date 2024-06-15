@@ -9,7 +9,7 @@ type Config interface {
 	GetPassWord() string
 	GetRootDir() string
 	GetRootURl() string
-	GetPages() Pages
+	GetPages() []Page
 	HasProvider(Provider) bool
 	GetLoggingConfig() LoggingConfig
 }
@@ -18,9 +18,8 @@ type LoggingConfig interface {
 	GetLogLevel() slog.Level
 	GetSource() bool
 	GetHandler() string
+	LogHttp() bool
 }
-
-type Pages []Page
 
 type Page interface {
 	GetTitle() string
@@ -46,9 +45,25 @@ const (
 )
 
 type Modifier struct {
-	Title  string `yaml:"title" json:"title"`
-	Multi  bool   `yaml:"multi" json:"multi"`
-	Values []Pair `yaml:"values" json:"values"`
+	Title  string       `yaml:"title" json:"title"`
+	Type   ModifierType `yaml:"type" json:"type"`
+	Values []Pair       `yaml:"values" json:"values"`
+}
+
+type ModifierType string
+
+const (
+	DROPDOWN ModifierType = "dropdown"
+	MULTI    ModifierType = "multi"
+)
+
+func IsValidModifierType(modType ModifierType) bool {
+	switch modType {
+	case DROPDOWN, MULTI:
+		return true
+	default:
+		return false
+	}
 }
 
 type Pair struct {

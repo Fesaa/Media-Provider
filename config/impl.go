@@ -39,7 +39,7 @@ func (c configImpl) HasProvider(provider Provider) bool {
 	return false
 }
 
-func (c configImpl) GetPages() Pages {
+func (c configImpl) GetPages() []Page {
 	pages := make([]Page, len(c.Pages))
 	for i, page := range c.Pages {
 		pages[i] = page
@@ -55,6 +55,7 @@ type loggingConfigImpl struct {
 	LogLevel slog.Level `yaml:"log_level"`
 	Source   bool       `yaml:"source"`
 	Handler  string     `yaml:"handler"`
+	Http     bool       `yaml:"http"`
 }
 
 func (l loggingConfigImpl) GetLogLevel() slog.Level {
@@ -67,6 +68,10 @@ func (l loggingConfigImpl) GetSource() bool {
 
 func (l loggingConfigImpl) GetHandler() string {
 	return l.Handler
+}
+
+func (l loggingConfigImpl) LogHttp() bool {
+	return l.Http
 }
 
 type pageImpl struct {

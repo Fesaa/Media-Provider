@@ -6,14 +6,14 @@ import (
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
-	"github.com/irevenko/go-nyaa/nyaa"
+	"log/slog"
 )
 
 var providers = map[config.Provider]provider{}
 
 func init() {
-	register(config.SUKEBEI, nyaaTransformer(string(config.SUKEBEI)), nyaa.Search, nyaaNormalizer(config.SUKEBEI), yoitsuDownloader, yoitsuStopper)
-	register(config.NYAA, nyaaTransformer(string(config.NYAA)), nyaa.Search, nyaaNormalizer(config.NYAA), yoitsuDownloader, yoitsuStopper)
+	register(config.SUKEBEI, nyaaTransformer(string(config.SUKEBEI)), nyaaSearch, nyaaNormalizer(config.SUKEBEI), yoitsuDownloader, yoitsuStopper)
+	register(config.NYAA, nyaaTransformer(string(config.NYAA)), nyaaSearch, nyaaNormalizer(config.NYAA), yoitsuDownloader, yoitsuStopper)
 	register(config.LIME, limeTransformer, limetorrents.Search, limeNormalizer, yoitsuDownloader, yoitsuStopper)
 	register(config.YTS, ytsTransformer, yts.Search, ytsNormalizer, yoitsuDownloader, yoitsuStopper)
 	register(config.SUBSPLEASE, subsPleaseTransformer, subsplease.Search, subsPleaseNormalizer, yoitsuDownloader, yoitsuStopper)
@@ -56,6 +56,7 @@ func (s *providerImpl[T, S]) Search(req SearchRequest) ([]Info, error) {
 	t := s.transformer(req)
 	data, err := s.searcher(t)
 	if err != nil {
+		slog.Debug("Error while searching", "error", err)
 		return nil, err
 	}
 	return s.normalizer(data), nil

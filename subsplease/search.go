@@ -46,6 +46,14 @@ func Search(options SearchOptions) (SearchResult, error) {
 	var r SearchResult
 	err = json.Unmarshal(data, &r)
 	if err != nil {
+		// Subsplease sends back an empty array when no torrents are found
+		// instead of an empty map...
+		var empty []string
+		err2 := json.Unmarshal(data, &empty)
+		if err2 == nil {
+			return SearchResult{}, nil
+		}
+
 		return nil, err
 	}
 
