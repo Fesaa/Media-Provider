@@ -24,6 +24,7 @@ COPY ./auth ./auth
 COPY ./config ./config
 COPY ./limetorrents ./limetorrents
 COPY ./mangadex ./mangadex
+COPY ./payload ./payload
 COPY ./providers ./providers
 COPY ./subsplease ./subsplease
 COPY ./utils ./utils

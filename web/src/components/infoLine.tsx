@@ -84,10 +84,12 @@ export default function InfoLine(props: {
 
         <div className="flex flex-col flex-grow">
           <div className="flex flex-row justify-between">
-            <div className={`space-x-2 flex flex-row`} onClick={() => toggleOpen()}>
-              {open
+            <div className={`space-x-2 flex flex-row`} onClick={() => {
+              if (i.downloading) toggleOpen()
+            }}>
+              {i.downloading && (open
                   ? <ChevronUpIcon className="hidden md:block h-6 w-6"/>
-                  : <ChevronDownIcon className="hidden md:block h-6 w-6"/>
+                  : <ChevronDownIcon className="hidden md:block h-6 w-6"/>)
               }
               <span className="break-all min-w-20 md:min-w-56">
                   {i.name}
@@ -116,9 +118,9 @@ export default function InfoLine(props: {
         <div className="flex flex-col justify-center">
           <TrashIcon className="h-8 md:h-12 w-8 md:w-12 text-red-500 hover:cursor-pointer"
                      onClick={() => remove(i.id)}/>
-          {open
+          {i.downloading && (open
               ? <ChevronUpIcon className="md:hidden h-6 w-6" onClick={() => toggleOpen()} />
-              : <ChevronDownIcon className="md:hidden h-6 w-6" onClick={() => toggleOpen()} />
+              : <ChevronDownIcon className="md:hidden h-6 w-6" onClick={() => toggleOpen()} />)
           }
         </div>
       </div>

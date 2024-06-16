@@ -2,8 +2,8 @@ package routes
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/mangadex"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"log/slog"
@@ -12,7 +12,7 @@ import (
 )
 
 func Download(ctx *fiber.Ctx) error {
-	var req providers.DownloadRequest
+	var req payload.DownloadRequest
 	err := ctx.BodyParser(&req)
 	if err != nil {
 		slog.Error("Error parsing request body into DownloadRequest", "err", err)
@@ -34,7 +34,7 @@ func Download(ctx *fiber.Ctx) error {
 }
 
 func Stop(ctx *fiber.Ctx) error {
-	var req providers.StopRequest
+	var req payload.StopRequest
 	err := ctx.BodyParser(&req)
 	if err != nil {
 		slog.Error("Error parsing request body into StopRequest", "err", err)
@@ -52,15 +52,22 @@ func Stop(ctx *fiber.Ctx) error {
 }
 
 func Stats(ctx *fiber.Ctx) error {
-	torrents := yoitsu.I().GetRunningTorrents()
-	info := make(map[string]config.InfoStat, torrents.Len())
-	torrents.ForEachSafe(func(key string, torrent yoitsu.Torrent) {
-		info[key] = torrent.GetInfo()
+	statsResponse := payload.StatsResponse{
+		Running: []payload.InfoStat{},
+		Queued:  []payload.QueueStat{},
+	}
+	yoitsu.I().GetRunningTorrents().ForEachSafe(func(key string, torrent yoitsu.Torrent) {
+		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
 	})
-
 	manga := mangadex.I().GetCurrentManga()
 	if manga != nil {
-		info[manga.Id()] = manga.GetInfo()
+		statsResponse.Running = append(statsResponse.Running, manga.GetInfo())
 	}
-	return ctx.JSON(info)
+	for _, id := range yoitsu.I().GetQueuedTorrents() {
+		statsResponse.Queued = append(statsResponse.Queued, id)
+	}
+	for _, id := range mangadex.I().GetQueuedMangas() {
+		statsResponse.Queued = append(statsResponse.Queued, id)
+	}
+	return ctx.JSON(statsResponse)
 }

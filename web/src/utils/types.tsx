@@ -8,6 +8,7 @@ interface DownloadRequest {
     provider: string;
     id: string;
     base_dir: string;
+    temp_title: string;
 }
 
 interface StopRequest {
@@ -42,6 +43,7 @@ interface InfoStat {
     id: string;
     name: string;
     size: string;
+    downloading: boolean;
     progress: number;
     speed_type: string;
     speed: SpeedData;
@@ -68,6 +70,15 @@ interface DirEntry {
     dir: boolean;
 }
 
-type Stats = { [key: string]: InfoStat };
+interface QueueStat {
+    provider: string;
+    id: string;
+    name: string;
+}
 
-export {SearchRequest, ContentInfo, NavigationItem, InfoStat, Stats, StopRequest, DownloadRequest, SubDirsRequest, NewDirRequest, SpeedData, DirEntry}
+interface Stats {
+    running: InfoStat[]
+    queued: QueueStat[]
+}
+
+export {SearchRequest, ContentInfo, NavigationItem, InfoStat, Stats, StopRequest, DownloadRequest, SubDirsRequest, NewDirRequest, SpeedData, DirEntry, QueueStat}

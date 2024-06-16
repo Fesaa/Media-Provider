@@ -3,10 +3,11 @@ package providers
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"log/slog"
 )
 
-func Search(req SearchRequest) ([]Info, error) {
+func Search(req payload.SearchRequest) ([]Info, error) {
 	slog.Debug("Searching...", "req", fmt.Sprintf("%+v", req))
 	data := make([]Info, 0)
 	for _, p := range req.Provider {
@@ -26,7 +27,7 @@ func Search(req SearchRequest) ([]Info, error) {
 	return data, nil
 }
 
-func Download(req DownloadRequest) error {
+func Download(req payload.DownloadRequest) error {
 	slog.Debug("Downloading...", "req", fmt.Sprintf("%+v", req))
 	s, ok := providers[req.Provider]
 	if !ok {
@@ -35,7 +36,7 @@ func Download(req DownloadRequest) error {
 	return s.Download(req)
 }
 
-func Stop(req StopRequest) error {
+func Stop(req payload.StopRequest) error {
 	slog.Debug("Stopping...", "req", fmt.Sprintf("%+v", req))
 	s, ok := providers[req.Provider]
 	if !ok {

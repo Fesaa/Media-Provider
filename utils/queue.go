@@ -1,18 +1,24 @@
 package utils
 
-import "errors"
+import (
+	"errors"
+	"slices"
+)
 
-type Queue[T any] interface {
+type Queue[T comparable] interface {
 	Enqueue(item T)
 	Dequeue() (*T, error)
 	IsEmpty() bool
+	Size() int
+	Items() []T
+	RemoveFunc(func(T) bool) bool
 }
 
-type queueImpl[T any] struct {
+type queueImpl[T comparable] struct {
 	items []T
 }
 
-func NewQueue[T any]() Queue[T] {
+func NewQueue[T comparable]() Queue[T] {
 	return &queueImpl[T]{items: []T{}}
 }
 
@@ -31,4 +37,18 @@ func (q *queueImpl[T]) Dequeue() (*T, error) {
 
 func (q *queueImpl[T]) IsEmpty() bool {
 	return len(q.items) == 0
+}
+
+func (q *queueImpl[T]) Size() int {
+	return len(q.items)
+}
+
+func (q *queueImpl[T]) Items() []T {
+	return slices.Clone(q.items)
+}
+
+func (q *queueImpl[T]) RemoveFunc(f func(T) bool) bool {
+	size := q.Size()
+	q.items = slices.DeleteFunc(q.items, f)
+	return size != q.Size()
 }

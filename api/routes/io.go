@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"log/slog"
 	"os"
 	"path"
@@ -9,18 +10,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type ListDirsRequest struct {
-	Dir       string `json:"dir"`
-	ShowFiles bool   `json:"files"`
-}
-
-type DirEntry struct {
-	Name string `json:"name"`
-	Dir  bool   `json:"dir"`
-}
-
 func ListDirs(ctx *fiber.Ctx) error {
-	var req ListDirsRequest
+	var req payload.ListDirsRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		slog.Warn("Error parsing query params:", "err", err)
 		return fiber.ErrBadRequest
@@ -33,12 +24,12 @@ func ListDirs(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	var out []DirEntry
+	var out payload.ListDirResponse
 	for _, entry := range entries {
 		if !entry.IsDir() && !req.ShowFiles {
 			continue
 		}
-		out = append(out, DirEntry{entry.Name(), entry.IsDir()})
+		out = append(out, payload.DirEntry{Name: entry.Name(), Dir: entry.IsDir()})
 	}
 
 	return ctx.JSON(out)

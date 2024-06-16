@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"io"
 	"log/slog"
@@ -18,6 +19,7 @@ import (
 type mangaImpl struct {
 	id                 string
 	baseDir            string
+	tempTitle          string
 	info               *MangaSearchData
 	chapters           ChapterSearchResponse
 	chaptersDownloaded int
@@ -30,22 +32,34 @@ type mangaImpl struct {
 	lastRead int
 }
 
-func newManga(id string, baseDir string) Manga {
+func newManga(req payload.DownloadRequest) Manga {
 	return &mangaImpl{
-		id:                 id,
-		baseDir:            baseDir,
+		id:                 req.Id,
+		baseDir:            req.BaseDir,
+		tempTitle:          req.TempTitle,
 		chaptersDownloaded: 0,
 		imagesDownloaded:   0,
 		lastRead:           0,
 		lastTime:           time.Now(),
+		wg:                 nil,
 	}
 }
 
 func (m *mangaImpl) Title() string {
 	if m.info == nil {
-		return ""
+		return m.id
 	}
 
+	return m.info.Attributes.EnTitle()
+}
+
+func (m *mangaImpl) PrettyTitle() string {
+	if m.info == nil {
+		if m.tempTitle == "" {
+			return m.id
+		}
+		return m.tempTitle
+	}
 	return m.info.Attributes.EnTitle()
 }
 
@@ -117,7 +131,11 @@ func (m *mangaImpl) startDownload() {
 			m.wg.Done()
 			if err != nil {
 				slog.Error("A fatal error occurred while downloading a chapter, cleaning up files", "id", m.id, "err", err)
-				if err := I().RemoveDownload(m.id, true); err != nil {
+				if err := I().RemoveDownload(payload.StopRequest{
+					Provider:    config.MANGADEX,
+					Id:          m.id,
+					DeleteFiles: true,
+				}); err != nil {
 					slog.Error("Error cleaning up files", "id", m.id, "err", err)
 				}
 				m.wg.Wait()
@@ -127,7 +145,11 @@ func (m *mangaImpl) startDownload() {
 
 	}
 	m.wg.Wait()
-	if err := I().RemoveDownload(m.id, false); err != nil {
+	if err := I().RemoveDownload(payload.StopRequest{
+		Provider:    config.MANGADEX,
+		Id:          m.id,
+		DeleteFiles: false,
+	}); err != nil {
 		slog.Error("Error cleaning up files", "id", m.id, "err", err)
 	}
 }
@@ -212,7 +234,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 }
 
 func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url string) error {
-	slog.Debug("Downloading image", "id", m.id, "chapter", m.chapterName(chapter), "url", url)
+	//slog.Debug("Downloading image", "id", m.id, "chapter", m.chapterName(chapter), "url", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -257,21 +279,22 @@ func (m *mangaImpl) GetDownloadDir() string {
 	return path.Join(m.baseDir, title)
 }
 
-func (m *mangaImpl) GetInfo() config.InfoStat {
+func (m *mangaImpl) GetInfo() payload.InfoStat {
 	volumeDiff := m.imagesDownloaded - m.lastRead
 	timeDiff := max(time.Since(m.lastTime).Seconds(), 1)
 	speed := max(int64(float64(volumeDiff)/timeDiff), 1)
 	m.lastRead = m.imagesDownloaded
 	m.lastTime = time.Now()
 
-	return config.InfoStat{
+	return payload.InfoStat{
 		Provider:    config.MANGADEX,
 		Id:          m.id,
-		Name:        m.Title(),
+		Name:        m.PrettyTitle(),
 		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
+		Downloading: m.wg != nil,
 		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
-		SpeedType:   config.IMAGES,
-		Speed:       config.SpeedData{T: time.Now().Unix(), Speed: speed},
+		SpeedType:   payload.IMAGES,
+		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: m.GetDownloadDir(),
 	}
 }

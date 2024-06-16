@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"log/slog"
@@ -14,10 +15,11 @@ import (
 // torrentImpl wrapper around the torrent.Torrent struct
 // Providers some specific functionality
 type torrentImpl struct {
-	t        *torrent.Torrent
-	key      string
-	baseDir  string
-	provider config.Provider
+	t         *torrent.Torrent
+	key       string
+	baseDir   string
+	tempTitle string
+	provider  config.Provider
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -26,14 +28,15 @@ type torrentImpl struct {
 	lastRead int64
 }
 
-func newTorrent(t *torrent.Torrent, baseDir string, provider config.Provider) Torrent {
+func newTorrent(t *torrent.Torrent, req payload.DownloadRequest) Torrent {
 	return &torrentImpl{
-		t:        t,
-		key:      t.InfoHash().HexString(),
-		baseDir:  baseDir,
-		provider: provider,
-		lastTime: time.Now(),
-		lastRead: 0,
+		t:         t,
+		key:       t.InfoHash().HexString(),
+		baseDir:   req.BaseDir,
+		tempTitle: req.TempTitle,
+		provider:  req.Provider,
+		lastTime:  time.Now(),
+		lastRead:  0,
 	}
 }
 
@@ -74,7 +77,7 @@ func (t *torrentImpl) GetDownloadDir() string {
 	return path.Join(t.baseDir, t.key)
 }
 
-func (t *torrentImpl) GetInfo() config.InfoStat {
+func (t *torrentImpl) GetInfo() payload.InfoStat {
 	c := t.t.Stats().BytesReadData
 	bytesRead := c.Int64()
 	bytesDiff := bytesRead - t.lastRead
@@ -83,14 +86,20 @@ func (t *torrentImpl) GetInfo() config.InfoStat {
 	t.lastRead = bytesRead
 	t.lastTime = time.Now()
 
-	return config.InfoStat{
-		Provider:    t.provider,
-		Id:          t.key,
-		Name:        t.t.Name(),
+	return payload.InfoStat{
+		Provider: t.provider,
+		Id:       t.key,
+		Name: func() string {
+			if t.t.Info() != nil {
+				return t.t.Info().BestName()
+			}
+			return t.tempTitle
+		}(),
 		Size:        utils.BytesToSize(float64(t.t.Length())),
+		Downloading: t.t.Info() != nil,
 		Progress:    utils.Percent(t.t.BytesCompleted(), t.t.Length()),
-		SpeedType:   config.BYTES,
-		Speed:       config.SpeedData{T: time.Now().Unix(), Speed: speed},
+		SpeedType:   payload.BYTES,
+		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: t.GetDownloadDir(),
 	}
 }

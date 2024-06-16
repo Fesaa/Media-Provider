@@ -2,6 +2,7 @@ package providers
 
 import (
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 )
 
 type Info struct {
@@ -19,26 +20,8 @@ type Info struct {
 	Provider    config.Provider `json:"Provider"`
 }
 
-type SearchRequest struct {
-	Provider  []config.Provider   `json:"provider"`
-	Query     string              `json:"query"`
-	Modifiers map[string][]string `json:"modifiers,omitempty"`
-}
-
-type DownloadRequest struct {
-	Provider config.Provider `json:"provider"`
-	Id       string          `json:"id"`
-	BaseDir  string          `json:"base_dir"`
-}
-
-type StopRequest struct {
-	Provider    config.Provider `json:"provider"`
-	Id          string          `json:"id"`
-	DeleteFiles bool            `json:"delete_files"`
-}
-
 type provider interface {
-	Search(request SearchRequest) ([]Info, error)
-	Download(request DownloadRequest) error
-	Stop(StopRequest) error
+	Search(payload.SearchRequest) ([]Info, error)
+	Download(payload.DownloadRequest) error
+	Stop(payload.StopRequest) error
 }

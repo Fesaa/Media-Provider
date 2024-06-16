@@ -4,6 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/mangadex"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
 	"log/slog"
@@ -31,10 +32,10 @@ func register[T, S any](name config.Provider, t requestTransformerFunc[S], s sea
 }
 
 type responseNormalizerFunc[T any] func(T) []Info
-type requestTransformerFunc[S any] func(SearchRequest) S
+type requestTransformerFunc[S any] func(payload.SearchRequest) S
 type searchFunc[S, T any] func(S) (T, error)
-type downloadFunc func(DownloadRequest) error
-type stopFunc func(StopRequest) error
+type downloadFunc func(payload.DownloadRequest) error
+type stopFunc func(payload.StopRequest) error
 
 type providerImpl[T any, S any] struct {
 	transformer requestTransformerFunc[S]
@@ -44,15 +45,15 @@ type providerImpl[T any, S any] struct {
 	stopper     stopFunc
 }
 
-func (s *providerImpl[T, S]) Download(req DownloadRequest) error {
+func (s *providerImpl[T, S]) Download(req payload.DownloadRequest) error {
 	return s.downloader(req)
 }
 
-func (s *providerImpl[T, S]) Stop(req StopRequest) error {
+func (s *providerImpl[T, S]) Stop(req payload.StopRequest) error {
 	return s.stopper(req)
 }
 
-func (s *providerImpl[T, S]) Search(req SearchRequest) ([]Info, error) {
+func (s *providerImpl[T, S]) Search(req payload.SearchRequest) ([]Info, error) {
 	t := s.transformer(req)
 	data, err := s.searcher(t)
 	if err != nil {

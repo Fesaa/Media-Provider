@@ -3,6 +3,7 @@ package mangadex
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"log/slog"
 	"os"
@@ -20,7 +21,7 @@ func newClient() MangadexClient {
 	return &mangadexClientImpl{
 		dir:         config.OrDefault(config.I().GetRootDir(), "temp"),
 		mangas:      utils.NewSafeMap[string, Manga](),
-		queue:       utils.NewQueue[string](),
+		queue:       utils.NewQueue[payload.QueueStat](),
 		downloading: nil,
 		mu:          sync.Mutex{},
 	}
@@ -29,24 +30,23 @@ func newClient() MangadexClient {
 type mangadexClientImpl struct {
 	dir         string
 	mangas      *utils.SafeMap[string, Manga]
-	queue       utils.Queue[string]
+	queue       utils.Queue[payload.QueueStat]
 	downloading Manga
 	mu          sync.Mutex
 }
 
-func (m *mangadexClientImpl) Download(id string, baseDir string) error {
-	if m.mangas.Has(id) {
-		return fmt.Errorf("manga already exists: %s", id)
+func (m *mangadexClientImpl) Download(req payload.DownloadRequest) error {
+	if m.mangas.Has(req.Id) {
+		return fmt.Errorf("manga already exists: %s", req.Id)
 	}
-
-	manga := newManga(id, baseDir)
-	m.mangas.Set(id, manga)
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.downloading != nil {
-		m.queue.Enqueue(id)
+		m.queue.Enqueue(req.ToQueueStat())
 	} else {
+		manga := newManga(req)
+		m.mangas.Set(req.Id, manga)
 		m.downloading = manga
 		manga.WaitForInfoAndDownload()
 	}
@@ -54,21 +54,28 @@ func (m *mangadexClientImpl) Download(id string, baseDir string) error {
 	return nil
 }
 
-func (m *mangadexClientImpl) RemoveDownload(id string, deleteFiles bool) error {
-	manga, ok := m.mangas.Get(id)
+func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
+	manga, ok := m.mangas.Get(req.Id)
 	if !ok {
-		return fmt.Errorf("manga not found: %s", id)
+		ok = m.queue.RemoveFunc(func(item payload.QueueStat) bool {
+			return item.Id == req.Id
+		})
+		if ok {
+			slog.Info("torrent removed from queue", "id", req.Id)
+			return nil
+		}
+		return fmt.Errorf("manga not found: %s", req.Id)
 	}
 
-	slog.Info("Dropping manga", "title", manga.Title(), "id", manga.Id(), "deleteFiles", deleteFiles)
+	slog.Info("Dropping manga", "title", manga.Title(), "id", manga.Id(), "deleteFiles", req.DeleteFiles)
 	go func() {
-		m.mangas.Delete(id)
+		m.mangas.Delete(req.Id)
 		manga.Cancel()
 		m.mu.Lock()
 		m.downloading = nil
 		m.mu.Unlock()
 
-		if deleteFiles {
+		if req.DeleteFiles {
 			go m.deleteFiles(manga)
 		} else {
 			go m.cleanup(manga)
@@ -83,23 +90,15 @@ func (m *mangadexClientImpl) startNext() {
 		return
 	}
 
-	var manga Manga
-	var ok bool
-	for !ok && !m.queue.IsEmpty() {
-		nextId, err := m.queue.Dequeue()
+	added := false
+	for !added && !m.queue.IsEmpty() {
+		q, _ := m.queue.Dequeue()
+		err := m.Download(q.ToDownloadRequest())
 		if err != nil {
-			slog.Debug("Error while dequeueing manga from queue", "error", err)
-			return
+			slog.Warn("Error while downloading manga from queue", "error", err)
+			continue
 		}
-		manga, ok = m.mangas.Get(*nextId)
-		if !ok {
-			slog.Debug("manga not found", "id", nextId)
-			return
-		}
-		manga.WaitForInfoAndDownload()
-		m.mu.Lock()
-		m.downloading = manga
-		m.mu.Unlock()
+		added = true
 	}
 }
 
@@ -141,4 +140,8 @@ func (m *mangadexClientImpl) GetBaseDir() string {
 
 func (m *mangadexClientImpl) GetCurrentManga() Manga {
 	return m.downloading
+}
+
+func (m *mangadexClientImpl) GetQueuedMangas() []payload.QueueStat {
+	return m.queue.Items()
 }
