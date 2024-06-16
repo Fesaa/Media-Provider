@@ -37,6 +37,7 @@ type Yoitsu interface {
 
 	// GetRunningTorrents returns a map of all running torrents, indexed by their info hash
 	GetRunningTorrents() *utils.SafeMap[string, Torrent]
+	GetQueuedTorrents() []config.QueueStat
 
 	GetBaseDir() string
 }

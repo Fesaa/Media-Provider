@@ -12,6 +12,7 @@ type Config interface {
 	GetPages() []Page
 	HasProvider(Provider) bool
 	GetLoggingConfig() LoggingConfig
+	GetContentDownloaderConfig() ContentDownloaderConfig
 }
 
 type LoggingConfig interface {
@@ -19,6 +20,11 @@ type LoggingConfig interface {
 	GetSource() bool
 	GetHandler() string
 	LogHttp() bool
+}
+
+type ContentDownloaderConfig interface {
+	GetMaxConcurrentTorrents() int
+	GetMaxConcurrentMangadexImages() int
 }
 
 type Page interface {

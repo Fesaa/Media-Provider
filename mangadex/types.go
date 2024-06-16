@@ -7,6 +7,7 @@ type MangadexClient interface {
 	RemoveDownload(id string, deleteFiles bool) error
 	GetBaseDir() string
 	GetCurrentManga() Manga
+	GetQueuedMangas() []config.QueueStat
 }
 
 type Manga interface {

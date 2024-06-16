@@ -51,16 +51,28 @@ func Stop(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusAccepted)
 }
 
-func Stats(ctx *fiber.Ctx) error {
-	torrents := yoitsu.I().GetRunningTorrents()
-	info := make(map[string]config.InfoStat, torrents.Len())
-	torrents.ForEachSafe(func(key string, torrent yoitsu.Torrent) {
-		info[key] = torrent.GetInfo()
-	})
+type StatsResponse struct {
+	Running []config.InfoStat  `json:"running"`
+	Queued  []config.QueueStat `json:"queued"`
+}
 
+func Stats(ctx *fiber.Ctx) error {
+	statsResponse := StatsResponse{
+		Running: []config.InfoStat{},
+		Queued:  []config.QueueStat{},
+	}
+	yoitsu.I().GetRunningTorrents().ForEachSafe(func(key string, torrent yoitsu.Torrent) {
+		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
+	})
 	manga := mangadex.I().GetCurrentManga()
 	if manga != nil {
-		info[manga.Id()] = manga.GetInfo()
+		statsResponse.Running = append(statsResponse.Running, manga.GetInfo())
 	}
-	return ctx.JSON(info)
+	for _, id := range yoitsu.I().GetQueuedTorrents() {
+		statsResponse.Queued = append(statsResponse.Queued, id)
+	}
+	for _, id := range mangadex.I().GetQueuedMangas() {
+		statsResponse.Queued = append(statsResponse.Queued, id)
+	}
+	return ctx.JSON(statsResponse)
 }

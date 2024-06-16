@@ -43,7 +43,7 @@ func newManga(id string, baseDir string) Manga {
 
 func (m *mangaImpl) Title() string {
 	if m.info == nil {
-		return ""
+		return m.id
 	}
 
 	return m.info.Attributes.EnTitle()
@@ -212,7 +212,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 }
 
 func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url string) error {
-	slog.Debug("Downloading image", "id", m.id, "chapter", m.chapterName(chapter), "url", url)
+	//slog.Debug("Downloading image", "id", m.id, "chapter", m.chapterName(chapter), "url", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err

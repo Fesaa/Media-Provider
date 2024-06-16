@@ -2,6 +2,13 @@ package config
 
 // Not really the right package, will see later where
 
+type QueueStat struct {
+	Provider Provider `json:"provider"`
+	Id       string   `json:"id"`
+	Name     string   `json:"name,omitempty"`
+	BaseDir  string
+}
+
 type InfoStat struct {
 	Provider    Provider  `json:"provider"`
 	Id          string    `json:"id"`

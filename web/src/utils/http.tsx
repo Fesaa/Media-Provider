@@ -86,9 +86,9 @@ async function getStats(): Promise<Stats> {
                 throw new Error("Unable to load stats")
             }
             if (!res.data) {
-                return {}
+                return {running: [], queued: []}
             }
-            return res.data as { [key: string]: InfoStat }
+            return res.data as Stats
         })
 }
 

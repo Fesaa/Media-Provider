@@ -68,6 +68,15 @@ interface DirEntry {
     dir: boolean;
 }
 
-type Stats = { [key: string]: InfoStat };
+interface QueueStat {
+    provider: string;
+    id: string;
+    name: string;
+}
 
-export {SearchRequest, ContentInfo, NavigationItem, InfoStat, Stats, StopRequest, DownloadRequest, SubDirsRequest, NewDirRequest, SpeedData, DirEntry}
+interface Stats {
+    running: InfoStat[]
+    queued: QueueStat[]
+}
+
+export {SearchRequest, ContentInfo, NavigationItem, InfoStat, Stats, StopRequest, DownloadRequest, SubDirsRequest, NewDirRequest, SpeedData, DirEntry, QueueStat}
