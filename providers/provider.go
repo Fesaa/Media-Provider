@@ -13,8 +13,8 @@ import (
 var providers = map[config.Provider]provider{}
 
 func init() {
-	register(config.SUKEBEI, nyaaTransformer(string(config.SUKEBEI)), nyaaSearch, nyaaNormalizer(config.SUKEBEI), yoitsuDownloader, yoitsuStopper)
-	register(config.NYAA, nyaaTransformer(string(config.NYAA)), nyaaSearch, nyaaNormalizer(config.NYAA), yoitsuDownloader, yoitsuStopper)
+	register(config.SUKEBEI, nyaaTransformer(config.SUKEBEI), nyaaSearch, nyaaNormalizer(config.SUKEBEI), yoitsuDownloader, yoitsuStopper)
+	register(config.NYAA, nyaaTransformer(config.NYAA), nyaaSearch, nyaaNormalizer(config.NYAA), yoitsuDownloader, yoitsuStopper)
 	register(config.LIME, limeTransformer, limetorrents.Search, limeNormalizer, yoitsuDownloader, yoitsuStopper)
 	register(config.YTS, ytsTransformer, yts.Search, ytsNormalizer, yoitsuDownloader, yoitsuStopper)
 	register(config.SUBSPLEASE, subsPleaseTransformer, subsplease.Search, subsPleaseNormalizer, yoitsuDownloader, yoitsuStopper)

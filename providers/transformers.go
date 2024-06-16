@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
@@ -59,11 +60,11 @@ func limeTransformer(s payload.SearchRequest) limetorrents.SearchOptions {
 	}
 }
 
-func nyaaTransformer(p string) requestTransformerFunc[nyaa.SearchOptions] {
+func nyaaTransformer(p config.Provider) requestTransformerFunc[nyaa.SearchOptions] {
 	return func(s payload.SearchRequest) nyaa.SearchOptions {
 		n := nyaa.SearchOptions{}
 		n.Query = url.QueryEscape(s.Query)
-		n.Provider = p
+		n.Provider = string(p)
 		categories, ok := s.Modifiers["categories"]
 		if ok && len(categories) > 0 {
 			n.Category = categories[0]
