@@ -13,21 +13,25 @@ import (
 
 func Download(ctx *fiber.Ctx) error {
 	var req payload.DownloadRequest
-	err := ctx.BodyParser(&req)
-	if err != nil {
+	if err := ctx.BodyParser(&req); err != nil {
 		slog.Error("Error parsing request body into DownloadRequest", "err", err)
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	if req.BaseDir == "" {
 		slog.Warn("Trying to download Torrent to empty baseDir, returning error.")
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "base dir cannot be null",
+		})
 	}
 
-	err = providers.Download(req)
-	if err != nil {
+	if err := providers.Download(req); err != nil {
 		slog.Error("Error adding download", "error", err, "debug_info", fmt.Sprintf("%#v", req))
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	return ctx.SendStatus(fiber.StatusAccepted)
@@ -35,17 +39,17 @@ func Download(ctx *fiber.Ctx) error {
 
 func Stop(ctx *fiber.Ctx) error {
 	var req payload.StopRequest
-	err := ctx.BodyParser(&req)
-	if err != nil {
+	if err := ctx.BodyParser(&req); err != nil {
 		slog.Error("Error parsing request body into StopRequest", "err", err)
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
-	id := ctx.Params("id")
-
-	err = providers.Stop(req)
-	if err != nil {
-		slog.Error("Error stopping download", "id", id, "error", err)
-		return fiber.ErrInternalServerError
+	if err := providers.Stop(req); err != nil {
+		slog.Error("Error stopping download", "id", req.Id, "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	return ctx.SendStatus(fiber.StatusAccepted)

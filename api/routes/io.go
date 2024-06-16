@@ -14,14 +14,18 @@ func ListDirs(ctx *fiber.Ctx) error {
 	var req payload.ListDirsRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		slog.Warn("Error parsing query params:", "err", err)
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	base := config.OrDefault(config.I().GetRootDir(), "temp")
 	entries, err := os.ReadDir(path.Join(base, req.Dir))
 	if err != nil {
 		slog.Error("Error reading dir:", "err", err)
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	var out payload.ListDirResponse
@@ -44,7 +48,9 @@ func CreateDir(ctx *fiber.Ctx) error {
 	var req CreateDirRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		slog.Warn("Error parsing query params:", "err", err)
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	base := config.OrDefault(config.I().GetRootDir(), "temp")
@@ -52,7 +58,9 @@ func CreateDir(ctx *fiber.Ctx) error {
 	err := os.Mkdir(p, 0755)
 	if err != nil {
 		slog.Error("Error creating dir:", "err", err)
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	return ctx.SendStatus(fiber.StatusCreated)
