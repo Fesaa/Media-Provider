@@ -36,6 +36,7 @@ type yoitsuImpl struct {
 	torrents *utils.SafeMap[string, Torrent]
 	baseDirs *utils.SafeMap[string, string]
 	dir      string
+	queue    utils.Queue[config.QueueStat]
 }
 
 func (t *yoitsuImpl) GetBackingClient() *torrent.Client {
@@ -48,6 +49,24 @@ func (t *yoitsuImpl) GetBaseDir() string {
 
 func (t *yoitsuImpl) AddDownload(infoHash string, baseDir string, provider config.Provider) (Torrent, error) {
 	slog.Info("Adding torrent", "baseDir", baseDir, "infoHash", infoHash)
+
+	maxConcurrent := config.I().GetContentDownloaderConfig().GetMaxConcurrentTorrents()
+	if maxConcurrent <= 0 {
+		return t.addDownload(infoHash, baseDir, provider)
+	}
+	if t.torrents.Len() >= maxConcurrent {
+		t.queue.Enqueue(config.QueueStat{
+			Id:       infoHash,
+			BaseDir:  baseDir,
+			Provider: provider,
+		})
+		return nil, nil
+	}
+
+	return t.addDownload(infoHash, baseDir, provider)
+}
+
+func (t *yoitsuImpl) addDownload(infoHash string, baseDir string, provider config.Provider) (Torrent, error) {
 	torrentInfo, newTorrent := t.client.AddTorrentInfoHash(infohash.FromHexString(strings.ToLower(infoHash)))
 	if !newTorrent {
 		return nil, errors.New("torrent already exists")
@@ -68,6 +87,14 @@ func (t *yoitsuImpl) RemoveDownload(infoHashString string, deleteFiles bool) err
 
 	tor, ok := t.torrents.Get(infoHashString)
 	if !ok {
+		ok = t.queue.RemoveFunc(func(item config.QueueStat) bool {
+			return item.Id == infoHashString
+		})
+		if ok {
+			slog.Info("torrent removed from queue", "infoHash", infoHashString)
+			return nil
+		}
+
 		return errors.New("torrent does not exist, or has already completed")
 	}
 
@@ -94,7 +121,25 @@ func (t *yoitsuImpl) RemoveDownload(infoHashString string, deleteFiles bool) err
 	} else {
 		go t.cleanup(backingTorrent, baseDir)
 	}
+	t.startNext()
 	return nil
+}
+
+func (t *yoitsuImpl) startNext() {
+	if t.queue.IsEmpty() {
+		return
+	}
+
+	added := false
+	for !added && !t.queue.IsEmpty() {
+		item, _ := t.queue.Dequeue()
+		_, err := t.AddDownload(item.Id, item.BaseDir, item.Provider)
+		if err != nil {
+			slog.Warn("Error adding torrent from queue", "err", err)
+			continue
+		}
+		added = true
+	}
 }
 
 func (t *yoitsuImpl) cleanup(tor *torrent.Torrent, baseDir string) {
@@ -159,6 +204,10 @@ func (t *yoitsuImpl) GetRunningTorrents() *utils.SafeMap[string, Torrent] {
 	return t.torrents
 }
 
+func (t *yoitsuImpl) GetQueuedTorrents() []config.QueueStat {
+	return t.queue.Items()
+}
+
 // GetTorrentDirFilePathMaker appending the infohash allows us to always clean up the torrent files on delete
 func (t *yoitsuImpl) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMaker {
 	return func(baseDir string, info *metainfo.Info, infoHash metainfo.Hash) string {
@@ -177,6 +226,7 @@ func newYoitsu() (Yoitsu, error) {
 		torrents: utils.NewSafeMap[string, Torrent](),
 		baseDirs: utils.NewSafeMap[string, string](),
 		dir:      dir,
+		queue:    utils.NewQueue[config.QueueStat](),
 	}
 
 	opts := storage.NewFileClientOpts{
