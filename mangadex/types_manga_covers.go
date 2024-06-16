@@ -29,10 +29,6 @@ func (m *MangaCoverResponse) GetUrlsPerVolume(mangaId string) map[string]string 
 	}
 
 	for _, cover := range m.Data {
-		volume := cover.Attributes.Volume
-		if volume == "" {
-			continue
-		}
 		out[cover.Attributes.Volume] = coverUrl(cover.Attributes.FileName)
 	}
 
