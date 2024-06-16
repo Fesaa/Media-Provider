@@ -256,10 +256,10 @@ func (y *yoitsuImpl) cleaner() {
 				err := y.RemoveDownload(payload.StopRequest{
 					Provider:    "",
 					Id:          s,
-					DeleteFiles: true,
+					DeleteFiles: false,
 				})
 				if err != nil {
-					slog.Error("Error removing torrent file", "file", s, "err", err)
+					slog.Error("Error cleaning up torrent", "file", s, "err", err)
 				}
 			}
 		})
