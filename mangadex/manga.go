@@ -97,7 +97,7 @@ func (m *mangaImpl) WaitForInfoAndDownload() {
 func (m *mangaImpl) loadInfo() chan struct{} {
 	out := make(chan struct{})
 	go func() {
-		mangaInfo, err, _ := GetManga(m.id)
+		mangaInfo, err := GetManga(m.id)
 		if err != nil {
 			slog.Error("An error occurred while loading manga info", "id", m.id, "err", err)
 			m.cancel()
@@ -105,7 +105,7 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 		}
 		m.info = &mangaInfo.Data
 
-		chapters, err, _ := GetChapters(m.id)
+		chapters, err := GetChapters(m.id)
 		if err != nil || chapters == nil {
 			slog.Error("An error occurred while getting chapters: ", err)
 			m.cancel()
@@ -142,11 +142,12 @@ func (m *mangaImpl) startDownload() {
 			m.wg.Done()
 			if err != nil {
 				slog.Error("A fatal error occurred while downloading a chapter, cleaning up files", "id", m.id, "err", err)
-				if err := m.client.RemoveDownload(payload.StopRequest{
+				req := payload.StopRequest{
 					Provider:    config.MANGADEX,
 					Id:          m.id,
 					DeleteFiles: true,
-				}); err != nil {
+				}
+				if err = m.client.RemoveDownload(req); err != nil {
 					slog.Error("Error cleaning up files", "id", m.id, "err", err)
 				}
 				m.wg.Wait()
@@ -156,11 +157,12 @@ func (m *mangaImpl) startDownload() {
 
 	}
 	m.wg.Wait()
-	if err := m.client.RemoveDownload(payload.StopRequest{
+	req := payload.StopRequest{
 		Provider:    config.MANGADEX,
 		Id:          m.id,
 		DeleteFiles: false,
-	}); err != nil {
+	}
+	if err := m.client.RemoveDownload(req); err != nil {
 		slog.Error("Error cleaning up files", "id", m.id, "err", err)
 	}
 }
@@ -172,7 +174,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 		return err
 	}
 
-	imageInfo, err, _ := GetChapterImages(chapter.Id)
+	imageInfo, err := GetChapterImages(chapter.Id)
 	if err != nil {
 		return err
 	}

@@ -29,6 +29,12 @@ async function getPage(index: number): Promise<Page | null> {
 
 async function searchContent(searchRequest: SearchRequest): Promise<ContentInfo[]> {
     return axios.post(`${BASE_URL}/api/search`, searchRequest)
+        .catch(err => {
+            if (err.response) {
+                return Promise.reject(err.response.data.error)
+            }
+            return Promise.reject("unknown error searching for content")
+        })
         .then((res) => {
             if (!res || !res.data) {
                 throw new Error("No results found")
@@ -94,26 +100,31 @@ async function getStats(): Promise<Stats> {
 
 async function stopDownload(request: StopRequest): Promise<void> {
     return axios.post(`${BASE_URL}/api/stop/`, request)
+        .catch(err => {
+            if (err.response) {
+                return Promise.reject(err.response.data.error)
+            }
+            return Promise.reject("unknown error searching for content")
+        })
         .then((res) => {
             if (!res || res.status != 202) {
                 throw new Error("Error stopping download")
             }
-        }).catch(err => {
-            console.log(err)
-            throw new Error("Error stopping download")
         })
 }
 
 async function startDownload(downloadRequest: DownloadRequest): Promise<void> {
     return axios.post(`${BASE_URL}/api/download`, downloadRequest)
+        .catch(err => {
+            if (err.response) {
+                return Promise.reject(err.response.data.error)
+            }
+            return Promise.reject("unknown error searching for content")
+        })
         .then((res) => {
             if (!res || res.status != 202) {
                 throw new Error("Error starting download")
             }
-        })
-        .catch(err => {
-            console.log(err)
-            throw new Error("Error starting download")
         })
 }
 

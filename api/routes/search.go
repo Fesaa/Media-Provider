@@ -9,14 +9,18 @@ import (
 func Search(ctx *fiber.Ctx) error {
 	var searchRequest payload.SearchRequest
 	if err := ctx.BodyParser(&searchRequest); err != nil {
-		return ctx.Status(400).JSON(fiber.Map{
-			"error": "Invalid request",
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
 		})
 	}
 
-	search, err := providers.Search(searchRequest)
+	_, err := providers.Search(searchRequest)
 	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{})
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
-	return ctx.JSON(search)
+	return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		"error": "this pls",
+	})
 }

@@ -56,7 +56,7 @@ export default function SearchForm(props: SearchProps) {
               .scrollIntoView({ behavior: "smooth" });
         })
         .catch(err => {
-            NotificationHandler.addErrorNotificationByTitle(err.message);
+            NotificationHandler.addErrorNotificationByTitle(err instanceof String ? err : err.message);
             return null;
         })
   }
