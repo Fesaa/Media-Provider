@@ -40,10 +40,15 @@ func searchMangaURL(s SearchOptions) (string, error) {
 	base = addRange(base, "status", s.Status)
 	base = addRange(base, "contentRating", s.ContentRating)
 	base += "&availableTranslatedLanguage[]=en"
+	base += "&limit=20"
 	return base, nil
 }
 
-func chapterURL(id string) string {
+func chapterURL(id string, offset ...int) string {
+	if len(offset) > 0 {
+		return fmt.Sprintf("%s/manga/%s/feed?order[volume]=desc&order[chapter]=desc&offset=%d", URL, id, offset[0])
+	}
+
 	return fmt.Sprintf("%s/manga/%s/feed?order[volume]=desc&order[chapter]=desc", URL, id)
 }
 
@@ -55,6 +60,10 @@ func getMangaURL(id string) string {
 	return fmt.Sprintf("%s/manga/%s", URL, id)
 }
 
-func getCoverURL(id string) string {
-	return fmt.Sprintf("%s/cover/?manga[]=%s", URL, id)
+func getCoverURL(id string, offset ...int) string {
+	if len(offset) > 0 {
+		return fmt.Sprintf("%s/cover/?limit=20&manga[]=%s&offset=%d", URL, id, offset[0])
+	}
+
+	return fmt.Sprintf("%s/cover/?limit=20&manga[]=%s", URL, id)
 }

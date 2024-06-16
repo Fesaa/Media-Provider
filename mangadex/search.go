@@ -59,14 +59,24 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 	return &searchResponse, nil
 }
 
-func GetChapters(id string) (*ChapterSearchResponse, error) {
-	url := chapterURL(id)
+func GetChapters(id string, offset ...int) (*ChapterSearchResponse, error) {
+	url := chapterURL(id, offset...)
 	slog.Debug("Getting chapters", "id", id, "url", url)
 	var searchResponse ChapterSearchResponse
 	err := do(url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
+
+	if searchResponse.Total > searchResponse.Limit+searchResponse.Offset {
+		extra, err := GetChapters(id, searchResponse.Limit+searchResponse.Offset)
+		if err != nil {
+			return nil, err
+		}
+		searchResponse.Data = append(searchResponse.Data, extra.Data...)
+		return &searchResponse, nil
+	}
+
 	return &searchResponse, nil
 }
 
@@ -81,14 +91,24 @@ func GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
 	return &searchResponse, nil
 }
 
-func GetCoverImages(id string) (*MangaCoverResponse, error) {
-	url := getCoverURL(id)
-	slog.Debug("Getting cover images", "id", id, "url", url)
+func GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error) {
+	url := getCoverURL(id, offset...)
+	slog.Debug("Getting cover images", "id", id, "url", url, "offset", fmt.Sprintf("%#v", offset))
 	var searchResponse MangaCoverResponse
 	err := do(url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
+
+	if searchResponse.Total > searchResponse.Limit+searchResponse.Offset {
+		extra, err := GetCoverImages(id, searchResponse.Limit+searchResponse.Offset)
+		if err != nil {
+			return nil, err
+		}
+		searchResponse.Data = append(searchResponse.Data, extra.Data...)
+		return &searchResponse, nil
+	}
+
 	return &searchResponse, nil
 }
 

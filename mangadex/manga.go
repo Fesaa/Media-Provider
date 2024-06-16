@@ -117,9 +117,11 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 		covers, err := GetCoverImages(m.id)
 		if err != nil || covers == nil {
 			slog.Warn("An error occurred while getting covers", "err", err)
+			m.covers = &utils.SafeMap[string, string]{}
+		} else {
+			m.covers = utils.NewSafeMap(covers.GetUrlsPerVolume(m.id))
 		}
 
-		m.covers = utils.NewSafeMap(covers.GetUrlsPerVolume(m.id))
 		close(out)
 	}()
 	return out
@@ -271,7 +273,7 @@ func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
 		return err
 	}
 
-	//slog.Debug("Downloading cover image", "id", m.id, "chapter", m.chapterName(chapter), "url", coverUrl)
+	slog.Log(context.Background(), utils.LogLevelTrace, "Downloading cover image", "id", m.id, "chapter", m.chapterName(chapter), "url", coverUrl)
 	resp, err := http.Get(coverUrl)
 	if err != nil {
 		return err
@@ -296,7 +298,7 @@ func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
 }
 
 func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url string) error {
-	//slog.Debug("Downloading image", "id", m.id, "chapter", m.chapterName(chapter), "url", url)
+	slog.Log(context.Background(), utils.LogLevelTrace, "Downloading image", "id", m.id, "chapter", m.chapterName(chapter), "url", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
