@@ -14,13 +14,11 @@ func Search(ctx *fiber.Ctx) error {
 		})
 	}
 
-	_, err := providers.Search(searchRequest)
+	search, err := providers.Search(searchRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
-	return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-		"error": "this pls",
-	})
+	return ctx.JSON(search)
 }
