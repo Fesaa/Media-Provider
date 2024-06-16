@@ -2,10 +2,10 @@ package providers
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/irevenko/go-nyaa/nyaa"
 	"github.com/irevenko/go-nyaa/types"
-	"log/slog"
 	"time"
 )
 
@@ -17,10 +17,10 @@ func cacheKey(opts nyaa.SearchOptions) string {
 
 func nyaaSearch(opts nyaa.SearchOptions) ([]types.Torrent, error) {
 	key := cacheKey(opts)
-	slog.Debug(fmt.Sprintf("Searching %s", opts.Provider), "key", key)
+	log.Debug(fmt.Sprintf("Searching %s", opts.Provider), "key", key)
 
 	if hit := cache.Get(key); hit != nil {
-		slog.Debug("Cache hit", "key", key)
+		log.Trace("Nyaa Cache hit", "key", key)
 		return *hit, nil
 	}
 

@@ -2,7 +2,7 @@ package limetorrents
 
 import (
 	"fmt"
-	"log/slog"
+	"github.com/Fesaa/Media-Provider/log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,21 +18,21 @@ const SEARCH_URL string = BASE_URl + "/search/%s/%s/%d/"
 var cache utils.Cache[[]SearchResult] = *utils.NewCache[[]SearchResult](5 * time.Minute)
 
 func Search(searchOptions SearchOptions) ([]SearchResult, error) {
-	url := formatUrl(searchOptions)
-	slog.Debug("Searching lime for torrents", "url", url)
-	if res := cache.Get(url); res != nil {
-		slog.Debug("Cache hit", "url", url)
+	searchUrl := formatUrl(searchOptions)
+	log.Debug("searching lime for torrents", "url", searchUrl)
+	if res := cache.Get(searchUrl); res != nil {
+		log.Trace("Limetorrents Cache hit", "url", searchUrl)
 		return *res, nil
 	}
 
-	doc, err := getSearch(url)
+	doc, err := getSearch(searchUrl)
 	if err != nil {
 		return nil, err
 	}
 
 	torrents := doc.Find(".table2 tbody tr")
 	res := parseResults(torrents)
-	cache.Set(url, res)
+	cache.Set(searchUrl, res)
 	return res, nil
 }
 
@@ -49,7 +49,7 @@ func parseResults(torrents *goquery.Selection) []SearchResult {
 func searchFromNode(i int, s *goquery.Selection) SearchResult {
 	name := s.Find("td:nth-child(1) a").Text()
 	urlSel := s.Find("td:nth-child(1) a")
-	url, _ := urlSel.First().Attr("href")
+	torrentUrl, _ := urlSel.First().Attr("href")
 	pageUrl, _ := urlSel.Last().Attr("href")
 	added := s.Find("td:nth-child(2)").Text()
 	size := s.Find("td:nth-child(3)").Text()
@@ -58,8 +58,8 @@ func searchFromNode(i int, s *goquery.Selection) SearchResult {
 
 	return SearchResult{
 		Name:    name,
-		Url:     url,
-		Hash:    hashFromUrl(url),
+		Url:     torrentUrl,
+		Hash:    hashFromUrl(torrentUrl),
 		Size:    size,
 		Seed:    seed,
 		Leach:   leach,

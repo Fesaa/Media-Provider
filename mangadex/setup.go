@@ -3,15 +3,15 @@ package mangadex
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/log"
 	"io"
-	"log/slog"
 	"net/http"
 )
 
 func Init(c MangadexConfig) {
 	err := loadTags()
 	if err != nil {
-		slog.Warn("Failed to load tags, tag filtering won't work", "err", err)
+		log.Warn("failed to load tags, filtering won't work", "err", err)
 	}
 
 	m = newClient(c)

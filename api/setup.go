@@ -3,12 +3,12 @@ package api
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
-	"log/slog"
 )
 
 func Setup(app fiber.Router) {
-	slog.Debug("Registering api routes")
+	log.Debug("registering api routes")
 	api := app.Group("/api")
 
 	api.Get("/health", func(c *fiber.Ctx) error {

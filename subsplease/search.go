@@ -3,9 +3,9 @@ package subsplease
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -25,10 +25,10 @@ func (o SearchOptions) toURL() string {
 
 func Search(options SearchOptions) (SearchResult, error) {
 	u := options.toURL()
-	slog.Debug("Search SubsPlease for anime", "url", u)
+	log.Debug("search SubsPlease for anime", "url", u)
 
 	if res := cache.Get(u); res != nil {
-		slog.Debug("Cache hit", "url", u)
+		log.Trace("Cache hit", "url", u)
 		return *res, nil
 	}
 

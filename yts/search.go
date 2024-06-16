@@ -3,8 +3,8 @@ package yts
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/log"
 	"io"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -35,10 +35,10 @@ func (o SearchOptions) toURL() string {
 
 func Search(options SearchOptions) (*SearchResult, error) {
 	url := options.toURL()
-	slog.Debug("Searing YTS for movies", "url", url)
+	log.Debug("Searing YTS for movies", "url", url)
 
 	if res := cache.Get(url); res != nil {
-		slog.Debug("Cache hit", "url", url)
+		log.Trace("YTS cache hit", "url", url)
 		return res, nil
 	}
 

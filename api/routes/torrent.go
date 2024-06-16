@@ -2,11 +2,11 @@ package routes
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/yoitsu"
-	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -14,21 +14,21 @@ import (
 func Download(ctx *fiber.Ctx) error {
 	var req payload.DownloadRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		slog.Error("Error parsing request body into DownloadRequest", "err", err)
+		log.Error("error while parsing request body into DownloadRequest", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
 	if req.BaseDir == "" {
-		slog.Warn("Trying to download Torrent to empty baseDir, returning error.")
+		log.Warn("trying to download Torrent to empty baseDir, returning error.")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "base dir cannot be null",
 		})
 	}
 
 	if err := providers.Download(req); err != nil {
-		slog.Error("Error adding download", "error", err, "debug_info", fmt.Sprintf("%#v", req))
+		log.Error("error while adding download", "error", err, "debug_info", fmt.Sprintf("%#v", req))
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -40,13 +40,13 @@ func Download(ctx *fiber.Ctx) error {
 func Stop(ctx *fiber.Ctx) error {
 	var req payload.StopRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		slog.Error("Error parsing request body into StopRequest", "err", err)
+		log.Error("error while parsing request body into StopRequest", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 	if err := providers.Stop(req); err != nil {
-		slog.Error("Error stopping download", "id", req.Id, "error", err)
+		log.Error("error while stopping download", "id", req.Id, "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})

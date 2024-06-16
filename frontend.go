@@ -1,15 +1,14 @@
 package main
 
 import (
-	"errors"
 	"github.com/Fesaa/Media-Provider/auth"
-	"log/slog"
+	"github.com/Fesaa/Media-Provider/log"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func RegisterFrontEnd(app fiber.Router) {
-	slog.Debug("Registering Front End")
+	log.Debug("Registering Front End")
 
 	app.Get("/", auth.Middleware(true), home)
 	app.Get("/page", auth.Middleware(true), page)
@@ -33,8 +32,8 @@ func home(ctx *fiber.Ctx) error {
 func login(ctx *fiber.Ctx) error {
 	success, err := auth.I().IsAuthenticated(ctx)
 	if err != nil {
-		slog.Error("Error checking if user is authenticated ", "error", err)
-		return errors.New("")
+		log.Error("Error checking if user is authenticated ", "error", err)
+		return err
 	}
 
 	if success {
