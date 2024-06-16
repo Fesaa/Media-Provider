@@ -8,6 +8,7 @@ interface DownloadRequest {
     provider: string;
     id: string;
     base_dir: string;
+    temp_title: string;
 }
 
 interface StopRequest {
@@ -42,6 +43,7 @@ interface InfoStat {
     id: string;
     name: string;
     size: string;
+    downloading: boolean;
     progress: number;
     speed_type: string;
     speed: SpeedData;

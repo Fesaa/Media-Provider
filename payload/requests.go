@@ -9,9 +9,10 @@ type SearchRequest struct {
 }
 
 type DownloadRequest struct {
-	Provider config.Provider `json:"provider"`
-	Id       string          `json:"id"`
-	BaseDir  string          `json:"base_dir"`
+	Provider  config.Provider `json:"provider"`
+	Id        string          `json:"id"`
+	BaseDir   string          `json:"base_dir"`
+	TempTitle string          `json:"temp_title"`
 }
 
 type StopRequest struct {

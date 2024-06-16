@@ -5,11 +5,12 @@ import {ContentInfo, DownloadRequest} from "../utils/types";
 import {startDownload} from "../utils/http";
 import NotificationHandler from "../notifications/handler";
 
-async function downloadTorrent(id: string, provider: string, baseDir: string): Promise<void> {
+async function downloadTorrent(id: string, provider: string, baseDir: string, title: string): Promise<void> {
     const downloadRequest: DownloadRequest = {
         provider: provider,
         id: id,
         base_dir: baseDir,
+        temp_title: title,
     };
 
     startDownload(downloadRequest)
@@ -76,7 +77,7 @@ export default function SearchLine(props: SearchLineProps) {
 
                 <div className="flex flex-col justify-center">
                     <ArrowDownTrayIcon className="h-6 md:h-10 w-6 md:w-10 text-blue-500 hover:cursor-pointer"
-                                       onClick={() => downloadTorrent(c.InfoHash, c.Provider, props.baseDir)}
+                                       onClick={() => downloadTorrent(c.InfoHash, c.Provider, props.baseDir, c.Name)}
                     />
                     {open
                         ? <ChevronUpIcon className="md:hidden h-6 w-6" onClick={() => toggleOpen()} />

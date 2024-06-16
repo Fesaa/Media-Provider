@@ -31,10 +31,10 @@ type mangaImpl struct {
 	lastRead int
 }
 
-func newManga(id string, baseDir string) Manga {
+func newManga(req payload.DownloadRequest) Manga {
 	return &mangaImpl{
-		id:                 id,
-		baseDir:            baseDir,
+		id:                 req.Id,
+		baseDir:            req.BaseDir,
 		chaptersDownloaded: 0,
 		imagesDownloaded:   0,
 		lastRead:           0,

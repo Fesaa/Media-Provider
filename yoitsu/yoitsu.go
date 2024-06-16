@@ -53,28 +53,28 @@ func (t *yoitsuImpl) AddDownload(req payload.DownloadRequest) (Torrent, error) {
 
 	maxConcurrent := config.I().GetContentDownloaderConfig().GetMaxConcurrentTorrents()
 	if maxConcurrent <= 0 {
-		return t.addDownload(req.Id, req.BaseDir, req.Provider)
+		return t.addDownload(req)
 	}
 	if t.torrents.Len() >= maxConcurrent {
 		t.queue.Enqueue(req.ToQueueStat())
 		return nil, nil
 	}
 
-	return t.addDownload(req.Id, req.BaseDir, req.Provider)
+	return t.addDownload(req)
 }
 
-func (t *yoitsuImpl) addDownload(infoHash string, baseDir string, provider config.Provider) (Torrent, error) {
-	torrentInfo, newTorrent := t.client.AddTorrentInfoHash(infohash.FromHexString(strings.ToLower(infoHash)))
+func (t *yoitsuImpl) addDownload(req payload.DownloadRequest) (Torrent, error) {
+	torrentInfo, newTorrent := t.client.AddTorrentInfoHash(infohash.FromHexString(strings.ToLower(req.Id)))
 	if !newTorrent {
 		return nil, errors.New("torrent already exists")
 	}
-	return t.processTorrent(torrentInfo, baseDir, provider), nil
+	return t.processTorrent(torrentInfo, req), nil
 }
 
-func (t *yoitsuImpl) processTorrent(torrentInfo *torrent.Torrent, dir string, provider config.Provider) Torrent {
-	newTorrent := newTorrent(torrentInfo, dir, provider)
+func (t *yoitsuImpl) processTorrent(torrentInfo *torrent.Torrent, req payload.DownloadRequest) Torrent {
+	newTorrent := newTorrent(torrentInfo, req)
 	t.torrents.Set(torrentInfo.InfoHash().String(), newTorrent)
-	t.baseDirs.Set(torrentInfo.InfoHash().String(), dir)
+	t.baseDirs.Set(torrentInfo.InfoHash().String(), req.BaseDir)
 	newTorrent.WaitForInfoAndDownload()
 	return newTorrent
 }

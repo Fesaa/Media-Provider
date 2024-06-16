@@ -15,10 +15,11 @@ import (
 // torrentImpl wrapper around the torrent.Torrent struct
 // Providers some specific functionality
 type torrentImpl struct {
-	t        *torrent.Torrent
-	key      string
-	baseDir  string
-	provider config.Provider
+	t         *torrent.Torrent
+	key       string
+	baseDir   string
+	tempTitle string
+	provider  config.Provider
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -27,14 +28,15 @@ type torrentImpl struct {
 	lastRead int64
 }
 
-func newTorrent(t *torrent.Torrent, baseDir string, provider config.Provider) Torrent {
+func newTorrent(t *torrent.Torrent, req payload.DownloadRequest) Torrent {
 	return &torrentImpl{
-		t:        t,
-		key:      t.InfoHash().HexString(),
-		baseDir:  baseDir,
-		provider: provider,
-		lastTime: time.Now(),
-		lastRead: 0,
+		t:         t,
+		key:       t.InfoHash().HexString(),
+		baseDir:   req.BaseDir,
+		tempTitle: req.TempTitle,
+		provider:  req.Provider,
+		lastTime:  time.Now(),
+		lastRead:  0,
 	}
 }
 
@@ -85,10 +87,16 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 	t.lastTime = time.Now()
 
 	return payload.InfoStat{
-		Provider:    t.provider,
-		Id:          t.key,
-		Name:        t.t.Name(),
+		Provider: t.provider,
+		Id:       t.key,
+		Name: func() string {
+			if t.t.Info() != nil {
+				return t.t.Info().BestName()
+			}
+			return t.tempTitle
+		}(),
 		Size:        utils.BytesToSize(float64(t.t.Length())),
+		Downloading: t.t.Info() != nil,
 		Progress:    utils.Percent(t.t.BytesCompleted(), t.t.Length()),
 		SpeedType:   payload.BYTES,
 		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},

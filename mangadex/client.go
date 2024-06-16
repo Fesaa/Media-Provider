@@ -45,7 +45,7 @@ func (m *mangadexClientImpl) Download(req payload.DownloadRequest) error {
 	if m.downloading != nil {
 		m.queue.Enqueue(req.ToQueueStat())
 	} else {
-		manga := newManga(req.Id, req.BaseDir)
+		manga := newManga(req)
 		m.mangas.Set(req.Id, manga)
 		m.downloading = manga
 		manga.WaitForInfoAndDownload()
