@@ -54,3 +54,7 @@ func chapterImageUrl(id string) string {
 func getMangaURL(id string) string {
 	return fmt.Sprintf("%s/manga/%s", URL, id)
 }
+
+func getCoverURL(id string) string {
+	return fmt.Sprintf("%s/cover/?manga[]=%s", URL, id)
+}

@@ -81,6 +81,17 @@ func GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
 	return &searchResponse, nil
 }
 
+func GetCoverImages(id string) (*MangaCoverResponse, error) {
+	url := getCoverURL(id)
+	slog.Debug("Getting cover images", "id", id, "url", url)
+	var searchResponse MangaCoverResponse
+	err := do(url, &searchResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &searchResponse, nil
+}
+
 func do[T any](url string, out *T) error {
 	resp, err := http.Get(url)
 	if err != nil {

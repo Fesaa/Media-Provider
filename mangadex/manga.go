@@ -26,6 +26,7 @@ type mangaImpl struct {
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
+	covers   *utils.SafeMap[string, string]
 
 	chaptersDownloaded int
 	imagesDownloaded   int
@@ -112,6 +113,13 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 			return
 		}
 		m.chapters = chapters.FilterOneEnChapter()
+
+		covers, err := GetCoverImages(m.id)
+		if err != nil || covers == nil {
+			slog.Warn("An error occurred while getting covers", "err", err)
+		}
+
+		m.covers = utils.NewSafeMap(covers.GetUrlsPerVolume(m.id))
 		close(out)
 	}()
 	return out
@@ -172,6 +180,10 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 	err := os.MkdirAll(path.Join(m.client.GetBaseDir(), m.baseDir, m.Title(), m.volumeName(chapter), m.chapterName(chapter)), 0755)
 	if err != nil {
 		return err
+	}
+
+	if err = m.tryVolumeCover(chapter); err != nil {
+		slog.Warn("error while downloading cover image", "id", m.id, "volume", chapter.Attributes.Volume, "err", err)
 	}
 
 	imageInfo, err := GetChapterImages(chapter.Id)
@@ -243,6 +255,43 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 	}
 
 	m.chaptersDownloaded++
+	return nil
+}
+
+func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
+	coverUrl, ok := m.covers.Get(chapter.Attributes.Volume)
+	if !ok {
+		slog.Warn("Unable to find cover", "id", m.id, "volume", chapter.Attributes.Volume)
+		return nil
+	}
+
+	dir := path.Join(m.client.GetBaseDir(), m.baseDir, m.Title(), m.volumeName(chapter))
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		return err
+	}
+
+	//slog.Debug("Downloading cover image", "id", m.id, "chapter", m.chapterName(chapter), "url", coverUrl)
+	resp, err := http.Get(coverUrl)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	filePath := path.Join(m.client.GetBaseDir(), m.baseDir, m.Title(), m.volumeName(chapter), "cover.jpg")
+	if err := os.WriteFile(filePath, data, 0755); err != nil {
+		return err
+	}
+
 	return nil
 }
 
