@@ -29,6 +29,11 @@ type MangaAttributes struct {
 }
 
 func (a *MangaAttributes) EnTitle() string {
+	enAltTitle, ok := a.AltTitles["en"]
+	if ok {
+		return enAltTitle
+	}
+
 	enTitle, ok := a.Title["en"]
 	if ok {
 		return enTitle
