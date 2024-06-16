@@ -1,11 +1,10 @@
 name: Run Tests
 
 on:
-  push:
+  pull_request:
     branches:
       - "master"
-    paths-ignore:
-      - ".github/**"
+  workflow_call:
 
 jobs:
   test:
@@ -29,3 +28,6 @@ jobs:
 
       - name: Test config
         run: go test -v ./config
+
+      - name: Mangadex test
+        run: go test -v ./mangadex
