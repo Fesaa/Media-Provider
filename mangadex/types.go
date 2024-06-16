@@ -4,8 +4,13 @@ import (
 	"github.com/Fesaa/Media-Provider/payload"
 )
 
+type MangadexConfig interface {
+	GetRootDir() string
+	GetMaxConcurrentMangadexImages() int
+}
+
 type MangadexClient interface {
-	Download(payload.DownloadRequest) error
+	Download(payload.DownloadRequest) (Manga, error)
 	RemoveDownload(payload.StopRequest) error
 	GetBaseDir() string
 	GetCurrentManga() Manga

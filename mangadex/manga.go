@@ -17,26 +17,33 @@ import (
 )
 
 type mangaImpl struct {
-	id                 string
-	baseDir            string
-	tempTitle          string
-	info               *MangaSearchData
-	chapters           ChapterSearchResponse
+	client MangadexClient
+
+	id        string
+	baseDir   string
+	tempTitle string
+	maxImages int
+
+	info     *MangaSearchData
+	chapters ChapterSearchResponse
+
 	chaptersDownloaded int
 	imagesDownloaded   int
-	ctx                context.Context
-	cancel             context.CancelFunc
-	wg                 *sync.WaitGroup
+	lastTime           time.Time
+	lastRead           int
 
-	lastTime time.Time
-	lastRead int
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     *sync.WaitGroup
 }
 
-func newManga(req payload.DownloadRequest) Manga {
+func newManga(req payload.DownloadRequest, maxImages int, client MangadexClient) Manga {
 	return &mangaImpl{
+		client:             client,
 		id:                 req.Id,
 		baseDir:            req.BaseDir,
 		tempTitle:          req.TempTitle,
+		maxImages:          min(maxImages, 4),
 		chaptersDownloaded: 0,
 		imagesDownloaded:   0,
 		lastRead:           0,
@@ -115,10 +122,14 @@ func (m *mangaImpl) Cancel() {
 		return
 	}
 	m.cancel()
+	if m.wg == nil {
+		return
+	}
 	m.wg.Wait()
 }
 
 func (m *mangaImpl) startDownload() {
+	slog.Debug("Starting download", "manga", m.Title(), "id", m.id, "chapters", len(m.chapters.Data))
 	m.wg = &sync.WaitGroup{}
 	for _, chapter := range m.chapters.Data {
 		select {
@@ -131,7 +142,7 @@ func (m *mangaImpl) startDownload() {
 			m.wg.Done()
 			if err != nil {
 				slog.Error("A fatal error occurred while downloading a chapter, cleaning up files", "id", m.id, "err", err)
-				if err := I().RemoveDownload(payload.StopRequest{
+				if err := m.client.RemoveDownload(payload.StopRequest{
 					Provider:    config.MANGADEX,
 					Id:          m.id,
 					DeleteFiles: true,
@@ -145,7 +156,7 @@ func (m *mangaImpl) startDownload() {
 
 	}
 	m.wg.Wait()
-	if err := I().RemoveDownload(payload.StopRequest{
+	if err := m.client.RemoveDownload(payload.StopRequest{
 		Provider:    config.MANGADEX,
 		Id:          m.id,
 		DeleteFiles: false,
@@ -156,7 +167,7 @@ func (m *mangaImpl) startDownload() {
 
 func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 	slog.Debug("Downloading chapter", "id", m.id, "title", m.Title(), "chapter", m.chapterName(chapter))
-	err := os.MkdirAll(path.Join(I().GetBaseDir(), m.baseDir, m.Title(), m.volumeName(chapter), m.chapterName(chapter)), 0755)
+	err := os.MkdirAll(path.Join(m.client.GetBaseDir(), m.baseDir, m.Title(), m.volumeName(chapter), m.chapterName(chapter)), 0755)
 	if err != nil {
 		return err
 	}
@@ -169,7 +180,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 
 	wg := sync.WaitGroup{}
 	errCh := make(chan error, 1)
-	sem := make(chan struct{}, 4)
+	sem := make(chan struct{}, m.maxImages)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -196,7 +207,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 			}(i, url)
 		}
 
-		if (i+1)%4 == 0 && i > 0 {
+		if (i+1)%m.maxImages == 0 && i > 0 {
 			select {
 			case <-time.After(1 * time.Second):
 			case err := <-errCh:
@@ -250,7 +261,7 @@ func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url stri
 		return err
 	}
 
-	filePath := path.Join(I().GetBaseDir(), m.baseDir, m.Title(), m.volumeName(chapter), m.chapterName(chapter), fmt.Sprintf("page %d.jpg", index))
+	filePath := path.Join(m.client.GetBaseDir(), m.baseDir, m.Title(), m.volumeName(chapter), m.chapterName(chapter), fmt.Sprintf("page %d.jpg", index))
 	if err := os.WriteFile(filePath, data, 0755); err != nil {
 		return err
 	}
