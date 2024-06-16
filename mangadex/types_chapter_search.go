@@ -6,8 +6,8 @@ func (c ChapterSearchResponse) FilterOneEnChapter() ChapterSearchResponse {
 	c2 := c
 	newData := make([]ChapterSearchData, 0)
 
-	lastChapter := ""
-	lastVolume := ""
+	lastChapter := "random stuff that will never match"
+	lastVolume := "random stuff that will never match"
 	for _, data := range c.Data {
 		if data.Attributes.Volume == lastVolume && data.Attributes.Chapter == lastChapter {
 			continue
