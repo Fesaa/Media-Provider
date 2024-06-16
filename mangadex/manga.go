@@ -19,6 +19,7 @@ import (
 type mangaImpl struct {
 	id                 string
 	baseDir            string
+	tempTitle          string
 	info               *MangaSearchData
 	chapters           ChapterSearchResponse
 	chaptersDownloaded int
@@ -35,10 +36,12 @@ func newManga(req payload.DownloadRequest) Manga {
 	return &mangaImpl{
 		id:                 req.Id,
 		baseDir:            req.BaseDir,
+		tempTitle:          req.TempTitle,
 		chaptersDownloaded: 0,
 		imagesDownloaded:   0,
 		lastRead:           0,
 		lastTime:           time.Now(),
+		wg:                 nil,
 	}
 }
 
@@ -47,6 +50,16 @@ func (m *mangaImpl) Title() string {
 		return m.id
 	}
 
+	return m.info.Attributes.EnTitle()
+}
+
+func (m *mangaImpl) PrettyTitle() string {
+	if m.info == nil {
+		if m.tempTitle == "" {
+			return m.id
+		}
+		return m.tempTitle
+	}
 	return m.info.Attributes.EnTitle()
 }
 
@@ -276,8 +289,9 @@ func (m *mangaImpl) GetInfo() payload.InfoStat {
 	return payload.InfoStat{
 		Provider:    config.MANGADEX,
 		Id:          m.id,
-		Name:        m.Title(),
+		Name:        m.PrettyTitle(),
 		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
+		Downloading: m.wg != nil,
 		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
 		SpeedType:   payload.IMAGES,
 		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
