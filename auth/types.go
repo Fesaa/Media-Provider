@@ -14,8 +14,3 @@ type AuthProvider interface {
 	// Logout logs the current user out. This happens by deleting the appropriate cookie
 	Logout(ctx *fiber.Ctx) error
 }
-
-type LoginRequest struct {
-	Password string `json:"password"`
-	Remember string `json:"remember,omitempty"`
-}

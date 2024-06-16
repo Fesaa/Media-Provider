@@ -1,13 +1,15 @@
 package mangadex
 
-import "github.com/Fesaa/Media-Provider/config"
+import (
+	"github.com/Fesaa/Media-Provider/payload"
+)
 
 type MangadexClient interface {
-	Download(id string, baseDir string) error
-	RemoveDownload(id string, deleteFiles bool) error
+	Download(payload.DownloadRequest) error
+	RemoveDownload(payload.StopRequest) error
 	GetBaseDir() string
 	GetCurrentManga() Manga
-	GetQueuedMangas() []config.QueueStat
+	GetQueuedMangas() []payload.QueueStat
 }
 
 type Manga interface {
@@ -16,7 +18,7 @@ type Manga interface {
 	GetBaseDir() string
 	Cancel()
 	WaitForInfoAndDownload()
-	GetInfo() config.InfoStat
+	GetInfo() payload.InfoStat
 	GetDownloadDir() string
 }
 

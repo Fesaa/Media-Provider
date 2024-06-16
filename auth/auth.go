@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
 	"time"
 )
@@ -49,7 +50,7 @@ func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 }
 
 func (v *authImpl) Login(ctx *fiber.Ctx) error {
-	body := LoginRequest{}
+	body := payload.LoginRequest{}
 	err := ctx.BodyParser(&body)
 	if err != nil {
 		return err

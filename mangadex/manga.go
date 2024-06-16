@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"io"
 	"log/slog"
@@ -117,7 +118,11 @@ func (m *mangaImpl) startDownload() {
 			m.wg.Done()
 			if err != nil {
 				slog.Error("A fatal error occurred while downloading a chapter, cleaning up files", "id", m.id, "err", err)
-				if err := I().RemoveDownload(m.id, true); err != nil {
+				if err := I().RemoveDownload(payload.StopRequest{
+					Provider:    config.MANGADEX,
+					Id:          m.id,
+					DeleteFiles: true,
+				}); err != nil {
 					slog.Error("Error cleaning up files", "id", m.id, "err", err)
 				}
 				m.wg.Wait()
@@ -127,7 +132,11 @@ func (m *mangaImpl) startDownload() {
 
 	}
 	m.wg.Wait()
-	if err := I().RemoveDownload(m.id, false); err != nil {
+	if err := I().RemoveDownload(payload.StopRequest{
+		Provider:    config.MANGADEX,
+		Id:          m.id,
+		DeleteFiles: false,
+	}); err != nil {
 		slog.Error("Error cleaning up files", "id", m.id, "err", err)
 	}
 }
@@ -257,21 +266,21 @@ func (m *mangaImpl) GetDownloadDir() string {
 	return path.Join(m.baseDir, title)
 }
 
-func (m *mangaImpl) GetInfo() config.InfoStat {
+func (m *mangaImpl) GetInfo() payload.InfoStat {
 	volumeDiff := m.imagesDownloaded - m.lastRead
 	timeDiff := max(time.Since(m.lastTime).Seconds(), 1)
 	speed := max(int64(float64(volumeDiff)/timeDiff), 1)
 	m.lastRead = m.imagesDownloaded
 	m.lastTime = time.Now()
 
-	return config.InfoStat{
+	return payload.InfoStat{
 		Provider:    config.MANGADEX,
 		Id:          m.id,
 		Name:        m.Title(),
 		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
 		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
-		SpeedType:   config.IMAGES,
-		Speed:       config.SpeedData{T: time.Now().Unix(), Speed: speed},
+		SpeedType:   payload.IMAGES,
+		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: m.GetDownloadDir(),
 	}
 }

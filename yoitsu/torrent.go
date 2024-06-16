@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"log/slog"
@@ -74,7 +75,7 @@ func (t *torrentImpl) GetDownloadDir() string {
 	return path.Join(t.baseDir, t.key)
 }
 
-func (t *torrentImpl) GetInfo() config.InfoStat {
+func (t *torrentImpl) GetInfo() payload.InfoStat {
 	c := t.t.Stats().BytesReadData
 	bytesRead := c.Int64()
 	bytesDiff := bytesRead - t.lastRead
@@ -83,14 +84,14 @@ func (t *torrentImpl) GetInfo() config.InfoStat {
 	t.lastRead = bytesRead
 	t.lastTime = time.Now()
 
-	return config.InfoStat{
+	return payload.InfoStat{
 		Provider:    t.provider,
 		Id:          t.key,
 		Name:        t.t.Name(),
 		Size:        utils.BytesToSize(float64(t.t.Length())),
 		Progress:    utils.Percent(t.t.BytesCompleted(), t.t.Length()),
-		SpeedType:   config.BYTES,
-		Speed:       config.SpeedData{T: time.Now().Unix(), Speed: speed},
+		SpeedType:   payload.BYTES,
+		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: t.GetDownloadDir(),
 	}
 }

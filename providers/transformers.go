@@ -3,13 +3,14 @@ package providers
 import (
 	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/mangadex"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/irevenko/go-nyaa/nyaa"
 	"net/url"
 )
 
-func mangadexTransformer(s SearchRequest) mangadex.SearchOptions {
+func mangadexTransformer(s payload.SearchRequest) mangadex.SearchOptions {
 	ms := mangadex.SearchOptions{
 		Query:            s.Query,
 		SkipNotFoundTags: true,
@@ -39,13 +40,13 @@ func mangadexTransformer(s SearchRequest) mangadex.SearchOptions {
 	return ms
 }
 
-func subsPleaseTransformer(s SearchRequest) subsplease.SearchOptions {
+func subsPleaseTransformer(s payload.SearchRequest) subsplease.SearchOptions {
 	return subsplease.SearchOptions{
 		Query: s.Query,
 	}
 }
 
-func limeTransformer(s SearchRequest) limetorrents.SearchOptions {
+func limeTransformer(s payload.SearchRequest) limetorrents.SearchOptions {
 	categories, ok := s.Modifiers["categories"]
 	var category string
 	if ok && len(categories) > 0 {
@@ -59,7 +60,7 @@ func limeTransformer(s SearchRequest) limetorrents.SearchOptions {
 }
 
 func nyaaTransformer(p string) requestTransformerFunc[nyaa.SearchOptions] {
-	return func(s SearchRequest) nyaa.SearchOptions {
+	return func(s payload.SearchRequest) nyaa.SearchOptions {
 		n := nyaa.SearchOptions{}
 		n.Query = url.QueryEscape(s.Query)
 		n.Provider = p
@@ -82,7 +83,7 @@ func nyaaTransformer(p string) requestTransformerFunc[nyaa.SearchOptions] {
 	}
 }
 
-func ytsTransformer(s SearchRequest) yts.SearchOptions {
+func ytsTransformer(s payload.SearchRequest) yts.SearchOptions {
 	y := yts.SearchOptions{}
 	y.Query = s.Query
 	sortBys, ok := s.Modifiers["sortBys"]

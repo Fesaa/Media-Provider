@@ -2,8 +2,8 @@ package routes
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/mangadex"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"log/slog"
@@ -12,7 +12,7 @@ import (
 )
 
 func Download(ctx *fiber.Ctx) error {
-	var req providers.DownloadRequest
+	var req payload.DownloadRequest
 	err := ctx.BodyParser(&req)
 	if err != nil {
 		slog.Error("Error parsing request body into DownloadRequest", "err", err)
@@ -34,7 +34,7 @@ func Download(ctx *fiber.Ctx) error {
 }
 
 func Stop(ctx *fiber.Ctx) error {
-	var req providers.StopRequest
+	var req payload.StopRequest
 	err := ctx.BodyParser(&req)
 	if err != nil {
 		slog.Error("Error parsing request body into StopRequest", "err", err)
@@ -51,15 +51,10 @@ func Stop(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusAccepted)
 }
 
-type StatsResponse struct {
-	Running []config.InfoStat  `json:"running"`
-	Queued  []config.QueueStat `json:"queued"`
-}
-
 func Stats(ctx *fiber.Ctx) error {
-	statsResponse := StatsResponse{
-		Running: []config.InfoStat{},
-		Queued:  []config.QueueStat{},
+	statsResponse := payload.StatsResponse{
+		Running: []payload.InfoStat{},
+		Queued:  []payload.QueueStat{},
 	}
 	yoitsu.I().GetRunningTorrents().ForEachSafe(func(key string, torrent yoitsu.Torrent) {
 		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())

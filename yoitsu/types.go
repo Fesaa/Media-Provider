@@ -1,7 +1,7 @@
 package yoitsu
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 )
@@ -17,7 +17,7 @@ type Torrent interface {
 	// Cancel stops WaitForInfoAndDownload, returns an error if it wasn't started yet
 	Cancel() error
 	// GetInfo returns useful information about the torrent
-	GetInfo() config.InfoStat
+	GetInfo() payload.InfoStat
 	GetDownloadDir() string
 }
 
@@ -30,14 +30,14 @@ type Yoitsu interface {
 	// The baseDir is the directory where the files will be downloaded to.
 	// Should not include specific location, just the base directory. The torrent hash will be appended to it.
 	// Returns the torrent that was added
-	AddDownload(infoHash string, baseDir string, provider config.Provider) (Torrent, error)
+	AddDownload(payload.DownloadRequest) (Torrent, error)
 
 	// RemoveDownload removes a download from the wrapper, optionally deleting the files
-	RemoveDownload(infoHash string, deleteFiles bool) error
+	RemoveDownload(request payload.StopRequest) error
 
 	// GetRunningTorrents returns a map of all running torrents, indexed by their info hash
 	GetRunningTorrents() *utils.SafeMap[string, Torrent]
-	GetQueuedTorrents() []config.QueueStat
+	GetQueuedTorrents() []payload.QueueStat
 
 	GetBaseDir() string
 }
