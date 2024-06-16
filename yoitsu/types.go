@@ -6,6 +6,11 @@ import (
 	"github.com/anacrolix/torrent"
 )
 
+type YoitsuConfig interface {
+	GetRootDir() string
+	GetMaxConcurrentTorrents() int
+}
+
 // Torrent wrapper around torrent.Torrent
 type Torrent interface {
 	// GetTorrent returns the wrapped torrent.Torrent
@@ -27,9 +32,8 @@ type Yoitsu interface {
 	GetBackingClient() *torrent.Client
 
 	// AddDownload adds a new download to the client.
-	// The baseDir is the directory where the files will be downloaded to.
-	// Should not include specific location, just the base directory. The torrent hash will be appended to it.
-	// Returns the torrent that was added
+	// A nill error does NOT mean Torrent is not nill, if the torrent is queued
+	// both will be nill
 	AddDownload(payload.DownloadRequest) (Torrent, error)
 
 	// RemoveDownload removes a download from the wrapper, optionally deleting the files

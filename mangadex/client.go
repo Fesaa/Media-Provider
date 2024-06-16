@@ -17,9 +17,10 @@ func I() MangadexClient {
 	return m
 }
 
-func newClient() MangadexClient {
+func newClient(c MangadexConfig) MangadexClient {
 	return &mangadexClientImpl{
-		dir:         config.OrDefault(config.I().GetRootDir(), "temp"),
+		dir:         config.OrDefault(c.GetRootDir(), "temp"),
+		maxImages:   c.GetMaxConcurrentMangadexImages(),
 		mangas:      utils.NewSafeMap[string, Manga](),
 		queue:       utils.NewQueue[payload.QueueStat](),
 		downloading: nil,
@@ -29,29 +30,30 @@ func newClient() MangadexClient {
 
 type mangadexClientImpl struct {
 	dir         string
+	maxImages   int
 	mangas      *utils.SafeMap[string, Manga]
 	queue       utils.Queue[payload.QueueStat]
 	downloading Manga
 	mu          sync.Mutex
 }
 
-func (m *mangadexClientImpl) Download(req payload.DownloadRequest) error {
+func (m *mangadexClientImpl) Download(req payload.DownloadRequest) (Manga, error) {
 	if m.mangas.Has(req.Id) {
-		return fmt.Errorf("manga already exists: %s", req.Id)
+		return nil, fmt.Errorf("manga already exists: %s", req.Id)
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.downloading != nil {
 		m.queue.Enqueue(req.ToQueueStat())
-	} else {
-		manga := newManga(req)
-		m.mangas.Set(req.Id, manga)
-		m.downloading = manga
-		manga.WaitForInfoAndDownload()
+		return nil, nil
 	}
 
-	return nil
+	manga := newManga(req, m.maxImages, m)
+	m.mangas.Set(req.Id, manga)
+	m.downloading = manga
+	manga.WaitForInfoAndDownload()
+	return manga, nil
 }
 
 func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
@@ -61,7 +63,7 @@ func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
 			return item.Id == req.Id
 		})
 		if ok {
-			slog.Info("torrent removed from queue", "id", req.Id)
+			slog.Info("manga removed from queue", "id", req.Id)
 			return nil
 		}
 		return fmt.Errorf("manga not found: %s", req.Id)
@@ -93,7 +95,7 @@ func (m *mangadexClientImpl) startNext() {
 	added := false
 	for !added && !m.queue.IsEmpty() {
 		q, _ := m.queue.Dequeue()
-		err := m.Download(q.ToDownloadRequest())
+		_, err := m.Download(q.ToDownloadRequest())
 		if err != nil {
 			slog.Warn("Error while downloading manga from queue", "error", err)
 			continue

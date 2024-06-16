@@ -49,8 +49,8 @@ func init() {
 		"path": baseURL,
 	}
 	auth.Init()
-	yoitsu.Init()
-	mangadex.Init()
+	yoitsu.Init(config.I())
+	mangadex.Init(config.I())
 }
 
 func main() {

@@ -6,13 +6,14 @@ import (
 )
 
 type configImpl struct {
-	Port                    string                      `yaml:"port"`
-	Password                string                      `yaml:"password"`
-	RootDir                 string                      `yaml:"root_dir"`
-	RootURL                 string                      `yaml:"root_url"`
-	Pages                   []pageImpl                  `yaml:"pages"`
-	LoggingConfig           loggingConfigImpl           `yaml:"logging"`
-	ContentDownloaderConfig contentDownloaderConfigImpl `yaml:"content_downloader"`
+	Port                        string            `yaml:"port"`
+	Password                    string            `yaml:"password"`
+	RootDir                     string            `yaml:"root_dir"`
+	RootURL                     string            `yaml:"root_url"`
+	Pages                       []pageImpl        `yaml:"pages"`
+	LoggingConfig               loggingConfigImpl `yaml:"logging"`
+	MaxConcurrentTorrents       int               `yaml:"max_torrents"`
+	MaxConcurrentMangadexImages int               `yaml:"max_mangadex_images"`
 }
 
 func (c configImpl) GetPort() string {
@@ -29,6 +30,14 @@ func (c configImpl) GetRootDir() string {
 
 func (c configImpl) GetRootURl() string {
 	return c.RootURL
+}
+
+func (c configImpl) GetMaxConcurrentTorrents() int {
+	return c.MaxConcurrentTorrents
+}
+
+func (c configImpl) GetMaxConcurrentMangadexImages() int {
+	return c.MaxConcurrentMangadexImages
 }
 
 func (c configImpl) HasProvider(provider Provider) bool {
@@ -73,23 +82,6 @@ func (l loggingConfigImpl) GetHandler() string {
 
 func (l loggingConfigImpl) LogHttp() bool {
 	return l.Http
-}
-
-func (c configImpl) GetContentDownloaderConfig() ContentDownloaderConfig {
-	return c.ContentDownloaderConfig
-}
-
-type contentDownloaderConfigImpl struct {
-	MaxConcurrentTorrents       int `yaml:"max_torrents"`
-	MaxConcurrentMangadexImages int `yaml:"max_mangadex_images"`
-}
-
-func (c contentDownloaderConfigImpl) GetMaxConcurrentTorrents() int {
-	return c.MaxConcurrentTorrents
-}
-
-func (c contentDownloaderConfigImpl) GetMaxConcurrentMangadexImages() int {
-	return c.MaxConcurrentMangadexImages
 }
 
 type pageImpl struct {

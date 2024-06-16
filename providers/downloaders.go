@@ -12,5 +12,6 @@ func yoitsuDownloader(req payload.DownloadRequest) error {
 }
 
 func mangadexDownloader(req payload.DownloadRequest) error {
-	return mangadex.I().Download(req)
+	_, err := mangadex.I().Download(req)
+	return err
 }

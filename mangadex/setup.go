@@ -6,13 +6,13 @@ import (
 	"net/http"
 )
 
-func Init() {
+func Init(c MangadexConfig) {
 	err := loadTags()
 	if err != nil {
 		panic(err)
 	}
 
-	m = newClient()
+	m = newClient(c)
 }
 
 func loadTags() error {
