@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"os"
 	"path"
+	"slices"
 	"sync"
 )
 
@@ -106,10 +107,32 @@ func (m *mangadexClientImpl) startNext() {
 }
 
 func (m *mangadexClientImpl) deleteFiles(manga Manga) {
-	dir := path.Join(m.dir, manga.GetBaseDir(), manga.Title())
-	log.Info("deleting directory", "dir", dir, "mangaId", manga.Id())
-	if err := os.RemoveAll(dir); err != nil {
-		log.Error("error while deleting directory", "dir", dir, "mangaId", manga.Id(), "err", err)
+	dir := path.Join(m.dir, manga.GetDownloadDir())
+	skip := manga.GetPrevVolumes()
+	if len(skip) == 0 {
+		log.Info("deleting directory", "dir", dir, "mangaId", manga.Id())
+		if err := os.RemoveAll(dir); err != nil {
+			log.Error("error while deleting directory", "dir", dir, "mangaId", manga.Id(), "err", err)
+		}
+		return
+	}
+
+	log.Info("deleting new entries in directory", "dir", dir, "mangaId", manga.Id(), "skipping", fmt.Sprintf("%+v", skip))
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		log.Error("error while reading dir", "dir", dir, "mangaId", manga.Id(), "err", err)
+		return
+	}
+	for _, entry := range entries {
+		if slices.Contains(skip, entry.Name()) {
+			log.Trace("skipping inner directory", "dir", dir, "mangaId", manga.Id(), "name", entry.Name())
+			continue
+		}
+
+		log.Trace("deleting inner directory", "dir", dir, "mangaId", manga.Id(), "name", entry.Name())
+		if err = os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
+			log.Error("error while deleting directory", "dir", dir, "mangaId", manga.Id(), "err", err)
+		}
 	}
 }
 

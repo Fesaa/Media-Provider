@@ -31,7 +31,7 @@ func mapTags(in []string, skip bool) ([]string, error) {
 
 func GetManga(id string) (*GetMangaResponse, error) {
 	url := getMangaURL(id)
-	log.Debug("getting manga info", "mangaId", id, "url", url)
+	log.Trace("getting manga info", "mangaId", id, "url", url)
 	var getMangaResponse GetMangaResponse
 	err := do(url, &getMangaResponse)
 	if err != nil {
@@ -45,7 +45,7 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("searching Mangadex for Manga", "options", fmt.Sprintf("%#v", options), "url", url)
+	log.Trace("searching Mangadex for Manga", "options", fmt.Sprintf("%#v", options), "url", url)
 	if hit := cache.Get(url); hit != nil {
 		log.Trace("Mangadex Cache hit", "url", url)
 		return hit, nil
@@ -61,7 +61,7 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 
 func GetChapters(id string, offset ...int) (*ChapterSearchResponse, error) {
 	url := chapterURL(id, offset...)
-	log.Debug("getting chapters", "mangaId", id, "url", url)
+	log.Trace("getting chapters", "mangaId", id, "url", url)
 	var searchResponse ChapterSearchResponse
 	err := do(url, &searchResponse)
 	if err != nil {
@@ -82,7 +82,7 @@ func GetChapters(id string, offset ...int) (*ChapterSearchResponse, error) {
 
 func GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
 	url := chapterImageUrl(id)
-	log.Debug("getting chapter images", "mangaId", id, "url", url)
+	log.Trace("getting chapter images", "mangaId", id, "url", url)
 	var searchResponse ChapterImageSearchResponse
 	err := do(url, &searchResponse)
 	if err != nil {
@@ -93,7 +93,7 @@ func GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
 
 func GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error) {
 	url := getCoverURL(id, offset...)
-	log.Debug("getting cover images", "mangaId", id, "offset", fmt.Sprintf("%#v", offset), "url", url)
+	log.Trace("getting cover images", "mangaId", id, "offset", fmt.Sprintf("%#v", offset), "url", url)
 	var searchResponse MangaCoverResponse
 	err := do(url, &searchResponse)
 	if err != nil {

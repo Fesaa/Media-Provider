@@ -25,6 +25,7 @@ type Manga interface {
 	WaitForInfoAndDownload()
 	GetInfo() payload.InfoStat
 	GetDownloadDir() string
+	GetPrevVolumes() []string
 }
 
 type SearchOptions struct {
