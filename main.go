@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"log/slog"
@@ -54,7 +55,7 @@ func init() {
 }
 
 func main() {
-	slog.Info("Starting Media-Provider", "baseURL", baseURL)
+	log.Info("Starting Media-Provider", "baseURL", baseURL)
 	engine := html.New("./web/views", ".html")
 	app := fiber.New(fiber.Config{
 		Views:        engine,
@@ -87,7 +88,7 @@ func main() {
 
 	err := app.ShutdownWithTimeout(time.Second * 30)
 	if err != nil {
-		slog.Error("An error occurred during shutdown", "error", err)
+		log.Error("An error occurred during shutdown", "error", err)
 		return
 	}
 }

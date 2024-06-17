@@ -2,8 +2,8 @@ package utils
 
 import (
 	"archive/zip"
+	"github.com/Fesaa/Media-Provider/log"
 	"io"
-	"log/slog"
 	"os"
 	"path/filepath"
 )
@@ -41,7 +41,7 @@ func addFileToZip(zipWriter *zip.Writer, filename string, baseDir string) error 
 }
 
 func ZipFolder(folderPath string, zipFileName string) error {
-	slog.Debug("Zipping folder", "path", folderPath, "filename", zipFileName)
+	log.Trace("zipping folder", "path", folderPath, "filename", zipFileName)
 	zipFile, err := os.Create(zipFileName)
 	if err != nil {
 		return err

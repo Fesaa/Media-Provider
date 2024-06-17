@@ -28,7 +28,7 @@ function getDirUp(s: string) {
 
 }
 
-function dirLine(s: string, dir: boolean, copy: boolean, callBack: () => void): ReactNode {
+function dirLine(s: string, dir: boolean, copy: boolean, callBack: () => void, overrideCopy?: string): ReactNode {
   return <div
       key={s}
       className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom"
@@ -36,7 +36,7 @@ function dirLine(s: string, dir: boolean, copy: boolean, callBack: () => void): 
     <div className="space-x-2 flex flex-row items-center">
         {dir ? <FolderIcon className="w-6 h-6 text-blue-500" /> : <DocumentIcon className="w-6 h-6 text-blue-500" /> }
       <span
-          className="hover:cursor-pointer hover:underline"
+          className={dir ? `hover:cursor-pointer hover:underline` : ""}
           onClick={() => {
               if (dir) {
                   callBack()
@@ -46,7 +46,7 @@ function dirLine(s: string, dir: boolean, copy: boolean, callBack: () => void): 
         {getDirName(s)}
       </span>
     </div>
-      {(dir && copy) && <ClipboardIcon className="w-4 h-4 hover:cursor-pointer" onClick={() => copyToClipboard(s)} />}
+      {(dir && copy) && <ClipboardIcon className="w-4 h-4 hover:cursor-pointer" onClick={() => copyToClipboard(overrideCopy || s)} />}
   </div>
 }
 
@@ -97,7 +97,7 @@ export default function Dir(props: {
         <div className="flex flex-col max-h-48 overflow-auto">
           {!root && dirLine('...', true, props.copy, () => {
             setCurRoot(getDirUp(curRoot))
-          })}
+          }, curRoot)}
           {subs.map(entry => {
             return dirLine(curRoot + "/" + entry.name, entry.dir, props.copy, () => {
               setCurRoot(curRoot + "/" + entry.name)

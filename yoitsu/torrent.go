@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
-	"log/slog"
 	"path"
 	"time"
 )
@@ -46,26 +46,27 @@ func (t *torrentImpl) GetTorrent() *torrent.Torrent {
 
 func (t *torrentImpl) WaitForInfoAndDownload() {
 	if t.cancel != nil {
-		slog.Debug("Yoitsu has already started loading info", "name", t.t.Name(), "infoHash", t.t.InfoHash().HexString())
+		log.Debug("Yoitsu has already started loading info", "infoHash", t.key, "name", t.t.Name())
 		return
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.ctx = ctx
 	t.cancel = cancel
-	slog.Debug("Starting loading Torrent info", "infoHash", t.t.InfoHash().HexString())
+	log.Trace("loading torrent info", "infoHash", t.key)
 	go func() {
 		select {
 		case <-t.ctx.Done():
 			return
 		case <-t.t.GotInfo():
-			slog.Info("Starting download", "name", t.t.Name(), "infoHash", t.t.InfoHash().HexString())
+			log.Debug("starting torrent download", "infoHash", t.key, "name", t.t.Name())
 			t.t.DownloadAll()
 		}
 	}()
 }
 
 func (t *torrentImpl) Cancel() error {
+	log.Trace("calling cancel on torrent", "infoHash", t.key)
 	if t.cancel == nil {
 		return fmt.Errorf("torrent is not downloading")
 	}

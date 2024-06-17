@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/limetorrents"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/irevenko/go-nyaa/types"
-	"log/slog"
 	"strconv"
 )
 
@@ -52,7 +52,7 @@ func subsPleaseNormalizer(torrents subsplease.SearchResult) []Info {
 		download := data.Downloads[len(data.Downloads)-1]
 		m, err := metainfo.ParseMagnetUri(download.Magnet)
 		if err != nil {
-			slog.Debug("Couldn't parse magnet uri", "error", err, "info", fmt.Sprintf("%+v", data))
+			log.Debug("couldn't parse magnet uri", "error", err, "info", fmt.Sprintf("%+v", data))
 		}
 		torrentsInfo = append(torrentsInfo, Info{
 			Name:     name,

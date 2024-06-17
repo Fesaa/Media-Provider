@@ -3,9 +3,9 @@ package mangadex
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"io"
-	"log/slog"
 	"net/http"
 	"time"
 )
@@ -31,7 +31,7 @@ func mapTags(in []string, skip bool) ([]string, error) {
 
 func GetManga(id string) (*GetMangaResponse, error) {
 	url := getMangaURL(id)
-	slog.Debug("Getting manga info", "id", id, "url", url)
+	log.Trace("getting manga info", "mangaId", id, "url", url)
 	var getMangaResponse GetMangaResponse
 	err := do(url, &getMangaResponse)
 	if err != nil {
@@ -45,9 +45,9 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	slog.Debug("Searching Mangadex for Manga", "options", fmt.Sprintf("%#v", options), "url", url)
+	log.Trace("searching Mangadex for Manga", "options", fmt.Sprintf("%#v", options), "url", url)
 	if hit := cache.Get(url); hit != nil {
-		slog.Debug("Cache hit", "url", url)
+		log.Trace("Mangadex Cache hit", "url", url)
 		return hit, nil
 	}
 
@@ -61,7 +61,7 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 
 func GetChapters(id string, offset ...int) (*ChapterSearchResponse, error) {
 	url := chapterURL(id, offset...)
-	slog.Debug("Getting chapters", "id", id, "url", url)
+	log.Trace("getting chapters", "mangaId", id, "url", url)
 	var searchResponse ChapterSearchResponse
 	err := do(url, &searchResponse)
 	if err != nil {
@@ -82,7 +82,7 @@ func GetChapters(id string, offset ...int) (*ChapterSearchResponse, error) {
 
 func GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
 	url := chapterImageUrl(id)
-	slog.Debug("Getting chapter images", "id", id, "url", url)
+	log.Trace("getting chapter images", "mangaId", id, "url", url)
 	var searchResponse ChapterImageSearchResponse
 	err := do(url, &searchResponse)
 	if err != nil {
@@ -93,7 +93,7 @@ func GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
 
 func GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error) {
 	url := getCoverURL(id, offset...)
-	slog.Debug("Getting cover images", "id", id, "url", url, "offset", fmt.Sprintf("%#v", offset))
+	log.Trace("getting cover images", "mangaId", id, "offset", fmt.Sprintf("%#v", offset), "url", url)
 	var searchResponse MangaCoverResponse
 	err := do(url, &searchResponse)
 	if err != nil {

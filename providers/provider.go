@@ -1,13 +1,14 @@
 package providers
 
 import (
+	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/limetorrents"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
-	"log/slog"
 )
 
 var providers = map[config.Provider]provider{}
@@ -57,7 +58,7 @@ func (s *providerImpl[T, S]) Search(req payload.SearchRequest) ([]Info, error) {
 	t := s.transformer(req)
 	data, err := s.searcher(t)
 	if err != nil {
-		slog.Debug("Error while searching", "error", err)
+		log.Debug("error while searching", "req", fmt.Sprintf("%+v", req), "err", err)
 		return nil, err
 	}
 	return s.normalizer(data), nil

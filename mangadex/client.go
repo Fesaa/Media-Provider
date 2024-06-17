@@ -3,11 +3,12 @@ package mangadex
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
-	"log/slog"
 	"os"
 	"path"
+	"slices"
 	"sync"
 )
 
@@ -37,6 +38,18 @@ type mangadexClientImpl struct {
 	mu          sync.Mutex
 }
 
+func (m *mangadexClientImpl) GetBaseDir() string {
+	return m.dir
+}
+
+func (m *mangadexClientImpl) GetCurrentManga() Manga {
+	return m.downloading
+}
+
+func (m *mangadexClientImpl) GetQueuedMangas() []payload.QueueStat {
+	return m.queue.Items()
+}
+
 func (m *mangadexClientImpl) Download(req payload.DownloadRequest) (Manga, error) {
 	if m.mangas.Has(req.Id) {
 		return nil, fmt.Errorf("manga already exists: %s", req.Id)
@@ -49,6 +62,7 @@ func (m *mangadexClientImpl) Download(req payload.DownloadRequest) (Manga, error
 		return nil, nil
 	}
 
+	log.Info("downloading manga", "mangaId", req.Id, "into", req.BaseDir, "title?", req.TempTitle)
 	manga := newManga(req, m.maxImages, m)
 	m.mangas.Set(req.Id, manga)
 	m.downloading = manga
@@ -63,13 +77,13 @@ func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
 			return item.Id == req.Id
 		})
 		if ok {
-			slog.Info("manga removed from queue", "id", req.Id)
+			log.Info("manga removed from queue", "mangaId", req.Id)
 			return nil
 		}
 		return fmt.Errorf("manga not found: %s", req.Id)
 	}
 
-	slog.Info("Dropping manga", "title", manga.Title(), "id", manga.Id(), "deleteFiles", req.DeleteFiles)
+	log.Info("Dropping manga", "mangaId", req.Id, "title", manga.Title(), "deleteFiles", req.DeleteFiles)
 	go func() {
 		m.mangas.Delete(req.Id)
 		manga.Cancel()
@@ -97,7 +111,7 @@ func (m *mangadexClientImpl) startNext() {
 		q, _ := m.queue.Dequeue()
 		_, err := m.Download(q.ToDownloadRequest())
 		if err != nil {
-			slog.Warn("Error while downloading manga from queue", "error", err)
+			log.Warn("error while adding manga from queue", "error", err)
 			continue
 		}
 		added = true
@@ -105,10 +119,32 @@ func (m *mangadexClientImpl) startNext() {
 }
 
 func (m *mangadexClientImpl) deleteFiles(manga Manga) {
-	dir := path.Join(m.dir, manga.GetBaseDir(), manga.Title())
-	slog.Info("Deleting directory", "dir", dir, "id", manga.Id())
-	if err := os.RemoveAll(dir); err != nil {
-		slog.Error("Error deleting directory", "dir", dir, "id", manga.Id(), "error", err)
+	dir := path.Join(m.dir, manga.GetDownloadDir())
+	skip := manga.GetPrevVolumes()
+	if len(skip) == 0 {
+		log.Info("deleting directory", "dir", dir, "mangaId", manga.Id())
+		if err := os.RemoveAll(dir); err != nil {
+			log.Error("error while deleting directory", "dir", dir, "mangaId", manga.Id(), "err", err)
+		}
+		return
+	}
+
+	log.Info("deleting new entries in directory", "dir", dir, "mangaId", manga.Id(), "skipping", fmt.Sprintf("%+v", skip))
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		log.Error("error while reading dir", "dir", dir, "mangaId", manga.Id(), "err", err)
+		return
+	}
+	for _, entry := range entries {
+		if slices.Contains(skip, entry.Name()) {
+			log.Trace("skipping inner directory", "dir", dir, "mangaId", manga.Id(), "name", entry.Name())
+			continue
+		}
+
+		log.Trace("deleting inner directory", "dir", dir, "mangaId", manga.Id(), "name", entry.Name())
+		if err = os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
+			log.Error("error while deleting directory", "dir", dir, "mangaId", manga.Id(), "err", err)
+		}
 	}
 }
 
@@ -116,34 +152,22 @@ func (m *mangadexClientImpl) cleanup(manga Manga) {
 	dir := path.Join(m.dir, manga.GetBaseDir(), manga.Title())
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		slog.Error("Error reading directory", "dir", dir, "error", err)
+		log.Error("error while reading directory", "dir", dir, "mangaId", manga.Id(), "err", err)
 		return
 	}
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
 		}
-		err := utils.ZipFolder(path.Join(dir, entry.Name()), path.Join(dir, entry.Name()+".cbz"))
+		err = utils.ZipFolder(path.Join(dir, entry.Name()), path.Join(dir, entry.Name()+".cbz"))
 		if err != nil {
-			slog.Error("Error zipping directory", "dir", dir, "error", err, "id", manga.Id())
+			log.Error("error while zipping directory", "dir", dir, "mangaId", manga.Id(), "err", err)
 			continue
 		}
-		err = os.RemoveAll(path.Join(dir, entry.Name()))
-		if err != nil {
-			slog.Error("Error removing file", "file", entry.Name(), "error", err, "id", manga.Id())
+
+		if err = os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
+			log.Error("error while removing old directory", "dir", entry.Name(), "mangaId", manga.Id(), "err", err)
 			return
 		}
 	}
-}
-
-func (m *mangadexClientImpl) GetBaseDir() string {
-	return m.dir
-}
-
-func (m *mangadexClientImpl) GetCurrentManga() Manga {
-	return m.downloading
-}
-
-func (m *mangadexClientImpl) GetQueuedMangas() []payload.QueueStat {
-	return m.queue.Items()
 }

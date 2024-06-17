@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers"
-	"log/slog"
 	"os"
 	"path"
 	"strings"
@@ -12,22 +12,22 @@ import (
 
 func validateConfig() {
 	if err := validateRootConfig(config.I()); err != nil {
-		slog.Warn("Error validating config", "err", err)
+		log.Warn("error while validating config", "err", err)
 		panic(err)
 	}
 
 	for _, p := range config.I().GetPages() {
 		if err := validatePage(p); err != nil {
-			slog.Warn("Error validating page", "page", p.GetTitle(), "err", err)
+			log.Warn("error while validating page", "page", p.GetTitle(), "err", err)
 			panic(err)
 		}
 	}
 
-	slog.Info("Config validated")
+	log.Info("Config validated")
 }
 
 func validateRootConfig(c config.Config) error {
-	slog.Debug("Validating root config")
+	log.Debug("Validating root config")
 	if strings.HasSuffix(c.GetRootURl(), "/") {
 		return fmt.Errorf("invalid root url: %s", c.GetRootURl())
 	}
@@ -106,7 +106,7 @@ func validateModifier(modifier config.Modifier) error {
 }
 
 func dirExists(path string) (bool, error) {
-	slog.Debug("Checking directory", "path", path)
+	log.Trace("checking directory", "path", path)
 	info, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return false, nil

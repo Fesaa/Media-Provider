@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
-	"log/slog"
 	"os"
 	"path"
 
@@ -13,7 +13,7 @@ import (
 func ListDirs(ctx *fiber.Ctx) error {
 	var req payload.ListDirsRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		slog.Warn("Error parsing query params:", "err", err)
+		log.Warn("error while parsing query params:", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -22,7 +22,7 @@ func ListDirs(ctx *fiber.Ctx) error {
 	base := config.OrDefault(config.I().GetRootDir(), "temp")
 	entries, err := os.ReadDir(path.Join(base, req.Dir))
 	if err != nil {
-		slog.Error("Error reading dir:", "err", err)
+		log.Error("error while reading dir:", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -47,7 +47,7 @@ type CreateDirRequest struct {
 func CreateDir(ctx *fiber.Ctx) error {
 	var req CreateDirRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		slog.Warn("Error parsing query params:", "err", err)
+		log.Warn("error while parsing query params:", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -57,7 +57,7 @@ func CreateDir(ctx *fiber.Ctx) error {
 	p := path.Join(base, req.BaseDir, req.NewDir)
 	err := os.Mkdir(p, 0755)
 	if err != nil {
-		slog.Error("Error creating dir:", "err", err)
+		log.Error("error while creating dir:", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
