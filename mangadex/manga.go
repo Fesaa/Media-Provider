@@ -60,6 +60,10 @@ func newManga(req payload.DownloadRequest, maxImages int, client MangadexClient)
 	}
 }
 
+func (m *mangaImpl) Id() string {
+	return m.id
+}
+
 func (m *mangaImpl) Title() string {
 	if m.info == nil {
 		return m.id
@@ -68,18 +72,58 @@ func (m *mangaImpl) Title() string {
 	return m.info.Attributes.EnTitle()
 }
 
-func (m *mangaImpl) PrettyTitle() string {
-	if m.info == nil {
-		if m.tempTitle == "" {
-			return m.id
-		}
-		return m.tempTitle
-	}
-	return m.info.Attributes.EnTitle()
-}
-
 func (m *mangaImpl) GetBaseDir() string {
 	return m.baseDir
+}
+
+func (m *mangaImpl) GetDownloadDir() string {
+	title := m.Title()
+	if title == "" {
+		return ""
+	}
+	return path.Join(m.baseDir, title)
+}
+
+func (m *mangaImpl) GetPrevVolumes() []string {
+	return m.alreadyDownloaded
+}
+
+func (m *mangaImpl) GetInfo() payload.InfoStat {
+	volumeDiff := m.imagesDownloaded - m.lastRead
+	timeDiff := max(time.Since(m.lastTime).Seconds(), 1)
+	speed := max(int64(float64(volumeDiff)/timeDiff), 1)
+	m.lastRead = m.imagesDownloaded
+	m.lastTime = time.Now()
+
+	return payload.InfoStat{
+		Provider: config.MANGADEX,
+		Id:       m.id,
+		Name: func() string {
+			title := m.Title()
+			if title == m.id && m.tempTitle != "" {
+				return m.tempTitle
+			}
+			return title
+		}(),
+		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
+		Downloading: m.wg != nil,
+		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
+		SpeedType:   payload.IMAGES,
+		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
+		DownloadDir: m.GetDownloadDir(),
+	}
+}
+
+func (m *mangaImpl) Cancel() {
+	log.Trace("calling cancel on manga", "mangaId", m.id)
+	if m.cancel == nil {
+		return
+	}
+	m.cancel()
+	if m.wg == nil {
+		return
+	}
+	m.wg.Wait()
 }
 
 func (m *mangaImpl) WaitForInfoAndDownload() {
@@ -105,34 +149,6 @@ func (m *mangaImpl) WaitForInfoAndDownload() {
 			m.startDownload()
 		}
 	}()
-}
-
-func (m *mangaImpl) checkVolumesOnDisk() ([]string, error) {
-	log.Debug("checking for already downloaded volumes", "mangaId", m.id, "title", m.Title(), "dir", m.GetDownloadDir())
-	entries, err := os.ReadDir(path.Join(m.client.GetBaseDir(), m.GetDownloadDir()))
-	if errors.Is(err, os.ErrNotExist) {
-		log.Debug("manga directory not found, fresh download", "mangaId", m.id, "title", m.Title())
-		return []string{}, nil
-	}
-	if err != nil {
-		return []string{}, err
-	}
-
-	out := make([]string, 0)
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-
-		matches := volumeRegex.FindStringSubmatch(entry.Name())
-		if len(matches) < 2 {
-			continue
-		}
-		log.Trace("found volume on disk", "mangaId", m.id, "title", m.Title(), "file", entry.Name(), "volume", matches[1])
-		out = append(out, entry.Name())
-	}
-	slog.Debug("found following volumes on disk", "volumes", fmt.Sprintf("%+v", out))
-	return out, nil
 }
 
 func (m *mangaImpl) loadInfo() chan struct{} {
@@ -167,16 +183,32 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 	return out
 }
 
-func (m *mangaImpl) Cancel() {
-	log.Trace("calling cancel on manga", "mangaId", m.id)
-	if m.cancel == nil {
-		return
+func (m *mangaImpl) checkVolumesOnDisk() ([]string, error) {
+	log.Debug("checking for already downloaded volumes", "mangaId", m.id, "title", m.Title(), "dir", m.GetDownloadDir())
+	entries, err := os.ReadDir(path.Join(m.client.GetBaseDir(), m.GetDownloadDir()))
+	if errors.Is(err, os.ErrNotExist) {
+		log.Debug("manga directory not found, fresh download", "mangaId", m.id, "title", m.Title())
+		return []string{}, nil
 	}
-	m.cancel()
-	if m.wg == nil {
-		return
+	if err != nil {
+		return []string{}, err
 	}
-	m.wg.Wait()
+
+	out := make([]string, 0)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		matches := volumeRegex.FindStringSubmatch(entry.Name())
+		if len(matches) < 2 {
+			continue
+		}
+		log.Trace("found volume on disk", "mangaId", m.id, "title", m.Title(), "file", entry.Name(), "volume", matches[1])
+		out = append(out, entry.Name())
+	}
+	slog.Debug("found following volumes on disk", "volumes", fmt.Sprintf("%+v", out))
+	return out, nil
 }
 
 func (m *mangaImpl) startDownload() {
@@ -311,6 +343,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 	return nil
 }
 
+// TODO: don't try each chapter, only try once per volume
 func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
 	coverUrl, ok := m.covers.Get(chapter.Attributes.Volume)
 	if !ok {
@@ -388,40 +421,4 @@ func (m *mangaImpl) volumePath(c ChapterSearchData) string {
 func (m *mangaImpl) chapterPath(c ChapterSearchData) string {
 	chDir := fmt.Sprintf("%s Vol. %s Ch. %s", m.Title(), c.Attributes.Volume, c.Attributes.Chapter)
 	return path.Join(m.volumePath(c), chDir)
-}
-
-func (m *mangaImpl) Id() string {
-	return m.id
-}
-
-func (m *mangaImpl) GetDownloadDir() string {
-	title := m.Title()
-	if title == "" {
-		return ""
-	}
-	return path.Join(m.baseDir, title)
-}
-
-func (m *mangaImpl) GetPrevVolumes() []string {
-	return m.alreadyDownloaded
-}
-
-func (m *mangaImpl) GetInfo() payload.InfoStat {
-	volumeDiff := m.imagesDownloaded - m.lastRead
-	timeDiff := max(time.Since(m.lastTime).Seconds(), 1)
-	speed := max(int64(float64(volumeDiff)/timeDiff), 1)
-	m.lastRead = m.imagesDownloaded
-	m.lastTime = time.Now()
-
-	return payload.InfoStat{
-		Provider:    config.MANGADEX,
-		Id:          m.id,
-		Name:        m.PrettyTitle(),
-		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
-		Downloading: m.wg != nil,
-		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
-		SpeedType:   payload.IMAGES,
-		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
-		DownloadDir: m.GetDownloadDir(),
-	}
 }

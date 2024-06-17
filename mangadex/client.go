@@ -38,6 +38,18 @@ type mangadexClientImpl struct {
 	mu          sync.Mutex
 }
 
+func (m *mangadexClientImpl) GetBaseDir() string {
+	return m.dir
+}
+
+func (m *mangadexClientImpl) GetCurrentManga() Manga {
+	return m.downloading
+}
+
+func (m *mangadexClientImpl) GetQueuedMangas() []payload.QueueStat {
+	return m.queue.Items()
+}
+
 func (m *mangadexClientImpl) Download(req payload.DownloadRequest) (Manga, error) {
 	if m.mangas.Has(req.Id) {
 		return nil, fmt.Errorf("manga already exists: %s", req.Id)
@@ -158,16 +170,4 @@ func (m *mangadexClientImpl) cleanup(manga Manga) {
 			return
 		}
 	}
-}
-
-func (m *mangadexClientImpl) GetBaseDir() string {
-	return m.dir
-}
-
-func (m *mangadexClientImpl) GetCurrentManga() Manga {
-	return m.downloading
-}
-
-func (m *mangadexClientImpl) GetQueuedMangas() []payload.QueueStat {
-	return m.queue.Items()
 }
