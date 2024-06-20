@@ -38,11 +38,6 @@ export default function SearchForm(props: SearchProps) {
   }
 
   async function searchTorrents() {
-    if (query == "") {
-      NotificationHandler.addErrorNotificationByTitle("Search query cannot be empty");
-      return;
-    }
-
     const searchReq: SearchRequest = {
       provider: searchProvider,
       query: query,
