@@ -1,5 +1,10 @@
 package mangadex
 
+import (
+	"fmt"
+	"github.com/Fesaa/Media-Provider/log"
+)
+
 type ChapterSearchResponse MangaDexResponse[[]ChapterSearchData]
 
 func (c ChapterSearchResponse) FilterOneEnChapter() ChapterSearchResponse {
@@ -20,6 +25,7 @@ func (c ChapterSearchResponse) FilterOneEnChapter() ChapterSearchResponse {
 		lastVolume = data.Attributes.Volume
 	}
 
+	log.Trace("returning filtered chapters", "amount", len(newData), "data", fmt.Sprintf("%+v", newData), "original", fmt.Sprintf("%+v", c.Data))
 	c2.Data = newData
 	return c2
 }

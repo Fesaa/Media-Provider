@@ -45,11 +45,12 @@ func searchMangaURL(s SearchOptions) (string, error) {
 }
 
 func chapterURL(id string, offset ...int) string {
+	contentRatingSuffix := "&contentRating[]=pornographic&contentRating[]=erotica&contentRating[]=suggestive&contentRating[]=safe"
 	if len(offset) > 0 {
-		return fmt.Sprintf("%s/manga/%s/feed?order[volume]=desc&order[chapter]=desc&offset=%d", URL, id, offset[0])
+		return fmt.Sprintf("%s/manga/%s/feed?order[volume]=desc&order[chapter]=desc&offset=%d%s", URL, id, offset[0], contentRatingSuffix)
 	}
 
-	return fmt.Sprintf("%s/manga/%s/feed?order[volume]=desc&order[chapter]=desc", URL, id)
+	return fmt.Sprintf("%s/manga/%s/feed?order[volume]=desc&order[chapter]=desc%s", URL, id, contentRatingSuffix)
 }
 
 func chapterImageUrl(id string) string {
