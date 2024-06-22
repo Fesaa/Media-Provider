@@ -67,11 +67,11 @@ func Stats(ctx *fiber.Ctx) error {
 	if manga != nil {
 		statsResponse.Running = append(statsResponse.Running, manga.GetInfo())
 	}
-	for _, id := range yoitsu.I().GetQueuedTorrents() {
-		statsResponse.Queued = append(statsResponse.Queued, id)
+	for _, queueStat := range yoitsu.I().GetQueuedTorrents() {
+		statsResponse.Queued = append(statsResponse.Queued, queueStat)
 	}
-	for _, id := range mangadex.I().GetQueuedMangas() {
-		statsResponse.Queued = append(statsResponse.Queued, id)
+	for _, queueStat := range mangadex.I().GetQueuedMangas() {
+		statsResponse.Queued = append(statsResponse.Queued, queueStat)
 	}
 	return ctx.JSON(statsResponse)
 }

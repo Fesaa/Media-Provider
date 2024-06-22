@@ -5,7 +5,7 @@ import { ChevronDoubleRightIcon } from "@heroicons/react/16/solid";
 import NotificationHandler from "./notifications/handler";
 import Header from "./components/navigation/header";
 import {getStats, loadNavigation} from "./utils/http";
-import {NavigationItem, SpeedData, Stats} from "./utils/types";
+import {InfoStat, NavigationItem, QueueStat, SpeedData, Stats} from "./utils/types";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -63,6 +63,13 @@ function Application() {
     updateInfo(true);
   }, []);
 
+  const comparator = (a: InfoStat, b: InfoStat) => {
+    return a.name.localeCompare(b.name);
+  }
+  const comparatorQueue = (a: QueueStat, b: QueueStat) => {
+    return a.name.localeCompare(b.name);
+  }
+
   return (
     <div>
       <Header />
@@ -71,7 +78,7 @@ function Application() {
         <section className="pt-5">
           {info.running.length > 0 && <div className="flex flex-col flex-grow py-5 px-5 md:mx-20 space-y-2">
             <span className="font-bold text-xl">Downloading</span>
-            {info.running.map(stat => (
+            {info.running.sort(comparator).map(stat => (
                 <InfoLine
                     key={stat.id}
                     infoStat={stat}
@@ -83,7 +90,7 @@ function Application() {
           </div>}
           {info.queued.length > 0 && <div className="flex flex-col flex-grow py-5 px-5 md:mx-20 space-y-2">
             <span className="font-bold text-xl">Queue</span>
-            {info.queued.map(stat => (
+            {info.queued.sort(comparatorQueue).map(stat => (
                 <QueueLine stat={stat} refreshFunc={updateInfo} key={stat.id}/>
             ))}
           </div>}
