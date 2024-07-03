@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
+	"log/slog"
 	"path"
 	"time"
 )
@@ -15,7 +16,9 @@ import (
 // torrentImpl wrapper around the torrent.Torrent struct
 // Providers some specific functionality
 type torrentImpl struct {
-	t         *torrent.Torrent
+	t   *torrent.Torrent
+	log *log.Logger
+
 	key       string
 	baseDir   string
 	tempTitle string
@@ -29,7 +32,7 @@ type torrentImpl struct {
 }
 
 func newTorrent(t *torrent.Torrent, req payload.DownloadRequest) Torrent {
-	return &torrentImpl{
+	tor := &torrentImpl{
 		t:         t,
 		key:       t.InfoHash().HexString(),
 		baseDir:   req.BaseDir,
@@ -38,6 +41,11 @@ func newTorrent(t *torrent.Torrent, req payload.DownloadRequest) Torrent {
 		lastTime:  time.Now(),
 		lastRead:  0,
 	}
+
+	tor.log = log.With(
+		slog.String("infoHash", tor.key),
+		slog.String("name", tor.t.Name()))
+	return tor
 }
 
 func (t *torrentImpl) GetTorrent() *torrent.Torrent {
@@ -46,27 +54,27 @@ func (t *torrentImpl) GetTorrent() *torrent.Torrent {
 
 func (t *torrentImpl) WaitForInfoAndDownload() {
 	if t.cancel != nil {
-		log.Debug("Yoitsu has already started loading info", "infoHash", t.key, "name", t.t.Name())
+		t.log.Debug("already loading info")
 		return
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.ctx = ctx
 	t.cancel = cancel
-	log.Trace("loading torrent info", "infoHash", t.key)
+	t.log.Trace("loading torrent info")
 	go func() {
 		select {
 		case <-t.ctx.Done():
 			return
 		case <-t.t.GotInfo():
-			log.Debug("starting torrent download", "infoHash", t.key, "name", t.t.Name())
+			t.log.Debug("starting torrent download")
 			t.t.DownloadAll()
 		}
 	}()
 }
 
 func (t *torrentImpl) Cancel() error {
-	log.Trace("calling cancel on torrent", "infoHash", t.key)
+	t.log.Trace("canceling torrent")
 	if t.cancel == nil {
 		return fmt.Errorf("torrent is not downloading")
 	}

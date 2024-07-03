@@ -13,34 +13,83 @@ const (
 	LevelFatal slog.Level = 12
 )
 
+type Logger struct {
+	_log *slog.Logger
+}
+
+func SetDefault(log *slog.Logger) {
+	def = Logger{_log: log}
+}
+
+func Default() *Logger {
+	return &def
+}
+
+var def Logger
+
 func Error(msg string, args ...any) {
-	log(slog.LevelError, msg, args...)
+	Default().log(slog.LevelError, msg, args...)
 }
 
 func Warn(msg string, args ...any) {
-	log(slog.LevelWarn, msg, args...)
+	Default().log(slog.LevelWarn, msg, args...)
 }
 
 func Info(msg string, args ...any) {
-	log(slog.LevelInfo, msg, args...)
+	Default().log(slog.LevelInfo, msg, args...)
 }
 
 func Debug(msg string, args ...any) {
-	log(slog.LevelDebug, msg, args...)
+	Default().log(slog.LevelDebug, msg, args...)
 }
 
 func Trace(msg string, args ...any) {
-	log(LevelTrace, msg, args...)
+	Default().log(LevelTrace, msg, args...)
 }
 
 func Fatal(msg string, args ...any) {
-	log(LevelFatal, msg, args...)
+	Default().log(LevelFatal, msg, args...)
 	panic("fatal log call")
+}
+
+func (l *Logger) Error(msg string, args ...any) {
+	l.log(slog.LevelError, msg, args...)
+}
+
+func (l *Logger) Warn(msg string, args ...any) {
+	l.log(slog.LevelWarn, msg, args...)
+}
+
+func (l *Logger) Info(msg string, args ...any) {
+	l.log(slog.LevelInfo, msg, args...)
+}
+
+func (l *Logger) Debug(msg string, args ...any) {
+	l.log(slog.LevelDebug, msg, args...)
+}
+
+func (l *Logger) Trace(msg string, args ...any) {
+	l.log(LevelTrace, msg, args...)
+}
+
+func (l *Logger) Fatal(msg string, args ...any) {
+	l.log(LevelFatal, msg, args...)
+	panic("fatal log call")
+}
+
+func With(args ...any) *Logger {
+	return Default().With(args)
+}
+
+func (l *Logger) With(args ...any) *Logger {
+	return &Logger{
+		_log: l._log.With(args),
+	}
 }
 
 // Overriding default, such that the source is correct
 // this is almost a copy of the slog.log function
-func log(level slog.Level, msg string, args ...any) {
+func (l *Logger) log(level slog.Level, msg string, args ...any) {
 	ctx := context.Background()
 	if !slog.Default().Enabled(ctx, level) {
 		return
@@ -54,5 +103,5 @@ func log(level slog.Level, msg string, args ...any) {
 	r := slog.NewRecord(time.Now(), level, msg, pc)
 	r.Add(args...)
 
-	_ = slog.Default().Handler().Handle(ctx, r)
+	_ = l._log.Handler().Handle(ctx, r)
 }

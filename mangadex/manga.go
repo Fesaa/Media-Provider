@@ -24,6 +24,7 @@ var volumeRegex = regexp.MustCompile(".* Vol\\. (\\d+).cbz")
 
 type mangaImpl struct {
 	client MangadexClient
+	log    *log.Logger
 
 	id        string
 	baseDir   string
@@ -46,7 +47,7 @@ type mangaImpl struct {
 }
 
 func newManga(req payload.DownloadRequest, maxImages int, client MangadexClient) Manga {
-	return &mangaImpl{
+	manga := &mangaImpl{
 		client:             client,
 		id:                 req.Id,
 		baseDir:            req.BaseDir,
@@ -58,6 +59,11 @@ func newManga(req payload.DownloadRequest, maxImages int, client MangadexClient)
 		lastTime:           time.Now(),
 		wg:                 nil,
 	}
+
+	manga.log = log.With(
+		slog.String("mangaId", manga.id),
+		slog.String("title", manga.Title()))
+	return manga
 }
 
 func (m *mangaImpl) Id() string {
@@ -115,7 +121,7 @@ func (m *mangaImpl) GetInfo() payload.InfoStat {
 }
 
 func (m *mangaImpl) Cancel() {
-	log.Trace("calling cancel on manga", "mangaId", m.id)
+	m.log.Trace("calling cancel on manga")
 	if m.cancel == nil {
 		return
 	}
@@ -128,22 +134,22 @@ func (m *mangaImpl) Cancel() {
 
 func (m *mangaImpl) WaitForInfoAndDownload() {
 	if m.cancel != nil {
-		log.Debug("manga already downloading", "mangaId", m.id, "title", m.Title())
+		m.log.Debug("manga already downloading")
 		return
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	m.ctx = ctx
 	m.cancel = cancel
-	log.Trace("loading manga info", "mangaId", m.id)
+	m.log.Trace("loading manga info")
 	go func() {
 		select {
 		case <-m.ctx.Done():
 			return
 		case <-m.loadInfo():
-			log.Debug("starting manga download", "mangaId", m.id, "title", m.Title())
+			m.log.Debug("starting manga download")
 			alreadyDownloaded, err := m.checkVolumesOnDisk()
 			if err != nil {
-				log.Warn("unable to check volumes on disk, downloading everything", "mangaId", m.id, "title", m.Title(), "err", err)
+				m.log.Warn("unable to check volumes on disk, downloading everything", "err", err)
 			}
 			m.alreadyDownloaded = alreadyDownloaded
 			m.startDownload()
@@ -156,7 +162,7 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 	go func() {
 		mangaInfo, err := GetManga(m.id)
 		if err != nil {
-			log.Error("error while loading manga info", "mangaId", m.id, "err", err)
+			m.log.Error("error while loading manga info", "err", err)
 			m.cancel()
 			return
 		}
@@ -164,7 +170,7 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 
 		chapters, err := GetChapters(m.id)
 		if err != nil || chapters == nil {
-			log.Error("error while loading manga chapters", "mangaId", m.id, "err", err)
+			m.log.Error("error while loading manga chapters", "err", err)
 			m.cancel()
 			return
 		}
@@ -172,7 +178,7 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 
 		covers, err := GetCoverImages(m.id)
 		if err != nil || covers == nil {
-			log.Warn("error while loading manga covers, ignoring", "mangaId", m.id, "err", err)
+			m.log.Warn("error while loading manga covers, ignoring", "err", err)
 			m.covers = &utils.SafeMap[string, string]{}
 		} else {
 			m.covers = utils.NewSafeMap(covers.GetUrlsPerVolume(m.id))
@@ -184,10 +190,10 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 }
 
 func (m *mangaImpl) checkVolumesOnDisk() ([]string, error) {
-	log.Debug("checking for already downloaded volumes", "mangaId", m.id, "title", m.Title(), "dir", m.GetDownloadDir())
+	m.log.Debug("checking for already downloaded volumes", "mangaId", "dir", m.GetDownloadDir())
 	entries, err := os.ReadDir(path.Join(m.client.GetBaseDir(), m.GetDownloadDir()))
 	if errors.Is(err, os.ErrNotExist) {
-		log.Debug("manga directory not found, fresh download", "mangaId", m.id, "title", m.Title())
+		m.log.Debug("manga directory not found, fresh download")
 		return []string{}, nil
 	}
 	if err != nil {
@@ -204,21 +210,19 @@ func (m *mangaImpl) checkVolumesOnDisk() ([]string, error) {
 		if len(matches) < 2 {
 			continue
 		}
-		log.Trace("found volume on disk", "mangaId", m.id, "title", m.Title(), "file", entry.Name(), "volume", matches[1])
+		m.log.Trace("found volume on disk", "file", entry.Name(), "volume", matches[1])
 		out = append(out, entry.Name())
 	}
-	slog.Debug("found following volumes on disk", "volumes", fmt.Sprintf("%+v", out))
+	m.log.Debug("found following volumes on disk", "volumes", fmt.Sprintf("%+v", out))
 	return out, nil
 }
 
 func (m *mangaImpl) startDownload() {
-	log.Trace("starting download", "mangaId", m.id, "title", m.Title(), "chapters", len(m.chapters.Data))
+	m.log.Trace("starting download", "chapters", len(m.chapters.Data))
 	m.wg = &sync.WaitGroup{}
 	for _, chapter := range m.chapters.Data {
 		if slices.Contains(m.alreadyDownloaded, m.volumeDir(chapter.Attributes.Volume)+".cbz") {
-			log.Debug("skipping chapter, as the volume already exists",
-				"mangaId", m.id,
-				"title", m.Title(),
+			m.log.Debug("skipping chapter, as the volume already exists",
 				"volume", chapter.Attributes.Volume,
 				"chapter", chapter.Attributes.Chapter)
 			continue
@@ -233,14 +237,14 @@ func (m *mangaImpl) startDownload() {
 			err := m.downloadChapter(chapter)
 			m.wg.Done()
 			if err != nil {
-				log.Error("error while downloading a chapter, cleaning up", "mangaId", m.id, "title", m.Title(), "err", err)
+				m.log.Error("error while downloading a chapter, cleaning up", "err", err)
 				req := payload.StopRequest{
 					Provider:    config.MANGADEX,
 					Id:          m.id,
 					DeleteFiles: true,
 				}
 				if err = m.client.RemoveDownload(req); err != nil {
-					log.Error("error while cleaning up files", "mangaId", m.id, "title", m.Title(), "err", err)
+					m.log.Error("error while cleaning up files", "err", err)
 				}
 				m.wg.Wait()
 				return
@@ -255,19 +259,19 @@ func (m *mangaImpl) startDownload() {
 		DeleteFiles: false,
 	}
 	if err := m.client.RemoveDownload(req); err != nil {
-		log.Error("error while cleaning up files", "mangaId", m.id, "title", m.Title(), "err", err)
+		m.log.Error("error while cleaning up files", "err", err)
 	}
 }
 
 func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
-	log.Trace("downloading chapter", "mangaId", m.id, "title", m.Title(), "chapterId", chapter.Id, "chapterTitle", chapter.Attributes.Title)
+	m.log.Trace("downloading chapter", "chapterId", chapter.Id, "chapterTitle", chapter.Attributes.Title)
 	err := os.MkdirAll(m.chapterPath(chapter), 0755)
 	if err != nil {
 		return err
 	}
 
 	if err = m.tryVolumeCover(chapter); err != nil {
-		log.Info("error while downloading cover image", "mangaId", m.id, "volume", chapter.Attributes.Volume, "err", err)
+		m.log.Info("error while downloading cover image", "volume", chapter.Attributes.Volume, "err", err)
 	}
 
 	imageInfo, err := GetChapterImages(chapter.Id)
@@ -275,7 +279,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 		return err
 	}
 	urls := imageInfo.FullImageUrls()
-	log.Trace("downloading images in chapter", "mangaId", m.id, "chapter", chapter.Attributes.Chapter, "images", len(urls))
+	m.log.Trace("downloading images in chapter", "chapter", chapter.Attributes.Chapter, "images", len(urls))
 
 	wg := sync.WaitGroup{}
 	errCh := make(chan error, 1)
@@ -296,7 +300,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 				defer wg.Done()
 				sem <- struct{}{}
 				go func() { <-sem }()
-				if err := m.downloadImage(i, chapter, url); err != nil {
+				if err = m.downloadImage(i, chapter, url); err != nil {
 					select {
 					case errCh <- err:
 						cancel()
@@ -347,7 +351,7 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
 	coverUrl, ok := m.covers.Get(chapter.Attributes.Volume)
 	if !ok {
-		log.Debug("unable to find cover", "mangaId", m.id, "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter)
+		m.log.Debug("unable to find cover", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter)
 		return nil
 	}
 
@@ -356,7 +360,7 @@ func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
 		return err
 	}
 
-	log.Trace("downloading cover image", "mangaId", m.id, "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter, "url", coverUrl)
+	m.log.Trace("downloading cover image", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter, "url", coverUrl)
 	resp, err := http.Get(coverUrl)
 	if err != nil {
 		return err
@@ -373,7 +377,7 @@ func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
 	}
 
 	filePath := path.Join(m.volumePath(chapter), "cover.jpg")
-	if err := os.WriteFile(filePath, data, 0755); err != nil {
+	if err = os.WriteFile(filePath, data, 0755); err != nil {
 		return err
 	}
 
@@ -381,7 +385,7 @@ func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
 }
 
 func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url string) error {
-	log.Trace("downloading image", "mangaId", m.id, "chapter", chapter.Attributes.Chapter, "url", url)
+	m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err

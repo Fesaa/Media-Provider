@@ -42,7 +42,10 @@ func init() {
 	default:
 		panic("Invalid logging handler: " + config.I().GetLoggingConfig().GetHandler())
 	}
-	slog.SetDefault(slog.New(h))
+	_log := slog.New(h)
+	slog.SetDefault(_log)
+	log.SetDefault(_log)
+
 	validateConfig()
 
 	baseURL = config.OrDefault(config.I().GetRootURl(), "")
