@@ -13,6 +13,10 @@ const (
 	LevelFatal slog.Level = 12
 )
 
+func init() {
+	def = Logger{_log: slog.Default()}
+}
+
 type Logger struct {
 	_log *slog.Logger
 }
