@@ -21,7 +21,7 @@ func (a *MangaSearchData) RefURL() string {
 
 type MangaAttributes struct {
 	Title            map[string]string `json:"title"`
-	AltTitles        map[string]string `json:"alt_titles"`
+	AltTitles        map[string]string `json:"altTitles"`
 	Description      map[string]string `json:"description"`
 	OriginalLanguage string            `json:"originalLanguage"`
 	LastVolume       string            `json:"lastVolume"`
