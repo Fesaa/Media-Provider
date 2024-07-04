@@ -78,12 +78,12 @@ func (l *Logger) Fatal(msg string, args ...any) {
 }
 
 func With(args ...any) *Logger {
-	return Default().With(args)
+	return Default().With(args...)
 }
 
 func (l *Logger) With(args ...any) *Logger {
 	return &Logger{
-		_log: l._log.With(args),
+		_log: l._log.With(args...),
 	}
 }
 
