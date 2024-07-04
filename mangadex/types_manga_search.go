@@ -1,6 +1,9 @@
 package mangadex
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/Fesaa/Media-Provider/comicinfo"
+)
 
 type MangaSearchResponse MangaDexResponse[[]MangaSearchData]
 type GetMangaResponse MangaDexResponse[MangaSearchData]
@@ -25,7 +28,8 @@ type MangaAttributes struct {
 	LastChapter      string            `json:"lastChapter"`
 	Status           string            `json:"status"`
 	Year             int               `json:"year"`
-	ContentRating    string            `json:"contentRating"`
+	ContentRating    ContentRating     `json:"contentRating"`
+	Tags             []TagData         `json:"tags"`
 }
 
 func (a *MangaAttributes) EnTitle() string {
@@ -47,4 +51,28 @@ func (a *MangaAttributes) EnDescription() string {
 		return enDescription
 	}
 	return ""
+}
+
+type ContentRating string
+
+const (
+	ContentRatingSafe         ContentRating = "safe"
+	ContentRatingSuggestive   ContentRating = "suggestive"
+	ContentRatingErotica      ContentRating = "erotica"
+	ContentRatingPornographic ContentRating = "pornographic"
+)
+
+func (c ContentRating) ComicInfoAgeRating() comicinfo.AgeRating {
+	switch c {
+	case ContentRatingSafe:
+		return comicinfo.AgeRatingEveryone
+	case ContentRatingSuggestive:
+		return comicinfo.AgeRatingTeen
+	case ContentRatingErotica:
+		return comicinfo.AgeRatingMaturePlus17
+	case ContentRatingPornographic:
+		return comicinfo.AgeRatingAdultsOnlyPlus18
+	default:
+		return comicinfo.AgeRatingUnknown
+	}
 }

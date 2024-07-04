@@ -21,6 +21,7 @@ RUN go mod download
 
 COPY ./api ./api
 COPY ./auth ./auth
+COPY ./comicinfo ./comicinfo
 COPY ./config ./config
 COPY ./limetorrents ./limetorrents
 COPY ./log ./log
