@@ -20,21 +20,30 @@ func (a *MangaSearchData) RefURL() string {
 }
 
 type MangaAttributes struct {
-	Title            map[string]string `json:"title"`
-	AltTitles        map[string]string `json:"altTitles"`
-	Description      map[string]string `json:"description"`
-	OriginalLanguage string            `json:"originalLanguage"`
-	LastVolume       string            `json:"lastVolume"`
-	LastChapter      string            `json:"lastChapter"`
-	Status           string            `json:"status"`
-	Year             int               `json:"year"`
-	ContentRating    ContentRating     `json:"contentRating"`
-	Tags             []TagData         `json:"tags"`
+	Title            map[string]string   `json:"title"`
+	AltTitles        []map[string]string `json:"altTitles"`
+	Description      map[string]string   `json:"description"`
+	OriginalLanguage string              `json:"originalLanguage"`
+	LastVolume       string              `json:"lastVolume"`
+	LastChapter      string              `json:"lastChapter"`
+	Status           string              `json:"status"`
+	Year             int                 `json:"year"`
+	ContentRating    ContentRating       `json:"contentRating"`
+	Tags             []TagData           `json:"tags"`
 }
 
 func (a *MangaAttributes) EnTitle() string {
-	enAltTitle, ok := a.AltTitles["en"]
-	if ok {
+	var enAltTitle string
+	for _, altTitle := range a.AltTitles {
+		for key, value := range altTitle {
+			if key == "en" {
+				enAltTitle = value
+				break
+			}
+		}
+	}
+
+	if enAltTitle != "" {
 		return enAltTitle
 	}
 
