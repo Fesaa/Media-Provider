@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
@@ -16,6 +17,7 @@ import (
 	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -31,10 +33,12 @@ type mangaImpl struct {
 	tempTitle string
 	maxImages int
 
-	info              *MangaSearchData
-	chapters          ChapterSearchResponse
-	covers            *utils.SafeMap[string, string]
-	alreadyDownloaded []string
+	info     *MangaSearchData
+	chapters ChapterSearchResponse
+	covers   *utils.SafeMap[string, string]
+
+	volumeMetadata           []string
+	alreadyDownloadedVolumes []string
 
 	chaptersDownloaded int
 	imagesDownloaded   int
@@ -53,6 +57,7 @@ func newManga(req payload.DownloadRequest, maxImages int, client MangadexClient)
 		baseDir:            req.BaseDir,
 		tempTitle:          req.TempTitle,
 		maxImages:          min(maxImages, 4),
+		volumeMetadata:     make([]string, 0),
 		chaptersDownloaded: 0,
 		imagesDownloaded:   0,
 		lastRead:           0,
@@ -91,7 +96,7 @@ func (m *mangaImpl) GetDownloadDir() string {
 }
 
 func (m *mangaImpl) GetPrevVolumes() []string {
-	return m.alreadyDownloaded
+	return m.alreadyDownloadedVolumes
 }
 
 func (m *mangaImpl) GetInfo() payload.InfoStat {
@@ -147,11 +152,7 @@ func (m *mangaImpl) WaitForInfoAndDownload() {
 			return
 		case <-m.loadInfo():
 			m.log.Debug("starting manga download")
-			alreadyDownloaded, err := m.checkVolumesOnDisk()
-			if err != nil {
-				m.log.Warn("unable to check volumes on disk, downloading everything", "err", err)
-			}
-			m.alreadyDownloaded = alreadyDownloaded
+			m.checkVolumesOnDisk()
 			m.startDownload()
 		}
 	}()
@@ -189,15 +190,17 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 	return out
 }
 
-func (m *mangaImpl) checkVolumesOnDisk() ([]string, error) {
+func (m *mangaImpl) checkVolumesOnDisk() {
 	m.log.Debug("checking for already downloaded volumes", "mangaId", "dir", m.GetDownloadDir())
 	entries, err := os.ReadDir(path.Join(m.client.GetBaseDir(), m.GetDownloadDir()))
-	if errors.Is(err, os.ErrNotExist) {
-		m.log.Debug("manga directory not found, fresh download")
-		return []string{}, nil
-	}
 	if err != nil {
-		return []string{}, err
+		if errors.Is(err, os.ErrNotExist) {
+			m.log.Debug("directory not found, fresh download")
+		} else {
+			m.log.Warn("unable to check for downloaded volumes, downloading all", "err", err)
+		}
+		m.alreadyDownloadedVolumes = []string{}
+		return
 	}
 
 	out := make([]string, 0)
@@ -214,14 +217,14 @@ func (m *mangaImpl) checkVolumesOnDisk() ([]string, error) {
 		out = append(out, entry.Name())
 	}
 	m.log.Debug("found following volumes on disk", "volumes", fmt.Sprintf("%+v", out))
-	return out, nil
+	m.alreadyDownloadedVolumes = out
 }
 
 func (m *mangaImpl) startDownload() {
 	m.log.Trace("starting download", "chapters", len(m.chapters.Data))
 	m.wg = &sync.WaitGroup{}
 	for _, chapter := range m.chapters.Data {
-		if slices.Contains(m.alreadyDownloaded, m.volumeDir(chapter.Attributes.Volume)+".cbz") {
+		if slices.Contains(m.alreadyDownloadedVolumes, m.volumeDir(chapter.Attributes.Volume)+".cbz") {
 			m.log.Debug("skipping chapter, as the volume already exists",
 				"volume", chapter.Attributes.Volume,
 				"chapter", chapter.Attributes.Chapter)
@@ -270,8 +273,8 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 		return err
 	}
 
-	if err = m.tryVolumeCover(chapter); err != nil {
-		m.log.Info("error while downloading cover image", "volume", chapter.Attributes.Volume, "err", err)
+	if err = m.writeVolumeMetadata(chapter); err != nil {
+		m.log.Info("error while writing volume metadata", "volume", chapter.Attributes.Volume, "err", err)
 	}
 
 	imageInfo, err := GetChapterImages(chapter.Id)
@@ -347,11 +350,9 @@ func (m *mangaImpl) downloadChapter(chapter ChapterSearchData) error {
 	return nil
 }
 
-// TODO: don't try each chapter, only try once per volume
-func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
-	coverUrl, ok := m.covers.Get(chapter.Attributes.Volume)
-	if !ok {
-		m.log.Debug("unable to find cover", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter)
+func (m *mangaImpl) writeVolumeMetadata(chapter ChapterSearchData) error {
+	if slices.Contains(m.volumeMetadata, chapter.Attributes.Volume) {
+		m.log.Debug("volume metadata already written, skipping", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter)
 		return nil
 	}
 
@@ -360,52 +361,54 @@ func (m *mangaImpl) tryVolumeCover(chapter ChapterSearchData) error {
 		return err
 	}
 
-	m.log.Trace("downloading cover image", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter, "url", coverUrl)
-	resp, err := http.Get(coverUrl)
-	if err != nil {
+	coverUrl, ok := m.covers.Get(chapter.Attributes.Volume)
+	if !ok {
+		m.log.Debug("unable to find cover", "volume", chapter.Attributes.Volume)
+	} else {
+		m.log.Trace("downloading cover image", "volume", chapter.Attributes.Volume, "url", coverUrl)
+		filePath := path.Join(m.volumePath(chapter), "cover.jpg")
+		if err = downloadAndWriteImage(coverUrl, filePath); err != nil {
+			return err
+		}
+	}
+
+	m.log.Debug("writing comicinfoxml", "volume", chapter.Attributes.Volume)
+	if err = comicinfo.Save(m.comicInfo(chapter), path.Join(m.volumePath(chapter), "comicinfo.xml")); err != nil {
 		return err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	filePath := path.Join(m.volumePath(chapter), "cover.jpg")
-	if err = os.WriteFile(filePath, data, 0755); err != nil {
-		return err
-	}
-
+	m.volumeMetadata = append(m.volumeMetadata, chapter.Attributes.Volume)
 	return nil
+}
+
+func (m *mangaImpl) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
+	ci := comicinfo.NewComicInfo()
+	ci.Series = m.info.Attributes.EnTitle()
+	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {
+		ci.Volume = v
+	} else {
+		m.log.Trace("unable to parse volume number", "volume", chapter.Attributes.Volume, "err", err)
+	}
+	ci.Manga = comicinfo.MangaYes
+	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
+	ci.Tags = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
+		n, ok := t.Attributes.Name["en"]
+		if !ok {
+			return "", false
+		}
+		return n, true
+	}), ",")
+	ci.Year = m.info.Attributes.Year
+	ci.Summary = m.info.Attributes.EnDescription()
+	return ci
 }
 
 func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url string) error {
 	m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
 	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %d.jpg", index))
-	if err := os.WriteFile(filePath, data, 0755); err != nil {
+	if err := downloadAndWriteImage(url, filePath); err != nil {
 		return err
 	}
-
 	m.imagesDownloaded++
 	return nil
 }
@@ -425,4 +428,27 @@ func (m *mangaImpl) volumePath(c ChapterSearchData) string {
 func (m *mangaImpl) chapterPath(c ChapterSearchData) string {
 	chDir := fmt.Sprintf("%s Vol. %s Ch. %s", m.Title(), c.Attributes.Volume, c.Attributes.Chapter)
 	return path.Join(m.volumePath(c), chDir)
+}
+
+func downloadAndWriteImage(url string, path string) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if err = os.WriteFile(path, data, 0755); err != nil {
+		return err
+	}
+
+	return nil
 }
