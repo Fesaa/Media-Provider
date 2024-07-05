@@ -3,6 +3,7 @@ module github.com/Fesaa/Media-Provider
 go 1.22.2
 
 require (
+	github.com/Fesaa/go-tools v0.0.3
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/anacrolix/torrent v1.56.1
 	github.com/gofiber/fiber/v2 v2.52.5
@@ -12,7 +13,6 @@ require (
 )
 
 require (
-	github.com/Fesaa/go-tools v0.0.3 // indirect
 	github.com/RoaringBitmap/roaring v1.9.4 // indirect
 	github.com/ajwerner/btree v0.0.0-20211221152037-f427b3e689c0 // indirect
 	github.com/alecthomas/atomic v0.1.0-alpha2 // indirect
