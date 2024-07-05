@@ -31,3 +31,6 @@ jobs:
 
       - name: Mangadex test
         run: go test -v ./mangadex
+
+      - name: Yoitsu test
+        run: go test -v ./yoitsu
