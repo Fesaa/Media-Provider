@@ -36,4 +36,4 @@ jobs:
             context: .
             file: ./Dockerfile
             push: true
-            tags: ameliaah/media-provider:latest-x64
+            tags: ameliaah/media-provider:latest
