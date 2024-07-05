@@ -33,6 +33,14 @@ type MangaAttributes struct {
 }
 
 func (a *MangaAttributes) EnTitle() string {
+	// Note: for some reason the en title may still be in Japanese, don't really have a way of checking if it is
+	// as the Japanese title is in the latin alphabet. We'll just have to be fine with it, as the alternative titles
+	// are just plain weird from time to time
+	enTitle, ok := a.Title["en"]
+	if ok {
+		return enTitle
+	}
+
 	var enAltTitle string
 	for _, altTitle := range a.AltTitles {
 		for key, value := range altTitle {
@@ -45,11 +53,6 @@ func (a *MangaAttributes) EnTitle() string {
 
 	if enAltTitle != "" {
 		return enAltTitle
-	}
-
-	enTitle, ok := a.Title["en"]
-	if ok {
-		return enTitle
 	}
 	return ""
 }
