@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
-	tools "github.com/Fesaa/go-tools"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 const URL string = "https://yts.mx/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
 
-var cache = tools.NewCache[*SearchResult](5 * time.Minute)
+var cache = *utils.NewCache[SearchResult](5 * time.Minute)
 
 type SearchOptions struct {
 	Query  string
@@ -38,7 +39,7 @@ func Search(options SearchOptions) (*SearchResult, error) {
 
 	if res := cache.Get(url); res != nil {
 		log.Trace("YTS cache hit", "url", url)
-		return res.Get(), nil
+		return res, nil
 	}
 
 	req, err := http.Get(url)
@@ -62,6 +63,6 @@ func Search(options SearchOptions) (*SearchResult, error) {
 		return nil, err
 	}
 
-	cache.Set(url, &r)
+	cache.Set(url, r)
 	return &r, nil
 }

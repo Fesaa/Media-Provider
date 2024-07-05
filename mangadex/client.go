@@ -5,7 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
-	tools "github.com/Fesaa/go-tools"
+	"github.com/Fesaa/Media-Provider/utils"
 	"os"
 	"path"
 	"slices"
@@ -22,8 +22,8 @@ func newClient(c Config) Client {
 	return &client{
 		dir:         config.OrDefault(c.GetRootDir(), "temp"),
 		maxImages:   c.GetMaxConcurrentMangadexImages(),
-		mangas:      tools.NewSafeMap[string, Manga](),
-		queue:       tools.NewQueue[payload.QueueStat](),
+		mangas:      utils.NewSafeMap[string, Manga](),
+		queue:       utils.NewQueue[payload.QueueStat](),
 		downloading: nil,
 		mu:          sync.Mutex{},
 	}
@@ -32,8 +32,8 @@ func newClient(c Config) Client {
 type client struct {
 	dir         string
 	maxImages   int
-	mangas      tools.SafeMap[string, Manga]
-	queue       tools.Queue[payload.QueueStat]
+	mangas      *utils.SafeMap[string, Manga]
+	queue       utils.Queue[payload.QueueStat]
 	downloading Manga
 	mu          sync.Mutex
 }
@@ -51,7 +51,7 @@ func (m *client) GetQueuedMangas() []payload.QueueStat {
 }
 
 func (m *client) Download(req payload.DownloadRequest) (Manga, error) {
-	if m.mangas.Contains(req.Id) {
+	if m.mangas.Has(req.Id) {
 		return nil, fmt.Errorf("manga already exists: %s", req.Id)
 	}
 
@@ -64,7 +64,7 @@ func (m *client) Download(req payload.DownloadRequest) (Manga, error) {
 
 	log.Info("downloading manga", "mangaId", req.Id, "into", req.BaseDir, "title?", req.TempTitle)
 	manga := newManga(req, m.maxImages, m)
-	m.mangas.Put(req.Id, manga)
+	m.mangas.Set(req.Id, manga)
 	m.downloading = manga
 	manga.WaitForInfoAndDownload()
 	return manga, nil
@@ -85,7 +85,7 @@ func (m *client) RemoveDownload(req payload.StopRequest) error {
 
 	log.Info("Dropping manga", "mangaId", req.Id, "title", manga.Title(), "deleteFiles", req.DeleteFiles)
 	go func() {
-		m.mangas.Remove(req.Id)
+		m.mangas.Delete(req.Id)
 		manga.Cancel()
 		m.mu.Lock()
 		m.downloading = nil
@@ -159,7 +159,7 @@ func (m *client) cleanup(manga Manga) {
 		if !entry.IsDir() {
 			continue
 		}
-		err = zipFolder(path.Join(dir, entry.Name()), path.Join(dir, entry.Name()+".cbz"))
+		err = utils.ZipFolder(path.Join(dir, entry.Name()), path.Join(dir, entry.Name()+".cbz"))
 		if err != nil {
 			log.Error("error while zipping directory", "dir", dir, "mangaId", manga.Id(), "err", err)
 			continue

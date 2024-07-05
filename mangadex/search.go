@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
-	tools "github.com/Fesaa/go-tools"
+	"github.com/Fesaa/Media-Provider/utils"
 	"io"
 	"net/http"
 	"time"
 )
 
-var tags = tools.NewSafeMap[string, string]()
+var tags = utils.NewSafeMap[string, string]()
 
-var cache = tools.NewCache[*MangaSearchResponse](5 * time.Minute)
+var cache = utils.NewCache[MangaSearchResponse](5 * time.Minute)
 
 func mapTags(in []string, skip bool) ([]string, error) {
 	mappedTags := make([]string, 0)
@@ -48,7 +48,7 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 	log.Trace("searching Mangadex for Manga", "options", fmt.Sprintf("%#v", options), "url", url)
 	if hit := cache.Get(url); hit != nil {
 		log.Trace("Mangadex Cache hit", "url", url)
-		return hit.Get(), nil
+		return hit, nil
 	}
 
 	var searchResponse MangaSearchResponse
@@ -56,7 +56,6 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	cache.Set(url, &searchResponse)
 	return &searchResponse, nil
 }
 
