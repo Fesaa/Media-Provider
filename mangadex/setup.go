@@ -50,7 +50,7 @@ func loadTags() error {
 		if !ok {
 			continue
 		}
-		tags.Put(enName, tag.Id)
+		tags.Set(enName, tag.Id)
 	}
 	return nil
 }

@@ -2,7 +2,7 @@ package yoitsu
 
 import (
 	"github.com/Fesaa/Media-Provider/payload"
-	tools "github.com/Fesaa/go-tools"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 )
 
@@ -40,7 +40,7 @@ type Yoitsu interface {
 	RemoveDownload(request payload.StopRequest) error
 
 	// GetRunningTorrents returns a map of all running torrents, indexed by their info hash
-	GetRunningTorrents() tools.SafeMap[string, Torrent]
+	GetRunningTorrents() *utils.SafeMap[string, Torrent]
 	GetQueuedTorrents() []payload.QueueStat
 
 	GetBaseDir() string
