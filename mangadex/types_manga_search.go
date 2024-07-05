@@ -57,6 +57,19 @@ func (a *MangaAttributes) EnTitle() string {
 	return ""
 }
 
+func (a *MangaAttributes) EnAltTitles() []string {
+	var enAltTitles []string
+	for _, altTitle := range a.AltTitles {
+		for key, value := range altTitle {
+			if key == "en" {
+				enAltTitles = append(enAltTitles, value)
+				break
+			}
+		}
+	}
+	return enAltTitles
+}
+
 func (a *MangaAttributes) EnDescription() string {
 	enDescription, ok := a.Description["en"]
 	if ok {

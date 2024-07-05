@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-https://github.com/fmartingr/go-comicinfo/blob/latest/schema.go, but with Tags support
+https://github.com/fmartingr/go-comicinfo/blob/latest/schema.go, but with Tags support, and custom Kavitatags
 */
 package comicinfo
 
@@ -31,6 +31,7 @@ var xmlHeader = []byte(`<?xml version="1.0" encoding="UTF-8"?>`)
 type ComicInfo struct {
 	Title               string    `xml:"Title,omitempty"`
 	Series              string    `xml:"Series,omitempty"`
+	LocalizedSeries     string    `xml:"LocalizedSeries,omitempty"` // Kavita only
 	Number              string    `xml:"Number,omitempty"`
 	Count               int       `xml:"Count,omitempty"`
 	Volume              int       `xml:"Volume,omitempty"`

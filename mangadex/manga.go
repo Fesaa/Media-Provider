@@ -367,7 +367,7 @@ func (m *mangaImpl) writeVolumeMetadata(chapter ChapterSearchData) error {
 	} else {
 		m.log.Trace("downloading cover image", "volume", chapter.Attributes.Volume, "url", coverUrl)
 		filePath := path.Join(m.volumePath(chapter), "cover.jpg")
-		if err = downloadAndWriteImage(coverUrl, filePath); err != nil {
+		if err = downloadAndWrite(coverUrl, filePath); err != nil {
 			return err
 		}
 	}
@@ -383,14 +383,24 @@ func (m *mangaImpl) writeVolumeMetadata(chapter ChapterSearchData) error {
 
 func (m *mangaImpl) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
+
 	ci.Series = m.info.Attributes.EnTitle()
+	ci.Year = m.info.Attributes.Year
+	ci.Summary = m.info.Attributes.EnDescription()
+	ci.Manga = comicinfo.MangaYes
+	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
+
+	alts := m.info.Attributes.EnAltTitles()
+	if len(alts) > 0 {
+		ci.LocalizedSeries = alts[0]
+	}
+
 	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {
 		ci.Volume = v
 	} else {
 		m.log.Trace("unable to parse volume number", "volume", chapter.Attributes.Volume, "err", err)
 	}
-	ci.Manga = comicinfo.MangaYes
-	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
+
 	ci.Tags = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
 		n, ok := t.Attributes.Name["en"]
 		if !ok {
@@ -398,15 +408,13 @@ func (m *mangaImpl) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		}
 		return n, true
 	}), ",")
-	ci.Year = m.info.Attributes.Year
-	ci.Summary = m.info.Attributes.EnDescription()
 	return ci
 }
 
 func (m *mangaImpl) downloadImage(index int, chapter ChapterSearchData, url string) error {
 	m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
 	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %d.jpg", index))
-	if err := downloadAndWriteImage(url, filePath); err != nil {
+	if err := downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
 	m.imagesDownloaded++
@@ -430,7 +438,7 @@ func (m *mangaImpl) chapterPath(c ChapterSearchData) string {
 	return path.Join(m.volumePath(c), chDir)
 }
 
-func downloadAndWriteImage(url string, path string) error {
+func downloadAndWrite(url string, path string) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -440,7 +448,11 @@ func downloadAndWriteImage(url string, path string) error {
 		return fmt.Errorf("bad status: %s", resp.Status)
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			log.Warn("error while closing response body", "err", err)
+		}
+	}(resp.Body)
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
