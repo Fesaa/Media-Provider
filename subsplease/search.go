@@ -36,7 +36,11 @@ func Search(options SearchOptions) (SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer req.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			log.Warn("failed to close body", "error", err)
+		}
+	}(req.Body)
 
 	data, err := io.ReadAll(req.Body)
 	if err != nil {

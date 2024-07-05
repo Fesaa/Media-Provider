@@ -23,7 +23,7 @@ func I() Yoitsu {
 	return yoitsu
 }
 
-func Init(c YoitsuConfig) {
+func Init(c Config) {
 	var err error
 	yoitsu, err = newYoitsu(c)
 	if err != nil {
@@ -42,7 +42,7 @@ type yoitsuImpl struct {
 	queue    tools.Queue[payload.QueueStat]
 }
 
-func newYoitsu(c YoitsuConfig) (Yoitsu, error) {
+func newYoitsu(c Config) (Yoitsu, error) {
 	dir := config.OrDefault(c.GetRootDir(), "temp")
 
 	impl := &yoitsuImpl{

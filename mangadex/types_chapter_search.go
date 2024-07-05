@@ -5,7 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 )
 
-type ChapterSearchResponse MangaDexResponse[[]ChapterSearchData]
+type ChapterSearchResponse Response[[]ChapterSearchData]
 
 func (c ChapterSearchResponse) FilterOneEnChapter() ChapterSearchResponse {
 	c2 := c

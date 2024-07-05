@@ -13,13 +13,13 @@ const (
 	TokenCookieName = "token"
 )
 
-var authProvider AuthProvider
+var authProvider Provider
 
 func Init() {
 	authProvider = newAuth()
 }
 
-func I() AuthProvider {
+func I() Provider {
 	return authProvider
 }
 
@@ -28,7 +28,7 @@ type authImpl struct {
 	tokens map[string]time.Time
 }
 
-func newAuth() AuthProvider {
+func newAuth() Provider {
 	return &authImpl{
 		tokens: make(map[string]time.Time),
 		pass:   config.OrDefault(config.I().GetPassWord(), "admin"),

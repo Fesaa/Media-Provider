@@ -5,7 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 )
 
-type MangaCoverResponse MangaDexResponse[[]MangaCoverData]
+type MangaCoverResponse Response[[]MangaCoverData]
 
 type MangaCoverData struct {
 	Id            string               `json:"id"`

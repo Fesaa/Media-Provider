@@ -12,14 +12,14 @@ import (
 	"sync"
 )
 
-var m MangadexClient
+var m Client
 
-func I() MangadexClient {
+func I() Client {
 	return m
 }
 
-func newClient(c MangadexConfig) MangadexClient {
-	return &mangadexClientImpl{
+func newClient(c Config) Client {
+	return &client{
 		dir:         config.OrDefault(c.GetRootDir(), "temp"),
 		maxImages:   c.GetMaxConcurrentMangadexImages(),
 		mangas:      tools.NewSafeMap[string, Manga](),
@@ -29,7 +29,7 @@ func newClient(c MangadexConfig) MangadexClient {
 	}
 }
 
-type mangadexClientImpl struct {
+type client struct {
 	dir         string
 	maxImages   int
 	mangas      tools.SafeMap[string, Manga]
@@ -38,19 +38,19 @@ type mangadexClientImpl struct {
 	mu          sync.Mutex
 }
 
-func (m *mangadexClientImpl) GetBaseDir() string {
+func (m *client) GetBaseDir() string {
 	return m.dir
 }
 
-func (m *mangadexClientImpl) GetCurrentManga() Manga {
+func (m *client) GetCurrentManga() Manga {
 	return m.downloading
 }
 
-func (m *mangadexClientImpl) GetQueuedMangas() []payload.QueueStat {
+func (m *client) GetQueuedMangas() []payload.QueueStat {
 	return m.queue.Items()
 }
 
-func (m *mangadexClientImpl) Download(req payload.DownloadRequest) (Manga, error) {
+func (m *client) Download(req payload.DownloadRequest) (Manga, error) {
 	if m.mangas.Contains(req.Id) {
 		return nil, fmt.Errorf("manga already exists: %s", req.Id)
 	}
@@ -70,7 +70,7 @@ func (m *mangadexClientImpl) Download(req payload.DownloadRequest) (Manga, error
 	return manga, nil
 }
 
-func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
+func (m *client) RemoveDownload(req payload.StopRequest) error {
 	manga, ok := m.mangas.Get(req.Id)
 	if !ok {
 		ok = m.queue.RemoveFunc(func(item payload.QueueStat) bool {
@@ -101,7 +101,7 @@ func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
 	return nil
 }
 
-func (m *mangadexClientImpl) startNext() {
+func (m *client) startNext() {
 	if m.queue.IsEmpty() {
 		return
 	}
@@ -118,7 +118,7 @@ func (m *mangadexClientImpl) startNext() {
 	}
 }
 
-func (m *mangadexClientImpl) deleteFiles(manga Manga) {
+func (m *client) deleteFiles(manga Manga) {
 	dir := path.Join(m.dir, manga.GetDownloadDir())
 	skip := manga.GetPrevVolumes()
 	if len(skip) == 0 {
@@ -148,7 +148,7 @@ func (m *mangadexClientImpl) deleteFiles(manga Manga) {
 	}
 }
 
-func (m *mangadexClientImpl) cleanup(manga Manga) {
+func (m *client) cleanup(manga Manga) {
 	dir := path.Join(m.dir, manga.GetBaseDir(), manga.Title())
 	entries, err := os.ReadDir(dir)
 	if err != nil {

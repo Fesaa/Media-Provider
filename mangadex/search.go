@@ -123,7 +123,11 @@ func do[T any](url string, out *T) error {
 		return fmt.Errorf("bad status: %s", resp.Status)
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			log.Warn("failed to close body", "error", err)
+		}
+	}(resp.Body)
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err

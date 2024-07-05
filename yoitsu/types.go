@@ -6,7 +6,7 @@ import (
 	"github.com/anacrolix/torrent"
 )
 
-type YoitsuConfig interface {
+type Config interface {
 	GetRootDir() string
 	GetMaxConcurrentTorrents() int
 }

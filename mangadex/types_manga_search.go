@@ -5,8 +5,8 @@ import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
 )
 
-type MangaSearchResponse MangaDexResponse[[]MangaSearchData]
-type GetMangaResponse MangaDexResponse[MangaSearchData]
+type MangaSearchResponse Response[[]MangaSearchData]
+type GetMangaResponse Response[MangaSearchData]
 
 type MangaSearchData struct {
 	Id            string          `json:"id"`

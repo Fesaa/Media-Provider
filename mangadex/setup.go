@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func Init(c MangadexConfig) {
+func Init(c Config) {
 	err := loadTags()
 	if err != nil {
 		log.Warn("failed to load tags, filtering won't work", "err", err)
@@ -29,7 +29,11 @@ func loadTags() error {
 		return fmt.Errorf("loadTags status: %s", resp.Status)
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			log.Warn("failed to close body", "error", err)
+		}
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("loadTags readAll: %s", err)

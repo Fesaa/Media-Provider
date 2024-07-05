@@ -1,4 +1,5 @@
 /*
+Package comicinfo
 MIT License
 
 # Copyright (c) 2023 Felipe Martin
@@ -83,7 +84,7 @@ func (ci *ComicInfo) SetXMLAttributes() {
 	ci.XmlNsXsi = "http://www.w3.org/2001/XMLSchema-instance"
 }
 
-// New provides a new ComicInfo struct with the XML attributes set
+// NewComicInfo provides a new ComicInfo struct with the XML attributes set
 func NewComicInfo() *ComicInfo {
 	ci := ComicInfo{}
 	ci.SetXMLAttributes()

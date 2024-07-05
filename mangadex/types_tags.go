@@ -1,6 +1,6 @@
 package mangadex
 
-type TagResponse MangaDexResponse[[]TagData]
+type TagResponse Response[[]TagData]
 
 type TagData struct {
 	Id         string        `json:"id"`
