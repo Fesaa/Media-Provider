@@ -1,4 +1,4 @@
-package utils
+package mangadex
 
 import (
 	"archive/zip"
@@ -13,7 +13,11 @@ func addFileToZip(zipWriter *zip.Writer, filename string, baseDir string) error 
 	if err != nil {
 		return err
 	}
-	defer fileToZip.Close()
+	defer func(fileToZip *os.File) {
+		if err = fileToZip.Close(); err != nil {
+			log.Warn("failed to close file", "filename", filename, "error", err)
+		}
+	}(fileToZip)
 
 	relativePath, err := filepath.Rel(baseDir, filename)
 	if err != nil {
@@ -40,16 +44,24 @@ func addFileToZip(zipWriter *zip.Writer, filename string, baseDir string) error 
 	return err
 }
 
-func ZipFolder(folderPath string, zipFileName string) error {
+func zipFolder(folderPath string, zipFileName string) error {
 	log.Trace("zipping folder", "path", folderPath, "filename", zipFileName)
 	zipFile, err := os.Create(zipFileName)
 	if err != nil {
 		return err
 	}
-	defer zipFile.Close()
+	defer func(zipFile *os.File) {
+		if err = zipFile.Close(); err != nil {
+			log.Warn("failed to close zip file", "filename", zipFileName, "error", err)
+		}
+	}(zipFile)
 
 	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
+	defer func(zipWriter *zip.Writer) {
+		if err = zipWriter.Close(); err != nil {
+			log.Warn("failed to close zip writer", "error", err)
+		}
+	}(zipWriter)
 
 	err = filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

@@ -6,9 +6,9 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"log/slog"
+	"math"
 	"path"
 	"time"
 )
@@ -104,11 +104,27 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 			}
 			return t.tempTitle
 		}(),
-		Size:        utils.BytesToSize(float64(t.t.Length())),
+		Size:        BytesToSize(float64(t.t.Length())),
 		Downloading: t.t.Info() != nil,
-		Progress:    utils.Percent(t.t.BytesCompleted(), t.t.Length()),
+		Progress:    Percent(t.t.BytesCompleted(), t.t.Length()),
 		SpeedType:   payload.BYTES,
 		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: t.GetDownloadDir(),
 	}
+}
+
+func Percent(a, b int64) int64 {
+	b = max(b, 1)
+	ratio := (float64)(a) / (float64)(b)
+	return (int64)(ratio * 100)
+}
+
+var sizes = [...]string{"Bytes", "KB", "MB", "GB", "TB"}
+
+func BytesToSize(bytes float64) string {
+	if bytes == 0 {
+		return "0 Byte"
+	}
+	i := math.Floor(math.Log(bytes) / math.Log(1024))
+	return fmt.Sprintf("%.2f %s", bytes/math.Pow(1024, i), sizes[int(i)])
 }

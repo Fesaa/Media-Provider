@@ -1,10 +1,9 @@
 module github.com/Fesaa/Media-Provider
 
-go 1.22
-
-toolchain go1.22.2
+go 1.22.2
 
 require (
+	github.com/Fesaa/go-tools v0.0.3
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/anacrolix/torrent v1.56.1
 	github.com/gofiber/fiber/v2 v2.52.5

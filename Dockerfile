@@ -29,7 +29,6 @@ COPY ./mangadex ./mangadex
 COPY ./payload ./payload
 COPY ./providers ./providers
 COPY ./subsplease ./subsplease
-COPY ./utils ./utils
 COPY ./yoitsu ./yoitsu
 COPY ./yts ./yts
 COPY ./*.go ./

@@ -2,11 +2,11 @@ package yoitsu
 
 import (
 	"github.com/Fesaa/Media-Provider/payload"
-	"github.com/Fesaa/Media-Provider/utils"
+	tools "github.com/Fesaa/go-tools"
 	"github.com/anacrolix/torrent"
 )
 
-type YoitsuConfig interface {
+type Config interface {
 	GetRootDir() string
 	GetMaxConcurrentTorrents() int
 }
@@ -40,7 +40,7 @@ type Yoitsu interface {
 	RemoveDownload(request payload.StopRequest) error
 
 	// GetRunningTorrents returns a map of all running torrents, indexed by their info hash
-	GetRunningTorrents() *utils.SafeMap[string, Torrent]
+	GetRunningTorrents() tools.SafeMap[string, Torrent]
 	GetQueuedTorrents() []payload.QueueStat
 
 	GetBaseDir() string

@@ -1,5 +1,7 @@
 /*
-MIT License
+	Package comicinfo
+
+# MIT License
 
 # Copyright (c) 2023 Felipe Martin
 
@@ -58,7 +60,7 @@ func Write(ci *ComicInfo, w io.Writer) error {
 	return nil
 }
 
-// Read reads the ComicInfo spec from the specified path.
+// Open reads the ComicInfo spec from the specified path.
 func Open(path string) (*ComicInfo, error) {
 	f, err := os.ReadFile(path)
 	if err != nil {

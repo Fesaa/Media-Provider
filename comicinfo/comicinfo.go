@@ -1,4 +1,5 @@
 /*
+Package comicinfo
 MIT License
 
 # Copyright (c) 2023 Felipe Martin
@@ -21,7 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-https://github.com/fmartingr/go-comicinfo/blob/latest/schema.go, but with Tags support
+https://github.com/fmartingr/go-comicinfo/blob/latest/schema.go, but with Tags support, and custom Kavitatags
 */
 package comicinfo
 
@@ -31,6 +32,7 @@ var xmlHeader = []byte(`<?xml version="1.0" encoding="UTF-8"?>`)
 type ComicInfo struct {
 	Title               string    `xml:"Title,omitempty"`
 	Series              string    `xml:"Series,omitempty"`
+	LocalizedSeries     string    `xml:"LocalizedSeries,omitempty"` // Kavita only
 	Number              string    `xml:"Number,omitempty"`
 	Count               int       `xml:"Count,omitempty"`
 	Volume              int       `xml:"Volume,omitempty"`
@@ -82,7 +84,7 @@ func (ci *ComicInfo) SetXMLAttributes() {
 	ci.XmlNsXsi = "http://www.w3.org/2001/XMLSchema-instance"
 }
 
-// New provides a new ComicInfo struct with the XML attributes set
+// NewComicInfo provides a new ComicInfo struct with the XML attributes set
 func NewComicInfo() *ComicInfo {
 	ci := ComicInfo{}
 	ci.SetXMLAttributes()

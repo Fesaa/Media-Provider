@@ -2,7 +2,7 @@ package auth
 
 import "github.com/gofiber/fiber/v2"
 
-type AuthProvider interface {
+type Provider interface {
 	// IsAuthenticated checks the current request for authentication. This should be handled by the middleware
 	IsAuthenticated(ctx *fiber.Ctx) (bool, error)
 

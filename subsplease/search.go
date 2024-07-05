@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/utils"
+	tools "github.com/Fesaa/go-tools"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,7 +13,7 @@ import (
 
 const URL string = "https://subsplease.org/api/?f=search&tz=Europe/Brussels&s=%s"
 
-var cache = *utils.NewCache[SearchResult](5 * time.Minute)
+var cache = tools.NewCache[SearchResult](5 * time.Minute)
 
 type SearchOptions struct {
 	Query string
@@ -29,14 +29,18 @@ func Search(options SearchOptions) (SearchResult, error) {
 
 	if res := cache.Get(u); res != nil {
 		log.Trace("Cache hit", "url", u)
-		return *res, nil
+		return res.Get(), nil
 	}
 
 	req, err := http.Get(u)
 	if err != nil {
 		return nil, err
 	}
-	defer req.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			log.Warn("failed to close body", "error", err)
+		}
+	}(req.Body)
 
 	data, err := io.ReadAll(req.Body)
 	if err != nil {

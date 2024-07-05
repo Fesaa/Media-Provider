@@ -3,26 +3,27 @@ package limetorrents
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
+	tools "github.com/Fesaa/go-tools"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 )
 
 const BASE_URl string = "https://www.limetorrents.lol"
-const SEARCH_URL string = BASE_URl + "/search/%s/%s/%d/"
+const SEARCH_URL = BASE_URl + "/search/%s/%s/%d/"
 
-var cache utils.Cache[[]SearchResult] = *utils.NewCache[[]SearchResult](5 * time.Minute)
+var cache = tools.NewCache[[]SearchResult](5 * time.Minute)
 
 func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	searchUrl := formatUrl(searchOptions)
 	log.Debug("searching lime for torrents", "url", searchUrl)
 	if res := cache.Get(searchUrl); res != nil {
 		log.Trace("Limetorrents Cache hit", "url", searchUrl)
-		return *res, nil
+		return res.Get(), nil
 	}
 
 	doc, err := getSearch(searchUrl)
@@ -46,7 +47,7 @@ func parseResults(torrents *goquery.Selection) []SearchResult {
 	return results[1:]
 }
 
-func searchFromNode(i int, s *goquery.Selection) SearchResult {
+func searchFromNode(_ int, s *goquery.Selection) SearchResult {
 	name := s.Find("td:nth-child(1) a").Text()
 	urlSel := s.Find("td:nth-child(1) a")
 	torrentUrl, _ := urlSel.First().Attr("href")
@@ -89,7 +90,11 @@ func getSearch(url string) (*goquery.Document, error) {
 		return nil, err
 	}
 
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			log.Warn("failed to close body", "error", err)
+		}
+	}(res.Body)
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}

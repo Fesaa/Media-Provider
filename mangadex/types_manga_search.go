@@ -5,8 +5,8 @@ import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
 )
 
-type MangaSearchResponse MangaDexResponse[[]MangaSearchData]
-type GetMangaResponse MangaDexResponse[MangaSearchData]
+type MangaSearchResponse Response[[]MangaSearchData]
+type GetMangaResponse Response[MangaSearchData]
 
 type MangaSearchData struct {
 	Id            string          `json:"id"`
@@ -55,6 +55,19 @@ func (a *MangaAttributes) EnTitle() string {
 		return enAltTitle
 	}
 	return ""
+}
+
+func (a *MangaAttributes) EnAltTitles() []string {
+	var enAltTitles []string
+	for _, altTitle := range a.AltTitles {
+		for key, value := range altTitle {
+			if key == "en" {
+				enAltTitles = append(enAltTitles, value)
+				break
+			}
+		}
+	}
+	return enAltTitles
 }
 
 func (a *MangaAttributes) EnDescription() string {

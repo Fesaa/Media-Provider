@@ -60,8 +60,9 @@ func Stats(ctx *fiber.Ctx) error {
 		Running: []payload.InfoStat{},
 		Queued:  []payload.QueueStat{},
 	}
-	yoitsu.I().GetRunningTorrents().ForEachSafe(func(key string, torrent yoitsu.Torrent) {
+	yoitsu.I().GetRunningTorrents().ForEach(func(key string, torrent yoitsu.Torrent) bool {
 		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
+		return true
 	})
 	manga := mangadex.I().GetCurrentManga()
 	if manga != nil {

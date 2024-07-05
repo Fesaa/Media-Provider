@@ -4,12 +4,12 @@ import (
 	"github.com/Fesaa/Media-Provider/payload"
 )
 
-type MangadexConfig interface {
+type Config interface {
 	GetRootDir() string
 	GetMaxConcurrentMangadexImages() int
 }
 
-type MangadexClient interface {
+type Client interface {
 	Download(payload.DownloadRequest) (Manga, error)
 	RemoveDownload(payload.StopRequest) error
 	GetBaseDir() string
@@ -38,7 +38,7 @@ type SearchOptions struct {
 	SkipNotFoundTags       bool
 }
 
-type MangaDexResponse[T any] struct {
+type Response[T any] struct {
 	Result   string `json:"result"`
 	Response string `json:"response"`
 	Data     T      `json:"data"`

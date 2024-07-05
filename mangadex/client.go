@@ -5,53 +5,53 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
-	"github.com/Fesaa/Media-Provider/utils"
+	tools "github.com/Fesaa/go-tools"
 	"os"
 	"path"
 	"slices"
 	"sync"
 )
 
-var m MangadexClient
+var m Client
 
-func I() MangadexClient {
+func I() Client {
 	return m
 }
 
-func newClient(c MangadexConfig) MangadexClient {
-	return &mangadexClientImpl{
+func newClient(c Config) Client {
+	return &client{
 		dir:         config.OrDefault(c.GetRootDir(), "temp"),
 		maxImages:   c.GetMaxConcurrentMangadexImages(),
-		mangas:      utils.NewSafeMap[string, Manga](),
-		queue:       utils.NewQueue[payload.QueueStat](),
+		mangas:      tools.NewSafeMap[string, Manga](),
+		queue:       tools.NewQueue[payload.QueueStat](),
 		downloading: nil,
 		mu:          sync.Mutex{},
 	}
 }
 
-type mangadexClientImpl struct {
+type client struct {
 	dir         string
 	maxImages   int
-	mangas      *utils.SafeMap[string, Manga]
-	queue       utils.Queue[payload.QueueStat]
+	mangas      tools.SafeMap[string, Manga]
+	queue       tools.Queue[payload.QueueStat]
 	downloading Manga
 	mu          sync.Mutex
 }
 
-func (m *mangadexClientImpl) GetBaseDir() string {
+func (m *client) GetBaseDir() string {
 	return m.dir
 }
 
-func (m *mangadexClientImpl) GetCurrentManga() Manga {
+func (m *client) GetCurrentManga() Manga {
 	return m.downloading
 }
 
-func (m *mangadexClientImpl) GetQueuedMangas() []payload.QueueStat {
+func (m *client) GetQueuedMangas() []payload.QueueStat {
 	return m.queue.Items()
 }
 
-func (m *mangadexClientImpl) Download(req payload.DownloadRequest) (Manga, error) {
-	if m.mangas.Has(req.Id) {
+func (m *client) Download(req payload.DownloadRequest) (Manga, error) {
+	if m.mangas.Contains(req.Id) {
 		return nil, fmt.Errorf("manga already exists: %s", req.Id)
 	}
 
@@ -64,13 +64,13 @@ func (m *mangadexClientImpl) Download(req payload.DownloadRequest) (Manga, error
 
 	log.Info("downloading manga", "mangaId", req.Id, "into", req.BaseDir, "title?", req.TempTitle)
 	manga := newManga(req, m.maxImages, m)
-	m.mangas.Set(req.Id, manga)
+	m.mangas.Put(req.Id, manga)
 	m.downloading = manga
 	manga.WaitForInfoAndDownload()
 	return manga, nil
 }
 
-func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
+func (m *client) RemoveDownload(req payload.StopRequest) error {
 	manga, ok := m.mangas.Get(req.Id)
 	if !ok {
 		ok = m.queue.RemoveFunc(func(item payload.QueueStat) bool {
@@ -85,7 +85,7 @@ func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
 
 	log.Info("Dropping manga", "mangaId", req.Id, "title", manga.Title(), "deleteFiles", req.DeleteFiles)
 	go func() {
-		m.mangas.Delete(req.Id)
+		m.mangas.Remove(req.Id)
 		manga.Cancel()
 		m.mu.Lock()
 		m.downloading = nil
@@ -101,7 +101,7 @@ func (m *mangadexClientImpl) RemoveDownload(req payload.StopRequest) error {
 	return nil
 }
 
-func (m *mangadexClientImpl) startNext() {
+func (m *client) startNext() {
 	if m.queue.IsEmpty() {
 		return
 	}
@@ -118,7 +118,7 @@ func (m *mangadexClientImpl) startNext() {
 	}
 }
 
-func (m *mangadexClientImpl) deleteFiles(manga Manga) {
+func (m *client) deleteFiles(manga Manga) {
 	dir := path.Join(m.dir, manga.GetDownloadDir())
 	skip := manga.GetPrevVolumes()
 	if len(skip) == 0 {
@@ -148,7 +148,7 @@ func (m *mangadexClientImpl) deleteFiles(manga Manga) {
 	}
 }
 
-func (m *mangadexClientImpl) cleanup(manga Manga) {
+func (m *client) cleanup(manga Manga) {
 	dir := path.Join(m.dir, manga.GetBaseDir(), manga.Title())
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -159,7 +159,7 @@ func (m *mangadexClientImpl) cleanup(manga Manga) {
 		if !entry.IsDir() {
 			continue
 		}
-		err = utils.ZipFolder(path.Join(dir, entry.Name()), path.Join(dir, entry.Name()+".cbz"))
+		err = zipFolder(path.Join(dir, entry.Name()), path.Join(dir, entry.Name()+".cbz"))
 		if err != nil {
 			log.Error("error while zipping directory", "dir", dir, "mangaId", manga.Id(), "err", err)
 			continue
