@@ -8,7 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
-	"github.com/Fesaa/Media-Provider/utils"
+	tools "github.com/Fesaa/go-tools"
 	"io"
 	"log/slog"
 	"net/http"
@@ -37,7 +37,7 @@ type mangaImpl struct {
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
-	covers   *utils.SafeMap[string, string]
+	covers   tools.SafeMap[string, string]
 
 	volumeMetadata           []string
 	alreadyDownloadedVolumes []string
@@ -120,7 +120,7 @@ func (m *mangaImpl) GetInfo() payload.InfoStat {
 		}(),
 		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
 		Downloading: m.wg != nil,
-		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
+		Progress:    Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
 		SpeedType:   payload.IMAGES,
 		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: m.GetDownloadDir(),
@@ -182,9 +182,9 @@ func (m *mangaImpl) loadInfo() chan struct{} {
 		covers, err := GetCoverImages(m.id)
 		if err != nil || covers == nil {
 			m.log.Warn("error while loading manga covers, ignoring", "err", err)
-			m.covers = &utils.SafeMap[string, string]{}
+			m.covers = tools.NewSafeMap[string, string]()
 		} else {
-			m.covers = utils.NewSafeMap(covers.GetUrlsPerVolume(m.id))
+			m.covers = tools.NewSafeMap(covers.GetUrlsPerVolume(m.id))
 		}
 
 		close(out)
@@ -403,7 +403,7 @@ func (m *mangaImpl) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		m.log.Trace("unable to parse volume number", "volume", chapter.Attributes.Volume, "err", err)
 	}
 
-	ci.Tags = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
+	ci.Tags = strings.Join(tools.TransformMaybeArray(m.info.Attributes.Tags, func(t TagData) (string, bool) {
 		n, ok := t.Attributes.Name["en"]
 		if !ok {
 			return "", false
@@ -467,4 +467,10 @@ func downloadAndWrite(url string, path string) error {
 	}
 
 	return nil
+}
+
+func Percent(a, b int64) int64 {
+	b = max(b, 1)
+	ratio := (float64)(a) / (float64)(b)
+	return (int64)(ratio * 100)
 }

@@ -46,7 +46,7 @@ func loadTags() error {
 		if !ok {
 			continue
 		}
-		tags.Set(enName, tag.Id)
+		tags.Put(enName, tag.Id)
 	}
 	return nil
 }

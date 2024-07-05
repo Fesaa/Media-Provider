@@ -1,4 +1,4 @@
-package utils
+package mangadex
 
 import (
 	"archive/zip"
@@ -40,7 +40,7 @@ func addFileToZip(zipWriter *zip.Writer, filename string, baseDir string) error 
 	return err
 }
 
-func ZipFolder(folderPath string, zipFileName string) error {
+func zipFolder(folderPath string, zipFileName string) error {
 	log.Trace("zipping folder", "path", folderPath, "filename", zipFileName)
 	zipFile, err := os.Create(zipFileName)
 	if err != nil {
