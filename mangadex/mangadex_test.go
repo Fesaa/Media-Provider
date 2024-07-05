@@ -34,6 +34,7 @@ func (m *mockConfig) GetMaxConcurrentMangadexImages() int {
 }
 
 func TestQueue(t *testing.T) {
+	t.Parallel()
 	mock := mockConfig{d: t.TempDir(), m: 4}
 	client := newClient(&mock)
 
@@ -87,6 +88,7 @@ func TestQueue(t *testing.T) {
 }
 
 func TestCancel(t *testing.T) {
+	t.Parallel()
 	mock := mockConfig{d: t.TempDir(), m: 4}
 	client := newClient(&mock)
 
@@ -126,6 +128,7 @@ func TestCancel(t *testing.T) {
 }
 
 func TestDownload(t *testing.T) {
+	t.Parallel()
 	mock := mockConfig{d: t.TempDir(), m: 4}
 	client := newClient(&mock)
 
