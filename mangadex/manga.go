@@ -305,7 +305,8 @@ func (m *manga) downloadChapter(chapter ChapterSearchData) error {
 				defer wg.Done()
 				sem <- struct{}{}
 				go func() { <-sem }()
-				if err = m.downloadImage(i, chapter, url); err != nil {
+				// Indexing pages from 1
+				if err = m.downloadImage(i+1, chapter, url); err != nil {
 					select {
 					case errCh <- err:
 						cancel()
@@ -368,7 +369,9 @@ func (m *manga) writeVolumeMetadata(chapter ChapterSearchData) error {
 		m.log.Debug("unable to find cover", "volume", chapter.Attributes.Volume)
 	} else {
 		m.log.Trace("downloading cover image", "volume", chapter.Attributes.Volume, "url", coverUrl)
-		filePath := path.Join(m.volumePath(chapter), "cover.jpg")
+		// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
+		// first by most readers, and in particular, kavita.
+		filePath := path.Join(m.volumePath(chapter), "!0000 cover.jpg")
 		if err = downloadAndWrite(coverUrl, filePath); err != nil {
 			return err
 		}
@@ -415,9 +418,9 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	return ci
 }
 
-func (m *manga) downloadImage(index int, chapter ChapterSearchData, url string) error {
+func (m *manga) downloadImage(page int, chapter ChapterSearchData, url string) error {
 	m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
-	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %d.jpg", index))
+	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %s.jpg", padNumber(page, 4)))
 	if err := downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
@@ -467,4 +470,12 @@ func downloadAndWrite(url string, path string) error {
 	}
 
 	return nil
+}
+
+func padNumber(num int, n int) string {
+	str := strconv.Itoa(num)
+	if len(str) < n {
+		str = strings.Repeat("0", n-len(str)) + str
+	}
+	return str
 }
