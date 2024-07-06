@@ -17,3 +17,13 @@ func MaybeMap[T, S any](in []T, f func(T) (S, bool)) []S {
 	}
 	return out
 }
+
+func Filter[T any](in []T, f func(T) bool) []T {
+	out := make([]T, 0)
+	for _, t := range in {
+		if f(t) {
+			out = append(out, t)
+		}
+	}
+	return out
+}

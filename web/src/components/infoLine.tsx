@@ -68,7 +68,8 @@ export default function InfoLine(props: {
   }
 
   const chartData: ChartData<"line", number[]> = {
-    labels: props.speeds.map((s) => (new Date(s.time)).toLocaleTimeString()),
+    // Multiplying time by 1000, to adjust for seconds -> milliseconds
+    labels: props.speeds.map((s) => (new Date(s.time*1000)).toLocaleTimeString()),
     datasets: [{
       label: 'Download speed',
       data: props.speeds.map((s) => s.speed).map((s) => speedConv(s, i.speed_type)),
