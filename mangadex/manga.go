@@ -37,10 +37,12 @@ type manga struct {
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
-	covers   *utils.SafeMap[string, string]
 
-	volumeMetadata           []string
-	alreadyDownloadedVolumes []string
+	toDownload []ChapterSearchData
+	covers     *utils.SafeMap[string, string]
+
+	volumeMetadata  []string
+	existingVolumes []string
 
 	chaptersDownloaded int
 	imagesDownloaded   int
@@ -98,7 +100,7 @@ func (m *manga) GetDownloadDir() string {
 }
 
 func (m *manga) GetPrevVolumes() []string {
-	return m.alreadyDownloadedVolumes
+	return m.existingVolumes
 }
 
 func (m *manga) GetInfo() payload.InfoStat {
@@ -120,7 +122,7 @@ func (m *manga) GetInfo() payload.InfoStat {
 		}(),
 		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
 		Downloading: m.wg != nil,
-		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.chapters.Data))),
+		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.toDownload))),
 		SpeedType:   payload.IMAGES,
 		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: m.GetDownloadDir(),
@@ -201,13 +203,14 @@ func (m *manga) checkVolumesOnDisk() {
 		} else {
 			m.log.Warn("unable to check for downloaded volumes, downloading all", "err", err)
 		}
-		m.alreadyDownloadedVolumes = []string{}
+		m.existingVolumes = []string{}
 		return
 	}
 
 	out := make([]string, 0)
 	for _, entry := range entries {
-		if entry.IsDir() {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".cbz") {
+			m.log.Trace("skipping non volume file", "file", entry.Name())
 			continue
 		}
 
@@ -219,20 +222,22 @@ func (m *manga) checkVolumesOnDisk() {
 		out = append(out, entry.Name())
 	}
 	m.log.Debug("found following volumes on disk", "volumes", fmt.Sprintf("%+v", out))
-	m.alreadyDownloadedVolumes = out
+	m.existingVolumes = out
 }
 
 func (m *manga) startDownload() {
 	m.log.Trace("starting download", "chapters", len(m.chapters.Data))
 	m.wg = &sync.WaitGroup{}
-	for _, chapter := range m.chapters.Data {
-		if slices.Contains(m.alreadyDownloadedVolumes, m.volumeDir(chapter.Attributes.Volume)+".cbz") {
-			m.log.Debug("skipping chapter, as the volume already exists",
-				"volume", chapter.Attributes.Volume,
-				"chapter", chapter.Attributes.Chapter)
-			continue
+	m.toDownload = utils.Filter(m.chapters.Data, func(chapter ChapterSearchData) bool {
+		download := !slices.Contains(m.existingVolumes, m.volumeDir(chapter.Attributes.Volume)+".cbz")
+		if !download {
+			m.log.Trace("chapter already downloaded, skipping", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter)
 		}
+		return download
+	})
 
+	m.log.Debug("downloading chapters", "all", len(m.chapters.Data), "toDownload", len(m.toDownload))
+	for _, chapter := range m.toDownload {
 		select {
 		case <-m.ctx.Done():
 			m.wg.Wait()
@@ -304,7 +309,7 @@ func (m *manga) downloadChapter(chapter ChapterSearchData) error {
 			go func(i int, url string) {
 				defer wg.Done()
 				sem <- struct{}{}
-				go func() { <-sem }()
+				defer func() { <-sem }()
 				// Indexing pages from 1
 				if err = m.downloadImage(i+1, chapter, url); err != nil {
 					select {
