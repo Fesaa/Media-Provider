@@ -59,15 +59,26 @@ func TestCancel(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	time.Sleep(5 * time.Second)
 	dir := path.Join(mock.GetRootDir(), tor.GetTorrent().Name())
 	dir2 := path.Join(mock.GetRootDir(), tor.GetTorrent().InfoHash().HexString())
 	_, err = os.Stat(dir)
 	if !errors.Is(err, os.ErrNotExist) {
-		t.Fatal("expected ErrNotExist error, got none")
+		t.Fatal("expected ErrNotExist error, got " + func() string {
+			if err != nil {
+				return err.Error()
+			}
+			return "<nil>"
+		}())
 	}
 	_, err = os.Stat(dir2)
 	if !errors.Is(err, os.ErrNotExist) {
-		t.Fatal("expected ErrNotExist error, got none")
+		t.Fatal("expected ErrNotExist error, got " + func() string {
+			if err != nil {
+				return err.Error()
+			}
+			return "<nil>"
+		}())
 	}
 
 }
