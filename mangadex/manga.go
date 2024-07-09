@@ -38,8 +38,8 @@ type manga struct {
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
 
-	toDownload []ChapterSearchData
-	covers     *utils.SafeMap[string, string]
+	toDownload   []ChapterSearchData
+	coverFactory CoverFactory
 
 	volumeMetadata  []string
 	existingVolumes []string
@@ -54,13 +54,13 @@ type manga struct {
 	wg     *sync.WaitGroup
 }
 
-func newManga(req payload.DownloadRequest, maxImages int, client Client) Manga {
+func newManga(req payload.DownloadRequest, c Config, client Client) Manga {
 	manga := &manga{
 		client:             client,
 		id:                 req.Id,
 		baseDir:            req.BaseDir,
 		tempTitle:          req.TempTitle,
-		maxImages:          min(maxImages, 4),
+		maxImages:          min(c.GetMaxConcurrentMangadexImages(), 4),
 		volumeMetadata:     make([]string, 0),
 		chaptersDownloaded: 0,
 		imagesDownloaded:   0,
@@ -183,10 +183,12 @@ func (m *manga) loadInfo() chan struct{} {
 
 		covers, err := GetCoverImages(m.id)
 		if err != nil || covers == nil {
-			m.log.Warn("error while loading manga covers, ignoring", "err", err)
-			m.covers = &utils.SafeMap[string, string]{}
+			m.log.Warn("error while loading manga coverFactory, ignoring", "err", err)
+			m.coverFactory = func(volume string) (string, bool) {
+				return "", false
+			}
 		} else {
-			m.covers = utils.NewSafeMap(covers.GetUrlsPerVolume(m.id))
+			m.coverFactory = covers.GetCoverFactory(m.id)
 		}
 
 		close(out)
@@ -369,7 +371,7 @@ func (m *manga) writeVolumeMetadata(chapter ChapterSearchData) error {
 		return err
 	}
 
-	coverUrl, ok := m.covers.Get(chapter.Attributes.Volume)
+	coverUrl, ok := m.coverFactory(chapter.Attributes.Volume)
 	if !ok {
 		m.log.Debug("unable to find cover", "volume", chapter.Attributes.Volume)
 	} else {

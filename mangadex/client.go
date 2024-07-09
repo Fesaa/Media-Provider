@@ -20,8 +20,7 @@ func I() Client {
 
 func newClient(c Config) Client {
 	return &client{
-		dir:         config.OrDefault(c.GetRootDir(), "temp"),
-		maxImages:   c.GetMaxConcurrentMangadexImages(),
+		config:      c,
 		mangas:      utils.NewSafeMap[string, Manga](),
 		queue:       utils.NewQueue[payload.QueueStat](),
 		downloading: nil,
@@ -30,8 +29,7 @@ func newClient(c Config) Client {
 }
 
 type client struct {
-	dir         string
-	maxImages   int
+	config      Config
 	mangas      *utils.SafeMap[string, Manga]
 	queue       utils.Queue[payload.QueueStat]
 	downloading Manga
@@ -39,7 +37,11 @@ type client struct {
 }
 
 func (m *client) GetBaseDir() string {
-	return m.dir
+	return config.OrDefault(m.config.GetRootDir(), "temp")
+}
+
+func (m *client) GetConfig() Config {
+	return m.config
 }
 
 func (m *client) GetCurrentManga() Manga {
@@ -63,7 +65,7 @@ func (m *client) Download(req payload.DownloadRequest) (Manga, error) {
 	}
 
 	log.Info("downloading manga", "mangaId", req.Id, "into", req.BaseDir, "title?", req.TempTitle)
-	manga := newManga(req, m.maxImages, m)
+	manga := newManga(req, m.GetConfig(), m)
 	m.mangas.Set(req.Id, manga)
 	m.downloading = manga
 	manga.WaitForInfoAndDownload()
@@ -119,7 +121,7 @@ func (m *client) startNext() {
 }
 
 func (m *client) deleteFiles(manga Manga) {
-	dir := path.Join(m.dir, manga.GetDownloadDir())
+	dir := path.Join(m.GetBaseDir(), manga.GetDownloadDir())
 	skip := manga.GetPrevVolumes()
 	if len(skip) == 0 {
 		log.Info("deleting directory", "dir", dir, "mangaId", manga.Id())
@@ -149,7 +151,7 @@ func (m *client) deleteFiles(manga Manga) {
 }
 
 func (m *client) cleanup(manga Manga) {
-	dir := path.Join(m.dir, manga.GetBaseDir(), manga.Title())
+	dir := path.Join(m.GetBaseDir(), manga.GetBaseDir(), manga.Title())
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		log.Error("error while reading directory", "dir", dir, "mangaId", manga.Id(), "err", err)
