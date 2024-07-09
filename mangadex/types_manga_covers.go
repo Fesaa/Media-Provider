@@ -24,19 +24,38 @@ type MangaCoverAttributes struct {
 	Version     int    `json:"version"`
 }
 
-func (m *MangaCoverResponse) GetUrlsPerVolume(mangaId string) map[string]string {
-	out := make(map[string]string)
+type CoverFactory func(volume string) (string, bool)
+
+func (m *MangaCoverResponse) GetCoverFactory(mangaId string) CoverFactory {
+	covers := make(map[string]string)
 	log.Debug("getting cover urls for manga", "mangaId", mangaId, "amount", len(m.Data))
 
 	coverUrl := func(fileName string) string {
 		return fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s", mangaId, fileName)
 	}
 
+	var defaultCover string
+	if len(m.Data) > 0 {
+		// Set the first cover as the default cover, this way a manga always has a cover
+		// Even if it's a bit wrong
+		defaultCover = coverUrl(m.Data[0].Attributes.FileName)
+	}
+
 	for _, cover := range m.Data {
 		url := coverUrl(cover.Attributes.FileName)
 		log.Trace("setting cover url for volume", "mangaId", mangaId, "volume", cover.Attributes.Volume, "url", url)
-		out[cover.Attributes.Volume] = url
+		covers[cover.Attributes.Volume] = url
 	}
 
-	return out
+	return func(volume string) (string, bool) {
+		url, ok := covers[volume]
+		if !ok && defaultCover != "" {
+			return defaultCover, true
+		}
+		if !ok {
+			return "", false
+		}
+
+		return url, true
+	}
 }

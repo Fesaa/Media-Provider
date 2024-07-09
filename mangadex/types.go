@@ -15,6 +15,7 @@ type Client interface {
 	GetBaseDir() string
 	GetCurrentManga() Manga
 	GetQueuedMangas() []payload.QueueStat
+	GetConfig() Config
 }
 
 type Manga interface {
