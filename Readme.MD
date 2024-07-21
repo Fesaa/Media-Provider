@@ -25,10 +25,10 @@ However, if both use the same key, it may cause problems.
 Search modifiers are essentials to how you want to search for content. You can provide filters, etc... per page. You can find information per provider in their respective Readme's. 
 
 ## Docker compose
-This is the entry in my compose file.
+This is the entry in my compose file, behind nginx
 ```yaml
   media-provider:
-    image: ameliaah/media-provider:latest-x64
+    image: ameliaah/media-provider:latest
     restart: "on-failure:3"
     healthcheck:
       test: curl --fail http://0.0.0.0/mp/api/health || exit 1
@@ -42,3 +42,6 @@ This is the entry in my compose file.
       - /Media:/media
       - ./mp.yaml:/app/config.yaml
 ```
+Or with docker run, if you may be running it on your personal computer
+
+`docker run -v ~/downloads:/anything -v ./config.yml:/app/config.yaml -p 80:80 ameliaah/media-provider:latest`
