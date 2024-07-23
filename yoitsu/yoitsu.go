@@ -197,7 +197,7 @@ func (y *yoitsuImpl) cleanup(tor *torrent.Torrent, baseDir string) {
 			log.Error("error while renaming directory", "from", src, "to", dest, "err", err)
 			return
 		}
-		if err = os.Remove(hashDir); err != nil {
+		if err = os.RemoveAll(hashDir); err != nil {
 			log.Error("error while removing old hash directory", "dir", hashDir, "err", err)
 		}
 		return
