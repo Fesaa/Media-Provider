@@ -28,15 +28,15 @@ func validateConfig() {
 
 func validateRootConfig(c config.Config) error {
 	log.Debug("Validating root config")
-	if strings.HasSuffix(c.GetRootURl(), "/") {
-		return fmt.Errorf("invalid root url: %s", c.GetRootURl())
+	if strings.HasSuffix(c.GetRootDir(), "/") {
+		return fmt.Errorf("invalid root url, must not end with /: %s", c.GetRootDir())
 	}
 	ok, err := dirExists(c.GetRootDir())
 	if err != nil {
 		return err
 	}
 	if !ok {
-		return fmt.Errorf("invalid root dir: %s", c.GetRootURl())
+		return fmt.Errorf("invalid root dir, does not exist: %s", c.GetRootDir())
 	}
 	return nil
 }
@@ -52,12 +52,13 @@ func validatePage(page config.Page) error {
 		}
 	}
 
-	ok, err := dirExists(path.Join(config.I().GetRootDir(), page.GetSearchConfig().GetCustomRootDir()))
+	rootPath := path.Join(config.I().GetRootDir(), page.GetSearchConfig().GetCustomRootDir())
+	ok, err := dirExists(rootPath)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		return fmt.Errorf("customRootDir %s for page %s not found", config.I().GetRootDir(), page.GetTitle())
+		return fmt.Errorf("customRootDir does not exist %s", rootPath)
 	}
 
 	for _, dir := range page.GetSearchConfig().GetRootDirs() {

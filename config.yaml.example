@@ -15,7 +15,7 @@ pages:
       search_modifiers:
         categories:
           title: "Category"
-          multi: false
+          type: "dropdown"
           values:
             - key: "anime"
               name: "Anime"
@@ -27,7 +27,7 @@ pages:
               name: "Non-English Translated"
         sortBys:
           title: "Sort"
-          multi: false
+          type: "dropdown"
           values:
             - key: "downloads"
               name: "Downloads"
@@ -51,7 +51,7 @@ pages:
       search_modifiers:
         includeTags:
           title: "Include Tags"
-          multi: true
+          type: "multi"
           values:
             - key: "Girls' Love"
               name: "Girls' Love"
@@ -61,7 +61,7 @@ pages:
               name: "Isekai"
         excludeTags:
           title: "Exclude Tags"
-          multi: true
+          type: "multi"
           values:
             - key: "Girls' Love"
               name: "Girls' Love"
@@ -71,7 +71,7 @@ pages:
               name: "Isekai"
         status:
           title: "Status"
-          multi: true
+          type: "multi"
           values:
             - key: "ongoing"
               name: "Ongoing"
@@ -83,7 +83,7 @@ pages:
               name: "Cancelled"
         contentRating:
           title: "Content Rating"
-          multi: true
+          type: "multi"
           values:
             - key: "safe"
               name: "Safe"
@@ -91,7 +91,7 @@ pages:
               name: "Suggestive"
         publicationDemographic:
           title: "Demographic"
-          multi: true
+          type: "multi"
           values:
             - key: "shounen"
               name: "Shounen"
@@ -107,7 +107,7 @@ pages:
       search_modifiers:
         categories:
           title: "Category"
-          multi: false
+          type: "dropdown"
           values:
             - key: "literature-eng"
               name: "English Literature"
@@ -119,7 +119,7 @@ pages:
               name: "Raw Literature"
         sortBys:
           title: "Sort by"
-          multi: false
+          type: "dropdown"
           values:
             - key: "downloads"
               name: "Downloads"
@@ -144,7 +144,7 @@ pages:
       search_modifiers:
         sortBys:
           title: "Sort By"
-          multi: false
+          type: "dropdown"
           values:
             - key: "title"
               name: "Title"
@@ -172,7 +172,7 @@ pages:
       search_modifiers:
         categories:
           title: "Category"
-          multi: false
+          type: "dropdown"
           values:
               - key: "ALL"
                 name: "All categories"
