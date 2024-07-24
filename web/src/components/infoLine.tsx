@@ -130,7 +130,7 @@ export default function InfoLine(props: {
           <Line options={chartOptions} data={chartData}/>
         </div>
         {i.download_dir && <div className="flex flex-col flex-grow mx-5 justify-center">
-          <DirBrowser base={i.download_dir} name={i.name} addFiles={false} showFiles={true} copy={false} />
+          <DirBrowser base={i.download_dir} name={i.name} addFiles={false} showFiles={true}/>
         </div>}
       </div>}
     </div>

@@ -28,7 +28,7 @@ function getDirUp(s: string) {
 
 }
 
-function dirLine(s: string, dir: boolean, copy: boolean, callBack: () => void, overrideCopy?: string): ReactNode {
+function dirLine(s: string, dir: boolean, callBack: () => void, overridePath?: string, setter?: (path: string)=> void): ReactNode {
   return <div
       key={s}
       className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom"
@@ -46,7 +46,12 @@ function dirLine(s: string, dir: boolean, copy: boolean, callBack: () => void, o
         {getDirName(s)}
       </span>
     </div>
-      {(dir && copy) && <ClipboardIcon className="w-4 h-4 hover:cursor-pointer" onClick={() => copyToClipboard(overrideCopy || s)} />}
+      {(dir && setter) && <ClipboardIcon className="w-4 h-4 hover:cursor-pointer" onClick={
+          () => {
+                copyToClipboard(overridePath || s);
+                setter(overridePath || s)
+          }}
+      />}
   </div>
 }
 
@@ -54,8 +59,8 @@ export default function Dir(props: {
   base: string;
   addFiles: boolean,
   showFiles: boolean,
-  copy: boolean,
   root?: boolean;
+  setter?: (path: string) => void;
 }) {
   const [subs, setSubs] = useState<DirEntry[]>([]);
   const [curRoot, setCurRoot] = useState<string>(props.base);
@@ -95,13 +100,13 @@ export default function Dir(props: {
       <div className="flex flex-col">
         <span className="text-xl mb-5 flex flex-grow text-center break-all">{props.base}</span>
         <div className="flex flex-col max-h-48 overflow-auto">
-          {!root && dirLine('...', true, props.copy, () => {
+          {!root && dirLine('...', true, () => {
             setCurRoot(getDirUp(curRoot))
-          }, curRoot)}
+          }, curRoot, props.setter)}
           {subs.map(entry => {
-            return dirLine(curRoot + "/" + entry.name, entry.dir, props.copy, () => {
+            return dirLine(curRoot + "/" + entry.name, entry.dir,() => {
               setCurRoot(curRoot + "/" + entry.name)
-            })
+            }, undefined, props.setter)
           })}
         </div>
         {props.addFiles && <div className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom">
