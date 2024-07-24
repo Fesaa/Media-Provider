@@ -197,9 +197,7 @@ func (y *yoitsuImpl) cleanup(tor *torrent.Torrent, baseDir string) {
 			log.Error("error while renaming directory", "from", src, "to", dest, "err", err)
 			return
 		}
-		if err = os.RemoveAll(hashDir); err != nil {
-			log.Error("error while removing old hash directory", "dir", hashDir, "err", err)
-		}
+		removeAll(hashDir, infoHash)
 		return
 	}
 
@@ -220,10 +218,7 @@ func (y *yoitsuImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
 	infoHash := tor.InfoHash().HexString()
 	dir := path.Join(y.dir, baseDir, infoHash)
 	log.Debug("deleting directory", "dir", dir, "infoHash", infoHash)
-	err := os.RemoveAll(dir)
-	if err != nil {
-		log.Error("error while deleting directory", "dir", dir, "err", err, "infoHash", infoHash)
-	}
+	removeAll(dir, infoHash)
 }
 
 func (y *yoitsuImpl) GetRunningTorrents() *utils.SafeMap[string, Torrent] {
