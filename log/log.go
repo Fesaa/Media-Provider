@@ -31,6 +31,10 @@ func Default() *Logger {
 
 var def Logger
 
+func IsTraceEnabled() bool {
+	return Default().IsTraceEnabled()
+}
+
 func Error(msg string, args ...any) {
 	Default().log(slog.LevelError, msg, args...)
 }
@@ -79,6 +83,10 @@ func (l *Logger) Trace(msg string, args ...any) {
 func (l *Logger) Fatal(msg string, args ...any) {
 	l.log(LevelFatal, msg, args...)
 	panic("fatal log call")
+}
+
+func (l *Logger) IsTraceEnabled() bool {
+	return l._log.Enabled(nil, LevelTrace)
 }
 
 func With(args ...any) *Logger {
