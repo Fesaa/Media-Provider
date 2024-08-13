@@ -65,6 +65,7 @@ export default function Dir(props: {
   const [subs, setSubs] = useState<DirEntry[]>([]);
   const [curRoot, setCurRoot] = useState<string>(props.base);
   const [root, setRoot] = useState<boolean>(props.root || true);
+  const [filter, setFilter] = useState<string>("");
 
   useEffect(() => {
     loadSubs(curRoot)
@@ -99,17 +100,29 @@ export default function Dir(props: {
   return (
       <div className="flex flex-col">
         <span className="text-xl mb-5 flex flex-grow text-center break-all">{props.base}</span>
-        <div className="flex flex-col max-h-48 overflow-auto">
-          {!root && dirLine('...', true, () => {
-            setCurRoot(getDirUp(curRoot))
-          }, curRoot, props.setter)}
-          {subs.map(entry => {
-            return dirLine(curRoot + "/" + entry.name, entry.dir,() => {
-              setCurRoot(curRoot + "/" + entry.name)
-            }, undefined, props.setter)
-          })}
-        </div>
-        {props.addFiles && <div className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom">
+          <div className="mb-2">
+              <input
+                  type="text"
+                  name="filter"
+                  id="filter"
+                  className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                  required
+                  placeholder="Filter..."
+                  onChange={(e) => setFilter(e.target.value.toLowerCase())}
+              />
+          </div>
+          <div className="flex flex-col max-h-48 overflow-auto">
+              {!root && dirLine('...', true, () => {
+                  setCurRoot(getDirUp(curRoot))
+              }, curRoot, props.setter)}
+              {subs.filter(entry => entry.name.toLowerCase().includes(filter)).map(entry => {
+                  return dirLine(curRoot + "/" + entry.name, entry.dir, () => {
+                      setCurRoot(curRoot + "/" + entry.name)
+                  }, undefined, props.setter)
+              })}
+          </div>
+          {props.addFiles && <div
+              className="px-2 py-2 border-2 border-solid border-gray-200 bg-white flex flex-row justify-between items-center align-text-bottom">
           <div className={`flex flex-row text-center items-center`} onClick={createSubDir}>
             <PlusIcon className="w-6 h-6 text-green-500"/>{" "}
             <span className="text-sm hover:underline hover:cursor-pointer">
