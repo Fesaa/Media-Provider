@@ -42,9 +42,7 @@ func newTorrent(t *torrent.Torrent, req payload.DownloadRequest) Torrent {
 		lastRead:  0,
 	}
 
-	tor.log = log.With(
-		slog.String("infoHash", tor.key),
-		slog.String("name", tor.t.Name()))
+	tor.log = log.With(slog.String("infoHash", tor.key))
 	return tor
 }
 
@@ -67,6 +65,7 @@ func (t *torrentImpl) WaitForInfoAndDownload() {
 		case <-t.ctx.Done():
 			return
 		case <-t.t.GotInfo():
+			t.log = t.log.With("name", t.t.Info().BestName())
 			t.log.Debug("starting torrent download")
 			t.t.DownloadAll()
 		}

@@ -55,7 +55,7 @@ type manga struct {
 }
 
 func newManga(req payload.DownloadRequest, c Config, client Client) Manga {
-	manga := &manga{
+	m := &manga{
 		client:             client,
 		id:                 req.Id,
 		baseDir:            req.BaseDir,
@@ -69,10 +69,8 @@ func newManga(req payload.DownloadRequest, c Config, client Client) Manga {
 		wg:                 nil,
 	}
 
-	manga.log = log.With(
-		slog.String("mangaId", manga.id),
-		slog.String("title", manga.Title()))
-	return manga
+	m.log = log.With(slog.String("mangaId", m.id))
+	return m
 }
 
 func (m *manga) Id() string {
@@ -155,6 +153,7 @@ func (m *manga) WaitForInfoAndDownload() {
 		case <-m.ctx.Done():
 			return
 		case <-m.loadInfo():
+			m.log = m.log.With("title", m.Title())
 			m.log.Debug("starting manga download")
 			m.checkVolumesOnDisk()
 			m.startDownload()
@@ -439,6 +438,8 @@ func (m *manga) mangaPath() string {
 	return path.Join(m.client.GetBaseDir(), m.baseDir, m.Title())
 }
 
+// TODO: Find a better way to handle volumeDir for empty volume numbers
+// mangadex sometimes has empty volume numbers, which causes the volumeDir to be "Vol. .cbz"
 func (m *manga) volumeDir(v string) string {
 	return fmt.Sprintf("%s Vol. %s", m.Title(), v)
 }
