@@ -425,7 +425,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 }
 
 func (m *manga) downloadImage(page int, chapter ChapterSearchData, url string) error {
-	m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
+	//m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
 	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %s.jpg", padNumber(page, 4)))
 	if err := downloadAndWrite(url, filePath); err != nil {
 		return err
