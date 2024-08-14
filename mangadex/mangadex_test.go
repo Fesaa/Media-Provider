@@ -182,7 +182,7 @@ func TestDownload(t *testing.T) {
 
 	found := false
 	for _, entry := range dirEntries {
-		if entry.Name() == "The Girlfriend I Care About Vol. .cbz" {
+		if entry.Name() == "The Girlfriend I Care About Special.cbz" {
 			found = true
 			break
 		}

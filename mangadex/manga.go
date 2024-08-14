@@ -451,7 +451,7 @@ func (m *manga) volumePath(c ChapterSearchData) string {
 }
 
 func (m *manga) chapterPath(c ChapterSearchData) string {
-	if chapter, err := strconv.Atoi(c.Attributes.Chapter); err != nil {
+	if chapter, err := strconv.Atoi(c.Attributes.Chapter); err == nil {
 		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), padNumber(chapter, 4))
 		return path.Join(m.volumePath(c), chDir)
 	} else {
