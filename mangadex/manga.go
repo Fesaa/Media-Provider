@@ -426,7 +426,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 func (m *manga) downloadImage(page int, chapter ChapterSearchData, url string) error {
 	//m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
-	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %s.jpg", padNumber(page, 4)))
+	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %s.jpg", pad(strconv.Itoa(page), 4)))
 	if err := downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
@@ -451,10 +451,10 @@ func (m *manga) volumePath(c ChapterSearchData) string {
 }
 
 func (m *manga) chapterPath(c ChapterSearchData) string {
-	if chapter, err := strconv.Atoi(c.Attributes.Chapter); err == nil {
-		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), padNumber(chapter, 4))
+	if _, err := strconv.ParseFloat(c.Attributes.Chapter, 32); err == nil {
+		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), pad(c.Attributes.Chapter, 4))
 		return path.Join(m.volumePath(c), chDir)
-	} else {
+	} else if c.Attributes.Chapter != "" { // Don't warm for empty chapter. They're expected to fail
 		m.log.Warn("unable to parse chapter number, not padding", "chapter", c.Attributes.Chapter, "err", err)
 	}
 
@@ -489,8 +489,7 @@ func downloadAndWrite(url string, path string) error {
 	return nil
 }
 
-func padNumber(num int, n int) string {
-	str := strconv.Itoa(num)
+func pad(str string, n int) string {
 	if len(str) < n {
 		str = strings.Repeat("0", n-len(str)) + str
 	}
