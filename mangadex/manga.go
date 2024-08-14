@@ -438,9 +438,11 @@ func (m *manga) mangaPath() string {
 	return path.Join(m.client.GetBaseDir(), m.baseDir, m.Title())
 }
 
-// TODO: Find a better way to handle volumeDir for empty volume numbers
-// mangadex sometimes has empty volume numbers, which causes the volumeDir to be "Vol. .cbz"
 func (m *manga) volumeDir(v string) string {
+	if v == "" {
+		return fmt.Sprintf("%s Special", m.Title())
+	}
+
 	return fmt.Sprintf("%s Vol. %s", m.Title(), v)
 }
 
@@ -449,7 +451,14 @@ func (m *manga) volumePath(c ChapterSearchData) string {
 }
 
 func (m *manga) chapterPath(c ChapterSearchData) string {
-	chDir := fmt.Sprintf("%s Vol. %s Ch. %s", m.Title(), c.Attributes.Volume, c.Attributes.Chapter)
+	if chapter, err := strconv.Atoi(c.Attributes.Chapter); err != nil {
+		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), padNumber(chapter, 4))
+		return path.Join(m.volumePath(c), chDir)
+	} else {
+		m.log.Warn("unable to parse chapter number, not padding", "chapter", c.Attributes.Chapter, "err", err)
+	}
+
+	chDir := fmt.Sprintf("%s Ch. %s", m.Title(), c.Attributes.Chapter)
 	return path.Join(m.volumePath(c), chDir)
 }
 
