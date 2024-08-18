@@ -494,7 +494,7 @@ func padInt(i int, n int) string {
 }
 
 func padFloat(f float64, n int) string {
-	full := strconv.FormatFloat(f, 'f', -1, 64)
+	full := fmt.Sprintf("%.1f", f)
 	parts := strings.Split(full, ".")
 	if len(parts) < 2 { // No decimal part
 		return pad(full, n)
