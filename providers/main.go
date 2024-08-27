@@ -10,18 +10,29 @@ import (
 func Search(req payload.SearchRequest) ([]Info, error) {
 	log.Trace("searching", "req", fmt.Sprintf("%+v", req))
 	data := make([]Info, 0)
+	// A page may have several providers, that don't share the same modifiers
+	// So we bottle them up, instead of instantly returning an error
+	errors := make([]error, 0)
 	for _, p := range req.Provider {
 		s, ok := providers[p]
 		if !ok {
-			return nil, fmt.Errorf("provider %q not supported", req.Provider)
+			log.Warn("provider not supported", "provider", p)
+			errors = append(errors, fmt.Errorf("provider %q not supported", p))
+			continue
 		}
 
 		search, err := s.Search(req)
 		if err != nil {
-			return nil, err
+			log.Debug("search error", "provider", p, "error", err)
+			errors = append(errors, fmt.Errorf("provider %q: %w", p, err))
+			continue
 		}
 
 		data = append(data, search...)
+	}
+
+	if len(data) == 0 {
+		return nil, fmt.Errorf("no results found: %v", errors)
 	}
 
 	return data, nil
