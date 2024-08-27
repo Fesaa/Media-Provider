@@ -31,7 +31,7 @@ func Search(req payload.SearchRequest) ([]Info, error) {
 		data = append(data, search...)
 	}
 
-	if len(data) == 0 {
+	if len(data) == 0 && len(errors) > 0 {
 		return nil, fmt.Errorf("no results found: %v", errors)
 	}
 
