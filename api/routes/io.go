@@ -19,8 +19,8 @@ func ListDirs(ctx *fiber.Ctx) error {
 		})
 	}
 
-	base := config.OrDefault(config.I().GetRootDir(), "temp")
-	entries, err := os.ReadDir(path.Join(base, req.Dir))
+	root := config.OrDefault(config.Get(ctx).RootDir, "temp")
+	entries, err := os.ReadDir(path.Join(root, req.Dir))
 	if err != nil {
 		log.Error("error while reading dir:", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -53,8 +53,8 @@ func CreateDir(ctx *fiber.Ctx) error {
 		})
 	}
 
-	base := config.OrDefault(config.I().GetRootDir(), "temp")
-	p := path.Join(base, req.BaseDir, req.NewDir)
+	root := config.OrDefault(config.Get(ctx).RootDir, "temp")
+	p := path.Join(root, req.BaseDir, req.NewDir)
 	err := os.Mkdir(p, 0755)
 	if err != nil {
 		log.Error("error while creating dir:", "err", err)

@@ -15,8 +15,8 @@ const (
 
 var authProvider Provider
 
-func Init() {
-	authProvider = newAuth()
+func Init(cfg *config.Config) {
+	authProvider = newAuth(cfg)
 }
 
 func I() Provider {
@@ -24,14 +24,15 @@ func I() Provider {
 }
 
 type authImpl struct {
+	cfg    *config.Config
 	pass   string
 	tokens map[string]time.Time
 }
 
-func newAuth() Provider {
+func newAuth(cfg *config.Config) Provider {
 	return &authImpl{
 		tokens: make(map[string]time.Time),
-		pass:   config.OrDefault(config.I().GetPassWord(), "admin"),
+		pass:   config.OrDefault(cfg.Password, "admin"),
 	}
 }
 

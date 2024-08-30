@@ -11,14 +11,14 @@ import (
 )
 
 func validateConfig() {
-	if err := validateRootConfig(config.I()); err != nil {
+	if err := validateRootConfig(cfg); err != nil {
 		log.Warn("error while validating config", "err", err)
 		panic(err)
 	}
 
-	for _, p := range config.I().GetPages() {
+	for _, p := range cfg.Pages {
 		if err := validatePage(p); err != nil {
-			log.Warn("error while validating page", "page", p.GetTitle(), "err", err)
+			log.Warn("error while validating page", "page", p.Title, "err", err)
 			panic(err)
 		}
 	}
@@ -26,7 +26,7 @@ func validateConfig() {
 	log.Info("Config validated")
 }
 
-func validateRootConfig(c config.Config) error {
+func validateRootConfig(c *config.Config) error {
 	log.Debug("Validating root config")
 	if strings.HasSuffix(c.GetRootDir(), "/") {
 		return fmt.Errorf("invalid root url, must not end with /: %s", c.GetRootDir())
@@ -42,17 +42,17 @@ func validateRootConfig(c config.Config) error {
 }
 
 func validatePage(page config.Page) error {
-	if page.GetTitle() == "" {
+	if page.Title == "" {
 		return fmt.Errorf("page title is required")
 	}
 
-	for _, p := range page.GetSearchConfig().GetProvider() {
+	for _, p := range page.Provider {
 		if !providers.HasProvider(p) {
 			return fmt.Errorf("provider %s not found", p)
 		}
 	}
 
-	rootPath := path.Join(config.I().GetRootDir(), page.GetSearchConfig().GetCustomRootDir())
+	rootPath := path.Join(cfg.GetRootDir(), page.CustomRootDir)
 	ok, err := dirExists(rootPath)
 	if err != nil {
 		return err
@@ -61,18 +61,18 @@ func validatePage(page config.Page) error {
 		return fmt.Errorf("customRootDir does not exist %s", rootPath)
 	}
 
-	for _, dir := range page.GetSearchConfig().GetRootDirs() {
-		dir := path.Join(config.I().GetRootDir(), dir)
+	for _, dir := range page.Dirs {
+		dir := path.Join(cfg.GetRootDir(), dir)
 		ok, err = dirExists(dir)
 		if err != nil {
 			return err
 		}
 		if !ok {
-			return fmt.Errorf("rootDir %s for page %s not found", dir, page.GetTitle())
+			return fmt.Errorf("rootDir %s for page %s not found", dir, page.Title)
 		}
 	}
 
-	for name, modifier := range page.GetSearchConfig().GetSearchModifiers() {
+	for name, modifier := range page.Modifiers {
 		if err = validateModifier(modifier); err != nil {
 			return fmt.Errorf("invalid search modifier '%s': %s", name, err)
 		}
@@ -94,11 +94,11 @@ func validateModifier(modifier config.Modifier) error {
 		return fmt.Errorf("modifier type '%s' is not a valid. Check the documentation for valid types", modifier.Type)
 	}
 
-	for _, pair := range modifier.Values {
-		if pair.Name == "" {
+	for name, key := range modifier.Values {
+		if name == "" {
 			return fmt.Errorf("modifier value name is required")
 		}
-		if pair.Key == "" {
+		if key == "" {
 			return fmt.Errorf("modifier value key is required")
 		}
 	}

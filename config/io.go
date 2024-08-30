@@ -1,0 +1,50 @@
+package config
+
+import (
+	"encoding/json"
+	"errors"
+	"github.com/Fesaa/Media-Provider/log"
+	"os"
+)
+
+func Load(path string) (*Config, error) {
+	cfg, err := Read(path)
+
+	if errors.Is(err, os.ErrNotExist) {
+		log.Warn("Config file not found, creating new one")
+		cfg = defaultConfig()
+		err = Write(path, cfg)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+func Write(path string, cfg *Config) error {
+	log.Debug("Writing config", "path", path)
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0644)
+}
+
+func Read(path string) (*Config, error) {
+	var cfg Config
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, &cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
+}

@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -20,27 +21,31 @@ import (
 	"github.com/gofiber/template/html/v2"
 )
 
+var cfg *config.Config
 var baseURL string
 var baseURLMap fiber.Map
 
 func init() {
-	if err := config.LoadConfig("config.yaml"); err != nil {
+	var err error
+
+	file := config.OrDefault(os.Getenv("CONFIG_FILE"), "config.json")
+	if cfg, err = config.Load(path.Join("config", file)); err != nil {
 		panic(err)
 	}
 
 	opt := &slog.HandlerOptions{
-		AddSource:   config.I().GetLoggingConfig().GetSource(),
-		Level:       config.I().GetLoggingConfig().GetLogLevel(),
+		AddSource:   cfg.Logging.Source,
+		Level:       cfg.Logging.Level,
 		ReplaceAttr: nil,
 	}
 	var h slog.Handler
-	switch strings.ToUpper(config.I().GetLoggingConfig().GetHandler()) {
+	switch strings.ToUpper(cfg.Logging.Handler) {
 	case "TEXT":
 		h = slog.NewTextHandler(os.Stdout, opt)
 	case "JSON":
 		h = slog.NewJSONHandler(os.Stdout, opt)
 	default:
-		panic("Invalid logging handler: " + config.I().GetLoggingConfig().GetHandler())
+		panic("Invalid logging handler: " + cfg.Logging.Handler)
 	}
 	_log := slog.New(h)
 	slog.SetDefault(_log)
@@ -48,13 +53,13 @@ func init() {
 
 	validateConfig()
 
-	baseURL = config.OrDefault(config.I().GetRootURl(), "")
+	baseURL = config.OrDefault(cfg.BaseUrl, "")
 	baseURLMap = fiber.Map{
 		"path": baseURL,
 	}
-	auth.Init()
-	yoitsu.Init(config.I())
-	mangadex.Init(config.I())
+	auth.Init(cfg)
+	yoitsu.Init(cfg)
+	mangadex.Init(cfg)
 }
 
 func main() {
@@ -69,16 +74,20 @@ func main() {
 		TimeFormat: "2006/01/02 15:04:05",
 		Format:     "${time} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
 		Next: func(c *fiber.Ctx) bool {
-			return !config.I().GetLoggingConfig().LogHttp()
+			return !cfg.Logging.LogHttp
 		},
 	}))
 
 	app.Static(baseURL, "./web/public")
 	router := app.Group(baseURL)
+	router.Use(func(c *fiber.Ctx) error {
+		c.Locals("cfg", cfg)
+		return c.Next()
+	})
 	api.Setup(router)
 	RegisterFrontEnd(router)
 
-	port := config.OrDefault(config.I().GetPort(), "80")
+	port := config.OrDefault(cfg.Port, "80")
 	e := app.Listen(":" + port)
 	if e != nil {
 		slog.Error("Unable to start server, exiting application", "error", e)

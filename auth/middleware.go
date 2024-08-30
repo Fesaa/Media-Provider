@@ -15,7 +15,7 @@ func Middleware(redirect ...bool) func(ctx *fiber.Ctx) error {
 		}
 		if !isAuthenticated {
 			if len(redirect) > 0 && redirect[0] {
-				return ctx.Redirect(config.I().GetRootURl() + "/login")
+				return ctx.Redirect(config.Get(ctx).BaseUrl + "/login")
 			}
 			return ctx.Status(401).SendString("Unauthorized")
 		}

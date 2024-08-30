@@ -13,12 +13,16 @@ const (
 	LevelFatal slog.Level = 12
 )
 
-func init() {
-	def = Logger{_log: slog.Default()}
+var source bool
+
+func Init(cfg *config.Logging) {
+	source = cfg.Source
+	def = Logger{_log: slog.Default(), source: nil}
 }
 
 type Logger struct {
-	_log *slog.Logger
+	_log   *slog.Logger
+	source *bool
 }
 
 func SetDefault(log *slog.Logger) {
@@ -99,6 +103,10 @@ func (l *Logger) With(args ...any) *Logger {
 	}
 }
 
+func (l *Logger) SetSource(source bool) {
+	l.source = &source
+}
+
 // Overriding default, such that the source is correct
 // this is almost a copy of the slog.log function
 func (l *Logger) log(level slog.Level, msg string, args ...any) {
@@ -107,7 +115,7 @@ func (l *Logger) log(level slog.Level, msg string, args ...any) {
 		return
 	}
 	var pc uintptr
-	if config.I().GetLoggingConfig().GetSource() {
+	if (l.source != nil && *l.source) || (source && l.source == nil) {
 		var pcs [1]uintptr
 		runtime.Callers(3, pcs[:])
 		pc = pcs[0]

@@ -2,5 +2,5 @@
 node_modules/
 generated/
 temp/
-config.yaml
+config.json
 .idea
