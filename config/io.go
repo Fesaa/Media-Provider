@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"github.com/Fesaa/Media-Provider/log"
+	"log/slog"
 	"os"
 )
 
@@ -11,7 +11,7 @@ func Load(path string) (*Config, error) {
 	cfg, err := Read(path)
 
 	if errors.Is(err, os.ErrNotExist) {
-		log.Warn("Config file not found, creating new one")
+		slog.Warn("Config file not found, creating new one", "path", path)
 		cfg = defaultConfig()
 		err = Write(path, cfg)
 	}
@@ -24,7 +24,7 @@ func Load(path string) (*Config, error) {
 }
 
 func Write(path string, cfg *Config) error {
-	log.Debug("Writing config", "path", path)
+	slog.Debug("Writing config", "path", path)
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err

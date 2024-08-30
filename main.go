@@ -29,7 +29,7 @@ func init() {
 	var err error
 
 	file := config.OrDefault(os.Getenv("CONFIG_FILE"), "config.json")
-	if cfg, err = config.Load(path.Join("config", file)); err != nil {
+	if cfg, err = config.Load(path.Join("", file)); err != nil {
 		panic(err)
 	}
 

@@ -27,11 +27,12 @@ class DropDownModifier extends React.Component<ModifierProps> {
                     onChange={(e) => this.props.onChange(this.props.keyProp, e.target.value)}
                     className="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm"
                 >
-                    {this.props.modifier.values.map((pair) => (
-                        <option key={pair.key} value={pair.key}>
-                            {pair.name}
+
+                    {Object.entries(this.props.modifier.values).map(([key, value]) => {
+                        return <option key={key} value={key}>
+                            {value}
                         </option>
-                    ))}
+                    })}
                 </select>
         </div>;
     }
@@ -96,21 +97,23 @@ class MultiSelectModifier extends React.Component<ModifierProps, MultiSelectStat
                             this.setState({...this.state, query: e.target.value})
                     }} />}
                     <div className="grid grid-cols-3 gap-4 mt-4 max-h-48 overflow-auto">
-                        {this.props.modifier.values
-                            .filter(option => this.normalize(option.name).includes(this.normalize(this.state.query)))
-                            .map(option => (
-                            <div key={option.key} className="flex items-center hover:cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    id={option.key}
-                                    value={option.name}
-                                    checked={this.state.checkedItems.includes(option.key)}
-                                    onChange={(e) => this.handleCheckboxChange(option.key)}
-                                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-600 focus:border-primary-600 shadow-sm focus:ring focus:ring-opacity-50 h-4 w-4 mr-2"
-                                />
-                                <label htmlFor={option.key} className="text-xs hover:cursor-pointer">{option.name}</label>
-                            </div>
-                        ))}
+                        {Object.entries(this.props.modifier.values)
+                            .filter(option => this.normalize(option[0]).includes(this.normalize(this.state.query)))
+                            .map(option => {
+                                const [key, value] = option as [string, string];
+                                return <div key={key} className="flex items-center hover:cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        id={key}
+                                        value={value}
+                                        checked={this.state.checkedItems.includes(key)}
+                                        onChange={(e) => this.handleCheckboxChange(key)}
+                                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-600 focus:border-primary-600 shadow-sm focus:ring focus:ring-opacity-50 h-4 w-4 mr-2"
+                                    />
+                                    <label htmlFor={key}
+                                           className="text-xs hover:cursor-pointer">{value}</label>
+                                </div>
+                            })}
                     </div>
                 </div>
             )}

@@ -11,10 +11,10 @@ import SearchLine from "../searchLine";
 
 export default function SearchForm(props: SearchProps) {
   const title = props.page.title;
-  const searchProvider = props.page.search.providers;
-  const modifiers = props.page.search.search_modifiers;
-  const dirs = props.page.search.root_dirs;
-  const customRootDir = props.page.search.custom_root_dir;
+  const searchProvider = props.page.providers;
+  const modifiers = props.page.modifiers;
+  const dirs = props.page.dirs;
+  const customRootDir = props.page.custom_root_dir;
 
   const [query, setQuery] = useState<string>("");
   const [requestDir, setRequestDir] = useState<string>("");
@@ -58,7 +58,7 @@ export default function SearchForm(props: SearchProps) {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    searchTorrents();
+    await searchTorrents();
   }
 
   useEffect(() => {
@@ -70,8 +70,9 @@ export default function SearchForm(props: SearchProps) {
 
     if (modifiers) {
       Object.entries(modifiers).forEach(([key, modifier]) => {
-        if (modifier.type == "dropdown" && modifier.values.length > 0) {
-          handleModifierChange(key, modifier.values[0].key)
+        const entries = Object.entries(modifier.values);
+        if (modifier.type == "dropdown" && entries.length > 0) {
+          handleModifierChange(key, entries[0][0])
         }
       })
     }
