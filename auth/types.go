@@ -13,4 +13,7 @@ type Provider interface {
 
 	// Logout logs the current user out. This happens by deleting the appropriate cookie
 	Logout(ctx *fiber.Ctx) error
+
+	// UpdatePassword updates the password of the current user
+	UpdatePassword(ctx *fiber.Ctx) error
 }

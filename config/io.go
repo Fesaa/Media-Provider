@@ -36,6 +36,10 @@ func Save(cfg *Config) error {
 	return Write(configPath, cfg)
 }
 
+func (c *Config) Save() error {
+	return Save(c)
+}
+
 func Write(path string, cfg *Config) error {
 	slog.Debug("Writing config", "path", path)
 	data, err := json.MarshalIndent(cfg, "", "  ")

@@ -36,6 +36,24 @@ func newAuth(cfg *config.Config) Provider {
 	}
 }
 
+func (v *authImpl) UpdatePassword(ctx *fiber.Ctx) error {
+	body := payload.UpdatePasswordRequest{}
+	err := ctx.BodyParser(&body)
+	if err != nil {
+		return err
+	}
+
+	if body.Password == "" {
+		return badRequest("Password is required")
+	}
+
+	v.pass = body.Password
+
+	newCfg := config.I()
+	newCfg.Password = v.pass
+	return newCfg.Save()
+}
+
 func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	token := ctx.Cookies(TokenCookieName)
 	if token == "" {

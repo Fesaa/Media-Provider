@@ -30,3 +30,7 @@ type LoginRequest struct {
 	Password string `json:"password"`
 	Remember string `json:"remember,omitempty"`
 }
+
+type UpdatePasswordRequest struct {
+	Password string `json:"password"`
+}
