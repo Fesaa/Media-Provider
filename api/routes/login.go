@@ -13,5 +13,5 @@ func Login(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Redirect(config.Get(ctx).BaseUrl + "/")
+	return ctx.Redirect(config.I().BaseUrl + "/")
 }

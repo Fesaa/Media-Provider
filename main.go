@@ -80,10 +80,6 @@ func main() {
 
 	app.Static(baseURL, "./web/public")
 	router := app.Group(baseURL)
-	router.Use(func(c *fiber.Ctx) error {
-		c.Locals("cfg", cfg)
-		return c.Next()
-	})
 	api.Setup(router)
 	RegisterFrontEnd(router)
 

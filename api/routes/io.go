@@ -19,7 +19,7 @@ func ListDirs(ctx *fiber.Ctx) error {
 		})
 	}
 
-	root := config.OrDefault(config.Get(ctx).RootDir, "temp")
+	root := config.OrDefault(config.I().RootDir, "temp")
 	entries, err := os.ReadDir(path.Join(root, req.Dir))
 	if err != nil {
 		log.Error("error while reading dir:", "err", err)
@@ -53,7 +53,7 @@ func CreateDir(ctx *fiber.Ctx) error {
 		})
 	}
 
-	root := config.OrDefault(config.Get(ctx).RootDir, "temp")
+	root := config.OrDefault(config.I().RootDir, "temp")
 	p := path.Join(root, req.BaseDir, req.NewDir)
 	err := os.Mkdir(p, 0755)
 	if err != nil {

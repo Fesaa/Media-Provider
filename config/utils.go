@@ -1,6 +1,6 @@
 package config
 
-import "github.com/gofiber/fiber/v2"
+var current *Config
 
 func OrDefault(value string, defaultValue ...string) string {
 	if value == "" {
@@ -12,6 +12,6 @@ func OrDefault(value string, defaultValue ...string) string {
 	return value
 }
 
-func Get(ctx *fiber.Ctx) *Config {
-	return ctx.Locals("cfg").(*Config)
+func I() *Config {
+	return current
 }

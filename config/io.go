@@ -20,6 +20,7 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 
+	current = cfg
 	return cfg, nil
 }
 
@@ -30,7 +31,13 @@ func Write(path string, cfg *Config) error {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0644)
+	err = os.WriteFile(path, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	current = cfg
+	return nil
 }
 
 func Read(path string) (*Config, error) {

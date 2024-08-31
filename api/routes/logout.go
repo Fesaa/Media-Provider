@@ -13,5 +13,5 @@ func Logout(ctx *fiber.Ctx) error {
 		return ctx.Status(500).SendString("Could not logout. Please try again. " + err.Error())
 	}
 
-	return ctx.Redirect(config.Get(ctx).BaseUrl + "/login")
+	return ctx.Redirect(config.I().BaseUrl + "/login")
 }

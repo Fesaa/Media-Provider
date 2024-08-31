@@ -6,7 +6,7 @@ import (
 )
 
 func Pages(ctx *fiber.Ctx) error {
-	return ctx.JSON(config.Get(ctx).Pages)
+	return ctx.JSON(config.I().Pages)
 }
 
 func Page(ctx *fiber.Ctx) error {
@@ -17,11 +17,11 @@ func Page(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if index >= len(config.Get(ctx).Pages) || index < 0 {
+	if index >= len(config.I().Pages) || index < 0 {
 		return ctx.Status(404).JSON(fiber.Map{
 			"error": "Page not found",
 		})
 	}
 
-	return ctx.JSON(config.Get(ctx).Pages[index])
+	return ctx.JSON(config.I().Pages[index])
 }
