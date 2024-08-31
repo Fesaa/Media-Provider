@@ -32,4 +32,10 @@ func Setup(app fiber.Router) {
 
 	config := api.Group("/config")
 	config.Get("/", auth.Middleware(), routes.GetConfig)
+
+	pages := config.Group("/pages")
+	pages.Delete("/:index", auth.Middleware(), routes.RemovePage)
+	pages.Post("/", auth.Middleware(), routes.AddPage)
+	pages.Put("/", auth.Middleware(), routes.UpdatePage)
+	pages.Post("/move", auth.Middleware(), routes.MovePage)
 }

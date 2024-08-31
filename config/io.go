@@ -5,15 +5,23 @@ import (
 	"errors"
 	"log/slog"
 	"os"
+	"path"
 )
 
-func Load(path string) (*Config, error) {
-	cfg, err := Read(path)
+var configPath string
+
+func init() {
+	file := OrDefault(os.Getenv("CONFIG_FILE"), "config.json")
+	configPath = path.Join("", file)
+}
+
+func Load() (*Config, error) {
+	cfg, err := Read(configPath)
 
 	if errors.Is(err, os.ErrNotExist) {
-		slog.Warn("Config file not found, creating new one", "path", path)
+		slog.Warn("Config file not found, creating new one", "path", configPath)
 		cfg = defaultConfig()
-		err = Write(path, cfg)
+		err = Write(configPath, cfg)
 	}
 
 	if err != nil {
@@ -22,6 +30,10 @@ func Load(path string) (*Config, error) {
 
 	current = cfg
 	return cfg, nil
+}
+
+func Save(cfg *Config) error {
+	return Write(configPath, cfg)
 }
 
 func Write(path string, cfg *Config) error {

@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -27,9 +26,7 @@ var baseURLMap fiber.Map
 
 func init() {
 	var err error
-
-	file := config.OrDefault(os.Getenv("CONFIG_FILE"), "config.json")
-	if cfg, err = config.Load(path.Join("", file)); err != nil {
+	if cfg, err = config.Load(); err != nil {
 		panic(err)
 	}
 
