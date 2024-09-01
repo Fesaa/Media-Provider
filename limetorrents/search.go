@@ -3,28 +3,19 @@ package limetorrents
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/PuerkitoBio/goquery"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
-
-	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/PuerkitoBio/goquery"
 )
 
 const BASE_URl string = "https://www.limetorrents.lol"
 const SEARCH_URL string = BASE_URl + "/search/%s/%s/%d/"
 
-var cache utils.Cache[[]SearchResult] = *utils.NewCache[[]SearchResult](5 * time.Minute)
-
 func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	searchUrl := formatUrl(searchOptions)
 	log.Debug("searching lime for torrents", "url", searchUrl)
-	if res := cache.Get(searchUrl); res != nil {
-		log.Trace("Limetorrents Cache hit", "url", searchUrl)
-		return *res, nil
-	}
 
 	doc, err := getSearch(searchUrl)
 	if err != nil {
@@ -33,7 +24,6 @@ func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 
 	torrents := doc.Find(".table2 tbody tr")
 	res := parseResults(torrents)
-	cache.Set(searchUrl, res)
 	return res, nil
 }
 

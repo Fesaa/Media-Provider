@@ -21,10 +21,10 @@ type Downloader struct {
 }
 
 type Logging struct {
-	Level   slog.Level
-	Source  bool
-	Handler string
-	LogHttp bool
+	Level   slog.Level `json:"level"`
+	Source  bool       `json:"source"`
+	Handler string     `json:"handler"`
+	LogHttp bool       `json:"log_http"`
 }
 
 type Page struct {

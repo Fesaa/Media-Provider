@@ -21,7 +21,6 @@ import (
 
 var cfg *config.Config
 var baseURL string
-var baseURLMap fiber.Map
 
 func init() {
 	var err error
@@ -50,9 +49,6 @@ func init() {
 	validateConfig()
 
 	baseURL = config.OrDefault(cfg.BaseUrl, "")
-	baseURLMap = fiber.Map{
-		"path": baseURL,
-	}
 	auth.Init(cfg)
 	yoitsu.Init(cfg)
 	mangadex.Init(cfg)
@@ -74,15 +70,24 @@ func main() {
 		AllowOrigins: "http://localhost:4200",
 	}))
 
-	app.Static(baseURL, "./UI/Web/dist/web/browser")
 	router := app.Group(baseURL)
 	api.Setup(router)
+
+	app.Static(baseURL, "./public")
+	app.Use(func(c *fiber.Ctx) error {
+		err := c.Next()
+		// This is very much nonsense, definitely have to find a better way later
+		if err != nil && strings.HasPrefix(err.Error(), "Cannot GET") {
+			return c.SendFile("./public/index.html")
+		}
+
+		return err
+	})
 
 	port := config.OrDefault(cfg.Port, "80")
 	e := app.Listen(":" + port)
 	if e != nil {
-		slog.Error("Unable to start server, exiting application", "error", e)
-		panic(e)
+		log.Fatal("Unable to start server, exiting application", "error", e)
 	}
 
 	sc := make(chan os.Signal, 1)

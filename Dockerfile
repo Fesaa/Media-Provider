@@ -2,14 +2,13 @@ FROM node:18 AS npm-stage
 
 WORKDIR /app
 
-COPY web/package.json web/package-lock.json ./
+COPY UI/Web/package.json UI/Web/package-lock.json ./
 RUN npx update-browserslist-db@latest
 RUN npm install
 
-COPY web ./
+COPY UI/Web ./
 
-RUN npm run build:prod
-RUN npm run tailwind:prod
+RUN npm run build
 
 
 FROM golang:1.22.2 as go-stage
@@ -41,9 +40,7 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=go-stage /media-provider /app/media-provider
-COPY --from=npm-stage /app/public/ /app/web/public
-COPY --from=npm-stage /app/views/ /app/web/views
-
+COPY --from=npm-stage /app/dist/web/browser /app/public
 
 RUN apk add --no-cache ca-certificates curl
 

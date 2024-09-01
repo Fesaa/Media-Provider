@@ -5,10 +5,23 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
+	"github.com/gofiber/fiber/v2/utils"
 )
 
 func Setup(app fiber.Router) {
 	log.Debug("registering api routes")
+
+	c := cache.New(cache.Config{
+		CacheControl: true,
+		Next: func(c *fiber.Ctx) bool {
+			return false
+		},
+		KeyGenerator: func(ctx *fiber.Ctx) string {
+			return ctx.Path() + "_" + string(utils.CopyBytes(ctx.Body()))
+		},
+	})
+
 	api := app.Group("/api")
 
 	api.Get("/health", func(c *fiber.Ctx) error {
@@ -19,7 +32,7 @@ func Setup(app fiber.Router) {
 	api.Get("/logout", routes.Logout)
 	api.Post("/update-password", auth.Middleware(), routes.UpdatePassword)
 
-	api.Post("/search", auth.Middleware(), routes.Search)
+	api.Post("/search", auth.Middleware(), c, routes.Search)
 	api.Get("/stats", auth.Middleware(), routes.Stats)
 	api.Post("/download", auth.Middleware(), routes.Download)
 	api.Post("/stop", auth.Middleware(), routes.Stop)

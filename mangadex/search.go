@@ -7,12 +7,9 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"io"
 	"net/http"
-	"time"
 )
 
 var tags = utils.NewSafeMap[string, string]()
-
-var cache = utils.NewCache[MangaSearchResponse](5 * time.Minute)
 
 func mapTags(in []string, skip bool) ([]string, error) {
 	mappedTags := make([]string, 0)
@@ -44,11 +41,6 @@ func SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 	url, err := searchMangaURL(options)
 	if err != nil {
 		return nil, err
-	}
-	log.Trace("searching Mangadex for Manga", "options", fmt.Sprintf("%#v", options), "url", url)
-	if hit := cache.Get(url); hit != nil {
-		log.Trace("Mangadex Cache hit", "url", url)
-		return hit, nil
 	}
 
 	var searchResponse MangaSearchResponse
