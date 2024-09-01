@@ -1,0 +1,81 @@
+<div [@bounceIn200ms] class="flex flex-grow flex-col bg-white border-2 border-solid border-gray-200 p-2 text-center mx-2 md:mx-10 rounded shadow">
+
+  <div class="flex flex-grow flex-row space-x-2 items-center">
+
+    <div class="flex flex-grow flex-row space-x-2 items-center">
+      @if (!showExtra) {
+        <button (click)="toggleExtra()">
+          <ng-icon name="heroChevronDown" class="w-6 h-6"></ng-icon>
+        </button>
+      } @else {
+        <button (click)="toggleExtra()">
+          <ng-icon name="heroChevronUp" class="w-6 h-6"></ng-icon>
+        </button>
+      }
+
+      <a [href]="searchResult.RefUrl" class="hover:underline hover:-translate-y-0.5 text-xl"
+         target="_blank">{{ searchResult.Name }}
+      </a>
+    </div>
+
+
+
+    <div class="flex flex-row space-x-2">
+      @if (searchResult.Size) {
+        <span class="whitespace-nowrap">({{ searchResult.Size }})</span>
+      }
+      <button class="btn btn-primary" (click)="download()">
+        <ng-icon name="heroArrowDownTray" class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer"></ng-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (showExtra) {
+    <div class="flex flex-row flex-grow space-x-1 mt-1 md:mt-5" [@dropDown]>
+
+      @if (searchResult.ImageUrl) {
+        <img [src]="searchResult.ImageUrl" alt="Image" class="w-32 h-48 rounded shadow shadow-black dropdown-item">
+      }
+
+      <div class="flex flex-col space-x-2 dropdown-item ml-2">
+
+        <div class="flex flex-row space-x-2 p-1">
+
+          @if (searchResult.Size) {
+            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour(0)}} dropdown-item">
+              <span class="whitespace-nowrap">{{ searchResult.Size }}</span>
+            </div>
+          }
+
+          @if (searchResult.Downloads) {
+            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour(1)}} dropdown-item">
+              <span class="whitespace-nowrap">Downloads</span>
+              <span class="whitespace-nowrap">{{ searchResult.Downloads }}</span>
+            </div>
+          }
+
+          @if (searchResult.Seeders) {
+            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour(2)}} dropdown-item">
+              <span class="whitespace-nowrap">Seeds</span>
+              <span class="whitespace-nowrap">{{ searchResult.Seeders }}</span>
+            </div>
+          }
+
+          @if (searchResult.Date) {
+            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour(3)}} dropdown-item">
+              <span class="whitespace-nowrap">{{ searchResult.Date }}</span>
+            </div>
+          }
+
+        </div>
+
+        @if (searchResult.Description) {
+          <p class="text-sm text-left text-gray-500 dark:text-gray-400 dropdown-item">{{ searchResult.Description }}</p>
+        }
+      </div>
+    </div>
+  }
+
+
+</div>
+

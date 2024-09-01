@@ -1,7 +1,7 @@
 import {DestroyRef, inject, Injectable} from '@angular/core';
 import {environment} from "../../environments/environment";
 import {HttpClient} from "@angular/common/http";
-import {interval, Observable, ReplaySubject, Subscription} from "rxjs";
+import {catchError, interval, Observable, ReplaySubject, Subscription} from "rxjs";
 import {InfoStat, QueueStat, StatsResponse} from "../_models/stats";
 import {DownloadRequest, SearchRequest, StopRequest} from "../_models/search";
 import {SearchInfo} from "../_models/Info";
@@ -26,6 +26,7 @@ export class DownloadService {
   private sub: Subscription | undefined;
 
   constructor(private httpClient: HttpClient) {
+    this.loadStatsSource.next(false)
     this.loadStats$.subscribe(load => {
       if (load) {
         this.sub = interval(1000).subscribe(() => {
@@ -42,7 +43,8 @@ export class DownloadService {
   }
 
   download(req: DownloadRequest) {
-    return this.httpClient.post(this.baseUrl + 'download', req)
+    console.log(this.baseUrl + 'download')
+    return this.httpClient.post(this.baseUrl + 'download', req);
   }
 
   stop(req: StopRequest) {

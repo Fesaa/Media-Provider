@@ -2,8 +2,9 @@ import {DestroyRef, inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {Page} from "../_models/page";
-import {Observable, of, tap} from "rxjs";
+import {Observable, of, ReplaySubject, tap} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {ActivatedRoute} from "@angular/router";
 
 @Injectable({
   providedIn: 'root'
@@ -14,9 +15,9 @@ export class PageService {
   baseUrl = environment.apiUrl;
 
   private pages: Page[] | undefined = undefined;
-  public currentPage: number | undefined = undefined;
 
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient,) {
+  }
 
   getPages(): Observable<Page[]> {
     if (this.pages !== undefined) {
@@ -31,7 +32,7 @@ export class PageService {
   }
 
   getPage(index: number): Observable<Page> {
-    if (this.pages && index < this.pages.length && index > 0) {
+    if (this.pages && index < this.pages.length && index >= 0) {
       return of(this.pages[index]);
     }
 

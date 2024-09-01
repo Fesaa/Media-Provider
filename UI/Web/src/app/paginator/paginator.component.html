@@ -1,0 +1,31 @@
+@if (totalPages >= 1) {
+  <div class="flex items-center justify-center space-x-2">
+    <button
+      (click)="previousPage()"
+      [disabled]="currentPage === 1"
+      class="rounded-lg bg-gray-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-gray-600 focus:outline-none focus:ring-4"
+    >
+      Previous
+    </button>
+
+    <div class="flex items-center space-x-1">
+
+      @for (page of pages; track $index) {
+        <button
+          class="px-3 py-1 rounded"
+          (click)="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+      }
+    </div>
+
+    <button
+      (click)="nextPage()"
+      [disabled]="currentPage === totalPages"
+      class="rounded-lg bg-gray-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-gray-600 focus:outline-none focus:ring-4"
+    >
+      Next
+    </button>
+  </div>
+}

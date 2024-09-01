@@ -1,7 +1,7 @@
 
 export type Page = {
   title: string;
-  provider: Provider;
+  provider: Provider[];
   modifiers: { [key: string]: Modifier };
   dirs: string[];
   custom_root_dir: string;

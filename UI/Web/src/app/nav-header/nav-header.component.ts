@@ -3,10 +3,11 @@ import {PageService} from "../_services/page.service";
 import {Page} from "../_models/page";
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {AsyncPipe, NgClass} from "@angular/common";
-import {animate, state, style, transition, trigger} from "@angular/animations";
+import {animate, query, sequence, stagger, state, style, transition, trigger} from "@angular/animations";
 import {AccountService} from "../_services/account.service";
 import {NavService} from "../_services/nav.service";
 import {Observable} from "rxjs";
+import {dropAnimation} from "../_animations/drop-animation";
 
 @Component({
   selector: 'app-nav-header',
@@ -18,21 +19,7 @@ import {Observable} from "rxjs";
   ],
   templateUrl: './nav-header.component.html',
   styleUrl: './nav-header.component.css',
-  animations: [
-    trigger('menuAnimation', [
-      state('open', style({
-        transform: 'translateY(0)',
-        opacity: 1
-      })),
-      state('closed', style({
-        transform: 'translateY(-100%)',
-        opacity: 0
-      })),
-      transition('void => open', [
-        animate('0.5s ease-out')
-      ]),
-    ])
-  ]
+  animations: [dropAnimation]
 })
 export class NavHeaderComponent implements OnInit {
 

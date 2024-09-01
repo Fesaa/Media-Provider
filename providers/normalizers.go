@@ -58,7 +58,7 @@ func subsPleaseNormalizer(torrents subsplease.SearchResult) []Info {
 			Name:     name,
 			Date:     data.ReleaseDate,
 			InfoHash: m.InfoHash.HexString(),
-			ImageUrl: data.ImageURL,
+			ImageUrl: data.ImageUrl(),
 			RefUrl:   data.ReferenceURL(),
 			Provider: config.SUBSPLEASE,
 		})
