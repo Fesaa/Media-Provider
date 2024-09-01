@@ -20,6 +20,7 @@ func Setup(app fiber.Router) {
 		KeyGenerator: func(ctx *fiber.Ctx) string {
 			return ctx.Path() + "_" + string(utils.CopyBytes(ctx.Body()))
 		},
+		Methods: []string{fiber.MethodGet, fiber.MethodPost},
 	})
 
 	api := app.Group("/api")
