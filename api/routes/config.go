@@ -4,6 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
+	"strconv"
 )
 
 func GetConfig(ctx *fiber.Ctx) error {
@@ -27,7 +28,7 @@ func RemovePage(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
 }
 
 func AddPage(ctx *fiber.Ctx) error {
@@ -48,7 +49,7 @@ func AddPage(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
 }
 
 func UpdatePage(ctx *fiber.Ctx) error {
@@ -74,7 +75,7 @@ func UpdatePage(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
 }
 
 func MovePage(ctx *fiber.Ctx) error {
@@ -98,5 +99,5 @@ func MovePage(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
 }
