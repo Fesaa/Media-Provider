@@ -35,22 +35,22 @@ type Page struct {
 	CustomRootDir string              `json:"custom_root_dir"`
 }
 
-type Provider string
+type Provider int
 
 const (
-	SUKEBEI    Provider = "sukebei"
-	NYAA       Provider = "nyaa"
-	YTS        Provider = "yts"
-	LIME       Provider = "limetorrents"
-	SUBSPLEASE Provider = "subsplease"
-	MANGADEX   Provider = "mangadex"
+	SUKEBEI Provider = iota + 1
+	NYAA
+	YTS
+	LIME
+	SUBSPLEASE
+	MANGADEX
 )
 
-type ModifierType string
+type ModifierType int
 
 const (
-	DROPDOWN ModifierType = "dropdown"
-	MULTI    ModifierType = "multi"
+	DROPDOWN ModifierType = iota + 1
+	MULTI
 )
 
 func IsValidModifierType(modType ModifierType) bool {

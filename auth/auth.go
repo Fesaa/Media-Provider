@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
+	"strings"
 	"time"
 )
 
@@ -55,7 +56,17 @@ func (v *authImpl) UpdatePassword(ctx *fiber.Ctx) error {
 }
 
 func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
-	token := ctx.Cookies(TokenCookieName)
+	headers := ctx.GetReqHeaders()
+	authorization := headers["Authorization"]
+	if len(authorization) == 0 {
+		return false, nil
+	}
+	auth := authorization[0]
+	split := strings.SplitN(auth, "Bearer ", 2)
+	if len(split) != 2 {
+		return false, nil
+	}
+	token := split[1]
 	if token == "" {
 		return false, nil
 	}
@@ -68,23 +79,21 @@ func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	return time.Since(t) < time.Hour*24*7, nil
 }
 
-func (v *authImpl) Login(ctx *fiber.Ctx) error {
+func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 	body := payload.LoginRequest{}
 	err := ctx.BodyParser(&body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	password := body.Password
 	if password == "" {
-		return badRequest("Password is required")
+		return nil, badRequest("Password is required")
 	}
 
 	if password != v.pass {
-		return badRequest("Invalid password")
+		return nil, badRequest("Invalid password")
 	}
-
-	sessionOnly := body.Remember == ""
 
 	token := generateSecureToken(32)
 	v.tokens[token] = time.Now().Add(time.Hour * 24 * 7)
@@ -92,10 +101,10 @@ func (v *authImpl) Login(ctx *fiber.Ctx) error {
 	ctx.Cookie(&fiber.Cookie{
 		Name:        TokenCookieName,
 		Value:       token,
-		SessionOnly: sessionOnly,
+		SessionOnly: body.Remember,
 		Expires:     time.Now().Add(time.Hour * 24 * 7),
 	})
-	return nil
+	return &payload.LoginResponse{Token: token}, nil
 }
 
 func (v *authImpl) Logout(ctx *fiber.Ctx) error {

@@ -24,9 +24,6 @@ func Setup(app fiber.Router) {
 	api.Post("/download/", auth.Middleware(), routes.Download)
 	api.Post("/stop/", auth.Middleware(), routes.Stop)
 
-	api.Get("/pages", auth.Middleware(), routes.Pages)
-	api.Get("/pages/:index", auth.Middleware(), routes.Page)
-
 	io := api.Group("/io")
 	io.Post("/ls", auth.Middleware(), routes.ListDirs)
 	io.Post("/create", auth.Middleware(), routes.CreateDir)
@@ -34,7 +31,9 @@ func Setup(app fiber.Router) {
 	config := api.Group("/config")
 	config.Get("/", auth.Middleware(), routes.GetConfig)
 
-	pages := config.Group("/pages")
+	pages := api.Group("/pages")
+	pages.Get("/", auth.Middleware(), routes.Pages)
+	pages.Get("/:index", auth.Middleware(), routes.Page)
 	pages.Delete("/:index", auth.Middleware(), routes.RemovePage)
 	pages.Post("/", auth.Middleware(), routes.AddPage)
 	pages.Put("/", auth.Middleware(), routes.UpdatePage)

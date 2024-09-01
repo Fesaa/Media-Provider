@@ -9,12 +9,12 @@ import (
 
 func Login(ctx *fiber.Ctx) error {
 	authProvider := auth.I()
-	err := authProvider.Login(ctx)
+	res, err := authProvider.Login(ctx)
 	if err != nil {
 		return err
 	}
 
-	return ctx.Redirect(config.I().BaseUrl + "/")
+	return ctx.JSON(res)
 }
 
 func Logout(ctx *fiber.Ctx) error {

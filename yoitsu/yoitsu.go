@@ -248,7 +248,7 @@ func (y *yoitsuImpl) cleaner() {
 			if tor.BytesCompleted() == tor.Length() && tor.BytesCompleted() > 0 {
 				i++
 				err := y.RemoveDownload(payload.StopRequest{
-					Provider:    "",
+					Provider:    -1,
 					Id:          s,
 					DeleteFiles: false,
 				})

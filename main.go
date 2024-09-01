@@ -1,11 +1,11 @@
 package main
 
 import (
-	"errors"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/yoitsu"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -17,7 +17,6 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/template/html/v2"
 )
 
 var cfg *config.Config
@@ -61,11 +60,7 @@ func init() {
 
 func main() {
 	log.Info("Starting Media-Provider", "baseURL", baseURL)
-	engine := html.New("./web/views", ".html")
-	app := fiber.New(fiber.Config{
-		Views:        engine,
-		ErrorHandler: errorHandler,
-	})
+	app := fiber.New()
 
 	app.Use(logger.New(logger.Config{
 		TimeFormat: "2006/01/02 15:04:05",
@@ -75,10 +70,13 @@ func main() {
 		},
 	}))
 
-	app.Static(baseURL, "./web/public")
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:4200",
+	}))
+
+	app.Static(baseURL, "./UI/Web/dist/web/browser")
 	router := app.Group(baseURL)
 	api.Setup(router)
-	RegisterFrontEnd(router)
 
 	port := config.OrDefault(cfg.Port, "80")
 	e := app.Listen(":" + port)
@@ -96,20 +94,4 @@ func main() {
 		log.Error("An error occurred during shutdown", "error", err)
 		return
 	}
-}
-
-func errorHandler(c *fiber.Ctx, err error) error {
-	code := fiber.StatusInternalServerError
-
-	var e *fiber.Error
-	if errors.As(err, &e) {
-		code = e.Code
-	}
-
-	if code == fiber.StatusNotFound {
-		return c.Render("404", nil)
-	}
-
-	c.Set(fiber.HeaderContentType, fiber.MIMETextPlainCharsetUTF8)
-	return c.Status(code).SendString(err.Error())
 }

@@ -86,7 +86,7 @@ func validateModifier(modifier config.Modifier) error {
 		return fmt.Errorf("modifier title is required")
 	}
 
-	if modifier.Type == "" {
+	if modifier.Type == 0 {
 		return fmt.Errorf("modifier type is required")
 	}
 
