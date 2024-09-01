@@ -3,6 +3,7 @@ package config
 import "log/slog"
 
 type Config struct {
+	SyncId   int    `json:"sync_id"`
 	Port     string `json:"port"`
 	Password string `json:"password"`
 	RootDir  string `json:"root_dir"`

@@ -6,9 +6,14 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"sync"
 )
 
-var configPath string
+var (
+	configPath    string
+	cfgLock       = sync.RWMutex{}
+	InvalidSyncID = errors.New("invalid sync id")
+)
 
 func init() {
 	file := OrDefault(os.Getenv("CONFIG_FILE"), "config.json")
@@ -16,12 +21,15 @@ func init() {
 }
 
 func Load() (*Config, error) {
-	cfg, err := Read(configPath)
+	cfgLock.RLock()
+	defer cfgLock.RUnlock()
+
+	cfg, err := read(configPath)
 
 	if errors.Is(err, os.ErrNotExist) {
 		slog.Warn("Config file not found, creating new one", "path", configPath)
 		cfg = defaultConfig()
-		err = Write(configPath, cfg)
+		err = write(configPath, cfg)
 	}
 
 	if err != nil {
@@ -33,14 +41,23 @@ func Load() (*Config, error) {
 }
 
 func Save(cfg *Config) error {
-	return Write(configPath, cfg)
+	cfgLock.Lock()
+	defer cfgLock.Unlock()
+
+	if current != nil {
+		if current.SyncId != cfg.SyncId {
+			return InvalidSyncID
+		}
+	}
+	cfg.SyncId = cfg.SyncId + 1
+	return write(configPath, cfg)
 }
 
 func (c *Config) Save() error {
 	return Save(c)
 }
 
-func Write(path string, cfg *Config) error {
+func write(path string, cfg *Config) error {
 	slog.Debug("Writing config", "path", path)
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
@@ -56,7 +73,7 @@ func Write(path string, cfg *Config) error {
 	return nil
 }
 
-func Read(path string) (*Config, error) {
+func read(path string) (*Config, error) {
 	var cfg Config
 
 	data, err := os.ReadFile(path)

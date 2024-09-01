@@ -1,13 +1,13 @@
 package config
 
-func (cfg *Config) GetRootDir() string {
-	return cfg.RootDir
+func (c *Config) GetRootDir() string {
+	return c.RootDir
 }
 
-func (cfg *Config) GetMaxConcurrentTorrents() int {
-	return cfg.Downloader.MaxConcurrentTorrents
+func (c *Config) GetMaxConcurrentTorrents() int {
+	return c.Downloader.MaxConcurrentTorrents
 }
 
-func (cfg *Config) GetMaxConcurrentMangadexImages() int {
-	return cfg.Downloader.MaxConcurrentMangadexImages
+func (c *Config) GetMaxConcurrentMangadexImages() int {
+	return c.Downloader.MaxConcurrentMangadexImages
 }

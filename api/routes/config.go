@@ -4,7 +4,6 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
-	"strconv"
 )
 
 func GetConfig(ctx *fiber.Ctx) error {
@@ -12,24 +11,20 @@ func GetConfig(ctx *fiber.Ctx) error {
 }
 
 func RemovePage(ctx *fiber.Ctx) error {
-	indexS := ctx.Params("index")
-	index, err := strconv.Atoi(indexS)
+	index, err := intParam(ctx, "index")
 	if err != nil {
-		log.Debug("Invalid index", "index", indexS, "error", err)
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid index"})
+		log.Debug("Invalid index", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
+	}
+	syncID, err := intParam(ctx, "sync_id")
+	if err != nil {
+		log.Debug("Invalid sync_id", "error", err)
+		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
 	}
 
-	newCfg := config.I()
-	if index < 0 || index >= len(newCfg.Pages) {
-		log.Debug("Invalid index", "index", index)
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid index"})
-	}
-	newCfg.Pages = append(newCfg.Pages[:index], newCfg.Pages[index+1:]...)
-
-	err = config.Save(newCfg)
-	if err != nil {
-		log.Error("Failed to save config", "error", err)
-		return ctx.Status(500).JSON(fiber.Map{"error": "Failed to save config"})
+	if err = config.I().RemovePage(index, syncID); err != nil {
+		log.Error("Failed to update page", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
@@ -40,16 +35,17 @@ func AddPage(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&page)
 	if err != nil {
 		log.Error("Failed to parse request body", "error", err)
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+	syncID, err := intParam(ctx, "sync_id")
+	if err != nil {
+		log.Debug("Invalid sync_id", "error", err)
+		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
 	}
 
-	newCfg := config.I()
-	newCfg.Pages = append(newCfg.Pages, page)
-
-	err = config.Save(newCfg)
-	if err != nil {
-		log.Error("Failed to save config", "error", err)
-		return ctx.Status(500).JSON(fiber.Map{"error": "Failed to save config"})
+	if err = config.I().AddPage(page, syncID); err != nil {
+		log.Error("Failed to update page", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
@@ -60,67 +56,46 @@ func UpdatePage(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&page)
 	if err != nil {
 		log.Error("Failed to parse request body", "error", err)
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
-
-	indexS := ctx.Params("index")
-	index, err := strconv.Atoi(indexS)
+	index, err := intParam(ctx, "index")
 	if err != nil {
-		log.Debug("Invalid index", "index", indexS, "error", err)
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid index"})
+		log.Debug("Invalid index", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
 	}
-
-	newCfg := config.I()
-	if index < 0 || index >= len(newCfg.Pages) {
-		log.Debug("Invalid index", "index", index)
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid index"})
-	}
-
-	newCfg.Pages[index] = page
-
-	err = config.Save(newCfg)
+	syncID, err := intParam(ctx, "sync_id")
 	if err != nil {
-		log.Error("Failed to save config", "error", err)
-		return ctx.Status(500).JSON(fiber.Map{"error": "Failed to save config"})
+		log.Debug("Invalid sync_id", "error", err)
+		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
+	}
+
+	if err = config.I().UpdatePage(page, index, syncID); err != nil {
+		log.Error("Failed to update page", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
 func MovePage(ctx *fiber.Ctx) error {
-	oldIndexS := ctx.Params("oldIndex")
-	oldIndex, err := strconv.Atoi(oldIndexS)
+	oldIndex, err := intParam(ctx, "old_index")
 	if err != nil {
-		log.Debug("Invalid old index", "index", oldIndexS, "error, err")
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid old index"})
+		log.Debug("Invalid index", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
 	}
-
-	newIndexS := ctx.Params("newIndex")
-	newIndex, err := strconv.Atoi(newIndexS)
+	newIndex, err := intParam(ctx, "old_index")
 	if err != nil {
-		log.Debug("Invalid new index", "index", newIndexS, "error, err")
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid new index"})
+		log.Debug("Invalid index", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
 	}
-
-	newCfg := config.I()
-	if oldIndex < 0 || oldIndex >= len(newCfg.Pages) {
-		log.Debug("Invalid old index", "index", oldIndex)
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid old index"})
-	}
-
-	if newIndex < 0 || newIndex >= len(newCfg.Pages) {
-		log.Debug("Invalid new index", "index", newIndex)
-		return ctx.Status(400).JSON(fiber.Map{"error": "Invalid new index"})
-	}
-
-	page := newCfg.Pages[oldIndex]
-	newCfg.Pages = append(newCfg.Pages[:oldIndex], newCfg.Pages[oldIndex+1:]...)
-	newCfg.Pages = append(newCfg.Pages[:newIndex], append([]config.Page{page}, newCfg.Pages[newIndex:]...)...)
-
-	err = config.Save(newCfg)
+	syncID, err := intParam(ctx, "sync_id")
 	if err != nil {
+		log.Debug("Invalid sync_id", "error", err)
+		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
+	}
+	if err = config.I().MovePage(oldIndex, newIndex, syncID); err != nil {
 		log.Error("Failed to save config", "error", err)
-		return ctx.Status(500).JSON(fiber.Map{"error": "Failed to save config"})
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
