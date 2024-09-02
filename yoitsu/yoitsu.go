@@ -27,7 +27,7 @@ func Init(c Config) {
 	var err error
 	yoitsu, err = newYoitsu(c)
 	if err != nil {
-		log.Fatal("error while initializing Yoitsu", "err", err)
+		log.Fatal("error while initializing Yoitsu", err)
 		panic(err)
 	}
 }

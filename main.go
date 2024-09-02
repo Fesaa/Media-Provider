@@ -87,7 +87,7 @@ func main() {
 	port := config.OrDefault(cfg.Port, "80")
 	e := app.Listen(":" + port)
 	if e != nil {
-		log.Fatal("Unable to start server, exiting application", "error", e)
+		log.Fatal("Unable to start server, exiting application", e)
 	}
 
 	sc := make(chan os.Signal, 1)
