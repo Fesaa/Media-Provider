@@ -15,6 +15,8 @@ import {dropAnimation} from "../_animations/drop-animation";
 import {bounceIn500ms} from "../_animations/bounce-in";
 import {ToastrService} from "ngx-toastr";
 import {flyInOutAnimation} from "../_animations/fly-animation";
+import {DirectoryBrowserComponent} from "../directory-browser/directory-browser.component";
+import {NgIcon} from "@ng-icons/core";
 
 @Component({
   selector: 'app-page',
@@ -25,7 +27,9 @@ import {flyInOutAnimation} from "../_animations/fly-animation";
     DropdownModifierComponent,
     MultiModifierComponent,
     SearchResultComponent,
-    PaginatorComponent
+    PaginatorComponent,
+    DirectoryBrowserComponent,
+    NgIcon
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.css',
@@ -42,6 +46,9 @@ export class PageComponent implements OnInit{
   currentPage: number = 1;
   showSearchForm: boolean = true;
   hideSearchForm: boolean = false;
+
+  showDirBrowser: boolean = false;
+  cooldown: boolean = false;
 
   constructor(private navService: NavService,
               private pageService: PageService,
@@ -60,6 +67,7 @@ export class PageComponent implements OnInit{
         this.hideSearchForm = true;
         this.cdRef.detectChanges();
         this.searchResult = [];
+        this.showDirBrowser = false;
 
         setTimeout(() => {
           this.page = page;
@@ -80,6 +88,10 @@ export class PageComponent implements OnInit{
 
     if (page.dirs.length > 0) {
       this.searchForm.addControl('dir', this.fb.control(page.dirs[0]));
+    }
+
+    if (page.custom_root_dir) {
+      this.searchForm.addControl('customDir', this.fb.control(null));
     }
 
     for (const [key, modifier] of Object.entries(page.modifiers)) {
@@ -130,6 +142,19 @@ export class PageComponent implements OnInit{
   toggleSearchForm() {
     this.showSearchForm = !this.showSearchForm;
     this.cdRef.detectChanges();
+  }
+
+  toggleDirBrowser() {
+    if (this.cooldown) {
+      return;
+    }
+    this.showDirBrowser = !this.showDirBrowser;
+    this.cooldown = true;
+    this.cdRef.detectChanges();
+    setTimeout(() => {
+      this.cooldown = false;
+      this.cdRef.detectChanges();
+    }, 500)
   }
 
   toShowResults(): SearchInfo[] {

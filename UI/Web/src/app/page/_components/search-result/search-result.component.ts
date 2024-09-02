@@ -48,11 +48,15 @@ export class SearchResultComponent {
   }
 
   download() {
+
+    const customDir = this.form.value["customDir"];
+    const dir = customDir ? customDir : this.form.value["dir"];
+
     const req: DownloadRequest = {
       provider: this.searchResult.Provider,
       title: this.searchResult.Name,
       id: this.searchResult.InfoHash,
-      dir: this.form.value["dir"],
+      dir: dir,
     }
 
     this.downloadService.download(req).subscribe({
