@@ -1,7 +1,12 @@
 package config
 
+import (
+	"os"
+	"path"
+)
+
 func (c *Config) GetRootDir() string {
-	return c.RootDir
+	return OrDefault(c.RootDir, path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"))
 }
 
 func (c *Config) GetMaxConcurrentTorrents() int {

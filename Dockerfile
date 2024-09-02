@@ -44,4 +44,6 @@ COPY --from=npm-stage /app/dist/web/browser /app/public
 
 RUN apk add --no-cache ca-certificates curl
 
+ENV CONFIG_DIR="/mp/"
+
 CMD ["./media-provider"]

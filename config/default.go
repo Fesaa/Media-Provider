@@ -2,6 +2,8 @@ package config
 
 import (
 	"log/slog"
+	"os"
+	"path"
 )
 
 func defaultConfig() *Config {
@@ -9,7 +11,7 @@ func defaultConfig() *Config {
 		SyncId:   0,
 		Port:     "8080",
 		Password: "admin",
-		RootDir:  "temp",
+		RootDir:  path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"),
 		BaseUrl:  "",
 		Logging: Logging{
 			Level:   slog.LevelInfo,

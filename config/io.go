@@ -17,7 +17,8 @@ var (
 
 func init() {
 	file := OrDefault(os.Getenv("CONFIG_FILE"), "config.json")
-	configPath = path.Join("", file)
+	dir := OrDefault(os.Getenv("CONFIG_DIR"), ".")
+	configPath = path.Join(dir, file)
 }
 
 func Load() (*Config, error) {
