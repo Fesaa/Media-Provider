@@ -89,7 +89,7 @@
       <section id="search-results" class="flex flex-col space-y-2 pt-5">
         @if (searchResult.length > 0) {
           @for (res of toShowResults(); track $index) {
-            <app-search-result [form]="searchForm" [page]="page" [searchResult]="res"></app-search-result>
+            <app-search-result [form]="searchForm" [page]="page" [searchResult]="res" [@flyInOut]></app-search-result>
           }
           <app-paginator [totalPages]="searchResult.length/10" (pageChange)="onPageChange($event)" ></app-paginator>
         } @else {

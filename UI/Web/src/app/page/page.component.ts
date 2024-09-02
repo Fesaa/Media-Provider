@@ -14,6 +14,7 @@ import {PaginatorComponent} from "../paginator/paginator.component";
 import {dropAnimation} from "../_animations/drop-animation";
 import {bounceIn500ms} from "../_animations/bounce-in";
 import {ToastrService} from "ngx-toastr";
+import {flyInOutAnimation} from "../_animations/fly-animation";
 
 @Component({
   selector: 'app-page',
@@ -28,7 +29,7 @@ import {ToastrService} from "ngx-toastr";
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.css',
-  animations: [dropAnimation, bounceIn500ms]
+  animations: [dropAnimation, bounceIn500ms, flyInOutAnimation]
 })
 export class PageComponent implements OnInit{
 
@@ -58,12 +59,11 @@ export class PageComponent implements OnInit{
       this.pageService.getPage(index).subscribe(page => {
         this.hideSearchForm = true;
         this.cdRef.detectChanges();
+        this.searchResult = [];
 
-        // TODO: Don't wait if the search form is hidden, and add out animation for the search results?
         setTimeout(() => {
           this.page = page;
           this.modifiers = new Map(Object.entries(this.page.modifiers));
-          this.searchResult = [];
           this.buildForm(page);
           this.hideSearchForm = false;
           this.cdRef.detectChanges()
@@ -99,6 +99,7 @@ export class PageComponent implements OnInit{
 
   search() {
     if (!this.searchForm || !this.searchForm.valid || !this.page) {
+      this.toastr.error(`Cannot search`, "Error");
       return;
     }
     const modifiers: { [key: string]: string[] } = {};
