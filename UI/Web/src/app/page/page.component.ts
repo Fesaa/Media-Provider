@@ -13,6 +13,7 @@ import {SearchResultComponent} from "./_components/search-result/search-result.c
 import {PaginatorComponent} from "../paginator/paginator.component";
 import {dropAnimation} from "../_animations/drop-animation";
 import {bounceIn500ms} from "../_animations/bounce-in";
+import {ToastrService} from "ngx-toastr";
 
 @Component({
   selector: 'app-page',
@@ -46,6 +47,7 @@ export class PageComponent implements OnInit{
               private downloadService: DownloadService,
               private cdRef: ChangeDetectorRef,
               private fb: FormBuilder,
+              private toastr: ToastrService
   ) {
     this.navService.setNavVisibility(true);
     this.downloadService.loadStats(false);
@@ -114,6 +116,11 @@ export class PageComponent implements OnInit{
     };
 
     this.downloadService.search(req).subscribe(info => {
+      if (info.length == 0) {
+        this.toastr.error("No results found")
+      } else {
+        this.toastr.success(`Found ${info.length} items`,"Search completed")
+      }
       this.searchResult = info;
       this.showSearchForm = false;
     })

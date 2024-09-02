@@ -1,15 +1,41 @@
 
-<div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen w-full">
   @if (running.length === 0 && queued.length === 0 && !this.loading) {
     <app-suggestion-dashboard></app-suggestion-dashboard>
   }
 
-  @for (page of running; track $index) {
-  }
+  <div class="w-full pt-1 md:pt-5">
 
-  @for (page of queued; track $index) {
+    @if (running.length > 0) {
+      <div class="flex flex-row justify-center items-center w-full">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-2 pb-4 relative w-3/4">
+          <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-400">Downloading</span>
+          <span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-400"></span>
+        </h1>
+      </div>
 
-  }
+      @for (info of running; track $index) {
+        <app-running-info [info]="info"></app-running-info>
+      }
+    }
+
+    @if (queued.length > 0) {
+      <div class="flex flex-row justify-center items-center w-full">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-2 pb-4 relative w-3/4">
+          <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-400">Queued</span>
+          <span class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-400"></span>
+        </h1>
+      </div>
+
+      @for (info of queued; track $index) {
+        <app-queued-info [info]="info"></app-queued-info>
+      }
+    }
+
+
+
+  </div>
+
 </div>
 
 

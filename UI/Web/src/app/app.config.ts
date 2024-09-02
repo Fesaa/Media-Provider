@@ -7,17 +7,28 @@ import {AuthInterceptor} from "./_interceptors/auth-headers.interceptor";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {AuthRedirectInterceptor} from "./_interceptors/auth-redirect.interceptor";
 import {NgIconsModule} from "@ng-icons/core";
-import { heroChevronDoubleRight, heroChevronUp, heroChevronDown, heroArrowDownTray } from '@ng-icons/heroicons/outline';
+import { heroChevronDoubleRight, heroChevronUp, heroChevronDown, heroArrowDownTray, heroTrash } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
+import {provideToastr} from "ngx-toastr";
+import {ContentTitlePipe} from "./_pipes/content-title.pipe";
 
 export const appConfig: ApplicationConfig = {
   providers: [
     CommonModule,
+    provideToastr({
+      countDuplicates: true,
+      preventDuplicates: true,
+      maxOpened: 5,
+      resetTimeoutOnDuplicate: true,
+      includeTitleDuplicates: true,
+      progressBar: true,
+    }),
+    ContentTitlePipe,
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: AuthRedirectInterceptor, multi: true },
     provideHttpClient(withInterceptorsFromDi()),
-    importProvidersFrom(BrowserAnimationsModule, NgIconsModule.withIcons({heroChevronDoubleRight, heroChevronUp, heroChevronDown, heroArrowDownTray}))
+    importProvidersFrom(BrowserAnimationsModule, NgIconsModule.withIcons({heroChevronDoubleRight, heroChevronUp, heroChevronDown, heroArrowDownTray,heroTrash}))
   ]
 };

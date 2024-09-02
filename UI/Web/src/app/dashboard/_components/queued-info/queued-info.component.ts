@@ -1,15 +1,15 @@
 import {Component, Input} from '@angular/core';
-import {InfoStat} from "../../../_models/stats";
+import {InfoStat, QueueStat} from "../../../_models/stats";
 import {DownloadService} from "../../../_services/download.service";
-import {StopRequest} from "../../../_models/search";
 import {ToastrService} from "ngx-toastr";
 import {ContentTitlePipe} from "../../../_pipes/content-title.pipe";
+import {StopRequest} from "../../../_models/search";
 import {NgIcon} from "@ng-icons/core";
 import {SpeedPipe} from "../../../_pipes/speed.pipe";
 import {SpeedTypePipe} from "../../../_pipes/speed-type.pipe";
 
 @Component({
-  selector: 'app-running-info',
+  selector: 'app-queued-info',
   standalone: true,
   imports: [
     ContentTitlePipe,
@@ -17,12 +17,11 @@ import {SpeedTypePipe} from "../../../_pipes/speed-type.pipe";
     SpeedPipe,
     SpeedTypePipe
   ],
-  templateUrl: './running-info.component.html',
-  styleUrl: './running-info.component.css'
+  templateUrl: './queued-info.component.html',
+  styleUrl: './queued-info.component.css'
 })
-export class RunningInfoComponent {
-
-  @Input({required: true}) info!: InfoStat;
+export class QueuedInfoComponent {
+  @Input({required: true}) info!: QueueStat;
 
   constructor(private downloadService: DownloadService,
               private toastR: ToastrService,
@@ -47,5 +46,4 @@ export class RunningInfoComponent {
       }
     })
   }
-
 }

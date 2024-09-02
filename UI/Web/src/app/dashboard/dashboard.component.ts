@@ -6,13 +6,17 @@ import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/s
 import {DownloadService} from "../_services/download.service";
 import {InfoStat, QueueStat} from "../_models/stats";
 import {combineLatest} from "rxjs";
+import {RunningInfoComponent} from "./_components/running-info/running-info.component";
+import {QueuedInfoComponent} from "./_components/queued-info/queued-info.component";
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     AsyncPipe,
-    SuggestionDashboardComponent
+    SuggestionDashboardComponent,
+    RunningInfoComponent,
+    QueuedInfoComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'

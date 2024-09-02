@@ -7,6 +7,7 @@ import {DownloadRequest} from "../../../_models/search";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
 import {NgIcon} from "@ng-icons/core";
 import {dropAnimation} from "../../../_animations/drop-animation";
+import {ToastrService} from "ngx-toastr";
 
 @Component({
   selector: 'app-search-result',
@@ -40,7 +41,10 @@ export class SearchResultComponent {
   properties: (keyof SearchInfo)[] = ["Size", "Downloads", "Seeders", "Date"]
 
 
-  constructor(private downloadService: DownloadService, private cdRef: ChangeDetectorRef) {
+  constructor(private downloadService: DownloadService,
+              private cdRef: ChangeDetectorRef,
+              private toastR: ToastrService
+  ) {
   }
 
   download() {
@@ -51,9 +55,14 @@ export class SearchResultComponent {
       dir: this.form.value["dir"],
     }
 
-    this.downloadService.download(req).subscribe(() => {
-      console.log("Download started")
-    })
+    this.downloadService.download(req).subscribe({
+      complete: () => {
+        this.toastR.success(`Downloaded started for ${this.searchResult.Name}`, "Success")
+      },
+      error: (err) => {
+        this.toastR.error(`Download failed ${err.message}`, "Error")
+      }
+  })
   }
 
   getColour(idx: number): string {

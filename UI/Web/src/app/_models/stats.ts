@@ -9,6 +9,7 @@ export type QueueStat = {
 
 export type InfoStat = {
   provider: Provider;
+  id: string;
   name: string;
   size: string;
   downloading: boolean;
