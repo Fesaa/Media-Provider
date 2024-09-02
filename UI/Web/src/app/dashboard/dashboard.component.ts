@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {PageService} from "../_services/page.service";
 import {AsyncPipe} from "@angular/common";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {DownloadService} from "../_services/download.service";
 import {InfoStat, QueueStat} from "../_models/stats";
+import {combineLatest} from "rxjs";
 
 @Component({
   selector: 'app-dashboard',
@@ -16,27 +17,35 @@ import {InfoStat, QueueStat} from "../_models/stats";
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
 
+  loading = true;
   running: InfoStat[] | [] = [];
   queued: QueueStat[] | [] = [];
 
   constructor(private navService: NavService,
               protected pageService: PageService,
               private downloadService: DownloadService,
+              private cdRef: ChangeDetectorRef,
   ) {
     this.navService.setNavVisibility(true);
+  }
 
-    this.downloadService.running$.subscribe(running =>{
+  ngOnInit(): void {
+    this.downloadService.loadStats();
+
+    combineLatest([
+      this.downloadService.running$,
+      this.downloadService.queued$
+    ]).subscribe(([running, queued]) => {
       if (running) {
         this.running = running;
       }
-    });
-
-    this.downloadService.queued$.subscribe(queued =>{
       if (queued) {
         this.queued = queued;
       }
+      this.loading = false;
+      this.cdRef.detectChanges();
     });
   }
 

@@ -1,11 +1,15 @@
 
-@if (running.length === 0 && queued.length === 0) {
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+  @if (running.length === 0 && queued.length === 0 && !this.loading) {
     <app-suggestion-dashboard></app-suggestion-dashboard>
-}
+  }
 
-@for (page of running; track $index) {
-}
+  @for (page of running; track $index) {
+  }
 
-@for (page of queued; track $index) {
+  @for (page of queued; track $index) {
 
-}
+  }
+</div>
+
+

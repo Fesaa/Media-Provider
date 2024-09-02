@@ -39,6 +39,7 @@ export class PageComponent implements OnInit{
   searchResult: SearchInfo[] = [];
   currentPage: number = 1;
   showSearchForm: boolean = true;
+  hideSearchForm: boolean = false;
 
   constructor(private navService: NavService,
               private pageService: PageService,
@@ -47,16 +48,23 @@ export class PageComponent implements OnInit{
               private fb: FormBuilder,
   ) {
     this.navService.setNavVisibility(true);
+    this.downloadService.loadStats(false);
   }
 
   ngOnInit(): void {
     this.navService.pageIndex$.subscribe(index => {
       this.pageService.getPage(index).subscribe(page => {
-        this.page = page;
-        this.modifiers = new Map(Object.entries(this.page.modifiers));
-        this.searchResult = [];
-        this.buildForm(page);
-        this.cdRef.detectChanges()
+        this.hideSearchForm = true;
+        this.cdRef.detectChanges();
+
+        setTimeout(() => {
+          this.page = page;
+          this.modifiers = new Map(Object.entries(this.page.modifiers));
+          this.searchResult = [];
+          this.buildForm(page);
+          this.hideSearchForm = false;
+          this.cdRef.detectChanges()
+        }, this.page === undefined ? 0 : 800)
       });
     })
   }

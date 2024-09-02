@@ -1,8 +1,8 @@
-<div class="flex flex-col items-center justify-center pt-5">
-  <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">
+<div class="flex flex-col items-center justify-center pt-5" [@dropDown]>
+  <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200 dropdown-item">
     No content found
   </h1>
-  <p class="text-gray-500 dark:text-gray-400">
+  <p class="text-gray-500 dark:text-gray-400 dropdown-item">
     Add content to get started
   </p>
   <ul class="flex flex-col justify-start items-start space-y-2 mt-2">
@@ -10,7 +10,7 @@
 
   @for (page of pageService.getPages() | async; track $index) {
     <li class="flex flex-row items-center justify-center text-center space-x-2">
-      <ng-icon name="heroChevronDoubleRight" class="w-4 h-4"></ng-icon>
+      <ng-icon name="heroChevronDoubleRight" class="w-4 h-4 dark:text-white"></ng-icon>
       <a
         [routerLink]="['/page']"
         [queryParams]="{ index: $index }"

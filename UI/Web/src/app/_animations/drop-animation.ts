@@ -11,7 +11,7 @@ export const dropAnimation = trigger("dropDown", [
       animate("200ms", style({ height: "*" })),
       query(".dropdown-item", [
         stagger(-50, [
-          animate("400ms ease", style({ opacity: 1, transform: "none" }))
+          animate("300ms ease", style({ opacity: 1, transform: "none" }))
         ])
       ])
     ])
@@ -24,7 +24,7 @@ export const dropAnimation = trigger("dropDown", [
       query(".dropdown-item", [
         stagger(50, [
           animate(
-            "400ms ease",
+            "300ms ease",
             style({ opacity: 0, transform: "translateY(-50px)" })
           )
         ])

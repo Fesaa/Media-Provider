@@ -28,14 +28,23 @@ export class DownloadService {
   constructor(private httpClient: HttpClient) {
     this.loadStatsSource.next(false)
     this.loadStats$.subscribe(load => {
+      this.sub?.unsubscribe();
       if (load) {
         this.sub = interval(1000).subscribe(() => {
           this.refreshStats();
-        })
-      } else {
-        this.sub?.unsubscribe();
+        });
       }
     })
+
+    this.running$.subscribe(running => {
+      if (running?.length == 0) {
+        this.sub?.unsubscribe();
+        this.sub = interval(10000).subscribe(() => {
+          this.refreshStats();
+        });
+      }
+    })
+
   }
 
   search(req: SearchRequest): Observable<SearchInfo[]> {

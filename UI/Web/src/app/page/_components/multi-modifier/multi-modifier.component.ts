@@ -23,6 +23,7 @@ export class MultiModifierComponent {
   @Input({required: true}) key!: string;
   @Input({required: true}) modifier!: Modifier;
 
+  coolDown: boolean = false;
   isDropdownOpen: boolean = false;
   query = '';
 
@@ -32,7 +33,14 @@ export class MultiModifierComponent {
 
 
   toggleDropdown() {
+    if (this.coolDown) return;
+
     this.isDropdownOpen = !this.isDropdownOpen;
+    this.coolDown = true;
+    setTimeout(() => {
+      this.coolDown = false;
+      this.cdRef.detectChanges();
+    }, 1000);
   }
 
   normalize(str: string): string {

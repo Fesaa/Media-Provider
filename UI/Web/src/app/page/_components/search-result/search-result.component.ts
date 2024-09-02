@@ -26,7 +26,17 @@ export class SearchResultComponent {
 
   showExtra: boolean = false;
 
-  colours = ["bg-blue-200", "bg-green-200", "bg-yellow-200", "bg-red-200", "bg-purple-200", "bg-pink-200", "bg-indigo-200", "bg-gray-200"];
+  colours = [
+    "bg-blue-200 dark:bg-blue-800",
+    "bg-green-200 dark:bg-green-800",
+    "bg-yellow-200 dark:bg-yellow-700",
+    "bg-red-200 dark:bg-red-800",
+    "bg-purple-200 dark:bg-purple-800",
+    "bg-pink-200 dark:bg-pink-800",
+    "bg-indigo-200 dark:bg-indigo-800",
+    "bg-gray-200 dark:bg-gray-700"
+  ];
+
 
   constructor(private downloadService: DownloadService, private cdRef: ChangeDetectorRef) {
   }
