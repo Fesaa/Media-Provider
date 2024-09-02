@@ -37,6 +37,8 @@ export class SearchResultComponent {
     "bg-gray-200 dark:bg-gray-700"
   ];
 
+  properties: (keyof SearchInfo)[] = ["Size", "Downloads", "Seeders", "Date"]
+
 
   constructor(private downloadService: DownloadService, private cdRef: ChangeDetectorRef) {
   }

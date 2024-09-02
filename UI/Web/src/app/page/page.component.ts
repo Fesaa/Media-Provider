@@ -57,6 +57,7 @@ export class PageComponent implements OnInit{
         this.hideSearchForm = true;
         this.cdRef.detectChanges();
 
+        // TODO: Don't wait if the search form is hidden, and add out animation for the search results?
         setTimeout(() => {
           this.page = page;
           this.modifiers = new Map(Object.entries(this.page.modifiers));

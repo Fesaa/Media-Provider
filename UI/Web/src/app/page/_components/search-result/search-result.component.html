@@ -42,32 +42,14 @@
 
         <div class="flex flex-row space-x-2 p-1">
 
-          @if (searchResult.Size) {
-            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour(0)}} dropdown-item">
-              <span class="whitespace-nowrap">{{ searchResult.Size }}</span>
-            </div>
+          @for (property of properties; track $index) {
+            @if (searchResult.hasOwnProperty(property)) {
+              <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour($index)}} dropdown-item">
+                <span class="whitespace-nowrap">{{property}}</span>
+                <span class="whitespace-nowrap">{{ searchResult[property] }}</span>
+              </div>
+            }
           }
-
-          @if (searchResult.Downloads) {
-            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour(1)}} dropdown-item">
-              <span class="whitespace-nowrap">Downloads</span>
-              <span class="whitespace-nowrap">{{ searchResult.Downloads }}</span>
-            </div>
-          }
-
-          @if (searchResult.Seeders) {
-            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour(2)}} dropdown-item">
-              <span class="whitespace-nowrap">Seeds</span>
-              <span class="whitespace-nowrap">{{ searchResult.Seeders }}</span>
-            </div>
-          }
-
-          @if (searchResult.Date) {
-            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour(3)}} dropdown-item">
-              <span class="whitespace-nowrap">{{ searchResult.Date }}</span>
-            </div>
-          }
-
         </div>
 
         @if (searchResult.Description) {
