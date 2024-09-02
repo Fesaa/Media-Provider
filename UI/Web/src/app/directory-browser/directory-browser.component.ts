@@ -51,7 +51,6 @@ export class DirectoryBrowserComponent implements OnInit{
 
   selectNode(entry: DirEntry) {
     if (!entry.dir) {
-      this.toastR.error(`${entry.name} is not a directory`, 'Error');
       return;
     }
 

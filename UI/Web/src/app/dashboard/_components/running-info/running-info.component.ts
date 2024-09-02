@@ -7,6 +7,8 @@ import {ContentTitlePipe} from "../../../_pipes/content-title.pipe";
 import {NgIcon} from "@ng-icons/core";
 import {SpeedPipe} from "../../../_pipes/speed.pipe";
 import {SpeedTypePipe} from "../../../_pipes/speed-type.pipe";
+import {DirectoryBrowserComponent} from "../../../directory-browser/directory-browser.component";
+import {dropAnimation} from "../../../_animations/drop-animation";
 
 @Component({
   selector: 'app-running-info',
@@ -15,19 +17,27 @@ import {SpeedTypePipe} from "../../../_pipes/speed-type.pipe";
     ContentTitlePipe,
     NgIcon,
     SpeedPipe,
-    SpeedTypePipe
+    SpeedTypePipe,
+    DirectoryBrowserComponent
   ],
   templateUrl: './running-info.component.html',
-  styleUrl: './running-info.component.css'
+  styleUrl: './running-info.component.css',
+  animations: [dropAnimation]
 })
 export class RunningInfoComponent {
 
   @Input({required: true}) info!: InfoStat;
 
+  showDirBrowser = false;
+
   constructor(private downloadService: DownloadService,
               private toastR: ToastrService,
               private contentTitle: ContentTitlePipe
   ) {
+  }
+
+  toggleDirBrowser() {
+    this.showDirBrowser = !this.showDirBrowser;
   }
 
 
