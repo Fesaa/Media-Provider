@@ -45,11 +45,11 @@ func Setup(app fiber.Router) {
 	config := api.Group("/config")
 	config.Get("/", auth.Middleware(), routes.GetConfig)
 
-	pages := api.Group("/pages")
+	pages := config.Group("/pages")
 	pages.Get("/", auth.Middleware(), routes.Pages)
 	pages.Get("/:index", auth.Middleware(), routes.Page)
 	pages.Delete("/:index", auth.Middleware(), routes.RemovePage)
 	pages.Post("/", auth.Middleware(), routes.AddPage)
-	pages.Put("/", auth.Middleware(), routes.UpdatePage)
+	pages.Put("/:index", auth.Middleware(), routes.UpdatePage)
 	pages.Post("/move", auth.Middleware(), routes.MovePage)
 }

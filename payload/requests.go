@@ -38,3 +38,8 @@ type LoginResponse struct {
 type UpdatePasswordRequest struct {
 	Password string `json:"password"`
 }
+
+type MovePageRequest struct {
+	OldIndex int `json:"oldIndex"`
+	NewIndex int `json:"newIndex"`
+}

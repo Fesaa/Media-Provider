@@ -4,7 +4,6 @@ import {environment} from "../../environments/environment";
 import {Page} from "../_models/page";
 import {Observable, of, ReplaySubject, tap} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {ActivatedRoute} from "@angular/router";
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +23,7 @@ export class PageService {
       return of(this.pages);
     }
 
-    return this.httpClient.get<Page[]>(this.baseUrl + 'pages/').pipe(
+    return this.httpClient.get<Page[]>(this.baseUrl + 'config/pages/').pipe(
       tap(pages => {
         this.pages = pages;
       }), takeUntilDestroyed(this.destroyRef)
@@ -36,6 +35,6 @@ export class PageService {
       return of(this.pages[index]);
     }
 
-    return this.httpClient.get<Page>(this.baseUrl + 'pages/' + index)
+    return this.httpClient.get<Page>(this.baseUrl + 'config/pages/' + index)
   }
 }

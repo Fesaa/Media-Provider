@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
 	"strconv"
 )
@@ -17,7 +18,7 @@ func RemovePage(ctx *fiber.Ctx) error {
 		log.Debug("Invalid index", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
 	}
-	syncID, err := intParam(ctx, "sync_id")
+	syncID, err := intQuery(ctx, "sync_id")
 	if err != nil {
 		log.Debug("Invalid sync_id", "error", err)
 		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
@@ -38,7 +39,7 @@ func AddPage(ctx *fiber.Ctx) error {
 		log.Error("Failed to parse request body", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
-	syncID, err := intParam(ctx, "sync_id")
+	syncID, err := intQuery(ctx, "sync_id")
 	if err != nil {
 		log.Debug("Invalid sync_id", "error", err)
 		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
@@ -64,7 +65,7 @@ func UpdatePage(ctx *fiber.Ctx) error {
 		log.Debug("Invalid index", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
 	}
-	syncID, err := intParam(ctx, "sync_id")
+	syncID, err := intQuery(ctx, "sync_id")
 	if err != nil {
 		log.Debug("Invalid sync_id", "error", err)
 		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
@@ -79,22 +80,17 @@ func UpdatePage(ctx *fiber.Ctx) error {
 }
 
 func MovePage(ctx *fiber.Ctx) error {
-	oldIndex, err := intParam(ctx, "old_index")
-	if err != nil {
-		log.Debug("Invalid index", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
+	var m payload.MovePageRequest
+	if err := ctx.BodyParser(m); err != nil {
+		log.Error("Failed to parse request body", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
-	newIndex, err := intParam(ctx, "old_index")
-	if err != nil {
-		log.Debug("Invalid index", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
-	}
-	syncID, err := intParam(ctx, "sync_id")
+	syncID, err := intQuery(ctx, "sync_id")
 	if err != nil {
 		log.Debug("Invalid sync_id", "error", err)
 		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
 	}
-	if err = config.I().MovePage(oldIndex, newIndex, syncID); err != nil {
+	if err = config.I().MovePage(m.OldIndex, m.NewIndex, syncID); err != nil {
 		log.Error("Failed to save config", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
