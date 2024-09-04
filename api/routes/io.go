@@ -6,6 +6,8 @@ import (
 	"github.com/Fesaa/Media-Provider/payload"
 	"os"
 	"path"
+	"slices"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,8 +21,19 @@ func ListDirs(ctx *fiber.Ctx) error {
 		})
 	}
 
+	// TODO: I don't know if this is enough, would need to properly check.
+	// This endpoint is behind auth, so you'd already need om some access.
+	// But would still want to check.
+	cleanedPath := func(p string) string {
+		parts := strings.Split(p, "/")
+		filtered := slices.DeleteFunc(parts, func(s string) bool {
+			return s == ".." || s == "."
+		})
+		return strings.Join(filtered, "/")
+	}(req.Dir)
+
 	root := config.I().GetRootDir()
-	entries, err := os.ReadDir(path.Join(root, req.Dir))
+	entries, err := os.ReadDir(path.Join(root, cleanedPath))
 	if err != nil {
 		log.Error("error while reading dir:", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -50,6 +63,12 @@ func CreateDir(ctx *fiber.Ctx) error {
 		log.Warn("error while parsing query params:", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
+		})
+	}
+
+	if strings.Contains(req.NewDir, "..") || strings.Contains(req.BaseDir, "..") {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid path",
 		})
 	}
 
