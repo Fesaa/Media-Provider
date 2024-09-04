@@ -47,7 +47,7 @@ export class ServerSettingsComponent implements OnInit {
       port: this.fb.control(this.config.port, Validators.required),
       password: this.fb.control(this.config.password, [Validators.required, Validators.pattern('^[a-zA-Z0-9]*$')]),
       root_dir: this.fb.control(this.config.root_dir, Validators.required),
-      base_url: this.fb.control(this.config.base_url, Validators.required),
+      base_url: this.fb.control(this.config.base_url),
       logging: this.fb.group({
         level: this.fb.control(this.config.logging.level, Validators.required),
         source: this.fb.control(this.config.logging.source, Validators.required),
@@ -72,12 +72,17 @@ export class ServerSettingsComponent implements OnInit {
       return;
     }
 
-    this.configService.updateConfig(this.settingsForm.value).subscribe(() => {
-      this.configService.getConfig().subscribe(config => {
-        this.config = config;
-        this.buildForm();
-      });
-  });
+    this.configService.updateConfig(this.settingsForm.value).subscribe({
+      next: () => {
+        this.configService.getConfig().subscribe(config => {
+          this.config = config;
+          this.buildForm();
+        });
+      },
+      error: (error) => {
+        this.toastr.error(error.error.error, 'Failed to save settings');
+      }
+    });
   }
 
   private displayErrors() {
@@ -85,6 +90,7 @@ export class ServerSettingsComponent implements OnInit {
     Object.keys(this.settingsForm!.controls).forEach(key => {
       const controlErrors = this.settingsForm!.get(key)?.errors;
       if (controlErrors) {
+        console.log(controlErrors);
         count += Object.keys(controlErrors).length;
       }
     });

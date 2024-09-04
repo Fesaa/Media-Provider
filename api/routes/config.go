@@ -4,8 +4,13 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"strconv"
+)
+
+var (
+	val = validator.New()
 )
 
 func GetConfig(ctx *fiber.Ctx) error {
@@ -23,6 +28,11 @@ func UpdateConfig(ctx *fiber.Ctx) error {
 	if err = ctx.BodyParser(&c); err != nil {
 		log.Debug("Failed to parse config", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid config"})
+	}
+
+	if err = val.Struct(c); err != nil {
+		log.Debug("Invalid config", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	if err = config.I().Update(c, syncID); err != nil {

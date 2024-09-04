@@ -23,6 +23,16 @@ func validateConfig() {
 		}
 	}
 
+	if cfg.Downloader.MaxConcurrentTorrents < 1 || cfg.Downloader.MaxConcurrentTorrents > 10 {
+		log.Warn("invalid max concurrent torrents", "value", cfg.Downloader.MaxConcurrentTorrents)
+		panic("invalid max concurrent torrents")
+	}
+
+	if cfg.Downloader.MaxConcurrentMangadexImages < 1 || cfg.Downloader.MaxConcurrentMangadexImages > 5 {
+		log.Warn("invalid max concurrent mangadex images", "value", cfg.Downloader.MaxConcurrentMangadexImages)
+		panic("invalid max concurrent mangadex images")
+	}
+
 	log.Info("Config validated")
 }
 

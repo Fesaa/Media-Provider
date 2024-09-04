@@ -1,6 +1,7 @@
 package config
 
 import (
+	"math"
 	"os"
 	"path"
 )
@@ -10,9 +11,9 @@ func (c *Config) GetRootDir() string {
 }
 
 func (c *Config) GetMaxConcurrentTorrents() int {
-	return c.Downloader.MaxConcurrentTorrents
+	return int(math.Max(1, math.Min(10, float64(c.Downloader.MaxConcurrentTorrents))))
 }
 
 func (c *Config) GetMaxConcurrentMangadexImages() int {
-	return c.Downloader.MaxConcurrentMangadexImages
+	return int(math.Max(1, math.Min(5, float64(c.Downloader.MaxConcurrentMangadexImages))))
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
@@ -47,6 +49,9 @@ func main() {
 		},
 	}))
 
+	app.Use(recover2.New(recover2.Config{
+		EnableStackTrace: config.I().Logging.Level <= slog.LevelDebug,
+	}))
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "http://localhost:4200",
 	}))
