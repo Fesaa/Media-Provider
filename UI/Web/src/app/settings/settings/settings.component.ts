@@ -1,30 +1,66 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import { Config } from '../../_models/config';
 import {NavService} from "../../_services/nav.service";
 import {ConfigService} from "../../_services/config.service";
+import {NgIcon} from "@ng-icons/core";
+import {ServerSettingsComponent} from "./_components/server-settings/server-settings.component";
+import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
+import {dropAnimation} from "../../_animations/drop-animation";
+
+export enum SettingsID {
+
+  Server,
+  Pages,
+
+}
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [],
+  imports: [
+    NgIcon,
+    ServerSettingsComponent,
+    PagesSettingsComponent
+  ],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css'
+  styleUrl: './settings.component.css',
+  animations: [dropAnimation]
 })
 export class SettingsComponent implements OnInit{
+  showMobileConfig = false;
 
-  syncID: number | undefined;
+  selected: SettingsID = SettingsID.Server;
+  settings: {id: SettingsID, title: string, icon: string}[] = [
+    {
+      id: SettingsID.Server,
+      title: 'Server',
+      icon: 'heroServerStack',
+    },
+    {
+      id: SettingsID.Pages,
+      title: 'Pages',
+      icon: 'heroDocument',
+    }
+  ]
 
-  config: Config | undefined;
-
-  constructor(private navService: NavService, private configService: ConfigService) {
+  constructor(private navService: NavService,
+              private cdRef: ChangeDetectorRef
+  ) {
   }
 
   ngOnInit(): void {
     this.navService.setNavVisibility(true)
-    this.configService.getConfig().subscribe(config => {
-      this.config = config;
-      this.syncID = config.sync_id;
-    })
   }
 
+  toggleMobile() {
+    this.showMobileConfig = !this.showMobileConfig;
+    this.cdRef.detectChanges();
+  }
+
+  setSettings(id: SettingsID) {
+    this.selected = id;
+    this.cdRef.detectChanges();
+  }
+
+  protected readonly SettingsID = SettingsID;
 }

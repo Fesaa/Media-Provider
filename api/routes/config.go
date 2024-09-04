@@ -12,6 +12,27 @@ func GetConfig(ctx *fiber.Ctx) error {
 	return ctx.JSON(config.I())
 }
 
+func UpdateConfig(ctx *fiber.Ctx) error {
+	syncID, err := intQuery(ctx, "sync_id")
+	if err != nil {
+		log.Debug("Invalid sync_id", "error", err)
+		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
+	}
+
+	var c config.Config
+	if err = ctx.BodyParser(&c); err != nil {
+		log.Debug("Failed to parse config", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid config"})
+	}
+
+	if err = config.I().Update(c, syncID); err != nil {
+		log.Error("Failed to update config", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
+}
+
 func RemovePage(ctx *fiber.Ctx) error {
 	index, err := intParam(ctx, "index")
 	if err != nil {

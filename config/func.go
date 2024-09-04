@@ -5,6 +5,16 @@ import (
 	"log/slog"
 )
 
+func (c *Config) Update(config Config, syncID int) error {
+	if c.SyncId != syncID {
+		return InvalidSyncID
+	}
+
+	config.SyncId = syncID
+	config.Pages = c.Pages
+	return Save(&config)
+}
+
 func (c *Config) RemovePage(index, syncID int) error {
 	if c.SyncId != syncID {
 		return InvalidSyncID

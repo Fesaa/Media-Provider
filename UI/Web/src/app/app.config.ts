@@ -19,6 +19,8 @@ import {
   heroSquare3Stack3d,
   heroClipboard,
   heroPlus,
+  heroAdjustmentsHorizontal,
+  heroServerStack,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {provideToastr} from "ngx-toastr";
@@ -54,6 +56,8 @@ export const appConfig: ApplicationConfig = {
       heroSquare3Stack3d,
       heroClipboard,
       heroPlus,
+      heroAdjustmentsHorizontal,
+      heroServerStack,
     }))
   ]
 };

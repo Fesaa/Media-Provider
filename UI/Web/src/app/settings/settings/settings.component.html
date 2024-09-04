@@ -1,23 +1,58 @@
+<div class="flex flex-col w-full items-center bg-gray-50 dark:bg-gray-900 min-h-screen text-black dark:text-white">
+  <div class="flex flex-col w-2/3 items-center py-5 px-2 md:p-10">
 
-<div class="justify-items-center bg-gray-50 dark:bg-gray-900 min-h-screen">
-
-  @if (config !== undefined) {
-
-    <div class="flex flex-col">
-
-      <div class="flex flex-row space-x-2 overflow-x-auto mb-2 md:mb-5 border-b-2 border-red-100">
-        <div>
-          Server settings
-        </div>
-        <div>
-          Page settings
-        </div>
+    <div
+      class="flex flex-row justify-between w-full space-x-2 border-b-2 border-black-100 dark:border-white items-center">
+      <div class="text-xl md:text-4xl">
+        Settings
       </div>
-
-
+      <div class="block md:hidden hover:cursor-pointer">
+        <ng-icon (click)="toggleMobile()" name="heroAdjustmentsHorizontal" size="32"></ng-icon>
+      </div>
     </div>
 
+    <div class="flex flex-col md:flex-row w-full mt-2 md:mt-10">
 
-  }
+      <div class="hidden md:flex flex-col space-y-4">
+        @for (setting of settings; track setting.id) {
+          <div (click)="setSettings(setting.id)"
+               class="flex flex-row space-x-2 items-center rounded-xl hover:cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-950 p-2 {{selected === setting.id ? 'bg-gray-200 dark:bg-gray-950': '' }}">
+            <ng-icon name="{{setting.icon}}" size="16"></ng-icon>
+            <span class="hover:cursor-pointer">{{ setting.title }}</span>
+          </div>
+        }
+      </div>
+      <div>
 
+        @if (showMobileConfig) {
+          <div class="flex md:hidden flex-col" [@dropDown]>
+            @for (setting of settings; track setting.id) {
+              <div (click)="setSettings(setting.id)"
+                   class="dropdown-item flex flex-row space-x-2 items-center rounded-xl hover:cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-950 p-2 {{selected === setting.id ? 'bg-gray-200 dark:bg-gray-950': '' }}">
+                <ng-icon name="{{setting.icon}}" size="16"></ng-icon>
+                <span class="hover:cursor-pointer">{{ setting.title }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        @defer (when selected == SettingsID.Server; prefetch on idle) {
+          @if (selected === SettingsID.Server) {
+            <div class="mt-5 md:ml-5">
+              <app-server-settings></app-server-settings>
+            </div>
+          }
+        }
+
+        @defer (when selected == SettingsID.Pages; prefetch on idle) {
+          @if (selected === SettingsID.Pages) {
+            <div class="mt-5 md:ml-5">
+              <app-pages-settings></app-pages-settings>
+            </div>
+          }
+        }
+
+      </div>
+    </div>
+  </div>
 </div>

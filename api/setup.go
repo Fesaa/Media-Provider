@@ -44,6 +44,7 @@ func Setup(app fiber.Router) {
 
 	config := api.Group("/config")
 	config.Get("/", auth.Middleware(), routes.GetConfig)
+	config.Post("/update", auth.Middleware(), routes.UpdateConfig)
 
 	pages := config.Group("/pages")
 	pages.Get("/", auth.Middleware(), routes.Pages)

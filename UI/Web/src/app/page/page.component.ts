@@ -17,6 +17,7 @@ import {ToastrService} from "ngx-toastr";
 import {flyInOutAnimation} from "../_animations/fly-animation";
 import {DirectoryBrowserComponent} from "../directory-browser/directory-browser.component";
 import {NgIcon} from "@ng-icons/core";
+import {FormInputComponent} from "../shared/form/form-input/form-input.component";
 
 @Component({
   selector: 'app-page',
@@ -29,7 +30,8 @@ import {NgIcon} from "@ng-icons/core";
     SearchResultComponent,
     PaginatorComponent,
     DirectoryBrowserComponent,
-    NgIcon
+    NgIcon,
+    FormInputComponent
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.css',
