@@ -5,8 +5,11 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/yoitsu"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
 	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -41,20 +44,23 @@ func main() {
 	log.Info("Starting Media-Provider", "baseURL", baseURL)
 	app := fiber.New()
 
-	app.Use(logger.New(logger.Config{
-		TimeFormat: "2006/01/02 15:04:05",
-		Format:     "${time} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
-		Next: func(c *fiber.Ctx) bool {
-			return !cfg.Logging.LogHttp
-		},
-	}))
-
-	app.Use(recover2.New(recover2.Config{
-		EnableStackTrace: config.I().Logging.Level <= slog.LevelDebug,
-	}))
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:4200",
-	}))
+	app.
+		Use(favicon.New()).
+		Use(requestid.New()).
+		Use(logger.New(logger.Config{
+			TimeFormat: "2006/01/02 15:04:05",
+			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
+			Next: func(c *fiber.Ctx) bool {
+				return !cfg.Logging.LogHttp
+			},
+		})).
+		Use(recover2.New(recover2.Config{
+			EnableStackTrace: config.I().Logging.Level <= slog.LevelDebug,
+		})).
+		Use(cors.New(cors.Config{
+			AllowOrigins: "http://localhost:4200",
+		})).
+		Use(compress.New())
 
 	router := app.Group(baseURL)
 	api.Setup(router)
