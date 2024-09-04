@@ -23,7 +23,7 @@ type Downloader struct {
 type Logging struct {
 	Level   slog.Level `json:"level"`
 	Source  bool       `json:"source"`
-	Handler string     `json:"handler"`
+	Handler LogHandler `json:"handler"`
 	LogHttp bool       `json:"log_http"`
 }
 
@@ -67,3 +67,10 @@ type Modifier struct {
 	Type   ModifierType      `yaml:"type" json:"type"`
 	Values map[string]string `yaml:"values" json:"values"`
 }
+
+type LogHandler string
+
+const (
+	LogHandlerText LogHandler = "TEXT"
+	LogHandlerJSON LogHandler = "JSON"
+)

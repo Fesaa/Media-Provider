@@ -16,7 +16,7 @@ func defaultConfig() *Config {
 		Logging: Logging{
 			Level:   slog.LevelInfo,
 			Source:  true,
-			Handler: "text",
+			Handler: LogHandlerText,
 			LogHttp: false,
 		},
 		Downloader: Downloader{

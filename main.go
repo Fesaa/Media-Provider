@@ -6,7 +6,6 @@ import (
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"log/slog"
 	"os"
 	"os/signal"
 	"strings"
@@ -28,26 +27,8 @@ func init() {
 		panic(err)
 	}
 
-	opt := &slog.HandlerOptions{
-		AddSource:   cfg.Logging.Source,
-		Level:       cfg.Logging.Level,
-		ReplaceAttr: nil,
-	}
-	var h slog.Handler
-	switch strings.ToUpper(cfg.Logging.Handler) {
-	case "TEXT":
-		h = slog.NewTextHandler(os.Stdout, opt)
-	case "JSON":
-		h = slog.NewJSONHandler(os.Stdout, opt)
-	default:
-		panic("Invalid logging handler: " + cfg.Logging.Handler)
-	}
-	_log := slog.New(h)
-	slog.SetDefault(_log)
-	log.SetDefault(_log)
-
+	log.Init(cfg.Logging)
 	validateConfig()
-
 	baseURL = config.OrDefault(cfg.BaseUrl, "")
 	auth.Init()
 	yoitsu.Init(cfg)
@@ -73,7 +54,10 @@ func main() {
 	router := app.Group(baseURL)
 	api.Setup(router)
 
-	app.Static(baseURL, "./public")
+	app.Static(baseURL, "./public", fiber.Static{
+		Compress: true,
+		MaxAge:   60 * 60,
+	})
 	app.Use(func(c *fiber.Ctx) error {
 		err := c.Next()
 		// This is very much nonsense, definitely have to find a better way later

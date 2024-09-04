@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/config"
 	"log/slog"
+	"os"
 	"runtime"
 	"time"
 )
@@ -15,7 +16,24 @@ const (
 
 var source bool
 
-func Init(cfg *config.Logging) {
+func Init(cfg config.Logging) {
+	opt := &slog.HandlerOptions{
+		AddSource:   cfg.Source,
+		Level:       cfg.Level,
+		ReplaceAttr: nil,
+	}
+	var h slog.Handler
+	switch cfg.Handler {
+	case config.LogHandlerText:
+		h = slog.NewTextHandler(os.Stdout, opt)
+	case config.LogHandlerJSON:
+		h = slog.NewJSONHandler(os.Stdout, opt)
+	default:
+		panic("Invalid logging handler: " + cfg.Handler)
+	}
+	_log := slog.New(h)
+	slog.SetDefault(_log)
+	SetDefault(_log)
 	source = cfg.Source
 	def = Logger{_log: slog.Default(), source: nil}
 }
