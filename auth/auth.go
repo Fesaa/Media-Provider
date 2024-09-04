@@ -16,8 +16,8 @@ const (
 
 var authProvider Provider
 
-func Init(cfg *config.Config) {
-	authProvider = newAuth(cfg)
+func Init() {
+	authProvider = newAuth()
 }
 
 func I() Provider {
@@ -26,33 +26,15 @@ func I() Provider {
 
 type authImpl struct {
 	cfg    *config.Config
-	pass   string
 	tokens map[string]time.Time
+	pass   func() string
 }
 
-func newAuth(cfg *config.Config) Provider {
+func newAuth() Provider {
 	return &authImpl{
 		tokens: make(map[string]time.Time),
-		pass:   config.OrDefault(cfg.Password, "admin"),
+		pass:   func() string { return config.OrDefault(config.I().Password, "admin") },
 	}
-}
-
-func (v *authImpl) UpdatePassword(ctx *fiber.Ctx) error {
-	body := payload.UpdatePasswordRequest{}
-	err := ctx.BodyParser(&body)
-	if err != nil {
-		return err
-	}
-
-	if body.Password == "" {
-		return badRequest("Password is required")
-	}
-
-	v.pass = body.Password
-
-	newCfg := config.I()
-	newCfg.Password = v.pass
-	return newCfg.Save()
 }
 
 func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
@@ -91,7 +73,7 @@ func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 		return nil, badRequest("Password is required")
 	}
 
-	if password != v.pass {
+	if password != v.pass() {
 		return nil, badRequest("Invalid password")
 	}
 

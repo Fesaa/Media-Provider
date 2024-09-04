@@ -51,7 +51,11 @@ func Save(cfg *Config) error {
 		}
 	}
 	cfg.SyncId = cfg.SyncId + 1
-	return write(configPath, cfg)
+	err := write(configPath, cfg)
+	if err == nil {
+		slog.SetLogLoggerLevel(cfg.Logging.Level)
+	}
+	return err
 }
 
 func (c *Config) Save() error {

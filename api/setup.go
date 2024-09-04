@@ -31,7 +31,6 @@ func Setup(app fiber.Router) {
 
 	api.Post("/login", routes.Login)
 	api.Get("/logout", routes.Logout)
-	api.Post("/update-password", auth.Middleware(), routes.UpdatePassword)
 
 	api.Post("/search", auth.Middleware(), c, routes.Search)
 	api.Get("/stats", auth.Middleware(), routes.Stats)
