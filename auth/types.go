@@ -10,10 +10,5 @@ type Provider interface {
 	IsAuthenticated(ctx *fiber.Ctx) (bool, error)
 
 	// Login logs the current user in. This happens by setting the appropriate cookie
-	//
-	// The request may specify a "remember me" option, which will set the cookie to expire in a month
 	Login(ctx *fiber.Ctx) (*payload.LoginResponse, error)
-
-	// Logout logs the current user out. This happens by deleting the appropriate cookie
-	Logout(ctx *fiber.Ctx) error
 }

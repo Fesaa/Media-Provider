@@ -3,18 +3,22 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
-	"strings"
 	"time"
 )
 
 const (
-	TokenCookieName = "token"
+	HeaderName = "Authorization"
+	AuthScheme = "Bearer"
 )
 
-var authProvider Provider
+var (
+	ErrMissingOrMalformedAPIKey = errors.New("missing or malformed API key")
+	authProvider                Provider
+)
 
 func Init() {
 	authProvider = newAuth()
@@ -25,7 +29,6 @@ func I() Provider {
 }
 
 type authImpl struct {
-	cfg    *config.Config
 	tokens map[string]time.Time
 	pass   func() string
 }
@@ -38,22 +41,23 @@ func newAuth() Provider {
 }
 
 func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
-	headers := ctx.GetReqHeaders()
-	authorization := headers["Authorization"]
-	if len(authorization) == 0 {
-		return false, nil
-	}
-	auth := authorization[0]
-	split := strings.SplitN(auth, "Bearer ", 2)
-	if len(split) != 2 {
-		return false, nil
-	}
-	token := split[1]
-	if token == "" {
-		return false, nil
-	}
+	auth := ctx.Get(HeaderName)
+	l := len(AuthScheme)
+	key, err := func() (string, error) {
+		if len(auth) > 0 && l == 0 {
+			return auth, nil
+		}
+		if len(auth) > l+1 && auth[:l] == AuthScheme {
+			return auth[l+1:], nil
+		}
 
-	t, ok := v.tokens[token]
+		return "", ErrMissingOrMalformedAPIKey
+	}()
+
+	if err != nil {
+		return false, err
+	}
+	t, ok := v.tokens[key]
 	if !ok {
 		return false, nil
 	}
@@ -79,22 +83,7 @@ func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 
 	token := generateSecureToken(32)
 	v.tokens[token] = time.Now().Add(time.Hour * 24 * 7)
-
-	ctx.Cookie(&fiber.Cookie{
-		Name:        TokenCookieName,
-		Value:       token,
-		SessionOnly: body.Remember,
-		Expires:     time.Now().Add(time.Hour * 24 * 7),
-	})
 	return &payload.LoginResponse{Token: token}, nil
-}
-
-func (v *authImpl) Logout(ctx *fiber.Ctx) error {
-	ctx.Cookie(&fiber.Cookie{
-		Name:    TokenCookieName,
-		Expires: time.Now().Add(-(time.Hour * 5)),
-	})
-	return nil
 }
 
 func badRequest(msg string) error {

@@ -30,26 +30,27 @@ func Setup(app fiber.Router) {
 	})
 
 	api.Post("/login", routes.Login)
-	api.Get("/logout", routes.Logout)
 
-	api.Post("/search", auth.Middleware(), c, routes.Search)
-	api.Get("/stats", auth.Middleware(), routes.Stats)
-	api.Post("/download", auth.Middleware(), routes.Download)
-	api.Post("/stop", auth.Middleware(), routes.Stop)
+	api.Use(auth.Middleware)
+
+	api.Post("/search", c, routes.Search)
+	api.Get("/stats", routes.Stats)
+	api.Post("/download", routes.Download)
+	api.Post("/stop", routes.Stop)
 
 	io := api.Group("/io")
-	io.Post("/ls", auth.Middleware(), routes.ListDirs)
-	io.Post("/create", auth.Middleware(), routes.CreateDir)
+	io.Post("/ls", routes.ListDirs)
+	io.Post("/create", routes.CreateDir)
 
 	config := api.Group("/config")
-	config.Get("/", auth.Middleware(), routes.GetConfig)
-	config.Post("/update", auth.Middleware(), routes.UpdateConfig)
+	config.Get("/", routes.GetConfig)
+	config.Post("/update", routes.UpdateConfig)
 
 	pages := config.Group("/pages")
-	pages.Get("/", auth.Middleware(), routes.Pages)
-	pages.Get("/:index", auth.Middleware(), routes.Page)
-	pages.Delete("/:index", auth.Middleware(), routes.RemovePage)
-	pages.Post("/", auth.Middleware(), routes.AddPage)
-	pages.Put("/:index", auth.Middleware(), routes.UpdatePage)
-	pages.Post("/move", auth.Middleware(), routes.MovePage)
+	pages.Get("/", routes.Pages)
+	pages.Get("/:index", routes.Page)
+	pages.Delete("/:index", routes.RemovePage)
+	pages.Post("/", routes.AddPage)
+	pages.Put("/:index", routes.UpdatePage)
+	pages.Post("/move", routes.MovePage)
 }
