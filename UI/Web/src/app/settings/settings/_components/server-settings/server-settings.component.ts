@@ -4,6 +4,8 @@ import {ConfigService} from "../../../../_services/config.service";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
+import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/BoundNumberValidator";
+import {ToastrService} from "ngx-toastr";
 
 @Component({
   selector: 'app-server-settings',
@@ -24,7 +26,8 @@ export class ServerSettingsComponent implements OnInit {
 
   constructor(private configService: ConfigService,
               private fb: FormBuilder,
-              private cdRef: ChangeDetectorRef
+              private cdRef: ChangeDetectorRef,
+              private toastr: ToastrService
   ) {
   }
 
@@ -52,8 +55,8 @@ export class ServerSettingsComponent implements OnInit {
         log_http: this.fb.control(this.config.logging.log_http, Validators.required),
       }),
       downloader: this.fb.group({
-        max_torrents: this.fb.control<number>(this.config.downloader.max_torrents, Validators.required),
-        max_mangadex_images: this.fb.control<number>(this.config.downloader.max_mangadex_images, Validators.required),
+        max_torrents: new IntegerFormControl(this.config.downloader.max_torrents, [Validators.required, BoundNumberValidator(1, 10)]),
+        max_mangadex_images: new IntegerFormControl(this.config.downloader.max_mangadex_images, [Validators.required, BoundNumberValidator(1, 5)]),
       })
     });
     this.cdRef.detectChanges();
@@ -63,12 +66,30 @@ export class ServerSettingsComponent implements OnInit {
     if (!this.settingsForm) {
       return;
     }
+
+    if (!this.settingsForm.valid) {
+      this.displayErrors();
+      return;
+    }
+
     this.configService.updateConfig(this.settingsForm.value).subscribe(() => {
       this.configService.getConfig().subscribe(config => {
         this.config = config;
         this.buildForm();
       });
   });
+  }
+
+  private displayErrors() {
+    let count = 0;
+    Object.keys(this.settingsForm!.controls).forEach(key => {
+      const controlErrors = this.settingsForm!.get(key)?.errors;
+      if (controlErrors) {
+        count += Object.keys(controlErrors).length;
+      }
+    });
+
+    this.toastr.error(`Found ${count} errors in the form`, 'Cannot submit');
   }
 
 
