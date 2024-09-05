@@ -19,7 +19,7 @@ type Config struct {
 
 type Downloader struct {
 	MaxConcurrentTorrents       int `json:"max_torrents" validate:"required,number,min=1,max=10"`
-	MaxConcurrentMangadexImages int `json:"max_mangadex_images" validate:"required,number,min=5,max=5"`
+	MaxConcurrentMangadexImages int `json:"max_mangadex_images" validate:"required,number,min=1,max=5"`
 }
 
 type Logging struct {

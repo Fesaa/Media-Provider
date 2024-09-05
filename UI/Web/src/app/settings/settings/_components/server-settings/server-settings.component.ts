@@ -45,7 +45,7 @@ export class ServerSettingsComponent implements OnInit {
 
     this.settingsForm = this.fb.group({
       port: this.fb.control(this.config.port, Validators.required),
-      password: this.fb.control(this.config.password, [Validators.required, Validators.pattern('^[a-zA-Z0-9]*$')]),
+      password: this.fb.control(this.config.password, [Validators.required]),
       root_dir: this.fb.control(this.config.root_dir, Validators.required),
       base_url: this.fb.control(this.config.base_url),
       logging: this.fb.group({
@@ -72,11 +72,17 @@ export class ServerSettingsComponent implements OnInit {
       return;
     }
 
+    if (!this.settingsForm.dirty) {
+      this.toastr.warning('No changes detected', 'Not saving');
+      return;
+    }
+
     this.configService.updateConfig(this.settingsForm.value).subscribe({
       next: () => {
         this.configService.getConfig().subscribe(config => {
           this.config = config;
           this.buildForm();
+          this.toastr.success('Settings saved', 'Success');
         });
       },
       error: (error) => {

@@ -8,7 +8,7 @@ import (
 func Middleware(ctx *fiber.Ctx) error {
 	isAuthenticated, err := authProvider.IsAuthenticated(ctx)
 	if err != nil {
-		log.Error("Error while checking authentication status", "err", err)
+		log.Debug("Error while checking authentication status", "err", err)
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	}
 	if !isAuthenticated {
