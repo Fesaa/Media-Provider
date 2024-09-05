@@ -1,19 +1,28 @@
 import { Component } from '@angular/core';
-import {Page} from "../../../../_models/page";
+import {Page, Provider, providerNames, providerValues} from "../../../../_models/page";
 import {PageService} from "../../../../_services/page.service";
 import {ConfigService} from "../../../../_services/config.service";
 import {RouterLink} from "@angular/router";
 import {NgIcon} from "@ng-icons/core";
 import {ToastrService} from "ngx-toastr";
 import {dropAnimation} from "../../../../_animations/drop-animation";
-import {ConfirmService} from "../../../../_services/confirm.service";
+import {DialogService} from "../../../../_services/dialog.service";
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
+import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
+import {KeyValuePipe, TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-pages-settings',
   standalone: true,
   imports: [
     RouterLink,
-    NgIcon
+    NgIcon,
+    ReactiveFormsModule,
+    FormInputComponent,
+    FormSelectComponent,
+    KeyValuePipe,
+    TitleCasePipe
   ],
   templateUrl: './pages-settings.component.html',
   styleUrl: './pages-settings.component.css',
@@ -26,11 +35,15 @@ export class PagesSettingsComponent {
   cooldown = false;
   selectedPage: Page | null = null;
 
+  pageForm: FormGroup | undefined;
+
   constructor(private configService: ConfigService,
               private toastR: ToastrService,
               private pageService: PageService,
-              private confirmService: ConfirmService,
+              private dialogService: DialogService,
+              private fb: FormBuilder
   ) {
+    this.configService.getConfig().subscribe();
     this.pageService.pages$.subscribe(pages => this.pages = pages);
   }
 
@@ -41,23 +54,49 @@ export class PagesSettingsComponent {
         title: '',
         modifiers: {},
         custom_root_dir: '',
-        provider: [],
+        providers: [],
       }
     }
+    this.pageForm = undefined;
     this.selectedPage = page;
+    this.buildForm();
     this.cooldown = true;
     setTimeout(() => this.cooldown = false, 700);
   }
 
-  async remove(index: number) {
-    const confirm = await this.confirmService.confirm(`Are you sure you want to remove ${this.pages[index].title}?`);
-    if (!confirm) {
-      console.log('cancelled');
-      return
+  buildForm() {
+    if (this.selectedPage === null) {
+      return;
     }
 
+    this.pageForm = this.fb.group({
+      title: this.fb.control(this.selectedPage.title, [Validators.required, Validators.minLength(3), Validators.maxLength(25)]),
+      providers: this.fb.control(this.selectedPage.providers, [Validators.required]),
+      dirs: this.fb.control(this.selectedPage.dirs, [Validators.required]),
+      custom_root_dir: this.fb.control(this.selectedPage.custom_root_dir),
+    });
 
-   /* this.configService.removePage(index).subscribe({
+    const modifiers = this.fb.group({});
+    for (const [key, value] of Object.entries(this.selectedPage.modifiers)) {
+      modifiers.addControl(key, this.fb.group({
+        title: this.fb.control(value.title, [Validators.required]),
+        type: this.fb.control(value.type, [Validators.required]),
+        values: this.fb.control(value.values, [Validators.required]),
+      }));
+    }
+
+  }
+
+  submit() {
+    console.log(this.pageForm?.value);
+  }
+
+  async remove(index: number) {
+    if (!await this.dialogService.openDialog('Are you sure you want to remove this page?')) {
+      return;
+    }
+
+   this.configService.removePage(index).subscribe({
       next: () => {
         const page = this.pages[index];
         this.toastR.success(`${page.title} removed`, 'Success');
@@ -66,7 +105,7 @@ export class PagesSettingsComponent {
       error: (err) => {
         this.toastR.error(err.error.message, 'Error');
       }
-    });*/
+    });
   }
 
   moveUp(index: number) {
@@ -95,4 +134,27 @@ export class PagesSettingsComponent {
     });
   }
 
+  hasProvider(provider: Provider) {
+    if (this.selectedPage === null) {
+      return false;
+    }
+    return this.selectedPage.providers.includes(provider);
+  }
+
+  onProviderCheckboxChange(provider: number) {
+    if (this.pageForm === undefined) {
+      return;
+    }
+    const formArray = this.pageForm.controls['providers'];
+    if (formArray.value.includes(provider)) {
+      formArray.patchValue(formArray.value.filter((v: number) => v !== provider));
+    } else {
+      formArray.patchValue([...formArray.value, provider]);
+    }
+  }
+
+  protected readonly Provider = Provider;
+  protected readonly Object = Object;
+  protected readonly providerValues = providerValues;
+  protected readonly providerNames = providerNames;
 }

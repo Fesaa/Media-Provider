@@ -36,7 +36,6 @@ export class NavHeaderComponent implements OnInit {
   ) {
 
     this.pageService.pages$.subscribe(pages => {
-      console.log('pages', pages);
       this.pages = pages;
       this.cdRef.detectChanges();
     });
@@ -59,7 +58,6 @@ export class NavHeaderComponent implements OnInit {
   }
 
   mobileMenuState() {
-    console.log(this.isMenuOpen ? 'open' : 'closed');
     return this.isMenuOpen ? 'open' : 'closed';
   }
 

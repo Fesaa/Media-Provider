@@ -30,8 +30,8 @@ type Logging struct {
 }
 
 type Page struct {
-	Title         string              `json:"title"`
-	Provider      []Provider          `json:"provider"`
+	Title         string              `json:"title" validate:"required,min=3,max=25"`
+	Provider      []Provider          `json:"providers"`
 	Modifiers     map[string]Modifier `json:"modifiers"`
 	Dirs          []string            `json:"dirs"`
 	CustomRootDir string              `json:"custom_root_dir"`

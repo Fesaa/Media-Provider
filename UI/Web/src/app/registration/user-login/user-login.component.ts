@@ -5,6 +5,8 @@ import {Router} from "@angular/router";
 import {take} from "rxjs";
 import {AuthGuard} from "../../_guards/auth.guard";
 import {NavService} from "../../_services/nav.service";
+import {ToastrService} from "ngx-toastr";
+import {PageService} from "../../_services/page.service";
 
 @Component({
   selector: 'app-login',
@@ -28,7 +30,9 @@ export class UserLoginComponent implements OnInit {
   constructor(private accountService: AccountService,
               private router: Router,
               private readonly cdRef: ChangeDetectorRef,
-              private navService: NavService
+              private navService: NavService,
+              private toastR: ToastrService,
+              private pageService: PageService,
   ) {
   }
 
@@ -49,24 +53,27 @@ export class UserLoginComponent implements OnInit {
     const model = this.loginForm.getRawValue();
     this.isSubmitting = true;
 
-    this.accountService.login(model).subscribe(() => {
-      this.loginForm.reset();
+    this.accountService.login(model).subscribe({
+      next: () => {
+        this.loginForm.reset();
+        this.pageService.refreshPages();
+        const pageResume = localStorage.getItem(AuthGuard.urlKey);
+        localStorage.setItem(AuthGuard.urlKey, '');
+        if (pageResume && pageResume != '/login') {
+          this.router.navigateByUrl(pageResume);
+        } else {
+          this.router.navigateByUrl('/home');
+        }
 
-      const pageResume = localStorage.getItem(AuthGuard.urlKey);
-      localStorage.setItem(AuthGuard.urlKey, '');
-      if (pageResume && pageResume != '/login') {
-        this.router.navigateByUrl(pageResume);
-      } else {
-        this.router.navigateByUrl('/home');
+        this.isSubmitting = false;
+        this.cdRef.markForCheck()
+      }, error: (_) => {
+        this.toastR.error("Unable to log in, check your credentials", 'Error');
+        this.isSubmitting = false;
+        this.cdRef.markForCheck()
       }
-
-      this.isSubmitting = false;
-      this.cdRef.markForCheck()
-    }, err => {
-      console.error(err);
-      this.isSubmitting = false;
-      this.cdRef.markForCheck()
     })
+
   }
 
 

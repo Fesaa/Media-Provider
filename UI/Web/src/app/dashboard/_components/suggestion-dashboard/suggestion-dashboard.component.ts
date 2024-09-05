@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component} from '@angular/core';
+import {Component} from '@angular/core';
 import {PageService} from "../../../_services/page.service";
 import {AsyncPipe} from "@angular/common";
 import {RouterLink} from "@angular/router";
@@ -16,16 +16,15 @@ import {Page} from "../../../_models/page";
   ],
   templateUrl: './suggestion-dashboard.component.html',
   styleUrl: './suggestion-dashboard.component.css',
-  animations: [dropAnimation]
+  animations: [dropAnimation],
 })
 export class SuggestionDashboardComponent {
 
   pages: Page[] = []
 
-  constructor(protected pageService: PageService, private cdRef: ChangeDetectorRef) {
+  constructor(protected pageService: PageService) {
     this.pageService.pages$.subscribe(pages => {
       this.pages = pages;
-      this.cdRef.detectChanges();
     });
   }
 

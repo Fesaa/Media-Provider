@@ -26,7 +26,7 @@ func (c *Config) RemovePage(index, syncID int) error {
 	}
 
 	c.Pages = append(c.Pages[:index], c.Pages[index+1:]...)
-	return c.Save()
+	return c.Save(true)
 }
 
 func (c *Config) AddPage(page Page, syncID int) error {
@@ -43,7 +43,7 @@ func (c *Config) UpdatePage(page Page, index, syncID int) error {
 	}
 
 	c.Pages[index] = page
-	return c.Save()
+	return c.Save(true)
 }
 
 func (c *Config) MovePage(oldIndex, newIndex, syncID int) error {

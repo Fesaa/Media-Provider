@@ -126,7 +126,7 @@ export class PageComponent implements OnInit{
 
     const req: SearchRequest = {
       query: this.searchForm.value.query,
-      provider: this.page?.provider,
+      provider: this.page?.providers,
       modifiers: modifiers,
     };
 

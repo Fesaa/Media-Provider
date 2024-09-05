@@ -34,7 +34,7 @@ export class ConfigService {
     }
 
     return this.httpClient
-      .delete<number>(this.baseUrl + 'pages/' + pageId + '?sync_id' + this.syncId)
+      .delete<number>(this.baseUrl + 'pages/' + pageId + '?sync_id=' + this.syncId)
       .pipe(this.updateSyncId());
   }
 
