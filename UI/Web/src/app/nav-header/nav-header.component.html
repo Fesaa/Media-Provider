@@ -63,7 +63,7 @@
               </a>
 
               <div class="overflow-x-auto flex space-x-4">
-                @for (page of pages() | async; track $index) {
+                @for (page of pages; track $index) {
                   <a
                     [routerLink]="['/page']"
                     [queryParams]="{ index: $index }"
@@ -109,7 +109,7 @@
             Home
           </a>
 
-          @for (page of pages() | async; track $index) {
+          @for (page of pages; track $index) {
             <a
               [routerLink]="['/page']"
               [queryParams]="{ index: $index }"

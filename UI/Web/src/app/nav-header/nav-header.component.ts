@@ -26,12 +26,20 @@ export class NavHeaderComponent implements OnInit {
   isMenuOpen = false;
   index: number | undefined;
 
+  pages: Page[] = [];
+
   constructor(private pageService: PageService,
               private route: ActivatedRoute,
               private cdRef: ChangeDetectorRef,
               protected accountService: AccountService,
               protected navService: NavService
   ) {
+
+    this.pageService.pages$.subscribe(pages => {
+      console.log('pages', pages);
+      this.pages = pages;
+      this.cdRef.detectChanges();
+    });
   }
 
   ngOnInit(): void {
@@ -43,10 +51,6 @@ export class NavHeaderComponent implements OnInit {
         this.index = undefined;
       }
     })
-  }
-
-  pages(): Observable<Page[]> {
-    return this.pageService.getPages();
   }
 
   clickMenu() {

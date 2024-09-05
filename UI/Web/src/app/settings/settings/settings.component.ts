@@ -6,6 +6,7 @@ import {NgIcon} from "@ng-icons/core";
 import {ServerSettingsComponent} from "./_components/server-settings/server-settings.component";
 import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
 import {dropAnimation} from "../../_animations/drop-animation";
+import {ActivatedRoute, Router} from "@angular/router";
 
 export enum SettingsID {
 
@@ -44,8 +45,18 @@ export class SettingsComponent implements OnInit{
   ]
 
   constructor(private navService: NavService,
-              private cdRef: ChangeDetectorRef
+              private cdRef: ChangeDetectorRef,
+              private activatedRoute: ActivatedRoute,
   ) {
+
+    this.activatedRoute.fragment.subscribe(fragment => {
+      if (fragment) {
+        const id = parseInt(fragment);
+        if (id in SettingsID) {
+          this.selected = id;
+        }
+      }
+    })
   }
 
   ngOnInit(): void {
@@ -57,6 +68,7 @@ export class SettingsComponent implements OnInit{
     this.cdRef.detectChanges();
   }
 
+  // TODO: Update route fragment
   setSettings(id: SettingsID) {
     this.selected = id;
     this.cdRef.detectChanges();

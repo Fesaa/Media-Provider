@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import {ChangeDetectorRef, Component} from '@angular/core';
 import {PageService} from "../../../_services/page.service";
 import {AsyncPipe} from "@angular/common";
 import {RouterLink} from "@angular/router";
 import {NgIcon} from "@ng-icons/core";
 import {dropAnimation} from "../../../_animations/drop-animation";
+import {Page} from "../../../_models/page";
 
 @Component({
   selector: 'app-suggestion-dashboard',
@@ -19,6 +20,13 @@ import {dropAnimation} from "../../../_animations/drop-animation";
 })
 export class SuggestionDashboardComponent {
 
-  constructor(protected pageService: PageService) { }
+  pages: Page[] = []
+
+  constructor(protected pageService: PageService, private cdRef: ChangeDetectorRef) {
+    this.pageService.pages$.subscribe(pages => {
+      this.pages = pages;
+      this.cdRef.detectChanges();
+    });
+  }
 
 }

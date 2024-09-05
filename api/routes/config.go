@@ -112,7 +112,7 @@ func UpdatePage(ctx *fiber.Ctx) error {
 
 func MovePage(ctx *fiber.Ctx) error {
 	var m payload.MovePageRequest
-	if err := ctx.BodyParser(m); err != nil {
+	if err := ctx.BodyParser(&m); err != nil {
 		log.Error("Failed to parse request body", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}

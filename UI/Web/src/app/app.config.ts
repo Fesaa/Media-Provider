@@ -21,10 +21,13 @@ import {
   heroPlus,
   heroAdjustmentsHorizontal,
   heroServerStack,
+  heroPlusCircle,
+  heroMinus,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {provideToastr} from "ngx-toastr";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -58,6 +61,8 @@ export const appConfig: ApplicationConfig = {
       heroPlus,
       heroAdjustmentsHorizontal,
       heroServerStack,
-    }))
+      heroPlusCircle,
+      heroMinus
+    })), provideAnimationsAsync()
   ]
 };
