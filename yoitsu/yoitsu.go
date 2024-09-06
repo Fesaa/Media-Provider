@@ -27,7 +27,7 @@ func Init(c Config) {
 	var err error
 	yoitsu, err = newYoitsu(c)
 	if err != nil {
-		log.Fatal("error while initializing Yoitsu", "err", err)
+		log.Fatal("error while initializing Yoitsu", err)
 		panic(err)
 	}
 }
@@ -248,7 +248,7 @@ func (y *yoitsuImpl) cleaner() {
 			if tor.BytesCompleted() == tor.Length() && tor.BytesCompleted() > 0 {
 				i++
 				err := y.RemoveDownload(payload.StopRequest{
-					Provider:    "",
+					Provider:    -1,
 					Id:          s,
 					DeleteFiles: false,
 				})

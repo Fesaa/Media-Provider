@@ -2,5 +2,8 @@
 node_modules/
 generated/
 temp/
-config.yaml
+config.json
 .idea
+public
+!UI/Web/public
+backup

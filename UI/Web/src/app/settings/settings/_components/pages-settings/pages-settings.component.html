@@ -1,0 +1,73 @@
+<div class="flex flex-grow w-full">
+
+  @if (selectedPage == null) {
+    @if (pages.length > 0) {
+      <div class="flex flex-col space-y-2 w-full" [@dropDown]>
+        @for (page of pages; track $index) {
+          <div class="w-full flex flex-row space-x-6 md:space-x-3 p-2 md:p-3 bg-white dark:bg-gray-800 rounded shadow dropdown-item">
+            <div class="hover:cursor-pointer hidden md:block">
+              <ng-icon name="heroDocument" size="48" (click)="setSelectedPage($index, page)"></ng-icon>
+            </div>
+
+            <div class="flex flex-col justify-center w-full hover:cursor-pointer" (click)="setSelectedPage($index, page)">
+              <h1 class="text-xl">{{ page.title }}</h1>
+              <a class="text-xs ml-1 text-blue-400 dark:text-blue-500 hover:underline" [routerLink]="['/page']" [queryParams]="{ index: $index }">
+                load page
+              </a>
+            </div>
+
+            <div class="flex flex-col justify-between">
+              @if ($index != 0) {
+                <ng-icon name="heroChevronUp" class="hover:cursor-pointer" (click)="moveUp($index)"></ng-icon>
+              } @else {
+                <div></div>
+              }
+              <ng-icon name="heroMinus" class="hover:cursor-pointer" (click)="remove($index)"></ng-icon>
+              @if ($index != pages.length - 1) {
+                <ng-icon name="heroChevronDown" class="hover:cursor-pointer" (click)="moveDown($index)"></ng-icon>
+              } @else {
+                <div></div>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="flex flex-row w-full justify-start items-center space-x-3">
+          <ng-icon name="heroPlusCircle" size="48" (click)="setSelectedPage(undefined)"></ng-icon>
+          <h1 class="text-xl hover:cursor-pointer" (click)="setSelectedPage(undefined)">New page</h1>
+        </div>
+      </div>
+    }
+  } @else if (!cooldown && pageForm !== undefined && selectedPage != null) {
+
+    <div class="w-full h-full">
+        <ng-icon name="heroChevronLeft" size="32" class="hover:cursor-pointer" (click)="setSelectedPage(undefined, null)"></ng-icon>
+
+      <form [formGroup]="pageForm" (ngSubmit)="submit()">
+
+        <h1 class="w-2/5 border-b-2 border-black dark:border-white mb-2">General</h1>
+
+        <app-form-input [formGroup]="pageForm" controlName="title" label="Title"></app-form-input>
+
+        <app-provider-settings [pageForm]="pageForm" [page]="selectedPage"></app-provider-settings>
+
+       <app-directory-settings [pageForm]="pageForm"></app-directory-settings>
+
+        <app-modifier-settings [pageForm]="pageForm"></app-modifier-settings>
+
+        <div class="flex w-full flex-grow flex-row justify-center md:justify-end mt-4 md:mt-2">
+          <button
+            type="submit"
+            class="w-full md:w-1/6 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
+          >
+            Save
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+  }
+
+</div>

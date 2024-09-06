@@ -1,0 +1,55 @@
+<div class="bg-white dark:bg-gray-600 dark:border-gray-500 dark:border-2 shadow-lg rounded-lg p-6 w-2/3 mx-auto my-4 text-black dark:text-white ">
+  <div class="flex justify-between items-center mb-4 space-x-1 md:space-x-4">
+    <h2 class="text-lg font-semibold">{{ info.name | contentTitle }}</h2>
+    <div class="flex flex-row space-x-1 md:space-x-4 items-center">
+      <span class="text-sm text-gray-500 dark:text-white hidden md:block">{{ info.size }}</span>
+      <div class="justify-end hidden md:flex flex-row space-x-2">
+        <button
+          (click)="toggleDirBrowser()"
+          class="flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors">
+          <ng-icon name="heroSquare3Stack3d" size="16"></ng-icon>
+        </button>
+        <button
+          (click)="stop()"
+          class="flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors">
+          <ng-icon name="heroTrash" size="16"></ng-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="relative pt-1">
+    <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+      <div
+        class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 dark:bg-blue-400"
+        [style.width.%]="info.progress"
+      ></div>
+    </div>
+    <div class="flex justify-between text-sm text-gray-500 dark:text-white mt-1">
+      <span>{{info.speed.speed | speed:info.speed_type}} {{info.speed_type | speedType }}</span>
+      <span>{{ info.progress }}%</span>
+    </div>
+  </div>
+
+  <div class="flex flex-row justify-between md:hidden">
+    <span class="text-sm text-gray-500 dark:text-white">{{ info.size }}</span>
+    <div class="justify-end flex flex-row space-x-2">
+      <button
+        (click)="toggleDirBrowser()"
+        class="flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors">
+        <ng-icon name="heroSquare3Stack3d" size="16"></ng-icon>
+      </button>
+      <button
+        (click)="stop()"
+        class="flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors">
+        <ng-icon name="heroTrash" size="16"></ng-icon>
+      </button>
+    </div>
+  </div>
+
+  @if (showDirBrowser) {
+    <div class="mt-4" [@dropDown]>
+      <app-directory-browser [root]="info.download_dir" [showFiles]="true" [copy]="false" />
+    </div>
+  }
+</div>

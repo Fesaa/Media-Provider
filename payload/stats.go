@@ -21,12 +21,12 @@ type InfoStat struct {
 	DownloadDir string          `json:"download_dir"`
 }
 
-type SpeedType string
+type SpeedType int
 
 const (
-	BYTES   SpeedType = "bytes"
-	VOLUMES SpeedType = "volumes"
-	IMAGES  SpeedType = "images"
+	BYTES SpeedType = iota
+	VOLUMES
+	IMAGES
 )
 
 type SpeedData struct {

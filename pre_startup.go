@@ -5,28 +5,44 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers"
+	"github.com/go-playground/validator/v10"
 	"os"
 	"path"
 	"strings"
 )
 
 func validateConfig() {
-	if err := validateRootConfig(config.I()); err != nil {
+	if err := validator.New().Struct(cfg); err != nil {
 		log.Warn("error while validating config", "err", err)
 		panic(err)
 	}
 
-	for _, p := range config.I().GetPages() {
+	if err := validateRootConfig(cfg); err != nil {
+		log.Warn("error while validating config", "err", err)
+		panic(err)
+	}
+
+	for _, p := range cfg.Pages {
 		if err := validatePage(p); err != nil {
-			log.Warn("error while validating page", "page", p.GetTitle(), "err", err)
+			log.Warn("error while validating page", "page", p.Title, "err", err)
 			panic(err)
 		}
+	}
+
+	if cfg.Downloader.MaxConcurrentTorrents < 1 || cfg.Downloader.MaxConcurrentTorrents > 10 {
+		log.Warn("invalid max concurrent torrents", "value", cfg.Downloader.MaxConcurrentTorrents)
+		panic("invalid max concurrent torrents")
+	}
+
+	if cfg.Downloader.MaxConcurrentMangadexImages < 1 || cfg.Downloader.MaxConcurrentMangadexImages > 5 {
+		log.Warn("invalid max concurrent mangadex images", "value", cfg.Downloader.MaxConcurrentMangadexImages)
+		panic("invalid max concurrent mangadex images")
 	}
 
 	log.Info("Config validated")
 }
 
-func validateRootConfig(c config.Config) error {
+func validateRootConfig(c *config.Config) error {
 	log.Debug("Validating root config")
 	if strings.HasSuffix(c.GetRootDir(), "/") {
 		return fmt.Errorf("invalid root url, must not end with /: %s", c.GetRootDir())
@@ -42,17 +58,17 @@ func validateRootConfig(c config.Config) error {
 }
 
 func validatePage(page config.Page) error {
-	if page.GetTitle() == "" {
+	if page.Title == "" {
 		return fmt.Errorf("page title is required")
 	}
 
-	for _, p := range page.GetSearchConfig().GetProvider() {
+	for _, p := range page.Provider {
 		if !providers.HasProvider(p) {
 			return fmt.Errorf("provider %s not found", p)
 		}
 	}
 
-	rootPath := path.Join(config.I().GetRootDir(), page.GetSearchConfig().GetCustomRootDir())
+	rootPath := path.Join(cfg.GetRootDir(), page.CustomRootDir)
 	ok, err := dirExists(rootPath)
 	if err != nil {
 		return err
@@ -61,18 +77,18 @@ func validatePage(page config.Page) error {
 		return fmt.Errorf("customRootDir does not exist %s", rootPath)
 	}
 
-	for _, dir := range page.GetSearchConfig().GetRootDirs() {
-		dir := path.Join(config.I().GetRootDir(), dir)
+	for _, dir := range page.Dirs {
+		dir := path.Join(cfg.GetRootDir(), dir)
 		ok, err = dirExists(dir)
 		if err != nil {
 			return err
 		}
 		if !ok {
-			return fmt.Errorf("rootDir %s for page %s not found", dir, page.GetTitle())
+			return fmt.Errorf("rootDir %s for page %s not found", dir, page.Title)
 		}
 	}
 
-	for name, modifier := range page.GetSearchConfig().GetSearchModifiers() {
+	for name, modifier := range page.Modifiers {
 		if err = validateModifier(modifier); err != nil {
 			return fmt.Errorf("invalid search modifier '%s': %s", name, err)
 		}
@@ -86,7 +102,7 @@ func validateModifier(modifier config.Modifier) error {
 		return fmt.Errorf("modifier title is required")
 	}
 
-	if modifier.Type == "" {
+	if modifier.Type == 0 {
 		return fmt.Errorf("modifier type is required")
 	}
 
@@ -94,11 +110,11 @@ func validateModifier(modifier config.Modifier) error {
 		return fmt.Errorf("modifier type '%s' is not a valid. Check the documentation for valid types", modifier.Type)
 	}
 
-	for _, pair := range modifier.Values {
-		if pair.Name == "" {
+	for name, key := range modifier.Values {
+		if name == "" {
 			return fmt.Errorf("modifier value name is required")
 		}
-		if pair.Key == "" {
+		if key == "" {
 			return fmt.Errorf("modifier value key is required")
 		}
 	}

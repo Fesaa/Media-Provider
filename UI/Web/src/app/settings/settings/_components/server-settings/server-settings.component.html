@@ -1,0 +1,79 @@
+<div class="flex w-full flex-grow">
+
+  @if (settingsForm !== undefined && config !== undefined) {
+    <form [formGroup]="settingsForm" class="w-full px-2" (ngSubmit)="save()">
+
+      <div class="flex flex-col items-center space-y-4 md:space-y-0">
+        <div class="w-full">
+          <h3 class="w-2/5 border-b-2 border-black dark:border-white">General</h3>
+
+          <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
+            <app-form-input [formGroup]="settingsForm" [label]="'Port'" [controlName]="'port'"></app-form-input>
+
+            <app-form-input [formGroup]="settingsForm" [label]="'Password'" [controlName]="'password'" type="password"></app-form-input>
+
+            <app-form-input [formGroup]="settingsForm" label="Root Directory" controlName="root_dir"></app-form-input>
+
+            <app-form-input [formGroup]="settingsForm" label="Base Url" controlName="base_url"></app-form-input>
+          </div>
+        </div>
+
+        <div class="w-full">
+          <h3 class="w-2/5 border-b-2 border-black dark:border-white">Logging</h3>
+
+          <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
+            <app-form-select
+              [formGroupName]="'logging'"
+              [formGroup]="settingsForm"
+              label="Handler"
+              controlName="handler"
+              [options]="Object.values(LogHandler)"
+              [values]="Object.keys(LogHandler)" />
+
+            <app-form-select
+              [formGroupName]="'logging'"
+              [formGroup]="settingsForm"
+              label="Level" controlName="level"
+              [options]="Object.values(LogLevel)"
+              [values]="Object.keys(LogLevel)" />
+          </div>
+        </div>
+
+        <div class="flex flex-col w-full items-center ">
+          <div class="w-full">
+            <h3 class="w-2/5 border-b-2 border-black dark:border-white">Downloader</h3>
+
+            <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
+              <app-form-input
+                formGroupName="downloader"
+                [formGroup]="settingsForm"
+                label="Max torrents"
+                controlName="max_torrents"
+                type="number"
+              />
+
+              <app-form-input
+                formGroupName="downloader"
+                [formGroup]="settingsForm"
+                label="Max Mangadex Images"
+                controlName="max_mangadex_images"
+                type="number"
+              />
+            </div>
+          </div>
+      </div>
+
+        <div class="flex w-full flex-grow flex-row justify-center md:justify-end mt-4 md:mt-2">
+          <button
+            type="submit"
+            class="w-full md:w-1/6 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
+          >
+            Save
+          </button>
+        </div>
+
+      </div>
+
+    </form>
+  }
+</div>

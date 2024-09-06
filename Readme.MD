@@ -1,11 +1,17 @@
 # Media-Provider
-A simple web applications for downloading torrents. Written in Go, and React, with a very simple env config, meant to run as a docker container.
+
+A web application for downloading content. Written in Go, and Angular. With a simple to navigate interface.
+Set up once, no need to touch files again. 
+
+![Preview](./assets/demo.gif)
+
 
 Torrenting content with copy right is theft, bla bla, this is all educational, bla bla...
 
 ## Support
 
-The project currently supports the following providers (websites), to fetch content from. 
+The project currently supports the following providers (websites), to fetch content from.
+Read their respective Readme's for more information on which modifiers they support.
 
 - [Lime torrents](limetorrents/Readme.MD)
 - [Nyaa](nyaaReadme.MD)
@@ -15,33 +21,45 @@ The project currently supports the following providers (websites), to fetch cont
 
 ## Config
 
-Is done via `config.yaml`, and must be placed at `/app/config.yaml` when using Docker. Media-Provider works by provider `pages` in the config which will each give you a tab on the website.
+Configuring the web can be done completely through the UI. No need to touch files.
 
-Each page has a `title` used as name. And a search config. You can find an example [here](config.yaml.example), and the structs [here](config/impl.go) & [here](config/types.go) if you want to do more.
-You may use several providers per page, the `search_config` doesn't have to be correct for both, it'll filter out correctly.
-However, if both use the same key, it may cause problems.
+<details open>
+<summary>Screenshot</summary>
 
-### Search modifiers
-Search modifiers are essentials to how you want to search for content. You can provide filters, etc... per page. You can find information per provider in their respective Readme's. 
+![Settings Preview](./assets/settings.png)
+
+</details>
+
+However, adding lots of modifiers at once may be painful through the UI. You can edit the `config.json` file by hand if needed.
+It is recommended to turn off the web server while editing the file, it shouldn't cause issues. But it's better to be safe than sorry.
+
+When using the docker image, the config will be stored in `/mp`, together with the default download directory `/mp/temp`.
+The config dir and file can be changed by setting the `CONFIG_DIR` and `CONFIG_FILE` environment variables.
+
+### Modifiers
+
+Modifiers depend on the provider used for your page, see the provider's Readme for more information.
+You can set up modifiers, so sort, filter, ... your search queries. The title and value are free to choose.
+While the key, and value key must match with the ones provided in the ReadME's.
+
+The default config comes with some modifiers for each provider, use them as an example.
 
 ## Docker compose
-This is the entry in my compose file, behind nginx
-```yaml
-  media-provider:
-    image: ameliaah/media-provider:latest
-    restart: "on-failure:3"
-    healthcheck:
-      test: curl --fail http://0.0.0.0/mp/api/health || exit 1
-      interval: 60s
-      retries: 2
-      start_period: 10s
-      timeout: 10s
-    networks:
-      - backend
-    volumes:
-      - /Media:/media
-      - ./mp.yaml:/app/config.yaml
-```
-Or with docker run, if you may be running it on your personal computer
 
-`docker run -v ~/downloads:/anything -v ./config.yml:/app/config.yaml -p 80:80 ameliaah/media-provider:latest`
+Is it recommended to use the docker image, no other way is officially supported.
+The image is available on [Docker Hub](https://hub.docker.com/r/ameliaah/media-provider). 
+Here is a simple example;
+
+```yaml
+media-provider:
+  image: ameliaah/media-provider:latest
+  restart: "on-failure:3"
+  ports:
+    - "8080:8080"
+  volumes:
+    - ./mp-data:/mp
+```
+
+Or with docker run, 
+
+`docker run -v ./mp-data:/mp -p 8080:8080 ameliaah/media-provider:latest`

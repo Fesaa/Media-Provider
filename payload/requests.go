@@ -11,14 +11,14 @@ type SearchRequest struct {
 type DownloadRequest struct {
 	Provider  config.Provider `json:"provider"`
 	Id        string          `json:"id"`
-	BaseDir   string          `json:"base_dir"`
-	TempTitle string          `json:"temp_title"`
+	BaseDir   string          `json:"dir"`
+	TempTitle string          `json:"title"`
 }
 
 type StopRequest struct {
 	Provider    config.Provider `json:"provider"`
 	Id          string          `json:"id"`
-	DeleteFiles bool            `json:"delete_files"`
+	DeleteFiles bool            `json:"delete"`
 }
 
 type ListDirsRequest struct {
@@ -28,5 +28,18 @@ type ListDirsRequest struct {
 
 type LoginRequest struct {
 	Password string `json:"password"`
-	Remember string `json:"remember,omitempty"`
+	Remember bool   `json:"remember,omitempty"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+}
+
+type UpdatePasswordRequest struct {
+	Password string `json:"password"`
+}
+
+type MovePageRequest struct {
+	OldIndex int `json:"oldIndex"`
+	NewIndex int `json:"newIndex"`
 }

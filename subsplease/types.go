@@ -19,6 +19,10 @@ func (t TorrentData) ReferenceURL() string {
 	return fmt.Sprintf("https://subsplease.org/shows/%s/", t.Page)
 }
 
+func (t TorrentData) ImageUrl() string {
+	return fmt.Sprintf("https://subsplease.org/%s", t.ImageURL)
+}
+
 type Download struct {
 	Res    string `json:"res"`
 	Magnet string `json:"magnet"`

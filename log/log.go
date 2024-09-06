@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/config"
 	"log/slog"
+	"os"
 	"runtime"
 	"time"
 )
@@ -13,12 +14,42 @@ const (
 	LevelFatal slog.Level = 12
 )
 
+var source bool
+
+// Always initialize with default values, so that the logger is always usable
 func init() {
-	def = Logger{_log: slog.Default()}
+	Init(config.Logging{
+		Handler: config.LogHandlerText,
+		Level:   slog.LevelInfo,
+		Source:  false,
+	})
+}
+
+func Init(cfg config.Logging) {
+	opt := &slog.HandlerOptions{
+		AddSource:   cfg.Source,
+		Level:       cfg.Level,
+		ReplaceAttr: nil,
+	}
+	var h slog.Handler
+	switch cfg.Handler {
+	case config.LogHandlerText:
+		h = slog.NewTextHandler(os.Stdout, opt)
+	case config.LogHandlerJSON:
+		h = slog.NewJSONHandler(os.Stdout, opt)
+	default:
+		panic("Invalid logging handler: " + cfg.Handler)
+	}
+	_log := slog.New(h)
+	slog.SetDefault(_log)
+	SetDefault(_log)
+	source = cfg.Source
+	def = Logger{_log: slog.Default(), source: nil}
 }
 
 type Logger struct {
-	_log *slog.Logger
+	_log   *slog.Logger
+	source *bool
 }
 
 func SetDefault(log *slog.Logger) {
@@ -36,28 +67,27 @@ func IsTraceEnabled() bool {
 }
 
 func Error(msg string, args ...any) {
-	Default().log(slog.LevelError, msg, args...)
+	Default().Error(msg, args...)
 }
 
 func Warn(msg string, args ...any) {
-	Default().log(slog.LevelWarn, msg, args...)
+	Default().Warn(msg, args...)
 }
 
 func Info(msg string, args ...any) {
-	Default().log(slog.LevelInfo, msg, args...)
+	Default().Info(msg, args...)
 }
 
 func Debug(msg string, args ...any) {
-	Default().log(slog.LevelDebug, msg, args...)
+	Default().Debug(msg, args...)
 }
 
 func Trace(msg string, args ...any) {
-	Default().log(LevelTrace, msg, args...)
+	Default().Trace(msg, args...)
 }
 
-func Fatal(msg string, args ...any) {
-	Default().log(LevelFatal, msg, args...)
-	panic("fatal log call")
+func Fatal(msg string, err error, args ...any) {
+	Default().Fatal(msg, err, args...)
 }
 
 func (l *Logger) Error(msg string, args ...any) {
@@ -80,9 +110,9 @@ func (l *Logger) Trace(msg string, args ...any) {
 	l.log(LevelTrace, msg, args...)
 }
 
-func (l *Logger) Fatal(msg string, args ...any) {
+func (l *Logger) Fatal(msg string, err error, args ...any) {
 	l.log(LevelFatal, msg, args...)
-	panic("fatal log call")
+	panic(err)
 }
 
 func (l *Logger) IsTraceEnabled() bool {
@@ -99,6 +129,10 @@ func (l *Logger) With(args ...any) *Logger {
 	}
 }
 
+func (l *Logger) SetSource(source bool) {
+	l.source = &source
+}
+
 // Overriding default, such that the source is correct
 // this is almost a copy of the slog.log function
 func (l *Logger) log(level slog.Level, msg string, args ...any) {
@@ -107,7 +141,7 @@ func (l *Logger) log(level slog.Level, msg string, args ...any) {
 		return
 	}
 	var pc uintptr
-	if config.I().GetLoggingConfig().GetSource() {
+	if (l.source != nil && *l.source) || (source && l.source == nil) {
 		var pcs [1]uintptr
 		runtime.Callers(3, pcs[:])
 		pc = pcs[0]

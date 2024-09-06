@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
@@ -10,10 +11,14 @@ import (
 )
 
 const (
-	TokenCookieName = "token"
+	HeaderName = "Authorization"
+	AuthScheme = "Bearer"
 )
 
-var authProvider Provider
+var (
+	ErrMissingOrMalformedAPIKey = errors.New("missing or malformed API key")
+	authProvider                Provider
+)
 
 func Init() {
 	authProvider = newAuth()
@@ -24,24 +29,35 @@ func I() Provider {
 }
 
 type authImpl struct {
-	pass   string
 	tokens map[string]time.Time
+	pass   func() string
 }
 
 func newAuth() Provider {
 	return &authImpl{
 		tokens: make(map[string]time.Time),
-		pass:   config.OrDefault(config.I().GetPassWord(), "admin"),
+		pass:   func() string { return config.OrDefault(config.I().Password, "admin") },
 	}
 }
 
 func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
-	token := ctx.Cookies(TokenCookieName)
-	if token == "" {
-		return false, nil
-	}
+	auth := ctx.Get(HeaderName)
+	l := len(AuthScheme)
+	key, err := func() (string, error) {
+		if len(auth) > 0 && l == 0 {
+			return auth, nil
+		}
+		if len(auth) > l+1 && auth[:l] == AuthScheme {
+			return auth[l+1:], nil
+		}
 
-	t, ok := v.tokens[token]
+		return "", ErrMissingOrMalformedAPIKey
+	}()
+
+	if err != nil {
+		return false, err
+	}
+	t, ok := v.tokens[key]
 	if !ok {
 		return false, nil
 	}
@@ -49,42 +65,25 @@ func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	return time.Since(t) < time.Hour*24*7, nil
 }
 
-func (v *authImpl) Login(ctx *fiber.Ctx) error {
+func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 	body := payload.LoginRequest{}
 	err := ctx.BodyParser(&body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	password := body.Password
 	if password == "" {
-		return badRequest("Password is required")
+		return nil, badRequest("Password is required")
 	}
 
-	if password != v.pass {
-		return badRequest("Invalid password")
+	if password != v.pass() {
+		return nil, badRequest("Invalid password")
 	}
-
-	sessionOnly := body.Remember == ""
 
 	token := generateSecureToken(32)
 	v.tokens[token] = time.Now().Add(time.Hour * 24 * 7)
-
-	ctx.Cookie(&fiber.Cookie{
-		Name:        TokenCookieName,
-		Value:       token,
-		SessionOnly: sessionOnly,
-		Expires:     time.Now().Add(time.Hour * 24 * 7),
-	})
-	return nil
-}
-
-func (v *authImpl) Logout(ctx *fiber.Ctx) error {
-	ctx.Cookie(&fiber.Cookie{
-		Name:    TokenCookieName,
-		Expires: time.Now().Add(-(time.Hour * 5)),
-	})
-	return nil
+	return &payload.LoginResponse{Token: token}, nil
 }
 
 func badRequest(msg string) error {

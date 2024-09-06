@@ -5,10 +5,24 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
+	"github.com/gofiber/fiber/v2/utils"
 )
 
 func Setup(app fiber.Router) {
 	log.Debug("registering api routes")
+
+	c := cache.New(cache.Config{
+		CacheControl: true,
+		Next: func(c *fiber.Ctx) bool {
+			return false
+		},
+		KeyGenerator: func(ctx *fiber.Ctx) string {
+			return ctx.Path() + "_" + string(utils.CopyBytes(ctx.Body()))
+		},
+		Methods: []string{fiber.MethodGet, fiber.MethodPost},
+	})
+
 	api := app.Group("/api")
 
 	api.Get("/health", func(c *fiber.Ctx) error {
@@ -16,20 +30,27 @@ func Setup(app fiber.Router) {
 	})
 
 	api.Post("/login", routes.Login)
-	api.Get("/logout", routes.Logout)
 
-	api.Post("/search", auth.Middleware(), routes.Search)
-	api.Get("/stats", auth.Middleware(), routes.Stats)
-	api.Post("/download/", auth.Middleware(), routes.Download)
-	api.Post("/stop/", auth.Middleware(), routes.Stop)
+	api.Use(auth.Middleware)
 
-	api.Get("/pages", auth.Middleware(), routes.Pages)
-	api.Get("/pages/:index", auth.Middleware(), routes.Page)
+	api.Post("/search", c, routes.Search)
+	api.Get("/stats", routes.Stats)
+	api.Post("/download", routes.Download)
+	api.Post("/stop", routes.Stop)
 
 	io := api.Group("/io")
-	io.Post("/ls", auth.Middleware(), routes.ListDirs)
-	io.Post("/create", auth.Middleware(), routes.CreateDir)
+	io.Post("/ls", routes.ListDirs)
+	io.Post("/create", routes.CreateDir)
 
 	config := api.Group("/config")
-	config.Get("/", auth.Middleware(), routes.GetConfig)
+	config.Get("/", routes.GetConfig)
+	config.Post("/update", routes.UpdateConfig)
+
+	pages := config.Group("/pages")
+	pages.Get("/", routes.Pages)
+	pages.Get("/:index", routes.Page)
+	pages.Delete("/:index", routes.RemovePage)
+	pages.Post("/", routes.AddPage)
+	pages.Put("/:index", routes.UpdatePage)
+	pages.Post("/move", routes.MovePage)
 }

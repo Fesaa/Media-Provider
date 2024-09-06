@@ -61,10 +61,21 @@ func limeTransformer(s payload.SearchRequest) limetorrents.SearchOptions {
 }
 
 func nyaaTransformer(p config.Provider) requestTransformerFunc[nyaa.SearchOptions] {
+	var ps string
+	switch p {
+	case config.NYAA:
+		ps = "nyaa"
+		break
+	case config.SUKEBEI:
+		ps = "sukebei"
+		break
+	default:
+		panic("Invalid provider")
+	}
 	return func(s payload.SearchRequest) nyaa.SearchOptions {
 		n := nyaa.SearchOptions{}
 		n.Query = url.QueryEscape(s.Query)
-		n.Provider = string(p)
+		n.Provider = ps
 		categories, ok := s.Modifiers["categories"]
 		if ok && len(categories) > 0 {
 			n.Category = categories[0]

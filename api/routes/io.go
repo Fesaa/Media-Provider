@@ -6,6 +6,8 @@ import (
 	"github.com/Fesaa/Media-Provider/payload"
 	"os"
 	"path"
+	"slices"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,8 +21,19 @@ func ListDirs(ctx *fiber.Ctx) error {
 		})
 	}
 
-	base := config.OrDefault(config.I().GetRootDir(), "temp")
-	entries, err := os.ReadDir(path.Join(base, req.Dir))
+	// TODO: I don't know if this is enough, would need to properly check.
+	// This endpoint is behind auth, so you'd already need om some access.
+	// But would still want to check.
+	cleanedPath := func(p string) string {
+		parts := strings.Split(p, "/")
+		filtered := slices.DeleteFunc(parts, func(s string) bool {
+			return s == ".." || s == "."
+		})
+		return strings.Join(filtered, "/")
+	}(req.Dir)
+
+	root := config.I().GetRootDir()
+	entries, err := os.ReadDir(path.Join(root, cleanedPath))
 	if err != nil {
 		log.Error("error while reading dir:", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -53,8 +66,14 @@ func CreateDir(ctx *fiber.Ctx) error {
 		})
 	}
 
-	base := config.OrDefault(config.I().GetRootDir(), "temp")
-	p := path.Join(base, req.BaseDir, req.NewDir)
+	if strings.Contains(req.NewDir, "..") || strings.Contains(req.BaseDir, "..") {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid path",
+		})
+	}
+
+	root := config.I().GetRootDir()
+	p := path.Join(root, req.BaseDir, req.NewDir)
 	err := os.Mkdir(p, 0755)
 	if err != nil {
 		log.Error("error while creating dir:", "err", err)

@@ -58,7 +58,7 @@ func subsPleaseNormalizer(torrents subsplease.SearchResult) []Info {
 			Name:     name,
 			Date:     data.ReleaseDate,
 			InfoHash: m.InfoHash.HexString(),
-			ImageUrl: data.ImageURL,
+			ImageUrl: data.ImageUrl(),
 			RefUrl:   data.ReferenceURL(),
 			Provider: config.SUBSPLEASE,
 		})
@@ -126,7 +126,7 @@ func nyaaNormalizer(provider config.Provider) responseNormalizerFunc[[]types.Tor
 		for i, t := range torrents {
 			torrentsInfo[i] = Info{
 				Name:        t.Name,
-				Description: t.Description,
+				Description: "", // The description passed here, is some raw html nonsense. Don't use it
 				Date:        t.Date,
 				Size:        t.Size,
 				Seeders:     t.Seeders,

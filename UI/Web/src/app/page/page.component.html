@@ -1,0 +1,95 @@
+@if (page !== undefined && searchForm !== undefined) {
+    <div class="justify-items-center bg-gray-50 dark:bg-gray-900 min-h-screen">
+      @if ((searchResult.length == 0 || showSearchForm) && !hideSearchForm) {
+        <div class="flex flex-row justify-center px-6 py-8 lg:py-0" [@dropDown]>
+          <div class="w-full rounded-lg bg-white shadow sm:max-w-md xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800 mt-10">
+            <div class="space-y-4 p-6 sm:p-8 md:space-y-6 dropdown-item">
+              <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+                {{ page.title }}
+              </h1>
+
+              <form
+                [formGroup]="searchForm"
+                (ngSubmit)="search()"
+                class="space-y-4 md:space-y-6 dropdown-item"
+              >
+
+                <app-form-input [formGroup]="searchForm"[controlName]="'query'" [label]="'Query'" ></app-form-input>
+
+                @for (modifier of modifiers | keyvalue; track modifier.key) {
+                  <div class="my-4 md:my-6">
+                    @switch (modifier.value.type) {
+                      @case (ModifierType.DROPDOWN) {
+                        <app-dropdown-modifier [key]="modifier.key" [modifier]="modifier.value"></app-dropdown-modifier>
+                      }
+                      @case (ModifierType.MULTI) {
+                        <app-multi-modifier [key]="modifier.key" [modifier]="modifier.value" [form]="searchForm"></app-multi-modifier>
+                      }
+                    }
+                  </div>
+                }
+
+                <div class="flex flex-col flex-wrap justify-start">
+                  <label
+                    for="dir"
+                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Directory
+                  </label>
+                  <div class="flex flex-row space-x-2 items-center">
+                    <select
+                      name="dir"
+                      id="dir"
+                      class="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                    >
+                      @for (dir of page.dirs; track $index) {
+                        <option [value]="dir">
+                          {{dir}}
+                        </option>
+                      }
+                    </select>
+                  </div>
+                  <div class="flex flex-row items-center space-x-2">
+                    <app-form-input [formGroup]="searchForm" controlName="customDir" [label]="''" class="w-full"></app-form-input>
+                    <div class="hover:cursor-pointer text-black dark:text-white flex flex-row space-x-2 items-center justify-center">
+                      <ng-icon (click)="selectCustomDir()"  name="heroSquare3Stack3d" size="32"></ng-icon>
+                      <ng-icon (click)="clearCustomDir()" name="heroXMark" size="32"></ng-icon>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  class="focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
+                >
+                  Search
+                </button>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      } @else if (!hideSearchForm) {
+        <div class="flex flex-row flex-grow justify-center" [@bounceIn500ms]>
+          <button
+            class="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 mt-5"
+            (click)="toggleSearchForm()"
+          >
+            Search
+          </button>
+        </div>
+
+      }
+
+      <section id="search-results" class="flex flex-col space-y-2 pt-5">
+        @if (searchResult.length > 0) {
+          @for (res of toShowResults(); track $index) {
+            <app-search-result [form]="searchForm" [page]="page" [searchResult]="res" [@flyInOut]></app-search-result>
+          }
+          <app-paginator [totalPages]="searchResult.length/10" (pageChange)="onPageChange($event)" ></app-paginator>
+        } @else {
+
+        }
+      </section>
+    </div>
+  }

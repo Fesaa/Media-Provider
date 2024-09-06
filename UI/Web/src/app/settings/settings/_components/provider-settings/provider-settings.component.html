@@ -1,0 +1,25 @@
+<div class="flex flex-col space-y-4 items-center md:items-start my-2">
+  <label
+    [for]="'providers'"
+    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+  >
+    Providers
+  </label>
+  <div class="grid grid-cols-2 md:flex md:flex-row space-y-2 md:space-y-0 md:space-x-2">
+    @for (provider of providerValues; track provider) {
+      <div class="flex items-center hover:cursor-pointer pb-2 {{$index < 20 ? 'dropdown-item' : ''}}" >
+        <input
+          type="checkbox"
+          id="{{provider}}"
+          [value]="provider"
+          [checked]="hasProvider(provider)"
+          (click)="onProviderCheckboxChange(provider)"
+          class="rounded border-gray-300 text-primary-600 focus:ring-primary-600 focus:border-primary-600 shadow-sm focus:ring focus:ring-opacity-50 h-4 w-4 mr-2"
+        />
+        <label [for]="provider" class="text-xs hover:cursor-pointer select-none text-black dark:text-white">
+          {{providerNames[$index] | titlecase}}
+        </label>
+      </div>
+    }
+  </div>
+</div>
