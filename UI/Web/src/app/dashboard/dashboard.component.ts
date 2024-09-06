@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {PageService} from "../_services/page.service";
 import {AsyncPipe} from "@angular/common";
@@ -21,18 +21,21 @@ import {QueuedInfoComponent} from "./_components/queued-info/queued-info.compone
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit,OnDestroy {
 
   loading = true;
   running: InfoStat[] | [] = [];
   queued: QueueStat[] | [] = [];
 
   constructor(private navService: NavService,
-              protected pageService: PageService,
               private downloadService: DownloadService,
               private cdRef: ChangeDetectorRef,
   ) {
     this.navService.setNavVisibility(true);
+  }
+
+  ngOnDestroy(): void {
+    this.downloadService.loadStats(false);
   }
 
   ngOnInit(): void {

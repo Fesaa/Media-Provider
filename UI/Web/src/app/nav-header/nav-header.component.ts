@@ -25,6 +25,7 @@ export class NavHeaderComponent implements OnInit {
 
   isMenuOpen = false;
   index: number | undefined;
+  path: string | undefined;
 
   pages: Page[] = [];
 
