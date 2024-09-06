@@ -70,11 +70,7 @@ func Save(cfg *Config, backUp ...bool) error {
 		}
 	}
 
-	err := write(configPath, cfg)
-	if err == nil {
-		slog.SetLogLoggerLevel(cfg.Logging.Level)
-	}
-	return err
+	return write(configPath, cfg)
 }
 
 func (c *Config) Save(backUp ...bool) error {

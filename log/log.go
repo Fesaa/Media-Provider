@@ -143,7 +143,7 @@ func (l *Logger) log(level slog.Level, msg string, args ...any) {
 	var pc uintptr
 	if (l.source != nil && *l.source) || (source && l.source == nil) {
 		var pcs [1]uintptr
-		runtime.Callers(3, pcs[:])
+		runtime.Callers(4, pcs[:])
 		pc = pcs[0]
 	}
 	r := slog.NewRecord(time.Now(), level, msg, pc)

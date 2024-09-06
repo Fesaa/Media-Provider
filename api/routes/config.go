@@ -40,6 +40,7 @@ func UpdateConfig(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	log.Init(config.I().Logging)
 	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
 }
 
