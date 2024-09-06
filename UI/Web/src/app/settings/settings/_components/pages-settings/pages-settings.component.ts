@@ -11,6 +11,9 @@ import {FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {KeyValuePipe, TitleCasePipe} from "@angular/common";
+import {ModifierSettingsComponent} from "../modifier-settings/modifier-settings.component";
+import {DirectorySettingsComponent} from "../directory-settings/directory-settings.component";
+import {ProviderSettingsComponent} from "../provider-settings/provider-settings.component";
 
 @Component({
   selector: 'app-pages-settings',
@@ -22,7 +25,10 @@ import {KeyValuePipe, TitleCasePipe} from "@angular/common";
     FormInputComponent,
     FormSelectComponent,
     KeyValuePipe,
-    TitleCasePipe
+    TitleCasePipe,
+    ModifierSettingsComponent,
+    DirectorySettingsComponent,
+    ProviderSettingsComponent
   ],
   templateUrl: './pages-settings.component.html',
   styleUrl: './pages-settings.component.css',
@@ -200,167 +206,5 @@ export class PagesSettingsComponent implements OnInit {
     });
   }
 
-  hasProvider(provider: Provider) {
-    if (this.selectedPage === null) {
-      return false;
-    }
-    return this.selectedPage.providers.includes(provider);
-  }
 
-  onProviderCheckboxChange(provider: number) {
-    if (this.pageForm === undefined) {
-      return;
-    }
-    const formArray = this.pageForm.controls['providers'];
-    if (formArray.value.includes(provider)) {
-      formArray.patchValue(formArray.value.filter((v: number) => v !== provider));
-    } else {
-      formArray.patchValue([...formArray.value, provider]);
-    }
-  }
-
-  async updateCustomDir() {
-    const newDir = await this.dialogService.openDirBrowser("");
-    if (newDir === undefined) {
-      return;
-    }
-    this.pageForm?.controls['custom_root_dir'].patchValue(newDir);
-  }
-
-  getDirs() {
-    return this.pageForm?.controls['dirs'].value;
-  }
-
-  updateDir(index: number, e: Event) {
-    const dir = (e.target as HTMLInputElement).value;
-    this.updateInArray(this.pageForm?.controls['dirs'] as FormArray, dir, index);
-  }
-
-  async getNewDir(index: number) {
-    const dir = await this.dialogService.openDirBrowser("");
-    if (dir === undefined) {
-      return;
-    }
-    this.updateInArray(this.pageForm?.controls['dirs'] as FormArray, dir, index);
-  }
-
-  async removeDir(index: number) {
-    const dirs = this.pageForm?.controls['dirs'] as FormArray;
-    const values = dirs.value;
-    if (index >= values.length) {
-      this.toastR.error('Invalid index', 'Error');
-      return;
-    }
-
-    if (!await this.dialogService.openDialog(`Are you sure you want to remove ${values[index]}?`)) {
-      return;
-    }
-
-    if (dirs.value.length === 1) {
-      this.toastR.error('You must have at least one directory', 'Error');
-      return;
-    }
-
-    dirs.patchValue(values.filter((_: any, i: number) => i !== index));
-    this.toastR.warning(`Removed directory ${values[index]}`, 'Success');
-  }
-
-  private updateInArray(formArray: FormArray, value: any, index: number) {
-    const values = formArray.value;
-
-    if (index >= values.length) {
-      const find = values.find((v: any) => v === value);
-      if (find !== undefined) {
-        this.toastR.info('Directory already added', 'Nothing happened');
-        return;
-      }
-
-      values.push(value);
-      formArray.patchValue(values);
-      this.toastR.success(`Added directory ${value}`, 'Success');
-      return;
-    }
-
-    values[index] = value;
-    formArray.patchValue(values);
-  }
-
-  toggleModifiers() {
-    this.showModifiers = !this.showModifiers;
-    this.cdRef.detectChanges();
-  }
-
-  getModifiers() {
-    const modifiers: {[key: string]: Modifier} = {};
-    if (this.pageForm === undefined) {
-      return modifiers;
-    }
-
-    const form = this.pageForm.controls['modifiers'] as FormGroup;
-    for (const [key, value] of Object.entries(form.controls)) {
-      modifiers[key] = value.value;
-    }
-
-    return modifiers;
-  }
-
-  addModifier() {
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    modifierGroup.addControl('modifier', this.fb.group({
-      title: this.fb.control('', [Validators.required]),
-      type: this.fb.control('string', [Validators.required]),
-      values: this.fb.control({}),
-    }));
-  }
-
-  updateModifierTitle(key: string, e: Event) {
-    const title = (e.target as HTMLInputElement).value;
-
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    const modifier = modifierGroup.controls[key] as FormGroup;
-    modifier.controls['title'].patchValue(title);
-  }
-
-  updateModifierKey(key: string, e: Event) {
-    const newKey = (e.target as HTMLInputElement).value;
-
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    const modifier = modifierGroup.controls[key] as FormGroup;
-    modifierGroup.removeControl(key);
-    modifierGroup.addControl(newKey, modifier);
-  }
-
-  async removeModifier(key: string) {
-    if (!await this.dialogService.openDialog(`Are you sure you want to remove ${key}?`)) {
-      return;
-    }
-
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    modifierGroup.removeControl(key);
-    this.toastR.warning(`Removed modifier ${key}`, 'Success');
-  }
-
-  async removeModifierValue(key: string, valueKey: string) {
-    if (!await this.dialogService.openDialog(`Are you sure you want to remove ${valueKey}?`)) {
-      return;
-    }
-
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    const modifier = modifierGroup.controls[key] as FormGroup;
-    const values = modifier.controls['values'];
-    delete values.value[valueKey];
-    values.patchValue(values.value);
-    this.toastR.warning(`Removed value ${valueKey}`, 'Success');
-  }
-
-  addModifierValue(key: string) {
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    const modifier = modifierGroup.controls[key] as FormGroup;
-    const values = modifier.controls['values'];
-    values.value['key'] = 'value';
-  }
-
-
-  protected readonly providerValues = providerValues;
-  protected readonly providerNames = providerNames;
 }

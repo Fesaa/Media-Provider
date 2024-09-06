@@ -34,7 +34,7 @@ type Page struct {
 	Provider      []Provider          `json:"providers" validate:"required,min=1"`
 	Modifiers     map[string]Modifier `json:"modifiers"`
 	Dirs          []string            `json:"dirs" validate:"required,min=1"`
-	CustomRootDir string              `json:"custom_root_dir" validate:"required"`
+	CustomRootDir string              `json:"custom_root_dir"`
 }
 
 type Provider int

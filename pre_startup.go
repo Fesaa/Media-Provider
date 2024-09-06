@@ -5,12 +5,18 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers"
+	"github.com/go-playground/validator/v10"
 	"os"
 	"path"
 	"strings"
 )
 
 func validateConfig() {
+	if err := validator.New().Struct(cfg); err != nil {
+		log.Warn("error while validating config", "err", err)
+		panic(err)
+	}
+
 	if err := validateRootConfig(cfg); err != nil {
 		log.Warn("error while validating config", "err", err)
 		panic(err)
