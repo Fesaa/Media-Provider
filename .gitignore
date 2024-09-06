@@ -6,3 +6,4 @@ config.json
 .idea
 public
 !UI/Web/public
+backup
