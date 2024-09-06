@@ -16,6 +16,15 @@ const (
 
 var source bool
 
+// Always initialize with default values, so that the logger is always usable
+func init() {
+	Init(config.Logging{
+		Handler: config.LogHandlerText,
+		Level:   slog.LevelInfo,
+		Source:  false,
+	})
+}
+
 func Init(cfg config.Logging) {
 	opt := &slog.HandlerOptions{
 		AddSource:   cfg.Source,
