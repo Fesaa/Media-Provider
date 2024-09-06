@@ -33,6 +33,7 @@ export class PagesSettingsComponent implements OnInit {
   pages: Page[] = []
 
   cooldown = false;
+  selectedPageIndex = -1;
   selectedPage: Page | null = null;
 
   pageForm: FormGroup | undefined;
@@ -60,7 +61,7 @@ export class PagesSettingsComponent implements OnInit {
     this.isMobile = window.innerWidth < 768;
   }
 
-  setSelectedPage(page?: Page) {
+  setSelectedPage(index: number | undefined, page?: Page) {
     if (page === undefined) {
       page = {
         dirs: [],
@@ -72,6 +73,7 @@ export class PagesSettingsComponent implements OnInit {
     }
     this.pageForm = undefined;
     this.selectedPage = page;
+    this.selectedPageIndex = index === undefined ? -1 : index;
     this.buildForm();
     this.cooldown = true;
     setTimeout(() => this.cooldown = false, 700);
@@ -102,7 +104,51 @@ export class PagesSettingsComponent implements OnInit {
   }
 
   submit() {
-    console.log(this.pageForm?.value);
+    if (this.pageForm === undefined) {
+      return;
+    }
+
+    if (this.pageForm.invalid) {
+      this.displayErrors();
+      return;
+    }
+
+    const page = this.pageForm.value as Page;
+    if (this.selectedPageIndex === -1) {
+      this.configService.addPage(page).subscribe({
+        next: () => {
+          this.toastR.success(`${page.title} added`, 'Success');
+          this.pageService.refreshPages();
+        },
+        error: (err) => {
+          this.toastR.error(`Failed to add page ${err.error.error}`, 'Error');
+        }
+      });
+      return;
+    }
+
+    this.configService.updatePage(page, this.selectedPageIndex).subscribe({
+      next: () => {
+        this.toastR.success(`${page.title} updated`, 'Success');
+        this.pageService.refreshPages();
+      },
+      error: (err) => {
+        this.toastR.error(`Failed to update page ${err.error.error}`, 'Error');
+      }
+    });
+  }
+
+  private displayErrors() {
+    let count = 0;
+    Object.keys(this.pageForm!.controls).forEach(key => {
+      const controlErrors = this.pageForm!.get(key)?.errors;
+      if (controlErrors) {
+        console.log(controlErrors);
+        count += Object.keys(controlErrors).length;
+      }
+    });
+
+    this.toastR.error(`Found ${count} errors in the form`, 'Cannot submit');
   }
 
   async remove(index: number) {
@@ -232,7 +278,6 @@ export class PagesSettingsComponent implements OnInit {
     values[index] = value;
     formArray.patchValue(values);
   }
-
 
   toggleModifiers() {
     this.showModifiers = !this.showModifiers;

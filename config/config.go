@@ -31,10 +31,10 @@ type Logging struct {
 
 type Page struct {
 	Title         string              `json:"title" validate:"required,min=3,max=25"`
-	Provider      []Provider          `json:"providers"`
+	Provider      []Provider          `json:"providers" validate:"required,min=1"`
 	Modifiers     map[string]Modifier `json:"modifiers"`
-	Dirs          []string            `json:"dirs"`
-	CustomRootDir string              `json:"custom_root_dir"`
+	Dirs          []string            `json:"dirs" validate:"required,min=1"`
+	CustomRootDir string              `json:"custom_root_dir" validate:"required"`
 }
 
 type Provider int

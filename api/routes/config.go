@@ -76,6 +76,11 @@ func AddPage(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
 	}
 
+	if err = val.Struct(page); err != nil {
+		log.Debug("Invalid page", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	if err = config.I().AddPage(page, syncID); err != nil {
 		log.Error("Failed to update page", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -100,6 +105,11 @@ func UpdatePage(ctx *fiber.Ctx) error {
 	if err != nil {
 		log.Debug("Invalid sync_id", "error", err)
 		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
+	}
+
+	if err = val.Struct(page); err != nil {
+		log.Debug("Invalid page", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	if err = config.I().UpdatePage(page, index, syncID); err != nil {

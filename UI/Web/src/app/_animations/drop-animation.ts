@@ -6,20 +6,22 @@ export const dropAnimation = trigger("dropDown", [
     style({ height: 0, overflow: "hidden" }),
     query(".dropdown-item", [
       style({ opacity: 0, transform: "translateY(-50px)" })
-    ]),
+    ], { optional: true }),
     sequence([
       animate("200ms", style({ height: "*" })),
       query(".dropdown-item", [
         stagger(-50, [
           animate("300ms ease", style({ opacity: 1, transform: "none" }))
         ])
-      ])
+      ], { optional: true })
     ])
   ]),
 
   transition(":leave", [
     style({ height: "*", overflow: "hidden" }),
-    query(".dropdown-item", [style({ opacity: 1, transform: "none" })]),
+    query(".dropdown-item", [
+      style({ opacity: 1, transform: "none" })
+    ], { optional: true }),
     sequence([
       query(".dropdown-item", [
         stagger(50, [
@@ -28,7 +30,7 @@ export const dropAnimation = trigger("dropDown", [
             style({ opacity: 0, transform: "translateY(-50px)" })
           )
         ])
-      ]),
+      ], { optional: true }),
       animate("200ms", style({ height: 0 }))
     ])
   ])
