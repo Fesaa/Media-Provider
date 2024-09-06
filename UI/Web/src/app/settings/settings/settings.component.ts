@@ -1,7 +1,5 @@
 import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
-import { Config } from '../../_models/config';
 import {NavService} from "../../_services/nav.service";
-import {ConfigService} from "../../_services/config.service";
 import {NgIcon} from "@ng-icons/core";
 import {ServerSettingsComponent} from "./_components/server-settings/server-settings.component";
 import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
@@ -10,8 +8,8 @@ import {ActivatedRoute, Router} from "@angular/router";
 
 export enum SettingsID {
 
-  Server,
-  Pages,
+  Server = "server",
+  Pages = "pages",
 
 }
 
@@ -47,13 +45,13 @@ export class SettingsComponent implements OnInit{
   constructor(private navService: NavService,
               private cdRef: ChangeDetectorRef,
               private activatedRoute: ActivatedRoute,
+              private router: Router
   ) {
 
     this.activatedRoute.fragment.subscribe(fragment => {
       if (fragment) {
-        const id = parseInt(fragment);
-        if (id in SettingsID) {
-          this.selected = id;
+        if (Object.values(SettingsID).find(id => id === fragment)) {
+          this.selected = fragment as SettingsID;
         }
       }
     })
@@ -68,9 +66,9 @@ export class SettingsComponent implements OnInit{
     this.cdRef.detectChanges();
   }
 
-  // TODO: Update route fragment
   setSettings(id: SettingsID) {
     this.selected = id;
+    this.router.navigate([], {fragment: id});
     this.cdRef.detectChanges();
   }
 

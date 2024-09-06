@@ -11,7 +11,6 @@ import {FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {KeyValuePipe, TitleCasePipe} from "@angular/common";
-import {getPropertyNameText} from "@angular/cdk/schematics";
 
 @Component({
   selector: 'app-pages-settings',
@@ -220,8 +219,6 @@ export class PagesSettingsComponent {
     formArray.patchValue(values);
   }
 
-  protected readonly Provider = Provider;
-  protected readonly Object = Object;
   protected readonly providerValues = providerValues;
   protected readonly providerNames = providerNames;
 }
