@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import {Page, Provider, providerNames, providerValues} from "../../../../_models/page";
+import {ChangeDetectorRef, Component, HostListener, OnInit} from '@angular/core';
+import {Modifier, Page, Provider, providerNames, providerValues} from "../../../../_models/page";
 import {PageService} from "../../../../_services/page.service";
 import {ConfigService} from "../../../../_services/config.service";
 import {RouterLink} from "@angular/router";
@@ -28,7 +28,7 @@ import {KeyValuePipe, TitleCasePipe} from "@angular/common";
   styleUrl: './pages-settings.component.css',
   animations: [dropAnimation],
 })
-export class PagesSettingsComponent {
+export class PagesSettingsComponent implements OnInit {
 
   pages: Page[] = []
 
@@ -37,14 +37,27 @@ export class PagesSettingsComponent {
 
   pageForm: FormGroup | undefined;
 
+  showModifiers = false;
+  isMobile = false;
+
   constructor(private configService: ConfigService,
               private toastR: ToastrService,
               private pageService: PageService,
               private dialogService: DialogService,
-              private fb: FormBuilder
+              private fb: FormBuilder,
+              private cdRef: ChangeDetectorRef,
   ) {
     this.configService.getConfig().subscribe();
     this.pageService.pages$.subscribe(pages => this.pages = pages);
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.isMobile = window.innerWidth < 768;
+  }
+
+  ngOnInit(): void {
+    this.isMobile = window.innerWidth < 768;
   }
 
   setSelectedPage(page?: Page) {
@@ -85,6 +98,7 @@ export class PagesSettingsComponent {
       }));
     }
 
+    this.pageForm.addControl('modifiers', modifiers);
   }
 
   submit() {
@@ -161,7 +175,7 @@ export class PagesSettingsComponent {
     this.pageForm?.controls['custom_root_dir'].patchValue(newDir);
   }
 
-  getCustomDirs() {
+  getDirs() {
     return this.pageForm?.controls['dirs'].value;
   }
 
@@ -218,6 +232,74 @@ export class PagesSettingsComponent {
     values[index] = value;
     formArray.patchValue(values);
   }
+
+
+  toggleModifiers() {
+    this.showModifiers = !this.showModifiers;
+    this.cdRef.detectChanges();
+  }
+
+  getModifiers() {
+    const modifiers: {[key: string]: Modifier} = {};
+    if (this.pageForm === undefined) {
+      return modifiers;
+    }
+
+    const form = this.pageForm.controls['modifiers'] as FormGroup;
+    for (const [key, value] of Object.entries(form.controls)) {
+      modifiers[key] = value.value;
+    }
+
+    return modifiers;
+  }
+
+  updateModifierTitle(key: string, e: Event) {
+    const title = (e.target as HTMLInputElement).value;
+
+    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
+    const modifier = modifierGroup.controls[key] as FormGroup;
+    modifier.controls['title'].patchValue(title);
+  }
+
+  updateModifierKey(key: string, e: Event) {
+    const newKey = (e.target as HTMLInputElement).value;
+
+    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
+    const modifier = modifierGroup.controls[key] as FormGroup;
+    modifierGroup.removeControl(key);
+    modifierGroup.addControl(newKey, modifier);
+  }
+
+  async removeModifier(key: string) {
+    if (!await this.dialogService.openDialog(`Are you sure you want to remove ${key}?`)) {
+      return;
+    }
+
+    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
+    modifierGroup.removeControl(key);
+    this.toastR.warning(`Removed modifier ${key}`, 'Success');
+  }
+
+  async removeModifierValue(key: string, valueKey: string) {
+    if (!await this.dialogService.openDialog(`Are you sure you want to remove ${valueKey}?`)) {
+      return;
+    }
+
+    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
+    const modifier = modifierGroup.controls[key] as FormGroup;
+    const values = modifier.controls['values'];
+    delete values.value[valueKey];
+    values.patchValue(values.value);
+    this.toastR.warning(`Removed value ${valueKey}`, 'Success');
+  }
+
+  addModifierValue(key: string) {
+    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
+    const modifier = modifierGroup.controls[key] as FormGroup;
+    const values = modifier.controls['values'];
+    values.value['key'] = 'value';
+  }
+
 
   protected readonly providerValues = providerValues;
   protected readonly providerNames = providerNames;
