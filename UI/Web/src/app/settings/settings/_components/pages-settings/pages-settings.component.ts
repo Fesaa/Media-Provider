@@ -7,10 +7,11 @@ import {NgIcon} from "@ng-icons/core";
 import {ToastrService} from "ngx-toastr";
 import {dropAnimation} from "../../../../_animations/drop-animation";
 import {DialogService} from "../../../../_services/dialog.service";
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {KeyValuePipe, TitleCasePipe} from "@angular/common";
+import {getPropertyNameText} from "@angular/cdk/schematics";
 
 @Component({
   selector: 'app-pages-settings',
@@ -159,6 +160,64 @@ export class PagesSettingsComponent {
       return;
     }
     this.pageForm?.controls['custom_root_dir'].patchValue(newDir);
+  }
+
+  getCustomDirs() {
+    return this.pageForm?.controls['dirs'].value;
+  }
+
+  updateDir(index: number, e: Event) {
+    const dir = (e.target as HTMLInputElement).value;
+    this.updateInArray(this.pageForm?.controls['dirs'] as FormArray, dir, index);
+  }
+
+  async getNewDir(index: number) {
+    const dir = await this.dialogService.openDirBrowser("");
+    if (dir === undefined) {
+      return;
+    }
+    this.updateInArray(this.pageForm?.controls['dirs'] as FormArray, dir, index);
+  }
+
+  async removeDir(index: number) {
+    const dirs = this.pageForm?.controls['dirs'] as FormArray;
+    const values = dirs.value;
+    if (index >= values.length) {
+      this.toastR.error('Invalid index', 'Error');
+      return;
+    }
+
+    if (!await this.dialogService.openDialog(`Are you sure you want to remove ${values[index]}?`)) {
+      return;
+    }
+
+    if (dirs.value.length === 1) {
+      this.toastR.error('You must have at least one directory', 'Error');
+      return;
+    }
+
+    dirs.patchValue(values.filter((_: any, i: number) => i !== index));
+    this.toastR.warning(`Removed directory ${values[index]}`, 'Success');
+  }
+
+  private updateInArray(formArray: FormArray, value: any, index: number) {
+    const values = formArray.value;
+
+    if (index >= values.length) {
+      const find = values.find((v: any) => v === value);
+      if (find !== undefined) {
+        this.toastR.info('Directory already added', 'Nothing happened');
+        return;
+      }
+
+      values.push(value);
+      formArray.patchValue(values);
+      this.toastR.success(`Added directory ${value}`, 'Success');
+      return;
+    }
+
+    values[index] = value;
+    formArray.patchValue(values);
   }
 
   protected readonly Provider = Provider;
