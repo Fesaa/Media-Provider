@@ -153,6 +153,14 @@ export class PagesSettingsComponent {
     }
   }
 
+  async updateCustomDir() {
+    const newDir = await this.dialogService.openDirBrowser("");
+    if (newDir === undefined) {
+      return;
+    }
+    this.pageForm?.controls['custom_root_dir'].patchValue(newDir);
+  }
+
   protected readonly Provider = Provider;
   protected readonly Object = Object;
   protected readonly providerValues = providerValues;

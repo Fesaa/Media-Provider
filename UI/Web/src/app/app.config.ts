@@ -23,6 +23,7 @@ import {
   heroServerStack,
   heroPlusCircle,
   heroMinus,
+  heroXMark,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {provideToastr} from "ngx-toastr";
@@ -62,7 +63,8 @@ export const appConfig: ApplicationConfig = {
       heroAdjustmentsHorizontal,
       heroServerStack,
       heroPlusCircle,
-      heroMinus
+      heroMinus,
+      heroXMark,
     })), provideAnimationsAsync()
   ]
 };

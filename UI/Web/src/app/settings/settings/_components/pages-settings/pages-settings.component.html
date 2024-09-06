@@ -72,7 +72,13 @@
           </div>
         </div>
 
-        <app-form-input [formGroup]="pageForm" controlName="custom_root_dir" label="Custom Root Dir"></app-form-input>
+        <div class="flex flex-row">
+          <app-form-input [formGroup]="pageForm" controlName="custom_root_dir" label="Custom Root Dir" class="w-full mr-5"></app-form-input>
+          <div (click)="updateCustomDir()" class="hover:cursor-pointer text-black dark:text-white flex flex-col justify-around">
+            <div></div>
+            <ng-icon name="heroSquare3Stack3d" size="32"></ng-icon>
+          </div>
+        </div>
 
         <div class="flex w-full flex-grow flex-row justify-center md:justify-end mt-4 md:mt-2">
           <button

@@ -1,25 +1,27 @@
-import {ChangeDetectorRef, Component, Input, OnInit} from '@angular/core';
-import {IoService} from "../_services/io.service";
-import {ToastrService} from "ngx-toastr";
-import {DirEntry} from "../_models/io";
-import {FormsModule} from "@angular/forms";
-import {Stack} from "../shared/data-structures/stack";
+import {Component, ComponentRef, HostListener, Input, OnInit} from '@angular/core';
+import {NgClass} from "@angular/common";
+import {DirectoryBrowserComponent} from "../../../directory-browser/directory-browser.component";
+import {ReplaySubject} from "rxjs";
 import {NgIcon} from "@ng-icons/core";
+import {DirEntry} from "../../../_models/io";
+import {Stack} from "../../data-structures/stack";
+import {IoService} from "../../../_services/io.service";
+import {ToastrService} from "ngx-toastr";
 import {Clipboard} from "@angular/cdk/clipboard";
-import {dropAnimation} from "../_animations/drop-animation";
 
 @Component({
-  selector: 'app-directory-browser',
+  selector: 'app-directory-selector',
   standalone: true,
   imports: [
-    FormsModule,
+    NgClass,
     NgIcon
   ],
-  templateUrl: './directory-browser.component.html',
-  styleUrl: './directory-browser.component.css',
-  animations: [dropAnimation],
+  templateUrl: './directory-selector.component.html',
+  styleUrl: './directory-selector.component.css'
 })
-export class DirectoryBrowserComponent implements OnInit{
+export class DirectorySelectorComponent implements OnInit {
+
+  @Input() isMobile = false;
 
   @Input({required: true}) root!: string;
   @Input() showFiles: boolean = false;
@@ -33,16 +35,19 @@ export class DirectoryBrowserComponent implements OnInit{
 
   query: string = '';
   newDirName: string = '';
+  private result = new ReplaySubject<string | undefined>(1)
 
   constructor(private ioService: IoService,
               private toastR: ToastrService,
               private clipboard: Clipboard,
-  ) {}
+  ) {
+  }
 
   ngOnInit(): void {
     this.currentRoot = this.root;
     this.routeStack.push(this.root);
     this.loadChildren(this.root);
+    this.isMobile = window.innerWidth < 768;
   }
 
   getEntries() {
@@ -57,7 +62,7 @@ export class DirectoryBrowserComponent implements OnInit{
     this.query = '';
     this.currentRoot = entry.name;
     this.routeStack.push(entry.name);
-    this.loadChildren( this.routeStack.items.join('/'));
+    this.loadChildren(this.routeStack.items.join('/'));
   }
 
   goBack() {
@@ -71,18 +76,6 @@ export class DirectoryBrowserComponent implements OnInit{
       this.currentRoot = nextRoot;
     }
     this.loadChildren(this.routeStack.items.join('/'));
-  }
-
-  private loadChildren(dir: string) {
-    this.ioService.ls(dir, this.showFiles).subscribe({
-      next: (entries) => {
-        this.entries = entries || [];
-      },
-      error: (err) => {
-        this.routeStack.pop();
-        console.error(err);
-      }
-    })
   }
 
   normalize(str: string): string {
@@ -113,7 +106,6 @@ export class DirectoryBrowserComponent implements OnInit{
     });
   }
 
-
   copyPath(entry: DirEntry) {
     let path = this.routeStack.items.join('/');
     if (entry.dir) {
@@ -122,6 +114,39 @@ export class DirectoryBrowserComponent implements OnInit{
     this.clipboard.copy(path);
   }
 
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.isMobile = window.innerWidth < 768;
+  }
 
+  public getResult() {
+    return this.result.asObservable();
+  }
+
+  closeDialog() {
+    this.result.next(undefined);
+    this.result.complete();
+  }
+
+  confirm() {
+    let path = this.routeStack.items.join('/');
+    if (path.startsWith('/')) {
+      path = path.substring(1);
+    }
+    this.result.next(path);
+    this.result.complete();
+  }
+
+  private loadChildren(dir: string) {
+    this.ioService.ls(dir, this.showFiles).subscribe({
+      next: (entries) => {
+        this.entries = entries || [];
+      },
+      error: (err) => {
+        this.routeStack.pop();
+        console.error(err);
+      }
+    })
+  }
 
 }

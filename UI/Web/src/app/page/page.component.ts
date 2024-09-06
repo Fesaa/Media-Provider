@@ -18,6 +18,7 @@ import {flyInOutAnimation} from "../_animations/fly-animation";
 import {DirectoryBrowserComponent} from "../directory-browser/directory-browser.component";
 import {NgIcon} from "@ng-icons/core";
 import {FormInputComponent} from "../shared/form/form-input/form-input.component";
+import {DialogService} from "../_services/dialog.service";
 
 @Component({
   selector: 'app-page',
@@ -49,15 +50,13 @@ export class PageComponent implements OnInit{
   showSearchForm: boolean = true;
   hideSearchForm: boolean = false;
 
-  showDirBrowser: boolean = false;
-  cooldown: boolean = false;
-
   constructor(private navService: NavService,
               private pageService: PageService,
               private downloadService: DownloadService,
               private cdRef: ChangeDetectorRef,
               private fb: FormBuilder,
-              private toastr: ToastrService
+              private toastr: ToastrService,
+              private dialogService: DialogService,
   ) {
     this.navService.setNavVisibility(true);
     this.downloadService.loadStats(false);
@@ -69,7 +68,6 @@ export class PageComponent implements OnInit{
         this.hideSearchForm = true;
         this.cdRef.detectChanges();
         this.searchResult = [];
-        this.showDirBrowser = false;
 
         setTimeout(() => {
           this.page = page;
@@ -146,17 +144,19 @@ export class PageComponent implements OnInit{
     this.cdRef.detectChanges();
   }
 
-  toggleDirBrowser() {
-    if (this.cooldown) {
+  async selectCustomDir() {
+    if (!this.page) {
       return;
     }
-    this.showDirBrowser = !this.showDirBrowser;
-    this.cooldown = true;
-    this.cdRef.detectChanges();
-    setTimeout(() => {
-      this.cooldown = false;
-      this.cdRef.detectChanges();
-    }, 500)
+
+    const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir);
+    if (dir) {
+      this.searchForm?.get('customDir')?.setValue(dir);
+    }
+  }
+
+  clearCustomDir() {
+    this.searchForm?.get('customDir')?.setValue(null);
   }
 
   toShowResults(): SearchInfo[] {
