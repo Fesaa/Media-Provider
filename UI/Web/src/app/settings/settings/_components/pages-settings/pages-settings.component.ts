@@ -298,6 +298,15 @@ export class PagesSettingsComponent implements OnInit {
     return modifiers;
   }
 
+  addModifier() {
+    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
+    modifierGroup.addControl('modifier', this.fb.group({
+      title: this.fb.control('', [Validators.required]),
+      type: this.fb.control('string', [Validators.required]),
+      values: this.fb.control({}),
+    }));
+  }
+
   updateModifierTitle(key: string, e: Event) {
     const title = (e.target as HTMLInputElement).value;
 

@@ -116,8 +116,13 @@
 
           <div class="flex flex-row w-full justify-between">
             <h1 class="w-2/5 border-b-2 border-black dark:border-white mb-2">Modifiers</h1>
-            <div (click)="toggleModifiers()" class="hover:cursor-pointer text-black dark:text-white">
-              <ng-icon [name]="showModifiers ? 'heroChevronDown' : 'heroChevronUp'" size="32"></ng-icon>
+            <div class="flex flex-row space-x-2">
+              <div (click)="addModifier()" class="hover:cursor-pointer text-black dark:text-white">
+                <ng-icon name="heroPlus" size="32"></ng-icon>
+              </div>
+              <div (click)="toggleModifiers()" class="hover:cursor-pointer text-black dark:text-white">
+                <ng-icon [name]="showModifiers ? 'heroChevronDown' : 'heroChevronUp'" size="32"></ng-icon>
+              </div>
             </div>
           </div>
 
