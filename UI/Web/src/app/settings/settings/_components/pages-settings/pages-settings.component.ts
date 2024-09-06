@@ -61,7 +61,13 @@ export class PagesSettingsComponent implements OnInit {
     this.isMobile = window.innerWidth < 768;
   }
 
-  setSelectedPage(index: number | undefined, page?: Page) {
+  setSelectedPage(index: number | undefined, page?: Page | null) {
+    if (page === null) {
+      this.selectedPage = null;
+      this.selectedPageIndex = -1;
+      this.buildForm();
+      return;
+    }
     if (page === undefined) {
       page = {
         dirs: [],

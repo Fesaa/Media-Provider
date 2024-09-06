@@ -41,6 +41,7 @@
   } @else if (!cooldown && pageForm !== undefined && selectedPage != null) {
 
     <div class="w-full h-full">
+        <ng-icon name="heroChevronLeft" size="32" class="hover:cursor-pointer" (click)="setSelectedPage(undefined, null)"></ng-icon>
 
       <form [formGroup]="pageForm" (ngSubmit)="submit()">
 
