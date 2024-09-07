@@ -67,27 +67,28 @@ func IsTraceEnabled() bool {
 }
 
 func Error(msg string, args ...any) {
-	Default().Error(msg, args...)
+	Default().log(slog.LevelError, msg, args...)
 }
 
 func Warn(msg string, args ...any) {
-	Default().Warn(msg, args...)
+	Default().log(slog.LevelWarn, msg, args...)
 }
 
 func Info(msg string, args ...any) {
-	Default().Info(msg, args...)
+	Default().log(slog.LevelInfo, msg, args...)
 }
 
 func Debug(msg string, args ...any) {
-	Default().Debug(msg, args...)
+	Default().log(slog.LevelDebug, msg, args...)
 }
 
 func Trace(msg string, args ...any) {
-	Default().Trace(msg, args...)
+	Default().log(LevelTrace, msg, args...)
 }
 
 func Fatal(msg string, err error, args ...any) {
-	Default().Fatal(msg, err, args...)
+	Default().log(LevelFatal, msg, args...)
+	panic(err)
 }
 
 func (l *Logger) Error(msg string, args ...any) {
@@ -143,7 +144,7 @@ func (l *Logger) log(level slog.Level, msg string, args ...any) {
 	var pc uintptr
 	if (l.source != nil && *l.source) || (source && l.source == nil) {
 		var pcs [1]uintptr
-		runtime.Callers(4, pcs[:])
+		runtime.Callers(3, pcs[:])
 		pc = pcs[0]
 	}
 	r := slog.NewRecord(time.Now(), level, msg, pc)
