@@ -175,7 +175,7 @@ export class PagesSettingsComponent implements OnInit {
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(err.error.message, 'Error');
+        this.toastR.error(err.error.error, 'Error');
       }
     });
   }
@@ -188,7 +188,7 @@ export class PagesSettingsComponent implements OnInit {
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(err.error.message, 'Error');
+        this.toastR.error(err.error.error, 'Error');
       }
     });
   }
@@ -201,7 +201,7 @@ export class PagesSettingsComponent implements OnInit {
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(err.error.message, 'Error');
+        this.toastR.error(err.error.error, 'Error');
       }
     });
   }

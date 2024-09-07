@@ -64,7 +64,7 @@ export class SearchResultComponent {
         this.toastR.success(`Downloaded started for ${this.searchResult.Name}`, "Success")
       },
       error: (err) => {
-        this.toastR.error(`Download failed ${err.message}`, "Error")
+        this.toastR.error(`Download failed ${err.error.error}`, "Error")
       }
   })
   }

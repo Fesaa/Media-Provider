@@ -107,8 +107,7 @@ export class DirectoryBrowserComponent implements OnInit{
         this.loadChildren(this.routeStack.items.join('/'));
       },
       error: (err) => {
-        this.toastR.error(`Failed to create directory ${this.newDirName}`, 'Error');
-        console.error(err);
+        this.toastR.error(`Failed to create directory ${this.newDirName}. \n ${err.error.error}`, 'Error');
       }
     });
   }
