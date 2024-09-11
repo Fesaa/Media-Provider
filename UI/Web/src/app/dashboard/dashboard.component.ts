@@ -40,18 +40,17 @@ export class DashboardComponent implements OnInit,OnDestroy {
 
   ngOnInit(): void {
     this.downloadService.loadStats();
-
-    combineLatest([
-      this.downloadService.running$,
-      this.downloadService.queued$
-    ]).subscribe(([running, queued]) => {
+    this.downloadService.running$.subscribe(running => {
       if (running) {
-        this.running = running;
+        this.running = running.sort((a, b) => a.id.localeCompare(b.id));
       }
+      this.cdRef.detectChanges();
+    });
+
+    this.downloadService.queued$.subscribe(queued => {
       if (queued) {
-        this.queued = queued;
+        this.queued = queued.sort((a, b) => a.id.localeCompare(b.id));
       }
-      this.loading = false;
       this.cdRef.detectChanges();
     });
   }
