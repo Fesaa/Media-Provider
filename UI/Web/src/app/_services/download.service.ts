@@ -14,19 +14,18 @@ export class DownloadService {
   private readonly destroyRef = inject(DestroyRef);
   baseUrl = environment.apiUrl;
 
-  private runningSource = new ReplaySubject<InfoStat[] | undefined>(1)
-  public running$ = this.runningSource.asObservable();
-
-  private queuedSource = new ReplaySubject<QueueStat[] | undefined>(1)
-  public queued$ = this.queuedSource.asObservable();
+  private statsSource = new ReplaySubject<StatsResponse>(1);
+  public stats$ = this.statsSource.asObservable();
 
   private loadStatsSource = new ReplaySubject<Boolean>(1);
   public loadStats$ = this.loadStatsSource.asObservable();
 
   private sub: Subscription | undefined;
+  longSub = false;
 
   constructor(private httpClient: HttpClient) {
     this.loadStatsSource.next(false)
+
     this.loadStats$.subscribe(load => {
       this.sub?.unsubscribe();
       if (load) {
@@ -36,10 +35,18 @@ export class DownloadService {
       }
     })
 
-    this.running$.subscribe(running => {
-      if (running?.length == 0) {
+
+    this.stats$.subscribe(s => {
+      if (s.running.length == 0) {
+        this.longSub = true;
         this.sub?.unsubscribe();
         this.sub = interval(10000).subscribe(() => {
+          this.refreshStats();
+        });
+      } else if (this.longSub) {
+        this.longSub = false;
+        this.sub?.unsubscribe();
+        this.sub = interval(1000).subscribe(() => {
           this.refreshStats();
         });
       }
@@ -61,8 +68,7 @@ export class DownloadService {
 
   private refreshStats() {
     this.httpClient.get<StatsResponse>(this.baseUrl + 'stats').subscribe(stats => {
-      this.runningSource.next(stats.running);
-      this.queuedSource.next(stats.queued);
+      this.statsSource.next(stats);
     })
   }
 

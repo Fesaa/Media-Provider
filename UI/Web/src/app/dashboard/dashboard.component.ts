@@ -1,13 +1,12 @@
 import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
-import {PageService} from "../_services/page.service";
 import {AsyncPipe} from "@angular/common";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {DownloadService} from "../_services/download.service";
 import {InfoStat, QueueStat} from "../_models/stats";
-import {combineLatest} from "rxjs";
 import {RunningInfoComponent} from "./_components/running-info/running-info.component";
 import {QueuedInfoComponent} from "./_components/queued-info/queued-info.component";
+import {combineLatest} from "rxjs";
 
 @Component({
   selector: 'app-dashboard',
@@ -40,19 +39,12 @@ export class DashboardComponent implements OnInit,OnDestroy {
 
   ngOnInit(): void {
     this.downloadService.loadStats();
-    this.downloadService.running$.subscribe(running => {
-      if (running) {
-        this.running = running.sort((a, b) => a.id.localeCompare(b.id));
-      }
-      this.cdRef.detectChanges();
-    });
 
-    this.downloadService.queued$.subscribe(queued => {
-      if (queued) {
-        this.queued = queued.sort((a, b) => a.id.localeCompare(b.id));
-      }
-      this.cdRef.detectChanges();
-    });
+    this.downloadService.stats$.subscribe(stats => {
+      this.loading = false;
+      this.running = stats.running || [];
+      this.queued = stats.queued || [];
+    })
   }
 
 }
