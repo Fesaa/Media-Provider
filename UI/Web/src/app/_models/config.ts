@@ -2,7 +2,6 @@ import {Page} from "./page";
 
 export type Config = {
   sync_id: number;
-  port: string;
   password: string;
   root_dir: string;
   base_url: string;

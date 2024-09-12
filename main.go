@@ -62,6 +62,10 @@ func main() {
 		})).
 		Use(compress.New())
 
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+
 	router := app.Group(baseURL)
 	api.Setup(router)
 
@@ -79,8 +83,7 @@ func main() {
 		return err
 	})
 
-	port := config.OrDefault(cfg.Port, "80")
-	e := app.Listen(":" + port)
+	e := app.Listen(":8080")
 	if e != nil {
 		log.Fatal("Unable to start server, exiting application", e)
 	}

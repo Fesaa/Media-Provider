@@ -6,7 +6,6 @@ import "log/slog"
 
 type Config struct {
 	SyncId   int    `json:"sync_id"`
-	Port     string `json:"port" validate:"required,number"`
 	Password string `json:"password" validate:"required"`
 	RootDir  string `json:"root_dir"`
 	BaseUrl  string `json:"base_url"`

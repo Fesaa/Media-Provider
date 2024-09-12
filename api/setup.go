@@ -25,10 +25,6 @@ func Setup(app fiber.Router) {
 
 	api := app.Group("/api")
 
-	api.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
-
 	api.Post("/login", routes.Login)
 
 	api.Use(auth.Middleware)
