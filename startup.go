@@ -23,7 +23,7 @@ func SetupApp(cfg config.Config) *fiber.App {
 	app := fiber.New()
 
 	app.
-		Use(favicon.New()).
+		Use(favicon.New(favicon.Config{File: "public/favicon.ico"})).
 		Use(requestid.New()).
 		Use(logger.New(logger.Config{
 			TimeFormat: "2006/01/02 15:04:05",
