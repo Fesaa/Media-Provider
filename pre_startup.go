@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func validateConfig() {
+func validateConfig(cfg *config.Config) {
 	if err := validator.New().Struct(cfg); err != nil {
 		log.Warn("error while validating config", "err", err)
 		panic(err)
@@ -53,6 +53,25 @@ func validateRootConfig(c *config.Config) error {
 	}
 	if !ok {
 		return fmt.Errorf("invalid root dir, does not exist: %s", c.GetRootDir())
+	}
+
+	// User can easily forget to add a / to the base url, so we add it for them
+	// The meaning of it doesn't change, as what would happen if we made directories for them in the above;
+	if c.BaseUrl != "" {
+		if !strings.HasPrefix(c.BaseUrl, "/") {
+			c.BaseUrl = "/" + c.BaseUrl
+			log.Warn("BaseUrl must start with /, prepending /", "baseUrl", c.BaseUrl)
+		}
+
+		if !strings.HasSuffix(c.BaseUrl, "/") {
+			c.BaseUrl += "/"
+			log.Warn("BaseUrl must end with /, appending /", "baseUrl", c.BaseUrl)
+		}
+
+		if err = c.Save(); err != nil {
+			return err
+		}
+
 	}
 	return nil
 }

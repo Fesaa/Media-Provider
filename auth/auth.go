@@ -20,7 +20,7 @@ var (
 	authProvider                Provider
 )
 
-func Init() {
+func Init(cfg *config.Config) {
 	authProvider = newAuth()
 }
 

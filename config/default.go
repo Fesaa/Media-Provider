@@ -9,7 +9,6 @@ import (
 func defaultConfig() *Config {
 	return &Config{
 		SyncId:   0,
-		Port:     "8080",
 		Password: "admin",
 		RootDir:  path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"),
 		BaseUrl:  "",

@@ -5,26 +5,15 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/yoitsu"
-	"github.com/gofiber/fiber/v2/middleware/compress"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/favicon"
-	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"log/slog"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
-	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 var cfg *config.Config
-var baseURL string
 
 func init() {
 	var err error
@@ -33,55 +22,18 @@ func init() {
 	}
 
 	log.Init(cfg.Logging)
-	validateConfig()
-	baseURL = config.OrDefault(cfg.BaseUrl, "")
-	auth.Init()
+	validateConfig(cfg)
+
+	UpdateBaseUrlInIndex(cfg.BaseUrl)
+	auth.Init(cfg)
 	yoitsu.Init(cfg)
 	mangadex.Init(cfg)
 }
 
 func main() {
-	log.Info("Starting Media-Provider", "baseURL", baseURL)
-	app := fiber.New()
+	log.Info("Starting Media-Provider", "baseURL", cfg.BaseUrl)
 
-	app.
-		Use(favicon.New()).
-		Use(requestid.New()).
-		Use(logger.New(logger.Config{
-			TimeFormat: "2006/01/02 15:04:05",
-			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
-			Next: func(c *fiber.Ctx) bool {
-				return !cfg.Logging.LogHttp
-			},
-		})).
-		Use(recover2.New(recover2.Config{
-			EnableStackTrace: config.I().Logging.Level <= slog.LevelDebug,
-		})).
-		Use(cors.New(cors.Config{
-			AllowOrigins: "http://localhost:4200",
-		})).
-		Use(compress.New())
-
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendStatus(fiber.StatusOK)
-	})
-
-	router := app.Group(baseURL)
-	api.Setup(router)
-
-	app.Static(baseURL, "./public", fiber.Static{
-		Compress: true,
-		MaxAge:   60 * 60,
-	})
-	app.Use(func(c *fiber.Ctx) error {
-		err := c.Next()
-		// This is very much nonsense, definitely have to find a better way later
-		if err != nil && strings.HasPrefix(err.Error(), "Cannot GET") {
-			return c.SendFile("./public/index.html")
-		}
-
-		return err
-	})
+	app := SetupApp(*cfg)
 
 	e := app.Listen(":8080")
 	if e != nil {
