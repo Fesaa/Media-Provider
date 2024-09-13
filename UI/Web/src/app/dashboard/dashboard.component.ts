@@ -42,8 +42,8 @@ export class DashboardComponent implements OnInit,OnDestroy {
 
     this.downloadService.stats$.subscribe(stats => {
       this.loading = false;
-      this.running = stats.running || [];
-      this.queued = stats.queued || [];
+      this.running = (stats.running || []).sort((a, b) => a.id.localeCompare(b.id));
+      this.queued = (stats.queued || []).sort((a, b) => a.id.localeCompare(b.id));
     })
   }
 
