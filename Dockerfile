@@ -48,6 +48,4 @@ ENV CONFIG_DIR="/mp/"
 
 HEALTHCHECK CMD curl --fail http://0.0.0.0:8080/ || exit 1
 
-EXPOSE 50000
-
 CMD ["./media-provider"]

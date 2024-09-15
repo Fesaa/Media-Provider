@@ -10,6 +10,7 @@ import (
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/storage"
 	"github.com/anacrolix/torrent/types/infohash"
+	"math/rand"
 	"os"
 	"path"
 	"strings"
@@ -59,7 +60,7 @@ func newYoitsu(c Config) (Yoitsu, error) {
 	}
 	conf := torrent.NewDefaultClientConfig()
 	conf.DefaultStorage = storage.NewFileOpts(opts)
-	conf.ListenPort = 50_000
+	conf.ListenPort = rand.Intn(65535-49152) + 49152
 
 	client, err := torrent.NewClient(conf)
 	if err != nil {
