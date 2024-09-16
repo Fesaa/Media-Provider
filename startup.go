@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-func SetupApp(cfg config.Config) *fiber.App {
+func SetupApp(baseUrl string) *fiber.App {
 	app := fiber.New()
 
 	app.
@@ -29,7 +29,7 @@ func SetupApp(cfg config.Config) *fiber.App {
 			TimeFormat: "2006/01/02 15:04:05",
 			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
 			Next: func(c *fiber.Ctx) bool {
-				return !cfg.Logging.LogHttp
+				return !config.I().Logging.LogHttp
 			},
 		})).
 		Use(recover2.New(recover2.Config{
@@ -44,10 +44,10 @@ func SetupApp(cfg config.Config) *fiber.App {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	router := app.Group(cfg.BaseUrl)
+	router := app.Group(baseUrl)
 	api.Setup(router)
 
-	app.Static(cfg.BaseUrl, "./public", fiber.Static{
+	app.Static(baseUrl, "./public", fiber.Static{
 		Compress: true,
 		MaxAge:   60 * 60,
 	})

@@ -33,7 +33,7 @@ func init() {
 func main() {
 	log.Info("Starting Media-Provider", "baseURL", cfg.BaseUrl)
 
-	app := SetupApp(*cfg)
+	app := SetupApp(cfg.BaseUrl)
 
 	e := app.Listen(":8080")
 	if e != nil {
