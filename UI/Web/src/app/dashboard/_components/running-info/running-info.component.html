@@ -27,6 +27,9 @@
     </div>
     <div class="flex justify-between text-sm text-gray-500 dark:text-white mt-1">
       <span>{{info.speed.speed | speed:info.speed_type}} {{info.speed_type | speedType }}</span>
+      @if (info.estimated) {
+        <span>{{info.estimated | time}}</span>
+      }
       <span>{{ info.progress }}%</span>
     </div>
   </div>

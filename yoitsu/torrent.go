@@ -94,6 +94,8 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 	t.lastRead = bytesRead
 	t.lastTime = time.Now()
 
+	timeLeft := (t.t.Length() - bytesRead) / speed
+
 	return payload.InfoStat{
 		Provider: t.provider,
 		Id:       t.key,
@@ -106,6 +108,7 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 		Size:        utils.BytesToSize(float64(t.t.Length())),
 		Downloading: t.t.Info() != nil,
 		Progress:    utils.Percent(t.t.BytesCompleted(), t.t.Length()),
+		Estimated:   timeLeft,
 		SpeedType:   payload.BYTES,
 		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: t.GetDownloadDir(),

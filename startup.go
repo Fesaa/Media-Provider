@@ -65,6 +65,10 @@ func SetupApp(baseUrl string) *fiber.App {
 }
 
 func UpdateBaseUrlInIndex(baseUrl string) {
+	if os.Getenv("DEV") != "" {
+		log.Debug("Skipping base url update in DEV environment")
+		return
+	}
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal("Unable to get current working directory", err)

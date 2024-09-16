@@ -9,6 +9,7 @@ import {SpeedPipe} from "../../../_pipes/speed.pipe";
 import {SpeedTypePipe} from "../../../_pipes/speed-type.pipe";
 import {DirectoryBrowserComponent} from "../../../directory-browser/directory-browser.component";
 import {dropAnimation} from "../../../_animations/drop-animation";
+import { TimePipe } from "../../../_pipes/time.pipe";
 
 @Component({
   selector: 'app-running-info',
@@ -18,7 +19,8 @@ import {dropAnimation} from "../../../_animations/drop-animation";
     NgIcon,
     SpeedPipe,
     SpeedTypePipe,
-    DirectoryBrowserComponent
+    DirectoryBrowserComponent,
+    TimePipe
   ],
   templateUrl: './running-info.component.html',
   styleUrl: './running-info.component.css',
