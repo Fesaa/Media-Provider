@@ -16,7 +16,7 @@ type InfoStat struct {
 	Size        string          `json:"size"`
 	Downloading bool            `json:"downloading"`
 	Progress    int64           `json:"progress"`
-	Estimated   int64           `json:"estimated"`
+	Estimated   *int64          `json:"estimated,omitempty"`
 	SpeedType   SpeedType       `json:"speed_type"`
 	Speed       SpeedData       `json:"speed"`
 	DownloadDir string          `json:"download_dir"`
