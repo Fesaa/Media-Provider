@@ -412,6 +412,19 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		m.log.Trace("unable to parse volume number", "volume", chapter.Attributes.Volume, "err", err)
 	}
 
+	ci.Genre = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
+		n, ok := t.Attributes.Name["en"]
+		if !ok {
+			return "", false
+		}
+
+		if t.Attributes.Group != "genre" {
+			return "", false
+		}
+
+		return n, true
+	}), ",")
+
 	ci.Tags = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
 		n, ok := t.Attributes.Name["en"]
 		if !ok {
