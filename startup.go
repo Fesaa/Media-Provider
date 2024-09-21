@@ -100,9 +100,10 @@ func UpdateBaseUrlInIndex(baseUrl string) {
 	}
 
 	err = os.WriteFile(indexHtmlPath, []byte(html), 0644)
-	if err != nil {
+	if err != nil && os.Getenv("DOCKER") != "true" {
+		// Ignore errors when running as non-root in docker
 		log.Fatal("Error saving modified HTML", err)
+	} else {
+		log.Info("Updated base URL in index.html", "baseURL", baseUrl)
 	}
-
-	log.Info("Updated base URL in index.html", "baseURL", baseUrl)
 }
