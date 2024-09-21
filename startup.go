@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/config"
@@ -100,9 +101,11 @@ func UpdateBaseUrlInIndex(baseUrl string) {
 	}
 
 	err = os.WriteFile(indexHtmlPath, []byte(html), 0644)
-	if err != nil && os.Getenv("DOCKER") != "true" {
+	if err != nil {
 		// Ignore errors when running as non-root in docker
-		log.Fatal("Error saving modified HTML", err)
+		if os.Getenv("DOCKER") != "true" || !errors.Is(err, os.ErrPermission) {
+			log.Fatal("Error saving modified HTML", err)
+		}
 	} else {
 		log.Info("Updated base URL in index.html", "baseURL", baseUrl)
 	}
