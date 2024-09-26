@@ -2,11 +2,12 @@ package log
 
 import (
 	"context"
-	"github.com/Fesaa/Media-Provider/config"
 	"log/slog"
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/config"
 )
 
 const (
@@ -138,7 +139,7 @@ func (l *Logger) SetSource(source bool) {
 // this is almost a copy of the slog.log function
 func (l *Logger) log(level slog.Level, msg string, args ...any) {
 	ctx := context.Background()
-	if !slog.Default().Enabled(ctx, level) {
+	if !l._log.Enabled(ctx, level) {
 		return
 	}
 	var pc uintptr
