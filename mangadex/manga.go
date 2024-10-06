@@ -507,14 +507,39 @@ func (m *manga) chapterPath(c ChapterSearchData) string {
 	return path.Join(m.volumePath(c), chDir)
 }
 
-func downloadAndWrite(url string, path string) error {
+func downloadAndWrite(url string, path string, tryAgain ...bool) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
+		if resp.StatusCode != http.StatusTooManyRequests {
+			return fmt.Errorf("bad status: %s", resp.Status)
+		}
+
+		retryAfter := resp.Header.Get("X-RateLimit-Retry-After")
+		if retryAfter == "" {
+			return fmt.Errorf("bad status: %s", resp.Status)
+		}
+
+		if unix, err := strconv.ParseInt(retryAfter, 10, 64); err == nil {
+			t := time.Unix(unix, 0)
+
+			if len(tryAgain) > 0 && !tryAgain[0] {
+				log.Error("Reached rate limit, after sleeping. What is going on?")
+				return fmt.Errorf("bad status: %s", resp.Status)
+			}
+
+			d := time.Until(t)
+			log.Warn("Hit rate limit, try again after it's over",
+				slog.String("retryAfter", retryAfter),
+				slog.Duration("sleeping_for", d))
+
+			time.Sleep(d)
+			return downloadAndWrite(url, path, false)
+		}
+
 	}
 
 	defer func(Body io.ReadCloser) {
