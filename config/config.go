@@ -26,7 +26,6 @@ type Logging struct {
 	Level   slog.Level `json:"level"`
 	Source  bool       `json:"source"`
 	Handler LogHandler `json:"handler" validate:"uppercase"`
-	LogHttp bool       `json:"log_http"`
 }
 
 type Page struct {

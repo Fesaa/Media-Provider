@@ -46,7 +46,7 @@ func SetupApp(baseUrl string) *fiber.App {
 			TimeFormat: "2006/01/02 15:04:05",
 			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
 			Next: func(c *fiber.Ctx) bool {
-				return c.Path() == "/api/stats" || c.Path() == "/" || !config.I().Logging.LogHttp
+				return c.Path() == "/api/stats" || c.Path() == "/" || config.I().Logging.Level <= slog.LevelDebug
 			},
 		}))
 
