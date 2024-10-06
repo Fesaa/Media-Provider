@@ -19,6 +19,7 @@ import {DirectoryBrowserComponent} from "../directory-browser/directory-browser.
 import {NgIcon} from "@ng-icons/core";
 import {FormInputComponent} from "../shared/form/form-input/form-input.component";
 import {DialogService} from "../_services/dialog.service";
+import {fadeOut} from "../_animations/fade-out";
 
 @Component({
   selector: 'app-page',
@@ -36,7 +37,7 @@ import {DialogService} from "../_services/dialog.service";
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.css',
-  animations: [dropAnimation, bounceIn500ms, flyInOutAnimation]
+  animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
 })
 export class PageComponent implements OnInit{
 
@@ -169,4 +170,5 @@ export class PageComponent implements OnInit{
   }
 
   protected readonly ModifierType = ModifierType;
+  protected readonly Math = Math;
 }

@@ -86,10 +86,10 @@
 
       <section id="search-results" class="flex flex-col space-y-2 pt-5">
         @if (searchResult.length > 0) {
-          @for (res of toShowResults(); track $index) {
-            <app-search-result [form]="searchForm" [page]="page" [searchResult]="res" [@flyInOut]></app-search-result>
+          @for (res of toShowResults(); track res.InfoHash) {
+            <app-search-result [form]="searchForm" [page]="page" [searchResult]="res" [@fadeAnimation]></app-search-result>
           }
-          <app-paginator [totalPages]="searchResult.length/10" (pageChange)="onPageChange($event)" ></app-paginator>
+          <app-paginator [totalPages]="Math.ceil(searchResult.length/10)" (pageChange)="onPageChange($event)" ></app-paginator>
         } @else {
 
         }

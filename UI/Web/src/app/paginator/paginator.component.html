@@ -1,4 +1,4 @@
-@if (totalPages >= 1) {
+@if (totalPages > 1) {
   <div class="flex items-center justify-center space-x-2">
     <button
       (click)="previousPage()"
@@ -9,7 +9,6 @@
     </button>
 
     <div class="flex items-center space-x-1">
-
       @for (page of pages; track $index) {
         <button
           class="px-3 py-1 rounded text-black dark:text-white"
