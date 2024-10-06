@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/utils"
 	"log/slog"
 )
 
@@ -62,6 +63,35 @@ type MangaSearchData struct {
 
 func (a *MangaSearchData) RefURL() string {
 	return fmt.Sprintf("https://mangadex.org/title/%s/", a.Id)
+}
+
+func (a *MangaSearchData) CoverURL() string {
+	cover := utils.Find(a.Relationships, func(r Relationship) bool {
+		return r.Type == "cover_art"
+	})
+	if cover == nil {
+		log.Trace("No cover art relationship found",
+			slog.String("mangaId", a.Id),
+			slog.String("title", a.Attributes.EnTitle()))
+		return ""
+	}
+
+	if log.IsTraceEnabled() {
+		log.Trace("Cover relationship found",
+			slog.String("mangaId", a.Id),
+			slog.String("title", a.Attributes.EnTitle()),
+			slog.String("struct", fmt.Sprintf("%#v", cover)),
+		)
+	}
+
+	if fileName, ok := cover.Attributes["fileName"].(string); ok {
+		return fmt.Sprintf("https://mangadex.org/covers/%s/%s.256.jpg", a.Id, fileName)
+	}
+
+	log.Debug("Cover art relationship found, but no url",
+		slog.String("mangaId", a.Id),
+		slog.String("title", a.Attributes.EnTitle()))
+	return ""
 }
 
 type MangaAttributes struct {

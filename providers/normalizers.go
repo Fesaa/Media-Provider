@@ -33,6 +33,7 @@ func mangadexNormalizer(mangas *mangadex.MangaSearchResponse) []Info {
 			InfoHash:    data.Id,
 			RefUrl:      data.RefURL(),
 			Provider:    config.MANGADEX,
+			ImageUrl:    data.CoverURL(),
 		})
 	}
 

@@ -49,7 +49,8 @@ type Response[T any] struct {
 }
 
 type Relationship struct {
-	Id      string `json:"id"`
-	Type    string `json:"type"`
-	Related string `json:"related"`
+	Id         string         `json:"id"`
+	Type       string         `json:"type"`
+	Related    string         `json:"related,omitempty"`
+	Attributes map[string]any `json:"attributes,omitempty"`
 }

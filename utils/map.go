@@ -27,3 +27,29 @@ func Filter[T any](in []T, f func(T) bool) []T {
 	}
 	return out
 }
+
+func Find[T any](in []T, f func(T) bool) *T {
+	for _, t := range in {
+		if f(t) {
+			return &t
+		}
+	}
+
+	return nil
+}
+
+func Keys[K comparable, V any](m map[K]V) []K {
+	out := make([]K, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
+func Values[K comparable, V any](m map[K]V) []V {
+	out := make([]V, 0, len(m))
+	for _, v := range m {
+		out = append(out, v)
+	}
+	return out
+}
