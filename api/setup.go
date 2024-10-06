@@ -7,6 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/utils"
+	"strings"
+	"time"
 )
 
 func Setup(app fiber.Router) {
@@ -21,6 +23,13 @@ func Setup(app fiber.Router) {
 			return ctx.Path() + "_" + string(utils.CopyBytes(ctx.Body()))
 		},
 		Methods: []string{fiber.MethodGet, fiber.MethodPost},
+		ExpirationGenerator: func(ctx *fiber.Ctx, config *cache.Config) time.Duration {
+			if strings.HasPrefix(ctx.Route().Path, "/api/proxy") {
+				return 24 * time.Hour
+			}
+
+			return 5 * time.Minute
+		},
 	})
 
 	api := app.Group("/api")
@@ -49,4 +58,7 @@ func Setup(app fiber.Router) {
 	pages.Post("/", routes.AddPage)
 	pages.Put("/:index", routes.UpdatePage)
 	pages.Post("/move", routes.MovePage)
+
+	proxy := api.Group("/proxy", c)
+	proxy.Get("/mangadex/covers/:id/:filename", routes.MangaDexCoverProxy)
 }

@@ -35,7 +35,7 @@
     <div class="flex flex-row flex-grow space-x-1 mt-1 md:mt-5" [@dropDown]>
 
       @if (searchResult.ImageUrl) {
-        <img [src]="searchResult.ImageUrl" alt="Image" class="w-32 h-48 rounded shadow shadow-black dropdown-item">
+        <img [src]="imageSource" alt="Image" class="w-32 h-48 rounded shadow shadow-black dropdown-item">
       }
 
       <div class="flex flex-col space-x-2 dropdown-item ml-2">

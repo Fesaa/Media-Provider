@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, Input} from '@angular/core';
+import {ChangeDetectorRef, Component, Input, OnInit} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {FormGroup} from "@angular/forms";
 import {Page} from "../../../_models/page";
@@ -8,6 +8,7 @@ import {bounceIn200ms} from "../../../_animations/bounce-in";
 import {NgIcon} from "@ng-icons/core";
 import {dropAnimation} from "../../../_animations/drop-animation";
 import {ToastrService} from "ngx-toastr";
+import {ImageService} from "../../../_services/image.service";
 
 @Component({
   selector: 'app-search-result',
@@ -39,12 +40,38 @@ export class SearchResultComponent {
   ];
 
   properties: (keyof SearchInfo)[] = ["Size", "Downloads", "Seeders", "Date"]
+  imageSource: string | null = null;
 
 
   constructor(private downloadService: DownloadService,
               private cdRef: ChangeDetectorRef,
-              private toastR: ToastrService
+              private toastR: ToastrService,
+              private imageService: ImageService,
   ) {
+  }
+
+  loadImage() {
+    if (this.searchResult.ImageUrl === "") {
+      return;
+    }
+
+    if (this.searchResult.ImageUrl.startsWith("proxy")) {
+      this.imageService.getImage(this.searchResult.ImageUrl).subscribe({
+        next: blob => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            this.imageSource = reader.result as string;
+          }
+          reader.readAsDataURL(blob);
+        },
+        error: err => {
+          console.error(err);
+          this.toastR.error("Unable to download cover for " + this.searchResult.Name, "Error");
+        }
+      })
+    } else {
+      this.imageSource = this.searchResult.ImageUrl;
+    }
   }
 
   download() {
@@ -75,6 +102,10 @@ export class SearchResultComponent {
 
   toggleExtra() {
     this.showExtra = !this.showExtra;
+    if (this.imageSource == null) {
+      this.loadImage();
+    }
+
     this.cdRef.detectChanges();
   }
 
