@@ -9,6 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
+	mapset "github.com/deckarep/golang-set/v2"
 	"io"
 	"log/slog"
 	"net/http"
@@ -35,8 +36,10 @@ type manga struct {
 	tempTitle string
 	maxImages int
 
-	info     *MangaSearchData
-	chapters ChapterSearchResponse
+	info            *MangaSearchData
+	chapters        ChapterSearchResponse
+	totalVolumes    int
+	foundLastVolume bool
 
 	toDownload   []ChapterSearchData
 	coverFactory CoverFactory
@@ -180,6 +183,17 @@ func (m *manga) loadInfo() chan struct{} {
 		}
 		m.chapters = chapters.FilterOneEnChapter()
 
+		volumes := mapset.NewSet[string]()
+		m.foundLastVolume = false
+		for _, ch := range m.chapters.Data {
+			if ch.Attributes.Volume == m.info.Attributes.LastVolume {
+				m.foundLastVolume = true
+			}
+
+			volumes.Add(ch.Attributes.Volume)
+		}
+		m.totalVolumes = volumes.Cardinality()
+
 		covers, err := GetCoverImages(m.id)
 		if err != nil || covers == nil {
 			m.log.Warn("error while loading manga coverFactory, ignoring", "err", err)
@@ -196,7 +210,7 @@ func (m *manga) loadInfo() chan struct{} {
 }
 
 func (m *manga) checkVolumesOnDisk() {
-	m.log.Debug("checking for already downloaded volumes", "mangaId", "dir", m.GetDownloadDir())
+	m.log.Debug("checking for already downloaded volumes", slog.String("dir", m.GetDownloadDir()))
 	entries, err := os.ReadDir(path.Join(m.client.GetBaseDir(), m.GetDownloadDir()))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -400,10 +414,28 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci.Summary = m.info.Attributes.EnDescription()
 	ci.Manga = comicinfo.MangaYes
 	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
+	ci.Web = strings.Join(m.info.FormattedLinks(), " ")
 
 	alts := m.info.Attributes.EnAltTitles()
 	if len(alts) > 0 {
 		ci.LocalizedSeries = alts[0]
+	}
+
+	// Add the comicinfo#count field if the manga has completed, so Kavita can add the correct Completed marker
+	// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
+	if m.info.Attributes.Status == StatusCompleted {
+		if ch, err := strconv.Atoi(m.info.Attributes.LastChapter); err == nil {
+			if ch == len(m.chapters.Data) && m.foundLastVolume {
+				ci.Count = m.totalVolumes
+			} else {
+				log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
+					slog.Int("wanted", ch),
+					slog.Int("got", len(m.chapters.Data)),
+					slog.Bool("foundLastVolume", m.foundLastVolume))
+			}
+		} else {
+			log.Trace("unable to parse last chapter", "LastChapter", m.info.Attributes.LastChapter, "err", err)
+		}
 	}
 
 	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {

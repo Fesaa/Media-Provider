@@ -3,7 +3,52 @@ package mangadex
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/log"
+	"log/slog"
 )
+
+var linkConverter map[string]func(string) string
+
+func init() {
+	linkConverter = map[string]func(string) string{}
+
+	linkConverter["al"] = func(s string) string {
+		return fmt.Sprintf("https://anilist.co/manga/%s", s)
+	}
+	linkConverter["ap"] = func(s string) string {
+		return fmt.Sprintf("https://www.anime-planet.com/manga/%s", s)
+	}
+	linkConverter["bw"] = func(s string) string {
+		return fmt.Sprintf("https://bookwalker.jp/%s", s)
+	}
+	linkConverter["mu"] = func(s string) string {
+		return fmt.Sprintf("https://www.mangaupdates.com/series.html?id=%s", s)
+	}
+	linkConverter["nu"] = func(s string) string {
+		return fmt.Sprintf("https://www.novelupdates.com/series/%s", s)
+	}
+	linkConverter["kt"] = func(s string) string {
+		return fmt.Sprintf("https://kitsu.io/api/edge/manga/%s", s)
+	}
+	linkConverter["amz"] = func(s string) string {
+		return s
+	}
+	linkConverter["ebj"] = func(s string) string {
+		return s
+	}
+	linkConverter["mal"] = func(s string) string {
+		return fmt.Sprintf("https://myanimelist.net/manga/%s", s)
+	}
+	linkConverter["cdj"] = func(s string) string {
+		return s
+	}
+	linkConverter["raw"] = func(s string) string {
+		return s
+	}
+	linkConverter["engtl"] = func(s string) string {
+		return s
+	}
+}
 
 type MangaSearchResponse Response[[]MangaSearchData]
 type GetMangaResponse Response[MangaSearchData]
@@ -23,10 +68,12 @@ type MangaAttributes struct {
 	Title            map[string]string   `json:"title"`
 	AltTitles        []map[string]string `json:"altTitles"`
 	Description      map[string]string   `json:"description"`
+	IsLocked         bool                `json:"isLocked"`
+	Links            map[string]string   `json:"links"`
 	OriginalLanguage string              `json:"originalLanguage"`
 	LastVolume       string              `json:"lastVolume"`
 	LastChapter      string              `json:"lastChapter"`
-	Status           string              `json:"status"`
+	Status           MangaStatus         `json:"status"`
 	Year             int                 `json:"year"`
 	ContentRating    ContentRating       `json:"contentRating"`
 	Tags             []TagData           `json:"tags"`
@@ -77,6 +124,33 @@ func (a *MangaAttributes) EnDescription() string {
 	}
 	return ""
 }
+
+func (a *MangaSearchData) FormattedLinks() []string {
+	var out []string
+	for key, link := range a.Attributes.Links {
+		if conv, ok := linkConverter[key]; ok {
+			out = append(out, conv(link))
+		} else {
+			log.Warn("Unknown link key found",
+				slog.String("mangaId", a.Id),
+				slog.String("manga", a.Attributes.EnTitle()),
+				slog.String("key", key),
+				slog.String("link", link),
+			)
+		}
+	}
+	out = append(out, a.RefURL())
+	return out
+}
+
+type MangaStatus string
+
+const (
+	StatusOngoing   MangaStatus = "ongoing"
+	StatusCompleted MangaStatus = "completed"
+	StatusHiatus    MangaStatus = "hiatus"
+	StatusCancelled MangaStatus = "cancelled"
+)
 
 type ContentRating string
 
