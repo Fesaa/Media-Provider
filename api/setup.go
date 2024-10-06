@@ -20,7 +20,10 @@ func Setup(app fiber.Router) {
 			return false
 		},
 		KeyGenerator: func(ctx *fiber.Ctx) string {
-			return ctx.Path() + "_" + string(utils.CopyBytes(ctx.Body()))
+			if ctx.Method() == fiber.MethodPost {
+				return utils.CopyString(ctx.Path()) + "_" + string(utils.CopyBytes(ctx.Body()))
+			}
+			return utils.CopyString(ctx.Path())
 		},
 		Methods: []string{fiber.MethodGet, fiber.MethodPost},
 		ExpirationGenerator: func(ctx *fiber.Ctx, config *cache.Config) time.Duration {
