@@ -414,7 +414,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci.Summary = m.info.Attributes.EnDescription()
 	ci.Manga = comicinfo.MangaYes
 	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
-	ci.Web = strings.Join(m.info.FormattedLinks(), " ")
+	ci.Web = strings.Join(m.info.FormattedLinks(), ",")
 
 	alts := m.info.Attributes.EnAltTitles()
 	if len(alts) > 0 {
