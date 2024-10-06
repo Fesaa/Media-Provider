@@ -86,7 +86,7 @@ func (a *MangaSearchData) CoverURL() string {
 
 	if fileName, ok := cover.Attributes["fileName"].(string); ok {
 		// Link to the proxy endpoint of the api
-		return fmt.Sprintf("proxy/mangadex/covers/%s/%s", a.Id, fileName)
+		return fmt.Sprintf("proxy/mangadex/covers/%s/%s.256.jpg", a.Id, fileName)
 	}
 
 	log.Debug("Cover art relationship found, but no url",

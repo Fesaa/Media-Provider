@@ -23,16 +23,12 @@ import (
 func SetupApp(baseUrl string) *fiber.App {
 	app := fiber.New()
 
+	if os.Getenv("DEV") == "" {
+		app.Use(favicon.New(favicon.Config{File: "public/favicon.ico"}))
+	}
+
 	app.
-		Use(favicon.New(favicon.Config{File: "public/favicon.ico"})).
 		Use(requestid.New()).
-		Use(logger.New(logger.Config{
-			TimeFormat: "2006/01/02 15:04:05",
-			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
-			Next: func(c *fiber.Ctx) bool {
-				return !config.I().Logging.LogHttp
-			},
-		})).
 		Use(recover2.New(recover2.Config{
 			EnableStackTrace: config.I().Logging.Level <= slog.LevelDebug,
 		})).
@@ -44,6 +40,15 @@ func SetupApp(baseUrl string) *fiber.App {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
+
+	app.
+		Use(logger.New(logger.Config{
+			TimeFormat: "2006/01/02 15:04:05",
+			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
+			Next: func(c *fiber.Ctx) bool {
+				return c.Route().Path == "/api/stats" || !config.I().Logging.LogHttp
+			},
+		}))
 
 	router := app.Group(baseUrl)
 	api.Setup(router)
