@@ -61,7 +61,10 @@ func chapterImageUrl(id string) string {
 }
 
 func getMangaURL(id string) string {
-	return fmt.Sprintf("%s/manga/%s", URL, id)
+	suffix := "?includes[]=cover_art"
+	suffix += "&includes[]=author"
+	suffix += "&includes[]=artist"
+	return fmt.Sprintf("%s/manga/%s%s", URL, id, suffix)
 }
 
 func getCoverURL(id string, offset ...int) string {
