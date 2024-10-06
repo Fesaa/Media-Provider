@@ -40,6 +40,8 @@ func searchMangaURL(s SearchOptions) (string, error) {
 	base = addRange(base, "status", s.Status)
 	base = addRange(base, "contentRating", s.ContentRating)
 	base += "&includes[]=cover_art"
+	base += "&includes[]=author"
+	base += "&includes[]=artist"
 	base += "&availableTranslatedLanguage[]=en"
 	base += "&limit=20"
 	return base, nil

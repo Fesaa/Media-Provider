@@ -36,10 +36,11 @@ type manga struct {
 	tempTitle string
 	maxImages int
 
-	info            *MangaSearchData
-	chapters        ChapterSearchResponse
-	totalVolumes    int
-	foundLastVolume bool
+	info             *MangaSearchData
+	chapters         ChapterSearchResponse
+	totalVolumes     int
+	foundLastVolume  bool
+	foundLastChapter bool
 
 	toDownload   []ChapterSearchData
 	coverFactory CoverFactory
@@ -188,6 +189,9 @@ func (m *manga) loadInfo() chan struct{} {
 		for _, ch := range m.chapters.Data {
 			if ch.Attributes.Volume == m.info.Attributes.LastVolume {
 				m.foundLastVolume = true
+			}
+			if ch.Attributes.Chapter == m.info.Attributes.LastChapter {
+				m.foundLastChapter = true
 			}
 
 			volumes.Add(ch.Attributes.Volume)
@@ -424,17 +428,14 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	// Add the comicinfo#count field if the manga has completed, so Kavita can add the correct Completed marker
 	// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
 	if m.info.Attributes.Status == StatusCompleted {
-		if ch, err := strconv.Atoi(m.info.Attributes.LastChapter); err == nil {
-			if ch == len(m.chapters.Data) && m.foundLastVolume {
-				ci.Count = m.totalVolumes
-			} else {
-				log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
-					slog.Int("wanted", ch),
-					slog.Int("got", len(m.chapters.Data)),
-					slog.Bool("foundLastVolume", m.foundLastVolume))
-			}
+		if m.foundLastChapter && m.foundLastVolume {
+			ci.Count = m.totalVolumes
 		} else {
-			log.Trace("unable to parse last chapter", "LastChapter", m.info.Attributes.LastChapter, "err", err)
+			log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
+				slog.String("lastChapter", m.info.Attributes.LastChapter),
+				slog.Bool("foundLastChapter", m.foundLastChapter),
+				slog.String("lastVolume", m.info.Attributes.LastVolume),
+				slog.Bool("foundLastVolume", m.foundLastVolume))
 		}
 	}
 
@@ -464,6 +465,9 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		}
 		return n, true
 	}), ",")
+
+	ci.Writer = strings.Join(m.info.Authors(), ",")
+	ci.Colorist = strings.Join(m.info.Artists(), ",")
 
 	ci.Notes = comicInfoNote
 	return ci

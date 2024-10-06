@@ -95,6 +95,32 @@ func (a *MangaSearchData) CoverURL() string {
 	return ""
 }
 
+func (a *MangaSearchData) Authors() []string {
+	return utils.MaybeMap(a.Relationships, func(t Relationship) (string, bool) {
+		if t.Type != "author" {
+			return "", false
+		}
+
+		if name, ok := t.Attributes["name"].(string); ok {
+			return name, true
+		}
+		return "", false
+	})
+}
+
+func (a *MangaSearchData) Artists() []string {
+	return utils.MaybeMap(a.Relationships, func(t Relationship) (string, bool) {
+		if t.Type != "artist" {
+			return "", false
+		}
+
+		if name, ok := t.Attributes["name"].(string); ok {
+			return name, true
+		}
+		return "", false
+	})
+}
+
 type MangaAttributes struct {
 	Title            map[string]string   `json:"title"`
 	AltTitles        []map[string]string `json:"altTitles"`
