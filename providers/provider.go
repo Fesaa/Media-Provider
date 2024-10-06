@@ -9,6 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/subsplease"
 	"github.com/Fesaa/Media-Provider/yts"
+	"time"
 )
 
 var providers = map[config.Provider]provider{}
@@ -29,6 +30,7 @@ func register[T, S any](name config.Provider, t requestTransformerFunc[S], s sea
 		searcher:    s,
 		downloader:  d,
 		stopper:     stop,
+		provider:    name,
 	}
 }
 
@@ -44,6 +46,7 @@ type providerImpl[T any, S any] struct {
 	searcher    searchFunc[S, T]
 	downloader  downloadFunc
 	stopper     stopFunc
+	provider    config.Provider
 }
 
 func (s *providerImpl[T, S]) Download(req payload.DownloadRequest) error {
@@ -56,7 +59,16 @@ func (s *providerImpl[T, S]) Stop(req payload.StopRequest) error {
 
 func (s *providerImpl[T, S]) Search(req payload.SearchRequest) ([]Info, error) {
 	t := s.transformer(req)
+
+	start := time.Now()
 	data, err := s.searcher(t)
+	since := time.Since(start)
+
+	log.Debug("Search done", "duration", since, "provider", s.provider, "request", fmt.Sprintf("%+v", req))
+	if since > time.Second*1 {
+		log.Warn("Searching took more than one second", "duration", since, "provider", s.provider)
+	}
+
 	if err != nil {
 		log.Debug("error while searching", "req", fmt.Sprintf("%+v", req), "err", err)
 		return nil, err
