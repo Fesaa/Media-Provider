@@ -56,18 +56,8 @@ export class SearchResultComponent {
     }
 
     if (this.searchResult.ImageUrl.startsWith("proxy")) {
-      this.imageService.getImage(this.searchResult.ImageUrl).subscribe({
-        next: blob => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            this.imageSource = reader.result as string;
-          }
-          reader.readAsDataURL(blob);
-        },
-        error: err => {
-          console.error(err);
-          this.toastR.error("Unable to download cover for " + this.searchResult.Name, "Error");
-        }
+      this.imageService.getImage(this.searchResult.ImageUrl).subscribe(src => {
+        this.imageSource = src;
       })
     } else {
       this.imageSource = this.searchResult.ImageUrl;
