@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"time"
 )
 
@@ -20,7 +20,7 @@ var (
 	authProvider                Provider
 )
 
-func Init(cfg *config.Config) {
+func Init() {
 	authProvider = newAuth()
 }
 
@@ -29,14 +29,12 @@ func I() Provider {
 }
 
 type authImpl struct {
-	tokens map[string]time.Time
-	pass   func() string
+	pass func() string
 }
 
 func newAuth() Provider {
 	return &authImpl{
-		tokens: make(map[string]time.Time),
-		pass:   func() string { return config.OrDefault(config.I().Password, "admin") },
+		pass: func() string { return config.OrDefault(config.I().Password, "admin") },
 	}
 }
 
@@ -57,12 +55,19 @@ func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	t, ok := v.tokens[key]
-	if !ok {
-		return false, nil
+
+	token, err := jwt.ParseWithClaims(key, &MpClaims{}, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+
+		return []byte(config.I().Secret), nil
+	})
+	if err != nil {
+		return false, err
 	}
 
-	return time.Since(t) < time.Hour*24*7, nil
+	return token.Valid, nil
 }
 
 func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
@@ -81,9 +86,25 @@ func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 		return nil, badRequest("Invalid password")
 	}
 
-	token := generateSecureToken(32)
-	v.tokens[token] = time.Now().Add(time.Hour * 24 * 7)
-	return &payload.LoginResponse{Token: token}, nil
+	claims := MpClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(func() time.Time {
+				if body.Remember {
+					return time.Now().Add(7 * 24 * time.Hour)
+				}
+				return time.Now().Add(24 * time.Hour)
+			}()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	t, err := token.SignedString([]byte(config.I().Secret))
+	if err != nil {
+		return nil, err
+	}
+
+	return &payload.LoginResponse{Token: t}, nil
 }
 
 func badRequest(msg string) error {
@@ -91,12 +112,4 @@ func badRequest(msg string) error {
 		Code:    fiber.ErrBadRequest.Code,
 		Message: msg,
 	}
-}
-
-func generateSecureToken(length int) string {
-	b := make([]byte, length)
-	if _, err := rand.Read(b); err != nil {
-		return ""
-	}
-	return hex.EncodeToString(b)
 }

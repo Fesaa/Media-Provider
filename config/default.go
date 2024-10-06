@@ -1,17 +1,34 @@
 package config
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"log/slog"
 	"os"
 	"path"
 )
 
+func GenerateSecret(length int) (string, error) {
+	secret := make([]byte, length)
+	_, err := rand.Read(secret)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(secret), nil
+}
+
 func defaultConfig() *Config {
+	secret, err := GenerateSecret(64)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Config{
 		SyncId:   0,
 		Password: "admin",
 		RootDir:  path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"),
 		BaseUrl:  "",
+		Secret:   secret,
 		Logging: Logging{
 			Level:   slog.LevelInfo,
 			Source:  true,

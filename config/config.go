@@ -9,6 +9,7 @@ type Config struct {
 	Password string `json:"password" validate:"required"`
 	RootDir  string `json:"root_dir"`
 	BaseUrl  string `json:"base_url"`
+	Secret   string `json:"secret"`
 
 	Logging    Logging    `json:"logging"`
 	Downloader Downloader `json:"downloader"`

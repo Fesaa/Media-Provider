@@ -25,7 +25,7 @@ func init() {
 	validateConfig(cfg)
 
 	UpdateBaseUrlInIndex(cfg.BaseUrl)
-	auth.Init(cfg)
+	auth.Init()
 	yoitsu.Init(cfg)
 	mangadex.Init(cfg)
 }

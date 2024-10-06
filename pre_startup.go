@@ -68,8 +68,17 @@ func validateRootConfig(c *config.Config) error {
 		c.BaseUrl += "/"
 	}
 
+	if c.Secret == "" {
+		secret, err := config.GenerateSecret(64)
+		if err != nil {
+			return err
+		}
+		c.Secret = secret
+		changed = true
+	}
+
 	if changed {
-		log.Warn("BaseUrl was forcefully changed, saving config", "baseUrl", c.BaseUrl)
+		log.Warn("Config was changed by validateRootConfig, saving...")
 		return c.Save()
 	}
 
