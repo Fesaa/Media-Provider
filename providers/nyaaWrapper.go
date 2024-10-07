@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/irevenko/go-nyaa/nyaa"
 	"github.com/irevenko/go-nyaa/types"
+	"log/slog"
 )
 
 func cacheKey(opts nyaa.SearchOptions) string {
@@ -13,7 +14,7 @@ func cacheKey(opts nyaa.SearchOptions) string {
 
 func nyaaSearch(opts nyaa.SearchOptions) ([]types.Torrent, error) {
 	key := cacheKey(opts)
-	log.Debug(fmt.Sprintf("Searching %s", opts.Provider), "key", key)
+	log.Trace("searching", slog.String("provider", opts.Provider), "key", key)
 
 	search, err := nyaa.Search(opts)
 	if err != nil {

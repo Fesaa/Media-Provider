@@ -21,7 +21,7 @@ func (o SearchOptions) toURL() string {
 
 func Search(options SearchOptions) (SearchResult, error) {
 	u := options.toURL()
-	log.Debug("search SubsPlease for anime", "url", u)
+	log.Trace("search SubsPlease for anime", "url", u)
 	req, err := http.Get(u)
 	if err != nil {
 		return nil, err

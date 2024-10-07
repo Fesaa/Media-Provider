@@ -89,7 +89,7 @@ func (a *MangaSearchData) CoverURL() string {
 		return fmt.Sprintf("proxy/mangadex/covers/%s/%s.256.jpg", a.Id, fileName)
 	}
 
-	log.Debug("Cover art relationship found, but no url",
+	log.Warn("Cover art relationship found, but no url",
 		slog.String("mangaId", a.Id),
 		slog.String("title", a.Attributes.EnTitle()))
 	return ""

@@ -70,7 +70,7 @@ func (s *providerImpl[T, S]) Search(req payload.SearchRequest) ([]Info, error) {
 	}
 
 	if err != nil {
-		log.Debug("error while searching", "req", fmt.Sprintf("%+v", req), "err", err)
+		log.Error("error while searching", "req", fmt.Sprintf("%+v", req), "err", err)
 		return nil, err
 	}
 	return s.normalizer(data), nil

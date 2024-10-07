@@ -30,7 +30,7 @@ func (o SearchOptions) toURL() string {
 
 func Search(options SearchOptions) (*SearchResult, error) {
 	url := options.toURL()
-	log.Debug("Searing YTS for movies", "url", url)
+	log.Trace("Searing YTS for movies", "url", url)
 
 	req, err := http.Get(url)
 	if err != nil {

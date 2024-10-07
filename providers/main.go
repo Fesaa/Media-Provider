@@ -23,7 +23,7 @@ func Search(req payload.SearchRequest) ([]Info, error) {
 
 		search, err := s.Search(req)
 		if err != nil {
-			log.Debug("search error", "provider", p, "error", err)
+			log.Warn("search error", "provider", p, "error", err)
 			errors = append(errors, fmt.Errorf("provider %q: %w", p, err))
 			continue
 		}

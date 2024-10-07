@@ -28,7 +28,7 @@ type CoverFactory func(volume string) (string, bool)
 
 func (m *MangaCoverResponse) GetCoverFactory(mangaId string) CoverFactory {
 	covers := make(map[string]string)
-	log.Debug("getting cover urls for manga", "mangaId", mangaId, "amount", len(m.Data))
+	log.Trace("getting cover urls for manga", "mangaId", mangaId, "amount", len(m.Data))
 
 	coverUrl := func(fileName string) string {
 		return fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s", mangaId, fileName)

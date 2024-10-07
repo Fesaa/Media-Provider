@@ -15,7 +15,7 @@ const SEARCH_URL string = BASE_URl + "/search/%s/%s/%d/"
 
 func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	searchUrl := formatUrl(searchOptions)
-	log.Debug("searching lime for torrents", "url", searchUrl)
+	log.Trace("searching lime for torrents", "url", searchUrl)
 
 	doc, err := getSearch(searchUrl)
 	if err != nil {

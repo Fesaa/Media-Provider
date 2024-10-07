@@ -53,7 +53,8 @@ func subsPleaseNormalizer(torrents subsplease.SearchResult) []Info {
 		download := data.Downloads[len(data.Downloads)-1]
 		m, err := metainfo.ParseMagnetUri(download.Magnet)
 		if err != nil {
-			log.Debug("couldn't parse magnet uri", "error", err, "info", fmt.Sprintf("%+v", data))
+			log.Warn("couldn't parse magnet uri", "error", err, "magnet", download.Magnet)
+			continue
 		}
 		torrentsInfo = append(torrentsInfo, Info{
 			Name:     name,

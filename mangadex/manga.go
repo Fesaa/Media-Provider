@@ -218,7 +218,7 @@ func (m *manga) checkVolumesOnDisk() {
 	entries, err := os.ReadDir(path.Join(m.client.GetBaseDir(), m.GetDownloadDir()))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			m.log.Debug("directory not found, fresh download")
+			m.log.Trace("directory not found, fresh download")
 		} else {
 			m.log.Warn("unable to check for downloaded volumes, downloading all", "err", err)
 		}
@@ -379,7 +379,7 @@ func (m *manga) downloadChapter(chapter ChapterSearchData) error {
 
 func (m *manga) writeVolumeMetadata(chapter ChapterSearchData) error {
 	if slices.Contains(m.volumeMetadata, chapter.Attributes.Volume) {
-		m.log.Debug("volume metadata already written, skipping", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter)
+		m.log.Trace("volume metadata already written, skipping", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter)
 		return nil
 	}
 
@@ -401,7 +401,7 @@ func (m *manga) writeVolumeMetadata(chapter ChapterSearchData) error {
 		}
 	}
 
-	m.log.Debug("writing comicinfoxml", "volume", chapter.Attributes.Volume)
+	m.log.Trace("writing comicinfoxml", "volume", chapter.Attributes.Volume)
 	if err = comicinfo.Save(m.comicInfo(chapter), path.Join(m.volumePath(chapter), "comicinfo.xml")); err != nil {
 		return err
 	}

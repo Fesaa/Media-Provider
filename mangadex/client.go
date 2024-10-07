@@ -85,7 +85,7 @@ func (m *client) RemoveDownload(req payload.StopRequest) error {
 		return fmt.Errorf("manga not found: %s", req.Id)
 	}
 
-	log.Info("Dropping manga", "mangaId", req.Id, "title", manga.Title(), "deleteFiles", req.DeleteFiles)
+	log.Info("dropping manga", "mangaId", req.Id, "title", manga.Title(), "deleteFiles", req.DeleteFiles)
 	go func() {
 		m.mangas.Delete(req.Id)
 		manga.Cancel()
