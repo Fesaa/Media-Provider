@@ -56,11 +56,11 @@ func Setup(app fiber.Router) {
 	io.Post("/ls", routes.ListDirs)
 	io.Post("/create", routes.CreateDir)
 
-	config := api.Group("/config")
-	config.Get("/", routes.GetConfig)
-	config.Post("/update", routes.UpdateConfig)
+	configGroup := api.Group("/config")
+	configGroup.Get("/", routes.GetConfig)
+	configGroup.Post("/update", routes.UpdateConfig)
 
-	pages := config.Group("/pages")
+	pages := configGroup.Group("/pages")
 	pages.Get("/", routes.Pages)
 	pages.Get("/:index", routes.Page)
 	pages.Delete("/:index", routes.RemovePage)
