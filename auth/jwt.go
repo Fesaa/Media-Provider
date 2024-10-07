@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/payload"
@@ -15,30 +14,17 @@ const (
 	AuthScheme = "Bearer"
 )
 
-var (
-	ErrMissingOrMalformedAPIKey = errors.New("missing or malformed API key")
-	authProvider                Provider
-)
-
-func Init() {
-	authProvider = newAuth()
-}
-
-func I() Provider {
-	return authProvider
-}
-
-type authImpl struct {
+type jwtAuth struct {
 	pass func() string
 }
 
-func newAuth() Provider {
-	return &authImpl{
+func newJwtAuth() Provider {
+	return &jwtAuth{
 		pass: func() string { return config.OrDefault(config.I().Password, "admin") },
 	}
 }
 
-func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
+func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	auth := ctx.Get(HeaderName)
 	l := len(AuthScheme)
 	key, err := func() (string, error) {
@@ -58,7 +44,7 @@ func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 
 	token, err := jwt.ParseWithClaims(key, &MpClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %s", t.Header["alg"])
 		}
 
 		return []byte(config.I().Secret), nil
@@ -70,7 +56,7 @@ func (v *authImpl) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	return token.Valid, nil
 }
 
-func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
+func (jwtAuth *jwtAuth) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 	body := payload.LoginRequest{}
 	err := ctx.BodyParser(&body)
 	if err != nil {
@@ -82,7 +68,7 @@ func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 		return nil, badRequest("Password is required")
 	}
 
-	if password != v.pass() {
+	if password != jwtAuth.pass() {
 		return nil, badRequest("Invalid password")
 	}
 
@@ -104,7 +90,10 @@ func (v *authImpl) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 		return nil, err
 	}
 
-	return &payload.LoginResponse{Token: t}, nil
+	return &payload.LoginResponse{
+		Token:  t,
+		ApiKey: config.I().ApiKey,
+	}, nil
 }
 
 func badRequest(msg string) error {

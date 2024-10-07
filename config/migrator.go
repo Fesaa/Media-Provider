@@ -10,7 +10,7 @@ type versionMap struct {
 }
 
 const (
-	currentVersion = 1
+	currentVersion = 2
 )
 
 var (
@@ -22,6 +22,15 @@ func init() {
 
 	versionMappers[versionMap{0, 1}] = func(c Config) Config {
 		c.Cache = CacheConfig{Type: MEMORY}
+		return c
+	}
+	versionMappers[versionMap{1, 2}] = func(c Config) Config {
+		apiKey, err := ApiKey()
+		if err != nil {
+			panic(err)
+		}
+
+		c.ApiKey = apiKey
 		return c
 	}
 }

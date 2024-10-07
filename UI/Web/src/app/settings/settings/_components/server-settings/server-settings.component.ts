@@ -6,6 +6,8 @@ import {FormInputComponent} from "../../../../shared/form/form-input/form-input.
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/BoundNumberValidator";
 import {ToastrService} from "ngx-toastr";
+import {NgIcon} from "@ng-icons/core";
+import {Clipboard} from "@angular/cdk/clipboard";
 
 @Component({
   selector: 'app-server-settings',
@@ -13,7 +15,8 @@ import {ToastrService} from "ngx-toastr";
   imports: [
     ReactiveFormsModule,
     FormInputComponent,
-    FormSelectComponent
+    FormSelectComponent,
+    NgIcon
   ],
   templateUrl: './server-settings.component.html',
   styleUrl: './server-settings.component.css',
@@ -24,10 +27,13 @@ export class ServerSettingsComponent implements OnInit {
   config: Config | undefined;
   settingsForm: FormGroup | undefined;
 
+  showKey = false;
+
   constructor(private configService: ConfigService,
               private fb: FormBuilder,
               private cdRef: ChangeDetectorRef,
-              private toastr: ToastrService
+              private toastr: ToastrService,
+              private clipBoardService: Clipboard
   ) {
   }
 
@@ -35,6 +41,28 @@ export class ServerSettingsComponent implements OnInit {
     this.configService.getConfig().subscribe(config => {
       this.config = config;
       this.buildForm();
+    })
+  }
+
+  hidden() {
+    return "X".repeat(this.config!.api_key.length);
+  }
+
+  toggle() {
+    this.showKey = !this.showKey;
+  }
+
+  copyApiKey() {
+    if (!this.config) {
+      return;
+    }
+    this.clipBoardService.copy(this.config.api_key)
+  }
+
+  refreshApiKey() {
+    this.configService.refreshApiKey().subscribe(apiKey => {
+      this.config!.api_key = apiKey;
+      this.cdRef.detectChanges();
     })
   }
 

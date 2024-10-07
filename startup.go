@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/api"
+	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -17,6 +19,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -41,12 +44,17 @@ func SetupApp(baseUrl string) *fiber.App {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
+	prometheus := fiberprometheus.New("media-provider")
+	prometheus.RegisterAt(app, "/api/metrics", auth.MiddlewareWithApiKey)
+	app.Use(prometheus.Middleware)
+
+	dontLog := []string{"/api/stats", "/", "/api/metrics"}
 	app.
 		Use(logger.New(logger.Config{
 			TimeFormat: "2006/01/02 15:04:05",
 			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
 			Next: func(c *fiber.Ctx) bool {
-				return c.Path() == "/api/stats" || c.Path() == "/" || config.I().Logging.Level > slog.LevelInfo
+				return slices.Contains(dontLog, c.Path()) || config.I().Logging.Level > slog.LevelInfo
 			},
 		}))
 

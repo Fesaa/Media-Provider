@@ -5,6 +5,7 @@ export type Config = {
   password: string;
   root_dir: string;
   base_url: string;
+  api_key: string;
 
   cache: Cache;
   logging: Logging;

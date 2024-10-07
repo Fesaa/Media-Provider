@@ -45,6 +45,9 @@ func Setup(app fiber.Router) {
 
 	api.Post("/login", routes.Login)
 
+	proxy := api.Group("/proxy", c)
+	proxy.Get("/mangadex/covers/:id/:filename", auth.MiddlewareWithApiKey, routes.MangaDexCoverProxy)
+
 	api.Use(auth.Middleware)
 
 	api.Post("/search", c, routes.Search)
@@ -58,6 +61,7 @@ func Setup(app fiber.Router) {
 
 	configGroup := api.Group("/config")
 	configGroup.Get("/", routes.GetConfig)
+	configGroup.Get("/refresh-api-key", routes.RefreshApiKey)
 	configGroup.Post("/update", routes.UpdateConfig)
 
 	pages := configGroup.Group("/pages")
@@ -67,7 +71,4 @@ func Setup(app fiber.Router) {
 	pages.Post("/", routes.AddPage)
 	pages.Put("/:index", routes.UpdatePage)
 	pages.Post("/move", routes.MovePage)
-
-	proxy := api.Group("/proxy", c)
-	proxy.Get("/mangadex/covers/:id/:filename", routes.MangaDexCoverProxy)
 }

@@ -3,7 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {Config, MovePageRequest} from '../_models/config';
 import {Page} from "../_models/page";
-import {of, tap} from "rxjs";
+import {of, Subject, take, tap} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -26,6 +26,20 @@ export class ConfigService {
       this.config = config;
       this.syncId = config.sync_id;
     }));
+  }
+
+  refreshApiKey() {
+    if (this.syncId == -1) {
+      throw new Error('Sync ID is not set');
+    }
+
+    const subject = new Subject<string>();
+    this.httpClient.get<{apiKey: string, sync_id: number}>(this.baseUrl + 'refresh-api-key' + '?sync_id=' + this.syncId)
+      .subscribe(model => {
+        this.syncId = model.sync_id;
+        subject.next(model.apiKey);
+      })
+    return subject.asObservable();
   }
 
   removePage(pageId: number) {

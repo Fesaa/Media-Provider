@@ -92,7 +92,7 @@ func validatePage(page config.Page) error {
 
 	for _, p := range page.Provider {
 		if !providers.HasProvider(p) {
-			return fmt.Errorf("provider %s not found", p)
+			return fmt.Errorf("provider %v not found", p)
 		}
 	}
 
@@ -135,7 +135,7 @@ func validateModifier(modifier config.Modifier) error {
 	}
 
 	if !config.IsValidModifierType(modifier.Type) {
-		return fmt.Errorf("modifier type '%s' is not a valid. Check the documentation for valid types", modifier.Type)
+		return fmt.Errorf("modifier type '%v' is not a valid. Check the documentation for valid types", modifier.Type)
 	}
 
 	for name, key := range modifier.Values {

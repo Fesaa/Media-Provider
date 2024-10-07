@@ -1,9 +1,49 @@
 package config
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
+	"github.com/gofiber/fiber/v2"
 	"log/slog"
 )
+
+func GenerateSecret(length int) (string, error) {
+	secret := make([]byte, length)
+	_, err := rand.Read(secret)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(secret), nil
+}
+
+func ApiKey() (string, error) {
+	bytes := make([]byte, 16)
+
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	apiKey := hex.EncodeToString(bytes)
+	return apiKey, nil
+}
+
+func (c *Config) RefreshApiKey(syncID int) error {
+	if c.SyncId != syncID {
+		return InvalidSyncID
+	}
+
+	apiKey, err := ApiKey()
+	if err != nil {
+		slog.Error("could not refresh api key", "err", err)
+		return fiber.ErrInternalServerError
+	}
+
+	c.ApiKey = apiKey
+	return c.Save()
+}
 
 func (c *Config) Update(config Config, syncID int) error {
 	if c.SyncId != syncID {
@@ -12,6 +52,7 @@ func (c *Config) Update(config Config, syncID int) error {
 
 	config.Version = c.Version
 	config.Secret = c.Secret
+	config.ApiKey = c.ApiKey
 	config.SyncId = syncID
 	config.Pages = c.Pages
 	return Save(&config)

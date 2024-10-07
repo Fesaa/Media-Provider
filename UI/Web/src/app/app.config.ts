@@ -25,6 +25,9 @@ import {
   heroMinus,
   heroXMark,
   heroChevronLeft,
+  heroArrowPath,
+  heroEye,
+  heroEyeSlash,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {provideToastr} from "ngx-toastr";
@@ -67,6 +70,9 @@ export const appConfig: ApplicationConfig = {
       heroMinus,
       heroXMark,
       heroChevronLeft,
+      heroArrowPath,
+      heroEye,
+      heroEyeSlash,
     })), provideAnimationsAsync()
   ]
 };
