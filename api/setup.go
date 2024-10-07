@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
@@ -15,6 +16,7 @@ func Setup(app fiber.Router) {
 	log.Debug("registering api routes")
 
 	c := cache.New(cache.Config{
+		Storage:      cacheStorage(),
 		CacheControl: true,
 		Next: func(c *fiber.Ctx) bool {
 			return false
@@ -26,12 +28,15 @@ func Setup(app fiber.Router) {
 			return utils.CopyString(ctx.Path())
 		},
 		Methods: []string{fiber.MethodGet, fiber.MethodPost},
-		ExpirationGenerator: func(ctx *fiber.Ctx, config *cache.Config) time.Duration {
+		ExpirationGenerator: func(ctx *fiber.Ctx, c *cache.Config) time.Duration {
 			if strings.HasPrefix(ctx.Route().Path, "/api/proxy") {
+				if config.I().Cache.Type == config.REDIS {
+					return 7 * 24 * time.Hour
+				}
 				return 24 * time.Hour
 			}
 
-			return 5 * time.Minute
+			return c.Expiration
 		},
 	})
 

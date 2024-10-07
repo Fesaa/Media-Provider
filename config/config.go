@@ -1,21 +1,37 @@
 package config
 
-import "log/slog"
+import (
+	"log/slog"
+)
 
 // Validate is for API requests, we manually validate stuff on startup
 
 type Config struct {
+	Version  int    `json:"version"`
 	SyncId   int    `json:"sync_id"`
 	Password string `json:"password" validate:"required"`
 	RootDir  string `json:"root_dir"`
 	BaseUrl  string `json:"base_url"`
 	Secret   string `json:"secret"`
 
-	Logging    Logging    `json:"logging"`
-	Downloader Downloader `json:"downloader"`
+	Logging    Logging     `json:"logging"`
+	Downloader Downloader  `json:"downloader"`
+	Cache      CacheConfig `json:"cache"`
 
 	Pages []Page `json:"pages"`
 }
+
+type CacheConfig struct {
+	Type      CacheType `json:"type"`
+	RedisAddr string    `json:"redis,omitempty"`
+}
+
+type CacheType string
+
+const (
+	MEMORY CacheType = "MEMORY"
+	REDIS  CacheType = "REDIS"
+)
 
 type Downloader struct {
 	MaxConcurrentTorrents       int `json:"max_torrents" validate:"required,number,min=1,max=10"`

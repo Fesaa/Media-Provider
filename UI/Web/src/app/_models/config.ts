@@ -6,10 +6,21 @@ export type Config = {
   root_dir: string;
   base_url: string;
 
+  cache: Cache;
   logging: Logging;
   downloader: Downloader;
 
   pages: Page[];
+}
+
+export type Cache = {
+  type: CacheType;
+  redis?: string
+}
+
+export enum CacheType {
+  MEMORY = "MEMORY",
+  REDIS = "REDIS",
 }
 
 export type Logging = {

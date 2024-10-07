@@ -17,6 +17,32 @@
         </div>
 
         <div class="w-full">
+          <h3 class="w-2/5 border-b-2 border-black dark:border-white">Cache</h3>
+
+          <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
+            <app-form-select
+              [formGroupName]="'cache'"
+              [formGroup]="settingsForm"
+              label="Cache Type"
+              controlName="type"
+              [options]="Object.values(CacheType)"
+              [values]="Object.keys(CacheType)" />
+
+            @switch (settingsForm.value.cache.type) {
+              @case (CacheType.REDIS) {
+                <app-form-input
+                  formGroupName="cache"
+                  [formGroup]="settingsForm"
+                  label="Redis addres"
+                  controlName="redis"
+                  type="text"
+                />
+              }
+            }
+          </div>
+        </div>
+
+        <div class="w-full">
           <h3 class="w-2/5 border-b-2 border-black dark:border-white">Logging</h3>
 
           <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">

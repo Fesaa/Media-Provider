@@ -10,6 +10,8 @@ func (c *Config) Update(config Config, syncID int) error {
 		return InvalidSyncID
 	}
 
+	config.Version = c.Version
+	config.Secret = c.Secret
 	config.SyncId = syncID
 	config.Pages = c.Pages
 	return Save(&config)

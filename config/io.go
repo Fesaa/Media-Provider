@@ -32,8 +32,6 @@ func init() {
 }
 
 func Load() (*Config, error) {
-	cfgLock.RLock()
-	defer cfgLock.RUnlock()
 
 	cfg, err := read(configPath)
 
@@ -47,8 +45,9 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	current = cfg
-	return cfg, nil
+	updatedConfig := update(*cfg)
+	current = &updatedConfig
+	return current, nil
 }
 
 func Save(cfg *Config, backUp ...bool) error {

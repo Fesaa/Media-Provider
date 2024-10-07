@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit} from '@angular/core';
-import {Config, LogHandler, LogLevel} from '../../../../_models/config';
+import {CacheType, Config, LogHandler, LogLevel} from '../../../../_models/config';
 import {ConfigService} from "../../../../_services/config.service";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
@@ -47,6 +47,10 @@ export class ServerSettingsComponent implements OnInit {
       password: this.fb.control(this.config.password, [Validators.required]),
       root_dir: this.fb.control(this.config.root_dir, Validators.required),
       base_url: this.fb.control(this.config.base_url),
+      cache: this.fb.group({
+        type: this.fb.control(this.config.cache.type, [Validators.required]),
+        redis: this.fb.control(this.config.cache.redis),
+      }),
       logging: this.fb.group({
         level: this.fb.control(this.config.logging.level, Validators.required),
         source: this.fb.control(this.config.logging.source, Validators.required),
@@ -66,14 +70,19 @@ export class ServerSettingsComponent implements OnInit {
       return;
     }
 
-    if (!this.settingsForm.valid) {
-      this.displayErrors();
+    const errors = this.errors();
+    if (errors > 0) {
+      this.toastr.error(`Found ${errors} errors in the form`, 'Cannot submit');
       return;
     }
 
     if (!this.settingsForm.dirty) {
       this.toastr.warning('No changes detected', 'Not saving');
       return;
+    }
+
+    if (this.settingsForm.value.cache.type != CacheType.REDIS) {
+      this.settingsForm.value.cache.redis = ""
     }
 
     this.configService.updateConfig(this.settingsForm.value).subscribe({
@@ -90,7 +99,7 @@ export class ServerSettingsComponent implements OnInit {
     });
   }
 
-  private displayErrors() {
+  private errors() {
     let count = 0;
     Object.keys(this.settingsForm!.controls).forEach(key => {
       const controlErrors = this.settingsForm!.get(key)?.errors;
@@ -100,11 +109,12 @@ export class ServerSettingsComponent implements OnInit {
       }
     });
 
-    this.toastr.error(`Found ${count} errors in the form`, 'Cannot submit');
+    return count
   }
 
 
   protected readonly LogHandler = LogHandler;
   protected readonly Object = Object;
   protected readonly LogLevel = LogLevel;
+  protected readonly CacheType = CacheType;
 }

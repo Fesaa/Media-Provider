@@ -29,11 +29,13 @@ func defaultConfig() *Config {
 		RootDir:  path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"),
 		BaseUrl:  "",
 		Secret:   secret,
+		Cache: CacheConfig{
+			Type: MEMORY,
+		},
 		Logging: Logging{
 			Level:   slog.LevelInfo,
 			Source:  true,
 			Handler: LogHandlerText,
-			LogHttp: false,
 		},
 		Downloader: Downloader{
 			MaxConcurrentTorrents:       5,

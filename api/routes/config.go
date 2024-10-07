@@ -14,7 +14,9 @@ var (
 )
 
 func GetConfig(ctx *fiber.Ctx) error {
-	return ctx.JSON(config.I())
+	cp := config.I()
+	cp.Secret = ""
+	return ctx.JSON(cp)
 }
 
 func UpdateConfig(ctx *fiber.Ctx) error {
