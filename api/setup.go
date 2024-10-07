@@ -27,7 +27,8 @@ func Setup(app fiber.Router) {
 			}
 			return utils.CopyString(ctx.Path())
 		},
-		Methods: []string{fiber.MethodGet, fiber.MethodPost},
+		Methods:    []string{fiber.MethodGet, fiber.MethodPost},
+		Expiration: time.Hour,
 		ExpirationGenerator: func(ctx *fiber.Ctx, c *cache.Config) time.Duration {
 			if strings.HasPrefix(ctx.Route().Path, "/api/proxy") {
 				if config.I().Cache.Type == config.REDIS {
