@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/subsplease"
+	"github.com/Fesaa/Media-Provider/webtoon"
 	"github.com/Fesaa/Media-Provider/yts"
 	"time"
 )
@@ -21,6 +22,7 @@ func init() {
 	register(config.YTS, ytsTransformer, yts.Search, ytsNormalizer, yoitsuDownloader, yoitsuStopper)
 	register(config.SUBSPLEASE, subsPleaseTransformer, subsplease.Search, subsPleaseNormalizer, yoitsuDownloader, yoitsuStopper)
 	register(config.MANGADEX, mangadexTransformer, mangadex.SearchManga, mangadexNormalizer, mangadexDownloader, mangadexStopper)
+	register(config.WEBTOON, webtoonTransformer, webtoon.Search, webtoonNormalizer, webToonDownloader, webtoonStopper)
 }
 
 func register[T, S any](name config.Provider, t requestTransformerFunc[S], s searchFunc[S, T], n responseNormalizerFunc[T], d downloadFunc, stop stopFunc) {

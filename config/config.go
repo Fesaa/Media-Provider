@@ -62,6 +62,7 @@ const (
 	LIME
 	SUBSPLEASE
 	MANGADEX
+	WEBTOON
 )
 
 type ModifierType int

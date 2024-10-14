@@ -47,6 +47,7 @@ func Setup(app fiber.Router) {
 
 	proxy := api.Group("/proxy", c)
 	proxy.Get("/mangadex/covers/:id/:filename", auth.MiddlewareWithApiKey, routes.MangaDexCoverProxy)
+	proxy.Get("/webtoon/covers/:date/:id/:filename", auth.MiddlewareWithApiKey, routes.WebToonCoverProxy)
 
 	api.Use(auth.Middleware)
 

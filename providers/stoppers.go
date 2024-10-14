@@ -13,3 +13,7 @@ func yoitsuStopper(req payload.StopRequest) error {
 func mangadexStopper(req payload.StopRequest) error {
 	return mangadex.I().RemoveDownload(req)
 }
+
+func webtoonStopper(req payload.StopRequest) error {
+	return nil
+}

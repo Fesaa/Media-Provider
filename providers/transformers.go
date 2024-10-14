@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/subsplease"
+	"github.com/Fesaa/Media-Provider/webtoon"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/irevenko/go-nyaa/nyaa"
 	"net/url"
@@ -104,4 +105,10 @@ func ytsTransformer(s payload.SearchRequest) yts.SearchOptions {
 	}
 	y.Page = 1
 	return y
+}
+
+func webtoonTransformer(s payload.SearchRequest) webtoon.SearchOptions {
+	return webtoon.SearchOptions{
+		Query: s.Query,
+	}
 }

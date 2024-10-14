@@ -7,6 +7,8 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/subsplease"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/webtoon"
 	"github.com/Fesaa/Media-Provider/yts"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/irevenko/go-nyaa/types"
@@ -152,6 +154,31 @@ func nyaaNormalizer(provider config.Provider) responseNormalizerFunc[[]types.Tor
 		}
 		return torrentsInfo
 	}
+}
+
+func webtoonNormalizer(webtoons []webtoon.Data) []Info {
+	return utils.MaybeMap(webtoons, func(w webtoon.Data) (Info, bool) {
+		if w.Id == "" {
+			return Info{}, false
+		}
+
+		return Info{
+			Name: w.Name,
+			Description: func() string {
+				if w.Author != "" {
+					return "By " + w.Author
+				}
+				return ""
+			}(),
+			Tags: []InfoTag{
+				of("Genre", w.Genre),
+			},
+			InfoHash: w.Id,
+			ImageUrl: w.ImageUrl,
+			RefUrl:   w.Url,
+			Provider: config.WEBTOON,
+		}, true
+	})
 }
 
 func stringify(i int) string {

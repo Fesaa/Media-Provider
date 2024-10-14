@@ -15,3 +15,7 @@ func mangadexDownloader(req payload.DownloadRequest) error {
 	_, err := mangadex.I().Download(req)
 	return err
 }
+
+func webToonDownloader(req payload.DownloadRequest) error {
+	return nil
+}
