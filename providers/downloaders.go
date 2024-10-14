@@ -3,6 +3,7 @@ package providers
 import (
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
+	"github.com/Fesaa/Media-Provider/webtoon"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 )
 
@@ -17,5 +18,6 @@ func mangadexDownloader(req payload.DownloadRequest) error {
 }
 
 func webToonDownloader(req payload.DownloadRequest) error {
-	return nil
+	_, err := webtoon.I().Download(req)
+	return err
 }
