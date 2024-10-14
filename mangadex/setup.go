@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/wisewolf"
 	"io"
 	"net/http"
 )
@@ -20,7 +21,7 @@ func Init(c Config) {
 func loadTags() error {
 	tagUrl := URL + "/manga/tag"
 
-	resp, err := http.Get(tagUrl)
+	resp, err := wisewolf.Client.Get(tagUrl)
 	if err != nil {
 		return fmt.Errorf("loadTags Get: %s", err)
 	}

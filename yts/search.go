@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/wisewolf"
 	"io"
-	"net/http"
 )
 
 const URL string = "https://yts.mx/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
@@ -30,9 +30,7 @@ func (o SearchOptions) toURL() string {
 
 func Search(options SearchOptions) (*SearchResult, error) {
 	url := options.toURL()
-	log.Trace("Searing YTS for movies", "url", url)
-
-	req, err := http.Get(url)
+	req, err := wisewolf.Client.Get(url)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/wisewolf"
 	mapset "github.com/deckarep/golang-set/v2"
 	"io"
 	"log/slog"
@@ -512,7 +513,7 @@ func (m *manga) chapterPath(c ChapterSearchData) string {
 }
 
 func downloadAndWrite(url string, path string, tryAgain ...bool) error {
-	resp, err := http.Get(url)
+	resp, err := wisewolf.Client.Get(url)
 	if err != nil {
 		return err
 	}

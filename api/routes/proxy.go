@@ -3,10 +3,10 @@ package routes
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/wisewolf"
 	"github.com/gofiber/fiber/v2"
 	"io"
 	"mime"
-	"net/http"
 	"path/filepath"
 )
 
@@ -33,7 +33,7 @@ func MangaDexCoverProxy(c *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	resp, err := http.Get(url(id, fileName))
+	resp, err := wisewolf.Client.Get(url(id, fileName))
 	if err != nil {
 		log.Error("Failed to download cover image from mangadex", "error", err)
 		return fiber.ErrInternalServerError

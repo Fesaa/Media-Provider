@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/wisewolf"
 	"io"
-	"net/http"
 	"net/url"
 )
 
@@ -21,8 +21,7 @@ func (o SearchOptions) toURL() string {
 
 func Search(options SearchOptions) (SearchResult, error) {
 	u := options.toURL()
-	log.Trace("search SubsPlease for anime", "url", u)
-	req, err := http.Get(u)
+	req, err := wisewolf.Client.Get(u)
 	if err != nil {
 		return nil, err
 	}

@@ -3,9 +3,9 @@ package limetorrents
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/wisewolf"
 	"github.com/PuerkitoBio/goquery"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 )
@@ -15,7 +15,6 @@ const SEARCH_URL string = BASE_URl + "/search/%s/%s/%d/"
 
 func Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	searchUrl := formatUrl(searchOptions)
-	log.Trace("searching lime for torrents", "url", searchUrl)
 
 	doc, err := getSearch(searchUrl)
 	if err != nil {
@@ -75,7 +74,7 @@ func hashFromUrl(url string) string {
 }
 
 func getSearch(url string) (*goquery.Document, error) {
-	res, err := http.Get(url)
+	res, err := wisewolf.Client.Get(url)
 	if err != nil {
 		return nil, err
 	}

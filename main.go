@@ -4,6 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
+	"github.com/Fesaa/Media-Provider/wisewolf"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"os"
 	"os/signal"
@@ -23,6 +24,7 @@ func init() {
 
 	log.Init(cfg.Logging)
 	validateConfig(cfg)
+	wisewolf.Init()
 
 	UpdateBaseUrlInIndex(cfg.BaseUrl)
 	auth.Init()

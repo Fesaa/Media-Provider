@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/wisewolf"
 	"io"
 	"net/http"
 )
@@ -105,7 +106,7 @@ func GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error) {
 }
 
 func do[T any](url string, out *T) error {
-	resp, err := http.Get(url)
+	resp, err := wisewolf.Client.Get(url)
 	if err != nil {
 		return err
 	}
