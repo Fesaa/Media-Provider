@@ -42,13 +42,11 @@
 
         <div class="flex flex-row space-x-2 p-1">
 
-          @for (property of properties; track $index) {
-            @if (searchResult.hasOwnProperty(property)) {
-              <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour($index)}} dropdown-item">
-                <span class="whitespace-nowrap">{{property}}</span>
-                <span class="whitespace-nowrap">{{ searchResult[property] }}</span>
-              </div>
-            }
+          @for (tag of searchResult.Tags; track $index) {
+            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour($index)}} dropdown-item">
+              <span class="whitespace-nowrap">{{tag.Name}}</span>
+              <span class="whitespace-nowrap">{{ tag.Value }}</span>
+            </div>
           }
         </div>
 

@@ -29,11 +29,13 @@ func mangadexNormalizer(mangas *mangadex.MangaSearchResponse) []Info {
 			Name:        enTitle,
 			Description: data.Attributes.EnDescription(),
 			Size:        config.OrDefault(data.Attributes.LastVolume, "unknown") + " Volumes",
-			Date:        strconv.Itoa(data.Attributes.Year),
-			InfoHash:    data.Id,
-			RefUrl:      data.RefURL(),
-			Provider:    config.MANGADEX,
-			ImageUrl:    data.CoverURL(),
+			Tags: []InfoTag{
+				of("Date", strconv.Itoa(data.Attributes.Year)),
+			},
+			InfoHash: data.Id,
+			RefUrl:   data.RefURL(),
+			Provider: config.MANGADEX,
+			ImageUrl: data.CoverURL(),
 		})
 	}
 
@@ -57,8 +59,11 @@ func subsPleaseNormalizer(torrents subsplease.SearchResult) []Info {
 			continue
 		}
 		torrentsInfo = append(torrentsInfo, Info{
-			Name:     name,
-			Date:     data.ReleaseDate,
+			Name: name,
+			Size: "Unknown",
+			Tags: []InfoTag{
+				of("Date", data.ReleaseDate),
+			},
 			InfoHash: m.InfoHash.HexString(),
 			ImageUrl: data.ImageUrl(),
 			RefUrl:   data.ReferenceURL(),
@@ -74,16 +79,17 @@ func limeNormalizer(torrents []limetorrents.SearchResult) []Info {
 		torrentsInfo[i] = Info{
 			Name:        t.Name,
 			Description: "",
-			Date:        t.Added,
 			Size:        t.Size,
-			Seeders:     t.Seed,
-			Leechers:    t.Leach,
-			Downloads:   "N/A",
-			Link:        t.Url,
-			InfoHash:    t.Hash,
-			ImageUrl:    "",
-			RefUrl:      t.PageUrl,
-			Provider:    config.LIME,
+			Tags: []InfoTag{
+				of("Date", t.Added),
+				of("Seeders", t.Seed),
+				of("Leechers", t.Leach),
+			},
+			Link:     t.Url,
+			InfoHash: t.Hash,
+			ImageUrl: "",
+			RefUrl:   t.PageUrl,
+			Provider: config.LIME,
 		}
 	}
 	return torrentsInfo
@@ -107,16 +113,17 @@ func ytsNormalizer(data *yts.SearchResult) []Info {
 		torrents[i] = Info{
 			Name:        movie.Title,
 			Description: movie.DescriptionFull,
-			Date:        stringify(movie.Year),
 			Size:        torrent.Size,
-			Seeders:     stringify(torrent.Seeds),
-			Leechers:    stringify(torrent.Peers),
-			Downloads:   "",
-			Link:        torrent.Url,
-			InfoHash:    torrent.Hash,
-			ImageUrl:    movie.MediumCoverImage,
-			RefUrl:      movie.Url,
-			Provider:    config.YTS,
+			Tags: []InfoTag{
+				of("Date", stringify(movie.Year)),
+				of("Seeders", stringify(torrent.Seeds)),
+				of("Leechers", stringify(torrent.Peers)),
+			},
+			Link:     torrent.Url,
+			InfoHash: torrent.Hash,
+			ImageUrl: movie.MediumCoverImage,
+			RefUrl:   movie.Url,
+			Provider: config.YTS,
 		}
 	}
 	return torrents
@@ -129,16 +136,18 @@ func nyaaNormalizer(provider config.Provider) responseNormalizerFunc[[]types.Tor
 			torrentsInfo[i] = Info{
 				Name:        t.Name,
 				Description: "", // The description passed here, is some raw html nonsense. Don't use it
-				Date:        t.Date,
 				Size:        t.Size,
-				Seeders:     t.Seeders,
-				Leechers:    t.Leechers,
-				Downloads:   t.Downloads,
-				Link:        t.Link,
-				InfoHash:    t.InfoHash,
-				ImageUrl:    "",
-				RefUrl:      t.GUID,
-				Provider:    provider,
+				Tags: []InfoTag{
+					of("Date", t.Date),
+					of("Seeders", t.Seeders),
+					of("Leechers", t.Leechers),
+					of("Downloads", t.Downloads),
+				},
+				Link:     t.Link,
+				InfoHash: t.InfoHash,
+				ImageUrl: "",
+				RefUrl:   t.GUID,
+				Provider: provider,
 			}
 		}
 		return torrentsInfo

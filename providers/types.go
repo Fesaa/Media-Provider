@@ -8,16 +8,25 @@ import (
 type Info struct {
 	Name        string          `json:"Name"`
 	Description string          `json:"Description"`
-	Date        string          `json:"Date"`
 	Size        string          `json:"Size"`
-	Seeders     string          `json:"Seeders"`
-	Leechers    string          `json:"Leechers"`
-	Downloads   string          `json:"Downloads"`
+	Tags        []InfoTag       `json:"Tags"`
 	Link        string          `json:"Link"`
 	InfoHash    string          `json:"InfoHash"`
 	ImageUrl    string          `json:"ImageUrl"`
 	RefUrl      string          `json:"RefUrl"`
 	Provider    config.Provider `json:"Provider"`
+}
+
+type InfoTag struct {
+	Name  string `json:"Name"`
+	Value any    `json:"Value"`
+}
+
+func of(name string, value any) InfoTag {
+	return InfoTag{
+		Name:  name,
+		Value: value,
+	}
 }
 
 type provider interface {
