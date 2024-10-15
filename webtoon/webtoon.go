@@ -115,14 +115,6 @@ func (w *webtoon) WaitForInfoAndDownload() {
 	go func() {
 		select {
 		case <-w.ctx.Done():
-			req := payload.StopRequest{
-				Provider:    config.WEBTOON,
-				Id:          w.id,
-				DeleteFiles: false,
-			}
-			if err := w.client.RemoveDownload(req); err != nil {
-				w.log.Warn("failed to remove download successfully", "err", err)
-			}
 			return
 		case <-w.loadInfo():
 			w.log = w.log.With(slog.String("title", w.Title()))

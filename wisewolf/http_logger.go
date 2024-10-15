@@ -31,8 +31,8 @@ func (lt *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error)
 		return resp, err
 	}
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		l.Debug("http request returned a non-200 status code",
+	if resp.StatusCode >= 400 {
+		l.Debug("http request returned an error status code",
 			slog.String("status", resp.Status),
 			slog.Int("status_code", resp.StatusCode))
 		return resp, err

@@ -1,6 +1,7 @@
 package webtoon
 
 import (
+	"fmt"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"strings"
@@ -8,7 +9,7 @@ import (
 )
 
 func constructSeriesInfo(id string) (*Series, error) {
-	seriesStartUrl := BASE_URL + id
+	seriesStartUrl := fmt.Sprintf(EPISODE_LIST, id)
 	doc, err := wrapInDoc(seriesStartUrl)
 	if err != nil {
 		return nil, err
@@ -30,6 +31,10 @@ func constructSeriesInfo(id string) (*Series, error) {
 		doc, err = wrapInDoc(DOMAIN + pages[index])
 		if err != nil {
 			return nil, err
+		}
+
+		if index == len(pages)-1 && len(pages) > 10 {
+			index = 1
 		}
 
 		series.Chapters = append(series.Chapters, extractChapters(doc)...)

@@ -12,6 +12,7 @@ const (
 	BASE_URL     = "https://www.webtoons.com/en/"
 	SEARCH_URL   = BASE_URL + "search?keyword=%s"
 	IMAGE_PREFIX = "https://webtoon-phinf.pstatic.net/"
+	EPISODE_LIST = DOMAIN + "/episodeList?titleNo=%s"
 )
 
 func Search(options SearchOptions) ([]SearchData, error) {
@@ -68,10 +69,12 @@ func constructProxyImg(imageUrl string) string {
 }
 
 func extractId(u string) string {
-	if strings.HasPrefix(u, BASE_URL) {
-		return strings.TrimPrefix(u, BASE_URL)
+	wtUrl, err := url.Parse(u)
+	if err != nil {
+		return ""
 	}
-	return ""
+
+	return wtUrl.Query().Get("title_no")
 }
 
 func searchUrl(keyword string) string {
