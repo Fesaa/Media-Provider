@@ -70,6 +70,9 @@ type webtoon struct {
 }
 
 func (w *webtoon) Title() string {
+	if w.searchInfo != nil {
+		return w.searchInfo.Name
+	}
 	if w.info != nil {
 		return w.info.Name
 	}
