@@ -12,11 +12,6 @@ type loggingTransport struct {
 }
 
 func (lt *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	log.Trace("http request",
-		slog.String("method", req.Method),
-		slog.String("url", req.URL.String()),
-	)
-
 	if lt.Transport == nil {
 		lt.Transport = http.DefaultTransport
 	}
@@ -37,7 +32,7 @@ func (lt *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		l.Trace("http request returned a non-200 status code",
+		l.Debug("http request returned a non-200 status code",
 			slog.String("status", resp.Status),
 			slog.Int("status_code", resp.StatusCode))
 		return resp, err
