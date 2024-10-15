@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/wisewolf"
 	"io"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -17,6 +18,10 @@ const (
 	SEARCH_URL   = BASE_URL + "search/immediate?keyword=%s"
 	IMAGE_PREFIX = "https://webtoon-phinf.pstatic.net/"
 	EPISODE_LIST = DOMAIN + "/episodeList?titleNo=%s"
+)
+
+var (
+	rg = regexp.MustCompile("[^a-zA-Z0-9 ]+")
 )
 
 func Search(options SearchOptions) ([]SearchData, error) {
@@ -64,6 +69,7 @@ func constructProxyImg(imageUrl string) string {
 }
 
 func searchUrl(keyword string) string {
+	keyword = rg.ReplaceAllString(keyword, "")
 	return fmt.Sprintf(SEARCH_URL, url.QueryEscape(keyword))
 }
 

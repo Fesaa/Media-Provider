@@ -141,7 +141,9 @@ func (w *webtoon) loadInfo() chan struct{} {
 
 		w.info = info
 
-		search, err := Search(SearchOptions{Query: w.info.Name})
+		// TempTitle is the title we previously got from the search, just should ensure we get the correct stuff
+		// WebToons search is surprisingly bad at correcting for spaces, special characters, etc...
+		search, err := Search(SearchOptions{Query: w.tempTitle})
 		if err != nil {
 			w.log.Error("error while loading webtoon info", "err", err)
 			w.cancel()
@@ -151,6 +153,10 @@ func (w *webtoon) loadInfo() chan struct{} {
 		w.searchInfo = utils.Find(search, func(data SearchData) bool {
 			return fmt.Sprintf("%d", data.Id) == w.id
 		})
+		if w.searchInfo == nil {
+			w.log.Warn("was unable to load searchInfo, some meta-data may be off")
+		}
+
 		close(out)
 	}()
 	return out
