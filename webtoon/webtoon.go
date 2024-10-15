@@ -350,7 +350,7 @@ func (w *webtoon) writeChapterMetadata(chapter Chapter) error {
 		// Kavita uses the image of the first chapter as the cover image in lists
 		// We replace this with the nicer looking image. As this software is still targeting Kavita
 		if w.searchInfo != nil && chapter.Number == "1" {
-			return w.searchInfo.ProxiedImage()
+			return webToonUrl(w.searchInfo.ThumbnailMobile)
 		}
 		return chapter.ImageUrl
 	}()
@@ -396,7 +396,7 @@ func (w *webtoon) GetInfo() payload.InfoStat {
 		Name:     w.Title(),
 		Size: func() string {
 			if w.info != nil {
-				return strconv.Itoa(len(w.info.Chapters)) + " Chapters"
+				return strconv.Itoa(len(w.toDownload)) + " Chapters"
 			}
 			return ""
 		}(),
@@ -509,4 +509,8 @@ func pad(str string, n int) string {
 		str = strings.Repeat("0", n-len(str)) + str
 	}
 	return str
+}
+
+func webToonUrl(s string) string {
+	return fmt.Sprintf("https://webtoon-phinf.pstatic.net%s", s)
 }

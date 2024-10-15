@@ -128,7 +128,10 @@ func (c *client) deleteFiles(wt WebToon) {
 		return
 	}
 
-	l.Info("deleting new entries in directory", slog.String("skipping", fmt.Sprintf("%+v", skip)))
+	l.Info("deleting new entries in directory")
+	if l.IsTraceEnabled() {
+		l.Trace("skipping already present files", slog.Int("amount", len(skip)), slog.String("skipping", fmt.Sprintf("%+v", skip)))
+	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		l.Error("error while reading directory", slog.Any("error", err))
