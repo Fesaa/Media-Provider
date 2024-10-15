@@ -1,8 +1,11 @@
 package webtoon
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/wisewolf"
+	"io"
 	"net/url"
 	"strings"
 )
@@ -10,55 +13,47 @@ import (
 const (
 	DOMAIN       = "https://www.webtoons.com"
 	BASE_URL     = "https://www.webtoons.com/en/"
-	SEARCH_URL   = BASE_URL + "search?keyword=%s"
+	SEARCH_URL   = BASE_URL + "search/immediate?keyword=%s"
 	IMAGE_PREFIX = "https://webtoon-phinf.pstatic.net/"
 	EPISODE_LIST = DOMAIN + "/episodeList?titleNo=%s"
 )
 
 func Search(options SearchOptions) ([]SearchData, error) {
-	doc, err := wrapInDoc(searchUrl(options.Query))
+	resp, err := wisewolf.Client.Get(searchUrl(options.Query))
 	if err != nil {
 		return nil, err
 	}
 
-	webtoons := doc.Find(".card_lst li")
-	if webtoons.Length() == 0 {
-		return []SearchData{}, nil
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
 
-	return goquery.Map(webtoons, constructWebToonFromNode), nil
-}
-
-func constructWebToonFromNode(_ int, s *goquery.Selection) SearchData {
-	pageUrl := s.Find("a").AttrOr("href", "")
-	img := s.Find("img").First().AttrOr("src", "")
-	info := s.Find(".info")
-	subj := info.Find(".subj").Text()
-	author := info.Find(".author").Text()
-	genre := s.Find(".genre").Text()
-	d := SearchData{
-		Id:       extractId(pageUrl),
-		Name:     subj,
-		Author:   author,
-		ImageUrl: constructProxyImg(img),
-		Genre:    genre,
-		Url:      pageUrl,
+	var response Response
+	err = json.Unmarshal(data, &response)
+	if err != nil {
+		return nil, err
 	}
-	return d
+
+	return utils.Map(response.Result.SearchedList, func(s SearchData) SearchData {
+		s.ThumbnailMobile = constructProxyImg(s.ThumbnailMobile)
+		s.Genre = strings.ToLower(s.Genre)
+		return s
+	}), nil
 }
 
 func constructProxyImg(imageUrl string) string {
-	if !strings.HasPrefix(imageUrl, IMAGE_PREFIX) {
+	if strings.HasPrefix(imageUrl, IMAGE_PREFIX) {
+		imageUrl = strings.TrimPrefix(imageUrl, IMAGE_PREFIX)
+	}
+	parts := strings.Split(imageUrl, "/")
+	if len(parts) != 4 {
 		return ""
 	}
-	parts := strings.Split(strings.TrimPrefix(imageUrl, IMAGE_PREFIX), "/")
-	if len(parts) != 3 {
-		return ""
-	}
-	date := parts[0]
-	id := parts[1]
+	date := parts[1]
+	id := parts[2]
 	fileName := func() string {
-		s := parts[2]
+		s := parts[3]
 		if strings.HasSuffix(s, "?type=q90") {
 			return strings.TrimSuffix(s, "?type=q90")
 		}
@@ -68,15 +63,10 @@ func constructProxyImg(imageUrl string) string {
 	return fmt.Sprintf("proxy/webtoon/covers/%s/%s/%s", date, id, fileName)
 }
 
-func extractId(u string) string {
-	wtUrl, err := url.Parse(u)
-	if err != nil {
-		return ""
-	}
-
-	return wtUrl.Query().Get("title_no")
-}
-
 func searchUrl(keyword string) string {
 	return fmt.Sprintf(SEARCH_URL, url.QueryEscape(keyword))
+}
+
+func (s *SearchData) Url() string {
+	return fmt.Sprintf(BASE_URL+"%s/%s/list?title_no=%d", s.Genre, url.PathEscape(s.Name), s.Id)
 }

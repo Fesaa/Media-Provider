@@ -158,24 +158,14 @@ func nyaaNormalizer(provider config.Provider) responseNormalizerFunc[[]types.Tor
 
 func webtoonNormalizer(webtoons []webtoon.SearchData) []Info {
 	return utils.MaybeMap(webtoons, func(w webtoon.SearchData) (Info, bool) {
-		if w.Id == "" {
-			return Info{}, false
-		}
-
 		return Info{
 			Name: w.Name,
-			Description: func() string {
-				if w.Author != "" {
-					return "By " + w.Author
-				}
-				return ""
-			}(),
 			Tags: []InfoTag{
 				of("Genre", w.Genre),
 			},
-			InfoHash: w.Id,
-			ImageUrl: w.ImageUrl,
-			RefUrl:   w.Url,
+			InfoHash: stringify(w.Id),
+			ImageUrl: w.ThumbnailMobile,
+			RefUrl:   w.Url(),
 			Provider: config.WEBTOON,
 		}, true
 	})

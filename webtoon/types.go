@@ -32,13 +32,27 @@ type SearchOptions struct {
 	Query string
 }
 
+type Response struct {
+	Result  SearchResult `json:"result"`
+	Success bool         `json:"success"`
+}
+
+type SearchResult struct {
+	Query        string       `json:"query"`
+	Start        int          `json:"start"`
+	Display      int          `json:"display"`
+	Total        int          `json:"total"`
+	SearchedList []SearchData `json:"searchedList"`
+}
+
 type SearchData struct {
-	Id       string
-	Name     string
-	Author   string
-	Genre    string
-	ImageUrl string
-	Url      string
+	Id              int      `json:"titleNo"`
+	Name            string   `json:"title"`
+	ReadCount       int      `json:"readCount"`
+	ThumbnailMobile string   `json:"thumbnailMobile"`
+	AuthorNameList  []string `json:"authorNameList"`
+	Genre           string   `json:"representGenre"`
+	Rating          bool     `json:"titleUnsuitableForChildren"`
 }
 
 type Series struct {
