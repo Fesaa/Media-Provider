@@ -20,6 +20,7 @@ type WebToon interface {
 	Title() string
 	Id() string
 	GetBaseDir() string
+	Downloading() bool
 	Cancel()
 	WaitForInfoAndDownload()
 	GetInfo() payload.InfoStat

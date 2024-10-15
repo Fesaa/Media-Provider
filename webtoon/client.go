@@ -112,6 +112,10 @@ func (c *client) startNext() {
 }
 
 func (c *client) deleteFiles(wt WebToon) {
+	if !wt.Downloading() {
+		return
+	}
+
 	dir := path.Join(c.GetBaseDir(), wt.GetDownloadDir())
 	l := log.With(slog.String("dir", dir), slog.String("id", wt.Id()))
 

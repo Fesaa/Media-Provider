@@ -88,6 +88,10 @@ func (w *webtoon) GetBaseDir() string {
 	return w.baseDir
 }
 
+func (w *webtoon) Downloading() bool {
+	return w.wg != nil
+}
+
 func (w *webtoon) Cancel() {
 	w.log.Trace("canceling webtoon download")
 	if w.cancel == nil {
@@ -117,7 +121,7 @@ func (w *webtoon) WaitForInfoAndDownload() {
 				DeleteFiles: false,
 			}
 			if err := w.client.RemoveDownload(req); err != nil {
-				w.log.Warn("failed to remove download successfully")
+				w.log.Warn("failed to remove download successfully", "err", err)
 			}
 			return
 		case <-w.loadInfo():
@@ -232,7 +236,10 @@ func (w *webtoon) startDownload() {
 
 func (w *webtoon) downloadChapter(chapter Chapter) error {
 	l := w.log.With(slog.String("chapter", chapter.Number))
+
 	l.Trace("downloading chapter")
+	wg := &sync.WaitGroup{}
+
 	err := os.MkdirAll(w.chapterPath(chapter.Number), 0755)
 	if err != nil {
 		return err
@@ -242,6 +249,83 @@ func (w *webtoon) downloadChapter(chapter Chapter) error {
 		l.Warn("error while writing chapter metadata", "err", err)
 	}
 
+	urls, err := loadImages(chapter)
+	if err != nil {
+		return err
+	}
+	l.Debug("downloading images", "amount", len(urls))
+
+	errCh := make(chan error, 1)
+	sem := make(chan struct{}, w.maxImages)
+	ctx, cancel := context.WithCancel(w.ctx)
+	defer cancel()
+
+	for i, url := range urls {
+		select {
+		case <-w.ctx.Done():
+			return nil
+		case <-ctx.Done():
+			wg.Wait()
+			return errors.New("context cancelled")
+		default:
+			wg.Add(1)
+			go func(i int, url string) {
+				defer wg.Done()
+				sem <- struct{}{}
+				defer func() { <-sem }()
+				if err = w.downloadImage(i+1, chapter, url); err != nil {
+					select {
+					case errCh <- err:
+						cancel()
+					default:
+					}
+				}
+			}(i, url)
+		}
+
+		if (i+1)%w.maxImages == 0 && i > 0 {
+			select {
+			case <-time.After(1 * time.Second):
+			case err = <-errCh:
+				wg.Wait()
+				for len(sem) > 0 {
+					<-sem
+				}
+				return fmt.Errorf("encountered an error while downloading images: %w", err)
+			case <-ctx.Done():
+				wg.Wait()
+				return fmt.Errorf("chapter download was cancelled from within")
+			}
+		}
+
+		select {
+		case err = <-errCh:
+			wg.Wait()
+			for len(sem) > 0 {
+				<-sem
+			}
+			return fmt.Errorf("encountered an error while downloading images: %w", err)
+		default:
+		}
+	}
+
+	wg.Wait()
+	select {
+	case err = <-errCh:
+		return err
+	default:
+	}
+
+	w.chaptersDownloaded++
+	return nil
+}
+
+func (w *webtoon) downloadImage(page int, chapter Chapter, url string) error {
+	filePath := path.Join(w.chapterPath(chapter.Number), fmt.Sprintf("page %s.jpg", padInt(page, 4)))
+	if err := downloadAndWrite(url, filePath); err != nil {
+		return err
+	}
+	w.imagesDownloaded++
 	return nil
 }
 
