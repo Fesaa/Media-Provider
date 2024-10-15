@@ -31,11 +31,29 @@ type SearchOptions struct {
 	Query string
 }
 
-type Data struct {
+type SearchData struct {
 	Id       string
 	Name     string
 	Author   string
 	Genre    string
 	ImageUrl string
 	Url      string
+}
+
+type Series struct {
+	Id          string
+	Name        string
+	Author      string
+	Description string
+	Genre       string
+	Completed   bool
+	Chapters    []Chapter
+}
+
+type Chapter struct {
+	Url      string
+	ImageUrl string
+	Title    string
+	Number   string
+	Date     string
 }

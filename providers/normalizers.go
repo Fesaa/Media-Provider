@@ -156,8 +156,8 @@ func nyaaNormalizer(provider config.Provider) responseNormalizerFunc[[]types.Tor
 	}
 }
 
-func webtoonNormalizer(webtoons []webtoon.Data) []Info {
-	return utils.MaybeMap(webtoons, func(w webtoon.Data) (Info, bool) {
+func webtoonNormalizer(webtoons []webtoon.SearchData) []Info {
+	return utils.MaybeMap(webtoons, func(w webtoon.SearchData) (Info, bool) {
 		if w.Id == "" {
 			return Info{}, false
 		}

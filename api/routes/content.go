@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/providers"
+	"github.com/Fesaa/Media-Provider/webtoon"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 
 	"github.com/gofiber/fiber/v2"
@@ -67,10 +68,18 @@ func Stats(ctx *fiber.Ctx) error {
 	if manga != nil {
 		statsResponse.Running = append(statsResponse.Running, manga.GetInfo())
 	}
+	wt := webtoon.I().GetCurrentWebToon()
+	if wt != nil {
+		statsResponse.Running = append(statsResponse.Running, wt.GetInfo())
+	}
+
 	for _, queueStat := range yoitsu.I().GetQueuedTorrents() {
 		statsResponse.Queued = append(statsResponse.Queued, queueStat)
 	}
 	for _, queueStat := range mangadex.I().GetQueuedMangas() {
+		statsResponse.Queued = append(statsResponse.Queued, queueStat)
+	}
+	for _, queueStat := range webtoon.I().GetQueuedWebToons() {
 		statsResponse.Queued = append(statsResponse.Queued, queueStat)
 	}
 	return ctx.JSON(statsResponse)

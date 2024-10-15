@@ -165,7 +165,7 @@ func (c *client) cleanup(wt WebToon) {
 			continue
 		}
 
-		if err = os.Remove(path.Join(dir, entry.Name())); err != nil {
+		if err = os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
 			l.Error("error while deleting file", slog.Any("error", err))
 			return
 		}

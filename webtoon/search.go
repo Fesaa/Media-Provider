@@ -8,12 +8,13 @@ import (
 )
 
 const (
+	DOMAIN       = "https://www.webtoons.com"
 	BASE_URL     = "https://www.webtoons.com/en/"
 	SEARCH_URL   = BASE_URL + "search?keyword=%s"
 	IMAGE_PREFIX = "https://webtoon-phinf.pstatic.net/"
 )
 
-func Search(options SearchOptions) ([]Data, error) {
+func Search(options SearchOptions) ([]SearchData, error) {
 	doc, err := wrapInDoc(searchUrl(options.Query))
 	if err != nil {
 		return nil, err
@@ -21,20 +22,20 @@ func Search(options SearchOptions) ([]Data, error) {
 
 	webtoons := doc.Find(".card_lst li")
 	if webtoons.Length() == 0 {
-		return []Data{}, nil
+		return []SearchData{}, nil
 	}
 
 	return goquery.Map(webtoons, constructWebToonFromNode), nil
 }
 
-func constructWebToonFromNode(_ int, s *goquery.Selection) Data {
+func constructWebToonFromNode(_ int, s *goquery.Selection) SearchData {
 	pageUrl := s.Find("a").AttrOr("href", "")
 	img := s.Find("img").First().AttrOr("src", "")
 	info := s.Find(".info")
 	subj := info.Find(".subj").Text()
 	author := info.Find(".author").Text()
 	genre := s.Find(".genre").Text()
-	d := Data{
+	d := SearchData{
 		Id:       extractId(pageUrl),
 		Name:     subj,
 		Author:   author,

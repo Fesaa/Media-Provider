@@ -4,6 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
+	"github.com/Fesaa/Media-Provider/webtoon"
 	"github.com/Fesaa/Media-Provider/wisewolf"
 	"github.com/Fesaa/Media-Provider/yoitsu"
 	"os"
@@ -30,6 +31,7 @@ func init() {
 	auth.Init()
 	yoitsu.Init(cfg)
 	mangadex.Init(cfg)
+	webtoon.Init(cfg)
 }
 
 func main() {
