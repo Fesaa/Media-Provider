@@ -162,9 +162,10 @@ func webtoonNormalizer(webtoons []webtoon.SearchData) []Info {
 			Name: w.Name,
 			Tags: []InfoTag{
 				of("Genre", w.Genre),
+				of("Readers", w.ReadCount),
 			},
 			InfoHash: stringify(w.Id),
-			ImageUrl: w.ThumbnailMobile,
+			ImageUrl: w.ProxiedImage(),
 			RefUrl:   w.Url(),
 			Provider: config.WEBTOON,
 		}, true

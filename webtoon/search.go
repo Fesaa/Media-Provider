@@ -3,6 +3,7 @@ package webtoon
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/wisewolf"
 	"io"
@@ -36,7 +37,6 @@ func Search(options SearchOptions) ([]SearchData, error) {
 	}
 
 	return utils.Map(response.Result.SearchedList, func(s SearchData) SearchData {
-		s.ThumbnailMobile = constructProxyImg(s.ThumbnailMobile)
 		s.Genre = strings.ToLower(s.Genre)
 		return s
 	}), nil
@@ -69,4 +69,15 @@ func searchUrl(keyword string) string {
 
 func (s *SearchData) Url() string {
 	return fmt.Sprintf(BASE_URL+"%s/%s/list?title_no=%d", s.Genre, url.PathEscape(s.Name), s.Id)
+}
+
+func (s *SearchData) ProxiedImage() string {
+	return constructProxyImg(s.ThumbnailMobile)
+}
+
+func (s *SearchData) ComicInfoRating() comicinfo.AgeRating {
+	if s.Rating {
+		return comicinfo.AgeRatingMaturePlus17
+	}
+	return comicinfo.AgeRatingEveryone
 }

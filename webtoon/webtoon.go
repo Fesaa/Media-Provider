@@ -52,6 +52,7 @@ type webtoon struct {
 	tempTitle string
 	maxImages int
 
+	searchInfo    *SearchData
 	info          *Series
 	totalChapters int
 
@@ -136,6 +137,17 @@ func (w *webtoon) loadInfo() chan struct{} {
 		}
 
 		w.info = info
+
+		search, err := Search(SearchOptions{Query: w.info.Name})
+		if err != nil {
+			w.log.Error("error while loading webtoon info", "err", err)
+			w.cancel()
+			return
+		}
+
+		w.searchInfo = utils.Find(search, func(data SearchData) bool {
+			return fmt.Sprintf("%d", data.Id) == w.id
+		})
 		close(out)
 	}()
 	return out
@@ -249,7 +261,7 @@ func (w *webtoon) downloadChapter(chapter Chapter) error {
 
 	errCh := make(chan error, 1)
 	sem := make(chan struct{}, w.maxImages)
-	ctx, cancel := context.WithCancel(w.ctx)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	for i, url := range urls {
@@ -258,7 +270,7 @@ func (w *webtoon) downloadChapter(chapter Chapter) error {
 			return nil
 		case <-ctx.Done():
 			wg.Wait()
-			return errors.New("context cancelled")
+			return errors.New("chapter download was cancelled from within")
 		default:
 			wg.Add(1)
 			go func(i int, url string) {
@@ -325,7 +337,15 @@ func (w *webtoon) writeChapterMetadata(chapter Chapter) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
 	filePath := path.Join(w.chapterPath(chapter.Number), "!0000 cover.jpg")
-	if err := downloadAndWrite(chapter.ImageUrl, filePath); err != nil {
+	imageUrl := func() string {
+		// Kavita uses the image of the first chapter as the cover image in lists
+		// We replace this with the nicer looking image. As this software is still targeting Kavita
+		if w.searchInfo != nil && chapter.Number == "1" {
+			return w.searchInfo.ThumbnailMobile
+		}
+		return chapter.ImageUrl
+	}()
+	if err := downloadAndWrite(imageUrl, filePath); err != nil {
 		return err
 	}
 
@@ -340,8 +360,12 @@ func (w *webtoon) comicInfo() *comicinfo.ComicInfo {
 	ci.Summary = w.info.Description
 	ci.Manga = comicinfo.MangaYes
 	ci.Genre = w.info.Genre
-	ci.Writer = w.info.Author
-	ci.Web = BASE_URL + w.id
+
+	if w.searchInfo != nil {
+		ci.Writer = strings.Join(w.searchInfo.AuthorNameList, ",")
+		ci.AgeRating = w.searchInfo.ComicInfoRating()
+		ci.Web = w.searchInfo.Url()
+	}
 
 	if w.info.Completed {
 		ci.Count = len(w.info.Chapters)
