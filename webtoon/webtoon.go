@@ -350,7 +350,7 @@ func (w *webtoon) writeChapterMetadata(chapter Chapter) error {
 		// Kavita uses the image of the first chapter as the cover image in lists
 		// We replace this with the nicer looking image. As this software is still targeting Kavita
 		if w.searchInfo != nil && chapter.Number == "1" {
-			return w.searchInfo.ThumbnailMobile
+			return w.searchInfo.ProxiedImage()
 		}
 		return chapter.ImageUrl
 	}()
