@@ -29,6 +29,8 @@ COPY ./payload ./payload
 COPY ./providers ./providers
 COPY ./subsplease ./subsplease
 COPY ./utils ./utils
+COPY ./webtoon ./webtoon
+COPY ./wisewolf ./wisewolf
 COPY ./yoitsu ./yoitsu
 COPY ./yts ./yts
 COPY ./*.go ./

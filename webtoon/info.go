@@ -18,7 +18,7 @@ func constructSeriesInfo(id string) (*Series, error) {
 	info := doc.Find(".detail_header .info")
 	series.Genre = info.Find(".genre").Text()
 	series.Name = info.Find(".subj").Text()
-	series.Author = info.Find(".author_area").Text()
+	series.Author = strings.TrimSpace(info.Find(".author_area").Children().Remove().End().Text())
 
 	detail := doc.Find(".detail")
 	series.Description = detail.Find(".summary").Text()
