@@ -26,7 +26,7 @@ func constructSeriesInfo(id string) (*Series, error) {
 	series.Completed = strings.Contains(detail.Find(".day_info").Text(), "COMPLETED")
 	series.Chapters = append(series.Chapters, extractChapters(doc)...)
 
-	pages := utils.MaybeMap(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
+	pages := utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
 	for index := 1; len(pages) > index; index++ {
 		doc, err = wrapInDoc(DOMAIN + pages[index])
 		if err != nil {
@@ -38,7 +38,7 @@ func constructSeriesInfo(id string) (*Series, error) {
 		}
 
 		series.Chapters = append(series.Chapters, extractChapters(doc)...)
-		pages = utils.MaybeMap(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
+		pages = utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
 		// Sleep a bit between these requests, to not spam them if the pages are a too high amount
 		// The time is small enough to not matter, downloading the images will always take longer.
 		time.Sleep(500 * time.Millisecond)
@@ -64,8 +64,8 @@ func extractChapters(doc *goquery.Document) (chapters []Chapter) {
 	})
 }
 
-func notEmpty(s string) (string, bool) {
-	return s, s != ""
+func notEmpty(s string) bool {
+	return s != ""
 }
 
 func href(_ int, selection *goquery.Selection) string {
