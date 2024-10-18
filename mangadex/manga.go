@@ -470,6 +470,11 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		if !ok {
 			return "", false
 		}
+
+		if t.Attributes.Group == "genre" {
+			return "", false
+		}
+
 		return n, true
 	}), ",")
 
