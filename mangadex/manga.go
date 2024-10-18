@@ -123,7 +123,7 @@ func (m *manga) GetInfo() payload.InfoStat {
 			}
 			return title
 		}(),
-		Size:        strconv.Itoa(len(m.chapters.Data)) + " Chapters",
+		Size:        strconv.Itoa(len(m.toDownload)) + " Chapters",
 		Downloading: m.wg != nil,
 		Progress:    utils.Percent(int64(m.chaptersDownloaded), int64(len(m.toDownload))),
 		SpeedType:   payload.IMAGES,
@@ -195,7 +195,13 @@ func (m *manga) loadInfo() chan struct{} {
 				m.foundLastChapter = true
 			}
 
-			volumes.Add(ch.Attributes.Volume)
+			// We don't want to add chapters not belonging to a volume in this count
+			// A series may have specials, this doesn't change the volume count
+			if _, err = strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
+				volumes.Add(ch.Attributes.Volume)
+			} else {
+				m.log.Debug("not adding chapter, as string isn't an int")
+			}
 		}
 		m.totalVolumes = volumes.Cardinality()
 
