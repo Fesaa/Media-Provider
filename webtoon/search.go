@@ -69,7 +69,7 @@ func constructProxyImg(imageUrl string) string {
 }
 
 func searchUrl(keyword string) string {
-	keyword = rg.ReplaceAllString(keyword, "")
+	keyword = strings.TrimSpace(rg.ReplaceAllString(keyword, " "))
 	return fmt.Sprintf(SEARCH_URL, url.QueryEscape(keyword))
 }
 
