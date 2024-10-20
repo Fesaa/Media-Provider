@@ -72,7 +72,7 @@ export class ServerSettingsComponent implements OnInit {
     }
 
     this.settingsForm = this.fb.group({
-      password: this.fb.control(this.config.password, [Validators.required]),
+      password: this.fb.control(this.config.password),
       root_dir: this.fb.control(this.config.root_dir, Validators.required),
       base_url: this.fb.control(this.config.base_url),
       cache: this.fb.group({
