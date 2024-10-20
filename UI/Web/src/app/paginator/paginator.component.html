@@ -1,12 +1,6 @@
 @if (totalPages > 1) {
   <div class="flex items-center justify-center space-x-2">
-    <button
-      (click)="previousPage()"
-      [disabled]="currentPage === 1"
-      class="rounded-lg bg-gray-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-gray-600 focus:outline-none focus:ring-4"
-    >
-      Previous
-    </button>
+    <ng-icon class="text-center hover:cursor-pointer" name="heroChevronLeft" size="16" (click)="previousPage()"></ng-icon>
 
     <div class="flex items-center space-x-1">
       @for (page of pages; track $index) {
@@ -19,12 +13,6 @@
       }
     </div>
 
-    <button
-      (click)="nextPage()"
-      [disabled]="currentPage === totalPages"
-      class="rounded-lg bg-gray-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-gray-600 focus:outline-none focus:ring-4"
-    >
-      Next
-    </button>
+    <ng-icon class="text-center hover:cursor-pointer" name="heroChevronRight" size="16" (click)="nextPage()"></ng-icon>
   </div>
 }
