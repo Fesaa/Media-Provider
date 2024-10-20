@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/go-playground/validator/v10"
+	"golang.org/x/crypto/bcrypt"
 	"os"
 	"path"
 	"strings"
@@ -74,6 +76,16 @@ func validateRootConfig(c *config.Config) error {
 			return err
 		}
 		c.Secret = secret
+		changed = true
+	}
+
+	if c.Password == "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		log.Warn("No password was found, password was set to admin. CHANGE THIS!")
+		c.Password = base64.StdEncoding.EncodeToString(hash)
 		changed = true
 	}
 

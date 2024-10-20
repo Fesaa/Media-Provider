@@ -16,6 +16,7 @@ var (
 func GetConfig(ctx *fiber.Ctx) error {
 	cp := *config.I()
 	cp.Secret = ""
+	cp.Password = ""
 	return ctx.JSON(cp)
 }
 

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/crypto/bcrypt"
 	"log/slog"
 )
 
@@ -48,6 +49,15 @@ func (c *Config) RefreshApiKey(syncID int) error {
 func (c *Config) Update(config Config, syncID int) error {
 	if c.SyncId != syncID {
 		return InvalidSyncID
+	}
+
+	if config.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(config.Password), bcrypt.DefaultCost)
+		if err != nil {
+			slog.Error("could not hash password", "err", err)
+			return fiber.ErrInternalServerError
+		}
+		config.Password = base64.StdEncoding.EncodeToString(hash)
 	}
 
 	config.Version = c.Version

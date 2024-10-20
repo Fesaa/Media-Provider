@@ -1,11 +1,14 @@
 package auth
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -20,7 +23,7 @@ type jwtAuth struct {
 
 func newJwtAuth() Provider {
 	return &jwtAuth{
-		pass: func() string { return config.OrDefault(config.I().Password, "admin") },
+		pass: func() string { return config.I().Password },
 	}
 }
 
@@ -68,7 +71,14 @@ func (jwtAuth *jwtAuth) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 		return nil, badRequest("Password is required")
 	}
 
-	if password != jwtAuth.pass() {
+	decodeString, err := base64.StdEncoding.DecodeString(jwtAuth.pass())
+	if err != nil {
+		log.Error("Failed to decode password, cannot login", "error", err, "hashed", jwtAuth.pass())
+		return nil, fiber.ErrInternalServerError
+	}
+
+	if err = bcrypt.CompareHashAndPassword(decodeString, []byte(password)); err != nil {
+		log.Error("Invalid password, cannot login", "error", err)
 		return nil, badRequest("Invalid password")
 	}
 

@@ -9,7 +9,7 @@ import (
 type Config struct {
 	Version  int    `json:"version"`
 	SyncId   int    `json:"sync_id"`
-	Password string `json:"password" validate:"required"`
+	Password string `json:"password"`
 	RootDir  string `json:"root_dir"`
 	BaseUrl  string `json:"base_url"`
 	Secret   string `json:"secret"`
