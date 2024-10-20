@@ -136,6 +136,7 @@ export class PageComponent implements OnInit{
         this.toastr.success(`Found ${info.length} items`,"Search completed")
       }
       this.searchResult = info;
+      this.currentPage = 1;
       this.showSearchForm = false;
     })
   }
