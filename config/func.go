@@ -58,6 +58,8 @@ func (c *Config) Update(config Config, syncID int) error {
 			return fiber.ErrInternalServerError
 		}
 		config.Password = base64.StdEncoding.EncodeToString(hash)
+	} else {
+		config.Password = c.Password
 	}
 
 	config.Version = c.Version
