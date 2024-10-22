@@ -57,6 +57,10 @@ const (
 	PermWriteConfig
 )
 
+var (
+	ALL_PERMS = PermWritePage | PermDeleteUser | PermWriteConfig | PermDeleteUser | PermWriteConfig
+)
+
 type User struct {
 	ID           int64  `json:"ID"`
 	Name         string `json:"name"`

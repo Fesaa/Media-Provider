@@ -49,6 +49,20 @@ func RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
 			u.PasswordHash = base64.StdEncoding.EncodeToString(password)
 			u.ApiKey = apiKey
 			return u
+		},
+		func(u *models.User) *models.User {
+			var ok bool
+			ok, err = models.AnyUserExists()
+			if err != nil {
+				l.Warn("failed to check existence of user, not setting all perms", "err", err)
+				return u
+			}
+			if ok {
+				return u
+			}
+
+			u.Permission = models.ALL_PERMS
+			return u
 		})
 
 	if err != nil {
