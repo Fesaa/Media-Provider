@@ -13,7 +13,7 @@
       <ng-icon name="heroChevronDoubleRight" class="w-4 h-4 dark:text-white"></ng-icon>
       <a
         [routerLink]="['/page']"
-        [queryParams]="{ index: $index }"
+        [queryParams]="{ index: page.id }"
         class="text-blue-500 dark:text-blue-400 hover:underline"
       >
         {{ page.title }}

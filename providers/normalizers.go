@@ -3,6 +3,7 @@ package providers
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
@@ -36,7 +37,7 @@ func mangadexNormalizer(mangas *mangadex.MangaSearchResponse) []Info {
 			},
 			InfoHash: data.Id,
 			RefUrl:   data.RefURL(),
-			Provider: config.MANGADEX,
+			Provider: models.MANGADEX,
 			ImageUrl: data.CoverURL(),
 		})
 	}
@@ -69,7 +70,7 @@ func subsPleaseNormalizer(torrents subsplease.SearchResult) []Info {
 			InfoHash: m.InfoHash.HexString(),
 			ImageUrl: data.ImageUrl(),
 			RefUrl:   data.ReferenceURL(),
-			Provider: config.SUBSPLEASE,
+			Provider: models.SUBSPLEASE,
 		})
 	}
 	return torrentsInfo
@@ -91,7 +92,7 @@ func limeNormalizer(torrents []limetorrents.SearchResult) []Info {
 			InfoHash: t.Hash,
 			ImageUrl: "",
 			RefUrl:   t.PageUrl,
-			Provider: config.LIME,
+			Provider: models.LIME,
 		}
 	}
 	return torrentsInfo
@@ -125,13 +126,13 @@ func ytsNormalizer(data *yts.SearchResult) []Info {
 			InfoHash: torrent.Hash,
 			ImageUrl: movie.MediumCoverImage,
 			RefUrl:   movie.Url,
-			Provider: config.YTS,
+			Provider: models.YTS,
 		}
 	}
 	return torrents
 }
 
-func nyaaNormalizer(provider config.Provider) responseNormalizerFunc[[]types.Torrent] {
+func nyaaNormalizer(provider models.Provider) responseNormalizerFunc[[]types.Torrent] {
 	return func(torrents []types.Torrent) []Info {
 		torrentsInfo := make([]Info, len(torrents))
 		for i, t := range torrents {
@@ -167,7 +168,7 @@ func webtoonNormalizer(webtoons []webtoon.SearchData) []Info {
 			InfoHash: stringify(w.Id),
 			ImageUrl: w.ProxiedImage(),
 			RefUrl:   w.Url(),
-			Provider: config.WEBTOON,
+			Provider: models.WEBTOON,
 		}, true
 	})
 }

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -114,7 +114,7 @@ func (m *manga) GetInfo() payload.InfoStat {
 	m.lastTime = time.Now()
 
 	return payload.InfoStat{
-		Provider: config.MANGADEX,
+		Provider: models.MANGADEX,
 		Id:       m.id,
 		Name: func() string {
 			title := m.Title()
@@ -275,7 +275,7 @@ func (m *manga) startDownload() {
 			if err != nil {
 				m.log.Error("error while downloading a chapter, cleaning up", "err", err)
 				req := payload.StopRequest{
-					Provider:    config.MANGADEX,
+					Provider:    models.MANGADEX,
 					Id:          m.id,
 					DeleteFiles: true,
 				}
@@ -290,7 +290,7 @@ func (m *manga) startDownload() {
 	}
 	m.wg.Wait()
 	req := payload.StopRequest{
-		Provider:    config.MANGADEX,
+		Provider:    models.MANGADEX,
 		Id:          m.id,
 		DeleteFiles: false,
 	}

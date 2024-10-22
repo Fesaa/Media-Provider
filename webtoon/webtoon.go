@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -223,7 +223,7 @@ func (w *webtoon) startDownload() {
 			if err != nil {
 				w.log.Error("error while downloading chapter, cleaning up", "err", err)
 				req := payload.StopRequest{
-					Provider:    config.WEBTOON,
+					Provider:    models.WEBTOON,
 					Id:          w.id,
 					DeleteFiles: true,
 				}
@@ -238,7 +238,7 @@ func (w *webtoon) startDownload() {
 
 	w.wg.Wait()
 	req := payload.StopRequest{
-		Provider:    config.WEBTOON,
+		Provider:    models.WEBTOON,
 		Id:          w.id,
 		DeleteFiles: false,
 	}
@@ -391,7 +391,7 @@ func (w *webtoon) GetInfo() payload.InfoStat {
 	w.lastTime = time.Now()
 
 	return payload.InfoStat{
-		Provider: config.WEBTOON,
+		Provider: models.WEBTOON,
 		Id:       w.id,
 		Name:     w.Title(),
 		Size: func() string {

@@ -71,12 +71,8 @@ func Setup(app fiber.Router) {
 	configGroup.Post("/update", routes.UpdateConfig)
 
 	pages := configGroup.Group("/pages")
-	pages.Get("/", routes.Pages)
-	pages.Get("/:index", routes.Page)
-	pages.Delete("/:index", routes.RemovePage)
-	pages.Post("/", routes.AddPage)
-	pages.Put("/:index", routes.UpdatePage)
-	pages.Post("/move", routes.MovePage)
+	pages.Get("/", logWrap(routes.Pages))
+	pages.Get("/:index", logWrap(routes.Page))
 }
 
 func logWrap(f func(l *log.Logger, ctx *fiber.Ctx) error) func(*fiber.Ctx) error {

@@ -1,22 +1,24 @@
 package payload
 
-import "github.com/Fesaa/Media-Provider/config"
+import (
+	"github.com/Fesaa/Media-Provider/db/models"
+)
 
 type SearchRequest struct {
-	Provider  []config.Provider   `json:"provider"`
+	Provider  []models.Provider   `json:"provider"`
 	Query     string              `json:"query"`
 	Modifiers map[string][]string `json:"modifiers,omitempty"`
 }
 
 type DownloadRequest struct {
-	Provider  config.Provider `json:"provider"`
+	Provider  models.Provider `json:"provider"`
 	Id        string          `json:"id"`
 	BaseDir   string          `json:"dir"`
 	TempTitle string          `json:"title"`
 }
 
 type StopRequest struct {
-	Provider    config.Provider `json:"provider"`
+	Provider    models.Provider `json:"provider"`
 	Id          string          `json:"id"`
 	DeleteFiles bool            `json:"delete"`
 }

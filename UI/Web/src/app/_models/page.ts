@@ -1,5 +1,6 @@
 
 export type Page = {
+  id: number;
   title: string;
   providers: Provider[];
   modifiers: { [key: string]: Modifier };

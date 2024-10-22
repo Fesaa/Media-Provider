@@ -3,7 +3,7 @@ package yoitsu
 import (
 	"context"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -22,7 +22,7 @@ type torrentImpl struct {
 	key       string
 	baseDir   string
 	tempTitle string
-	provider  config.Provider
+	provider  models.Provider
 
 	ctx    context.Context
 	cancel context.CancelFunc

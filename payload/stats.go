@@ -1,16 +1,18 @@
 package payload
 
-import "github.com/Fesaa/Media-Provider/config"
+import (
+	"github.com/Fesaa/Media-Provider/db/models"
+)
 
 type QueueStat struct {
-	Provider config.Provider `json:"provider"`
+	Provider models.Provider `json:"provider"`
 	Id       string          `json:"id"`
 	Name     string          `json:"name,omitempty"`
 	BaseDir  string
 }
 
 type InfoStat struct {
-	Provider    config.Provider `json:"provider"`
+	Provider    models.Provider `json:"provider"`
 	Id          string          `json:"id"`
 	Name        string          `json:"name"`
 	Size        string          `json:"size"`

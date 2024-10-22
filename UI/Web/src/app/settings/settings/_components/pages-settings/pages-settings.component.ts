@@ -76,6 +76,7 @@ export class PagesSettingsComponent implements OnInit {
     }
     if (page === undefined) {
       page = {
+        id: -1,
         dirs: [],
         title: '',
         modifiers: {},

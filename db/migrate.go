@@ -21,6 +21,32 @@ var (
     apiKey TEXT NOT NULL
 );`,
 		`ALTER TABLE users ADD COLUMN permission INTEGER`,
+		`CREATE TABLE pages (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	title TEXT NOT NULL,
+	customRootDir TEXT NOT NULL
+);`,
+		`CREATE TABLE providers (
+	page_id INTEGER REFERENCES pages(id),
+	provider INTEGER NOT NULL
+);`,
+		`
+CREATE TABLE dirs (
+	page_id INTEGER REFERENCES pages(id),
+	dir TEXT NOT NULL
+);`,
+		`CREATE TABLE modifiers (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	page_id INTEGER REFERENCES pages(id),
+	title TEXT NOT NULL,
+	type INTEGER NOT NULL,
+	key TEXT NOT NULL
+);`,
+		`CREATE TABLE modifier_values (
+	modifier_id INTEGER REFERENCES modifiers(id),
+	key TEXT NOT NULL,
+	value TEXT NOT NULL
+);`,
 	}
 )
 
@@ -45,7 +71,7 @@ func migrate() error {
 		}
 
 		if _, err := DB.Exec(m); err != nil {
-			return fmt.Errorf("could not execute migration %d: %w", index, err)
+			return fmt.Errorf("could not execute migration %d: %w\n%s", index, err, m)
 		}
 		if _, err := DB.Exec("INSERT INTO migrations (idx, executed) VALUES (?, true);", index); err != nil {
 			return fmt.Errorf("could not save migration %d: %w", index, err)

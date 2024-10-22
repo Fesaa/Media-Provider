@@ -27,11 +27,12 @@ export class PageService {
     })
   }
 
-  getPage(index: number): Observable<Page> {
-    if (this.pages && index < this.pages.length && index >= 0) {
-      return of(this.pages[index]);
+  getPage(id: number): Observable<Page> {
+    const page = this.pages ? this.pages.find(p => p.id === id) : undefined;
+    if (page) {
+      return of(page);
     }
 
-    return this.httpClient.get<Page>(this.baseUrl + 'config/pages/' + index)
+    return this.httpClient.get<Page>(this.baseUrl + 'config/pages/' + id)
   }
 }

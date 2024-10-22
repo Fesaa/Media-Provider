@@ -9,5 +9,9 @@ func Init(db *sql.DB) error {
 		return err
 	}
 
+	if err = initPages(db); err != nil {
+		return err
+	}
+
 	return nil
 }
