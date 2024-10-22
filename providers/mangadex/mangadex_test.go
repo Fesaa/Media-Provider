@@ -3,7 +3,7 @@ package mangadex
 import (
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"os"
 	"path"
@@ -39,24 +39,24 @@ func TestQueue(t *testing.T) {
 	client := newClient(&mock)
 
 	var req = payload.DownloadRequest{
-		Provider:  config.MANGADEX,
+		Provider:  models.MANGADEX,
 		Id:        LONG_ID,
 		BaseDir:   "",
 		TempTitle: "Love Affair Ranger",
 	}
 	var stopReq = payload.StopRequest{
-		Provider:    config.MANGADEX,
+		Provider:    models.MANGADEX,
 		Id:          LONG_ID,
 		DeleteFiles: true,
 	}
 	var req1 = payload.DownloadRequest{
-		Provider:  config.MANGADEX,
+		Provider:  models.MANGADEX,
 		Id:        ID,
 		BaseDir:   "",
 		TempTitle: "Destiny Unchain Online",
 	}
 	var stopReq1 = payload.StopRequest{
-		Provider:    config.MANGADEX,
+		Provider:    models.MANGADEX,
 		Id:          ID,
 		DeleteFiles: true,
 	}
@@ -93,7 +93,7 @@ func TestCancel(t *testing.T) {
 	client := newClient(&mock)
 
 	var req = payload.DownloadRequest{
-		Provider:  config.MANGADEX,
+		Provider:  models.MANGADEX,
 		Id:        LONG_ID,
 		BaseDir:   "",
 		TempTitle: "Destiny Unchain Online",
@@ -107,7 +107,7 @@ func TestCancel(t *testing.T) {
 	// Allow for download to start
 	time.Sleep(5 * time.Second)
 	stop := payload.StopRequest{
-		Provider:    config.MANGADEX,
+		Provider:    models.MANGADEX,
 		Id:          LONG_ID,
 		DeleteFiles: true,
 	}
@@ -133,7 +133,7 @@ func TestDownload(t *testing.T) {
 	client := newClient(&mock)
 
 	var req = payload.DownloadRequest{
-		Provider:  config.MANGADEX,
+		Provider:  models.MANGADEX,
 		Id:        ID,
 		BaseDir:   "",
 		TempTitle: "Love Affair Ranger",

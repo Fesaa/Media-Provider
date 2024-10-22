@@ -2,7 +2,7 @@ package yoitsu
 
 import (
 	"errors"
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"os"
 	"path"
@@ -36,7 +36,7 @@ func TestCancel(t *testing.T) {
 	}
 
 	var req = payload.DownloadRequest{
-		Provider:  config.NYAA,
+		Provider:  models.NYAA,
 		Id:        INFO_HASH_LARGE,
 		BaseDir:   "",
 		TempTitle: "[LonelyChaser] Getter Robo Go - 29 [CB6974A2] ",
@@ -49,7 +49,7 @@ func TestCancel(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 	stop := payload.StopRequest{
-		Provider:    config.NYAA,
+		Provider:    models.NYAA,
 		Id:          INFO_HASH_LARGE,
 		DeleteFiles: true,
 	}
@@ -92,7 +92,7 @@ func TestDownload(t *testing.T) {
 	}
 
 	var req = payload.DownloadRequest{
-		Provider:  config.NYAA,
+		Provider:  models.NYAA,
 		Id:        INFO_HASH_SMALL,
 		BaseDir:   "",
 		TempTitle: "Classroom of the Elite - Year 2 - Volume 09 [Seven Seas]",
