@@ -1,12 +1,14 @@
 package auth
 
 import (
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type MpClaims struct {
+	User models.User `json:"user,omitempty"`
 	jwt.RegisteredClaims
 }
 

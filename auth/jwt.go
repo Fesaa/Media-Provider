@@ -54,12 +54,25 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	subject, err := token.Claims.GetSubject()
-	if err != nil {
-		return false, err
+	mpClaims, ok := token.Claims.(*MpClaims)
+	if !ok {
+		return false, ErrMissingOrMalformedAPIKey
 	}
 
-	ctx.Locals("user", subject)
+	// Load user from DB in non get requests
+	if ctx.Method() != fiber.MethodGet {
+		user, err := models.GetUser(mpClaims.User.Name)
+		if err != nil {
+			return false, fmt.Errorf("cannot get user: %w", err)
+		}
+		if user == nil {
+			return false, ErrMissingOrMalformedAPIKey
+		}
+		ctx.Locals("user", user)
+	} else {
+		ctx.Locals("user", mpClaims.User)
+	}
+
 	return token.Valid, nil
 }
 
@@ -86,8 +99,8 @@ func (jwtAuth *jwtAuth) Login(loginRequest payload.LoginRequest) (*payload.Login
 	}
 
 	claims := MpClaims{
+		User: *user,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:  user.Name,
 			IssuedAt: jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(func() time.Time {
 				if loginRequest.Remember {

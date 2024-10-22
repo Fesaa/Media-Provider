@@ -86,7 +86,7 @@ func LoginUser(l *log.Logger, ctx *fiber.Ctx) error {
 }
 
 func RefreshApiKey(l *log.Logger, ctx *fiber.Ctx) error {
-	userName := ctx.Locals("user").(string)
+	user := ctx.Locals("user").(models.User)
 
 	key, err := utils.GenerateApiKey()
 	if err != nil {
@@ -94,13 +94,7 @@ func RefreshApiKey(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	user, err := models.GetUser(userName)
-	if err != nil {
-		l.Error("failed to get user", "err", err)
-		return fiber.ErrInternalServerError
-	}
-
-	_, err = models.UpdateUser(user, func(u *models.User) *models.User {
+	_, err = models.UpdateUser(&user, func(u *models.User) *models.User {
 		u.ApiKey = key
 		return u
 	})

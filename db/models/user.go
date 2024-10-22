@@ -56,11 +56,11 @@ const (
 )
 
 type User struct {
-	ID           int64
-	Name         string
+	ID           int64  `json:"ID"`
+	Name         string `json:"name"`
 	PasswordHash string
-	ApiKey       string
-	Permission   int
+	ApiKey       string `json:"apiKey,omitempty"`
+	Permission   int    `json:"permission"`
 }
 
 func (u *User) HasPermission(permission UserPermission) bool {

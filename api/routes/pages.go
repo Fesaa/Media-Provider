@@ -39,6 +39,12 @@ func Page(l *log.Logger, ctx *fiber.Ctx) error {
 }
 
 func UpsertPage(l *log.Logger, ctx *fiber.Ctx) error {
+	user := ctx.Locals("user").(*models.User)
+	if !user.HasPermission(models.PermWritePage) {
+		l.Warn("user does not have permission to edit pages", "user", user.Name)
+		//return fiber.ErrUnauthorized
+	}
+
 	var page models.Page
 	if err := ctx.BodyParser(&page); err != nil {
 		l.Error("failed to parse request body", "error", err)
@@ -64,20 +70,13 @@ func DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
 		return ctx.SendStatus(fiber.StatusBadRequest)
 	}
 
-	userName := ctx.Locals("user").(string)
-	user, err := models.GetUser(userName)
-	if err != nil {
-		l.Error("failed to retrieve user", "error", err)
-		return fiber.ErrInternalServerError
-	}
-
+	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermDeletePage) {
-		l.Warn("user does not have permission to delete page", "user", userName)
-		//return fiber.ErrForbidden
+		l.Warn("user does not have permission to delete page", "user", user.Name)
+		//return fiber.ErrUnauthorized
 	}
 
-	err = models.DeletePageByID(int64(id))
-	if err != nil {
+	if err := models.DeletePageByID(int64(id)); err != nil {
 		l.Error("failed to delete page", "error", err)
 		return fiber.ErrInternalServerError
 	}
