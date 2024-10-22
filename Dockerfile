@@ -49,6 +49,6 @@ RUN apk add --no-cache ca-certificates curl
 ENV CONFIG_DIR="/mp/"
 ENV DOCKER="true"
 
-HEALTHCHECK CMD curl --fail http://0.0.0.0:8080/ || exit 1
+HEALTHCHECK CMD curl --fail http://0.0.0.0:8080/health || exit 1
 
 CMD ["./media-provider"]
