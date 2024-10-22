@@ -44,4 +44,8 @@ export class PageService {
     return this.httpClient.post(this.baseUrl + 'upsert', page, {responseType: 'text'});
   }
 
+  swapPages(id1: number, id2: number) {
+    return this.httpClient.post(this.baseUrl + 'swap', {id1, id2}, {responseType: 'text'});
+  }
+
 }

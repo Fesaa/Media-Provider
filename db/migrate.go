@@ -47,6 +47,7 @@ CREATE TABLE dirs (
 	key TEXT NOT NULL,
 	value TEXT NOT NULL
 );`,
+		`ALTER TABLE pages ADD COLUMN sortValue INTEGER NOT NULL DEFAULT 0;`,
 	}
 )
 

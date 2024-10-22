@@ -180,23 +180,21 @@ export class PagesSettingsComponent implements OnInit {
   }
 
   moveUp(index: number) {
-    this.configService.movePage(index, index - 1).subscribe({
-      next: () => {
-        const temp = this.pages[index];
-        this.toastR.success(`${temp.title} moved up`, 'Success');
-        this.pageService.refreshPages();
-      },
-      error: (err) => {
-        this.toastR.error(err.error.error, 'Error');
-      }
-    });
+    const page1 = this.pages[index];
+    const page2 = this.pages[index-1];
+    this.swap(page1, page2);
   }
 
   moveDown(index: number) {
-    this.configService.movePage(index, index + 1).subscribe({
+    const page1 = this.pages[index];
+    const page2 = this.pages[index+1];
+    this.swap(page1, page2);
+  }
+
+  swap(page1: Page, page2: Page) {
+    this.pageService.swapPages(page1.id, page2.id).subscribe({
       next: () => {
-        const temp = this.pages[index];
-        this.toastR.success(`${temp.title} moved down`, 'Success');
+        this.toastR.success(`Swapped ${page1.title} and ${page2.title}`, 'Success');
         this.pageService.refreshPages();
       },
       error: (err) => {

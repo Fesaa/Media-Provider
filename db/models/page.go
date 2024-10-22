@@ -19,12 +19,12 @@ var (
 func initPages(db *sql.DB) error {
 	var err error
 
-	getPagesMeta, err = db.Prepare("SELECT id, title, customrootdir FROM pages;")
+	getPagesMeta, err = db.Prepare("SELECT id, sortValue, title, customrootdir FROM pages;")
 	if err != nil {
 		return err
 	}
 
-	getPageByID, err = db.Prepare("SELECT id, title, customrootdir FROM pages WHERE id = ?;")
+	getPageByID, err = db.Prepare("SELECT id, sortValue, title, customrootdir FROM pages WHERE id = ?;")
 	if err != nil {
 		return err
 	}
@@ -132,6 +132,7 @@ func readPage(s scanner, p *Page) error {
 type Page struct {
 	ID            int64               `json:"id"`
 	Title         string              `json:"title" validate:"required,min=3,max=25"`
+	SortValue     int                 `json:"sort_value"`
 	Providers     []Provider          `json:"providers" validate:"required,min=1"`
 	Modifiers     map[string]Modifier `json:"modifiers"`
 	Dirs          []string            `json:"dirs" validate:"required,min=1"`
@@ -139,7 +140,7 @@ type Page struct {
 }
 
 func (p *Page) read(s scanner) error {
-	return s.Scan(&p.ID, &p.Title, &p.CustomRootDir)
+	return s.Scan(&p.ID, &p.SortValue, &p.Title, &p.CustomRootDir)
 }
 
 func (p *Page) readProviders(rows *sql.Rows) error {
@@ -258,13 +259,23 @@ func (m *Modifier) readValues(rows *sql.Rows) error {
 	return nil
 }
 
-func UpsertPage(page *Page) error {
+func UpsertPage(pages ...*Page) error {
 	tx, err := db.DB.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
+	for _, page := range pages {
+		if err = upsertPage(tx, page); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func upsertPage(tx *sql.Tx, page *Page) error {
 	pageId := func() any {
 		if page.ID == 0 {
 			return nil
@@ -272,9 +283,9 @@ func UpsertPage(page *Page) error {
 		return page.ID
 	}()
 
-	result, err := tx.Exec(`INSERT INTO pages (id, title, customRootDir) VALUES (?, ?, ?) 
-		ON CONFLICT(id) DO UPDATE SET title = excluded.title, customRootDir = excluded.customRootDir`,
-		pageId, page.Title, page.CustomRootDir)
+	result, err := tx.Exec(`INSERT INTO pages (id, title, customRootDir, sortValue) VALUES (?, ?, ?, ?) 
+		ON CONFLICT(id) DO UPDATE SET title = excluded.title, customRootDir = excluded.customRootDir, sortValue = excluded.sortValue`,
+		pageId, page.Title, page.CustomRootDir, page.SortValue)
 	if err != nil {
 		return err
 	}
@@ -308,7 +319,7 @@ func UpsertPage(page *Page) error {
 		}
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 func upsertModifier(tx *sql.Tx, pageID int64, modifier *Modifier) error {

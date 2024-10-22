@@ -44,7 +44,7 @@ type UpdatePasswordRequest struct {
 	Password string `json:"password"`
 }
 
-type MovePageRequest struct {
-	OldIndex int `json:"oldIndex"`
-	NewIndex int `json:"newIndex"`
+type SwapPageRequest struct {
+	Id1 int64 `json:"id1"`
+	Id2 int64 `json:"id2"`
 }

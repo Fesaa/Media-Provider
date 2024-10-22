@@ -3,8 +3,11 @@ package routes
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
 	"log/slog"
+	"slices"
+	"strings"
 )
 
 func Pages(l *log.Logger, ctx *fiber.Ctx) error {
@@ -14,6 +17,14 @@ func Pages(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
+	slices.SortFunc(pages, func(a, b models.Page) int {
+		sort := a.SortValue - b.SortValue
+		if sort != 0 {
+			return sort
+		}
+
+		return strings.Compare(a.Title, b.Title)
+	})
 	return ctx.JSON(pages)
 }
 
@@ -81,5 +92,34 @@ func DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
+	return ctx.SendStatus(fiber.StatusOK)
+}
+
+func SwapPage(l *log.Logger, ctx *fiber.Ctx) error {
+	var m payload.SwapPageRequest
+	if err := ctx.BodyParser(&m); err != nil {
+		log.Error("Failed to parse request body", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	page1, err := models.GetPage(m.Id1)
+	if err != nil {
+		l.Error("failed to retrieve page 1 by id", "error", err, slog.Int64("id1", m.Id1))
+		return fiber.ErrInternalServerError
+	}
+	page2, err := models.GetPage(m.Id2)
+	if err != nil {
+		l.Error("failed to retrieve page 2 by id", "error", err, slog.Int64("id2", m.Id2))
+		return fiber.ErrInternalServerError
+	}
+
+	temp := page1.SortValue
+	page1.SortValue = page2.SortValue
+	page2.SortValue = temp
+
+	if err = models.UpsertPage(page1, page2); err != nil {
+		l.Error("failed to upsert pages", "error", err)
+		return fiber.ErrInternalServerError
+	}
 	return ctx.SendStatus(fiber.StatusOK)
 }
