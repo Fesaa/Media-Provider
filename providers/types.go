@@ -14,7 +14,7 @@ type Info struct {
 	InfoHash    string          `json:"InfoHash"`
 	ImageUrl    string          `json:"ImageUrl"`
 	RefUrl      string          `json:"RefUrl"`
-	Provider    models.Provider `json:"Providers"`
+	Provider    models.Provider `json:"Provider"`
 }
 
 type InfoTag struct {

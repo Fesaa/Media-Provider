@@ -3,7 +3,6 @@ FROM node:18 AS npm-stage
 WORKDIR /app
 
 COPY UI/Web/package.json UI/Web/package-lock.json ./
-RUN npx update-browserslist-db@latest
 RUN npm install
 
 COPY UI/Web ./
@@ -22,6 +21,7 @@ COPY ./api ./api
 COPY ./auth ./auth
 COPY ./comicinfo ./comicinfo
 COPY ./config ./config
+COPY ./db ./db
 COPY ./limetorrents ./limetorrents
 COPY ./log ./log
 COPY ./mangadex ./mangadex

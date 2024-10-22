@@ -114,7 +114,7 @@
               [routerLink]="['/page']"
               [queryParams]="{ index: page.id }"
               class="block rounded-md px-3 py-2 text-base font-medium dropdown-item"
-              [ngClass]="{ 'bg-gray-900 text-white': index === $index, 'text-gray-300 hover:bg-gray-700 hover:text-white' : index !== page.id }"
+              [ngClass]="{ 'bg-gray-900 text-white': index === page.id, 'text-gray-300 hover:bg-gray-700 hover:text-white' : index !== page.id }"
               (click)="clickMenu()"
             >
               {{page.title}}
