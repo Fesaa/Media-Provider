@@ -3,8 +3,11 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/utils"
+	"strings"
 )
 
 var (
@@ -298,11 +301,21 @@ func upsertPage(tx *sql.Tx, page *Page) error {
 		page.ID = pageID
 	}
 
+	_, err = tx.Exec("DELETE FROM providers WHERE page_id = ?", page.ID)
+	if err != nil {
+		return err
+	}
+
 	for _, provider := range page.Providers {
 		_, err = tx.Exec(`INSERT INTO providers (page_id, provider) VALUES (?, ?) ON CONFLICT DO NOTHING;`, page.ID, provider)
 		if err != nil {
 			return err
 		}
+	}
+
+	_, err = tx.Exec("DELETE FROM dirs WHERE page_id = ?", page.ID)
+	if err != nil {
+		return err
 	}
 
 	for _, dir := range page.Dirs {
@@ -312,11 +325,25 @@ func upsertPage(tx *sql.Tx, page *Page) error {
 		}
 	}
 
-	for _, modifier := range page.Modifiers {
+	for key, modifier := range page.Modifiers {
 		err = upsertModifier(tx, page.ID, &modifier)
 		if err != nil {
 			return err
 		}
+		page.Modifiers[key] = modifier
+	}
+
+	modifierIDs := utils.MapValues(page.Modifiers, func(t Modifier) any {
+		return t.ID
+	})
+	placeholders := make([]string, len(modifierIDs))
+	for i := range modifierIDs {
+		placeholders[i] = "?"
+	}
+	query := fmt.Sprintf("DELETE FROM modifiers WHERE id NOT IN (%s)", strings.Join(placeholders, ","))
+	_, err = tx.Exec(query, modifierIDs...)
+	if err != nil {
+		return err
 	}
 
 	return nil

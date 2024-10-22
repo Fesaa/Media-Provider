@@ -61,7 +61,7 @@ func WebToonCoverProxy(c *fiber.Ctx) error {
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error("Failed to download cover image from mangadex", "error", err)
+		log.Error("Failed to download cover image from webtoon", "error", err)
 		return fiber.ErrInternalServerError
 	}
 
