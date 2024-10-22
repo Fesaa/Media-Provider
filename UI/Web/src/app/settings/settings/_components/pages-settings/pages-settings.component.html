@@ -33,7 +33,7 @@
                 }
 
                 @if (hasPermission(this.user, Perm.DeletePage)) {
-                  <ng-icon name="heroMinus" class="hover:cursor-pointer" (click)="remove($index)"></ng-icon>
+                  <ng-icon name="heroMinus" class="hover:cursor-pointer" (click)="remove(page)"></ng-icon>
                 }
 
                 @if ($index != pages.length - 1) {

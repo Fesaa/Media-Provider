@@ -76,6 +76,7 @@ func Setup(app fiber.Router) {
 	pages.Post("/upsert", logWrap(routes.UpsertPage))
 	pages.Delete("/:pageId", logWrap(routes.DeletePage))
 	pages.Post("/swap", logWrap(routes.SwapPage))
+	pages.Post("/load-default", logWrap(routes.LoadDefault))
 }
 
 func logWrap(f func(l *log.Logger, ctx *fiber.Ctx) error) func(*fiber.Ctx) error {

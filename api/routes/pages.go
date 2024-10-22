@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
@@ -121,5 +122,25 @@ func SwapPage(l *log.Logger, ctx *fiber.Ctx) error {
 		l.Error("failed to upsert pages", "error", err)
 		return fiber.ErrInternalServerError
 	}
+	return ctx.SendStatus(fiber.StatusOK)
+}
+
+func LoadDefault(l *log.Logger, ctx *fiber.Ctx) error {
+	pages, err := models.GetPages()
+	if err != nil {
+		l.Error("failed to retrieve pages", "error", err)
+		return fiber.ErrInternalServerError
+	}
+
+	if len(pages) != 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot load default pages while other pages are present"})
+	}
+
+	if err = models.UpsertPage(models.DefaultPages...); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": fmt.Errorf("failed to load default pages %w", err).Error(),
+		})
+	}
+
 	return ctx.SendStatus(fiber.StatusOK)
 }

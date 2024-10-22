@@ -162,14 +162,13 @@ export class PagesSettingsComponent implements OnInit {
     this.toastR.error(`Found ${count} errors in the form`, 'Cannot submit');
   }
 
-  async remove(index: number) {
+  async remove(page: Page) {
     if (!await this.dialogService.openDialog('Are you sure you want to remove this page?')) {
       return;
     }
 
-   this.pageService.removePage(index).subscribe({
+   this.pageService.removePage(page.id).subscribe({
       next: () => {
-        const page = this.pages[index];
         this.toastR.success(`${page.title} removed`, 'Success');
         this.pageService.refreshPages();
       },

@@ -48,4 +48,12 @@ export class PageService {
     return this.httpClient.post(this.baseUrl + 'swap', {id1, id2}, {responseType: 'text'});
   }
 
+  loadDefault() {
+    if (this.pages != undefined && this.pages.length !== 0) {
+      throw "Cannot load default while pages are available"
+    }
+
+    return this.httpClient.post(this.baseUrl + "load-default", {}, {responseType: 'text'})
+  }
+
 }
