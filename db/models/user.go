@@ -53,6 +53,8 @@ const (
 
 	PermWriteUser
 	PermDeleteUser
+
+	PermWriteConfig
 )
 
 type User struct {
@@ -64,7 +66,7 @@ type User struct {
 }
 
 func (u *User) HasPermission(permission UserPermission) bool {
-	return u.Permission&int(permission) != 0
+	return u.Permission&int(permission) == int(permission)
 }
 
 func CreateUser(name string, opts ...Option[*User]) (*User, error) {

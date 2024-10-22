@@ -35,8 +35,9 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Token  string `json:"token"`
-	ApiKey string `json:"apiKey,omitempty"`
+	Token       string `json:"token"`
+	ApiKey      string `json:"apiKey,omitempty"`
+	Permissions int    `json:"permissions"`
 }
 
 type UpdatePasswordRequest struct {

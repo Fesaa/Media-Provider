@@ -70,7 +70,7 @@ func Setup(app fiber.Router) {
 	configGroup.Get("/", routes.GetConfig)
 	configGroup.Post("/update", routes.UpdateConfig)
 
-	pages := configGroup.Group("/pages")
+	pages := api.Group("/pages")
 	pages.Get("/", logWrap(routes.Pages))
 	pages.Get("/:index", logWrap(routes.Page))
 	pages.Post("/upsert", logWrap(routes.UpsertPage))

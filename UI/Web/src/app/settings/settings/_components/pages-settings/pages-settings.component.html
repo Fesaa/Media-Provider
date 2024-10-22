@@ -1,13 +1,21 @@
 <div class="flex flex-grow w-full">
 
-  @if (selectedPage == null) {
+  @if (selectedPage == null && this.user != null) {
     @if (pages.length > 0) {
       <div class="flex flex-col space-y-2 w-full" [@dropDown]>
         @for (page of pages; track $index) {
           <div class="w-full flex flex-row space-x-6 md:space-x-3 p-2 md:p-3 bg-white dark:bg-gray-800 rounded shadow dropdown-item">
-            <div class="hover:cursor-pointer hidden md:block">
-              <ng-icon name="heroDocument" size="48" (click)="setSelectedPage($index, page)"></ng-icon>
-            </div>
+
+            @if (hasPermission(this.user, Perm.WritePage)) {
+              <div class="hover:cursor-pointer hidden md:block">
+                <ng-icon name="heroDocument" size="48" (click)="setSelectedPage($index, page)"></ng-icon>
+              </div>
+            } @else {
+              <div class="hidden md:block">
+                <ng-icon name="heroDocument" size="48"></ng-icon>
+              </div>
+            }
+
 
             <div class="flex flex-col justify-center w-full hover:cursor-pointer" (click)="setSelectedPage($index, page)">
               <h1 class="text-xl">{{ page.title }}</h1>
@@ -16,32 +24,42 @@
               </a>
             </div>
 
-            <div class="flex flex-col justify-between">
-              @if ($index != 0) {
-                <ng-icon name="heroChevronUp" class="hover:cursor-pointer" (click)="moveUp($index)"></ng-icon>
-              } @else {
-                <div></div>
-              }
-              <ng-icon name="heroMinus" class="hover:cursor-pointer" (click)="remove($index)"></ng-icon>
-              @if ($index != pages.length - 1) {
-                <ng-icon name="heroChevronDown" class="hover:cursor-pointer" (click)="moveDown($index)"></ng-icon>
-              } @else {
-                <div></div>
-              }
-            </div>
+            @if (hasPermission(this.user, Perm.WritePage)) {
+              <div class="flex flex-col justify-between">
+                @if ($index != 0) {
+                  <ng-icon name="heroChevronUp" class="hover:cursor-pointer" (click)="moveUp($index)"></ng-icon>
+                } @else {
+                  <div></div>
+                }
+
+                @if (hasPermission(this.user, Perm.DeletePage)) {
+                  <ng-icon name="heroMinus" class="hover:cursor-pointer" (click)="remove($index)"></ng-icon>
+                }
+
+                @if ($index != pages.length - 1) {
+                  <ng-icon name="heroChevronDown" class="hover:cursor-pointer" (click)="moveDown($index)"></ng-icon>
+                } @else {
+                  <div></div>
+                }
+              </div>
+            }
           </div>
         }
 
+        @if (hasPermission(this.user, Perm.WritePage)) {
+          <div class="flex flex-row w-full justify-start items-center space-x-3">
+            <ng-icon name="heroPlusCircle" size="48" (click)="setSelectedPage(undefined)"></ng-icon>
+            <h1 class="text-xl hover:cursor-pointer" (click)="setSelectedPage(undefined)">New page</h1>
+          </div>
+        }
+      </div>
+    } @else {
+      @if (hasPermission(this.user, Perm.WritePage)) {
         <div class="flex flex-row w-full justify-start items-center space-x-3">
           <ng-icon name="heroPlusCircle" size="48" (click)="setSelectedPage(undefined)"></ng-icon>
           <h1 class="text-xl hover:cursor-pointer" (click)="setSelectedPage(undefined)">New page</h1>
         </div>
-      </div>
-    } @else {
-      <div class="flex flex-row w-full justify-start items-center space-x-3">
-        <ng-icon name="heroPlusCircle" size="48" (click)="setSelectedPage(undefined)"></ng-icon>
-        <h1 class="text-xl hover:cursor-pointer" (click)="setSelectedPage(undefined)">New page</h1>
-      </div>
+      }
     }
   } @else if (!cooldown && pageForm !== undefined && selectedPage != null) {
 

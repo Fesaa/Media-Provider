@@ -16,6 +16,6 @@ type Provider interface {
 	// IsAuthenticated checks the current request for authentication. This should be handled by the middleware
 	IsAuthenticated(ctx *fiber.Ctx) (bool, error)
 
-	// Login logs the current user in. This happens by setting the appropriate cookie
+	// Login logs the current user in.
 	Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error)
 }

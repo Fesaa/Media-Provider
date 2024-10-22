@@ -5,6 +5,8 @@ import {ServerSettingsComponent} from "./_components/server-settings/server-sett
 import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
 import {dropAnimation} from "../../_animations/drop-animation";
 import {ActivatedRoute, Router} from "@angular/router";
+import {hasPermission, Perm, User} from "../../_models/user";
+import {AccountService} from "../../_services/account.service";
 
 export enum SettingsID {
 
@@ -28,25 +30,39 @@ export enum SettingsID {
 export class SettingsComponent implements OnInit{
   showMobileConfig = false;
 
+  user: User | null = null;
   selected: SettingsID = SettingsID.Server;
-  settings: {id: SettingsID, title: string, icon: string}[] = [
+  settings: {id: SettingsID, title: string, icon: string, perm: Perm}[] = [
     {
       id: SettingsID.Server,
       title: 'Server',
       icon: 'heroServerStack',
+      perm: Perm.WriteConfig
     },
     {
       id: SettingsID.Pages,
       title: 'Pages',
       icon: 'heroDocument',
+      perm: Perm.All,
     }
   ]
 
   constructor(private navService: NavService,
               private cdRef: ChangeDetectorRef,
               private activatedRoute: ActivatedRoute,
-              private router: Router
+              private router: Router,
+              private accountService: AccountService,
   ) {
+    this.accountService.currentUser$.subscribe(user => {
+      if (user) {
+        this.user = user;
+      } else {
+        this.router.navigateByUrl('/login');
+        return;
+      }
+
+      this.setSettings(this.settings.find(s => this.canSee(s.id))!.id)
+    })
 
     this.activatedRoute.fragment.subscribe(fragment => {
       if (fragment) {
@@ -63,13 +79,26 @@ export class SettingsComponent implements OnInit{
 
   toggleMobile() {
     this.showMobileConfig = !this.showMobileConfig;
-    this.cdRef.detectChanges();
+    this.cdRef.markForCheck();
   }
 
   setSettings(id: SettingsID) {
     this.selected = id;
     this.router.navigate([], {fragment: id});
-    this.cdRef.detectChanges();
+    this.cdRef.markForCheck();
+  }
+
+  canSee(id: SettingsID): boolean {
+    if (!this.user) {
+      return false;
+    }
+
+    const setting = this.settings.find(setting => setting.id === id);
+    if (!setting) {
+      return false;
+    }
+
+    return hasPermission(this.user, setting.perm);
   }
 
   protected readonly SettingsID = SettingsID;

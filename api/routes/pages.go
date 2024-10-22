@@ -39,10 +39,10 @@ func Page(l *log.Logger, ctx *fiber.Ctx) error {
 }
 
 func UpsertPage(l *log.Logger, ctx *fiber.Ctx) error {
-	user := ctx.Locals("user").(*models.User)
+	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWritePage) {
 		l.Warn("user does not have permission to edit pages", "user", user.Name)
-		//return fiber.ErrUnauthorized
+		return fiber.ErrUnauthorized
 	}
 
 	var page models.Page
@@ -73,7 +73,7 @@ func DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermDeletePage) {
 		l.Warn("user does not have permission to delete page", "user", user.Name)
-		//return fiber.ErrUnauthorized
+		return fiber.ErrUnauthorized
 	}
 
 	if err := models.DeletePageByID(int64(id)); err != nil {

@@ -14,6 +14,8 @@ import {KeyValuePipe, TitleCasePipe} from "@angular/common";
 import {ModifierSettingsComponent} from "../modifier-settings/modifier-settings.component";
 import {DirectorySettingsComponent} from "../directory-settings/directory-settings.component";
 import {ProviderSettingsComponent} from "../provider-settings/provider-settings.component";
+import {hasPermission, Perm, User} from "../../../../_models/user";
+import {AccountService} from "../../../../_services/account.service";
 
 @Component({
   selector: 'app-pages-settings',
@@ -36,6 +38,7 @@ import {ProviderSettingsComponent} from "../provider-settings/provider-settings.
 })
 export class PagesSettingsComponent implements OnInit {
 
+  user: User | null = null;
   pages: Page[] = []
 
   cooldown = false;
@@ -53,9 +56,15 @@ export class PagesSettingsComponent implements OnInit {
               private dialogService: DialogService,
               private fb: FormBuilder,
               private cdRef: ChangeDetectorRef,
+              private accountService: AccountService,
   ) {
     this.configService.getConfig().subscribe();
     this.pageService.pages$.subscribe(pages => this.pages = pages);
+    this.accountService.currentUser$.subscribe(user => {
+      if (user) {
+        this.user = user;
+      }
+    });
   }
 
   @HostListener('window:resize', ['$event'])
@@ -117,7 +126,7 @@ export class PagesSettingsComponent implements OnInit {
   }
 
   submit() {
-    if (this.pageForm === undefined) {
+    if (this.pageForm === undefined || this.selectedPage === null) {
       return;
     }
 
@@ -127,6 +136,7 @@ export class PagesSettingsComponent implements OnInit {
     }
 
     const page = this.pageForm.value as Page;
+    page.id = this.selectedPage.id;
     this.pageService.upsertPage(page).subscribe({
       next: () => {
         this.toastR.success(`${page.title} upserted`, 'Success');
@@ -196,4 +206,6 @@ export class PagesSettingsComponent implements OnInit {
   }
 
 
+  protected readonly hasPermission = hasPermission;
+  protected readonly Perm = Perm;
 }

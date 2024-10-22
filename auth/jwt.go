@@ -68,7 +68,7 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		if user == nil {
 			return false, ErrMissingOrMalformedAPIKey
 		}
-		ctx.Locals("user", user)
+		ctx.Locals("user", *user)
 	} else {
 		ctx.Locals("user", mpClaims.User)
 	}
@@ -118,8 +118,9 @@ func (jwtAuth *jwtAuth) Login(loginRequest payload.LoginRequest) (*payload.Login
 	}
 
 	return &payload.LoginResponse{
-		Token:  t,
-		ApiKey: user.ApiKey,
+		Token:       t,
+		ApiKey:      user.ApiKey,
+		Permissions: user.Permission,
 	}, nil
 }
 

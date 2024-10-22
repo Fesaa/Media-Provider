@@ -10,7 +10,7 @@ import {Observable, of, ReplaySubject, tap} from "rxjs";
 export class PageService {
 
   private readonly destroyRef = inject(DestroyRef);
-  baseUrl = environment.apiUrl;
+  baseUrl = environment.apiUrl + "pages/";
 
   private pages: Page[] | undefined = undefined;
   private pagesSource = new ReplaySubject<Page[]>(1);
@@ -21,7 +21,7 @@ export class PageService {
   }
 
   refreshPages() {
-    this.httpClient.get<Page[]>(this.baseUrl + 'config/pages/').subscribe(pages => {
+    this.httpClient.get<Page[]>(this.baseUrl).subscribe(pages => {
       this.pages = pages;
       this.pagesSource.next(pages);
     })
@@ -33,15 +33,15 @@ export class PageService {
       return of(page);
     }
 
-    return this.httpClient.get<Page>(this.baseUrl + 'config/pages/' + id)
+    return this.httpClient.get<Page>(this.baseUrl + id)
   }
 
   removePage(pageId: number) {
-    return this.httpClient.delete(this.baseUrl + 'pages/' + pageId, {responseType: 'text'});
+    return this.httpClient.delete(this.baseUrl + pageId, {responseType: 'text'});
   }
 
   upsertPage(page: Page) {
-    return this.httpClient.post(this.baseUrl + 'pages/upsert', page, {responseType: 'text'});
+    return this.httpClient.post(this.baseUrl + 'upsert', page, {responseType: 'text'});
   }
 
 }
