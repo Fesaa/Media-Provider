@@ -3,10 +3,7 @@ package config
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
-	"github.com/gofiber/fiber/v2"
-	"golang.org/x/crypto/bcrypt"
 	"log/slog"
 )
 
@@ -19,31 +16,8 @@ func GenerateSecret(length int) (string, error) {
 	return base64.URLEncoding.EncodeToString(secret), nil
 }
 
-func ApiKey() (string, error) {
-	bytes := make([]byte, 16)
-
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", err
-	}
-
-	apiKey := hex.EncodeToString(bytes)
-	return apiKey, nil
-}
-
 func (c *Config) RefreshApiKey(syncID int) error {
-	if c.SyncId != syncID {
-		return InvalidSyncID
-	}
-
-	apiKey, err := ApiKey()
-	if err != nil {
-		slog.Error("could not refresh api key", "err", err)
-		return fiber.ErrInternalServerError
-	}
-
-	c.ApiKey = apiKey
-	return c.Save()
+	panic("not implemented")
 }
 
 func (c *Config) Update(config Config, syncID int) error {
@@ -51,20 +25,8 @@ func (c *Config) Update(config Config, syncID int) error {
 		return InvalidSyncID
 	}
 
-	if config.Password != "" {
-		hash, err := bcrypt.GenerateFromPassword([]byte(config.Password), bcrypt.DefaultCost)
-		if err != nil {
-			slog.Error("could not hash password", "err", err)
-			return fiber.ErrInternalServerError
-		}
-		config.Password = base64.StdEncoding.EncodeToString(hash)
-	} else {
-		config.Password = c.Password
-	}
-
 	config.Version = c.Version
 	config.Secret = c.Secret
-	config.ApiKey = c.ApiKey
 	config.SyncId = syncID
 	config.Pages = c.Pages
 	return Save(&config)

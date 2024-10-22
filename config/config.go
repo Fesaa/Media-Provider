@@ -7,13 +7,11 @@ import (
 // Validate is for API requests, we manually validate stuff on startup
 
 type Config struct {
-	Version  int    `json:"version"`
-	SyncId   int    `json:"sync_id"`
-	Password string `json:"password"`
-	RootDir  string `json:"root_dir"`
-	BaseUrl  string `json:"base_url"`
-	Secret   string `json:"secret"`
-	ApiKey   string `json:"api_key"`
+	Version int    `json:"version"`
+	SyncId  int    `json:"sync_id"`
+	RootDir string `json:"root_dir"`
+	BaseUrl string `json:"base_url"`
+	Secret  string `json:"secret"`
 
 	Logging    Logging     `json:"logging"`
 	Downloader Downloader  `json:"downloader"`

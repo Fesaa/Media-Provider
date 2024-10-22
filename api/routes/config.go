@@ -16,26 +16,7 @@ var (
 func GetConfig(ctx *fiber.Ctx) error {
 	cp := *config.I()
 	cp.Secret = ""
-	cp.Password = ""
 	return ctx.JSON(cp)
-}
-
-func RefreshApiKey(ctx *fiber.Ctx) error {
-	syncID, err := intQuery(ctx, "sync_id")
-	if err != nil {
-		log.Debug("Invalid sync_id", "error", err)
-		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
-	}
-
-	if err = config.I().RefreshApiKey(syncID); err != nil {
-		log.Error("Failed to refresh api key", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return ctx.JSON(fiber.Map{
-		"sync_id": config.I().SyncId,
-		"apiKey":  config.I().ApiKey,
-	})
 }
 
 func UpdateConfig(ctx *fiber.Ctx) error {

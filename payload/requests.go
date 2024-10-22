@@ -27,6 +27,7 @@ type ListDirsRequest struct {
 }
 
 type LoginRequest struct {
+	UserName string `json:"username"`
 	Password string `json:"password"`
 	Remember bool   `json:"remember,omitempty"`
 }

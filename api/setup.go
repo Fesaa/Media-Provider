@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/utils"
+	"log/slog"
 	"strings"
 	"time"
 )
@@ -43,13 +44,18 @@ func Setup(app fiber.Router) {
 
 	api := app.Group("/api")
 
-	api.Post("/login", routes.Login)
+	api.Post("/login", logWrap(routes.LoginUser))
+	api.Post("/register", logWrap(routes.RegisterUser))
+	api.Get("/any-user-exists", routes.AnyUserExists)
 
 	proxy := api.Group("/proxy", c)
 	proxy.Get("/mangadex/covers/:id/:filename", auth.MiddlewareWithApiKey, routes.MangaDexCoverProxy)
 	proxy.Get("/webtoon/covers/:date/:id/:filename", auth.MiddlewareWithApiKey, routes.WebToonCoverProxy)
 
 	api.Use(auth.Middleware)
+	
+	user := api.Group("/user")
+	user.Get("/refresh-api-key", logWrap(routes.RefreshApiKey))
 
 	api.Post("/search", c, routes.Search)
 	api.Get("/stats", routes.Stats)
@@ -62,7 +68,6 @@ func Setup(app fiber.Router) {
 
 	configGroup := api.Group("/config")
 	configGroup.Get("/", routes.GetConfig)
-	configGroup.Get("/refresh-api-key", routes.RefreshApiKey)
 	configGroup.Post("/update", routes.UpdateConfig)
 
 	pages := configGroup.Group("/pages")
@@ -72,4 +77,12 @@ func Setup(app fiber.Router) {
 	pages.Post("/", routes.AddPage)
 	pages.Put("/:index", routes.UpdatePage)
 	pages.Post("/move", routes.MovePage)
+}
+
+func logWrap(f func(l *log.Logger, ctx *fiber.Ctx) error) func(*fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		requestID := ctx.Locals("requestid").(string)
+		l := log.With(slog.String("request-id", requestID))
+		return f(l, ctx)
+	}
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/db"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/webtoon"
@@ -26,6 +28,10 @@ func init() {
 	log.Init(cfg.Logging)
 	validateConfig(cfg)
 	wisewolf.Init()
+	db.Init()
+	if err = models.Init(db.DB); err != nil {
+		log.Fatal("failed to initialize prepared statements", err)
+	}
 
 	UpdateBaseUrlInIndex(cfg.BaseUrl)
 	auth.Init()
@@ -35,6 +41,7 @@ func init() {
 }
 
 func main() {
+	defer db.Close()
 	log.Info("Starting Media-Provider", "baseURL", cfg.BaseUrl)
 
 	app := SetupApp(cfg.BaseUrl)

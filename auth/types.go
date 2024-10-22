@@ -15,5 +15,5 @@ type Provider interface {
 	IsAuthenticated(ctx *fiber.Ctx) (bool, error)
 
 	// Login logs the current user in. This happens by setting the appropriate cookie
-	Login(ctx *fiber.Ctx) (*payload.LoginResponse, error)
+	Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error)
 }

@@ -20,6 +20,7 @@ import {PageService} from "../../_services/page.service";
 export class UserLoginComponent implements OnInit {
 
   loginForm: FormGroup = new FormGroup({
+    username: new FormControl("", [Validators.required]),
     password: new FormControl('', [Validators.required]),
     remember: new FormControl(false),
   });

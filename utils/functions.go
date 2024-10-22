@@ -1,9 +1,23 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"math"
 )
+
+func GenerateApiKey() (string, error) {
+	bytes := make([]byte, 16)
+
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	apiKey := hex.EncodeToString(bytes)
+	return apiKey, nil
+}
 
 func HumanReadableSpeed(s int64) string {
 	speed := float64(s)

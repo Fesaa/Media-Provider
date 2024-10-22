@@ -12,18 +12,11 @@ func defaultConfig() *Config {
 		panic(err)
 	}
 
-	apiKey, err := ApiKey()
-	if err != nil {
-		panic(err)
-	}
-
 	return &Config{
-		SyncId:   0,
-		Password: "admin",
-		RootDir:  path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"),
-		BaseUrl:  "",
-		Secret:   secret,
-		ApiKey:   apiKey,
+		SyncId:  0,
+		RootDir: path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"),
+		BaseUrl: "",
+		Secret:  secret,
 		Cache: CacheConfig{
 			Type: MEMORY,
 		},

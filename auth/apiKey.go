@@ -2,7 +2,7 @@ package auth
 
 import (
 	"errors"
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
@@ -24,10 +24,16 @@ func (a apiKeyAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	if apiKey == "" {
 		return false, nil
 	}
-	return config.I().ApiKey == apiKey, nil
+
+	user, err := models.GetUserByApiKey(apiKey)
+	if err != nil {
+		return false, err
+	}
+
+	return user.ApiKey == apiKey, nil
 }
 
-func (a apiKeyAuth) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
+func (a apiKeyAuth) Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
 	log.Error("ApiKeyAuth does not support login")
 	return nil, errors.New("ApiKeyAuth does not support login")
 }
