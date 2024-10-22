@@ -35,4 +35,13 @@ export class PageService {
 
     return this.httpClient.get<Page>(this.baseUrl + 'config/pages/' + id)
   }
+
+  removePage(pageId: number) {
+    return this.httpClient.delete(this.baseUrl + 'pages/' + pageId, {responseType: 'text'});
+  }
+
+  upsertPage(page: Page) {
+    return this.httpClient.post(this.baseUrl + 'pages/upsert', page, {responseType: 'text'});
+  }
+
 }

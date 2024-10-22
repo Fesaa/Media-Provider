@@ -76,7 +76,7 @@ export class PagesSettingsComponent implements OnInit {
     }
     if (page === undefined) {
       page = {
-        id: -1,
+        id: 0,
         dirs: [],
         title: '',
         modifiers: {},
@@ -127,28 +127,16 @@ export class PagesSettingsComponent implements OnInit {
     }
 
     const page = this.pageForm.value as Page;
-    if (this.selectedPageIndex === -1) {
-      this.configService.addPage(page).subscribe({
-        next: () => {
-          this.toastR.success(`${page.title} added`, 'Success');
-          this.pageService.refreshPages();
-        },
-        error: (err) => {
-          this.toastR.error(`Failed to add page ${err.error.error}`, 'Error');
-        }
-      });
-      return;
-    }
-
-    this.configService.updatePage(page, this.selectedPageIndex).subscribe({
+    this.pageService.upsertPage(page).subscribe({
       next: () => {
-        this.toastR.success(`${page.title} updated`, 'Success');
+        this.toastR.success(`${page.title} upserted`, 'Success');
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(`Failed to update page ${err.error.error}`, 'Error');
+        this.toastR.error(`Failed to upsert page ${err.error.error}`, 'Error');
       }
     });
+    return;
   }
 
   private displayErrors() {
@@ -169,7 +157,7 @@ export class PagesSettingsComponent implements OnInit {
       return;
     }
 
-   this.configService.removePage(index).subscribe({
+   this.pageService.removePage(index).subscribe({
       next: () => {
         const page = this.pages[index];
         this.toastR.success(`${page.title} removed`, 'Success');

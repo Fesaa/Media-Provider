@@ -73,6 +73,8 @@ func Setup(app fiber.Router) {
 	pages := configGroup.Group("/pages")
 	pages.Get("/", logWrap(routes.Pages))
 	pages.Get("/:index", logWrap(routes.Page))
+	pages.Post("/upsert", logWrap(routes.UpsertPage))
+	pages.Delete("/:pageId", logWrap(routes.DeletePage))
 }
 
 func logWrap(f func(l *log.Logger, ctx *fiber.Ctx) error) func(*fiber.Ctx) error {

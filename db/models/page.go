@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/log"
 )
 
@@ -255,4 +256,125 @@ func (m *Modifier) readValues(rows *sql.Rows) error {
 	}
 
 	return nil
+}
+
+func UpsertPage(page *Page) error {
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	pageId := func() any {
+		if page.ID == 0 {
+			return nil
+		}
+		return page.ID
+	}()
+
+	result, err := tx.Exec(`INSERT INTO pages (id, title, customRootDir) VALUES (?, ?, ?) 
+		ON CONFLICT(id) DO UPDATE SET title = excluded.title, customRootDir = excluded.customRootDir`,
+		pageId, page.Title, page.CustomRootDir)
+	if err != nil {
+		return err
+	}
+
+	if page.ID == 0 {
+		pageID, err := result.LastInsertId()
+		if err != nil {
+			return err
+		}
+		page.ID = pageID
+	}
+
+	for _, provider := range page.Providers {
+		_, err = tx.Exec(`INSERT INTO providers (page_id, provider) VALUES (?, ?) ON CONFLICT DO NOTHING;`, page.ID, provider)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, dir := range page.Dirs {
+		_, err = tx.Exec(`INSERT INTO dirs (page_id, dir) VALUES (?, ?) ON CONFLICT DO NOTHING;`, page.ID, dir)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, modifier := range page.Modifiers {
+		err = upsertModifier(tx, page.ID, &modifier)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func upsertModifier(tx *sql.Tx, pageID int64, modifier *Modifier) error {
+	result, err := tx.Exec(`INSERT INTO modifiers (id, page_id, title, type, key) 
+		VALUES (?, ?, ?, ?, ?) 
+		ON CONFLICT(id) DO UPDATE SET title = excluded.title, type = excluded.type, key = excluded.key`,
+		modifier.ID, pageID, modifier.Title, modifier.Type, modifier.Key)
+	if err != nil {
+		return err
+	}
+
+	if modifier.ID == 0 {
+		modifierID, err := result.LastInsertId()
+		if err != nil {
+			return err
+		}
+		modifier.ID = modifierID
+	}
+
+	_, err = tx.Exec(`DELETE FROM modifier_values WHERE modifier_id = ?`, modifier.ID)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range modifier.Values {
+		_, err = tx.Exec(`INSERT INTO modifier_values (modifier_id, key, value) VALUES (?, ?, ?)`, modifier.ID, k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func DeletePageByID(pageID int64) error {
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(`DELETE FROM modifier_values WHERE modifier_id IN (
+        SELECT id FROM modifiers WHERE page_id = ?
+    )`, pageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM modifiers WHERE page_id = ?`, pageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM providers WHERE page_id = ?`, pageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM dirs WHERE page_id = ?`, pageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM pages WHERE id = ?`, pageID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }

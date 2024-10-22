@@ -28,12 +28,12 @@ var (
 );`,
 		`CREATE TABLE providers (
 	page_id INTEGER REFERENCES pages(id),
-	provider INTEGER NOT NULL
+	provider INTEGER NOT NULL UNIQUE
 );`,
 		`
 CREATE TABLE dirs (
 	page_id INTEGER REFERENCES pages(id),
-	dir TEXT NOT NULL
+	dir TEXT NOT NULL UNIQUE
 );`,
 		`CREATE TABLE modifiers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
