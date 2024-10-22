@@ -353,7 +353,7 @@ func upsertPage(tx *sql.Tx, page *Page) error {
 	for i := range modifierIDs {
 		placeholders[i] = "?"
 	}
-	query := fmt.Sprintf("DELETE FROM modifiers WHERE id NOT IN (%s)", strings.Join(placeholders, ","))
+	query := fmt.Sprintf("DELETE FROM modifiers WHERE id NOT IN (%s) AND page_id = ?", strings.Join(placeholders, ","), page.ID)
 	_, err = tx.Exec(query, modifierIDs...)
 	if err != nil {
 		return err
