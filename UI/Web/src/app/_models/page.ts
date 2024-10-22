@@ -1,6 +1,7 @@
 
 export type Page = {
   id: number;
+  sort_value: number;
   title: string;
   providers: Provider[];
   modifiers: { [key: string]: Modifier };

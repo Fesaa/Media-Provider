@@ -286,9 +286,22 @@ func upsertPage(tx *sql.Tx, page *Page) error {
 		return page.ID
 	}()
 
+	var sortValue any
+	if page.SortValue != 0 {
+		sortValue = page.SortValue
+	} else {
+		row := tx.QueryRow("SELECT MAX(sortValue) FROM pages;")
+		var val int
+		if err := row.Scan(&val); err != nil {
+			return err
+		}
+
+		sortValue = val + 1
+	}
+
 	result, err := tx.Exec(`INSERT INTO pages (id, title, customRootDir, sortValue) VALUES (?, ?, ?, ?) 
 		ON CONFLICT(id) DO UPDATE SET title = excluded.title, customRootDir = excluded.customRootDir, sortValue = excluded.sortValue`,
-		pageId, page.Title, page.CustomRootDir, page.SortValue)
+		pageId, page.Title, page.CustomRootDir, sortValue)
 	if err != nil {
 		return err
 	}

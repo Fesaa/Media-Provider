@@ -33,7 +33,7 @@ var (
 		`
 CREATE TABLE dirs (
 	page_id INTEGER REFERENCES pages(id),
-	dir TEXT NOT NULL UNIQUE
+	dir TEXT NOT NULL
 );`,
 		`CREATE TABLE modifiers (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,

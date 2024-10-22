@@ -86,6 +86,7 @@ export class PagesSettingsComponent implements OnInit {
     if (page === undefined) {
       page = {
         id: 0,
+        sort_value: 0,
         dirs: [],
         title: '',
         modifiers: {},
@@ -137,6 +138,7 @@ export class PagesSettingsComponent implements OnInit {
 
     const page = this.pageForm.value as Page;
     page.id = this.selectedPage.id;
+    page.sort_value = this.selectedPage.sort_value;
     this.pageService.upsertPage(page).subscribe({
       next: () => {
         this.toastR.success(`${page.title} upserted`, 'Success');
