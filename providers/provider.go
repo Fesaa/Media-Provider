@@ -3,13 +3,13 @@ package providers
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/limetorrents"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
-	"github.com/Fesaa/Media-Provider/subsplease"
-	"github.com/Fesaa/Media-Provider/webtoon"
-	"github.com/Fesaa/Media-Provider/yts"
+	"github.com/Fesaa/Media-Provider/providers/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/subsplease"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/yts"
 	"time"
 )
 

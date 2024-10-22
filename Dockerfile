@@ -22,17 +22,11 @@ COPY ./auth ./auth
 COPY ./comicinfo ./comicinfo
 COPY ./config ./config
 COPY ./db ./db
-COPY ./limetorrents ./limetorrents
 COPY ./log ./log
-COPY ./mangadex ./mangadex
 COPY ./payload ./payload
 COPY ./providers ./providers
-COPY ./subsplease ./subsplease
 COPY ./utils ./utils
-COPY ./webtoon ./webtoon
 COPY ./wisewolf ./wisewolf
-COPY ./yoitsu ./yoitsu
-COPY ./yts ./yts
 COPY ./*.go ./
 
 RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static"'

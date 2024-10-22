@@ -3,12 +3,11 @@ package routes
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/mangadex"
 	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/Fesaa/Media-Provider/providers"
-	"github.com/Fesaa/Media-Provider/webtoon"
-	"github.com/Fesaa/Media-Provider/yoitsu"
-
+	"github.com/Fesaa/Media-Provider/providers/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/gofiber/fiber/v2"
 )
 
