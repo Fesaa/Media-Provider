@@ -28,7 +28,7 @@ var (
 );`,
 		`CREATE TABLE providers (
 	page_id INTEGER REFERENCES pages(id),
-	provider INTEGER NOT NULL UNIQUE
+	provider INTEGER NOT NULL
 );`,
 		`
 CREATE TABLE dirs (
