@@ -1,13 +1,14 @@
 package config
 
 import (
+	"github.com/Fesaa/Media-Provider/utils"
 	"log/slog"
 	"os"
 	"path"
 )
 
 func defaultConfig() *Config {
-	secret, err := GenerateSecret(64)
+	secret, err := utils.GenerateSecret(64)
 	if err != nil {
 		panic(err)
 	}

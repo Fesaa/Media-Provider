@@ -61,6 +61,14 @@
           }
         }
 
+        @defer (when selected == SettingsID.User; prefetch on idle) {
+          @if (selected === SettingsID.User && canSee(SettingsID.User)) {
+            <div class="mt-5 md:ml-5">
+              <app-user-settings></app-user-settings>
+            </div>
+          }
+        }
+
       </div>
     </div>
   </div>

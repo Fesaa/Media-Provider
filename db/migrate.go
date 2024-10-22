@@ -48,6 +48,12 @@ CREATE TABLE dirs (
 	value TEXT NOT NULL
 );`,
 		`ALTER TABLE pages ADD COLUMN sortValue INTEGER NOT NULL DEFAULT 0;`,
+		`ALTER TABLE users ADD COLUMN original BIT NOT NULL DEFAULT 0`,
+		`CREATE TABLE password_reset (
+	user_id INTEGER REFERENCES users(id),
+	key TEXT NOT NULL,
+	expiry BIGINT NOT NULL
+);`,
 	}
 )
 

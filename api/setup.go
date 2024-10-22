@@ -47,6 +47,7 @@ func Setup(app fiber.Router) {
 	api.Post("/login", logWrap(routes.LoginUser))
 	api.Post("/register", logWrap(routes.RegisterUser))
 	api.Get("/any-user-exists", routes.AnyUserExists)
+	api.Post("/reset-password", logWrap(routes.ResetPassword))
 
 	proxy := api.Group("/proxy", c)
 	proxy.Get("/mangadex/covers/:id/:filename", auth.MiddlewareWithApiKey, routes.MangaDexCoverProxy)
@@ -56,6 +57,10 @@ func Setup(app fiber.Router) {
 
 	user := api.Group("/user")
 	user.Get("/refresh-api-key", logWrap(routes.RefreshApiKey))
+	user.Get("/all", logWrap(routes.Users))
+	user.Post("/update", logWrap(routes.UpdateUser))
+	user.Delete("/:userId", logWrap(routes.DeleteUser))
+	user.Post("/reset/:userId", logWrap(routes.GenerateResetPassword))
 
 	api.Post("/search", c, routes.Search)
 	api.Get("/stats", routes.Stats)

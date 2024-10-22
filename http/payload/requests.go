@@ -35,6 +35,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
+	Id          int64  `json:"id"`
 	Token       string `json:"token"`
 	ApiKey      string `json:"apiKey,omitempty"`
 	Permissions int    `json:"permissions"`
@@ -47,4 +48,9 @@ type UpdatePasswordRequest struct {
 type SwapPageRequest struct {
 	Id1 int64 `json:"id1"`
 	Id2 int64 `json:"id2"`
+}
+
+type ResetPasswordRequest struct {
+	Key      string `json:"key"`
+	Password string `json:"password"`
 }

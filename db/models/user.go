@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/Fesaa/Media-Provider/db"
+	"github.com/Fesaa/Media-Provider/log"
 )
 
 var (
@@ -17,7 +18,7 @@ var (
 func initUser(db *sql.DB) error {
 	var err error
 
-	createUserStmt, err = db.Prepare(`INSERT INTO users (name, password, apiKey,permission) VALUES (?, ?, ?, ?)`)
+	createUserStmt, err = db.Prepare(`INSERT INTO users (name, password, apiKey,permission,original) VALUES (?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -27,17 +28,17 @@ func initUser(db *sql.DB) error {
 		return err
 	}
 
-	deleteUserStmt, err = db.Prepare(`DELETE FROM users WHERE name = ?`)
+	deleteUserStmt, err = db.Prepare(`DELETE FROM users WHERE id = ?`)
 	if err != nil {
 		return err
 	}
 
-	getUserStmt, err = db.Prepare(`SELECT id,name,password,apiKey,permission FROM users WHERE name = ?`)
+	getUserStmt, err = db.Prepare(`SELECT id,name,password,apiKey,permission,original FROM users WHERE name = ?`)
 	if err != nil {
 		return err
 	}
 
-	getUserByApiKey, err = db.Prepare(`SELECT id,name,password,apiKey,permission FROM users WHERE apiKey = ?`)
+	getUserByApiKey, err = db.Prepare(`SELECT id,name,password,apiKey,permission,original FROM users WHERE apiKey = ?`)
 	if err != nil {
 		return err
 	}
@@ -58,15 +59,26 @@ const (
 )
 
 var (
-	ALL_PERMS = PermWritePage | PermDeleteUser | PermWriteConfig | PermDeleteUser | PermWriteConfig
+	ALL_PERMS = PermWritePage |
+		PermDeletePage |
+		PermWriteConfig |
+		PermWriteUser |
+		PermDeleteUser |
+		PermWriteConfig
 )
 
 type User struct {
-	ID           int64  `json:"ID"`
-	Name         string `json:"name"`
+	ID           int64
+	Name         string
 	PasswordHash string
-	ApiKey       string `json:"apiKey,omitempty"`
-	Permission   int    `json:"permission"`
+	ApiKey       string
+	Permission   int
+	// Will not be updated in the UpdateUser method, should be set on creation. And only for the first account
+	Original bool
+}
+
+func (u *User) read(s scanner) error {
+	return s.Scan(&u.ID, &u.Name, &u.PasswordHash, &u.ApiKey, &u.Permission, &u.Original)
 }
 
 func (u *User) HasPermission(permission UserPermission) bool {
@@ -79,7 +91,7 @@ func CreateUser(name string, opts ...Option[*User]) (*User, error) {
 		user = opt(user)
 	}
 
-	result, err := createUserStmt.Exec(user.Name, user.PasswordHash, user.ApiKey, user.Permission)
+	result, err := createUserStmt.Exec(user.Name, user.PasswordHash, user.ApiKey, user.Permission, user.Original)
 	if err != nil {
 		return nil, err
 	}
@@ -109,12 +121,23 @@ func DeleteUser(id int64) error {
 	return err
 }
 
+func GetUserById(id int64) (*User, error) {
+	row := db.DB.QueryRow("SELECT id,name,password,apiKey,permission,original FROM users WHERE id = ?", id)
+	var user User
+	if err := user.read(row); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func GetUser(userName string) (*User, error) {
 	row := getUserStmt.QueryRow(userName)
 	var user User
-	err := row.Scan(&user.ID, &user.Name, &user.PasswordHash, &user.ApiKey, &user.Permission)
-	if err != nil {
-
+	if err := user.read(row); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -146,4 +169,29 @@ func AnyUserExists() (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func Users() ([]User, error) {
+	rows, err := db.DB.Query("SELECT id, name, password, apiKey, permission FROM users")
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(rows *sql.Rows) {
+		if err = rows.Close(); err != nil {
+			log.Warn("failed to close rows", "err", err)
+		}
+	}(rows)
+
+	users := []User{}
+	for rows.Next() {
+		var user User
+		err = rows.Scan(&user.ID, &user.Name, &user.PasswordHash, &user.ApiKey, &user.Permission)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
 }

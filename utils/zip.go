@@ -2,8 +2,8 @@ package utils
 
 import (
 	"archive/zip"
-	"github.com/Fesaa/Media-Provider/log"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 )
@@ -15,7 +15,7 @@ func addFileToZip(zipWriter *zip.Writer, filename string, baseDir string) error 
 	}
 	defer func(fileToZip *os.File) {
 		if err = fileToZip.Close(); err != nil {
-			log.Warn("failed to close file", "filename", filename, "error", err)
+			slog.Warn("failed to close file", "filename", filename, "error", err)
 		}
 	}(fileToZip)
 
@@ -45,21 +45,20 @@ func addFileToZip(zipWriter *zip.Writer, filename string, baseDir string) error 
 }
 
 func ZipFolder(folderPath string, zipFileName string) error {
-	log.Trace("zipping folder", "path", folderPath, "filename", zipFileName)
 	zipFile, err := os.Create(zipFileName)
 	if err != nil {
 		return err
 	}
 	defer func(zipFile *os.File) {
 		if err = zipFile.Close(); err != nil {
-			log.Warn("failed to close zip file", "filename", zipFileName, "error", err)
+			slog.Warn("failed to close zip file", "filename", zipFileName, "error", err)
 		}
 	}(zipFile)
 
 	zipWriter := zip.NewWriter(zipFile)
 	defer func(zipWriter *zip.Writer) {
 		if err = zipWriter.Close(); err != nil {
-			log.Warn("failed to close zip writer", "error", err)
+			slog.Warn("failed to close zip writer", "error", err)
 		}
 	}(zipWriter)
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-playground/validator/v10"
 	"os"
 	"strings"
@@ -60,7 +61,7 @@ func validateRootConfig(c *config.Config) error {
 	}
 
 	if c.Secret == "" {
-		secret, err := config.GenerateSecret(64)
+		secret, err := utils.GenerateSecret(64)
 		if err != nil {
 			return err
 		}

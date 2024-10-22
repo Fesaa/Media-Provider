@@ -1,7 +1,7 @@
 import {DestroyRef, inject, Injectable} from '@angular/core';
 import {environment} from "../../environments/environment";
 import {Observable, ReplaySubject, tap} from "rxjs";
-import {User} from "../_models/user";
+import {User, UserDto} from "../_models/user";
 import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
@@ -63,6 +63,10 @@ export class AccountService {
   }
 
   logout() {
+    if (!this.currentUser) {
+      return;
+    }
+
     localStorage.removeItem(this.userKey);
     this.currentUser = undefined;
     this.currentUserSource.next(undefined);
@@ -72,4 +76,25 @@ export class AccountService {
   anyUserExists() {
     return this.httpClient.get<boolean>(this.baseUrl + 'any-user-exists');
   }
+
+  all() {
+    return this.httpClient.get<UserDto[]>(this.baseUrl + 'user/all');
+  }
+
+  update(dto: UserDto) {
+    return this.httpClient.post<number>(this.baseUrl + 'user/update', dto)
+  }
+
+  delete(id: number) {
+    return this.httpClient.delete(this.baseUrl + 'user/' + id);
+  }
+
+  generateReset(id: number) {
+    return this.httpClient.post(this.baseUrl + 'user/reset/' + id, {})
+  }
+
+  resetPassword(model: {key: string, password: string}) {
+    return this.httpClient.post(this.baseUrl + 'reset-password', model)
+  }
+
 }

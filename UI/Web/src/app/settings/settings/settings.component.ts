@@ -7,11 +7,13 @@ import {dropAnimation} from "../../_animations/drop-animation";
 import {ActivatedRoute, Router} from "@angular/router";
 import {hasPermission, Perm, User} from "../../_models/user";
 import {AccountService} from "../../_services/account.service";
+import {UserSettingsComponent} from "./_components/user-settings/user-settings.component";
 
 export enum SettingsID {
 
   Server = "server",
   Pages = "pages",
+  User = "user"
 
 }
 
@@ -21,7 +23,8 @@ export enum SettingsID {
   imports: [
     NgIcon,
     ServerSettingsComponent,
-    PagesSettingsComponent
+    PagesSettingsComponent,
+    UserSettingsComponent
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
@@ -44,7 +47,13 @@ export class SettingsComponent implements OnInit{
       title: 'Pages',
       icon: 'heroDocument',
       perm: Perm.All,
-    }
+    },
+    {
+      id: SettingsID.User,
+      title: 'Users',
+      icon: 'heroUser',
+      perm: Perm.WriteUser,
+    },
   ]
 
   constructor(private navService: NavService,
@@ -61,7 +70,9 @@ export class SettingsComponent implements OnInit{
         return;
       }
 
-      this.setSettings(this.settings.find(s => this.canSee(s.id))!.id)
+      if (!this.canSee(this.selected)) {
+        this.setSettings(this.settings.find(s => this.canSee(s.id))!.id)
+      }
     })
 
     this.activatedRoute.fragment.subscribe(fragment => {
