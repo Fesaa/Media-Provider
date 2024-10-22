@@ -19,10 +19,10 @@ func AnyUserExists(ctx *fiber.Ctx) error {
 	}
 
 	if ok {
-		return ctx.SendStatus(fiber.StatusOK)
+		return ctx.SendString("true")
 	}
 
-	return ctx.SendStatus(fiber.StatusNotFound)
+	return ctx.SendString("false")
 }
 
 func RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
@@ -58,7 +58,7 @@ func RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
 
 	loginRequest := payload.LoginRequest{
 		UserName: user.Name,
-		Password: user.PasswordHash,
+		Password: register.Password,
 		Remember: register.Remember,
 	}
 
@@ -86,7 +86,7 @@ func LoginUser(l *log.Logger, ctx *fiber.Ctx) error {
 }
 
 func RefreshApiKey(l *log.Logger, ctx *fiber.Ctx) error {
-	userName, _ := ctx.Locals("user").(string)
+	userName := ctx.Locals("user").(string)
 
 	key, err := utils.GenerateApiKey()
 	if err != nil {

@@ -53,7 +53,7 @@ func Setup(app fiber.Router) {
 	proxy.Get("/webtoon/covers/:date/:id/:filename", auth.MiddlewareWithApiKey, routes.WebToonCoverProxy)
 
 	api.Use(auth.Middleware)
-	
+
 	user := api.Group("/user")
 	user.Get("/refresh-api-key", logWrap(routes.RefreshApiKey))
 

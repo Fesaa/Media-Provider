@@ -31,8 +31,19 @@ export class AccountService {
     }
   }
 
-  login(model: {password: string, remember: boolean}): Observable<User> {
+  login(model: {username: string, password: string, remember: boolean}): Observable<User> {
     return this.httpClient.post<User>(this.baseUrl + 'login', model).pipe(
+      tap((user: User) => {
+        if (user) {
+          this.setCurrentUser(user)
+        }
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    );
+  }
+
+  register(model: {username: string, password: string, remember: boolean}): Observable<User> {
+    return this.httpClient.post<User>(this.baseUrl + 'register', model).pipe(
       tap((user: User) => {
         if (user) {
           this.setCurrentUser(user)
@@ -56,5 +67,9 @@ export class AccountService {
     this.currentUser = undefined;
     this.currentUserSource.next(undefined);
     this.router.navigate(['/login']);
+  }
+
+  anyUserExists() {
+    return this.httpClient.get<boolean>(this.baseUrl + 'any-user-exists');
   }
 }

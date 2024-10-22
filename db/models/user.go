@@ -17,7 +17,7 @@ var (
 func initUser(db *sql.DB) error {
 	var err error
 
-	createUserStmt, err = db.Prepare(`INSERT INTO users (name, password, apiKey,permission) VALUES (?, ?, ?)`)
+	createUserStmt, err = db.Prepare(`INSERT INTO users (name, password, apiKey,permission) VALUES (?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
