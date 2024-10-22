@@ -3,7 +3,7 @@ package yoitsu
 import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/payload"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"os"
 	"path"
 	"sync"

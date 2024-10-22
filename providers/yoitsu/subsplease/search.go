@@ -3,8 +3,8 @@ package subsplease
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/http/wisewolf"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/wisewolf"
 	"io"
 	"net/url"
 )

@@ -1,7 +1,7 @@
 package mangadex
 
 import (
-	"github.com/Fesaa/Media-Provider/payload"
+	"github.com/Fesaa/Media-Provider/http/payload"
 )
 
 type Config interface {

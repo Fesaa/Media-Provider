@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/Fesaa/Media-Provider/payload"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/gofiber/fiber/v2"
 )

@@ -2,7 +2,7 @@ package providers
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/payload"
+	"github.com/Fesaa/Media-Provider/http/payload"
 )
 
 type Info struct {

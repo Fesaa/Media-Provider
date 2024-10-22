@@ -17,16 +17,14 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY ./api ./api
 COPY ./auth ./auth
 COPY ./comicinfo ./comicinfo
 COPY ./config ./config
 COPY ./db ./db
+COPY ./http ./http
 COPY ./log ./log
-COPY ./payload ./payload
 COPY ./providers ./providers
 COPY ./utils ./utils
-COPY ./wisewolf ./wisewolf
 COPY ./*.go ./
 
 RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static"'

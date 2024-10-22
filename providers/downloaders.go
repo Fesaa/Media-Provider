@@ -1,7 +1,7 @@
 package providers
 
 import (
-	"github.com/Fesaa/Media-Provider/payload"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"

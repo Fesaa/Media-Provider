@@ -2,8 +2,8 @@ package providers
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/payload"
 )
 
 func Search(req payload.SearchRequest) ([]Info, error) {

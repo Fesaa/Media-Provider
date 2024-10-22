@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/payload"
 	"os"
 	"path"
 	"slices"

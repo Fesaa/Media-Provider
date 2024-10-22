@@ -1,6 +1,6 @@
 package webtoon
 
-import "github.com/Fesaa/Media-Provider/payload"
+import "github.com/Fesaa/Media-Provider/http/payload"
 
 type Config interface {
 	GetRootDir() string

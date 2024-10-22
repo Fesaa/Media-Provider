@@ -2,8 +2,8 @@ package routes
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/http/wisewolf"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/wisewolf"
 	"github.com/gofiber/fiber/v2"
 	"io"
 	"mime"
