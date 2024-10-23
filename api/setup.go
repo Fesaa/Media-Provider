@@ -2,18 +2,17 @@ package api
 
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
-	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/utils"
-	"log/slog"
 	"strings"
 	"time"
 )
 
-func Setup(app fiber.Router) {
+func Setup(app fiber.Router, db *db.Database) {
 	log.Debug("registering api routes")
 
 	c := cache.New(cache.Config{
@@ -43,51 +42,10 @@ func Setup(app fiber.Router) {
 	})
 
 	api := app.Group("/api")
-
-	api.Post("/login", logWrap(routes.LoginUser))
-	api.Post("/register", logWrap(routes.RegisterUser))
-	api.Get("/any-user-exists", routes.AnyUserExists)
-	api.Post("/reset-password", logWrap(routes.ResetPassword))
-
-	proxy := api.Group("/proxy", c)
-	proxy.Get("/mangadex/covers/:id/:filename", auth.MiddlewareWithApiKey, routes.MangaDexCoverProxy)
-	proxy.Get("/webtoon/covers/:date/:id/:filename", auth.MiddlewareWithApiKey, routes.WebToonCoverProxy)
-
-	api.Use(auth.Middleware)
-
-	user := api.Group("/user")
-	user.Get("/refresh-api-key", logWrap(routes.RefreshApiKey))
-	user.Get("/all", logWrap(routes.Users))
-	user.Post("/update", logWrap(routes.UpdateUser))
-	user.Delete("/:userId", logWrap(routes.DeleteUser))
-	user.Post("/reset/:userId", logWrap(routes.GenerateResetPassword))
-
-	api.Post("/search", c, routes.Search)
-	api.Get("/stats", routes.Stats)
-	api.Post("/download", routes.Download)
-	api.Post("/stop", routes.Stop)
-
-	io := api.Group("/io")
-	io.Post("/ls", routes.ListDirs)
-	io.Post("/create", routes.CreateDir)
-
-	configGroup := api.Group("/config")
-	configGroup.Get("/", routes.GetConfig)
-	configGroup.Post("/update", routes.UpdateConfig)
-
-	pages := api.Group("/pages")
-	pages.Get("/", logWrap(routes.Pages))
-	pages.Get("/:index", logWrap(routes.Page))
-	pages.Post("/upsert", logWrap(routes.UpsertPage))
-	pages.Delete("/:pageId", logWrap(routes.DeletePage))
-	pages.Post("/swap", logWrap(routes.SwapPage))
-	pages.Post("/load-default", logWrap(routes.LoadDefault))
-}
-
-func logWrap(f func(l *log.Logger, ctx *fiber.Ctx) error) func(*fiber.Ctx) error {
-	return func(ctx *fiber.Ctx) error {
-		requestID := ctx.Locals("requestid").(string)
-		l := log.With(slog.String("request-id", requestID))
-		return f(l, ctx)
-	}
+	routes.RegisterUserRoutes(api, db, c)
+	routes.RegisterProxyRoutes(api, db, c)
+	routes.RegisterContentRoutes(api, db, c)
+	routes.RegisterIoRoutes(api, db, c)
+	routes.RegisterConfigRoutes(api, db, c)
+	routes.RegisterPageRoutes(api, db, c)
 }

@@ -18,6 +18,7 @@ import (
 )
 
 var cfg *config.Config
+var database *db.Database
 
 func init() {
 	var err error
@@ -28,13 +29,16 @@ func init() {
 	log.Init(cfg.Logging)
 	validateConfig(cfg)
 	wisewolf.Init()
-	db.Init()
-	if err = models.Init(db.DB); err != nil {
+	database, err = db.Connect()
+	if err != nil {
+		panic(err)
+	}
+	if err = models.Init(database.DB()); err != nil {
 		log.Fatal("failed to initialize prepared statements", err)
 	}
 
 	UpdateBaseUrlInIndex(cfg.BaseUrl)
-	auth.Init()
+	auth.Init(database)
 	yoitsu.Init(cfg)
 	mangadex.Init(cfg)
 	webtoon.Init(cfg)

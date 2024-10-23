@@ -2,6 +2,8 @@ package routes
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
@@ -11,8 +13,24 @@ import (
 	"strings"
 )
 
-func Pages(l *log.Logger, ctx *fiber.Ctx) error {
-	pages, err := models.GetPages()
+type pageRoutes struct {
+	db *db.Database
+}
+
+func RegisterPageRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
+	pr := pageRoutes{db: db}
+
+	pages := router.Group("/pages", auth.Middleware)
+	pages.Get("/", wrap(pr.Pages))
+	pages.Get("/:index", wrap(pr.Page))
+	pages.Post("/upsert", wrap(pr.UpsertPage))
+	pages.Delete("/:pageId", wrap(pr.DeletePage))
+	pages.Post("/swap", wrap(pr.SwapPage))
+	pages.Post("/load-default", wrap(pr.LoadDefault))
+}
+
+func (pr *pageRoutes) Pages(l *log.Logger, ctx *fiber.Ctx) error {
+	pages, err := pr.db.Pages.All()
 	if err != nil {
 		l.Error("failed to retrieve pages", "error", err)
 		return fiber.ErrInternalServerError
@@ -29,7 +47,7 @@ func Pages(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.JSON(pages)
 }
 
-func Page(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) Page(l *log.Logger, ctx *fiber.Ctx) error {
 	id, _ := ctx.ParamsInt("index", -1)
 	if id == -1 {
 		return ctx.Status(400).JSON(fiber.Map{
@@ -37,7 +55,7 @@ func Page(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 	}
 
-	page, err := models.GetPage(int64(id))
+	page, err := pr.db.Pages.Get(int64(id))
 	if err != nil {
 		l.Error("failed to retrieve page", "error", err, slog.Int("pageId", id))
 		return fiber.ErrInternalServerError
@@ -50,7 +68,7 @@ func Page(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.JSON(page)
 }
 
-func UpsertPage(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) UpsertPage(l *log.Logger, ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWritePage) {
 		l.Warn("user does not have permission to edit pages", "user", user.Name)
@@ -68,7 +86,7 @@ func UpsertPage(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if err := models.UpsertPage(&page); err != nil {
+	if err := pr.db.Pages.Upsert(&page); err != nil {
 		l.Error("failed to upsert page", "error", err)
 		return fiber.ErrInternalServerError
 	}
@@ -76,7 +94,7 @@ func UpsertPage(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
 	id, _ := ctx.ParamsInt("pageId", -1)
 	if id == -1 {
 		return ctx.SendStatus(fiber.StatusBadRequest)
@@ -88,7 +106,7 @@ func DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	if err := models.DeletePageByID(int64(id)); err != nil {
+	if err := pr.db.Pages.Delete(int64(id)); err != nil {
 		l.Error("failed to delete page", "error", err)
 		return fiber.ErrInternalServerError
 	}
@@ -96,19 +114,19 @@ func DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func SwapPage(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) SwapPage(l *log.Logger, ctx *fiber.Ctx) error {
 	var m payload.SwapPageRequest
 	if err := ctx.BodyParser(&m); err != nil {
 		log.Error("Failed to parse request body", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	page1, err := models.GetPage(m.Id1)
+	page1, err := pr.db.Pages.Get(m.Id1)
 	if err != nil {
 		l.Error("failed to retrieve page 1 by id", "error", err, slog.Int64("id1", m.Id1))
 		return fiber.ErrInternalServerError
 	}
-	page2, err := models.GetPage(m.Id2)
+	page2, err := pr.db.Pages.Get(m.Id2)
 	if err != nil {
 		l.Error("failed to retrieve page 2 by id", "error", err, slog.Int64("id2", m.Id2))
 		return fiber.ErrInternalServerError
@@ -118,15 +136,15 @@ func SwapPage(l *log.Logger, ctx *fiber.Ctx) error {
 	page1.SortValue = page2.SortValue
 	page2.SortValue = temp
 
-	if err = models.UpsertPage(page1, page2); err != nil {
+	if err = pr.db.Pages.Upsert(page1, page2); err != nil {
 		l.Error("failed to upsert pages", "error", err)
 		return fiber.ErrInternalServerError
 	}
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func LoadDefault(l *log.Logger, ctx *fiber.Ctx) error {
-	pages, err := models.GetPages()
+func (pr *pageRoutes) LoadDefault(l *log.Logger, ctx *fiber.Ctx) error {
+	pages, err := pr.db.Pages.All()
 	if err != nil {
 		l.Error("failed to retrieve pages", "error", err)
 		return fiber.ErrInternalServerError
@@ -136,7 +154,7 @@ func LoadDefault(l *log.Logger, ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot load default pages while other pages are present"})
 	}
 
-	if err = models.UpsertPage(models.DefaultPages...); err != nil {
+	if err = pr.db.Pages.Upsert(models.DefaultPages...); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": fmt.Errorf("failed to load default pages %w", err).Error(),
 		})

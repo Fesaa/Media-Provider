@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
@@ -19,10 +19,11 @@ const (
 )
 
 type jwtAuth struct {
+	db *db.Database
 }
 
-func newJwtAuth() Provider {
-	return &jwtAuth{}
+func newJwtAuth(db *db.Database) Provider {
+	return &jwtAuth{db}
 }
 
 func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
@@ -59,9 +60,9 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, ErrMissingOrMalformedAPIKey
 	}
 
-	// Load user from DB in non get requests
+	// Load user from theDb in non get requests
 	if ctx.Method() != fiber.MethodGet {
-		user, err := models.GetUser(mpClaims.User.Name)
+		user, err := jwtAuth.db.Users.GetByName(mpClaims.User.Name)
 		if err != nil {
 			return false, fmt.Errorf("cannot get user: %w", err)
 		}
@@ -77,9 +78,9 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 }
 
 func (jwtAuth *jwtAuth) Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
-	user, err := models.GetUser(loginRequest.UserName)
+	user, err := jwtAuth.db.Users.GetByName(loginRequest.UserName)
 	if err != nil {
-		log.Error("failed to get user by username: %s", loginRequest.UserName)
+		log.Error("failed to get user by username:", "name", loginRequest.UserName)
 		return nil, err
 	}
 

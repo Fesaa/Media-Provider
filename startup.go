@@ -59,7 +59,7 @@ func SetupApp(baseUrl string) *fiber.App {
 		}))
 
 	router := app.Group(baseUrl)
-	api.Setup(router)
+	api.Setup(router, database)
 
 	app.Static(baseUrl, "./public", fiber.Static{
 		Compress: true,

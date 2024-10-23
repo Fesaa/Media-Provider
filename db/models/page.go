@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"strings"
@@ -55,7 +54,16 @@ func initPages(db *sql.DB) error {
 	return nil
 }
 
-func GetPages() ([]Page, error) {
+func NewPages(db *sql.DB) *Pages {
+	return &Pages{db: db}
+}
+
+type Pages struct {
+	db  *sql.DB
+	log *log.Logger
+}
+
+func (p *Pages) All() ([]Page, error) {
 	rows, err := getPagesMeta.Query()
 	if err != nil {
 		return nil, err
@@ -63,7 +71,7 @@ func GetPages() ([]Page, error) {
 
 	defer func(rows *sql.Rows) {
 		if err = rows.Close(); err != nil {
-			log.Warn("failed to close rows", "err", err)
+			p.log.Warn("failed to close rows", "err", err)
 		}
 	}(rows)
 
@@ -71,7 +79,7 @@ func GetPages() ([]Page, error) {
 	for rows.Next() {
 		var page Page
 		if err = readPage(rows, &page); err != nil {
-			log.Error("failed to read page", "err", err)
+			p.log.Error("failed to read page", "err", err)
 			return nil, err
 		}
 		pages = append(pages, page)
@@ -80,20 +88,72 @@ func GetPages() ([]Page, error) {
 	return pages, nil
 }
 
-func GetPage(id int64) (*Page, error) {
+func (p *Pages) Get(id int64) (*Page, error) {
 	row := getPageByID.QueryRow(id)
 	var page Page
 	if err := readPage(row, &page); err != nil {
-
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 
-		log.Error("failed to read page", "id", id, "err", err)
+		p.log.Error("failed to read page", "id", id, "err", err)
 		return nil, err
 	}
 
 	return &page, nil
+}
+
+func (p *Pages) Upsert(pages ...*Page) error {
+	tx, err := p.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	for _, page := range pages {
+		if err = upsertPage(tx, page); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (p *Pages) Delete(pageID int64) error {
+	tx, err := p.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(`DELETE FROM modifier_values WHERE modifier_id IN (
+        SELECT id FROM modifiers WHERE page_id = ?
+    )`, pageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM modifiers WHERE page_id = ?`, pageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM providers WHERE page_id = ?`, pageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM dirs WHERE page_id = ?`, pageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM pages WHERE id = ?`, pageID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 type scanner interface {
@@ -262,22 +322,6 @@ func (m *Modifier) readValues(rows *sql.Rows) error {
 	return nil
 }
 
-func UpsertPage(pages ...*Page) error {
-	tx, err := db.DB.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	for _, page := range pages {
-		if err = upsertPage(tx, page); err != nil {
-			return err
-		}
-	}
-
-	return tx.Commit()
-}
-
 func upsertPage(tx *sql.Tx, page *Page) error {
 	pageId := func() any {
 		if page.ID == 0 {
@@ -390,41 +434,4 @@ func upsertModifier(tx *sql.Tx, pageID int64, modifier *Modifier) error {
 		}
 	}
 	return nil
-}
-
-func DeletePageByID(pageID int64) error {
-	tx, err := db.DB.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	_, err = tx.Exec(`DELETE FROM modifier_values WHERE modifier_id IN (
-        SELECT id FROM modifiers WHERE page_id = ?
-    )`, pageID)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.Exec(`DELETE FROM modifiers WHERE page_id = ?`, pageID)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.Exec(`DELETE FROM providers WHERE page_id = ?`, pageID)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.Exec(`DELETE FROM dirs WHERE page_id = ?`, pageID)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.Exec(`DELETE FROM pages WHERE id = ?`, pageID)
-	if err != nil {
-		return err
-	}
-
-	return tx.Commit()
 }

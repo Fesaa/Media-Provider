@@ -2,42 +2,60 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/api"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
 	_ "modernc.org/sqlite"
 	"path"
 )
 
+type Database struct {
+	db    *sql.DB
+	Users api.Users
+	Pages api.Pages
+}
+
+func (db *Database) DB() *sql.DB {
+	return db.db
+}
+
 var (
-	DB *sql.DB
+	theDb *sql.DB
 )
 
-func Init() {
+func Connect() (*Database, error) {
 	var err error
-	DB, err = sql.Open("sqlite", path.Join(config.Dir, "media-provider.db"))
+	theDb, err = sql.Open("sqlite", path.Join(config.Dir, "media-provider.db"))
 	if err != nil {
-		log.Fatal("failed to open a connection to the database", err)
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	if err = DB.Ping(); err != nil {
-		log.Fatal("failed to ping the database", err)
+	if err = theDb.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping a database connection: %w", err)
 	}
 
 	if err = migrate(); err != nil {
-		log.Fatal("failed to migrate", err)
+		return nil, fmt.Errorf("failed to migrate database: %w", err)
 	}
 
 	log.Info("successfully connected to the database")
+	return &Database{
+		db:    theDb,
+		Users: models.NewUsers(theDb),
+		Pages: models.NewPages(theDb),
+	}, nil
 }
 
 func Close() {
-	if DB == nil {
-		log.Warn("tried closing DB, while none was initialized")
+	if theDb == nil {
+		log.Warn("tried closing theDb, while none was initialized")
 		return
 	}
 
-	if err := DB.Close(); err != nil {
-		log.Error("failed to close the DB", err)
+	if err := theDb.Close(); err != nil {
+		log.Error("failed to close the theDb", err)
 	}
-	DB = nil
+	theDb = nil
 }

@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"errors"
-	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/utils"
 	"time"
 )
@@ -14,7 +13,7 @@ type PassWordReset struct {
 	Expiry time.Time
 }
 
-func GenerateReset(userId int64) (*PassWordReset, error) {
+func (u *Users) GenerateReset(userId int64) (*PassWordReset, error) {
 	key, err := utils.GenerateSecret(32)
 	if err != nil {
 		return nil, err
@@ -26,7 +25,7 @@ func GenerateReset(userId int64) (*PassWordReset, error) {
 		Expiry: time.Now().Add(time.Hour * 24),
 	}
 
-	_, err = db.DB.Exec("INSERT INTO password_reset (user_id, key, expiry) VALUES (?, ?, ?)", reset.UserId, reset.Key, reset.Expiry.Unix())
+	_, err = u.db.Exec("INSERT INTO password_reset (user_id, key, expiry) VALUES (?, ?, ?)", reset.UserId, reset.Key, reset.Expiry.Unix())
 	if err != nil {
 		return nil, err
 	}
@@ -34,10 +33,10 @@ func GenerateReset(userId int64) (*PassWordReset, error) {
 	return reset, nil
 }
 
-func GetReset(key string) (*PassWordReset, error) {
+func (u *Users) GetReset(key string) (*PassWordReset, error) {
 	var reset PassWordReset
 	var unix int64
-	row := db.DB.QueryRow("SELECT user_id, key, expiry FROM password_reset WHERE key = ?", key)
+	row := u.db.QueryRow("SELECT user_id, key, expiry FROM password_reset WHERE key = ?", key)
 	err := row.Scan(&reset.UserId, &reset.Key, &unix)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -54,7 +53,7 @@ func GetReset(key string) (*PassWordReset, error) {
 	return &reset, nil
 }
 
-func DeleteReset(key string) error {
-	_, err := db.DB.Exec("DELETE FROM password_reset WHERE key = ?", key)
+func (u *Users) DeleteReset(key string) error {
+	_, err := u.db.Exec("DELETE FROM password_reset WHERE key = ?", key)
 	return err
 }

@@ -58,14 +58,14 @@ CREATE TABLE dirs (
 )
 
 func migrate() error {
-	if _, err := DB.Exec(migrationTable); err != nil {
+	if _, err := theDb.Exec(migrationTable); err != nil {
 		return fmt.Errorf("failed to create migration table: %w", err)
 	}
 
 	for index, m := range migrations {
 		log.Trace("checking migration", slog.Int("idx", index))
 
-		row := DB.QueryRow("SELECT executed FROM migrations WHERE idx = ?;", index)
+		row := theDb.QueryRow("SELECT executed FROM migrations WHERE idx = ?;", index)
 		var executed bool
 		if err := row.Scan(&executed); err != nil {
 			if !errors.Is(err, sql.ErrNoRows) {
@@ -77,10 +77,10 @@ func migrate() error {
 			continue
 		}
 
-		if _, err := DB.Exec(m); err != nil {
+		if _, err := theDb.Exec(m); err != nil {
 			return fmt.Errorf("could not execute migration %d: %w\n%s", index, err, m)
 		}
-		if _, err := DB.Exec("INSERT INTO migrations (idx, executed) VALUES (?, true);", index); err != nil {
+		if _, err := theDb.Exec("INSERT INTO migrations (idx, executed) VALUES (?, true);", index); err != nil {
 			return fmt.Errorf("could not save migration %d: %w", index, err)
 		}
 

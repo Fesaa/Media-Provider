@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
 	"os"
@@ -12,10 +14,20 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func ListDirs(ctx *fiber.Ctx) error {
+type ioRoutes struct {
+}
+
+func RegisterIoRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
+	ior := ioRoutes{}
+	io := router.Group("/io", auth.Middleware)
+	io.Post("/ls", wrap(ior.ListDirs))
+	io.Post("/create", wrap(ior.CreateDir))
+}
+
+func (ior *ioRoutes) ListDirs(l *log.Logger, ctx *fiber.Ctx) error {
 	var req payload.ListDirsRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		log.Warn("error while parsing query params:", "err", err)
+		l.Warn("error while parsing query params:", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -35,7 +47,7 @@ func ListDirs(ctx *fiber.Ctx) error {
 	root := config.I().GetRootDir()
 	entries, err := os.ReadDir(path.Join(root, cleanedPath))
 	if err != nil {
-		log.Error("error while reading dir:", "err", err)
+		l.Error("error while reading dir:", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -57,10 +69,10 @@ type CreateDirRequest struct {
 	NewDir  string `json:"newDir"`
 }
 
-func CreateDir(ctx *fiber.Ctx) error {
+func (ior *ioRoutes) CreateDir(l *log.Logger, ctx *fiber.Ctx) error {
 	var req CreateDirRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		log.Warn("error while parsing query params:", "err", err)
+		l.Warn("error while parsing query params:", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -76,7 +88,7 @@ func CreateDir(ctx *fiber.Ctx) error {
 	p := path.Join(root, req.BaseDir, req.NewDir)
 	err := os.Mkdir(p, 0755)
 	if err != nil {
-		log.Error("error while creating dir:", "err", err)
+		l.Error("error while creating dir:", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})

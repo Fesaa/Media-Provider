@@ -19,7 +19,7 @@
 
             <div class="flex flex-col justify-center w-full hover:cursor-pointer" (click)="setSelectedPage($index, page)">
               <h1 class="text-xl">{{ page.title }}</h1>
-              <a class="text-xs ml-1 text-blue-400 dark:text-blue-500 hover:underline" [routerLink]="['/page']" [queryParams]="{ index: $index }">
+              <a class="text-xs ml-1 text-blue-400 dark:text-blue-500 hover:underline" [routerLink]="['/page']" [queryParams]="{ index: page.id }">
                 load page
               </a>
             </div>

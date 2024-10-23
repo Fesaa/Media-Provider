@@ -2,7 +2,7 @@ package auth
 
 import (
 	"errors"
-	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
@@ -13,10 +13,11 @@ const (
 )
 
 type apiKeyAuth struct {
+	db *db.Database
 }
 
-func newApiKeyAuth() Provider {
-	return apiKeyAuth{}
+func newApiKeyAuth(db *db.Database) Provider {
+	return apiKeyAuth{db}
 }
 
 func (a apiKeyAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
@@ -25,7 +26,7 @@ func (a apiKeyAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, nil
 	}
 
-	user, err := models.GetUserByApiKey(apiKey)
+	user, err := a.db.Users.GetByApiKey(apiKey)
 	if err != nil {
 		return false, err
 	}

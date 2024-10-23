@@ -2,6 +2,8 @@ package routes
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers"
@@ -11,24 +13,34 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Download(ctx *fiber.Ctx) error {
+type contentRoutes struct{}
+
+func RegisterContentRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
+	cr := contentRoutes{}
+	router.Post("/search", auth.Middleware, cache, wrap(cr.Search))
+	router.Post("/download", auth.Middleware, wrap(cr.Download))
+	router.Post("/stop", auth.Middleware, wrap(cr.Stop))
+	router.Get("/stats", auth.Middleware, wrap(cr.Stats))
+}
+
+func (cr *contentRoutes) Download(l *log.Logger, ctx *fiber.Ctx) error {
 	var req payload.DownloadRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		log.Error("error while parsing request body into DownloadRequest", "err", err)
+		l.Error("error while parsing request body into DownloadRequest", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
 	if req.BaseDir == "" {
-		log.Warn("trying to download Torrent to empty baseDir, returning error.")
+		l.Warn("trying to download Torrent to empty baseDir, returning error.")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "base dir cannot be null",
 		})
 	}
 
 	if err := providers.Download(req); err != nil {
-		log.Error("error while adding download", "error", err, "debug_info", fmt.Sprintf("%#v", req))
+		l.Error("error while adding download", "error", err, "debug_info", fmt.Sprintf("%#v", req))
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -37,16 +49,16 @@ func Download(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusAccepted)
 }
 
-func Stop(ctx *fiber.Ctx) error {
+func (cr *contentRoutes) Stop(l *log.Logger, ctx *fiber.Ctx) error {
 	var req payload.StopRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		log.Error("error while parsing request body into StopRequest", "err", err)
+		l.Error("error while parsing request body into StopRequest", "err", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 	if err := providers.Stop(req); err != nil {
-		log.Error("error while stopping download", "id", req.Id, "error", err)
+		l.Error("error while stopping download", "id", req.Id, "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -55,7 +67,7 @@ func Stop(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusAccepted)
 }
 
-func Stats(ctx *fiber.Ctx) error {
+func (cr *contentRoutes) Stats(l *log.Logger, ctx *fiber.Ctx) error {
 	statsResponse := payload.StatsResponse{
 		Running: []payload.InfoStat{},
 		Queued:  []payload.QueueStat{},
