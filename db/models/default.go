@@ -5,9 +5,10 @@ var DefaultPages = []*Page{
 		Title:     "Anime",
 		SortValue: 1,
 		Providers: []Provider{NYAA, SUBSPLEASE},
-		Modifiers: map[string]Modifier{
-			"categories": {
+		Modifiers: []Modifier{
+			{
 				Title: "Category",
+				Key:   "categories",
 				Type:  DROPDOWN,
 				Values: map[string]string{
 					"anime":         "Anime",
@@ -16,8 +17,9 @@ var DefaultPages = []*Page{
 					"anime-non-eng": "Non-English Translated",
 				},
 			},
-			"sortBys": {
+			{
 				Title: "Sort",
+				Key:   "sortBys",
 				Type:  DROPDOWN,
 				Values: map[string]string{
 					"downloads": "Downloads",
@@ -36,9 +38,10 @@ var DefaultPages = []*Page{
 		Title:     "Mangadex",
 		SortValue: 2,
 		Providers: []Provider{MANGADEX},
-		Modifiers: map[string]Modifier{
-			"includeTags": {
+		Modifiers: []Modifier{
+			{
 				Title: "Include Tags",
+				Key:   "includeTags",
 				Type:  MULTI,
 				Values: map[string]string{
 					"Romance":   "Romance",
@@ -48,8 +51,9 @@ var DefaultPages = []*Page{
 					"Anthology": "Anthology",
 				},
 			},
-			"excludeTags": {
+			{
 				Title: "Exclude Tags",
+				Key:   "excludeTags",
 				Type:  MULTI,
 				Values: map[string]string{
 					"Cooking":      "Cooking",
@@ -60,8 +64,9 @@ var DefaultPages = []*Page{
 					"Full Color":   "Full Color",
 				},
 			},
-			"status": {
+			{
 				Title: "Status",
+				Key:   "status",
 				Type:  MULTI,
 				Values: map[string]string{
 					"ongoing":   "Ongoing",
@@ -70,16 +75,18 @@ var DefaultPages = []*Page{
 					"cancelled": "Cancelled",
 				},
 			},
-			"contentRating": {
+			{
 				Title: "Content Rating",
+				Key:   "contentRating",
 				Type:  MULTI,
 				Values: map[string]string{
 					"safe":       "Safe",
 					"suggestive": "Suggestive",
 				},
 			},
-			"publicationDemographic": {
+			{
 				Title: "Demographic",
+				Key:   "publicationDemographic",
 				Type:  MULTI,
 				Values: map[string]string{
 					"shounen": "Shounen",
@@ -96,9 +103,10 @@ var DefaultPages = []*Page{
 		Title:     "Manga & Light Novels",
 		SortValue: 3,
 		Providers: []Provider{NYAA},
-		Modifiers: map[string]Modifier{
-			"categories": {
+		Modifiers: []Modifier{
+			{
 				Title: "Category",
+				Key:   "categories",
 				Type:  DROPDOWN,
 				Values: map[string]string{
 					"literature-eng":     "English Literature",
@@ -107,8 +115,9 @@ var DefaultPages = []*Page{
 					"literature-raw":     "Raw Literature",
 				},
 			},
-			"sortBys": {
+			{
 				Title: "Sort by",
+				Key:   "sortBys",
 				Type:  DROPDOWN,
 				Values: map[string]string{
 					"downloads": "Downloads",
@@ -127,9 +136,10 @@ var DefaultPages = []*Page{
 		Title:     "Movies",
 		SortValue: 4,
 		Providers: []Provider{YTS},
-		Modifiers: map[string]Modifier{
-			"sortBys": {
+		Modifiers: []Modifier{
+			{
 				Title: "Sort By",
+				Key:   "sortBys",
 				Type:  DROPDOWN,
 				Values: map[string]string{
 					"title":          "Title",
@@ -150,9 +160,10 @@ var DefaultPages = []*Page{
 		Title:     "Lime",
 		SortValue: 5,
 		Providers: []Provider{LIME},
-		Modifiers: map[string]Modifier{
-			"categories": {
+		Modifiers: []Modifier{
+			{
 				Title: "Category",
+				Key:   "categories",
 				Type:  DROPDOWN,
 				Values: map[string]string{
 					"ALL":    "All categories",
@@ -170,7 +181,7 @@ var DefaultPages = []*Page{
 		Title:         "WebToon",
 		SortValue:     6,
 		Providers:     []Provider{WEBTOON},
-		Modifiers:     map[string]Modifier{},
+		Modifiers:     []Modifier{},
 		Dirs:          []string{"Manga"},
 		CustomRootDir: "Manga",
 	},

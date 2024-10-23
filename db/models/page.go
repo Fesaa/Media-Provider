@@ -133,13 +133,13 @@ func readPage(s scanner, p *Page) error {
 }
 
 type Page struct {
-	ID            int64               `json:"id"`
-	Title         string              `json:"title" validate:"required,min=3,max=25"`
-	SortValue     int                 `json:"sort_value"`
-	Providers     []Provider          `json:"providers" validate:"required,min=1"`
-	Modifiers     map[string]Modifier `json:"modifiers"`
-	Dirs          []string            `json:"dirs" validate:"required,min=1"`
-	CustomRootDir string              `json:"custom_root_dir"`
+	ID            int64      `json:"id"`
+	Title         string     `json:"title" validate:"required,min=3,max=25"`
+	SortValue     int        `json:"sort_value"`
+	Providers     []Provider `json:"providers" validate:"required,min=1"`
+	Modifiers     []Modifier `json:"modifiers"`
+	Dirs          []string   `json:"dirs" validate:"required,min=1"`
+	CustomRootDir string     `json:"custom_root_dir"`
 }
 
 func (p *Page) read(s scanner) error {
@@ -190,7 +190,7 @@ func (p *Page) readModifiers(rows *sql.Rows) error {
 		}
 	}(rows)
 
-	p.Modifiers = make(map[string]Modifier)
+	p.Modifiers = make([]Modifier, 0)
 	for rows.Next() {
 		var modifier Modifier
 		err := rows.Scan(&modifier.ID, &modifier.Title, &modifier.Type, &modifier.Key)
@@ -206,7 +206,7 @@ func (p *Page) readModifiers(rows *sql.Rows) error {
 		if err = modifier.readValues(valueRows); err != nil {
 			return err
 		}
-		p.Modifiers[modifier.Key] = modifier
+		p.Modifiers = append(p.Modifiers, modifier)
 	}
 
 	return nil
@@ -233,10 +233,10 @@ const (
 
 type Modifier struct {
 	ID     int64             `json:"id"`
-	Title  string            `yaml:"title" json:"title"`
-	Type   ModifierType      `yaml:"type" json:"type"`
-	Key    string            `yaml:"key" json:"key"`
-	Values map[string]string `yaml:"values" json:"values"`
+	Title  string            `json:"title"`
+	Type   ModifierType      `json:"type"`
+	Key    string            `json:"key"`
+	Values map[string]string `json:"values"`
 }
 
 func (m *Modifier) readValues(rows *sql.Rows) error {
@@ -338,15 +338,14 @@ func upsertPage(tx *sql.Tx, page *Page) error {
 		}
 	}
 
-	for key, modifier := range page.Modifiers {
+	for _, modifier := range page.Modifiers {
 		err = upsertModifier(tx, page.ID, &modifier)
 		if err != nil {
 			return err
 		}
-		page.Modifiers[key] = modifier
 	}
 
-	modifierIDs := utils.MapValues(page.Modifiers, func(t Modifier) any {
+	modifierIDs := utils.Map(page.Modifiers, func(t Modifier) any {
 		return t.ID
 	})
 	placeholders := make([]string, len(modifierIDs))

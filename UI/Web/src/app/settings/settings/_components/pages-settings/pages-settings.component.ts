@@ -89,7 +89,7 @@ export class PagesSettingsComponent implements OnInit {
         sort_value: 0,
         dirs: [],
         title: '',
-        modifiers: {},
+        modifiers: [],
         custom_root_dir: '',
         providers: [],
       }

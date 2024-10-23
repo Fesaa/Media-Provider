@@ -4,13 +4,14 @@ export type Page = {
   sort_value: number;
   title: string;
   providers: Provider[];
-  modifiers: { [key: string]: Modifier };
+  modifiers: Modifier[];
   dirs: string[];
   custom_root_dir: string;
 }
 
 export type Modifier = {
   title: string;
+  key: string;
   type: ModifierType;
   values: { [key: string]: string };
 }

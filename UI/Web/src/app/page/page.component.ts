@@ -44,7 +44,7 @@ export class PageComponent implements OnInit{
   searchForm: FormGroup | undefined;
   page: Page | undefined = undefined;
 
-  modifiers: Map<string, Modifier> = new Map<string, Modifier>();
+  modifiers: Modifier[] = [];
 
   searchResult: SearchInfo[] = [];
   currentPage: number = 1;
@@ -72,7 +72,7 @@ export class PageComponent implements OnInit{
 
         setTimeout(() => {
           this.page = page;
-          this.modifiers = new Map(Object.entries(this.page.modifiers));
+          this.modifiers = this.page.modifiers;
           this.buildForm(page);
           this.hideSearchForm = false;
           this.cdRef.detectChanges()
