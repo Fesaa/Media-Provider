@@ -150,8 +150,7 @@ func GetUser(userName string) (*User, error) {
 func GetUserByApiKey(key string) (*User, error) {
 	row := getUserByApiKey.QueryRow(key)
 	var user User
-	err := row.Scan(&user.ID, &user.Name, &user.PasswordHash, &user.ApiKey, &user.Permission)
-	if err != nil {
+	if err := user.read(row); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
