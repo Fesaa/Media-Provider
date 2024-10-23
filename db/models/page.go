@@ -370,7 +370,7 @@ func upsertModifier(tx *sql.Tx, pageID int64, modifier *Modifier) error {
 		return err
 	}
 
-	if modifier.ID == 0 {
+	if modifier.ID < 0 {
 		modifierID, err := result.LastInsertId()
 		if err != nil {
 			return err

@@ -112,18 +112,8 @@ export class PagesSettingsComponent implements OnInit {
       providers: this.fb.control(this.selectedPage.providers, [Validators.required]),
       dirs: this.fb.control(this.selectedPage.dirs, [Validators.required]),
       custom_root_dir: this.fb.control(this.selectedPage.custom_root_dir),
+      modifiers: this.fb.control(this.selectedPage.modifiers),
     });
-
-    const modifiers = this.fb.group({});
-    for (const [key, value] of Object.entries(this.selectedPage.modifiers)) {
-      modifiers.addControl(key, this.fb.group({
-        title: this.fb.control(value.title, [Validators.required]),
-        type: this.fb.control(value.type, [Validators.required]),
-        values: this.fb.control(value.values, [Validators.required]),
-      }));
-    }
-
-    this.pageForm.addControl('modifiers', modifiers);
   }
 
   submit() {
@@ -139,6 +129,15 @@ export class PagesSettingsComponent implements OnInit {
     const page = this.pageForm.value as Page;
     page.id = this.selectedPage.id;
     page.sort_value = this.selectedPage.sort_value;
+    // Filter some stuff out
+    page.modifiers = page.modifiers
+      .map((m: Modifier) => {
+        delete m.values['']
+        return m;
+      })
+      .filter(m => m.key !== "");
+
+
     this.pageService.upsertPage(page).subscribe({
       next: () => {
         this.toastR.success(`${page.title} upserted`, 'Success');
