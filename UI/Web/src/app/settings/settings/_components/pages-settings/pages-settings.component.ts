@@ -14,6 +14,8 @@ import {KeyValuePipe, TitleCasePipe} from "@angular/common";
 import {ModifierSettingsComponent} from "../modifier-settings/modifier-settings.component";
 import {DirectorySettingsComponent} from "../directory-settings/directory-settings.component";
 import {ProviderSettingsComponent} from "../provider-settings/provider-settings.component";
+import {hasPermission, Perm, User} from "../../../../_models/user";
+import {AccountService} from "../../../../_services/account.service";
 
 @Component({
   selector: 'app-pages-settings',
@@ -36,6 +38,7 @@ import {ProviderSettingsComponent} from "../provider-settings/provider-settings.
 })
 export class PagesSettingsComponent implements OnInit {
 
+  user: User | null = null;
   pages: Page[] = []
 
   cooldown = false;
@@ -53,9 +56,15 @@ export class PagesSettingsComponent implements OnInit {
               private dialogService: DialogService,
               private fb: FormBuilder,
               private cdRef: ChangeDetectorRef,
+              private accountService: AccountService,
   ) {
     this.configService.getConfig().subscribe();
     this.pageService.pages$.subscribe(pages => this.pages = pages);
+    this.accountService.currentUser$.subscribe(user => {
+      if (user) {
+        this.user = user;
+      }
+    });
   }
 
   @HostListener('window:resize', ['$event'])
@@ -76,9 +85,11 @@ export class PagesSettingsComponent implements OnInit {
     }
     if (page === undefined) {
       page = {
+        id: 0,
+        sort_value: 0,
         dirs: [],
         title: '',
-        modifiers: {},
+        modifiers: [],
         custom_root_dir: '',
         providers: [],
       }
@@ -101,22 +112,12 @@ export class PagesSettingsComponent implements OnInit {
       providers: this.fb.control(this.selectedPage.providers, [Validators.required]),
       dirs: this.fb.control(this.selectedPage.dirs, [Validators.required]),
       custom_root_dir: this.fb.control(this.selectedPage.custom_root_dir),
+      modifiers: this.fb.control(this.selectedPage.modifiers),
     });
-
-    const modifiers = this.fb.group({});
-    for (const [key, value] of Object.entries(this.selectedPage.modifiers)) {
-      modifiers.addControl(key, this.fb.group({
-        title: this.fb.control(value.title, [Validators.required]),
-        type: this.fb.control(value.type, [Validators.required]),
-        values: this.fb.control(value.values, [Validators.required]),
-      }));
-    }
-
-    this.pageForm.addControl('modifiers', modifiers);
   }
 
   submit() {
-    if (this.pageForm === undefined) {
+    if (this.pageForm === undefined || this.selectedPage === null) {
       return;
     }
 
@@ -126,28 +127,27 @@ export class PagesSettingsComponent implements OnInit {
     }
 
     const page = this.pageForm.value as Page;
-    if (this.selectedPageIndex === -1) {
-      this.configService.addPage(page).subscribe({
-        next: () => {
-          this.toastR.success(`${page.title} added`, 'Success');
-          this.pageService.refreshPages();
-        },
-        error: (err) => {
-          this.toastR.error(`Failed to add page ${err.error.error}`, 'Error');
-        }
-      });
-      return;
-    }
+    page.id = this.selectedPage.id;
+    page.sort_value = this.selectedPage.sort_value;
+    // Filter some stuff out
+    page.modifiers = page.modifiers
+      .map((m: Modifier) => {
+        delete m.values['']
+        return m;
+      })
+      .filter(m => m.key !== "");
 
-    this.configService.updatePage(page, this.selectedPageIndex).subscribe({
+
+    this.pageService.upsertPage(page).subscribe({
       next: () => {
-        this.toastR.success(`${page.title} updated`, 'Success');
+        this.toastR.success(`${page.title} upserted`, 'Success');
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(`Failed to update page ${err.error.error}`, 'Error');
+        this.toastR.error(`Failed to upsert page ${err.error.error}`, 'Error');
       }
     });
+    return;
   }
 
   private displayErrors() {
@@ -163,14 +163,13 @@ export class PagesSettingsComponent implements OnInit {
     this.toastR.error(`Found ${count} errors in the form`, 'Cannot submit');
   }
 
-  async remove(index: number) {
+  async remove(page: Page) {
     if (!await this.dialogService.openDialog('Are you sure you want to remove this page?')) {
       return;
     }
 
-   this.configService.removePage(index).subscribe({
+   this.pageService.removePage(page.id).subscribe({
       next: () => {
-        const page = this.pages[index];
         this.toastR.success(`${page.title} removed`, 'Success');
         this.pageService.refreshPages();
       },
@@ -181,23 +180,21 @@ export class PagesSettingsComponent implements OnInit {
   }
 
   moveUp(index: number) {
-    this.configService.movePage(index, index - 1).subscribe({
-      next: () => {
-        const temp = this.pages[index];
-        this.toastR.success(`${temp.title} moved up`, 'Success');
-        this.pageService.refreshPages();
-      },
-      error: (err) => {
-        this.toastR.error(err.error.error, 'Error');
-      }
-    });
+    const page1 = this.pages[index];
+    const page2 = this.pages[index-1];
+    this.swap(page1, page2);
   }
 
   moveDown(index: number) {
-    this.configService.movePage(index, index + 1).subscribe({
+    const page1 = this.pages[index];
+    const page2 = this.pages[index+1];
+    this.swap(page1, page2);
+  }
+
+  swap(page1: Page, page2: Page) {
+    this.pageService.swapPages(page1.id, page2.id).subscribe({
       next: () => {
-        const temp = this.pages[index];
-        this.toastR.success(`${temp.title} moved down`, 'Success');
+        this.toastR.success(`Swapped ${page1.title} and ${page2.title}`, 'Success');
         this.pageService.refreshPages();
       },
       error: (err) => {
@@ -207,4 +204,6 @@ export class PagesSettingsComponent implements OnInit {
   }
 
 
+  protected readonly hasPermission = hasPermission;
+  protected readonly Perm = Perm;
 }

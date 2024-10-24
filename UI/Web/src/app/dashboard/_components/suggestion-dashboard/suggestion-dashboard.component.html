@@ -7,18 +7,21 @@
   </p>
   <ul class="flex flex-col justify-start items-start space-y-2 mt-2">
 
-
-  @for (page of pages; track $index) {
-    <li class="flex flex-row items-center justify-center text-center space-x-2">
-      <ng-icon name="heroChevronDoubleRight" class="w-4 h-4 dark:text-white"></ng-icon>
-      <a
-        [routerLink]="['/page']"
-        [queryParams]="{ index: $index }"
-        class="text-blue-500 dark:text-blue-400 hover:underline"
-      >
-        {{ page.title }}
-      </a>
-    </li>
-  }
+    @for (page of pages; track $index) {
+      <li class="flex flex-row items-center justify-center text-center space-x-2">
+        <ng-icon name="heroChevronDoubleRight" class="w-4 h-4 dark:text-white"></ng-icon>
+        <a
+          [routerLink]="['/page']"
+          [queryParams]="{ index: page.id }"
+          class="text-blue-500 dark:text-blue-400 hover:underline"
+        >
+          {{ page.title }}
+        </a>
+      </li>
+    } @empty {
+      <li class="flex flex-row items-center justify-center text-center space-x-2">
+        <button class="px-2 py-1 bg-blue-300 rounded-full" (click)="loadDefault()">Load default pages</button>
+      </li>
+    }
   </ul>
 </div>

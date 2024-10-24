@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	configDir     string
+	Dir           string
 	configPath    string
 	cfgLock       = sync.RWMutex{}
 	InvalidSyncID = errors.New("invalid sync id")
@@ -20,10 +20,10 @@ var (
 
 func init() {
 	file := OrDefault(os.Getenv("CONFIG_FILE"), "config.json")
-	configDir = OrDefault(os.Getenv("CONFIG_DIR"), ".")
-	configPath = path.Join(configDir, file)
+	Dir = OrDefault(os.Getenv("CONFIG_DIR"), ".")
+	configPath = path.Join(Dir, file)
 
-	backupDir := path.Join(configDir, "backup")
+	backupDir := path.Join(Dir, "backup")
 	if _, err := os.Stat(backupDir); os.IsNotExist(err) {
 		if err = os.Mkdir(backupDir, os.ModePerm); err != nil {
 			slog.Warn("Failed to create missing backup directory... backups will fail. Please check permissions", "dir", backupDir)
@@ -62,7 +62,7 @@ func Save(cfg *Config, backUp ...bool) error {
 	cfg.SyncId = cfg.SyncId + 1
 
 	if len(backUp) > 0 && backUp[0] {
-		backUpPath := path.Join(configDir, "backup", fmt.Sprintf("%d_config.json", time.Now().UTC().Unix()))
+		backUpPath := path.Join(Dir, "backup", fmt.Sprintf("%d_config.json", time.Now().UTC().Unix()))
 		slog.Info("Backing up config", "sync_id", cfg.SyncId, "to", backUpPath)
 		if err := os.Rename(configPath, backUpPath); err != nil {
 			slog.Error("Failed to backup config file", "path", backUpPath, "err", err)

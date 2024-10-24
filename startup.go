@@ -14,7 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"log/slog"
 	"os"
@@ -32,7 +32,7 @@ func SetupApp(baseUrl string) *fiber.App {
 
 	app.
 		Use(requestid.New()).
-		Use(recover2.New(recover2.Config{
+		Use(recover.New(recover.Config{
 			EnableStackTrace: config.I().Logging.Level <= slog.LevelDebug,
 		})).
 		Use(cors.New(cors.Config{
@@ -59,7 +59,7 @@ func SetupApp(baseUrl string) *fiber.App {
 		}))
 
 	router := app.Group(baseUrl)
-	api.Setup(router)
+	api.Setup(router, database)
 
 	app.Static(baseUrl, "./public", fiber.Static{
 		Compress: true,

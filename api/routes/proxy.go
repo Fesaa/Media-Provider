@@ -2,8 +2,10 @@ package routes
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/db"
+	"github.com/Fesaa/Media-Provider/http/wisewolf"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/wisewolf"
 	"github.com/gofiber/fiber/v2"
 	"io"
 	"mime"
@@ -11,15 +13,26 @@ import (
 	"path/filepath"
 )
 
-func mangadexUrl(id, fileName string) string {
+type proxyRoutes struct {
+}
+
+func RegisterProxyRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
+	pr := proxyRoutes{}
+	proxy := router.Group("/proxy", cache)
+	proxy.Get("/mangadex/covers/:id/:filename", auth.MiddlewareWithApiKey, wrap(pr.MangaDexCoverProxy))
+	proxy.Get("/webtoon/covers/:date/:id/:filename", auth.MiddlewareWithApiKey, wrap(pr.WebToonCoverProxy))
+
+}
+
+func (pr *proxyRoutes) mangadexUrl(id, fileName string) string {
 	return fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s", id, fileName)
 }
 
-func webToonUrl(date, id, fileName string) string {
+func (pr *proxyRoutes) webToonUrl(date, id, fileName string) string {
 	return fmt.Sprintf("https://webtoon-phinf.pstatic.net/%s/%s/%s?type=q90", date, id, fileName)
 }
 
-func encoding(fileName string) string {
+func (pr *proxyRoutes) encoding(fileName string) string {
 	ext := filepath.Ext(fileName)
 	mimeType := mime.TypeByExtension(ext)
 
@@ -30,7 +43,7 @@ func encoding(fileName string) string {
 	return mimeType
 }
 
-func WebToonCoverProxy(c *fiber.Ctx) error {
+func (pr *proxyRoutes) WebToonCoverProxy(l *log.Logger, c *fiber.Ctx) error {
 	date := c.Params("date")
 	id := c.Params("id")
 	fileName := c.Params("filename")
@@ -39,9 +52,9 @@ func WebToonCoverProxy(c *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	req, err := http.NewRequest(http.MethodGet, webToonUrl(date, id, fileName), nil)
+	req, err := http.NewRequest(http.MethodGet, pr.webToonUrl(date, id, fileName), nil)
 	if err != nil {
-		log.Error("Failed to construct new request", "error", err)
+		l.Error("Failed to construct new request", "error", err)
 		return fiber.ErrInternalServerError
 	}
 
@@ -49,27 +62,27 @@ func WebToonCoverProxy(c *fiber.Ctx) error {
 
 	resp, err := wisewolf.Client.Do(req)
 	if err != nil {
-		log.Error("Failed to make request", "error", err)
+		l.Error("Failed to make request", "error", err)
 		return fiber.ErrInternalServerError
 	}
 
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
-			log.Warn("Failed to close response body", "error", err)
+			l.Warn("Failed to close response body", "error", err)
 		}
 	}(resp.Body)
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error("Failed to download cover image from mangadex", "error", err)
+		l.Error("Failed to download cover image from webtoon", "error", err)
 		return fiber.ErrInternalServerError
 	}
 
-	c.Set("Content-Type", encoding(fileName))
+	c.Set("Content-Type", pr.encoding(fileName))
 	return c.Send(data)
 }
 
-func MangaDexCoverProxy(c *fiber.Ctx) error {
+func (pr *proxyRoutes) MangaDexCoverProxy(l *log.Logger, c *fiber.Ctx) error {
 	id := c.Params("id")
 	fileName := c.Params("filename")
 
@@ -77,24 +90,24 @@ func MangaDexCoverProxy(c *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	resp, err := wisewolf.Client.Get(mangadexUrl(id, fileName))
+	resp, err := wisewolf.Client.Get(pr.mangadexUrl(id, fileName))
 	if err != nil {
-		log.Error("Failed to download cover image from mangadex", "error", err)
+		l.Error("Failed to download cover image from mangadex", "error", err)
 		return fiber.ErrInternalServerError
 	}
 
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
-			log.Warn("Failed to close response body", "error", err)
+			l.Warn("Failed to close response body", "error", err)
 		}
 	}(resp.Body)
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error("Failed to download cover image from mangadex", "error", err)
+		l.Error("Failed to download cover image from mangadex", "error", err)
 		return fiber.ErrInternalServerError
 	}
 
-	c.Set("Content-Type", encoding(fileName))
+	c.Set("Content-Type", pr.encoding(fileName))
 	return c.Send(data)
 }

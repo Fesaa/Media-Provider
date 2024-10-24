@@ -4,8 +4,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -18,13 +19,11 @@ const (
 )
 
 type jwtAuth struct {
-	pass func() string
+	db *db.Database
 }
 
-func newJwtAuth() Provider {
-	return &jwtAuth{
-		pass: func() string { return config.I().Password },
-	}
+func newJwtAuth(db *db.Database) Provider {
+	return &jwtAuth{db}
 }
 
 func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
@@ -56,37 +55,56 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
+	mpClaims, ok := token.Claims.(*MpClaims)
+	if !ok {
+		return false, ErrMissingOrMalformedAPIKey
+	}
+
+	// Load user from theDb in non get requests
+	if ctx.Method() != fiber.MethodGet {
+		user, err := jwtAuth.db.Users.GetByName(mpClaims.User.Name)
+		if err != nil {
+			return false, fmt.Errorf("cannot get user: %w", err)
+		}
+		if user == nil {
+			return false, ErrMissingOrMalformedAPIKey
+		}
+		ctx.Locals("user", *user)
+	} else {
+		ctx.Locals("user", mpClaims.User)
+	}
+
 	return token.Valid, nil
 }
 
-func (jwtAuth *jwtAuth) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
-	body := payload.LoginRequest{}
-	err := ctx.BodyParser(&body)
+func (jwtAuth *jwtAuth) Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
+	user, err := jwtAuth.db.Users.GetByName(loginRequest.UserName)
 	if err != nil {
+		log.Error("failed to get user by username:", "name", loginRequest.UserName)
 		return nil, err
 	}
 
-	password := body.Password
-	if password == "" {
-		return nil, badRequest("Password is required")
+	if user == nil {
+		return nil, fmt.Errorf("user %s not found", loginRequest.UserName)
 	}
 
-	decodeString, err := base64.StdEncoding.DecodeString(jwtAuth.pass())
+	decodeString, err := base64.StdEncoding.DecodeString(user.PasswordHash)
 	if err != nil {
-		log.Error("Failed to decode password, cannot login", "error", err, "hashed", jwtAuth.pass())
+		log.Error("Failed to decode password, cannot login", "error", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if err = bcrypt.CompareHashAndPassword(decodeString, []byte(password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword(decodeString, []byte(loginRequest.Password)); err != nil {
 		log.Error("Invalid password, cannot login", "error", err)
 		return nil, badRequest("Invalid password")
 	}
 
 	claims := MpClaims{
+		User: *user,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt: jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(func() time.Time {
-				if body.Remember {
+				if loginRequest.Remember {
 					return time.Now().Add(7 * 24 * time.Hour)
 				}
 				return time.Now().Add(24 * time.Hour)
@@ -101,8 +119,10 @@ func (jwtAuth *jwtAuth) Login(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
 	}
 
 	return &payload.LoginResponse{
-		Token:  t,
-		ApiKey: config.I().ApiKey,
+		Id:          user.ID,
+		Token:       t,
+		ApiKey:      user.ApiKey,
+		Permissions: user.Permission,
 	}, nil
 }
 

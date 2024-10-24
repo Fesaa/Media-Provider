@@ -2,11 +2,13 @@ package main
 
 import (
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/db"
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/wisewolf"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/mangadex"
-	"github.com/Fesaa/Media-Provider/webtoon"
-	"github.com/Fesaa/Media-Provider/wisewolf"
-	"github.com/Fesaa/Media-Provider/yoitsu"
+	"github.com/Fesaa/Media-Provider/providers/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +18,7 @@ import (
 )
 
 var cfg *config.Config
+var database *db.Database
 
 func init() {
 	var err error
@@ -26,15 +29,23 @@ func init() {
 	log.Init(cfg.Logging)
 	validateConfig(cfg)
 	wisewolf.Init()
+	database, err = db.Connect()
+	if err != nil {
+		panic(err)
+	}
+	if err = models.Init(database.DB()); err != nil {
+		log.Fatal("failed to initialize prepared statements", err)
+	}
 
 	UpdateBaseUrlInIndex(cfg.BaseUrl)
-	auth.Init()
+	auth.Init(database)
 	yoitsu.Init(cfg)
 	mangadex.Init(cfg)
 	webtoon.Init(cfg)
 }
 
 func main() {
+	defer db.Close()
 	log.Info("Starting Media-Provider", "baseURL", cfg.BaseUrl)
 
 	app := SetupApp(cfg.BaseUrl)

@@ -2,11 +2,12 @@ import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {AccountService} from "../../_services/account.service";
 import {Router} from "@angular/router";
-import {take} from "rxjs";
+import {Observable, take} from "rxjs";
 import {AuthGuard} from "../../_guards/auth.guard";
 import {NavService} from "../../_services/nav.service";
 import {ToastrService} from "ngx-toastr";
 import {PageService} from "../../_services/page.service";
+import {User} from "../../_models/user";
 
 @Component({
   selector: 'app-login',
@@ -20,12 +21,15 @@ import {PageService} from "../../_services/page.service";
 export class UserLoginComponent implements OnInit {
 
   loginForm: FormGroup = new FormGroup({
+    username: new FormControl("", [Validators.required]),
     password: new FormControl('', [Validators.required]),
     remember: new FormControl(false),
   });
 
   isSubmitting = false;
   isLoaded = false;
+
+  hasAccount = false;
 
   constructor(private accountService: AccountService,
               private router: Router,
@@ -44,8 +48,13 @@ export class UserLoginComponent implements OnInit {
         this.cdRef.markForCheck()
         return;
       }
-      this.isLoaded = true;
-      this.cdRef.markForCheck()
+
+      this.accountService.anyUserExists().subscribe(check => {
+        this.isLoaded = true;
+        this.hasAccount = check;
+        this.cdRef.markForCheck();
+      })
+
     });
   }
 
@@ -53,7 +62,14 @@ export class UserLoginComponent implements OnInit {
     const model = this.loginForm.getRawValue();
     this.isSubmitting = true;
 
-    this.accountService.login(model).subscribe({
+    let obs: Observable<User>;
+    if (this.hasAccount) {
+      obs = this.accountService.login(model);
+    } else {
+      obs = this.accountService.register(model);
+    }
+
+    obs.subscribe({
       next: () => {
         this.loginForm.reset();
         this.pageService.refreshPages();

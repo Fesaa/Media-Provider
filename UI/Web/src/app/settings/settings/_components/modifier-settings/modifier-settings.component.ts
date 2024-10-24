@@ -1,8 +1,8 @@
 import {ChangeDetectorRef, Component, HostListener, Input, OnInit} from '@angular/core';
 import {KeyValuePipe} from "@angular/common";
 import {NgIcon} from "@ng-icons/core";
-import {Modifier} from "../../../../_models/page";
-import {FormBuilder, FormGroup, Validators} from "@angular/forms";
+import {Modifier, ModifierType} from "../../../../_models/page";
+import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
 import {DialogService} from "../../../../_services/dialog.service";
 import {ToastrService} from "ngx-toastr";
 
@@ -45,44 +45,48 @@ export class ModifierSettingsComponent implements OnInit {
     this.cdRef.detectChanges();
   }
 
+  private get controlGroup(): FormControl<Modifier[]> {
+    return this.pageForm!.controls['modifiers'] as FormControl<Modifier[]>;
+  }
+
   getModifiers() {
-    const modifiers: {[key: string]: Modifier} = {};
+    const modifiers: Modifier[] = [];
     if (this.pageForm === undefined) {
       return modifiers;
     }
 
-    const form = this.pageForm.controls['modifiers'] as FormGroup;
-    for (const [key, value] of Object.entries(form.controls)) {
-      modifiers[key] = value.value;
-    }
-
-    return modifiers;
+    return this.controlGroup.value;
   }
 
   addModifier() {
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    modifierGroup.addControl('modifier', this.fb.group({
-      title: this.fb.control('', [Validators.required]),
-      type: this.fb.control('string', [Validators.required]),
-      values: this.fb.control({}),
-    }));
+    const mod = this.controlGroup.value.find(m => m.key === "");
+    if (mod) {
+      this.toastR.warning("Cannot add a new modifier, while one with an empty key exists", "error");
+      return;
+    }
+
+    this.controlGroup.value.push({
+      id: -1,
+      key: '',
+      title: '',
+      values: {},
+      type: ModifierType.DROPDOWN
+    })
   }
 
   updateModifierTitle(key: string, e: Event) {
-    const title = (e.target as HTMLInputElement).value;
-
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    const modifier = modifierGroup.controls[key] as FormGroup;
-    modifier.controls['title'].patchValue(title);
+    this.controlGroup.value.find(m => m.key === key)!.title = (e.target as HTMLInputElement).value;
   }
 
   updateModifierKey(key: string, e: Event) {
     const newKey = (e.target as HTMLInputElement).value;
+    const conflict = this.controlGroup.value.find(m => m.key === newKey);
+    if (conflict) {
+      this.toastR.warning("Key was not saved, other modifier already uses it", "warning");
+      return
+    }
 
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    const modifier = modifierGroup.controls[key] as FormGroup;
-    modifierGroup.removeControl(key);
-    modifierGroup.addControl(newKey, modifier);
+    this.controlGroup.value.find(m => m.key === key)!.key = newKey;
   }
 
   async removeModifier(key: string) {
@@ -90,9 +94,27 @@ export class ModifierSettingsComponent implements OnInit {
       return;
     }
 
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    modifierGroup.removeControl(key);
+    this.controlGroup.setValue(this.controlGroup.value.filter(m => m.key !== key));
     this.toastR.warning(`Removed modifier ${key}`, 'Success');
+  }
+
+  updateModifierValueKey(key: string, valueKey: string, e: Event) {
+    const modifier = this.controlGroup.value.find(m => m.key === key)!;
+    const newKey = (e.target as HTMLInputElement).value;
+    const conflict = this.controlGroup.value.find(m => m.key === newKey);
+    if (conflict) {
+      this.toastR.warning("Key was not saved, other modifier already uses it", "warning");
+      return;
+    }
+
+    const value = modifier.values[valueKey];
+    delete modifier.values[valueKey];
+    modifier.values[(e.target as HTMLInputElement).value] = value;
+  }
+
+  updateModifierValueValue(key: string, valueKey: string, e: Event) {
+    const modifier = this.controlGroup.value.find(m => m.key === key)!;
+    modifier.values[valueKey] = (e.target as HTMLInputElement).value;
   }
 
   async removeModifierValue(key: string, valueKey: string) {
@@ -100,19 +122,21 @@ export class ModifierSettingsComponent implements OnInit {
       return;
     }
 
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    const modifier = modifierGroup.controls[key] as FormGroup;
-    const values = modifier.controls['values'];
-    delete values.value[valueKey];
-    values.patchValue(values.value);
+    const modifier = this.controlGroup.value.find(m => m.key === key)!;
+    delete modifier.values[valueKey];
     this.toastR.warning(`Removed value ${valueKey}`, 'Success');
   }
 
   addModifierValue(key: string) {
-    const modifierGroup = this.pageForm?.controls['modifiers'] as FormGroup;
-    const modifier = modifierGroup.controls[key] as FormGroup;
-    const values = modifier.controls['values'];
-    values.value['key'] = 'value';
+    const modifier = this.controlGroup.value.find(m => m.key === key)!;
+    const val = new Map(Object.entries(modifier.values)).get('');
+    if (val !== undefined) {
+      this.toastR.warning(`Cannot add a new value to modifier, while one with an empty key exists`, 'Error');
+      return;
+    }
+
+    modifier.values[''] = '';
+    this.cdRef.detectChanges();
   }
 
 }

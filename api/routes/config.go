@@ -1,162 +1,58 @@
 package routes
 
 import (
+	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/payload"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"strconv"
 )
 
+type configRoutes struct{}
+
+func RegisterConfigRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
+	cr := &configRoutes{}
+
+	configGroup := router.Group("/config", auth.Middleware)
+	configGroup.Get("/", wrap(cr.GetConfig))
+	configGroup.Post("/update", wrap(cr.UpdateConfig))
+}
+
 var (
 	val = validator.New()
 )
 
-func GetConfig(ctx *fiber.Ctx) error {
+func (cr *configRoutes) GetConfig(l *log.Logger, ctx *fiber.Ctx) error {
 	cp := *config.I()
 	cp.Secret = ""
-	cp.Password = ""
 	return ctx.JSON(cp)
 }
 
-func RefreshApiKey(ctx *fiber.Ctx) error {
+func (cr *configRoutes) UpdateConfig(l *log.Logger, ctx *fiber.Ctx) error {
 	syncID, err := intQuery(ctx, "sync_id")
 	if err != nil {
-		log.Debug("Invalid sync_id", "error", err)
-		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
-	}
-
-	if err = config.I().RefreshApiKey(syncID); err != nil {
-		log.Error("Failed to refresh api key", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return ctx.JSON(fiber.Map{
-		"sync_id": config.I().SyncId,
-		"apiKey":  config.I().ApiKey,
-	})
-}
-
-func UpdateConfig(ctx *fiber.Ctx) error {
-	syncID, err := intQuery(ctx, "sync_id")
-	if err != nil {
-		log.Debug("Invalid sync_id", "error", err)
+		l.Debug("Invalid sync_id", "error", err)
 		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
 	}
 
 	var c config.Config
 	if err = ctx.BodyParser(&c); err != nil {
-		log.Debug("Failed to parse config", "error", err)
+		l.Debug("Failed to parse config", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid config"})
 	}
 
 	if err = val.Struct(c); err != nil {
-		log.Debug("Invalid config", "error", err)
+		l.Debug("Invalid config", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	if err = config.I().Update(c, syncID); err != nil {
-		log.Error("Failed to update config", "error", err)
+		l.Error("Failed to update config", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	log.Init(config.I().Logging)
-	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
-}
-
-func RemovePage(ctx *fiber.Ctx) error {
-	index, err := intParam(ctx, "index")
-	if err != nil {
-		log.Debug("Invalid index", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
-	}
-	syncID, err := intQuery(ctx, "sync_id")
-	if err != nil {
-		log.Debug("Invalid sync_id", "error", err)
-		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
-	}
-
-	if err = config.I().RemovePage(index, syncID); err != nil {
-		log.Error("Failed to update page", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
-}
-
-func AddPage(ctx *fiber.Ctx) error {
-	var page config.Page
-	err := ctx.BodyParser(&page)
-	if err != nil {
-		log.Error("Failed to parse request body", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
-	}
-	syncID, err := intQuery(ctx, "sync_id")
-	if err != nil {
-		log.Debug("Invalid sync_id", "error", err)
-		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
-	}
-
-	if err = val.Struct(page); err != nil {
-		log.Debug("Invalid page", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	if err = config.I().AddPage(page, syncID); err != nil {
-		log.Error("Failed to update page", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
-}
-
-func UpdatePage(ctx *fiber.Ctx) error {
-	var page config.Page
-	err := ctx.BodyParser(&page)
-	if err != nil {
-		log.Error("Failed to parse request body", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
-	}
-	index, err := intParam(ctx, "index")
-	if err != nil {
-		log.Debug("Invalid index", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid index"})
-	}
-	syncID, err := intQuery(ctx, "sync_id")
-	if err != nil {
-		log.Debug("Invalid sync_id", "error", err)
-		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
-	}
-
-	if err = val.Struct(page); err != nil {
-		log.Debug("Invalid page", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	if err = config.I().UpdatePage(page, index, syncID); err != nil {
-		log.Error("Failed to update page", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
-}
-
-func MovePage(ctx *fiber.Ctx) error {
-	var m payload.MovePageRequest
-	if err := ctx.BodyParser(&m); err != nil {
-		log.Error("Failed to parse request body", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
-	}
-	syncID, err := intQuery(ctx, "sync_id")
-	if err != nil {
-		log.Debug("Invalid sync_id", "error", err)
-		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
-	}
-	if err = config.I().MovePage(m.OldIndex, m.NewIndex, syncID); err != nil {
-		log.Error("Failed to save config", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
 	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
 }

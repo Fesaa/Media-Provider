@@ -1,13 +1,13 @@
 package providers
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/limetorrents"
-	"github.com/Fesaa/Media-Provider/mangadex"
-	"github.com/Fesaa/Media-Provider/payload"
-	"github.com/Fesaa/Media-Provider/subsplease"
-	"github.com/Fesaa/Media-Provider/webtoon"
-	"github.com/Fesaa/Media-Provider/yts"
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/subsplease"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/yts"
 	"github.com/irevenko/go-nyaa/nyaa"
 	"net/url"
 )
@@ -61,13 +61,13 @@ func limeTransformer(s payload.SearchRequest) limetorrents.SearchOptions {
 	}
 }
 
-func nyaaTransformer(p config.Provider) requestTransformerFunc[nyaa.SearchOptions] {
+func nyaaTransformer(p models.Provider) requestTransformerFunc[nyaa.SearchOptions] {
 	var ps string
 	switch p {
-	case config.NYAA:
+	case models.NYAA:
 		ps = "nyaa"
 		break
-	case config.SUKEBEI:
+	case models.SUKEBEI:
 		ps = "sukebei"
 		break
 	default:

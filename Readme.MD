@@ -13,11 +13,12 @@ Torrenting content with copy right is theft, bla bla, this is all educational, b
 The project currently supports the following providers (websites), to fetch content from.
 Read their respective Readme's for more information on which modifiers they support.
 
-- [Lime torrents](limetorrents/Readme.MD)
+- [Lime torrents](providers/yoitsu/limetorrents/Readme.MD)
 - [Nyaa](nyaaReadme.MD)
-- [YTS](yts/Readme.MD)
-- [SubsPlease](subsplease/Readme.MD)
-- [Mangadex](mangadex/Readme.MD)
+- [YTS](providers/yoitsu/yts/Readme.MD)
+- [SubsPlease](providers/yoitsu/subsplease/Readme.MD)
+- [Mangadex](providers/mangadex/Readme.MD)
+- [WebToon](providers/webtoon/Readme.MD)
 
 ## Config
 

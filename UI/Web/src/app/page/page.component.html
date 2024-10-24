@@ -16,14 +16,14 @@
 
                 <app-form-input [formGroup]="searchForm" [controlName]="'query'" [label]="'Query'" ></app-form-input>
 
-                @for (modifier of modifiers | keyvalue; track modifier.key) {
+                @for (modifier of modifiers; track modifier.key) {
                   <div class="my-4 md:my-6">
-                    @switch (modifier.value.type) {
+                    @switch (modifier.type) {
                       @case (ModifierType.DROPDOWN) {
-                        <app-dropdown-modifier [key]="modifier.key" [modifier]="modifier.value"></app-dropdown-modifier>
+                        <app-dropdown-modifier [key]="modifier.key" [modifier]="modifier"></app-dropdown-modifier>
                       }
                       @case (ModifierType.MULTI) {
-                        <app-multi-modifier [key]="modifier.key" [modifier]="modifier.value" [form]="searchForm"></app-multi-modifier>
+                        <app-multi-modifier [key]="modifier.key" [modifier]="modifier" [form]="searchForm"></app-multi-modifier>
                       }
                     }
                   </div>

@@ -1,9 +1,7 @@
 package config
 
 import (
-	"encoding/base64"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type versionMap struct {
@@ -24,23 +22,6 @@ func init() {
 
 	versionMappers[versionMap{0, 1}] = func(c Config) Config {
 		c.Cache = CacheConfig{Type: MEMORY}
-		return c
-	}
-	versionMappers[versionMap{1, 2}] = func(c Config) Config {
-		apiKey, err := ApiKey()
-		if err != nil {
-			panic(err)
-		}
-
-		c.ApiKey = apiKey
-		return c
-	}
-	versionMappers[versionMap{2, 3}] = func(c Config) Config {
-		hash, err := bcrypt.GenerateFromPassword([]byte(c.Password), bcrypt.DefaultCost)
-		if err != nil {
-			panic(err)
-		}
-		c.Password = base64.StdEncoding.EncodeToString(hash)
 		return c
 	}
 }

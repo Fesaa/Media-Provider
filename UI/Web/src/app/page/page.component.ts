@@ -44,7 +44,7 @@ export class PageComponent implements OnInit{
   searchForm: FormGroup | undefined;
   page: Page | undefined = undefined;
 
-  modifiers: Map<string, Modifier> = new Map<string, Modifier>();
+  modifiers: Modifier[] = [];
 
   searchResult: SearchInfo[] = [];
   currentPage: number = 1;
@@ -72,7 +72,7 @@ export class PageComponent implements OnInit{
 
         setTimeout(() => {
           this.page = page;
-          this.modifiers = new Map(Object.entries(this.page.modifiers));
+          this.modifiers = this.page.modifiers;
           this.buildForm(page);
           this.hideSearchForm = false;
           this.cdRef.detectChanges()
@@ -95,16 +95,16 @@ export class PageComponent implements OnInit{
       this.searchForm.addControl('customDir', this.fb.control(null));
     }
 
-    for (const [key, modifier] of Object.entries(page.modifiers)) {
+    for (const modifier of page.modifiers) {
       switch (modifier.type) {
         case ModifierType.DROPDOWN:
           const entries = Object.entries(modifier.values);
           if (entries.length > 0) {
-            this.searchForm.addControl(key, this.fb.control(entries[0][0]));
+            this.searchForm.addControl(modifier.key, this.fb.control(entries[0][0]));
           }
           break;
         case ModifierType.MULTI:
-          this.searchForm.addControl(key, this.fb.control([]));
+          this.searchForm.addControl(modifier.key, this.fb.control([]));
           break;
       }
     }
@@ -116,10 +116,10 @@ export class PageComponent implements OnInit{
       return;
     }
     const modifiers: { [key: string]: string[] } = {};
-    for (const [key, modifier] of Object.entries(this.page.modifiers)) {
-      const val = this.searchForm.value[key];
+    for (const modifier of this.page.modifiers) {
+      const val = this.searchForm.value[modifier.key];
       if (val) {
-        modifiers[key] = Array.isArray(val) ? val : [val];
+        modifiers[modifier.key] = Array.isArray(val) ? val : [val];
       }
     }
 

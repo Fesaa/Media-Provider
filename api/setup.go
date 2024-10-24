@@ -2,8 +2,8 @@ package api
 
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
-	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func Setup(app fiber.Router) {
+func Setup(app fiber.Router, db *db.Database) {
 	log.Debug("registering api routes")
 
 	c := cache.New(cache.Config{
@@ -42,34 +42,10 @@ func Setup(app fiber.Router) {
 	})
 
 	api := app.Group("/api")
-
-	api.Post("/login", routes.Login)
-
-	proxy := api.Group("/proxy", c)
-	proxy.Get("/mangadex/covers/:id/:filename", auth.MiddlewareWithApiKey, routes.MangaDexCoverProxy)
-	proxy.Get("/webtoon/covers/:date/:id/:filename", auth.MiddlewareWithApiKey, routes.WebToonCoverProxy)
-
-	api.Use(auth.Middleware)
-
-	api.Post("/search", c, routes.Search)
-	api.Get("/stats", routes.Stats)
-	api.Post("/download", routes.Download)
-	api.Post("/stop", routes.Stop)
-
-	io := api.Group("/io")
-	io.Post("/ls", routes.ListDirs)
-	io.Post("/create", routes.CreateDir)
-
-	configGroup := api.Group("/config")
-	configGroup.Get("/", routes.GetConfig)
-	configGroup.Get("/refresh-api-key", routes.RefreshApiKey)
-	configGroup.Post("/update", routes.UpdateConfig)
-
-	pages := configGroup.Group("/pages")
-	pages.Get("/", routes.Pages)
-	pages.Get("/:index", routes.Page)
-	pages.Delete("/:index", routes.RemovePage)
-	pages.Post("/", routes.AddPage)
-	pages.Put("/:index", routes.UpdatePage)
-	pages.Post("/move", routes.MovePage)
+	routes.RegisterUserRoutes(api, db, c)
+	routes.RegisterProxyRoutes(api, db, c)
+	routes.RegisterContentRoutes(api, db, c)
+	routes.RegisterIoRoutes(api, db, c)
+	routes.RegisterConfigRoutes(api, db, c)
+	routes.RegisterPageRoutes(api, db, c)
 }

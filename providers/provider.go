@@ -2,30 +2,30 @@ package providers
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/limetorrents"
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/mangadex"
-	"github.com/Fesaa/Media-Provider/payload"
-	"github.com/Fesaa/Media-Provider/subsplease"
-	"github.com/Fesaa/Media-Provider/webtoon"
-	"github.com/Fesaa/Media-Provider/yts"
+	"github.com/Fesaa/Media-Provider/providers/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/subsplease"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/yts"
 	"time"
 )
 
-var providers = map[config.Provider]provider{}
+var providers = map[models.Provider]provider{}
 
 func init() {
-	register(config.SUKEBEI, nyaaTransformer(config.SUKEBEI), nyaaSearch, nyaaNormalizer(config.SUKEBEI), yoitsuDownloader, yoitsuStopper)
-	register(config.NYAA, nyaaTransformer(config.NYAA), nyaaSearch, nyaaNormalizer(config.NYAA), yoitsuDownloader, yoitsuStopper)
-	register(config.LIME, limeTransformer, limetorrents.Search, limeNormalizer, yoitsuDownloader, yoitsuStopper)
-	register(config.YTS, ytsTransformer, yts.Search, ytsNormalizer, yoitsuDownloader, yoitsuStopper)
-	register(config.SUBSPLEASE, subsPleaseTransformer, subsplease.Search, subsPleaseNormalizer, yoitsuDownloader, yoitsuStopper)
-	register(config.MANGADEX, mangadexTransformer, mangadex.SearchManga, mangadexNormalizer, mangadexDownloader, mangadexStopper)
-	register(config.WEBTOON, webtoonTransformer, webtoon.Search, webtoonNormalizer, webToonDownloader, webtoonStopper)
+	register(models.SUKEBEI, nyaaTransformer(models.SUKEBEI), nyaaSearch, nyaaNormalizer(models.SUKEBEI), yoitsuDownloader, yoitsuStopper)
+	register(models.NYAA, nyaaTransformer(models.NYAA), nyaaSearch, nyaaNormalizer(models.NYAA), yoitsuDownloader, yoitsuStopper)
+	register(models.LIME, limeTransformer, limetorrents.Search, limeNormalizer, yoitsuDownloader, yoitsuStopper)
+	register(models.YTS, ytsTransformer, yts.Search, ytsNormalizer, yoitsuDownloader, yoitsuStopper)
+	register(models.SUBSPLEASE, subsPleaseTransformer, subsplease.Search, subsPleaseNormalizer, yoitsuDownloader, yoitsuStopper)
+	register(models.MANGADEX, mangadexTransformer, mangadex.SearchManga, mangadexNormalizer, mangadexDownloader, mangadexStopper)
+	register(models.WEBTOON, webtoonTransformer, webtoon.Search, webtoonNormalizer, webToonDownloader, webtoonStopper)
 }
 
-func register[T, S any](name config.Provider, t requestTransformerFunc[S], s searchFunc[S, T], n responseNormalizerFunc[T], d downloadFunc, stop stopFunc) {
+func register[T, S any](name models.Provider, t requestTransformerFunc[S], s searchFunc[S, T], n responseNormalizerFunc[T], d downloadFunc, stop stopFunc) {
 	providers[name] = &providerImpl[T, S]{
 		transformer: t,
 		normalizer:  n,
@@ -48,7 +48,7 @@ type providerImpl[T any, S any] struct {
 	searcher    searchFunc[S, T]
 	downloader  downloadFunc
 	stopper     stopFunc
-	provider    config.Provider
+	provider    models.Provider
 }
 
 func (s *providerImpl[T, S]) Download(req payload.DownloadRequest) error {

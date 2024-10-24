@@ -19,9 +19,11 @@ func Middleware(ctx *fiber.Ctx) error {
 }
 
 // MiddlewareWithApiKey Allows apiKeys to be used to authenticate, will always fall back to JWT tokens, if not.
-// The apiKeyProvider does not error
 func MiddlewareWithApiKey(ctx *fiber.Ctx) error {
-	isAuthenticated, _ := apiKeyProvider.IsAuthenticated(ctx)
+	isAuthenticated, err := apiKeyProvider.IsAuthenticated(ctx)
+	if err != nil {
+		log.Warn("error while checking api key auth", "err", err)
+	}
 	if !isAuthenticated {
 		return Middleware(ctx)
 	}

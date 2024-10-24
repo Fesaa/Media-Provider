@@ -1,9 +1,33 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"math"
 )
+
+func GenerateSecret(length int) (string, error) {
+	secret := make([]byte, length)
+	_, err := rand.Read(secret)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(secret), nil
+}
+
+func GenerateApiKey() (string, error) {
+	bytes := make([]byte, 16)
+
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	apiKey := hex.EncodeToString(bytes)
+	return apiKey, nil
+}
 
 func HumanReadableSpeed(s int64) string {
 	speed := float64(s)

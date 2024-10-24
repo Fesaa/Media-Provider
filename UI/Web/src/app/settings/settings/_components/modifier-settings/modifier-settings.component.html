@@ -13,14 +13,14 @@
   </div>
 
   @if (showModifiers && !isMobile) {
-    <div class="flex flex-col md:grid md:grid-cols-2 space-y-2" [@dropDown]>
+    <div class="flex flex-col md:grid md:grid-cols-2 space-y-2">
 
-      @for (m of getModifiers() | keyvalue; track m.key) {
+      @for (m of getModifiers(); track m.key) {
 
         <div class="flex flex-col space-y-2 md:m-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-xl shadow dropdown-item">
 
           <div class="flex flex-row w-full justify-between">
-            <h2 class="w-2/5 border-b-2 border-black dark:border-white mb-2">{{m.value.title}}</h2>
+            <h2 class="w-2/5 border-b-2 border-black dark:border-white mb-2">{{m.title}}</h2>
             <div (click)="removeModifier(m.key)" class="hover:cursor-pointer text-black dark:text-white">
               <ng-icon name="heroMinus" size="32"></ng-icon>
             </div>
@@ -32,7 +32,7 @@
               type="text"
               (change)="updateModifierTitle(m.key, $event)"
               class="focus:ring-primary-600 focus:border-primary-600 overflow-x-auto block w-2/3 rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-              [value]="m.value.title"
+              [value]="m.title"
             />
           </div>
 
@@ -53,7 +53,7 @@
               <h3 class="text-left hidden md:block w-2/5">Values </h3>
             </div>
 
-            @for (v of m.value.values | keyvalue; track v.key) {
+            @for (v of m.values | keyvalue; track v.key) {
 
               <div class="flex flex-row justify-between">
                 <div class="w-2/5">
@@ -62,6 +62,7 @@
                     type="text"
                     class="focus:ring-primary-600 focus:border-primary-600 overflow-x-auto block w-5/6 rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                     [value]="v.key"
+                    (change)="updateModifierValueKey(m.key, v.key, $event)"
                   />
                 </div>
 
@@ -71,6 +72,7 @@
                     type="text"
                     class="focus:ring-primary-600 focus:border-primary-600 overflow-x-auto block w-5/6 rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                     [value]="v.value"
+                    (change)="updateModifierValueValue(m.key, v.key, $event)"
                   />
                 </div>
 

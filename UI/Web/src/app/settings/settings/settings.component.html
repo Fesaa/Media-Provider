@@ -15,11 +15,15 @@
 
       <div class="hidden md:flex flex-col space-y-4">
         @for (setting of settings; track setting.id) {
-          <div (click)="setSettings(setting.id)"
-               class="flex flex-row space-x-2 items-center rounded-xl hover:cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-950 p-2 {{selected === setting.id ? 'bg-gray-200 dark:bg-gray-950': '' }}">
-            <ng-icon name="{{setting.icon}}" size="16"></ng-icon>
-            <span class="hover:cursor-pointer">{{ setting.title }}</span>
-          </div>
+
+          @if (canSee(setting.id)) {
+            <div (click)="setSettings(setting.id)"
+                 class="flex flex-row space-x-2 items-center rounded-xl hover:cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-950 p-2 {{selected === setting.id ? 'bg-gray-200 dark:bg-gray-950': '' }}">
+              <ng-icon name="{{setting.icon}}" size="16"></ng-icon>
+              <span class="hover:cursor-pointer">{{ setting.title }}</span>
+            </div>
+          }
+
         }
       </div>
 
@@ -28,17 +32,21 @@
         @if (showMobileConfig) {
           <div class="flex w-full md:hidden flex-col" [@dropDown]>
             @for (setting of settings; track setting.id) {
-              <div (click)="setSettings(setting.id)"
-                   class="dropdown-item flex flex-row space-x-2 items-center rounded-xl hover:cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-950 p-2 {{selected === setting.id ? 'bg-gray-200 dark:bg-gray-950': '' }}">
-                <ng-icon name="{{setting.icon}}" size="16"></ng-icon>
-                <span class="hover:cursor-pointer">{{ setting.title }}</span>
-              </div>
+
+              @if (canSee(setting.id)) {
+                <div (click)="setSettings(setting.id)"
+                     class="dropdown-item flex flex-row space-x-2 items-center rounded-xl hover:cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-950 p-2 {{selected === setting.id ? 'bg-gray-200 dark:bg-gray-950': '' }}">
+                  <ng-icon name="{{setting.icon}}" size="16"></ng-icon>
+                  <span class="hover:cursor-pointer">{{ setting.title }}</span>
+                </div>
+              }
+
             }
           </div>
         }
 
         @defer (when selected == SettingsID.Server; prefetch on idle) {
-          @if (selected === SettingsID.Server) {
+          @if (selected === SettingsID.Server && canSee(SettingsID.Server)) {
             <div class="mt-5 md:ml-5">
               <app-server-settings></app-server-settings>
             </div>
@@ -46,9 +54,17 @@
         }
 
         @defer (when selected == SettingsID.Pages; prefetch on idle) {
-          @if (selected === SettingsID.Pages) {
+          @if (selected === SettingsID.Pages && canSee(SettingsID.Pages)) {
             <div class="mt-5 md:ml-5">
               <app-pages-settings></app-pages-settings>
+            </div>
+          }
+        }
+
+        @defer (when selected == SettingsID.User; prefetch on idle) {
+          @if (selected === SettingsID.User && canSee(SettingsID.User)) {
+            <div class="mt-5 md:ml-5">
+              <app-user-settings></app-user-settings>
             </div>
           }
         }

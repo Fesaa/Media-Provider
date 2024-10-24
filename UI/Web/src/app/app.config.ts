@@ -29,6 +29,7 @@ import {
   heroEye,
   heroEyeSlash,
   heroChevronRight,
+  heroUser,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {provideToastr} from "ngx-toastr";
@@ -75,6 +76,7 @@ export const appConfig: ApplicationConfig = {
       heroEye,
       heroEyeSlash,
       heroChevronRight,
+      heroUser,
     })), provideAnimationsAsync()
   ]
 };
