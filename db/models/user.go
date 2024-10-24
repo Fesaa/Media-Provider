@@ -100,7 +100,7 @@ func (u *Users) GetByName(name string) (*User, error) {
 }
 
 func (u *Users) GetByApiKey(key string) (*User, error) {
-	row := u.db.QueryRow("SELECT id, name, password, apiKey, permission FROM users WHERE apiKey = ?", key)
+	row := u.db.QueryRow("SELECT id, name, password, apiKey, permission,original FROM users WHERE apiKey = ?", key)
 	return u.intoUser(row)
 }
 
