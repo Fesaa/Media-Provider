@@ -55,12 +55,13 @@ func initPages(db *sql.DB) error {
 }
 
 func NewPages(db *sql.DB) *Pages {
-	return &Pages{db: db}
+	return &Pages{
+		db: db,
+	}
 }
 
 type Pages struct {
-	db  *sql.DB
-	log *log.Logger
+	db *sql.DB
 }
 
 func (p *Pages) All() ([]Page, error) {
@@ -71,7 +72,7 @@ func (p *Pages) All() ([]Page, error) {
 
 	defer func(rows *sql.Rows) {
 		if err = rows.Close(); err != nil {
-			p.log.Warn("failed to close rows", "err", err)
+			log.Warn("failed to close rows", "err", err)
 		}
 	}(rows)
 
@@ -79,7 +80,6 @@ func (p *Pages) All() ([]Page, error) {
 	for rows.Next() {
 		var page Page
 		if err = readPage(rows, &page); err != nil {
-			p.log.Error("failed to read page", "err", err)
 			return nil, err
 		}
 		pages = append(pages, page)
@@ -95,8 +95,6 @@ func (p *Pages) Get(id int64) (*Page, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-
-		p.log.Error("failed to read page", "id", id, "err", err)
 		return nil, err
 	}
 

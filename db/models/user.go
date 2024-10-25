@@ -40,8 +40,7 @@ func NewUsers(db *sql.DB) *Users {
 }
 
 type Users struct {
-	db  *sql.DB
-	log *log.Logger
+	db *sql.DB
 }
 
 func (u *Users) All() ([]User, error) {
@@ -52,7 +51,7 @@ func (u *Users) All() ([]User, error) {
 
 	defer func(rows *sql.Rows) {
 		if err = rows.Close(); err != nil {
-			u.log.Warn("failed to close rows", "err", err)
+			log.Warn("failed to close rows", "err", err)
 		}
 	}(rows)
 
