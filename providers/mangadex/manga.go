@@ -487,7 +487,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 func (m *manga) downloadImage(page int, chapter ChapterSearchData, url string) error {
 	//m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
-	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %s.jpg", padInt(page, 4)))
+	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(page, 4)))
 	if err := downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
@@ -513,7 +513,7 @@ func (m *manga) volumePath(c ChapterSearchData) string {
 
 func (m *manga) chapterPath(c ChapterSearchData) string {
 	if chapter, err := strconv.ParseFloat(c.Attributes.Chapter, 32); err == nil {
-		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), padFloat(chapter, 4))
+		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chapter, 4))
 		return path.Join(m.volumePath(c), chDir)
 	} else if c.Attributes.Chapter != "" { // Don't warm for empty chapter. They're expected to fail
 		m.log.Warn("unable to parse chapter number, not padding", "chapter", c.Attributes.Chapter, "err", err)
@@ -573,24 +573,4 @@ func downloadAndWrite(url string, path string, tryAgain ...bool) error {
 	}
 
 	return nil
-}
-
-func padInt(i int, n int) string {
-	return pad(strconv.Itoa(i), n)
-}
-
-func padFloat(f float64, n int) string {
-	full := fmt.Sprintf("%.1f", f)
-	parts := strings.Split(full, ".")
-	if len(parts) < 2 || parts[1] == "0" { // No decimal part
-		return pad(full, n)
-	}
-	return pad(parts[0], n) + "." + parts[1]
-}
-
-func pad(str string, n int) string {
-	if len(str) < n {
-		str = strings.Repeat("0", n-len(str)) + str
-	}
-	return str
 }

@@ -334,7 +334,7 @@ func (w *webtoon) downloadChapter(chapter Chapter) error {
 }
 
 func (w *webtoon) downloadImage(page int, chapter Chapter, url string) error {
-	filePath := path.Join(w.chapterPath(chapter.Number), fmt.Sprintf("page %s.jpg", padInt(page, 4)))
+	filePath := path.Join(w.chapterPath(chapter.Number), fmt.Sprintf("page %s.jpg", utils.PadInt(page, 4)))
 	if err := downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
@@ -489,26 +489,6 @@ func downloadAndWrite(url string, path string, tryAgain ...bool) error {
 	}
 
 	return nil
-}
-
-func padInt(i int, n int) string {
-	return pad(strconv.Itoa(i), n)
-}
-
-func padFloat(f float64, n int) string {
-	full := fmt.Sprintf("%.1f", f)
-	parts := strings.Split(full, ".")
-	if len(parts) < 2 || parts[1] == "0" { // No decimal part
-		return pad(full, n)
-	}
-	return pad(parts[0], n) + "." + parts[1]
-}
-
-func pad(str string, n int) string {
-	if len(str) < n {
-		str = strings.Repeat("0", n-len(str)) + str
-	}
-	return str
 }
 
 func webToonUrl(s string) string {
