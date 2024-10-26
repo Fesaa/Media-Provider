@@ -366,7 +366,7 @@ func (w *webtoon) comicInfo() *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
 	ci.Series = w.Title()
-	ci.Summary = w.info.Description
+	ci.Summary = utils.SanitizeHtml(w.info.Description)
 	ci.Manga = comicinfo.MangaYes
 	ci.Genre = w.info.Genre
 

@@ -422,7 +422,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 	ci.Series = m.info.Attributes.EnTitle()
 	ci.Year = m.info.Attributes.Year
-	ci.Summary = m.info.Attributes.EnDescription()
+	ci.Summary = utils.MdToSafeHtml(m.info.Attributes.EnDescription())
 	ci.Manga = comicinfo.MangaYes
 	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
 	ci.Web = strings.Join(m.info.FormattedLinks(), ",")
