@@ -8,20 +8,19 @@ import (
 )
 
 var (
-	p        *parser.Parser
 	renderer *html.Renderer
 )
 
 func init() {
-	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
-	p = parser.NewWithExtensions(extensions)
-
 	htmlFlags := html.CommonFlags | html.HrefTargetBlank
 	opts := html.RendererOptions{Flags: htmlFlags}
 	renderer = html.NewRenderer(opts)
 }
 
 func MdToSafeHtml(mdString string) string {
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
+	p := parser.NewWithExtensions(extensions)
+
 	mdBytes := []byte(mdString)
 	unsafeHtml := markdown.ToHTML(mdBytes, p, renderer)
 	safeHtml := bluemonday.UGCPolicy().SanitizeBytes(unsafeHtml)
