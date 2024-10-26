@@ -200,7 +200,10 @@ func (m *manga) loadInfo() chan struct{} {
 			if _, err = strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
 				volumes.Add(ch.Attributes.Volume)
 			} else {
-				m.log.Debug("not adding chapter, as string isn't an int")
+				m.log.Trace("not adding chapter, as Volume string isn't an int",
+					slog.String("volume", ch.Attributes.Volume),
+					slog.String("chapter", ch.Attributes.Chapter),
+				)
 			}
 		}
 		m.totalVolumes = volumes.Cardinality()
@@ -262,7 +265,7 @@ func (m *manga) startDownload() {
 		return download
 	})
 
-	m.log.Debug("downloading chapters", "all", len(m.chapters.Data), "toDownload", len(m.toDownload))
+	m.log.Info("downloading chapters", "all", len(m.chapters.Data), "toDownload", len(m.toDownload))
 	for _, chapter := range m.toDownload {
 		select {
 		case <-m.ctx.Done():

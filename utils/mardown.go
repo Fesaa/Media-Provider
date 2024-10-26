@@ -5,6 +5,7 @@ import (
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/microcosm-cc/bluemonday"
+	"strings"
 )
 
 var (
@@ -22,9 +23,14 @@ func MdToSafeHtml(mdString string) string {
 	p := parser.NewWithExtensions(extensions)
 
 	mdBytes := []byte(mdString)
-	unsafeHtml := markdown.ToHTML(mdBytes, p, renderer)
-	safeHtml := bluemonday.UGCPolicy().SanitizeBytes(unsafeHtml)
-	return string(safeHtml)
+
+	// TODO: Have it not add <p> tags. These cause it to be a little too big for Kavita most of the time.
+	// Instead of replacing it ourselves
+	unsafeHtml := string(markdown.ToHTML(mdBytes, p, renderer))
+
+	unsafeHtml = strings.Replace(unsafeHtml, "<p>", "", -1)
+	unsafeHtml = strings.Replace(unsafeHtml, "</p>", "", -1)
+	return SanitizeHtml(unsafeHtml)
 }
 
 func SanitizeHtml(htmlString string) string {
