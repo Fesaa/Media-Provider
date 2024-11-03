@@ -146,11 +146,13 @@ func (a *MangaAttributes) EnTitle() string {
 	}
 
 	var enAltTitle string
+
+titleArrayLoop:
 	for _, altTitle := range a.AltTitles {
 		for key, value := range altTitle {
 			if key == "en" {
 				enAltTitle = value
-				break
+				break titleArrayLoop
 			}
 		}
 	}
