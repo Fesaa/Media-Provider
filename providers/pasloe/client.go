@@ -13,16 +13,6 @@ import (
 	"sync"
 )
 
-func Init(cfg api.Config) {
-	m = newClient(cfg)
-}
-
-var m api.Client
-
-func I() api.Client {
-	return m
-}
-
 func newClient(c api.Config) api.Client {
 	return &client{
 		config:   c,

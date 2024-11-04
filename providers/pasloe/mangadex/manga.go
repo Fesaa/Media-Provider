@@ -32,12 +32,12 @@ func NewManga(req payload.DownloadRequest, client api.Client) api.Downloadable {
 		volumeMetadata: make([]string, 0),
 	}
 	d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client)
-	block.Downloader = d
+	block.DownloadBase = d
 	return block
 }
 
 type manga struct {
-	*api.Downloader[ChapterSearchData]
+	*api.DownloadBase[ChapterSearchData]
 	id string
 
 	info     *MangaSearchData

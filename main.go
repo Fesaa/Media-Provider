@@ -7,7 +7,6 @@ import (
 	"github.com/Fesaa/Media-Provider/http/wisewolf"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"os"
 	"os/signal"
@@ -41,7 +40,6 @@ func init() {
 	auth.Init(database)
 	yoitsu.Init(cfg)
 	pasloe.Init(cfg)
-	mangadex.Init()
 }
 
 func main() {

@@ -16,22 +16,22 @@ import (
 	"time"
 )
 
-func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block DownloadBlock[T], client Client) *Downloader[T] {
-	return &Downloader[T]{
-		DownloadBlock: block,
-		Client:        client,
-		Log:           log.With(slog.String("id", req.Id)),
-		id:            req.Id,
-		baseDir:       req.BaseDir,
-		TempTitle:     req.TempTitle,
-		maxImages:     min(client.GetConfig().GetMaxConcurrentImages(), 4),
-		Req:           req,
-		LastTime:      time.Now(),
+func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block DownloadInfoProvider[T], client Client) *DownloadBase[T] {
+	return &DownloadBase[T]{
+		DownloadInfoProvider: block,
+		Client:               client,
+		Log:                  log.With(slog.String("id", req.Id)),
+		id:                   req.Id,
+		baseDir:              req.BaseDir,
+		TempTitle:            req.TempTitle,
+		maxImages:            min(client.GetConfig().GetMaxConcurrentImages(), 4),
+		Req:                  req,
+		LastTime:             time.Now(),
 	}
 }
 
-type Downloader[T any] struct {
-	DownloadBlock[T]
+type DownloadBase[T any] struct {
+	DownloadInfoProvider[T]
 
 	Client Client
 	Log    *log.Logger
@@ -55,15 +55,15 @@ type Downloader[T any] struct {
 	Wg     *sync.WaitGroup
 }
 
-func (d *Downloader[T]) Id() string {
+func (d *DownloadBase[T]) Id() string {
 	return d.id
 }
 
-func (d *Downloader[T]) GetBaseDir() string {
+func (d *DownloadBase[T]) GetBaseDir() string {
 	return d.baseDir
 }
 
-func (d *Downloader[T]) GetDownloadDir() string {
+func (d *DownloadBase[T]) GetDownloadDir() string {
 	title := d.Title()
 	if title == "" {
 		return ""
@@ -71,11 +71,11 @@ func (d *Downloader[T]) GetDownloadDir() string {
 	return path.Join(d.baseDir, title)
 }
 
-func (d *Downloader[T]) GetOnDiskContent() []string {
+func (d *DownloadBase[T]) GetOnDiskContent() []string {
 	return d.existingContent
 }
 
-func (d *Downloader[T]) Cancel() {
+func (d *DownloadBase[T]) Cancel() {
 	d.Log.Trace("calling cancel on manga")
 	if d.cancel == nil {
 		return
@@ -87,7 +87,7 @@ func (d *Downloader[T]) Cancel() {
 	d.Wg.Wait()
 }
 
-func (d *Downloader[T]) WaitForInfoAndDownload() {
+func (d *DownloadBase[T]) WaitForInfoAndDownload() {
 	if d.cancel != nil {
 		d.Log.Debug("content already downloading")
 		return
@@ -107,7 +107,7 @@ func (d *Downloader[T]) WaitForInfoAndDownload() {
 	}()
 }
 
-func (d *Downloader[T]) checkContentOnDisk() {
+func (d *DownloadBase[T]) checkContentOnDisk() {
 	d.Log.Debug("checking content on disk", slog.String("dir", d.GetDownloadDir()))
 	entries, err := os.ReadDir(path.Join(d.Client.GetBaseDir(), d.GetDownloadDir()))
 	if err != nil {
@@ -142,7 +142,7 @@ func (d *Downloader[T]) checkContentOnDisk() {
 	d.existingContent = out
 }
 
-func (d *Downloader[T]) startDownload() {
+func (d *DownloadBase[T]) startDownload() {
 	data := d.All()
 	d.Log.Trace("starting download", slog.Int("size", len(data)))
 	d.Wg = &sync.WaitGroup{}
@@ -193,7 +193,7 @@ func (d *Downloader[T]) startDownload() {
 	}
 }
 
-func (d *Downloader[T]) downloadContent(t T) error {
+func (d *DownloadBase[T]) downloadContent(t T) error {
 	l := d.ContentLogger(t)
 
 	l.Trace("downloading content")

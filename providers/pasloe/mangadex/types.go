@@ -1,20 +1,5 @@
 package mangadex
 
-import (
-	"github.com/Fesaa/Media-Provider/http/payload"
-)
-
-type Manga interface {
-	Title() string
-	Id() string
-	GetBaseDir() string
-	Cancel()
-	WaitForInfoAndDownload()
-	GetInfo() payload.InfoStat
-	GetDownloadDir() string
-	GetPrevVolumes() []string
-}
-
 type SearchOptions struct {
 	Query                  string
 	IncludedTags           []string

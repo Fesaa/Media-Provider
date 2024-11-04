@@ -29,12 +29,12 @@ func NewWebToon(req payload.DownloadRequest, client api.Client) api.Downloadable
 	}
 
 	d := api.NewDownloadableFromBlock[Chapter](req, wt, client)
-	wt.Downloader = d
+	wt.DownloadBase = d
 	return wt
 }
 
 type webtoon struct {
-	*api.Downloader[Chapter]
+	*api.DownloadBase[Chapter]
 	id string
 
 	searchInfo *SearchData

@@ -19,7 +19,7 @@ type Downloadable interface {
 	GetOnDiskContent() []string
 }
 
-type DownloadBlock[T any] interface {
+type DownloadInfoProvider[T any] interface {
 	Title() string
 	Provider() models.Provider
 	LoadInfo() chan struct{}

@@ -1,19 +1,5 @@
 package webtoon
 
-import "github.com/Fesaa/Media-Provider/http/payload"
-
-type WebToon interface {
-	Title() string
-	Id() string
-	GetBaseDir() string
-	Downloading() bool
-	Cancel()
-	WaitForInfoAndDownload()
-	GetInfo() payload.InfoStat
-	GetDownloadDir() string
-	GetPrevChapters() []string
-}
-
 type SearchOptions struct {
 	Query string
 }
