@@ -10,7 +10,7 @@ import {Observable, of, ReplaySubject, tap} from "rxjs";
 export class PageService {
 
   private readonly destroyRef = inject(DestroyRef);
-  baseUrl = environment.apiUrl;
+  baseUrl = environment.apiUrl + "pages/";
 
   private pages: Page[] | undefined = undefined;
   private pagesSource = new ReplaySubject<Page[]>(1);
@@ -21,17 +21,39 @@ export class PageService {
   }
 
   refreshPages() {
-    this.httpClient.get<Page[]>(this.baseUrl + 'config/pages/').subscribe(pages => {
+    this.httpClient.get<Page[]>(this.baseUrl).subscribe(pages => {
       this.pages = pages;
       this.pagesSource.next(pages);
     })
   }
 
-  getPage(index: number): Observable<Page> {
-    if (this.pages && index < this.pages.length && index >= 0) {
-      return of(this.pages[index]);
+  getPage(id: number): Observable<Page> {
+    const page = this.pages ? this.pages.find(p => p.id === id) : undefined;
+    if (page) {
+      return of(page);
     }
 
-    return this.httpClient.get<Page>(this.baseUrl + 'config/pages/' + index)
+    return this.httpClient.get<Page>(this.baseUrl + id)
   }
+
+  removePage(pageId: number) {
+    return this.httpClient.delete(this.baseUrl + pageId, {responseType: 'text'});
+  }
+
+  upsertPage(page: Page) {
+    return this.httpClient.post(this.baseUrl + 'upsert', page, {responseType: 'text'});
+  }
+
+  swapPages(id1: number, id2: number) {
+    return this.httpClient.post(this.baseUrl + 'swap', {id1, id2}, {responseType: 'text'});
+  }
+
+  loadDefault() {
+    if (this.pages != undefined && this.pages.length !== 0) {
+      throw "Cannot load default while pages are available"
+    }
+
+    return this.httpClient.post(this.baseUrl + "load-default", {}, {responseType: 'text'})
+  }
+
 }

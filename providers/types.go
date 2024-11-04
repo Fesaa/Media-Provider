@@ -1,8 +1,8 @@
 package providers
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/payload"
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
 )
 
 type Info struct {
@@ -14,7 +14,7 @@ type Info struct {
 	InfoHash    string          `json:"InfoHash"`
 	ImageUrl    string          `json:"ImageUrl"`
 	RefUrl      string          `json:"RefUrl"`
-	Provider    config.Provider `json:"Provider"`
+	Provider    models.Provider `json:"Provider"`
 }
 
 type InfoTag struct {

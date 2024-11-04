@@ -2,9 +2,8 @@ package providers
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/payload"
 )
 
 func Search(req payload.SearchRequest) ([]Info, error) {
@@ -54,9 +53,4 @@ func Stop(req payload.StopRequest) error {
 		return fmt.Errorf("provider %q not supported", req.Provider)
 	}
 	return s.Stop(req)
-}
-
-func HasProvider(provider config.Provider) bool {
-	_, ok := providers[provider]
-	return ok
 }

@@ -18,16 +18,13 @@ jobs:
           go-version: "1.22.2"
 
       - name: Test YTS
-        run: go test -v ./yts
+        run: go test -v ./providers/yoitsu/yts
 
       - name: Test Lime
-        run: go test -v ./limetorrents
+        run: go test -v ./providers/yoitsu/limetorrents
 
       - name: Test Subs Please
-        run: go test -v ./subsplease
-
-      - name: Test config
-        run: go test -v ./config
+        run: go test -v ./providers/yoitsu/subsplease
 
       - name: Mangadex test
-        run: go test -v ./mangadex
+        run: go test -v ./providers/mangadex

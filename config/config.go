@@ -7,19 +7,15 @@ import (
 // Validate is for API requests, we manually validate stuff on startup
 
 type Config struct {
-	Version  int    `json:"version"`
-	SyncId   int    `json:"sync_id"`
-	Password string `json:"password"`
-	RootDir  string `json:"root_dir"`
-	BaseUrl  string `json:"base_url"`
-	Secret   string `json:"secret"`
-	ApiKey   string `json:"api_key"`
+	Version int    `json:"version"`
+	SyncId  int    `json:"sync_id"`
+	RootDir string `json:"root_dir"`
+	BaseUrl string `json:"base_url"`
+	Secret  string `json:"secret"`
 
 	Logging    Logging     `json:"logging"`
 	Downloader Downloader  `json:"downloader"`
 	Cache      CacheConfig `json:"cache"`
-
-	Pages []Page `json:"pages"`
 }
 
 type CacheConfig struct {
@@ -43,48 +39,6 @@ type Logging struct {
 	Level   slog.Level `json:"level"`
 	Source  bool       `json:"source"`
 	Handler LogHandler `json:"handler" validate:"uppercase"`
-}
-
-type Page struct {
-	Title         string              `json:"title" validate:"required,min=3,max=25"`
-	Provider      []Provider          `json:"providers" validate:"required,min=1"`
-	Modifiers     map[string]Modifier `json:"modifiers"`
-	Dirs          []string            `json:"dirs" validate:"required,min=1"`
-	CustomRootDir string              `json:"custom_root_dir"`
-}
-
-type Provider int
-
-const (
-	SUKEBEI Provider = iota + 1
-	NYAA
-	YTS
-	LIME
-	SUBSPLEASE
-	MANGADEX
-	WEBTOON
-)
-
-type ModifierType int
-
-const (
-	DROPDOWN ModifierType = iota + 1
-	MULTI
-)
-
-func IsValidModifierType(modType ModifierType) bool {
-	switch modType {
-	case DROPDOWN, MULTI:
-		return true
-	default:
-		return false
-	}
-}
-
-type Modifier struct {
-	Title  string            `yaml:"title" json:"title"`
-	Type   ModifierType      `yaml:"type" json:"type"`
-	Values map[string]string `yaml:"values" json:"values"`
 }
 
 type LogHandler string

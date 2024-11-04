@@ -29,58 +29,7 @@ export class ConfigService {
   }
 
   refreshApiKey() {
-    if (this.syncId == -1) {
-      throw new Error('Sync ID is not set');
-    }
-
-    const subject = new Subject<string>();
-    this.httpClient.get<{apiKey: string, sync_id: number}>(this.baseUrl + 'refresh-api-key' + '?sync_id=' + this.syncId)
-      .subscribe(model => {
-        this.syncId = model.sync_id;
-        subject.next(model.apiKey);
-      })
-    return subject.asObservable();
-  }
-
-  removePage(pageId: number) {
-    if (this.syncId == -1) {
-      throw new Error('Sync ID is not set');
-    }
-
-    return this.httpClient
-      .delete<number>(this.baseUrl + 'pages/' + pageId + '?sync_id=' + this.syncId)
-      .pipe(this.updateSyncId());
-  }
-
-  addPage(page: Page) {
-    if (this.syncId == -1) {
-      throw new Error('Sync ID is not set');
-    }
-    return this.httpClient
-      .post<number>(this.baseUrl + 'pages?sync_id=' + this.syncId, page)
-      .pipe(this.updateSyncId());
-  }
-
-  updatePage(page: Page, pageIndex: number) {
-    if (this.syncId == -1) {
-      throw new Error('Sync ID is not set');
-    }
-    return this.httpClient
-      .put<number>(this.baseUrl + 'pages/' + pageIndex + '?sync_id=' + this.syncId, page)
-      .pipe(this.updateSyncId());
-  }
-
-  movePage(oldIndex: number, newIndex: number) {
-    if (this.syncId == -1) {
-      throw new Error('Sync ID is not set');
-    }
-    const req: MovePageRequest = {
-      oldIndex: oldIndex,
-      newIndex: newIndex
-    };
-    return this.httpClient
-      .post<number>(this.baseUrl + 'pages/move?sync_id=' + this.syncId, req)
-      .pipe(this.updateSyncId());
+    return this.httpClient.get<string>(this.baseUrl + 'user/refresh-api-key');
   }
 
   updateConfig(config: Config) {
