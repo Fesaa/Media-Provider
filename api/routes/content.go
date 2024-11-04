@@ -7,8 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers"
-	"github.com/Fesaa/Media-Provider/providers/mangadex"
-	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/gofiber/fiber/v2"
 )
@@ -75,22 +74,14 @@ func (cr *contentRoutes) Stats(l *log.Logger, ctx *fiber.Ctx) error {
 	yoitsu.I().GetRunningTorrents().ForEachSafe(func(key string, torrent yoitsu.Torrent) {
 		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
 	})
-	manga := mangadex.I().GetCurrentManga()
-	if manga != nil {
-		statsResponse.Running = append(statsResponse.Running, manga.GetInfo())
-	}
-	wt := webtoon.I().GetCurrentWebToon()
-	if wt != nil {
-		statsResponse.Running = append(statsResponse.Running, wt.GetInfo())
+	for _, download := range pasloe.I().GetCurrentDownloads() {
+		statsResponse.Running = append(statsResponse.Running, download.GetInfo())
 	}
 
 	for _, queueStat := range yoitsu.I().GetQueuedTorrents() {
 		statsResponse.Queued = append(statsResponse.Queued, queueStat)
 	}
-	for _, queueStat := range mangadex.I().GetQueuedMangas() {
-		statsResponse.Queued = append(statsResponse.Queued, queueStat)
-	}
-	for _, queueStat := range webtoon.I().GetQueuedWebToons() {
+	for _, queueStat := range pasloe.I().GetQueuedDownloads() {
 		statsResponse.Queued = append(statsResponse.Queued, queueStat)
 	}
 	return ctx.JSON(statsResponse)

@@ -2,20 +2,6 @@ package webtoon
 
 import "github.com/Fesaa/Media-Provider/http/payload"
 
-type Config interface {
-	GetRootDir() string
-	GetMaxConcurrentMangadexImages() int
-}
-
-type Client interface {
-	Download(payload.DownloadRequest) (WebToon, error)
-	RemoveDownload(payload.StopRequest) error
-	GetBaseDir() string
-	GetCurrentWebToon() WebToon
-	GetQueuedWebToons() []payload.QueueStat
-	GetConfig() Config
-}
-
 type WebToon interface {
 	Title() string
 	Id() string

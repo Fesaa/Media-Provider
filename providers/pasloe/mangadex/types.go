@@ -4,20 +4,6 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 )
 
-type Config interface {
-	GetRootDir() string
-	GetMaxConcurrentMangadexImages() int
-}
-
-type Client interface {
-	Download(payload.DownloadRequest) (Manga, error)
-	RemoveDownload(payload.StopRequest) error
-	GetBaseDir() string
-	GetCurrentManga() Manga
-	GetQueuedMangas() []payload.QueueStat
-	GetConfig() Config
-}
-
 type Manga interface {
 	Title() string
 	Id() string

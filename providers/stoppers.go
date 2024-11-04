@@ -2,8 +2,7 @@ package providers
 
 import (
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/mangadex"
-	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 )
 
@@ -12,9 +11,9 @@ func yoitsuStopper(req payload.StopRequest) error {
 }
 
 func mangadexStopper(req payload.StopRequest) error {
-	return mangadex.I().RemoveDownload(req)
+	return pasloe.I().RemoveDownload(req)
 }
 
 func webtoonStopper(req payload.StopRequest) error {
-	return webtoon.I().RemoveDownload(req)
+	return pasloe.I().RemoveDownload(req)
 }

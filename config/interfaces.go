@@ -15,5 +15,9 @@ func (c *Config) GetMaxConcurrentTorrents() int {
 }
 
 func (c *Config) GetMaxConcurrentMangadexImages() int {
+	return c.GetMaxConcurrentImages()
+}
+
+func (c *Config) GetMaxConcurrentImages() int {
 	return int(math.Max(1, math.Min(5, float64(c.Downloader.MaxConcurrentMangadexImages))))
 }
