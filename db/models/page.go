@@ -280,6 +280,7 @@ const (
 	SUBSPLEASE
 	MANGADEX
 	WEBTOON
+	DYNASTY
 )
 
 type ModifierType int

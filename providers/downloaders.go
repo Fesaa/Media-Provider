@@ -11,12 +11,7 @@ func yoitsuDownloader(req payload.DownloadRequest) error {
 	return err
 }
 
-func mangadexDownloader(req payload.DownloadRequest) error {
-	_, err := pasloe.I().Download(req)
-	return err
-}
-
-func webToonDownloader(req payload.DownloadRequest) error {
+func pasloeDownloader(req payload.DownloadRequest) error {
 	_, err := pasloe.I().Download(req)
 	return err
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
+	dynasty_scans "github.com/Fesaa/Media-Provider/providers/pasloe/dynasty-scans"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
@@ -21,8 +22,9 @@ func init() {
 	register(models.LIME, limeTransformer, limetorrents.Search, limeNormalizer, yoitsuDownloader, yoitsuStopper)
 	register(models.YTS, ytsTransformer, yts.Search, ytsNormalizer, yoitsuDownloader, yoitsuStopper)
 	register(models.SUBSPLEASE, subsPleaseTransformer, subsplease.Search, subsPleaseNormalizer, yoitsuDownloader, yoitsuStopper)
-	register(models.MANGADEX, mangadexTransformer, mangadex.SearchManga, mangadexNormalizer, mangadexDownloader, mangadexStopper)
-	register(models.WEBTOON, webtoonTransformer, webtoon.Search, webtoonNormalizer, webToonDownloader, webtoonStopper)
+	register(models.MANGADEX, mangadexTransformer, mangadex.SearchManga, mangadexNormalizer, pasloeDownloader, pasloeStopper)
+	register(models.WEBTOON, webtoonTransformer, webtoon.Search, webtoonNormalizer, pasloeDownloader, pasloeStopper)
+	register(models.DYNASTY, dynastyTransformer, dynasty_scans.SearchSeries, dynastyNormalizer, pasloeDownloader, pasloeStopper)
 }
 
 func register[T, S any](name models.Provider, t requestTransformerFunc[S], s searchFunc[S, T], n responseNormalizerFunc[T], d downloadFunc, stop stopFunc) {

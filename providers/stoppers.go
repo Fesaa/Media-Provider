@@ -10,10 +10,6 @@ func yoitsuStopper(req payload.StopRequest) error {
 	return yoitsu.I().RemoveDownload(req)
 }
 
-func mangadexStopper(req payload.StopRequest) error {
-	return pasloe.I().RemoveDownload(req)
-}
-
-func webtoonStopper(req payload.StopRequest) error {
+func pasloeStopper(req payload.StopRequest) error {
 	return pasloe.I().RemoveDownload(req)
 }
