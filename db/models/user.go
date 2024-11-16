@@ -44,7 +44,7 @@ type Users struct {
 }
 
 func (u *Users) All() ([]User, error) {
-	rows, err := u.db.Query("SELECT id, name, password, apiKey, permission FROM users")
+	rows, err := u.db.Query("SELECT id, name, password, apiKey, permission, original FROM users")
 	if err != nil {
 		return nil, err
 	}

@@ -106,7 +106,11 @@ func (p *Pages) Upsert(pages ...*Page) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func(tx *sql.Tx) {
+		if err = tx.Rollback(); err != nil {
+			log.Warn("failed to rollback transaction", "err", err)
+		}
+	}(tx)
 
 	for _, page := range pages {
 		if err = upsertPage(tx, page); err != nil {
@@ -122,7 +126,11 @@ func (p *Pages) Delete(pageID int64) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func(tx *sql.Tx) {
+		if err = tx.Rollback(); err != nil {
+			log.Warn("failed to rollback transaction", "err", err)
+		}
+	}(tx)
 
 	_, err = tx.Exec(`DELETE FROM modifier_values WHERE modifier_id IN (
         SELECT id FROM modifiers WHERE page_id = ?
