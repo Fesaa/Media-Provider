@@ -258,7 +258,7 @@ func (ur *userRoutes) GenerateResetPassword(l *log.Logger, ctx *fiber.Ctx) error
 			"error": err.Error(),
 		})
 	}
-	fmt.Printf("A reset link has been generated for %d, with key \"%s\"\n", reset.UserId, reset.Key)
+	fmt.Printf("A reset link has been generated for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.", reset.UserId, reset.Key, reset.Key)
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
