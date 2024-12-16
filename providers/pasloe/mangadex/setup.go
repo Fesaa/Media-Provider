@@ -9,13 +9,11 @@ import (
 	"net/http"
 )
 
-func Init(c Config) {
+func Init() {
 	err := loadTags()
 	if err != nil {
 		log.Warn("failed to load tags, filtering won't work", "err", err)
 	}
-
-	m = newClient(c)
 }
 
 func loadTags() error {

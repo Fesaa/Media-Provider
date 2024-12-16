@@ -5,8 +5,9 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/providers/mangadex"
-	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	dynasty_scans "github.com/Fesaa/Media-Provider/providers/pasloe/dynasty-scans"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/subsplease"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/yts"
@@ -170,6 +171,20 @@ func webtoonNormalizer(webtoons []webtoon.SearchData) []Info {
 			RefUrl:   w.Url(),
 			Provider: models.WEBTOON,
 		}, true
+	})
+}
+
+func dynastyNormalizer(series []dynasty_scans.SearchData) []Info {
+	return utils.Map(series, func(t dynasty_scans.SearchData) Info {
+		return Info{
+			Name:     t.Title,
+			InfoHash: t.Id,
+			Tags: utils.Map(t.Tags, func(t string) InfoTag {
+				return of("", t)
+			}),
+			RefUrl:   t.RefUrl(),
+			Provider: models.DYNASTY,
+		}
 	})
 }
 

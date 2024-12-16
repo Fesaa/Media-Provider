@@ -6,8 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/wisewolf"
 	"github.com/Fesaa/Media-Provider/log"
-	"github.com/Fesaa/Media-Provider/providers/mangadex"
-	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"os"
 	"os/signal"
@@ -40,8 +39,7 @@ func init() {
 	UpdateBaseUrlInIndex(cfg.BaseUrl)
 	auth.Init(database)
 	yoitsu.Init(cfg)
-	mangadex.Init(cfg)
-	webtoon.Init(cfg)
+	pasloe.Init(cfg)
 }
 
 func main() {

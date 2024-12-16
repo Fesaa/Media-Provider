@@ -3,8 +3,9 @@ package providers
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/mangadex"
-	"github.com/Fesaa/Media-Provider/providers/webtoon"
+	dynasty_scans "github.com/Fesaa/Media-Provider/providers/pasloe/dynasty-scans"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/subsplease"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/yts"
@@ -109,6 +110,12 @@ func ytsTransformer(s payload.SearchRequest) yts.SearchOptions {
 
 func webtoonTransformer(s payload.SearchRequest) webtoon.SearchOptions {
 	return webtoon.SearchOptions{
+		Query: s.Query,
+	}
+}
+
+func dynastyTransformer(s payload.SearchRequest) dynasty_scans.SearchOptions {
+	return dynasty_scans.SearchOptions{
 		Query: s.Query,
 	}
 }

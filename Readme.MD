@@ -17,8 +17,8 @@ Read their respective Readme's for more information on which modifiers they supp
 - [Nyaa](nyaaReadme.MD)
 - [YTS](providers/yoitsu/yts/Readme.MD)
 - [SubsPlease](providers/yoitsu/subsplease/Readme.MD)
-- [Mangadex](providers/mangadex/Readme.MD)
-- [WebToon](providers/webtoon/Readme.MD)
+- [Mangadex](providers/pasloe/mangadex/Readme.MD)
+- [WebToon](providers/pasloe/webtoon/Readme.MD)
 
 ## Config
 
