@@ -89,7 +89,7 @@ func (u *Users) intoUser(s scanner) (*User, error) {
 }
 
 func (u *Users) GetById(id int64) (*User, error) {
-	row := u.db.QueryRow("SELECT id, name, password, apiKey, permission FROM users WHERE id = ?", id)
+	row := u.db.QueryRow("SELECT id, name, password, apiKey, permission,original FROM users WHERE id = ?", id)
 	return u.intoUser(row)
 }
 
