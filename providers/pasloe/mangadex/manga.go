@@ -86,10 +86,10 @@ func (m *manga) LoadInfo() chan struct{} {
 		volumes := mapset.NewSet[string]()
 		m.foundLastVolume = false
 		for _, ch := range m.chapters.Data {
-			if ch.Attributes.Volume == m.info.Attributes.LastVolume {
+			if ch.Attributes.Volume == m.info.Attributes.LastVolume && m.info.Attributes.LastVolume != "" {
 				m.foundLastVolume = true
 			}
-			if ch.Attributes.Chapter == m.info.Attributes.LastChapter {
+			if ch.Attributes.Chapter == m.info.Attributes.LastChapter && m.info.Attributes.LastChapter != "" {
 				m.foundLastChapter = true
 			}
 
