@@ -32,7 +32,11 @@ func mangadexNormalizer(mangas *mangadex.MangaSearchResponse) []Info {
 		info = append(info, Info{
 			Name:        enTitle,
 			Description: data.Attributes.EnDescription(),
-			Size:        config.OrDefault(data.Attributes.LastVolume, "unknown") + " Volumes",
+			Size: func() string {
+				volumes := config.OrDefault(data.Attributes.LastVolume, "unknown")
+				chapters := config.OrDefault(data.Attributes.LastChapter, "unknown")
+				return fmt.Sprintf("%s Vol. %s Ch.", volumes, chapters)
+			}(),
 			Tags: []InfoTag{
 				of("Date", strconv.Itoa(data.Attributes.Year)),
 			},
