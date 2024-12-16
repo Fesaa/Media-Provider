@@ -135,7 +135,7 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 			slog.String("file", entry.Name()),
 			slog.String("key", matches[1]),
 		)
-		out = append(out, matches[1])
+		out = append(out, entry.Name())
 	}
 
 	d.Log.Debug("found following content on disk", "content", fmt.Sprintf("%v", out))
