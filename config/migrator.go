@@ -10,7 +10,7 @@ type versionMap struct {
 }
 
 const (
-	currentVersion = 3
+	currentVersion = 4
 )
 
 var (
@@ -22,6 +22,10 @@ func init() {
 
 	versionMappers[versionMap{0, 1}] = func(c Config) Config {
 		c.Cache = CacheConfig{Type: MEMORY}
+		return c
+	}
+	versionMappers[versionMap{3, 4}] = func(c Config) Config {
+		c.Downloader.DisableIpv6 = false
 		return c
 	}
 }

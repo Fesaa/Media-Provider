@@ -61,6 +61,7 @@ func newYoitsu(c Config) (Yoitsu, error) {
 	conf := torrent.NewDefaultClientConfig()
 	conf.DefaultStorage = storage.NewFileOpts(opts)
 	conf.ListenPort = rand.Intn(65535-49152) + 49152
+	conf.DisableIPv6 = config.I().Downloader.DisableIpv6
 
 	client, err := torrent.NewClient(conf)
 	if err != nil {

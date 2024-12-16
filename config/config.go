@@ -31,8 +31,9 @@ const (
 )
 
 type Downloader struct {
-	MaxConcurrentTorrents       int `json:"max_torrents" validate:"required,number,min=1,max=10"`
-	MaxConcurrentMangadexImages int `json:"max_mangadex_images" validate:"required,number,min=1,max=5"`
+	MaxConcurrentTorrents       int  `json:"max_torrents" validate:"required,number,min=1,max=10"`
+	MaxConcurrentMangadexImages int  `json:"max_mangadex_images" validate:"required,number,min=1,max=5"`
+	DisableIpv6                 bool `json:"disable_ipv6"`
 }
 
 type Logging struct {
