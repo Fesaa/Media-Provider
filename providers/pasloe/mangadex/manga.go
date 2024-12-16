@@ -239,7 +239,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		if m.foundLastChapter && m.foundLastVolume {
 			ci.Count = m.totalVolumes
 		} else {
-			log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
+			m.Log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
 				slog.String("lastChapter", m.info.Attributes.LastChapter),
 				slog.Bool("foundLastChapter", m.foundLastChapter),
 				slog.String("lastVolume", m.info.Attributes.LastVolume),
