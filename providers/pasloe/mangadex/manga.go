@@ -228,6 +228,11 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
 	ci.Web = strings.Join(m.info.FormattedLinks(), ",")
 
+	// Chapter cbz's include title
+	if m.totalVolumes == 0 {
+		ci.Title = chapter.Attributes.Title
+	}
+
 	alts := m.info.Attributes.EnAltTitles()
 	if len(alts) > 0 {
 		ci.LocalizedSeries = alts[0]
