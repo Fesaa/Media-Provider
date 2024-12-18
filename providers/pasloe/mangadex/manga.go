@@ -241,7 +241,13 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	// Add the comicinfo#count field if the manga has completed, so Kavita can add the correct Completed marker
 	// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
 	if m.info.Attributes.Status == StatusCompleted {
-		if m.foundLastChapter && m.foundLastVolume {
+		if m.totalVolumes == 0 && m.foundLastChapter {
+			if tc, err := strconv.Atoi(m.info.Attributes.LastChapter); err == nil {
+				ci.Count = tc
+			} else {
+				m.Log.Warn("failed to parse last chapter", "lastChapter", m.info.Attributes.LastChapter, "err", err)
+			}
+		} else if m.foundLastChapter && m.foundLastVolume {
 			ci.Count = m.totalVolumes
 		} else {
 			m.Log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
