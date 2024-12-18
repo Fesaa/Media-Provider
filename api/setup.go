@@ -48,4 +48,5 @@ func Setup(app fiber.Router, db *db.Database) {
 	routes.RegisterIoRoutes(api, db, c)
 	routes.RegisterConfigRoutes(api, db, c)
 	routes.RegisterPageRoutes(api, db, c)
+	routes.RegisterSubscriptionRoutes(api, db, c)
 }

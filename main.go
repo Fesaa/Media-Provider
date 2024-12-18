@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
+	"github.com/Fesaa/Media-Provider/subscriptions"
 	"os"
 	"os/signal"
 	"syscall"
@@ -40,6 +41,7 @@ func init() {
 	auth.Init(database)
 	yoitsu.Init(cfg)
 	pasloe.Init(cfg)
+	subscriptions.Init(database)
 }
 
 func main() {

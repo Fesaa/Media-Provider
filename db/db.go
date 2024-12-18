@@ -12,9 +12,10 @@ import (
 )
 
 type Database struct {
-	db    *sql.DB
-	Users api.Users
-	Pages api.Pages
+	db            *sql.DB
+	Users         api.Users
+	Pages         api.Pages
+	Subscriptions api.Subscriptions
 }
 
 func (db *Database) DB() *sql.DB {
@@ -42,9 +43,10 @@ func Connect() (*Database, error) {
 
 	log.Info("successfully connected to the database")
 	return &Database{
-		db:    theDb,
-		Users: models.NewUsers(theDb),
-		Pages: models.NewPages(theDb),
+		db:            theDb,
+		Users:         models.NewUsers(theDb),
+		Pages:         models.NewPages(theDb),
+		Subscriptions: models.NewSubscriptions(theDb),
 	}, nil
 }
 

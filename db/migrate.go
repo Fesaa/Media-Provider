@@ -54,6 +54,23 @@ CREATE TABLE dirs (
 	key TEXT NOT NULL,
 	expiry BIGINT NOT NULL
 );`,
+		`
+CREATE TABLE subscriptions (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	provider INTEGER NOT NULL,
+	contentId INTEGER NOT NULL,
+	refreshFrequency INTEGER NOT NULL
+);
+
+CREATE TABLE subscription_info (
+	subscription_id INTEGER REFERENCES subscriptions(id),
+	title TEXT NOT NULL,
+	description TEXT NOT NULL,
+	lastCheck TIMESTAMP NOT NULL,
+	lastCheckSuccess BOOLEAN NOT NULL
+);
+`,
+		`ALTER TABLE subscription_info ADD COLUMN baseDir TEXT NOT NULL DEFAULT '';`,
 	}
 )
 
@@ -73,7 +90,7 @@ func migrate() error {
 			}
 		}
 		if executed {
-			log.Debug("skipping migration, already executed", slog.Int("idx", index))
+			log.Trace("skipping migration, already executed", slog.Int("idx", index))
 			continue
 		}
 

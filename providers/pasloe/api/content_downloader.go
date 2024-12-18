@@ -210,6 +210,11 @@ func (d *DownloadBase[T]) downloadContent(t T) error {
 	if err != nil {
 		return err
 	}
+	if len(urls) == 0 {
+		l.Warn("content has no downloadable urls?")
+		return nil
+	}
+
 	l.Debug("downloading images", "size", len(urls))
 
 	wg := &sync.WaitGroup{}
