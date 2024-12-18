@@ -47,6 +47,7 @@ type manga struct {
 	coverFactory   CoverFactory
 	volumeMetadata []string
 
+	totalChapters    int
 	totalVolumes     int
 	foundLastVolume  bool
 	foundLastChapter bool
@@ -84,6 +85,7 @@ func (m *manga) LoadInfo() chan struct{} {
 		m.chapters = chapters.FilterOneEnChapter()
 
 		volumes := mapset.NewSet[string]()
+		chapterSet := mapset.NewSet[string]()
 		m.foundLastVolume = false
 		for _, ch := range m.chapters.Data {
 			if ch.Attributes.Volume == m.info.Attributes.LastVolume && m.info.Attributes.LastVolume != "" {
@@ -103,8 +105,17 @@ func (m *manga) LoadInfo() chan struct{} {
 					slog.String("chapter", ch.Attributes.Chapter),
 				)
 			}
+
+			if _, err = strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
+				chapterSet.Add(ch.Attributes.Chapter)
+			} else {
+				m.Log.Trace("not adding chapter, as Chapter string isn't an int",
+					slog.String("volume", ch.Attributes.Volume),
+					slog.String("chapter", ch.Attributes.Chapter))
+			}
 		}
 		m.totalVolumes = volumes.Cardinality()
+		m.totalChapters = chapterSet.Cardinality()
 
 		covers, err := GetCoverImages(m.id)
 		if err != nil || covers == nil {
@@ -242,11 +253,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
 	if m.info.Attributes.Status == StatusCompleted {
 		if m.totalVolumes == 0 && m.foundLastChapter {
-			if tc, err := strconv.Atoi(m.info.Attributes.LastChapter); err == nil {
-				ci.Count = tc
-			} else {
-				m.Log.Warn("failed to parse last chapter", "lastChapter", m.info.Attributes.LastChapter, "err", err)
-			}
+			ci.Count = m.totalChapters
 		} else if m.foundLastChapter && m.foundLastVolume {
 			ci.Count = m.totalVolumes
 		} else {
