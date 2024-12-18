@@ -1,6 +1,7 @@
 package subscriptions
 
 import (
+	"errors"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -39,6 +40,26 @@ func Init(db *db.Database) {
 
 func Refresh(id int64) {
 	handler.refresh(id)
+}
+
+func Delete(id int64) error {
+	return handler.delete(id)
+}
+
+func (h *subscriptionHandler) delete(id int64) error {
+	mappedUuid, ok := h.idMapper[id]
+	if !ok {
+		return errors.New("subscription not found")
+	}
+
+	if err := h.scheduler.RemoveJob(mappedUuid); err != nil {
+		h.log.Error("Failed to remove job", "id", mappedUuid, "err", err)
+		return err
+	}
+
+	delete(h.idMapper, id)
+	h.log.Info("Removed job", "id", mappedUuid, "subscriptionId", id)
+	return nil
 }
 
 func (h *subscriptionHandler) refresh(id int64) {

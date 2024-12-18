@@ -164,5 +164,10 @@ func (sr *subscriptionRoutes) Delete(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
+	if err = subscriptions.Delete(int64(id)); err != nil {
+		l.Error("Failed to delete subscription", "error", err)
+		return fiber.ErrInternalServerError
+	}
+
 	return ctx.SendStatus(fiber.StatusOK)
 }
