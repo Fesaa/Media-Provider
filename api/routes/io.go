@@ -36,13 +36,7 @@ func (ior *ioRoutes) ListDirs(l *log.Logger, ctx *fiber.Ctx) error {
 	// TODO: I don't know if this is enough, would need to properly check.
 	// This endpoint is behind auth, so you'd already need om some access.
 	// But would still want to check.
-	cleanedPath := func(p string) string {
-		parts := strings.Split(p, "/")
-		filtered := slices.DeleteFunc(parts, func(s string) bool {
-			return s == ".." || s == "."
-		})
-		return strings.Join(filtered, "/")
-	}(req.Dir)
+	cleanedPath := CleanPath(req.Dir)
 
 	root := config.I().GetRootDir()
 	entries, err := os.ReadDir(path.Join(root, cleanedPath))
@@ -95,4 +89,13 @@ func (ior *ioRoutes) CreateDir(l *log.Logger, ctx *fiber.Ctx) error {
 	}
 
 	return ctx.SendStatus(fiber.StatusCreated)
+}
+
+func CleanPath(path string) string {
+	path = strings.Replace(path, "\\", "/", -1)
+	parts := strings.Split(path, "/")
+	filtered := slices.DeleteFunc(parts, func(s string) bool {
+		return s == ".." || s == "."
+	})
+	return strings.Join(filtered, "/")
 }

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -8,6 +9,14 @@ import (
 	"github.com/Fesaa/Media-Provider/subscriptions"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
+	"os"
+	"slices"
+)
+
+var (
+	allowedProviders   = []models.Provider{models.MANGADEX, models.WEBTOON, models.DYNASTY}
+	disallowedProvider = errors.New("the passed provider does not support subscription")
+	notADir            = errors.New("the passed baseDir is not a directory")
 )
 
 type subscriptionRoutes struct {
@@ -18,11 +27,16 @@ func RegisterSubscriptionRoutes(router fiber.Router, db *db.Database, cache fibe
 	sr := subscriptionRoutes{db: db}
 
 	group := router.Group("/subscriptions", auth.Middleware)
+	group.Get("/providers", sr.Providers)
 	group.Get("/all", wrap(sr.All))
 	group.Get("/:id", wrap(sr.Get))
 	group.Post("/update", wrap(sr.Update))
 	group.Post("/new", wrap(sr.New))
 	group.Delete("/:id", wrap(sr.Delete))
+}
+
+func (sr *subscriptionRoutes) Providers(ctx *fiber.Ctx) error {
+	return ctx.JSON(allowedProviders)
 }
 
 func (sr *subscriptionRoutes) All(l *log.Logger, ctx *fiber.Ctx) error {
@@ -66,6 +80,13 @@ func (sr *subscriptionRoutes) Update(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	if err := sr.validatorSubscription(sub); err != nil {
+		l.Error("Failed to validate subscription", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
 	if err := sr.db.Subscriptions.Update(&sub); err != nil {
 		l.Error("Failed to upsert subscription", "error", err)
 		return fiber.ErrInternalServerError
@@ -89,6 +110,15 @@ func (sr *subscriptionRoutes) New(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	sub.Info.BaseDir = CleanPath(sub.Info.BaseDir)
+
+	if err := sr.validatorSubscription(sub); err != nil {
+		l.Error("Failed to validate subscription", "error", err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
 	subscription, err := sr.db.Subscriptions.New(sub)
 	if err != nil {
 		l.Error("Failed to create subscription", "error", err)
@@ -97,6 +127,27 @@ func (sr *subscriptionRoutes) New(l *log.Logger, ctx *fiber.Ctx) error {
 
 	subscriptions.Refresh(subscription.Id)
 	return ctx.JSON(subscription)
+}
+
+func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) error {
+	if err := val.Struct(&sub); err != nil {
+		return err
+	}
+
+	if slices.Contains(allowedProviders, sub.Provider) {
+		return disallowedProvider
+	}
+
+	info, err := os.Stat(sub.Info.BaseDir)
+	if err != nil {
+		return err
+	}
+
+	if !info.IsDir() {
+		return notADir
+	}
+
+	return nil
 }
 
 func (sr *subscriptionRoutes) Delete(l *log.Logger, ctx *fiber.Ctx) error {

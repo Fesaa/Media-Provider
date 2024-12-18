@@ -8,10 +8,10 @@ import (
 
 type Subscription struct {
 	Id               int64            `json:"id"`
-	Provider         Provider         `json:"provider"`
-	ContentId        string           `json:"contentId"`
-	RefreshFrequency RefreshFrequency `json:"refreshFrequency"`
-	Info             Info             `json:"info"`
+	Provider         Provider         `json:"provider" validator:"required"`
+	ContentId        string           `json:"contentId" validator:"required"`
+	RefreshFrequency RefreshFrequency `json:"refreshFrequency" validator:"required"`
+	Info             Info             `json:"info" validator:"required"`
 }
 
 func (s *Subscription) read(scanner scanner) error {
@@ -46,9 +46,9 @@ func (f RefreshFrequency) AsDuration() time.Duration {
 type Info struct {
 	SubscriptionId string `json:"subscriptionId"`
 
-	Title            string    `json:"title"`
+	Title            string    `json:"title" validator:"required"`
 	Description      string    `json:"description"`
-	BaseDir          string    `json:"baseDir"`
+	BaseDir          string    `json:"baseDir" validator:"required"`
 	LastCheck        time.Time `json:"lastCheck"`
 	LastCheckSuccess bool      `json:"lastCheckSuccess"`
 }
