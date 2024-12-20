@@ -83,7 +83,8 @@ func (h *subscriptionHandler) refresh(id int64) {
 }
 
 func (h *subscriptionHandler) new(sub models.Subscription) {
-	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub))
+	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
+		gocron.WithStartAt(gocron.WithStartImmediately())) // run once at start-up
 
 	if err != nil {
 		h.log.Error("Error creating subscription job", "id", sub.Id)
