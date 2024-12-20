@@ -22,22 +22,21 @@ import {DialogService} from "../_services/dialog.service";
 import {fadeOut} from "../_animations/fade-out";
 
 @Component({
-  selector: 'app-page',
-  standalone: true,
-  imports: [
-    KeyValuePipe,
-    ReactiveFormsModule,
-    DropdownModifierComponent,
-    MultiModifierComponent,
-    SearchResultComponent,
-    PaginatorComponent,
-    DirectoryBrowserComponent,
-    NgIcon,
-    FormInputComponent
-  ],
-  templateUrl: './page.component.html',
-  styleUrl: './page.component.css',
-  animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
+    selector: 'app-page',
+    imports: [
+        KeyValuePipe,
+        ReactiveFormsModule,
+        DropdownModifierComponent,
+        MultiModifierComponent,
+        SearchResultComponent,
+        PaginatorComponent,
+        DirectoryBrowserComponent,
+        NgIcon,
+        FormInputComponent
+    ],
+    templateUrl: './page.component.html',
+    styleUrl: './page.component.css',
+    animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
 })
 export class PageComponent implements OnInit{
 

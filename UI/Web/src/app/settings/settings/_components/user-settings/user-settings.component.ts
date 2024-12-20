@@ -6,14 +6,13 @@ import {NgIcon} from "@ng-icons/core";
 import {ToastrService} from "ngx-toastr";
 
 @Component({
-  selector: 'app-user-settings',
-  standalone: true,
-  imports: [
-    UserPreviewComponent,
-    NgIcon
-  ],
-  templateUrl: './user-settings.component.html',
-  styleUrl: './user-settings.component.css'
+    selector: 'app-user-settings',
+    imports: [
+        UserPreviewComponent,
+        NgIcon
+    ],
+    templateUrl: './user-settings.component.html',
+    styleUrl: './user-settings.component.css'
 })
 export class UserSettingsComponent {
 

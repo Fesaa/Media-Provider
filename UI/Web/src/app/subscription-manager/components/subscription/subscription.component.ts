@@ -12,18 +12,17 @@ import {FormsModule} from "@angular/forms";
 import {Observable} from "rxjs";
 
 @Component({
-  selector: 'app-subscription',
-  standalone: true,
-  imports: [
-    NgClass,
-    RefreshFrequencyPipe,
-    NgIcon,
-    SubscriptionExternalUrlPipe,
-    FormsModule,
-    NgForOf
-  ],
-  templateUrl: './subscription.component.html',
-  styleUrl: './subscription.component.css'
+    selector: 'app-subscription',
+    imports: [
+        NgClass,
+        RefreshFrequencyPipe,
+        NgIcon,
+        SubscriptionExternalUrlPipe,
+        FormsModule,
+        NgForOf
+    ],
+    templateUrl: './subscription.component.html',
+    styleUrl: './subscription.component.css'
 })
 export class SubscriptionComponent implements OnInit {
 

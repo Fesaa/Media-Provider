@@ -6,14 +6,13 @@ import {DialogService} from "../../../../_services/dialog.service";
 import {ToastrService} from "ngx-toastr";
 
 @Component({
-  selector: 'app-directory-settings',
-  standalone: true,
-  imports: [
-    FormInputComponent,
-    NgIcon
-  ],
-  templateUrl: './directory-settings.component.html',
-  styleUrl: './directory-settings.component.css'
+    selector: 'app-directory-settings',
+    imports: [
+        FormInputComponent,
+        NgIcon
+    ],
+    templateUrl: './directory-settings.component.html',
+    styleUrl: './directory-settings.component.css'
 })
 export class DirectorySettingsComponent {
 

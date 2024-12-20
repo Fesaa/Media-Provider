@@ -10,13 +10,12 @@ import {PageService} from "../../_services/page.service";
 import {User} from "../../_models/user";
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule
-  ],
-  templateUrl: './user-login.component.html',
-  styleUrl: './user-login.component.css'
+    selector: 'app-login',
+    imports: [
+        ReactiveFormsModule
+    ],
+    templateUrl: './user-login.component.html',
+    styleUrl: './user-login.component.css'
 })
 export class UserLoginComponent implements OnInit {
 

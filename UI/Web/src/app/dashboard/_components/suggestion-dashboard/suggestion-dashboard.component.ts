@@ -8,16 +8,15 @@ import {Page} from "../../../_models/page";
 import {ToastrService} from "ngx-toastr";
 
 @Component({
-  selector: 'app-suggestion-dashboard',
-  standalone: true,
-  imports: [
-    AsyncPipe,
-    RouterLink,
-    NgIcon
-  ],
-  templateUrl: './suggestion-dashboard.component.html',
-  styleUrl: './suggestion-dashboard.component.css',
-  animations: [dropAnimation],
+    selector: 'app-suggestion-dashboard',
+    imports: [
+        AsyncPipe,
+        RouterLink,
+        NgIcon
+    ],
+    templateUrl: './suggestion-dashboard.component.html',
+    styleUrl: './suggestion-dashboard.component.css',
+    animations: [dropAnimation]
 })
 export class SuggestionDashboardComponent {
 

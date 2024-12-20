@@ -7,14 +7,13 @@ import {SubscriptionComponent} from "./components/subscription/subscription.comp
 import {NgIcon} from "@ng-icons/core";
 
 @Component({
-  selector: 'app-subscription-manager',
-  standalone: true,
-  imports: [
-    SubscriptionComponent,
-    NgIcon
-  ],
-  templateUrl: './subscription-manager.component.html',
-  styleUrl: './subscription-manager.component.css'
+    selector: 'app-subscription-manager',
+    imports: [
+        SubscriptionComponent,
+        NgIcon
+    ],
+    templateUrl: './subscription-manager.component.html',
+    styleUrl: './subscription-manager.component.css'
 })
 export class SubscriptionManagerComponent implements OnInit {
 

@@ -6,13 +6,12 @@ import {NavService} from "../../_services/nav.service";
 import {ToastrService} from "ngx-toastr";
 
 @Component({
-  selector: 'app-reset',
-  standalone: true,
+    selector: 'app-reset',
     imports: [
         ReactiveFormsModule
     ],
-  templateUrl: './reset.component.html',
-  styleUrl: './reset.component.css'
+    templateUrl: './reset.component.html',
+    styleUrl: './reset.component.css'
 })
 export class ResetComponent implements OnInit {
 

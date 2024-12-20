@@ -4,14 +4,13 @@ import {ReactiveFormsModule} from "@angular/forms";
 import {Modifier} from "../../../_models/page";
 
 @Component({
-  selector: 'app-dropdown-modifier',
-  standalone: true,
+    selector: 'app-dropdown-modifier',
     imports: [
         KeyValuePipe,
         ReactiveFormsModule
     ],
-  templateUrl: './dropdown-modifier.component.html',
-  styleUrl: './dropdown-modifier.component.css'
+    templateUrl: './dropdown-modifier.component.html',
+    styleUrl: './dropdown-modifier.component.css'
 })
 export class DropdownModifierComponent {
 

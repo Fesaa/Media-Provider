@@ -10,14 +10,13 @@ import {ToastrService} from "ngx-toastr";
 import {Clipboard} from "@angular/cdk/clipboard";
 
 @Component({
-  selector: 'app-directory-selector',
-  standalone: true,
-  imports: [
-    NgClass,
-    NgIcon
-  ],
-  templateUrl: './directory-selector.component.html',
-  styleUrl: './directory-selector.component.css'
+    selector: 'app-directory-selector',
+    imports: [
+        NgClass,
+        NgIcon
+    ],
+    templateUrl: './directory-selector.component.html',
+    styleUrl: './directory-selector.component.css'
 })
 export class DirectorySelectorComponent implements OnInit {
 

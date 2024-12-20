@@ -18,17 +18,16 @@ export enum SettingsID {
 }
 
 @Component({
-  selector: 'app-settings',
-  standalone: true,
-  imports: [
-    NgIcon,
-    ServerSettingsComponent,
-    PagesSettingsComponent,
-    UserSettingsComponent
-  ],
-  templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css',
-  animations: [dropAnimation]
+    selector: 'app-settings',
+    imports: [
+        NgIcon,
+        ServerSettingsComponent,
+        PagesSettingsComponent,
+        UserSettingsComponent
+    ],
+    templateUrl: './settings.component.html',
+    styleUrl: './settings.component.css',
+    animations: [dropAnimation]
 })
 export class SettingsComponent implements OnInit{
   showMobileConfig = false;

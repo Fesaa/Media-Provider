@@ -5,13 +5,12 @@ import {FormGroup} from "@angular/forms";
 import {hasPermission, Perm, permissionNames, permissionValues, UserDto} from "../../../../_models/user";
 
 @Component({
-  selector: 'app-permissions-settings',
-  standalone: true,
-  imports: [
-    TitleCasePipe
-  ],
-  templateUrl: './permission-settings.component.html',
-  styleUrl: './permission-settings.component.css'
+    selector: 'app-permissions-settings',
+    imports: [
+        TitleCasePipe
+    ],
+    templateUrl: './permission-settings.component.html',
+    styleUrl: './permission-settings.component.css'
 })
 export class PermissionSettingsComponent {
 

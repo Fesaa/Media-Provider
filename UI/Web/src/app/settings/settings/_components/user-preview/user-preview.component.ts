@@ -10,17 +10,16 @@ import {DialogService} from "../../../../_services/dialog.service";
 import {ToastrService} from "ngx-toastr";
 
 @Component({
-  selector: 'app-user-preview',
-  standalone: true,
-  imports: [
-    FormInputComponent,
-    PermissionSettingsComponent,
-    ReactiveFormsModule,
-    TitleCasePipe,
-    NgIcon
-  ],
-  templateUrl: './user-preview.component.html',
-  styleUrl: './user-preview.component.css'
+    selector: 'app-user-preview',
+    imports: [
+        FormInputComponent,
+        PermissionSettingsComponent,
+        ReactiveFormsModule,
+        TitleCasePipe,
+        NgIcon
+    ],
+    templateUrl: './user-preview.component.html',
+    styleUrl: './user-preview.component.css'
 })
 export class UserPreviewComponent implements OnInit {
 

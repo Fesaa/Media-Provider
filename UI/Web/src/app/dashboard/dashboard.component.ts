@@ -9,16 +9,15 @@ import {QueuedInfoComponent} from "./_components/queued-info/queued-info.compone
 import {combineLatest} from "rxjs";
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [
-    AsyncPipe,
-    SuggestionDashboardComponent,
-    RunningInfoComponent,
-    QueuedInfoComponent
-  ],
-  templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+    selector: 'app-dashboard',
+    imports: [
+        AsyncPipe,
+        SuggestionDashboardComponent,
+        RunningInfoComponent,
+        QueuedInfoComponent
+    ],
+    templateUrl: './dashboard.component.html',
+    styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit,OnDestroy {
 

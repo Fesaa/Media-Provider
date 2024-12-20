@@ -7,14 +7,13 @@ import {DialogService} from "../../../../_services/dialog.service";
 import {ToastrService} from "ngx-toastr";
 
 @Component({
-  selector: 'app-modifier-settings',
-  standalone: true,
-  imports: [
-    KeyValuePipe,
-    NgIcon
-  ],
-  templateUrl: './modifier-settings.component.html',
-  styleUrl: './modifier-settings.component.css'
+    selector: 'app-modifier-settings',
+    imports: [
+        KeyValuePipe,
+        NgIcon
+    ],
+    templateUrl: './modifier-settings.component.html',
+    styleUrl: './modifier-settings.component.css'
 })
 export class ModifierSettingsComponent implements OnInit {
 

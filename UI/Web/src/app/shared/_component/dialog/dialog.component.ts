@@ -3,13 +3,12 @@ import {ReplaySubject} from "rxjs";
 import {NgClass} from "@angular/common";
 
 @Component({
-  selector: 'app-dialog',
-  standalone: true,
-  imports: [
-    NgClass
-  ],
-  templateUrl: './dialog.component.html',
-  styleUrl: './dialog.component.css'
+    selector: 'app-dialog',
+    imports: [
+        NgClass
+    ],
+    templateUrl: './dialog.component.html',
+    styleUrl: './dialog.component.css'
 })
 export class DialogComponent implements OnInit {
 

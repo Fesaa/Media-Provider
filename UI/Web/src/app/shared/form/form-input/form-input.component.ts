@@ -2,14 +2,13 @@ import {Component, Input, OnInit} from '@angular/core';
 import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 @Component({
-  selector: 'app-form-input',
-  standalone: true,
+    selector: 'app-form-input',
     imports: [
         FormsModule,
         ReactiveFormsModule
     ],
-  templateUrl: './form-input.component.html',
-  styleUrl: './form-input.component.css'
+    templateUrl: './form-input.component.html',
+    styleUrl: './form-input.component.css'
 })
 export class FormInputComponent {
 

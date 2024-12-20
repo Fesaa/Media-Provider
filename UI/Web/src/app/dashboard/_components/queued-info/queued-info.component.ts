@@ -9,16 +9,15 @@ import {SpeedPipe} from "../../../_pipes/speed.pipe";
 import {SpeedTypePipe} from "../../../_pipes/speed-type.pipe";
 
 @Component({
-  selector: 'app-queued-info',
-  standalone: true,
-  imports: [
-    ContentTitlePipe,
-    NgIcon,
-    SpeedPipe,
-    SpeedTypePipe
-  ],
-  templateUrl: './queued-info.component.html',
-  styleUrl: './queued-info.component.css'
+    selector: 'app-queued-info',
+    imports: [
+        ContentTitlePipe,
+        NgIcon,
+        SpeedPipe,
+        SpeedTypePipe
+    ],
+    templateUrl: './queued-info.component.html',
+    styleUrl: './queued-info.component.css'
 })
 export class QueuedInfoComponent {
   @Input({required: true}) info!: QueueStat;

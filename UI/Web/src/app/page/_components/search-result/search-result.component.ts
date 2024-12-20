@@ -11,14 +11,13 @@ import {ToastrService} from "ngx-toastr";
 import {ImageService} from "../../../_services/image.service";
 
 @Component({
-  selector: 'app-search-result',
-  standalone: true,
-  imports: [
-    NgIcon
-  ],
-  templateUrl: './search-result.component.html',
-  styleUrl: './search-result.component.css',
-  animations: [bounceIn200ms, dropAnimation]
+    selector: 'app-search-result',
+    imports: [
+        NgIcon
+    ],
+    templateUrl: './search-result.component.html',
+    styleUrl: './search-result.component.css',
+    animations: [bounceIn200ms, dropAnimation]
 })
 export class SearchResultComponent {
 

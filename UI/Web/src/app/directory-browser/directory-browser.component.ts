@@ -9,15 +9,14 @@ import {Clipboard} from "@angular/cdk/clipboard";
 import {dropAnimation} from "../_animations/drop-animation";
 
 @Component({
-  selector: 'app-directory-browser',
-  standalone: true,
-  imports: [
-    FormsModule,
-    NgIcon
-  ],
-  templateUrl: './directory-browser.component.html',
-  styleUrl: './directory-browser.component.css',
-  animations: [dropAnimation],
+    selector: 'app-directory-browser',
+    imports: [
+        FormsModule,
+        NgIcon
+    ],
+    templateUrl: './directory-browser.component.html',
+    styleUrl: './directory-browser.component.css',
+    animations: [dropAnimation]
 })
 export class DirectoryBrowserComponent implements OnInit{
 

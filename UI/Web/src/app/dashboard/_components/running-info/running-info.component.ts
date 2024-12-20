@@ -12,19 +12,18 @@ import {dropAnimation} from "../../../_animations/drop-animation";
 import { TimePipe } from "../../../_pipes/time.pipe";
 
 @Component({
-  selector: 'app-running-info',
-  standalone: true,
-  imports: [
-    ContentTitlePipe,
-    NgIcon,
-    SpeedPipe,
-    SpeedTypePipe,
-    DirectoryBrowserComponent,
-    TimePipe
-  ],
-  templateUrl: './running-info.component.html',
-  styleUrl: './running-info.component.css',
-  animations: [dropAnimation]
+    selector: 'app-running-info',
+    imports: [
+        ContentTitlePipe,
+        NgIcon,
+        SpeedPipe,
+        SpeedTypePipe,
+        DirectoryBrowserComponent,
+        TimePipe
+    ],
+    templateUrl: './running-info.component.html',
+    styleUrl: './running-info.component.css',
+    animations: [dropAnimation]
 })
 export class RunningInfoComponent {
 

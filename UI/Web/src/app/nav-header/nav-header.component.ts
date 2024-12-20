@@ -10,16 +10,15 @@ import {Observable} from "rxjs";
 import {dropAnimation} from "../_animations/drop-animation";
 
 @Component({
-  selector: 'app-nav-header',
-  standalone: true,
-  imports: [
-    RouterLink,
-    NgClass,
-    AsyncPipe
-  ],
-  templateUrl: './nav-header.component.html',
-  styleUrl: './nav-header.component.css',
-  animations: [dropAnimation]
+    selector: 'app-nav-header',
+    imports: [
+        RouterLink,
+        NgClass,
+        AsyncPipe
+    ],
+    templateUrl: './nav-header.component.html',
+    styleUrl: './nav-header.component.css',
+    animations: [dropAnimation]
 })
 export class NavHeaderComponent implements OnInit {
 

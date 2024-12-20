@@ -2,12 +2,11 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import {NgIcon} from "@ng-icons/core";
 
 @Component({
-  selector: 'app-paginator',
-  templateUrl: './paginator.component.html',
-  imports: [
-    NgIcon,
-  ],
-  standalone: true
+    selector: 'app-paginator',
+    templateUrl: './paginator.component.html',
+    imports: [
+        NgIcon,
+    ]
 })
 export class PaginatorComponent implements OnInit {
   @Input() totalPages: number = 1;

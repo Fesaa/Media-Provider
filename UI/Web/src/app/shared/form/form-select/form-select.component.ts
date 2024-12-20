@@ -3,15 +3,14 @@ import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {NgIcon} from "@ng-icons/core";
 
 @Component({
-  selector: 'app-form-select',
-  standalone: true,
-  imports: [
-    FormsModule,
-    NgIcon,
-    ReactiveFormsModule
-  ],
-  templateUrl: './form-select.component.html',
-  styleUrl: './form-select.component.css'
+    selector: 'app-form-select',
+    imports: [
+        FormsModule,
+        NgIcon,
+        ReactiveFormsModule
+    ],
+    templateUrl: './form-select.component.html',
+    styleUrl: './form-select.component.css'
 })
 export class FormSelectComponent {
 

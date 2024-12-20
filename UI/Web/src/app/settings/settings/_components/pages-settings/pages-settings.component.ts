@@ -18,23 +18,22 @@ import {hasPermission, Perm, User} from "../../../../_models/user";
 import {AccountService} from "../../../../_services/account.service";
 
 @Component({
-  selector: 'app-pages-settings',
-  standalone: true,
-  imports: [
-    RouterLink,
-    NgIcon,
-    ReactiveFormsModule,
-    FormInputComponent,
-    FormSelectComponent,
-    KeyValuePipe,
-    TitleCasePipe,
-    ModifierSettingsComponent,
-    DirectorySettingsComponent,
-    ProviderSettingsComponent
-  ],
-  templateUrl: './pages-settings.component.html',
-  styleUrl: './pages-settings.component.css',
-  animations: [dropAnimation],
+    selector: 'app-pages-settings',
+    imports: [
+        RouterLink,
+        NgIcon,
+        ReactiveFormsModule,
+        FormInputComponent,
+        FormSelectComponent,
+        KeyValuePipe,
+        TitleCasePipe,
+        ModifierSettingsComponent,
+        DirectorySettingsComponent,
+        ProviderSettingsComponent
+    ],
+    templateUrl: './pages-settings.component.html',
+    styleUrl: './pages-settings.component.css',
+    animations: [dropAnimation]
 })
 export class PagesSettingsComponent implements OnInit {
 

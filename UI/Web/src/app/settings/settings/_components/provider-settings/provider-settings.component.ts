@@ -4,13 +4,12 @@ import {TitleCasePipe} from "@angular/common";
 import {FormGroup} from "@angular/forms";
 
 @Component({
-  selector: 'app-provider-settings',
-  standalone: true,
-  imports: [
-    TitleCasePipe
-  ],
-  templateUrl: './provider-settings.component.html',
-  styleUrl: './provider-settings.component.css'
+    selector: 'app-provider-settings',
+    imports: [
+        TitleCasePipe
+    ],
+    templateUrl: './provider-settings.component.html',
+    styleUrl: './provider-settings.component.css'
 })
 export class ProviderSettingsComponent {
 

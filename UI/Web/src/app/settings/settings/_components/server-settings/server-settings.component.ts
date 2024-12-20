@@ -10,17 +10,16 @@ import {NgIcon} from "@ng-icons/core";
 import {Clipboard} from "@angular/cdk/clipboard";
 
 @Component({
-  selector: 'app-server-settings',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    FormInputComponent,
-    FormSelectComponent,
-    NgIcon
-  ],
-  templateUrl: './server-settings.component.html',
-  styleUrl: './server-settings.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-server-settings',
+    imports: [
+        ReactiveFormsModule,
+        FormInputComponent,
+        FormSelectComponent,
+        NgIcon
+    ],
+    templateUrl: './server-settings.component.html',
+    styleUrl: './server-settings.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServerSettingsComponent implements OnInit {
 

@@ -7,15 +7,14 @@ import {animate, query, sequence, stagger, style, transition, trigger} from "@an
 import {dropAnimation} from "../../../_animations/drop-animation";
 
 @Component({
-  selector: 'app-multi-modifier',
-  standalone: true,
-  imports: [
-    KeyValuePipe,
-    NgIcon
-  ],
-  templateUrl: './multi-modifier.component.html',
-  styleUrl: './multi-modifier.component.css',
-  animations: [dropAnimation]
+    selector: 'app-multi-modifier',
+    imports: [
+        KeyValuePipe,
+        NgIcon
+    ],
+    templateUrl: './multi-modifier.component.html',
+    styleUrl: './multi-modifier.component.css',
+    animations: [dropAnimation]
 })
 export class MultiModifierComponent {
 
