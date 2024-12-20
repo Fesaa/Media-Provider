@@ -1,0 +1,22 @@
+site_name: Media Provider Documentation
+site_url: ""
+
+nav:
+  - Home: index.md
+  - Usage:
+      - Installation: installation.md
+      - Dashboard: dashboard.md
+      - Setup: setup.md
+      - Downloading: downloading.md
+      - Subscriptions: subscriptions.md
+      - Users: users.md
+  - Providers:
+      - Nyaa: nyaa.md
+      - YTS: yts.md
+      - Lime: lime.md
+      - Subsplease: subsplease.md
+      - Mangadex: mangadex.md
+      - Webtoon: webtoon.md
+      - Dynasty: dynasty.md
+
+theme: readthedocs
