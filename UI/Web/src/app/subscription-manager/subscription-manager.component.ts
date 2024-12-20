@@ -28,7 +28,7 @@ export class SubscriptionManagerComponent implements OnInit {
   ngOnInit(): void {
     this.navService.setNavVisibility(true)
     this.subscriptionService.all().subscribe(s => {
-      this.subscriptions = s;
+      this.subscriptions = s ?? [];
     })
     this.subscriptionService.providers().subscribe(providers => {
       this.allowedProviders = providers;
@@ -41,7 +41,7 @@ export class SubscriptionManagerComponent implements OnInit {
 
   reload() {
     this.subscriptionService.all().subscribe(s => {
-      this.subscriptions = s;
+      this.subscriptions = s ?? [];
     })
   }
 

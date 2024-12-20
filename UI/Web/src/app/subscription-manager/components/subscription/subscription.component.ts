@@ -1,7 +1,7 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {RefreshFrequency, Subscription} from "../../../_models/subscription";
 import {SubscriptionService} from "../../../_services/subscription.service";
-import {DatePipe, NgClass, NgForOf, NgIf} from "@angular/common";
+import {DatePipe, NgClass, NgForOf, NgIf, TitleCasePipe} from "@angular/common";
 import {RefreshFrequencyPipe} from "../../../_pipes/refresh-frequency.pipe";
 import {NgIcon} from "@ng-icons/core";
 import {DirectoryBrowserComponent} from "../../../directory-browser/directory-browser.component";
@@ -10,32 +10,39 @@ import {ToastrService} from "ngx-toastr";
 import {DialogService} from "../../../_services/dialog.service";
 import {FormsModule} from "@angular/forms";
 import {Observable} from "rxjs";
+import {Tooltip} from "primeng/tooltip";
+import {Provider} from "../../../_models/page";
 
 @Component({
     selector: 'app-subscription',
-    imports: [
-        NgClass,
-        RefreshFrequencyPipe,
-        NgIcon,
-        SubscriptionExternalUrlPipe,
-        FormsModule,
-        NgForOf
-    ],
+  imports: [
+    NgClass,
+    RefreshFrequencyPipe,
+    NgIcon,
+    SubscriptionExternalUrlPipe,
+    FormsModule,
+    NgForOf,
+    Tooltip,
+    TitleCasePipe,
+    DatePipe
+  ],
     templateUrl: './subscription.component.html',
     styleUrl: './subscription.component.css'
 })
 export class SubscriptionComponent implements OnInit {
 
   @Input({required: true}) subscription!: Subscription;
+  @Input({required: true}) providers!: Provider[];
   @Output() onDelete = new EventEmitter<number>();
   @Output() onSave = new EventEmitter<void>();
 
   editMode: boolean = false;
 
   refreshFrequencies = Object.keys(RefreshFrequency)
-    .filter((key) => isNaN(Number(key))) // Exclude numeric keys
+    .filter((key) => isNaN(Number(key)))
     .map((key) => ({ label: key, value: RefreshFrequency[key as keyof typeof RefreshFrequency] }));
 
+  providerOptions!: {label: string; value: Provider}[];
   constructor(private subscriptionService: SubscriptionService,
               private toastR: ToastrService,
               private dialogService: DialogService,
@@ -50,6 +57,11 @@ export class SubscriptionComponent implements OnInit {
     if (this.subscription.id == -1) {
       this.editMode = true;
     }
+
+    this.providerOptions = this.providers.map((provider) => {
+      const key = Provider[provider];
+      return { label: key, value: provider };
+    });
   }
 
   async delete() {
@@ -76,10 +88,6 @@ export class SubscriptionComponent implements OnInit {
     })
   }
 
-  protected readonly RefreshFrequencyPipe = RefreshFrequencyPipe;
-  protected readonly RefreshFrequency = RefreshFrequency;
-  protected readonly Object = Object;
-
   async openDirSelector() {
     const dir = await this.dialogService.openDirBrowser("");
     if (dir == undefined) {
@@ -90,6 +98,9 @@ export class SubscriptionComponent implements OnInit {
   }
 
   saveSubscription() {
+    // monkey patch
+    this.subscription.refreshFrequency = Number(this.subscription.refreshFrequency);
+
     let obs: Observable<Subscription>;
     if (this.subscription.id == -1) {
       obs = this.subscriptionService.new(this.subscription);

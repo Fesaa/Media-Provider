@@ -2,7 +2,7 @@
 
   <div class="flex flex-col items-cen p-2">
     @for (sub of subscriptions; track sub.id) {
-      <app-subscription [subscription]="sub" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
+      <app-subscription [subscription]="sub" [providers]="allowedProviders" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
     } @empty {
       <span>No subscriptions</span>
     }

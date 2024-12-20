@@ -24,7 +24,8 @@ export enum Provider {
   LIMETORRENTS,
   SUBSPLEASE,
   MANGADEX,
-  WEBTOON
+  WEBTOON,
+  DYNASTY,
 }
 
 export const providerNames = Object.keys(Provider).filter(key => isNaN(Number(key))) as string[];

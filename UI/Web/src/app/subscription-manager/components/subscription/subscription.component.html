@@ -3,7 +3,9 @@
     <form (ngSubmit)="saveSubscription()">
       <div class="flex flex-col space-y-4">
         <div class="flex flex-col">
-          <label for="title" class="text-sm font-medium">Title</label>
+          <label for="title" class="text-sm font-medium"
+                 pTooltip="This is only for yourself"
+          >Title</label>
           <input
             id="title"
             type="text"
@@ -15,15 +17,26 @@
         </div>
 
         <div class="flex flex-col">
-          <label for="contentId" class="text-sm font-medium">Content Id</label>
+          <label for="contentId"
+                 pTooltip="The id used by your provider. Make sure this is correct, consult documentation if you're unsure"
+                 tooltipPosition="bottom"
+                 class="text-sm font-medium">Content Id</label>
           <input
             id="contentId"
             type="text"
             [(ngModel)]="subscription.contentId"
-            name="title"
+            name="contentId"
             class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
             required
           />
+          <a
+            class="hover:text-blue-800 hover:underline text-sm"
+            href="{{subscription.contentId | subscriptionExternalUrl:subscription.provider}}"
+            target="_blank"
+            pTooltip="Click to try out"
+          >
+            External link
+          </a>
         </div>
 
         <!--
@@ -72,6 +85,20 @@
           </select>
         </div>
 
+        <div class="flex flex-col">
+          <label for="provider" class="text-sm font-medium">Provider</label>
+          <select
+            id="provider"
+            [(ngModel)]="subscription.provider"
+            name="provider"
+            class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
+          >
+            <option *ngFor="let freq of providerOptions" [value]="freq.value">
+              {{ freq.label | titlecase }}
+            </option>
+          </select>
+        </div>
+
         <div class="flex justify-end space-x-2">
           <button
             type="button"
@@ -97,7 +124,10 @@
       <div class="flex items-center space-x-2">
         <h2 class="text-lg font-semibold">{{ subscription.info.title }}</h2>
         <ng-icon [name]="subscription.info.lastCheckSuccess ? 'heroCheckCircle' : 'heroXCircle'"
-                 [ngClass]="subscription.info.lastCheckSuccess ? 'text-green-500' : 'text-red-500'" size="16">
+                 [ngClass]="subscription.info.lastCheckSuccess ? 'text-green-500' : 'text-red-500'" size="16"
+                 [pTooltip]="(subscription.info.lastCheck | date) ?? 'Unknown'"
+                 tooltipPosition="top"
+        >
         </ng-icon>
       </div>
       <div class="flex flex-row space-x-2">

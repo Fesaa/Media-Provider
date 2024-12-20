@@ -10,6 +10,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
 	"log/slog"
+	"time"
 )
 
 var handler subscriptionHandler
@@ -35,7 +36,7 @@ func Init(db *db.Database) {
 	}
 
 	handler.StartAll()
-	//handler.scheduler.Start()
+	handler.scheduler.Start()
 }
 
 func Refresh(id int64) {
@@ -115,11 +116,19 @@ func (h *subscriptionHandler) toTask(sub models.Subscription) gocron.Task {
 			TempTitle: sub.Info.Title,
 			BaseDir:   sub.Info.BaseDir,
 		})
+		sub.Info.LastCheck = time.Now()
+		sub.Info.LastCheckSuccess = err == nil
+
 		if err != nil {
 			h.log.Error("Error downloading subscription, check config",
 				"id", sub.Id,
 				"contentId", sub.ContentId,
 				"error", err)
+
+		}
+
+		if err = h.db.Subscriptions.Update(&sub); err != nil {
+			h.log.Warn("Error updating subscription check time", "id", sub.Id, "err", err)
 		}
 	})
 }
