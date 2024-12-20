@@ -153,7 +153,7 @@ func (s *Subscriptions) New(model Subscription) (*Subscription, error) {
 }
 
 func upsert(tx *sql.Tx, s *Subscription) error {
-	_, err := tx.Exec("UPDATE subscriptions SET provider = $1, contentId = $2, refreshFrequency = 3 WHERE id = $4;", s.Provider, s.ContentId, s.RefreshFrequency, s.Id)
+	_, err := tx.Exec("UPDATE subscriptions SET provider = $1, contentId = $2, refreshFrequency = $3 WHERE id = $4;", s.Provider, s.ContentId, s.RefreshFrequency, s.Id)
 	if err != nil {
 		return err
 	}
