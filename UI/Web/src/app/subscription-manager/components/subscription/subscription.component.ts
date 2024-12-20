@@ -123,6 +123,7 @@ export class SubscriptionComponent implements OnInit {
 
     // monkey patch
     this.subscription.refreshFrequency = Number(this.subscription.refreshFrequency);
+    this.subscription.provider = Number(this.subscription.provider);
 
     let obs: Observable<Subscription>;
     if (this.subscription.id == -1) {
