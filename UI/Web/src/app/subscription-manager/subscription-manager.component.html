@@ -1,0 +1,17 @@
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen w-full">
+
+  <div class="flex flex-col items-cen p-2">
+    @for (sub of subscriptions; track sub.id) {
+      <app-subscription [subscription]="sub" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
+    } @empty {
+      <span>No subscriptions</span>
+    }
+
+    <div class="p-6 w-2/3 mx-auto my-4 text-black dark:text-white flex justify-end">
+      <ng-icon name="heroPlusCircle" size="48" (click)="addNew()"></ng-icon>
+    </div>
+
+
+  </div>
+
+</div>

@@ -9,7 +9,6 @@ import (
 	"github.com/Fesaa/Media-Provider/subscriptions"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
-	"os"
 	"slices"
 )
 
@@ -134,18 +133,18 @@ func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) err
 		return err
 	}
 
-	if slices.Contains(allowedProviders, sub.Provider) {
+	if !slices.Contains(allowedProviders, sub.Provider) {
 		return disallowedProvider
 	}
 
-	info, err := os.Stat(sub.Info.BaseDir)
+	/*info, err := os.Stat(sub.Info.BaseDir)
 	if err != nil {
 		return err
 	}
 
 	if !info.IsDir() {
 		return notADir
-	}
+	}*/
 
 	return nil
 }
@@ -159,9 +158,18 @@ func (sr *subscriptionRoutes) Delete(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 	}
 
+	if id == -1 {
+		return ctx.Status(400).JSON(fiber.Map{
+			"error": "Invalid id",
+			"id":    utils.CopyString(ctx.Params("id", "")),
+		})
+	}
+
 	if err = sr.db.Subscriptions.Delete(int64(id)); err != nil {
 		l.Error("Failed to delete subscription", "error", err)
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	if err = subscriptions.Delete(int64(id)); err != nil {

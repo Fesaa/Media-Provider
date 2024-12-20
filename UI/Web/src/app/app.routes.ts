@@ -20,6 +20,10 @@ export const routes: Routes = [
         loadChildren: () => import('./_routes/settings.routes').then(m => m.routes)
       },
       {path: '', pathMatch: 'full', redirectTo: 'home'},
+      {
+        path: 'subscriptions',
+        loadChildren: () => import('./_routes/subscriptions.routes').then(m => m.routes)
+      }
     ]
   },
   {

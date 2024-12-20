@@ -35,7 +35,7 @@ func Init(db *db.Database) {
 	}
 
 	handler.StartAll()
-	handler.scheduler.Start()
+	//handler.scheduler.Start()
 }
 
 func Refresh(id int64) {
@@ -69,6 +69,7 @@ func (h *subscriptionHandler) refresh(id int64) {
 			h.log.Error("Failed to remove job", "id", mappedUuid, "err", err)
 			return
 		}
+		h.log.Debug("Removed job", "id", mappedUuid, "subscriptionId", id)
 	}
 
 	sub, err := h.db.Subscriptions.Get(id)

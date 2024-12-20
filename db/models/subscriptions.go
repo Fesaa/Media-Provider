@@ -158,7 +158,7 @@ func upsert(tx *sql.Tx, s *Subscription) error {
 		return err
 	}
 
-	_, err = tx.Exec("UPDATE subscription_info SET title = $1, description = $3, baseDir = $5 WHERE subscription_id = $4;", s.Info.Title, s.Info.Description, s.Id, s.Info.BaseDir)
+	_, err = tx.Exec("UPDATE subscription_info SET title = $1, description = $2, baseDir = $4 WHERE subscription_id = $3;", s.Info.Title, s.Info.Description, s.Id, s.Info.BaseDir)
 	return err
 }
 

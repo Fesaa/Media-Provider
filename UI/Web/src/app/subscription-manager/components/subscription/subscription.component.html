@@ -1,0 +1,139 @@
+@if (editMode) {
+  <div class="bg-white dark:bg-gray-600 dark:border-gray-500 dark:border-2 shadow-lg rounded-lg p-6 w-2/3 mx-auto my-4 text-black dark:text-white">
+    <form (ngSubmit)="saveSubscription()">
+      <div class="flex flex-col space-y-4">
+        <div class="flex flex-col">
+          <label for="title" class="text-sm font-medium">Title</label>
+          <input
+            id="title"
+            type="text"
+            [(ngModel)]="subscription.info.title"
+            name="title"
+            class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
+            required
+          />
+        </div>
+
+        <div class="flex flex-col">
+          <label for="contentId" class="text-sm font-medium">Content Id</label>
+          <input
+            id="contentId"
+            type="text"
+            [(ngModel)]="subscription.contentId"
+            name="title"
+            class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
+            required
+          />
+        </div>
+
+        <!--
+        <div class="flex flex-col">
+          <label for="description" class="text-sm font-medium">Description</label>
+          <textarea
+            id="description"
+            [(ngModel)]="subscription.info.description"
+            name="description"
+            class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
+            rows="3"
+          ></textarea>
+        </div>
+        -->
+
+        <div class="flex items-center space-x-2">
+          <label for="baseDir" class="text-sm font-medium">Base Directory</label>
+          <input
+            id="baseDir"
+            type="text"
+            [(ngModel)]="subscription.info.baseDir"
+            name="baseDir"
+            class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 flex-grow"
+            readonly
+          />
+          <button
+            type="button"
+            (click)="openDirSelector()"
+            class="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors"
+          >
+            Select
+          </button>
+        </div>
+
+        <div class="flex flex-col">
+          <label for="refreshFrequency" class="text-sm font-medium">Refresh Frequency</label>
+          <select
+            id="refreshFrequency"
+            [(ngModel)]="subscription.refreshFrequency"
+            name="refreshFrequency"
+            class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
+          >
+            <option *ngFor="let freq of refreshFrequencies" [value]="freq.value">
+              {{ freq.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="flex justify-end space-x-2">
+          <button
+            type="button"
+            (click)="toggleEditMode()"
+            class="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+} @else {
+  <div class="bg-white dark:bg-gray-600 dark:border-gray-500 dark:border-2 shadow-lg rounded-lg p-6 w-2/3 mx-auto my-4 text-black dark:text-white ">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <h2 class="text-lg font-semibold">{{ subscription.info.title }}</h2>
+        <ng-icon [name]="subscription.info.lastCheckSuccess ? 'heroCheckCircle' : 'heroXCircle'"
+                 [ngClass]="subscription.info.lastCheckSuccess ? 'text-green-500' : 'text-red-500'" size="16">
+        </ng-icon>
+      </div>
+      <div class="flex flex-row space-x-2">
+        <button (click)="toggleEditMode()"
+          class="flex items-center px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors">
+          <ng-icon name="heroPencil" size="16"></ng-icon>
+        </button>
+        <button
+          (click)="delete()"
+          class="flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors">
+          <ng-icon name="heroTrash" size="16"></ng-icon>
+        </button>
+      </div>
+    </div>
+
+    @if (subscription.info.description !== "") {
+      <div>
+        <p class="text-sm text-gray-700 dark:text-gray-300">{{ subscription.info.description }}</p>
+      </div>
+    }
+
+    <div>
+      <a
+        class="hover:text-blue-800 hover:underline text-sm"
+        href="{{subscription.contentId | subscriptionExternalUrl:subscription.provider}}"
+        target="_blank"
+      >
+        External link
+      </a>
+      <!-- <p><strong>Last Check:</strong> {{ subscription.info.lastCheck | date:'medium' }}</p> -->
+      <div class="text-sm text-gray-600 dark:text-gray-300">
+        <p><strong>Refresh Frequency:</strong> {{ subscription.refreshFrequency | refreshFrequency }}</p>
+      </div>
+    </div>
+
+
+  </div>
+
+}
