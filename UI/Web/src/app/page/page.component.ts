@@ -24,13 +24,11 @@ import {fadeOut} from "../_animations/fade-out";
 @Component({
     selector: 'app-page',
     imports: [
-        KeyValuePipe,
         ReactiveFormsModule,
         DropdownModifierComponent,
         MultiModifierComponent,
         SearchResultComponent,
         PaginatorComponent,
-        DirectoryBrowserComponent,
         NgIcon,
         FormInputComponent
     ],

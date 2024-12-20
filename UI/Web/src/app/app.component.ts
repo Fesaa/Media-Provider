@@ -8,7 +8,7 @@ import {DialogService} from "./_services/dialog.service";
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, AsyncPipe, NavHeaderComponent],
+    imports: [RouterOutlet, NavHeaderComponent],
     templateUrl: './app.component.html',
     styleUrl: './app.component.css'
 })

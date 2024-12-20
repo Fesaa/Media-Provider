@@ -11,7 +11,6 @@ import {combineLatest} from "rxjs";
 @Component({
     selector: 'app-dashboard',
     imports: [
-        AsyncPipe,
         SuggestionDashboardComponent,
         RunningInfoComponent,
         QueuedInfoComponent

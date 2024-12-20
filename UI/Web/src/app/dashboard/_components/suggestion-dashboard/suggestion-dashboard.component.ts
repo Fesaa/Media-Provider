@@ -10,7 +10,6 @@ import {ToastrService} from "ngx-toastr";
 @Component({
     selector: 'app-suggestion-dashboard',
     imports: [
-        AsyncPipe,
         RouterLink,
         NgIcon
     ],

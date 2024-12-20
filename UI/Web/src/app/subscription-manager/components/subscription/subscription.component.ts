@@ -97,7 +97,30 @@ export class SubscriptionComponent implements OnInit {
     this.subscription.info.baseDir = dir;
   }
 
+  private valid(): boolean {
+    if (this.subscription.contentId == "") {
+      this.toastR.error("Subscription id must be set");
+      return false;
+    }
+
+    if (this.subscription.info.title == "") {
+      this.toastR.error("Subscription title must be set");
+      return false;
+    }
+
+    if (this.subscription.info.baseDir == "") {
+      this.toastR.error("Subscription baseDir must be set");
+      return false;
+    }
+
+    return true;
+  }
+
   saveSubscription() {
+    if (!this.valid()) {
+      return;
+    }
+
     // monkey patch
     this.subscription.refreshFrequency = Number(this.subscription.refreshFrequency);
 

@@ -12,10 +12,8 @@ import {ToastrService} from "ngx-toastr";
 @Component({
     selector: 'app-user-preview',
     imports: [
-        FormInputComponent,
         PermissionSettingsComponent,
         ReactiveFormsModule,
-        TitleCasePipe,
         NgIcon
     ],
     templateUrl: './user-preview.component.html',

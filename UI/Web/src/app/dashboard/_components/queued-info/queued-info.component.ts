@@ -13,8 +13,6 @@ import {SpeedTypePipe} from "../../../_pipes/speed-type.pipe";
     imports: [
         ContentTitlePipe,
         NgIcon,
-        SpeedPipe,
-        SpeedTypePipe
     ],
     templateUrl: './queued-info.component.html',
     styleUrl: './queued-info.component.css'

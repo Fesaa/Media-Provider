@@ -24,9 +24,6 @@ import {AccountService} from "../../../../_services/account.service";
         NgIcon,
         ReactiveFormsModule,
         FormInputComponent,
-        FormSelectComponent,
-        KeyValuePipe,
-        TitleCasePipe,
         ModifierSettingsComponent,
         DirectorySettingsComponent,
         ProviderSettingsComponent

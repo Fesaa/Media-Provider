@@ -6,7 +6,6 @@ import {NgIcon} from "@ng-icons/core";
     selector: 'app-form-select',
     imports: [
         FormsModule,
-        NgIcon,
         ReactiveFormsModule
     ],
     templateUrl: './form-select.component.html',
