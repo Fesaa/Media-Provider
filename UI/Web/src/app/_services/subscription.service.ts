@@ -31,7 +31,7 @@ export class SubscriptionService {
   }
 
   update(s: Subscription) {
-    this.httpClient.post(`${this.baseUrl}/update`, s, {responseType: 'text'});
+    return this.httpClient.post(`${this.baseUrl}/update`, s, {responseType: 'text'});
   }
 
   providers(): Observable<Provider[]> {
