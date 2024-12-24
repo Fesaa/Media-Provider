@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/Fesaa/Media-Provider/log"
 	"time"
 )
@@ -12,6 +13,13 @@ type Subscription struct {
 	ContentId        string           `json:"contentId" validator:"required"`
 	RefreshFrequency RefreshFrequency `json:"refreshFrequency" validator:"required"`
 	Info             Info             `json:"info" validator:"required"`
+}
+
+func (s *Subscription) ShouldRefresh(old *Subscription) bool {
+	return s.Provider != old.Provider ||
+		s.RefreshFrequency != old.RefreshFrequency ||
+		s.ContentId != old.ContentId ||
+		s.Info.BaseDir != old.Info.BaseDir
 }
 
 func (s *Subscription) read(scanner scanner) error {
@@ -98,6 +106,9 @@ func (s *Subscriptions) Get(i int64) (*Subscription, error) {
 
 	var sub Subscription
 	if err := sub.read(row); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &sub, nil

@@ -9,6 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/subscriptions"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
+	"log/slog"
 	"slices"
 )
 
@@ -86,12 +87,24 @@ func (sr *subscriptionRoutes) Update(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err := sr.db.Subscriptions.Update(&sub); err != nil {
-		l.Error("Failed to upsert subscription", "error", err)
+	prev, err := sr.db.Subscriptions.Get(sub.Id)
+	if err != nil {
+		l.Warn("Failed to get subscription", "error", err, slog.Int64("id", sub.Id))
 		return fiber.ErrInternalServerError
 	}
 
-	subscriptions.Refresh(sub.Id)
+	if prev == nil {
+		return fiber.ErrNotFound
+	}
+
+	if err = sr.db.Subscriptions.Update(&sub); err != nil {
+		l.Error("Failed to upsert subscription", "error", err, slog.Int64("id", sub.Id))
+		return fiber.ErrInternalServerError
+	}
+
+	if sub.ShouldRefresh(prev) {
+		subscriptions.Refresh(sub.Id)
+	}
 
 	return ctx.SendStatus(fiber.StatusOK)
 }
@@ -150,6 +163,12 @@ func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) err
 }
 
 func (sr *subscriptionRoutes) Delete(l *log.Logger, ctx *fiber.Ctx) error {
+	user := ctx.Locals("user").(models.User)
+	if !user.HasPermission(models.PermWriteConfig) {
+		l.Warn("user does not have permission to delete subscriptions", "user", user.Name)
+		return fiber.ErrUnauthorized
+	}
+
 	id, err := ctx.ParamsInt("id", -1)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
