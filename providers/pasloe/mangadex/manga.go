@@ -52,6 +52,8 @@ type manga struct {
 	totalVolumes     int
 	foundLastVolume  bool
 	foundLastChapter bool
+
+	hasWarned bool
 }
 
 func (m *manga) Title() string {
@@ -265,7 +267,8 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 			ci.Count = m.totalChapters
 		} else if m.foundLastChapter && m.foundLastVolume {
 			ci.Count = m.totalVolumes
-		} else {
+		} else if !m.hasWarned {
+			m.hasWarned = true
 			m.Log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
 				slog.String("lastChapter", m.info.Attributes.LastChapter),
 				slog.Bool("foundLastChapter", m.foundLastChapter),
