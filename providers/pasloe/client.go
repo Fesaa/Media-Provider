@@ -125,7 +125,12 @@ func (c *client) startNext() {
 }
 
 func (c *client) deleteFiles(content api.Downloadable) {
-	dir := path.Join(c.GetBaseDir(), content.GetDownloadDir())
+	downloadDir := content.GetDownloadDir()
+	if downloadDir == "" {
+		log.Error("download dir is empty, not removing any files")
+		return
+	}
+	dir := path.Join(c.GetBaseDir(), downloadDir)
 	skip := content.GetOnDiskContent()
 
 	l := log.With("dir", dir, "contentId", content.Id())
