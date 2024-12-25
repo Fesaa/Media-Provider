@@ -106,14 +106,12 @@ func (p *Pages) Upsert(pages ...*Page) error {
 	if err != nil {
 		return err
 	}
-	defer func(tx *sql.Tx) {
-		if err = tx.Rollback(); err != nil {
-			log.Warn("failed to rollback transaction", "err", err)
-		}
-	}(tx)
 
 	for _, page := range pages {
 		if err = upsertPage(tx, page); err != nil {
+			if re := tx.Rollback(); re != nil {
+				log.Warn("failed to rollback transaction", "err", re)
+			}
 			return err
 		}
 	}
