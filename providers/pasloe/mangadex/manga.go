@@ -242,7 +242,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
 	ci.Web = strings.Join(m.info.FormattedLinks(), ",")
 
-	if m.totalVolumes == 0 {
+	if m.totalVolumes == 0 && chapter.Attributes.PublishedAt != "" {
 		ci.Title = chapter.Attributes.Title
 
 		publishTime, err := time.Parse(timeLayout, chapter.Attributes.PublishedAt)
