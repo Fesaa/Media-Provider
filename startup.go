@@ -44,7 +44,7 @@ func SetupApp(baseUrl string) *fiber.App {
 		return c.SendStatus(fiber.StatusOK)
 	})
 
-	prometheus := fiberprometheus.New("media-provider")
+	prometheus := fiberprometheus.NewWithDefaultRegistry("media-provider")
 	prometheus.RegisterAt(app, "/api/metrics", auth.MiddlewareWithApiKey)
 	app.Use(prometheus.Middleware)
 
