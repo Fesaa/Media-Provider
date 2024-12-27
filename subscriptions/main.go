@@ -20,6 +20,8 @@ type subscriptionHandler struct {
 	db        *db.Database
 	idMapper  map[int64]uuid.UUID
 	log       *log.Logger
+
+	subUpdator chan models.Subscription
 }
 
 func Init(db *db.Database) {
@@ -29,14 +31,32 @@ func Init(db *db.Database) {
 	}
 
 	handler = subscriptionHandler{
-		scheduler: s,
-		db:        db,
-		idMapper:  make(map[int64]uuid.UUID),
-		log:       log.With("handler", "subscriptions"),
+		scheduler:  s,
+		db:         db,
+		idMapper:   make(map[int64]uuid.UUID),
+		log:        log.With("handler", "subscriptions"),
+		subUpdator: make(chan models.Subscription, 100),
 	}
 
+	handler.initUpdateProcessor()
+	
 	handler.StartAll()
 	handler.scheduler.Start()
+}
+
+func (h *subscriptionHandler) initUpdateProcessor() {
+	go func() {
+		for sub := range h.subUpdator {
+			err := h.db.Subscriptions.Update(sub)
+			if err != nil {
+				h.log.Warn("Error updating subscription check time",
+					"id", sub.Id, "err", err)
+			} else {
+				h.log.Info("Subscription updated successfully",
+					"id", sub.Id, "lastCheck", sub.Info.LastCheck)
+			}
+		}
+	}()
 }
 
 func Refresh(id int64) {
@@ -125,11 +145,9 @@ func (h *subscriptionHandler) toTask(sub models.Subscription) gocron.Task {
 				"id", sub.Id,
 				"contentId", sub.ContentId,
 				"error", err)
-
+			return
 		}
 
-		if err = h.db.Subscriptions.Update(&sub); err != nil {
-			h.log.Warn("Error updating subscription check time", "id", sub.Id, "err", err)
-		}
+		h.subUpdator <- sub
 	})
 }

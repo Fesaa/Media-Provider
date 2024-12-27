@@ -97,7 +97,7 @@ func (sr *subscriptionRoutes) Update(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	}
 
-	if err = sr.db.Subscriptions.Update(&sub); err != nil {
+	if err = sr.db.Subscriptions.Update(sub); err != nil {
 		l.Error("Failed to upsert subscription", "error", err, slog.Int64("id", sub.Id))
 		return fiber.ErrInternalServerError
 	}

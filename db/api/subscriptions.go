@@ -7,6 +7,6 @@ type Subscriptions interface {
 	Get(int64) (*models.Subscription, error)
 
 	New(models.Subscription) (*models.Subscription, error)
-	Update(...*models.Subscription) error
+	Update(models.Subscription) error
 	Delete(int64) error
 }

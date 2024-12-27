@@ -114,19 +114,17 @@ func (s *Subscriptions) Get(i int64) (*Subscription, error) {
 	return &sub, nil
 }
 
-func (s *Subscriptions) Update(subscriptions ...*Subscription) error {
+func (s *Subscriptions) Update(sub Subscription) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
 
-	for _, sub := range subscriptions {
-		if err = upsert(tx, sub); err != nil {
-			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				log.Error("failed to rollback transaction", "err", err, "rollbackErr", rollbackErr)
-			}
-			return err
+	if err = upsert(tx, &sub); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			log.Error("failed to rollback transaction", "err", err, "rollbackErr", rollbackErr)
 		}
+		return err
 	}
 
 	return tx.Commit()
