@@ -71,6 +71,9 @@ CREATE TABLE subscription_info (
 );
 `,
 		`ALTER TABLE subscription_info ADD COLUMN baseDir TEXT NOT NULL DEFAULT '';`,
+		`ALTER TABLE subscription_info DROP COLUMN lastCheck;`,
+		`ALTER TABLE subscription_info ADD COLUMN lastCheck TEXT NOT NULL DEFAULT '';
+		 UPDATE subscription_info SET lastCheck = strftime('%Y-%m-%dT%H:%M:%fZ', datetime('now'));`,
 	}
 )
 

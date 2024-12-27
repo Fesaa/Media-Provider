@@ -24,8 +24,22 @@ func (s *Subscription) ShouldRefresh(old *Subscription) bool {
 
 func (s *Subscription) read(scanner scanner) error {
 	s.Info = Info{}
-	return scanner.Scan(&s.Id, &s.Provider, &s.ContentId, &s.RefreshFrequency,
-		&s.Info.SubscriptionId, &s.Info.Title, &s.Info.Description, &s.Info.LastCheck, &s.Info.LastCheckSuccess, &s.Info.BaseDir)
+
+	var lastCheckStr string
+
+	err := scanner.Scan(&s.Id, &s.Provider, &s.ContentId, &s.RefreshFrequency,
+		&s.Info.SubscriptionId, &s.Info.Title, &s.Info.Description, &lastCheckStr, &s.Info.LastCheckSuccess, &s.Info.BaseDir)
+	if err != nil {
+		return err
+	}
+
+	parsedTime, err := time.Parse(time.RFC3339, lastCheckStr)
+	if err != nil {
+		return err
+	}
+
+	s.Info.LastCheck = parsedTime
+	return nil
 }
 
 type RefreshFrequency int

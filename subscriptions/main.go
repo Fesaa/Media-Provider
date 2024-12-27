@@ -108,9 +108,14 @@ func (h *subscriptionHandler) new(sub models.Subscription) {
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
 		gocron.WithStartAt(func() gocron.StartAtOption {
 			if diff > sub.RefreshFrequency.AsDuration() {
+				h.log.Debug("subscription scheduled to execute immediately", "id", sub.Id)
 				return gocron.WithStartImmediately()
 			}
-			return gocron.WithStartDateTime(time.Now().Add(diff))
+
+			startTime := time.Now().Add(sub.RefreshFrequency.AsDuration() - diff)
+
+			h.log.Debug("subscription scheduled to execute", "id", sub.Id, "title", sub.Info.Title, slog.Time("at", startTime))
+			return gocron.WithStartDateTime(startTime)
 		}()))
 
 	if err != nil {
@@ -119,11 +124,9 @@ func (h *subscriptionHandler) new(sub models.Subscription) {
 	}
 
 	h.idMapper[sub.Id] = j.ID()
-	h.log.Info("Subscription scheduled",
+	h.log.Debug("Subscription scheduled",
 		"subId", sub.Id, "contentId", sub.ContentId, "uuid", j.ID(), "title", sub.Info.Title,
-		slog.Duration("duration", sub.RefreshFrequency.AsDuration()),
-		slog.Duration("firstExecutingIn", diff),
-	)
+		slog.Duration("duration", sub.RefreshFrequency.AsDuration()))
 }
 
 func (h *subscriptionHandler) StartAll() {
@@ -136,6 +139,7 @@ func (h *subscriptionHandler) StartAll() {
 	for _, sub := range subs {
 		h.new(sub)
 	}
+	h.log.Info("Subscriptions loaded from database, and scheduled", slog.Int("amount", len(subs)))
 }
 
 func (h *subscriptionHandler) toTask(sub models.Subscription) gocron.Task {
