@@ -136,6 +136,13 @@
           <ng-icon name="heroPencil" size="16"></ng-icon>
         </button>
         <button
+          (click)="runOnce()"
+          class="flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors"
+          pTooltip="Will run the download once, not changed last checked"
+        >
+          <ng-icon size="16" name="heroArrowDownTray"></ng-icon>
+        </button>
+        <button
           (click)="delete()"
           class="flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors">
           <ng-icon name="heroTrash" size="16"></ng-icon>

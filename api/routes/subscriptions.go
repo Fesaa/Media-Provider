@@ -5,7 +5,9 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/subscriptions"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
@@ -33,10 +35,40 @@ func RegisterSubscriptionRoutes(router fiber.Router, db *db.Database, cache fibe
 	group.Post("/update", wrap(sr.Update))
 	group.Post("/new", wrap(sr.New))
 	group.Delete("/:id", wrap(sr.Delete))
+	group.Post("/run-once/:id", wrap(sr.RunOnce))
 }
 
 func (sr *subscriptionRoutes) Providers(ctx *fiber.Ctx) error {
 	return ctx.JSON(allowedProviders)
+}
+
+func (sr *subscriptionRoutes) RunOnce(l *log.Logger, ctx *fiber.Ctx) error {
+	id, err := ctx.ParamsInt("id", -1)
+	if err != nil || id == -1 {
+		return ctx.Status(400).JSON(fiber.Map{
+			"error": "Invalid id",
+			"id":    utils.CopyString(ctx.Params("id", "")),
+		})
+	}
+
+	sub, err := sr.db.Subscriptions.Get(int64(id))
+	if err != nil {
+		l.Error("Failed to get subscription", "error", err)
+		return fiber.ErrInternalServerError
+	}
+
+	err = providers.Download(payload.DownloadRequest{
+		Id:        sub.ContentId,
+		Provider:  sub.Provider,
+		TempTitle: sub.Info.Title,
+		BaseDir:   sub.Info.BaseDir,
+	})
+	if err != nil {
+		l.Error("Failed to download subscription", "error", err)
+		return fiber.ErrInternalServerError
+	}
+
+	return ctx.Status(fiber.StatusAccepted).JSON(fiber.Map{})
 }
 
 func (sr *subscriptionRoutes) All(l *log.Logger, ctx *fiber.Ctx) error {
@@ -51,7 +83,7 @@ func (sr *subscriptionRoutes) All(l *log.Logger, ctx *fiber.Ctx) error {
 
 func (sr *subscriptionRoutes) Get(l *log.Logger, ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id", -1)
-	if err != nil {
+	if err != nil || id == -1 {
 		return ctx.Status(400).JSON(fiber.Map{
 			"error": "Invalid id",
 			"id":    utils.CopyString(ctx.Params("id", "")),

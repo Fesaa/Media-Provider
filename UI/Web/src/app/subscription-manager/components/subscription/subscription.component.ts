@@ -64,6 +64,21 @@ export class SubscriptionComponent implements OnInit {
     });
   }
 
+  runOnce() {
+    if (this.subscription.id == -1) {
+      return
+    }
+
+    this.subscriptionService.runOnce(this.subscription.id).subscribe({
+      next: () => {
+        this.toastR.success("Success")
+      },
+      error: (err) => {
+        this.toastR.error("Failed to run once", err.message)
+      }
+      })
+  }
+
   async delete() {
     if (!await this.dialogService.openDialog(`Are you sure you want to remove your subscription on ${this.subscription.info.title}`)) {
       return;
