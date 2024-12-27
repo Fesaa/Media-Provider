@@ -39,7 +39,7 @@ func Init(db *db.Database) {
 	}
 
 	handler.initUpdateProcessor()
-	
+
 	handler.StartAll()
 	handler.scheduler.Start()
 }
@@ -103,8 +103,15 @@ func (h *subscriptionHandler) refresh(id int64) {
 }
 
 func (h *subscriptionHandler) new(sub models.Subscription) {
+	diff := time.Since(sub.Info.LastCheck)
+
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
-		gocron.WithStartAt(gocron.WithStartImmediately())) // run once at start-up
+		gocron.WithStartAt(func() gocron.StartAtOption {
+			if diff > sub.RefreshFrequency.AsDuration() {
+				return gocron.WithStartImmediately()
+			}
+			return gocron.WithStartDateTime(time.Now().Add(diff))
+		}()))
 
 	if err != nil {
 		h.log.Error("Error creating subscription job", "id", sub.Id)
@@ -114,7 +121,9 @@ func (h *subscriptionHandler) new(sub models.Subscription) {
 	h.idMapper[sub.Id] = j.ID()
 	h.log.Info("Subscription scheduled",
 		"subId", sub.Id, "contentId", sub.ContentId, "uuid", j.ID(), "title", sub.Info.Title,
-		slog.Duration("duration", sub.RefreshFrequency.AsDuration()))
+		slog.Duration("duration", sub.RefreshFrequency.AsDuration()),
+		slog.Duration("firstExecutingIn", diff),
+	)
 }
 
 func (h *subscriptionHandler) StartAll() {
