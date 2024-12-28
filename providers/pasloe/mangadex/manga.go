@@ -242,16 +242,18 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
 	ci.Web = strings.Join(m.info.FormattedLinks(), ",")
 
-	if m.totalVolumes == 0 && chapter.Attributes.PublishedAt != "" {
+	if m.totalVolumes == 0 {
 		ci.Title = chapter.Attributes.Title
 
-		publishTime, err := time.Parse(timeLayout, chapter.Attributes.PublishedAt)
-		if err != nil {
-			m.Log.Warn("unable to parse published date", "error", err, "chapter", chapter.Attributes.Chapter)
-		} else {
-			ci.Year = publishTime.Year()
-			ci.Month = int(publishTime.Month())
-			ci.Day = publishTime.Day()
+		if chapter.Attributes.PublishedAt != "" {
+			publishTime, err := time.Parse(timeLayout, chapter.Attributes.PublishedAt)
+			if err != nil {
+				m.Log.Warn("unable to parse published date", "error", err, "chapter", chapter.Attributes.Chapter)
+			} else {
+				ci.Year = publishTime.Year()
+				ci.Month = int(publishTime.Month())
+				ci.Day = publishTime.Day()
+			}
 		}
 	}
 
