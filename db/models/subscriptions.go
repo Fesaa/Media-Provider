@@ -185,6 +185,14 @@ func upsert(tx *sql.Tx, s *Subscription) error {
 	return err
 }
 
+func (s *Subscriptions) UpdateLastChecked(sub Subscription) error {
+	timeStr := sub.Info.LastCheck.Format(time.RFC3339)
+
+	_, err := s.db.Exec("UPDATE subscription_info SET lastCheck = $1, lastCheckSuccess = $2 WHERE subscription_id = $3;",
+		timeStr, sub.Info.LastCheckSuccess, sub.Id)
+	return err
+}
+
 func (s *Subscriptions) Delete(i int64) error {
 	_, err := s.db.Exec(`DELETE FROM subscription_info WHERE subscription_id = $1; DELETE FROM subscriptions WHERE id = $1;`, i)
 	return err

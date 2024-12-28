@@ -47,7 +47,7 @@ func Init(db *db.Database) {
 func (h *subscriptionHandler) initUpdateProcessor() {
 	go func() {
 		for sub := range h.subUpdator {
-			err := h.db.Subscriptions.Update(sub)
+			err := h.db.Subscriptions.UpdateLastChecked(sub)
 			if err != nil {
 				h.log.Warn("Error updating subscription check time",
 					"id", sub.Id, "err", err)
