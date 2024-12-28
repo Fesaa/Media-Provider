@@ -163,7 +163,8 @@ func (s *Subscriptions) New(model Subscription) (*Subscription, error) {
 		return nil, err
 	}
 
-	_, err = tx.Exec("INSERT INTO subscription_info (subscription_id, title, description, baseDir, lastCheck, lastCheckSuccess) VALUES ($1, $2, $3, $4, date('now'), 1)", id, model.Info.Title, model.Info.Description, model.Info.BaseDir)
+	_, err = tx.Exec("INSERT INTO subscription_info (subscription_id, title, description, baseDir, lastCheck, lastCheckSuccess) VALUES ($1, $2, $3, $4, $5, 1)",
+		id, model.Info.Title, model.Info.Description, model.Info.BaseDir, time.Now().Format(time.RFC3339))
 	if err != nil {
 		if err = tx.Rollback(); err != nil {
 			log.Warn("failed to rollback transaction", "err", err)
