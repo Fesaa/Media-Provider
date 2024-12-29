@@ -26,7 +26,7 @@ const (
 type Modifier struct {
 	gorm.Model
 
-	PageId uint
+	PageID uint
 
 	Title  string          `json:"title"`
 	Type   ModifierType    `json:"type"`
@@ -37,7 +37,7 @@ type Modifier struct {
 type ModifierValue struct {
 	gorm.Model
 
-	ModifierId uint
+	ModifierID uint
 	Key        string `json:"key"`
 	Value      string `json:"value"`
 }

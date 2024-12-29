@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type Database struct {
@@ -22,7 +23,10 @@ var (
 )
 
 func Connect() (*Database, error) {
-	db, err := gorm.Open(sqlite.Open("media-provider.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("media-provider.db"), &gorm.Config{
+		Logger:               logger.Default.LogMode(logger.Warn),
+		FullSaveAssociations: true,
+	})
 	if err != nil {
 		fmt.Println(err)
 		panic("failed to connect database")
