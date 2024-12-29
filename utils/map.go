@@ -8,6 +8,22 @@ func Map[T, S any](in []T, f func(T) S) []S {
 	return out
 }
 
+func FlatMapMany[E any](in ...[]E) []E {
+	var out []E
+	for _, e := range in {
+		out = append(out, e...)
+	}
+	return out
+}
+
+func FlatMap[E any](in [][]E) []E {
+	var out []E
+	for _, e := range in {
+		out = append(out, e...)
+	}
+	return out
+}
+
 func MaybeMap[T, S any](in []T, f func(T) (S, bool)) []S {
 	out := make([]S, 0)
 	for _, t := range in {

@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/go-metroninfo"
 	"log/slog"
 )
 
@@ -111,6 +112,19 @@ func (a *MangaSearchData) Authors() []string {
 func (a *MangaSearchData) Artists() []string {
 	return utils.MaybeMap(a.Relationships, func(t Relationship) (string, bool) {
 		if t.Type != "artist" {
+			return "", false
+		}
+
+		if name, ok := t.Attributes["name"].(string); ok {
+			return name, true
+		}
+		return "", false
+	})
+}
+
+func (a *MangaSearchData) ScanlationGroup() []string {
+	return utils.MaybeMap(a.Relationships, func(t Relationship) (string, bool) {
+		if t.Type != "scanlation_group" {
 			return "", false
 		}
 
@@ -232,5 +246,20 @@ func (c ContentRating) ComicInfoAgeRating() comicinfo.AgeRating {
 		return comicinfo.AgeRatingAdultsOnlyPlus18
 	default:
 		return comicinfo.AgeRatingUnknown
+	}
+}
+
+func (c ContentRating) MetronInfoAgeRating() metroninfo.AgeRating {
+	switch c {
+	case ContentRatingSafe:
+		return metroninfo.AgeRatingEveryone
+	case ContentRatingSuggestive:
+		return metroninfo.AgeRatingMature
+	case ContentRatingErotica:
+		return metroninfo.AgeRatingExplicit
+	case ContentRatingPornographic:
+		return metroninfo.AgeRatingAdult
+	default:
+		return metroninfo.AgeRatingUnknown
 	}
 }
