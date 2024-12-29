@@ -1,7 +1,6 @@
 package impl
 
 import (
-	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"gorm.io/gorm"
 )
@@ -35,7 +34,6 @@ func (s subscriptionImpl) Get(i uint) (*models.Subscription, error) {
 }
 
 func (s subscriptionImpl) New(subscription models.Subscription) (*models.Subscription, error) {
-	fmt.Printf("%+v\n", subscription)
 	res := s.db.Create(&subscription)
 	if res.Error != nil {
 		return nil, res.Error

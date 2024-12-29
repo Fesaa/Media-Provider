@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	apiQueryKey = "models-key"
+	apiQueryKey = "api-key"
 )
 
 type apiKeyAuth struct {

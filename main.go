@@ -41,7 +41,6 @@ func init() {
 }
 
 func main() {
-	defer db.Close()
 	log.Info("Starting Media-Provider", "baseURL", cfg.BaseUrl)
 
 	app := SetupApp(cfg.BaseUrl)

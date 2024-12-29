@@ -13,7 +13,7 @@ import (
 )
 
 func Setup(app fiber.Router, db *db.Database) {
-	log.Debug("registering models routes")
+	log.Debug("registering api routes")
 
 	c := cache.New(cache.Config{
 		Storage:      cacheStorage(),
@@ -30,7 +30,7 @@ func Setup(app fiber.Router, db *db.Database) {
 		Methods:    []string{fiber.MethodGet, fiber.MethodPost},
 		Expiration: time.Hour,
 		ExpirationGenerator: func(ctx *fiber.Ctx, c *cache.Config) time.Duration {
-			if strings.HasPrefix(ctx.Route().Path, "/models/proxy") {
+			if strings.HasPrefix(ctx.Route().Path, "/api/proxy") {
 				if config.I().Cache.Type == config.REDIS {
 					return 7 * 24 * time.Hour
 				}

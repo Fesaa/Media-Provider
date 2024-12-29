@@ -5,6 +5,19 @@ import (
 	"gorm.io/gorm"
 )
 
+type Provider int
+
+const (
+	SUKEBEI Provider = iota + 1
+	NYAA
+	YTS
+	LIME
+	SUBSPLEASE
+	MANGADEX
+	WEBTOON
+	DYNASTY
+)
+
 type Page struct {
 	gorm.Model
 

@@ -1,5 +1,24 @@
 package models
 
+type Pages interface {
+	All() ([]Page, error)
+	Get(id int64) (*Page, error)
+
+	New(page Page) error
+	Update(page Page) error
+
+	Delete(id int64) error
+}
+
+type Subscriptions interface {
+	All() ([]Subscription, error)
+	Get(uint) (*Subscription, error)
+
+	New(Subscription) (*Subscription, error)
+	Update(Subscription) error
+	Delete(uint) error
+}
+
 type Users interface {
 	All() ([]User, error)
 	ExistsAny() (bool, error)
