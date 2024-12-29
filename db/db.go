@@ -3,23 +3,18 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/db/api"
+	"github.com/Fesaa/Media-Provider/db/impl"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
-	_ "modernc.org/sqlite"
-	"path"
+	"github.com/glebarez/sqlite"
+	"gorm.io/gorm"
 )
 
 type Database struct {
-	db            *sql.DB
-	Users         api.Users
-	Pages         api.Pages
-	Subscriptions api.Subscriptions
-}
-
-func (db *Database) DB() *sql.DB {
-	return db.db
+	db            *gorm.DB
+	Users         models.Users
+	Pages         models.Pages
+	Subscriptions models.Subscriptions
 }
 
 var (
@@ -27,26 +22,22 @@ var (
 )
 
 func Connect() (*Database, error) {
-	var err error
-	theDb, err = sql.Open("sqlite", path.Join(config.Dir, "media-provider.db"))
+	db, err := gorm.Open(sqlite.Open("media-provider.db"), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		fmt.Println(err)
+		panic("failed to connect database")
 	}
 
-	if err = theDb.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping a database connection: %w", err)
+	if err = db.AutoMigrate(models.MODELS...); err != nil {
+		log.Error("failed to auto migrate", "err", err)
+		panic(err)
 	}
 
-	if err = migrate(); err != nil {
-		return nil, fmt.Errorf("failed to migrate database: %w", err)
-	}
-
-	log.Info("successfully connected to the database")
 	return &Database{
-		db:            theDb,
-		Users:         models.NewUsers(theDb),
-		Pages:         models.NewPages(theDb),
-		Subscriptions: models.NewSubscriptions(theDb),
+		db:            db,
+		Users:         impl.Users(db),
+		Pages:         impl.Pages(db),
+		Subscriptions: impl.Subscriptions(db),
 	}, nil
 }
 

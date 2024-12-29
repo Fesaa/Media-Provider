@@ -54,7 +54,7 @@ export class SubscriptionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.subscription.id == -1) {
+    if (this.subscription.ID == 0) {
       this.editMode = true;
     }
 
@@ -65,11 +65,11 @@ export class SubscriptionComponent implements OnInit {
   }
 
   runOnce() {
-    if (this.subscription.id == -1) {
+    if (this.subscription.ID == 0) {
       return
     }
 
-    this.subscriptionService.runOnce(this.subscription.id).subscribe({
+    this.subscriptionService.runOnce(this.subscription.ID).subscribe({
       next: () => {
         this.toastR.success("Success")
       },
@@ -84,13 +84,13 @@ export class SubscriptionComponent implements OnInit {
       return;
     }
 
-    if (this.subscription.id == -1) {
-      this.onDelete.emit(this.subscription.id);
+    if (this.subscription.ID == 0) {
+      this.onDelete.emit(this.subscription.ID);
       return;
     }
 
 
-    this.subscriptionService.delete(this.subscription.id).subscribe({
+    this.subscriptionService.delete(this.subscription.ID).subscribe({
       next: () => {
         this.toastR.success('Subscription deleted');
       },
@@ -98,7 +98,7 @@ export class SubscriptionComponent implements OnInit {
         this.toastR.error(err.message);
       },
       complete: () => {
-        this.onDelete.emit(this.subscription.id);
+        this.onDelete.emit(this.subscription.ID);
       }
     })
   }
@@ -141,7 +141,7 @@ export class SubscriptionComponent implements OnInit {
     this.subscription.provider = Number(this.subscription.provider);
 
     let obs: Observable<any>;
-    if (this.subscription.id == -1) {
+    if (this.subscription.ID == 0) {
       obs = this.subscriptionService.new(this.subscription);
     } else {
       obs = this.subscriptionService.update(this.subscription);

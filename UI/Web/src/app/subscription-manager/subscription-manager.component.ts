@@ -36,7 +36,7 @@ export class SubscriptionManagerComponent implements OnInit {
   }
 
   remove(id: number) {
-    this.subscriptions = this.subscriptions.filter(s => s.id !== id);
+    this.subscriptions = this.subscriptions.filter(s => s.ID !== id);
   }
 
   reload() {
@@ -48,7 +48,7 @@ export class SubscriptionManagerComponent implements OnInit {
 
   addNew() {
     this.subscriptions.push({
-      id: -1,
+      ID: 0,
       info: {
         title: "",
         baseDir: "",

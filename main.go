@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db"
-	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/wisewolf"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
@@ -32,9 +31,6 @@ func init() {
 	database, err = db.Connect()
 	if err != nil {
 		panic(err)
-	}
-	if err = models.Init(database.DB()); err != nil {
-		log.Fatal("failed to initialize prepared statements", err)
 	}
 
 	UpdateBaseUrlInIndex(cfg.BaseUrl)

@@ -1,7 +1,7 @@
 <div class="bg-gray-50 dark:bg-gray-900 min-h-screen w-full">
 
   <div class="flex flex-col items-cen p-2">
-    @for (sub of subscriptions; track sub.id) {
+    @for (sub of subscriptions; track sub.ID) {
       <app-subscription [subscription]="sub" [providers]="allowedProviders" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
     } @empty {
       <span>No subscriptions</span>

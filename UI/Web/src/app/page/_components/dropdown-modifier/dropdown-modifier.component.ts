@@ -6,7 +6,6 @@ import {Modifier} from "../../../_models/page";
 @Component({
     selector: 'app-dropdown-modifier',
     imports: [
-        KeyValuePipe,
         ReactiveFormsModule
     ],
     templateUrl: './dropdown-modifier.component.html',

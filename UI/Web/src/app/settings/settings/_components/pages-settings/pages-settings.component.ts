@@ -9,8 +9,6 @@ import {dropAnimation} from "../../../../_animations/drop-animation";
 import {DialogService} from "../../../../_services/dialog.service";
 import {FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
-import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
-import {KeyValuePipe, TitleCasePipe} from "@angular/common";
 import {ModifierSettingsComponent} from "../modifier-settings/modifier-settings.component";
 import {DirectorySettingsComponent} from "../directory-settings/directory-settings.component";
 import {ProviderSettingsComponent} from "../provider-settings/provider-settings.component";
@@ -81,7 +79,7 @@ export class PagesSettingsComponent implements OnInit {
     }
     if (page === undefined) {
       page = {
-        id: 0,
+        ID: 0,
         sort_value: 0,
         dirs: [],
         title: '',
@@ -123,18 +121,20 @@ export class PagesSettingsComponent implements OnInit {
     }
 
     const page = this.pageForm.value as Page;
-    page.id = this.selectedPage.id;
+    page.ID = this.selectedPage.ID;
     page.sort_value = this.selectedPage.sort_value;
     // Filter some stuff out
     page.modifiers = page.modifiers
-      .map((m: Modifier) => {
-        delete m.values['']
-        return m;
-      })
       .filter(m => m.key !== "");
 
+    let obs;
+    if (page.ID === 0) {
+      obs = this.pageService.new(page);
+    } else {
+      obs = this.pageService.update(page)
+    }
 
-    this.pageService.upsertPage(page).subscribe({
+    obs.subscribe({
       next: () => {
         this.toastR.success(`${page.title} upserted`, 'Success');
         this.pageService.refreshPages();
@@ -164,7 +164,7 @@ export class PagesSettingsComponent implements OnInit {
       return;
     }
 
-   this.pageService.removePage(page.id).subscribe({
+   this.pageService.removePage(page.ID).subscribe({
       next: () => {
         this.toastR.success(`${page.title} removed`, 'Success');
         this.pageService.refreshPages();
@@ -188,7 +188,7 @@ export class PagesSettingsComponent implements OnInit {
   }
 
   swap(page1: Page, page2: Page) {
-    this.pageService.swapPages(page1.id, page2.id).subscribe({
+    this.pageService.swapPages(page1.ID, page2.ID).subscribe({
       next: () => {
         this.toastR.success(`Swapped ${page1.title} and ${page2.title}`, 'Success');
         this.pageService.refreshPages();

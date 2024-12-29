@@ -28,7 +28,7 @@ export class PageService {
   }
 
   getPage(id: number): Observable<Page> {
-    const page = this.pages ? this.pages.find(p => p.id === id) : undefined;
+    const page = this.pages ? this.pages.find(p => p.ID === id) : undefined;
     if (page) {
       return of(page);
     }
@@ -40,8 +40,12 @@ export class PageService {
     return this.httpClient.delete(this.baseUrl + pageId, {responseType: 'text'});
   }
 
-  upsertPage(page: Page) {
-    return this.httpClient.post(this.baseUrl + 'upsert', page, {responseType: 'text'});
+  new(page: Page) {
+    return this.httpClient.post(this.baseUrl + 'new', page, {responseType: 'text'});
+  }
+
+  update(page: Page) {
+    return this.httpClient.post(this.baseUrl + 'update', page, {responseType: 'text'});
   }
 
   swapPages(id1: number, id2: number) {

@@ -22,7 +22,7 @@ func Middleware(ctx *fiber.Ctx) error {
 func MiddlewareWithApiKey(ctx *fiber.Ctx) error {
 	isAuthenticated, err := apiKeyProvider.IsAuthenticated(ctx)
 	if err != nil {
-		log.Warn("error while checking api key auth", "err", err)
+		log.Warn("error while checking models key auth", "err", err)
 	}
 	if !isAuthenticated {
 		return Middleware(ctx)

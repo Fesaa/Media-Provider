@@ -27,7 +27,7 @@ func RegisterUserRoutes(router fiber.Router, db *db.Database, cache fiber.Handle
 	router.Post("/reset-password", wrap(ur.ResetPassword))
 
 	user := router.Group("/user", auth.Middleware)
-	user.Get("/refresh-api-key", wrap(ur.RefreshApiKey))
+	user.Get("/refresh-models-key", wrap(ur.RefreshApiKey))
 	user.Get("/all", wrap(ur.Users))
 	user.Post("/update", wrap(ur.UpdateUser))
 	user.Delete("/:userId", wrap(ur.DeleteUser))
@@ -63,7 +63,7 @@ func (ur *userRoutes) RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
 
 	apiKey, err := utils.GenerateApiKey()
 	if err != nil {
-		l.Error("failed to generate api key", "err", err)
+		l.Error("failed to generate models key", "err", err)
 		return fiber.ErrInternalServerError
 	}
 
@@ -128,7 +128,7 @@ func (ur *userRoutes) RefreshApiKey(l *log.Logger, ctx *fiber.Ctx) error {
 
 	key, err := utils.GenerateApiKey()
 	if err != nil {
-		l.Error("failed to generate api key", "err", err)
+		l.Error("failed to generate models key", "err", err)
 		return fiber.ErrInternalServerError
 	}
 
@@ -215,7 +215,7 @@ func (ur *userRoutes) DeleteUser(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	toDelete, err := ur.db.Users.GetById(int64(userId))
+	toDelete, err := ur.db.Users.GetById(uint(userId))
 	if err != nil {
 		l.Error("could not find user specified in delete request", slog.Int("id", userId), "err", err)
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -251,7 +251,7 @@ func (ur *userRoutes) GenerateResetPassword(l *log.Logger, ctx *fiber.Ctx) error
 		return fiber.ErrBadRequest
 	}
 
-	reset, err := ur.db.Users.GenerateReset(int64(userId))
+	reset, err := ur.db.Users.GenerateReset(uint(userId))
 	if err != nil {
 		l.Error("failed to generate reset password", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

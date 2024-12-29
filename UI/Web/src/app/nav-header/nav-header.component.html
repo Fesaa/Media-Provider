@@ -63,12 +63,12 @@
               </a>
 
               <div class="overflow-x-auto flex space-x-4">
-                @for (page of pages; track page.id) {
+                @for (page of pages; track page.ID) {
                   <a
                     [routerLink]="['/page']"
-                    [queryParams]="{ index: page.id }"
+                    [queryParams]="{ index: page.ID }"
                     class="rounded-md px-3 py-2 text-sm font-medium"
-                    [ngClass]="{ 'bg-gray-900 text-white': index === page.id, 'text-gray-300 hover:bg-gray-700 hover:text-white' : index !== page.id }"
+                    [ngClass]="{ 'bg-gray-900 text-white': index === page.ID, 'text-gray-300 hover:bg-gray-700 hover:text-white' : index !== page.ID }"
                   >
                     {{page.title}}
                   </a>
@@ -115,12 +115,12 @@
             Home
           </a>
 
-          @for (page of pages; track page.id) {
+          @for (page of pages; track page.ID) {
             <a
               [routerLink]="['/page']"
-              [queryParams]="{ index: page.id }"
+              [queryParams]="{ index: page.ID }"
               class="block rounded-md px-3 py-2 text-base font-medium dropdown-item"
-              [ngClass]="{ 'bg-gray-900 text-white': index === page.id, 'text-gray-300 hover:bg-gray-700 hover:text-white' : index !== page.id }"
+              [ngClass]="{ 'bg-gray-900 text-white': index === page.ID, 'text-gray-300 hover:bg-gray-700 hover:text-white' : index !== page.ID }"
               (click)="clickMenu()"
             >
               {{page.title}}
