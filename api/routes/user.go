@@ -215,7 +215,7 @@ func (ur *userRoutes) DeleteUser(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	toDelete, err := ur.db.Users.GetById(int64(userId))
+	toDelete, err := ur.db.Users.GetById(uint(userId))
 	if err != nil {
 		l.Error("could not find user specified in delete request", slog.Int("id", userId), "err", err)
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -251,7 +251,7 @@ func (ur *userRoutes) GenerateResetPassword(l *log.Logger, ctx *fiber.Ctx) error
 		return fiber.ErrBadRequest
 	}
 
-	reset, err := ur.db.Users.GenerateReset(int64(userId))
+	reset, err := ur.db.Users.GenerateReset(uint(userId))
 	if err != nil {
 		l.Error("failed to generate reset password", "err", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

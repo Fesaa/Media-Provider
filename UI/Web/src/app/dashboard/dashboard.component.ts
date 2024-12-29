@@ -1,12 +1,10 @@
 import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
-import {AsyncPipe} from "@angular/common";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {DownloadService} from "../_services/download.service";
 import {InfoStat, QueueStat} from "../_models/stats";
 import {RunningInfoComponent} from "./_components/running-info/running-info.component";
 import {QueuedInfoComponent} from "./_components/queued-info/queued-info.component";
-import {combineLatest} from "rxjs";
 
 @Component({
     selector: 'app-dashboard',

@@ -1,9 +1,8 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
-import {Config, MovePageRequest} from '../_models/config';
-import {Page} from "../_models/page";
-import {of, Subject, take, tap} from "rxjs";
+import {Config} from '../_models/config';
+import {of, tap} from "rxjs";
 
 @Injectable({
   providedIn: 'root'

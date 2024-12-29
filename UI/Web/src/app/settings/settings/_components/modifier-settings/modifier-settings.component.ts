@@ -1,5 +1,4 @@
 import {ChangeDetectorRef, Component, HostListener, Input, OnInit} from '@angular/core';
-import {KeyValuePipe} from "@angular/common";
 import {NgIcon} from "@ng-icons/core";
 import {Modifier, ModifierType} from "../../../../_models/page";
 import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
@@ -9,7 +8,6 @@ import {ToastrService} from "ngx-toastr";
 @Component({
     selector: 'app-modifier-settings',
     imports: [
-        KeyValuePipe,
         NgIcon
     ],
     templateUrl: './modifier-settings.component.html',
@@ -68,7 +66,7 @@ export class ModifierSettingsComponent implements OnInit {
       id: -1,
       key: '',
       title: '',
-      values: {},
+      values: [],
       type: ModifierType.DROPDOWN
     })
   }
@@ -106,14 +104,19 @@ export class ModifierSettingsComponent implements OnInit {
       return;
     }
 
-    const value = modifier.values[valueKey];
-    delete modifier.values[valueKey];
-    modifier.values[(e.target as HTMLInputElement).value] = value;
+    const mv = modifier.values.find(m => m.key === valueKey);
+    if (mv) {
+      modifier.values = modifier.values.filter(m => m.key !== valueKey);
+      modifier.values.push({key: (e.target as HTMLInputElement).value, value: mv.value})
+    }
   }
 
   updateModifierValueValue(key: string, valueKey: string, e: Event) {
     const modifier = this.controlGroup.value.find(m => m.key === key)!;
-    modifier.values[valueKey] = (e.target as HTMLInputElement).value;
+    const mv = modifier.values.find(mv => mv.key === valueKey)
+    if (mv) {
+      mv.value = (e.target as HTMLInputElement).value
+    }
   }
 
   async removeModifierValue(key: string, valueKey: string) {
@@ -121,8 +124,7 @@ export class ModifierSettingsComponent implements OnInit {
       return;
     }
 
-    const modifier = this.controlGroup.value.find(m => m.key === key)!;
-    delete modifier.values[valueKey];
+    this.controlGroup.setValue(this.controlGroup.value.filter(m => m.key !== valueKey));
     this.toastR.warning(`Removed value ${valueKey}`, 'Success');
   }
 
@@ -134,7 +136,7 @@ export class ModifierSettingsComponent implements OnInit {
       return;
     }
 
-    modifier.values[''] = '';
+    modifier.values.push({key: '', value: ''});
     this.cdRef.detectChanges();
   }
 

@@ -1,6 +1,5 @@
-import {Component, ComponentRef, HostListener, Input, OnInit} from '@angular/core';
+import {Component, HostListener, Input, OnInit} from '@angular/core';
 import {NgClass} from "@angular/common";
-import {DirectoryBrowserComponent} from "../../../directory-browser/directory-browser.component";
 import {ReplaySubject} from "rxjs";
 import {NgIcon} from "@ng-icons/core";
 import {DirEntry} from "../../../_models/io";

@@ -1,42 +1,43 @@
 import {ApplicationConfig, importProvidersFrom, provideZoneChangeDetection} from '@angular/core';
-import { provideRouter } from '@angular/router';
+import {provideRouter} from '@angular/router';
 
-import { routes } from './app.routes';
+import {routes} from './app.routes';
 import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi} from "@angular/common/http";
 import {AuthInterceptor} from "./_interceptors/auth-headers.interceptor";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {AuthRedirectInterceptor} from "./_interceptors/auth-redirect.interceptor";
 import {NgIconsModule} from "@ng-icons/core";
 import {
-  heroChevronDoubleRight,
-  heroChevronUp,
-  heroChevronDown,
-  heroArrowDownTray,
-  heroTrash,
-  heroArrowUp,
-  heroFolder,
-  heroDocument,
-  heroSquare3Stack3d,
-  heroClipboard,
-  heroPlus,
   heroAdjustmentsHorizontal,
-  heroServerStack,
-  heroPlusCircle,
-  heroMinus,
-  heroXMark,
-  heroChevronLeft,
+  heroArrowDownTray,
   heroArrowPath,
+  heroArrowUp,
+  heroCheckCircle,
+  heroChevronDoubleRight,
+  heroChevronDown,
+  heroChevronLeft,
+  heroChevronRight,
+  heroChevronUp,
+  heroClipboard,
+  heroDocument,
   heroEye,
   heroEyeSlash,
-  heroChevronRight,
+  heroFolder,
+  heroMinus,
+  heroPencil,
+  heroPlus,
+  heroPlusCircle,
+  heroServerStack,
+  heroSquare3Stack3d,
+  heroTrash,
   heroUser,
-  heroCheckCircle,
-  heroXCircle, heroPencil,
+  heroXCircle,
+  heroXMark,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {provideToastr} from "ngx-toastr";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {providePrimeNG} from "primeng/config";
 import Aura from '@primeng/themes/aura';
 

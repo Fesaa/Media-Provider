@@ -1,6 +1,5 @@
 import {Component, Input} from '@angular/core';
 import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {NgIcon} from "@ng-icons/core";
 
 @Component({
     selector: 'app-form-select',

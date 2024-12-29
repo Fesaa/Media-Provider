@@ -1,7 +1,7 @@
 import {Provider} from "./page";
 
 export type Subscription = {
-  id: number;
+  ID: number;
   provider: Provider;
   contentId: string;
   refreshFrequency: RefreshFrequency;

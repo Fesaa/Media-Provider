@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {ReplaySubject} from "rxjs";
 import {ActivatedRoute} from "@angular/router";
 

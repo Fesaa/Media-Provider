@@ -18,7 +18,7 @@ var handler subscriptionHandler
 type subscriptionHandler struct {
 	scheduler gocron.Scheduler
 	db        *db.Database
-	idMapper  map[int64]uuid.UUID
+	idMapper  map[uint]uuid.UUID
 	log       *log.Logger
 
 	subUpdator chan models.Subscription
@@ -33,7 +33,7 @@ func Init(db *db.Database) {
 	handler = subscriptionHandler{
 		scheduler:  s,
 		db:         db,
-		idMapper:   make(map[int64]uuid.UUID),
+		idMapper:   make(map[uint]uuid.UUID),
 		log:        log.With("handler", "subscriptions"),
 		subUpdator: make(chan models.Subscription, 100),
 	}
@@ -47,27 +47,27 @@ func Init(db *db.Database) {
 func (h *subscriptionHandler) initUpdateProcessor() {
 	go func() {
 		for sub := range h.subUpdator {
-			err := h.db.Subscriptions.UpdateLastChecked(sub)
+			err := h.db.Subscriptions.Update(sub)
 			if err != nil {
 				h.log.Warn("Error updating subscription check time",
-					"id", sub.Id, "err", err)
+					"id", sub.ID, "err", err)
 			} else {
 				h.log.Info("Subscription updated successfully",
-					"id", sub.Id, "lastCheck", sub.Info.LastCheck)
+					"id", sub.ID, "lastCheck", sub.Info.LastCheck)
 			}
 		}
 	}()
 }
 
-func Refresh(id int64) {
+func Refresh(id uint) {
 	handler.refresh(id)
 }
 
-func Delete(id int64) error {
+func Delete(id uint) error {
 	return handler.delete(id)
 }
 
-func (h *subscriptionHandler) delete(id int64) error {
+func (h *subscriptionHandler) delete(id uint) error {
 	mappedUuid, ok := h.idMapper[id]
 	if !ok {
 		return errors.New("subscription not found")
@@ -83,7 +83,7 @@ func (h *subscriptionHandler) delete(id int64) error {
 	return nil
 }
 
-func (h *subscriptionHandler) refresh(id int64) {
+func (h *subscriptionHandler) refresh(id uint) {
 	mappedUuid, ok := h.idMapper[id]
 	if ok {
 		if err := h.scheduler.RemoveJob(mappedUuid); err != nil {
@@ -108,24 +108,24 @@ func (h *subscriptionHandler) new(sub models.Subscription) {
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
 		gocron.WithStartAt(func() gocron.StartAtOption {
 			if diff > sub.RefreshFrequency.AsDuration() {
-				h.log.Debug("subscription scheduled to execute immediately", "id", sub.Id)
+				h.log.Debug("subscription scheduled to execute immediately", "id", sub.ID)
 				return gocron.WithStartImmediately()
 			}
 
 			startTime := time.Now().Add(sub.RefreshFrequency.AsDuration() - diff)
 
-			h.log.Debug("subscription scheduled to execute", "id", sub.Id, "title", sub.Info.Title, slog.Time("at", startTime))
+			h.log.Debug("subscription scheduled to execute", "id", sub.ID, "title", sub.Info.Title, slog.Time("at", startTime))
 			return gocron.WithStartDateTime(startTime)
 		}()))
 
 	if err != nil {
-		h.log.Error("Error creating subscription job", "id", sub.Id)
+		h.log.Error("Error creating subscription job", "id", sub.ID)
 		return
 	}
 
-	h.idMapper[sub.Id] = j.ID()
+	h.idMapper[sub.ID] = j.ID()
 	h.log.Debug("Subscription scheduled",
-		"subId", sub.Id, "contentId", sub.ContentId, "uuid", j.ID(), "title", sub.Info.Title,
+		"subId", sub.ID, "contentId", sub.ContentId, "uuid", j.ID(), "title", sub.Info.Title,
 		slog.Duration("duration", sub.RefreshFrequency.AsDuration()))
 }
 
@@ -155,7 +155,7 @@ func (h *subscriptionHandler) toTask(sub models.Subscription) gocron.Task {
 
 		if err != nil {
 			h.log.Error("Error downloading subscription, check config",
-				"id", sub.Id,
+				"id", sub.ID,
 				"contentId", sub.ContentId,
 				"error", err)
 			return

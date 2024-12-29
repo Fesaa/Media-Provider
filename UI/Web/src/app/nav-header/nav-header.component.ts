@@ -3,10 +3,8 @@ import {PageService} from "../_services/page.service";
 import {Page} from "../_models/page";
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {AsyncPipe, NgClass} from "@angular/common";
-import {animate, query, sequence, stagger, state, style, transition, trigger} from "@angular/animations";
 import {AccountService} from "../_services/account.service";
 import {NavService} from "../_services/nav.service";
-import {Observable} from "rxjs";
 import {dropAnimation} from "../_animations/drop-animation";
 
 @Component({

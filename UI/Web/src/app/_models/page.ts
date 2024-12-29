@@ -1,6 +1,6 @@
 
 export type Page = {
-  id: number;
+  ID: number;
   sort_value: number;
   title: string;
   providers: Provider[];
@@ -14,7 +14,12 @@ export type Modifier = {
   title: string;
   key: string;
   type: ModifierType;
-  values: { [key: string]: string };
+  values: ModifierValue[];
+}
+
+export type ModifierValue = {
+  key: string;
+  value: string;
 }
 
 export enum Provider {

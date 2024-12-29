@@ -1,12 +1,10 @@
 import {Component, Input} from '@angular/core';
-import {InfoStat, QueueStat} from "../../../_models/stats";
+import {QueueStat} from "../../../_models/stats";
 import {DownloadService} from "../../../_services/download.service";
 import {ToastrService} from "ngx-toastr";
 import {ContentTitlePipe} from "../../../_pipes/content-title.pipe";
 import {StopRequest} from "../../../_models/search";
 import {NgIcon} from "@ng-icons/core";
-import {SpeedPipe} from "../../../_pipes/speed.pipe";
-import {SpeedTypePipe} from "../../../_pipes/speed-type.pipe";
 
 @Component({
     selector: 'app-queued-info',
