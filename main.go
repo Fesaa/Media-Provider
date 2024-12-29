@@ -26,18 +26,18 @@ func init() {
 		panic(err)
 	}
 
-	if !cfg.HasUpdatedDB {
-		fmt.Println("Please migrate your database using the python script, then manually edit the config value")
-		fmt.Println("Your application is not crashing, this is intended. ")
-		os.Exit(1)
-	}
-
 	log.Init(cfg.Logging)
 	validateConfig(cfg)
 	wisewolf.Init()
 	database, err = db.Connect()
 	if err != nil {
 		panic(err)
+	}
+
+	if !cfg.HasUpdatedDB {
+		fmt.Println("Please migrate your database using the python script, then manually edit the config value")
+		fmt.Println("Your application is not crashing, this is intended. ")
+		os.Exit(1)
 	}
 
 	UpdateBaseUrlInIndex(cfg.BaseUrl)
