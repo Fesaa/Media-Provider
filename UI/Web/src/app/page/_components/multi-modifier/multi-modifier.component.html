@@ -21,7 +21,7 @@
 
       <div class="grid grid-cols-3 gap-4 mt-4 max-h-48 overflow-auto p-2">
 
-        @for (option of modifier.values | keyvalue; track option.key) {
+        @for (option of modifier.values; track option.key) {
           @if (normalize(option.key).includes(query)) {
             <div class="flex items-center hover:cursor-pointer pb-2 {{$index < 20 ? 'dropdown-item' : ''}}" >
               <input

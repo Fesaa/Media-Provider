@@ -1,15 +1,12 @@
 import {ChangeDetectorRef, Component, Input} from '@angular/core';
 import {Modifier} from "../../../_models/page";
 import {FormGroup} from "@angular/forms";
-import {KeyValuePipe} from "@angular/common";
 import {NgIcon} from "@ng-icons/core";
-import {animate, query, sequence, stagger, style, transition, trigger} from "@angular/animations";
 import {dropAnimation} from "../../../_animations/drop-animation";
 
 @Component({
     selector: 'app-multi-modifier',
     imports: [
-        KeyValuePipe,
         NgIcon
     ],
     templateUrl: './multi-modifier.component.html',

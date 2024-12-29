@@ -95,9 +95,8 @@ export class PageComponent implements OnInit{
     for (const modifier of page.modifiers) {
       switch (modifier.type) {
         case ModifierType.DROPDOWN:
-          const entries = Object.entries(modifier.values);
-          if (entries.length > 0) {
-            this.searchForm.addControl(modifier.key, this.fb.control(entries[0][0]));
+          if (modifier.values.length > 0) {
+            this.searchForm.addControl(modifier.key, this.fb.control(modifier.values[0].key));
           }
           break;
         case ModifierType.MULTI:

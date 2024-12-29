@@ -3,12 +3,14 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/impl"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/log"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"path"
 )
 
 type Database struct {
@@ -23,7 +25,7 @@ var (
 )
 
 func Connect() (*Database, error) {
-	db, err := gorm.Open(sqlite.Open("media-provider.db"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open(path.Join(config.Dir, "media-provider.db")), &gorm.Config{
 		Logger:               logger.Default.LogMode(logger.Warn),
 		FullSaveAssociations: true,
 	})

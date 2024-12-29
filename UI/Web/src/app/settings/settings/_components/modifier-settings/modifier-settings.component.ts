@@ -1,5 +1,4 @@
 import {ChangeDetectorRef, Component, HostListener, Input, OnInit} from '@angular/core';
-import {KeyValuePipe} from "@angular/common";
 import {NgIcon} from "@ng-icons/core";
 import {Modifier, ModifierType} from "../../../../_models/page";
 import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
@@ -9,7 +8,6 @@ import {ToastrService} from "ngx-toastr";
 @Component({
     selector: 'app-modifier-settings',
     imports: [
-        KeyValuePipe,
         NgIcon
     ],
     templateUrl: './modifier-settings.component.html',
