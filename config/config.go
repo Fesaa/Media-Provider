@@ -13,6 +13,8 @@ type Config struct {
 	BaseUrl string `json:"base_url"`
 	Secret  string `json:"secret"`
 
+	HasUpdatedDB bool `json:"has_updated_db"`
+
 	Logging    Logging     `json:"logging"`
 	Downloader Downloader  `json:"downloader"`
 	Cache      CacheConfig `json:"cache"`

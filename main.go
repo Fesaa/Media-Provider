@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/wisewolf"
@@ -23,6 +24,12 @@ func init() {
 	var err error
 	if cfg, err = config.Load(); err != nil {
 		panic(err)
+	}
+
+	if !cfg.HasUpdatedDB {
+		fmt.Println("Please migrate your database using the python script, then manually edit the config value")
+		fmt.Println("Your application is not crashing, this is intended. ")
+		os.Exit(1)
 	}
 
 	log.Init(cfg.Logging)

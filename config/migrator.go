@@ -10,7 +10,7 @@ type versionMap struct {
 }
 
 const (
-	currentVersion = 4
+	currentVersion = 5
 )
 
 var (
