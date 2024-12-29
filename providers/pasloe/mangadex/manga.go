@@ -274,7 +274,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 	})
 
 	if m.totalVolumes == 0 {
-		//mi.CollectionTitle = chapter.Attributes.Title TODO: Find where this should be...
+		mi.Stories = metroninfo.Stories{{Value: chapter.Attributes.Title}}
 
 		if chapter.Attributes.PublishedAt != "" {
 			publishTime, err := time.Parse(timeLayout, chapter.Attributes.PublishedAt)
