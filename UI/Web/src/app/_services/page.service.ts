@@ -2,7 +2,7 @@ import {DestroyRef, inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {Page} from "../_models/page";
-import {Observable, of, ReplaySubject, tap} from "rxjs";
+import {Observable, of, ReplaySubject} from "rxjs";
 
 @Injectable({
   providedIn: 'root'

@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  ComponentRef,
-  ApplicationRef,
-  ViewContainerRef
-} from '@angular/core';
+import {ApplicationRef, ComponentRef, Injectable, ViewContainerRef} from '@angular/core';
 import {DialogComponent} from "../shared/_component/dialog/dialog.component";
 import {DirectorySelectorComponent} from "../shared/_component/directory-selector/directory-selector.component";
 

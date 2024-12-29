@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
 import {hasPermission, Perm, User, UserDto} from "../../../../_models/user";
 import {UserPreviewComponent} from "../user-preview/user-preview.component";

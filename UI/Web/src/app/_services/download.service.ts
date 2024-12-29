@@ -1,8 +1,8 @@
 import {DestroyRef, inject, Injectable} from '@angular/core';
 import {environment} from "../../environments/environment";
 import {HttpClient} from "@angular/common/http";
-import {catchError, interval, Observable, ReplaySubject, Subscription} from "rxjs";
-import {InfoStat, QueueStat, StatsResponse} from "../_models/stats";
+import {interval, Observable, ReplaySubject, Subscription} from "rxjs";
+import {StatsResponse} from "../_models/stats";
 import {DownloadRequest, SearchRequest, StopRequest} from "../_models/search";
 import {SearchInfo} from "../_models/Info";
 

@@ -1,5 +1,3 @@
-import {Provider} from "./page";
-
 export interface UserDto {
   id: number;
   name: string;

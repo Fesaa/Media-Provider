@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import {Pipe, PipeTransform} from '@angular/core';
 import {RefreshFrequency} from "../_models/subscription";
 
 @Pipe({

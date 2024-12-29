@@ -1,10 +1,9 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {RefreshFrequency, Subscription} from "../../../_models/subscription";
 import {SubscriptionService} from "../../../_services/subscription.service";
-import {DatePipe, NgClass, NgForOf, NgIf, TitleCasePipe} from "@angular/common";
+import {DatePipe, NgClass, NgForOf, TitleCasePipe} from "@angular/common";
 import {RefreshFrequencyPipe} from "../../../_pipes/refresh-frequency.pipe";
 import {NgIcon} from "@ng-icons/core";
-import {DirectoryBrowserComponent} from "../../../directory-browser/directory-browser.component";
 import {SubscriptionExternalUrlPipe} from "../../../_pipes/subscription-external-url.pipe";
 import {ToastrService} from "ngx-toastr";
 import {DialogService} from "../../../_services/dialog.service";

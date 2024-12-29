@@ -1,5 +1,4 @@
 import {Component, Input} from '@angular/core';
-import {Page, Provider, providerNames, providerValues} from "../../../../_models/page";
 import {TitleCasePipe} from "@angular/common";
 import {FormGroup} from "@angular/forms";
 import {hasPermission, Perm, permissionNames, permissionValues, UserDto} from "../../../../_models/user";

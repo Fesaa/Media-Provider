@@ -1,5 +1,5 @@
 import {ChangeDetectorRef, Component, HostListener, OnInit} from '@angular/core';
-import {Modifier, Page, Provider, providerNames, providerValues} from "../../../../_models/page";
+import {Page} from "../../../../_models/page";
 import {PageService} from "../../../../_services/page.service";
 import {ConfigService} from "../../../../_services/config.service";
 import {RouterLink} from "@angular/router";
@@ -7,7 +7,7 @@ import {NgIcon} from "@ng-icons/core";
 import {ToastrService} from "ngx-toastr";
 import {dropAnimation} from "../../../../_animations/drop-animation";
 import {DialogService} from "../../../../_services/dialog.service";
-import {FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {ModifierSettingsComponent} from "../modifier-settings/modifier-settings.component";
 import {DirectorySettingsComponent} from "../directory-settings/directory-settings.component";

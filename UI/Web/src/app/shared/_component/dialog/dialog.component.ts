@@ -1,4 +1,4 @@
-import {Component, HostListener, Input, OnInit, Renderer2} from '@angular/core';
+import {Component, HostListener, Input, OnInit} from '@angular/core';
 import {ReplaySubject} from "rxjs";
 import {NgClass} from "@angular/common";
 

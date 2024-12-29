@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, Input, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, Input} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {FormGroup} from "@angular/forms";
 import {Page} from "../../../_models/page";

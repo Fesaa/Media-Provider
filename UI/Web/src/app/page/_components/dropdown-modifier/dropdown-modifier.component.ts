@@ -1,5 +1,4 @@
 import {Component, Input} from '@angular/core';
-import {KeyValuePipe} from "@angular/common";
 import {ReactiveFormsModule} from "@angular/forms";
 import {Modifier} from "../../../_models/page";
 
