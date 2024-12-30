@@ -42,12 +42,8 @@ func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, lo
 		},
 	})
 
-	utils2.Must(container.Provide(func() fiber.Router {
-		return router.Group("/api")
-	}))
-	utils2.Must(container.Provide(func() fiber.Handler {
-		return c
-	}))
+	utils2.Must(container.Provide(utils2.Identity(router.Group("/api"))))
+	utils2.Must(container.Provide(utils2.Identity(c)))
 
 	utils2.Must(container.Invoke(routes.RegisterUserRoutes))
 	utils2.Must(container.Invoke(routes.RegisterProxyRoutes))

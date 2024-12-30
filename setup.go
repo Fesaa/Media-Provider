@@ -8,11 +8,11 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/rs/zerolog"
@@ -61,14 +61,21 @@ func ApplicationProvider(params appParams) *fiber.App {
 	app.Use(prometheus.Middleware)
 
 	dontLog := []string{"/api/stats", "/", "/api/metrics"}
-	app.
-		Use(logger.New(logger.Config{
-			TimeFormat: "2006/01/02 15:04:05",
-			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
-			Next: func(c *fiber.Ctx) bool {
-				return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
-			},
-		}))
+	app.Use(fiberzerolog.New(fiberzerolog.Config{
+		Logger: &params.Log,
+		Next: func(c *fiber.Ctx) bool {
+			return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
+		},
+		Fields: []string{
+			fiberzerolog.FieldIP,
+			fiberzerolog.FieldLatency,
+			fiberzerolog.FieldStatus,
+			fiberzerolog.FieldMethod,
+			fiberzerolog.FieldURL,
+			fiberzerolog.FieldError,
+			fiberzerolog.FieldRequestID,
+		},
+	}))
 
 	api.Setup(app.Group(baseUrl), c, params.Cfg, params.Log)
 
