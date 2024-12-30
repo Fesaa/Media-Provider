@@ -1,6 +1,10 @@
 <div class="bg-white dark:bg-gray-600 dark:border-gray-500 dark:border-2 shadow-lg rounded-lg p-6 w-2/3 mx-auto my-4 text-black dark:text-white ">
   <div class="flex justify-between items-center mb-4 space-x-1 md:space-x-4">
-    <h2 class="text-lg font-semibold">{{ info.name | contentTitle }}</h2>
+    @if (info.ref_url === "") {
+      <h2 class="text-lg font-semibold">{{ info.name | contentTitle }}</h2>
+    } @else {
+      <a class="text-lg font-semibold hover:underline" target="_blank" [href]="info.ref_url">{{ info.name | contentTitle }}</a>
+    }
     <div class="flex flex-row space-x-1 md:space-x-4 items-center">
       <span class="text-sm text-gray-500 dark:text-white hidden md:block">{{ info.size }}</span>
       <div class="justify-end hidden md:flex flex-row space-x-2">

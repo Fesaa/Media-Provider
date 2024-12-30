@@ -171,6 +171,7 @@ func (m *manga) GetInfo() payload.InfoStat {
 			}
 			return title
 		}(),
+		RefUrl:      m.info.RefURL(),
 		Size:        strconv.Itoa(len(m.ToDownload)) + " Chapters",
 		Downloading: m.Wg != nil,
 		Progress:    utils.Percent(int64(m.ContentDownloaded), int64(len(m.ToDownload))),

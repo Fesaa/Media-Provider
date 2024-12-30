@@ -11,6 +11,7 @@ export type InfoStat = {
   provider: Provider;
   id: string;
   name: string;
+  ref_url: string;
   size: string;
   downloading: boolean;
   progress: number;

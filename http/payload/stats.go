@@ -15,6 +15,7 @@ type InfoStat struct {
 	Provider    models.Provider `json:"provider"`
 	Id          string          `json:"id"`
 	Name        string          `json:"name"`
+	RefUrl      string          `json:"ref_url"`
 	Size        string          `json:"size"`
 	Downloading bool            `json:"downloading"`
 	Progress    int64           `json:"progress"`
