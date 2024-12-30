@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -20,6 +21,7 @@ type pageRoutes struct {
 	DB     *db.Database
 	Auth   auth.Provider `name:"jwt-auth"`
 	Log    zerolog.Logger
+	Val    *validator.Validate
 }
 
 func RegisterPageRoutes(pr pageRoutes) {
@@ -86,7 +88,7 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if err := val.Struct(page); err != nil {
+	if err := pr.Val.Struct(page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to validate page")
 		return fiber.ErrBadRequest
 	}
@@ -112,7 +114,7 @@ func (pr *pageRoutes) NewPage(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	if err := val.Struct(page); err != nil {
+	if err := pr.Val.Struct(page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to validate page")
 		return fiber.ErrBadRequest
 	}

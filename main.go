@@ -22,6 +22,7 @@ func main() {
 	utils.Must(c.Provide(utils.Identity(c)))
 	utils.Must(c.Provide(config.Load))
 	utils.Must(c.Provide(LogProvider))
+	utils.Must(c.Provide(ValidatorProvider))
 	utils.Must(c.Invoke(validateConfig))
 
 	utils.Must(c.Provide(db.DatabaseProvider))

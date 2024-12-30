@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/subscriptions"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
@@ -29,6 +30,7 @@ type subscriptionRoutes struct {
 	DB       *db.Database
 	Provider *providers.ContentProvider
 	Log      zerolog.Logger
+	Val      *validator.Validate
 }
 
 func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
@@ -178,7 +180,7 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 }
 
 func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) error {
-	if err := val.Struct(&sub); err != nil {
+	if err := sr.Val.Struct(&sub); err != nil {
 		return err
 	}
 

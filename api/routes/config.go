@@ -17,6 +17,7 @@ type configRoutes struct {
 	Router fiber.Router
 	Auth   auth.Provider `name:"jwt-auth"`
 	Log    zerolog.Logger
+	Val    *validator.Validate
 }
 
 func RegisterConfigRoutes(cr configRoutes) {
@@ -24,10 +25,6 @@ func RegisterConfigRoutes(cr configRoutes) {
 	configGroup.Get("/", cr.GetConfig)
 	configGroup.Post("/update", cr.UpdateConfig)
 }
-
-var (
-	val = validator.New()
-)
 
 func (cr *configRoutes) GetConfig(ctx *fiber.Ctx) error {
 	cp := *cr.Cfg
@@ -48,7 +45,7 @@ func (cr *configRoutes) UpdateConfig(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid config"})
 	}
 
-	if err = val.Struct(c); err != nil {
+	if err = cr.Val.Struct(c); err != nil {
 		cr.Log.Debug().Err(err).Msg("invalid config")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
