@@ -17,20 +17,20 @@ import (
 
 func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block DownloadInfoProvider[T], client Client, log zerolog.Logger) *DownloadBase[T] {
 	return &DownloadBase[T]{
-		DownloadInfoProvider: block,
-		Client:               client,
-		Log:                  log.With().Str("id", req.Id).Logger(),
-		id:                   req.Id,
-		baseDir:              req.BaseDir,
-		TempTitle:            req.TempTitle,
-		maxImages:            min(client.GetConfig().GetMaxConcurrentImages(), 4),
-		Req:                  req,
-		LastTime:             time.Now(),
+		infoProvider: block,
+		Client:       client,
+		Log:          log.With().Str("id", req.Id).Logger(),
+		id:           req.Id,
+		baseDir:      req.BaseDir,
+		TempTitle:    req.TempTitle,
+		maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 4),
+		Req:          req,
+		LastTime:     time.Now(),
 	}
 }
 
 type DownloadBase[T any] struct {
-	DownloadInfoProvider[T]
+	infoProvider DownloadInfoProvider[T]
 
 	Client Client
 	Log    zerolog.Logger
@@ -63,7 +63,7 @@ func (d *DownloadBase[T]) GetBaseDir() string {
 }
 
 func (d *DownloadBase[T]) GetDownloadDir() string {
-	title := d.Title()
+	title := d.infoProvider.Title()
 	if title == "" {
 		return ""
 	}
@@ -98,8 +98,8 @@ func (d *DownloadBase[T]) WaitForInfoAndDownload() {
 		select {
 		case <-d.ctx.Done():
 			return
-		case <-d.LoadInfo():
-			d.Log = d.Log.With().Str("title", d.Title()).Logger()
+		case <-d.infoProvider.LoadInfo():
+			d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
 			d.checkContentOnDisk()
 			d.startDownload()
 		}
@@ -126,7 +126,7 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 			continue
 		}
 
-		matches := d.ContentRegex().FindStringSubmatch(entry.Name())
+		matches := d.infoProvider.ContentRegex().FindStringSubmatch(entry.Name())
 		if len(matches) < 2 {
 			continue
 		}
@@ -139,13 +139,13 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 }
 
 func (d *DownloadBase[T]) startDownload() {
-	data := d.All()
+	data := d.infoProvider.All()
 	d.Log.Trace().Int("size", len(data)).Msg("downloading content")
 	d.Wg = &sync.WaitGroup{}
 	d.ToDownload = utils.Filter(data, func(t T) bool {
-		download := !slices.Contains(d.existingContent, d.ContentDir(t)+".cbz")
+		download := !slices.Contains(d.existingContent, d.infoProvider.ContentDir(t)+".cbz")
 		if !download {
-			d.Log.Trace().Str("key", d.ContentKey(t)).Msg("content already downloaded, skipping")
+			d.Log.Trace().Str("key", d.infoProvider.ContentKey(t)).Msg("content already downloaded, skipping")
 		}
 		return download
 	})
@@ -191,25 +191,25 @@ func (d *DownloadBase[T]) startDownload() {
 }
 
 func (d *DownloadBase[T]) downloadContent(t T) error {
-	l := d.ContentLogger(t)
+	l := d.infoProvider.ContentLogger(t)
 
 	l.Trace().Msg("downloading content")
 
-	if err := os.MkdirAll(d.ContentPath(t), 0755); err != nil {
+	if err := os.MkdirAll(d.infoProvider.ContentPath(t), 0755); err != nil {
 		return err
 	}
 
-	if err := d.WriteContentMetaData(t); err != nil {
-		d.Log.Warn().Err(err).Msg("error writing meta data")
-	}
-
-	urls, err := d.ContentUrls(t)
+	urls, err := d.infoProvider.ContentUrls(t)
 	if err != nil {
 		return err
 	}
 	if len(urls) == 0 {
 		l.Warn().Msg("content has no downloadable urls?")
 		return nil
+	}
+
+	if err := d.infoProvider.WriteContentMetaData(t); err != nil {
+		d.Log.Warn().Err(err).Msg("error writing meta data")
 	}
 
 	l.Debug().Int("size", len(urls)).Msg("downloading images")
@@ -234,7 +234,7 @@ func (d *DownloadBase[T]) downloadContent(t T) error {
 				sem <- struct{}{}
 				defer func() { <-sem }()
 				// Indexing pages from 1
-				if err = d.DownloadContent(i+1, t, url); err != nil {
+				if err = d.infoProvider.DownloadContent(i+1, t, url); err != nil {
 					select {
 					case errCh <- err:
 						cancel()
