@@ -163,13 +163,12 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		return t.DisplayName
 	}), ",")
 
-	ci.Tags = strings.Join(utils.Map(chapter.Tags, func(t Tag) string {
+	ci.Tags = strings.Join(utils.Map(utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags), func(t Tag) string {
 		return t.DisplayName
 	}), ",")
 
 	ci.Web = m.seriesInfo.RefUrl()
 
-	// Not writing completed info, as I'm not sure what Kavita would look at with lose Chapters + volume data
 	return ci
 }
 
@@ -207,12 +206,7 @@ func (m *manga) mangaPath() string {
 }
 
 func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := m.httpClient.Do(req)
+	resp, err := m.httpClient.Get(url)
 	if err != nil {
 		return err
 	}
@@ -222,25 +216,14 @@ func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) erro
 			return fmt.Errorf("bad status: %s", resp.Status)
 		}
 
-		retryAfter := resp.Header.Get("X-RateLimit-Retry-After")
-		if retryAfter == "" {
-			return fmt.Errorf("bad status: %s", resp.Status)
+		if len(tryAgain) > 0 && !tryAgain[0] {
+			return fmt.Errorf("hit rate limit too many times")
 		}
 
-		if unix, err := strconv.ParseInt(retryAfter, 10, 64); err == nil {
-			t := time.Unix(unix, 0)
-
-			if len(tryAgain) > 0 && !tryAgain[0] {
-				m.Log.Error().Msg("Reached rate limit, after sleeping. What is going on?")
-				return fmt.Errorf("bad status: %s", resp.Status)
-			}
-
-			d := time.Until(t)
-			m.Log.Warn().Str("retryAfter", retryAfter).Dur("sleeping_for", d).Msg("Hit rate limit, try again after it's over")
-
-			time.Sleep(d)
-			return m.downloadAndWrite(url, path, false)
-		}
+		d := time.Minute
+		m.Log.Warn().Dur("sleeping_for", d).Msg("Hit rate limit, sleeping for 1 minute")
+		time.Sleep(d)
+		return m.downloadAndWrite(url, path, false)
 
 	}
 
