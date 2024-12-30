@@ -8,8 +8,7 @@ import (
 type Provider int
 
 const (
-	SUKEBEI Provider = iota + 1
-	NYAA
+	NYAA Provider = iota + 2
 	YTS
 	LIME
 	SUBSPLEASE
@@ -20,8 +19,6 @@ const (
 
 func (p Provider) String() string {
 	switch p {
-	case SUKEBEI:
-		return "Sukebei"
 	case NYAA:
 		return "Nyaa"
 	case YTS:

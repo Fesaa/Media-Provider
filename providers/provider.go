@@ -16,13 +16,6 @@ import (
 )
 
 func (p *ContentProvider) registerAll(container *dig.Container) {
-
-	/*
-		p.register(models.SUKEBEI, makeProvider(log, models.SUKEBEI, nyaaTransformer(models.SUKEBEI), nyaaSearch, nyaaNormalizer(models.SUKEBEI), yoitsuDownloader, yoitsuStopper))
-
-		p.register(models.DYNASTY, makeProvider(log, models.DYNASTY, dynastyTransformer, dynasty_scans.SearchSeries, dynastyNormalizer, pasloeDownloader, pasloeStopper))
-	*/
-
 	scope := container.Scope("content-providers")
 
 	utils.Must(scope.Provide(yts.NewBuilder))
