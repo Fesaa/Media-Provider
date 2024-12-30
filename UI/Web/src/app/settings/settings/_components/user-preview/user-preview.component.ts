@@ -1,19 +1,22 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {hasPermission, Perm, UserDto} from '../../../../_models/user';
+import {hasPermission, Perm, User, UserDto} from '../../../../_models/user';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {AccountService} from "../../../../_services/account.service";
 import {PermissionSettingsComponent} from "../permission-settings/permission-settings.component";
 import {NgIcon} from "@ng-icons/core";
 import {DialogService} from "../../../../_services/dialog.service";
 import {ToastrService} from "ngx-toastr";
+import {Tooltip} from "primeng/tooltip";
+import {Clipboard} from "@angular/cdk/clipboard";
 
 @Component({
     selector: 'app-user-preview',
-    imports: [
-        PermissionSettingsComponent,
-        ReactiveFormsModule,
-        NgIcon
-    ],
+  imports: [
+    PermissionSettingsComponent,
+    ReactiveFormsModule,
+    NgIcon,
+    Tooltip,
+  ],
     templateUrl: './user-preview.component.html',
     styleUrl: './user-preview.component.css'
 })
@@ -26,16 +29,48 @@ export class UserPreviewComponent implements OnInit {
   form!: FormGroup;
 
   edit: boolean = false;
+  authUser!: User;
 
   constructor(
     private fb: FormBuilder,
     private accountService: AccountService,
     private dialogService: DialogService,
     private toastR: ToastrService,
+    private clipBoard: Clipboard,
   ) {
   }
 
+  refreshApiKey() {
+    if (this.authUser.id !== this.user.id) {
+      return;
+    }
+
+    this.accountService.refreshApiKey().subscribe({
+      next: data => {
+        this.toastR.success("Refreshed API key");
+      },
+      error: err => {
+        this.toastR.error("Failed to refresh API key", err.message);
+      }
+  })
+  }
+
+  copyAuth() {
+    if (this.authUser.id === this.user.id) {
+      this.clipBoard.copy(this.authUser.apiKey);
+      this.toastR.success('Removing in 1m', 'Api Key copied to clipboard');
+      setTimeout(() => {
+        this.clipBoard.copy('')
+      }, 60 * 1000);
+    }
+  }
+
   ngOnInit(): void {
+    this.accountService.currentUser$.subscribe((user) => {
+      if (user) {
+        this.authUser = user;
+      }
+    })
     this.form = this.fb.group({
       name: this.fb.control(this.user.name, Validators.required),
       permissions: this.fb.control(this.valueToPermissions(), Validators.required)

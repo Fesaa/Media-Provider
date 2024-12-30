@@ -31,15 +31,46 @@
   <div class="w-full flex flex-row space-x-6 md:space-x-3 p-2 md:p-3 bg-white dark:bg-gray-800 rounded shadow">
     <ng-icon name="heroUser" size="48"></ng-icon>
 
-    <div class="flex flex-col justify-center w-full hover:cursor-pointer" (click)="toggleEdit()">
-      <h1 class="text-xl">{{ user.name }}</h1>
+    <div class="flex flex-row justify-start space-x-5 items-center w-full hover:cursor-pointer">
+      <h1 class="text-xl"
+          pTooltip="Click to edit"
+          tooltipPosition="bottom"
+          (click)="toggleEdit()"
+      >
+        {{ user.name }}
+      </h1>
+
+      @if (user.id === authUser.id) {
+        <div class="flex flex-row space-x-2">
+          <h1 class="text-sm"
+              pTooltip="Api-Key, click to copy"
+              tooltipPosition="bottom"
+              (click)="copyAuth()"
+          >
+            {{ authUser.apiKey }}
+          </h1>
+          <div class="flex flex-row items-center"
+               pTooltip="Generate new api key"
+               tooltipPosition="bottom"
+          >
+            <ng-icon name="heroArrowPath" size="16" class="hover:cursor-pointer" (click)="refreshApiKey()"></ng-icon>
+          </div>
+        </div>
+      }
+
     </div>
 
-    <div class="flex flex-row items-center">
+    <div class="flex flex-row items-center"
+         pTooltip="Generate password reset"
+         tooltipPosition="bottom"
+    >
       <ng-icon name="heroArrowPath" size="16" class="hover:cursor-pointer" (click)="resetPassword()"></ng-icon>
     </div>
 
-    <div class="flex flex-row items-center">
+    <div class="flex flex-row items-center"
+         pTooltip="Delete user"
+         tooltipPosition="bottom"
+    >
       <ng-icon name="heroMinus" size="16" class="hover:cursor-pointer" (click)="deleteUser()"></ng-icon>
     </div>
 

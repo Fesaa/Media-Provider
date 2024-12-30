@@ -5,7 +5,7 @@ export interface UserDto {
 }
 
 export interface User {
-  ID: number;
+  id: number;
   token: string;
   apiKey: string;
   permissions: number;

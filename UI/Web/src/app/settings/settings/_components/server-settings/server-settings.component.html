@@ -19,6 +19,8 @@
 
           <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
             <app-form-select
+              pTooltip="Requires restart atm"
+              tooltipPosition="bottom"
               [formGroupName]="'logging'"
               [formGroup]="settingsForm"
               label="Handler"
@@ -27,12 +29,16 @@
               [values]="Object.keys(LogHandler)" />
 
             <app-form-select
+              pTooltip="Requires restart atm"
+              tooltipPosition="bottom"
               [formGroupName]="'logging'"
               [formGroup]="settingsForm"
               label="Level" controlName="level"
               [options]="Object.values(LogLevel)"/>
 
             <app-form-select
+              pTooltip="Redis allows requests to be cached between restarts"
+              tooltipPosition="bottom"
               [formGroupName]="'cache'"
               [formGroup]="settingsForm"
               label="Cache Type"
@@ -60,6 +66,8 @@
 
             <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
               <app-form-input
+                pTooltip="Global max torrents"
+                tooltipPosition="bottom"
                 formGroupName="downloader"
                 [formGroup]="settingsForm"
                 label="Max torrents"
@@ -68,9 +76,11 @@
               />
 
               <app-form-input
+                pTooltip="Amount of images downloaded at once, not shared between providers"
+                tooltipPosition="bottom"
                 formGroupName="downloader"
                 [formGroup]="settingsForm"
-                label="Max Mangadex Images"
+                label="Max Images"
                 controlName="max_mangadex_images"
                 type="number"
               />

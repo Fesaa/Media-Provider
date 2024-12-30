@@ -68,7 +68,13 @@ func (current *Config) Save(cfg *Config, backUp ...bool) error {
 		}
 	}
 
-	return write(configPath, cfg)
+	err := write(configPath, cfg)
+	if err != nil {
+		return err
+	}
+
+	*current = *cfg
+	return nil
 }
 
 func write(path string, cfg *Config) error {

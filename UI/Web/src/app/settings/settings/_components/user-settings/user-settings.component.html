@@ -7,7 +7,7 @@
           <app-user-preview
             (updateIdEmitter)="handleUpdateId($event)"
             (deleteUserEmitter)="handleDeleteUser($event)"
-            [user]="user" [delete]="hasPermission(authUser, Perm.DeleteUser) && users.length > 1 && user.id !== authUser.ID">
+            [user]="user" [delete]="hasPermission(authUser, Perm.DeleteUser) && users.length > 1 && user.id !== authUser.id">
 
           </app-user-preview>
         </div>

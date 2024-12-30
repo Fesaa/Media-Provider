@@ -42,12 +42,14 @@ export enum LogHandler {
 }
 
 export enum LogLevel {
-  TRACE = 'DEBUG-4',
-  DEBUG = 'DEBUG',
-  INFO = 'INFO',
-  WARN = 'WARN',
-  ERROR = 'ERROR',
-  FATAL = 'ERROR+4',
+  TRACE = 'trace',
+  DEBUG = 'debug',
+  INFO = 'info',
+  WARN = 'warn',
+  ERROR = 'error',
+  FATAL = 'fatel',
+  PANIC = 'panic',
+  DISABLED = 'disabled',
 }
 
 export type MovePageRequest = {

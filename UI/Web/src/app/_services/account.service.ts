@@ -1,6 +1,6 @@
 import {DestroyRef, inject, Injectable} from '@angular/core';
 import {environment} from "../../environments/environment";
-import {Observable, ReplaySubject, tap} from "rxjs";
+import {Observable, ReplaySubject, take, tap} from "rxjs";
 import {User, UserDto} from "../_models/user";
 import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
@@ -95,6 +95,13 @@ export class AccountService {
 
   resetPassword(model: {key: string, password: string}) {
     return this.httpClient.post(this.baseUrl + 'reset-password', model)
+  }
+
+  refreshApiKey() {
+    return this.httpClient.get(this.baseUrl + 'user/refresh-api-key', {responseType: 'text'}).pipe(tap(key => {
+      this.currentUser!.apiKey = key
+      this.setCurrentUser(this.currentUser)
+    }));
   }
 
 }

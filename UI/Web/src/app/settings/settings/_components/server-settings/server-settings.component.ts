@@ -8,15 +8,17 @@ import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/
 import {ToastrService} from "ngx-toastr";
 import {NgIcon} from "@ng-icons/core";
 import {Clipboard} from "@angular/cdk/clipboard";
+import {Tooltip} from "primeng/tooltip";
 
 @Component({
     selector: 'app-server-settings',
-    imports: [
-        ReactiveFormsModule,
-        FormInputComponent,
-        FormSelectComponent,
-        NgIcon
-    ],
+  imports: [
+    ReactiveFormsModule,
+    FormInputComponent,
+    FormSelectComponent,
+    NgIcon,
+    Tooltip
+  ],
     templateUrl: './server-settings.component.html',
     styleUrl: './server-settings.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush
