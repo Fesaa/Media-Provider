@@ -39,7 +39,7 @@ func levelConv(lvl logger.LogLevel) zerolog.Level {
 
 func gormLogger(log zerolog.Logger, config ...logger.Config) logger.Interface {
 	return &gormLoggerWrapper{
-		log: log,
+		log: log.With().Str("handler", "db").Logger(),
 		config: func() logger.Config {
 			if len(config) > 0 {
 				return config[0]
