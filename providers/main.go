@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	utils2 "github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"sync"
@@ -17,7 +17,7 @@ func New(log zerolog.Logger, container *dig.Container) *ContentProvider {
 		log:       log.With().Str("handler", "provider").Logger(),
 	}
 
-	utils2.Must(container.Invoke(p.registerAll))
+	utils.Must(container.Invoke(p.registerAll))
 	return p
 }
 

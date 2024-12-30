@@ -9,7 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/subsplease"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/yts"
-	utils2 "github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"time"
@@ -19,32 +19,35 @@ func (p *ContentProvider) registerAll(container *dig.Container) {
 
 	/*
 		p.register(models.SUKEBEI, makeProvider(log, models.SUKEBEI, nyaaTransformer(models.SUKEBEI), nyaaSearch, nyaaNormalizer(models.SUKEBEI), yoitsuDownloader, yoitsuStopper))
-		p.register(models.NYAA, makeProvider(log, models.NYAA, nyaaTransformer(models.NYAA), nyaaSearch, nyaaNormalizer(models.NYAA), yoitsuDownloader, yoitsuStopper))
 
 		p.register(models.DYNASTY, makeProvider(log, models.DYNASTY, dynastyTransformer, dynasty_scans.SearchSeries, dynastyNormalizer, pasloeDownloader, pasloeStopper))
 	*/
 
 	scope := container.Scope("content-providers")
 
-	utils2.Must(scope.Provide(yts.NewBuilder))
-	utils2.Must(scope.Provide(subsplease.NewBuilder))
-	utils2.Must(scope.Provide(limetorrents.NewBuilder))
-	utils2.Must(scope.Provide(webtoon.NewBuilder))
-	utils2.Must(scope.Provide(mangadex.NewBuilder))
+	utils.Must(scope.Provide(yts.NewBuilder))
+	utils.Must(scope.Provide(subsplease.NewBuilder))
+	utils.Must(scope.Provide(limetorrents.NewBuilder))
+	utils.Must(scope.Provide(webtoon.NewBuilder))
+	utils.Must(scope.Provide(mangadex.NewBuilder))
+	utils.Must(scope.Provide(NewNyaaBuilder))
 
-	utils2.Must(scope.Invoke(func(builder *yts.Builder) {
+	utils.Must(scope.Invoke(func(builder *yts.Builder) {
 		p.register(NewProvider(builder))
 	}))
-	utils2.Must(scope.Invoke(func(builder *subsplease.Builder) {
+	utils.Must(scope.Invoke(func(builder *subsplease.Builder) {
 		p.register(NewProvider(builder))
 	}))
-	utils2.Must(scope.Invoke(func(builder *limetorrents.Builder) {
+	utils.Must(scope.Invoke(func(builder *limetorrents.Builder) {
 		p.register(NewProvider(builder))
 	}))
-	utils2.Must(scope.Invoke(func(builder *webtoon.Builder) {
+	utils.Must(scope.Invoke(func(builder *webtoon.Builder) {
 		p.register(NewProvider(builder))
 	}))
-	utils2.Must(scope.Invoke(func(builder *mangadex.Builder) {
+	utils.Must(scope.Invoke(func(builder *mangadex.Builder) {
+		p.register(NewProvider(builder))
+	}))
+	utils.Must(scope.Invoke(func(builder *NyaaBuilder) {
 		p.register(NewProvider(builder))
 	}))
 }
