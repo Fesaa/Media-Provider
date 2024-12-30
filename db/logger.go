@@ -78,19 +78,19 @@ func (g *gormLoggerWrapper) Trace(ctx context.Context, begin time.Time, fc func(
 	case err != nil && g.log.GetLevel() <= zerolog.ErrorLevel && (!errors.Is(err, gorm.ErrRecordNotFound) || !g.config.IgnoreRecordNotFoundError):
 		sql, rows := fc()
 		if rows == -1 {
-			g.log.Trace().Err(err).Dur("elapsed", elapsed).Str("sql", sql).Send()
+			g.log.Error().Err(err).Dur("elapsed", elapsed).Str("sql", sql).Send()
 		} else {
-			g.log.Trace().Err(err).Dur("elapsed", elapsed).Int64("rows", rows).Str("sql", sql).Send()
+			g.log.Error().Err(err).Dur("elapsed", elapsed).Int64("rows", rows).Str("sql", sql).Send()
 		}
 	case elapsed > g.config.SlowThreshold && g.config.SlowThreshold != 0 && g.log.GetLevel() <= zerolog.WarnLevel:
 		sql, rows := fc()
 		slowLog := fmt.Sprintf("SLOW SQL >= %v", g.config.SlowThreshold)
 		if rows == -1 {
-			g.log.Trace().Dur("elapsed", elapsed).Str("sql", sql).Msg(slowLog)
+			g.log.Warn().Dur("elapsed", elapsed).Str("sql", sql).Msg(slowLog)
 		} else {
-			g.log.Trace().Dur("elapsed", elapsed).Int64("rows", rows).Str("sql", sql).Msg(slowLog)
+			g.log.Warn().Dur("elapsed", elapsed).Int64("rows", rows).Str("sql", sql).Msg(slowLog)
 		}
-	case g.log.GetLevel() == zerolog.InfoLevel:
+	case g.log.GetLevel() <= zerolog.TraceLevel:
 		sql, rows := fc()
 		if rows == -1 {
 			g.log.Trace().Dur("elapsed", elapsed).Str("sql", sql).Send()
