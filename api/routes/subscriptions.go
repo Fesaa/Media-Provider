@@ -7,7 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers"
-	"github.com/Fesaa/Media-Provider/subscriptions"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
@@ -31,6 +31,8 @@ type subscriptionRoutes struct {
 	Provider *providers.ContentProvider
 	Log      zerolog.Logger
 	Val      *validator.Validate
+
+	SubscriptionService services.SubscriptionService
 }
 
 func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
@@ -141,7 +143,7 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 	}
 
 	if sub.ShouldRefresh(prev) {
-		subscriptions.Refresh(sub.ID)
+		sr.SubscriptionService.Refresh(sub.ID)
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
@@ -175,7 +177,7 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	subscriptions.Refresh(subscription.ID)
+	sr.SubscriptionService.Refresh(subscription.ID)
 	return ctx.JSON(subscription)
 }
 
@@ -229,7 +231,7 @@ func (sr *subscriptionRoutes) Delete(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err = subscriptions.Delete(uint(id)); err != nil {
+	if err = sr.SubscriptionService.Delete(uint(id)); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
 		return fiber.ErrInternalServerError
 	}

@@ -24,7 +24,7 @@ COPY ./config ./config
 COPY ./db ./db
 COPY ./http ./http
 COPY ./providers ./providers
-COPY ./subscriptions ./subscriptions
+COPY ./services ./services
 COPY ./utils ./utils
 COPY ./*.go ./
 

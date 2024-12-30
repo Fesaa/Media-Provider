@@ -9,7 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
-	"github.com/Fesaa/Media-Provider/subscriptions"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -35,10 +35,10 @@ func main() {
 	utils.Must(c.Provide(yoitsu.New))
 	utils.Must(c.Provide(pasloe.New))
 	utils.Must(c.Provide(providers.New))
+	utils.Must(c.Provide(services.NewSubscriptionService))
 	utils.Must(c.Provide(ApplicationProvider))
 
 	utils.Must(c.Invoke(UpdateBaseUrlInIndex))
-	utils.Must(c.Invoke(subscriptions.New))
 	utils.Must(c.Invoke(startApp))
 }
 

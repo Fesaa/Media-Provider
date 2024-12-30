@@ -1,4 +1,4 @@
-package subscriptions
+package services
 
 import (
 	"errors"
@@ -12,9 +12,14 @@ import (
 	"time"
 )
 
-var handler SubscriptionHandler
+type SubscriptionService interface {
+	// Delete the subscription, stops the tasks. Does not remove subscription from db
+	Delete(uint) error
+	// Refresh stops the current task if exists. And starts a new one
+	Refresh(uint)
+}
 
-type SubscriptionHandler struct {
+type subscriptionService struct {
 	db       *db.Database
 	provider *providers.ContentProvider
 
@@ -25,13 +30,13 @@ type SubscriptionHandler struct {
 	subUpdator chan models.Subscription
 }
 
-func New(db *db.Database, provider *providers.ContentProvider, log zerolog.Logger) (*SubscriptionHandler, error) {
+func NewSubscriptionService(db *db.Database, provider *providers.ContentProvider, log zerolog.Logger) (SubscriptionService, error) {
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		return nil, err
 	}
 
-	handler = SubscriptionHandler{
+	handler := subscriptionService{
 		scheduler:  s,
 		db:         db,
 		provider:   provider,
@@ -47,7 +52,7 @@ func New(db *db.Database, provider *providers.ContentProvider, log zerolog.Logge
 	return &handler, nil
 }
 
-func (h *SubscriptionHandler) initUpdateProcessor() {
+func (h *subscriptionService) initUpdateProcessor() {
 	go func() {
 		for sub := range h.subUpdator {
 			err := h.db.Subscriptions.Update(sub)
@@ -60,15 +65,7 @@ func (h *SubscriptionHandler) initUpdateProcessor() {
 	}()
 }
 
-func Refresh(id uint) {
-	handler.refresh(id)
-}
-
-func Delete(id uint) error {
-	return handler.delete(id)
-}
-
-func (h *SubscriptionHandler) delete(id uint) error {
+func (h *subscriptionService) Delete(id uint) error {
 	mappedUuid, ok := h.idMapper[id]
 	if !ok {
 		return errors.New("subscription not found")
@@ -84,7 +81,7 @@ func (h *SubscriptionHandler) delete(id uint) error {
 	return nil
 }
 
-func (h *SubscriptionHandler) refresh(id uint) {
+func (h *subscriptionService) Refresh(id uint) {
 	mappedUuid, ok := h.idMapper[id]
 	if ok {
 		if err := h.scheduler.RemoveJob(mappedUuid); err != nil {
@@ -103,7 +100,7 @@ func (h *SubscriptionHandler) refresh(id uint) {
 	h.new(*sub)
 }
 
-func (h *SubscriptionHandler) new(sub models.Subscription) {
+func (h *subscriptionService) new(sub models.Subscription) {
 	diff := time.Since(sub.Info.LastCheck)
 
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
@@ -140,7 +137,7 @@ func (h *SubscriptionHandler) new(sub models.Subscription) {
 		Msg("added subscription")
 }
 
-func (h *SubscriptionHandler) StartAll() {
+func (h *subscriptionService) StartAll() {
 	subs, err := h.db.Subscriptions.All()
 	if err != nil {
 		h.log.Error().Err(err).Msg("failed to get subscriptions")
@@ -153,7 +150,7 @@ func (h *SubscriptionHandler) StartAll() {
 	h.log.Info().Int("count", len(subs)).Msg("added subscriptions")
 }
 
-func (h *SubscriptionHandler) toTask(sub models.Subscription) gocron.Task {
+func (h *subscriptionService) toTask(sub models.Subscription) gocron.Task {
 	return gocron.NewTask(func() {
 		err := h.provider.Download(payload.DownloadRequest{
 			Id:        sub.ContentId,
