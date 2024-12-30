@@ -3,56 +3,60 @@ package routes
 import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/db"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"strconv"
 )
 
-type configRoutes struct{}
+type configRoutes struct {
+	dig.In
 
-func RegisterConfigRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
-	cr := &configRoutes{}
+	Cfg    *config.Config
+	Router fiber.Router
+	Auth   auth.Provider `name:"jwt-auth"`
+	Log    zerolog.Logger
+}
 
-	configGroup := router.Group("/config", auth.Middleware)
-	configGroup.Get("/", wrap(cr.GetConfig))
-	configGroup.Post("/update", wrap(cr.UpdateConfig))
+func RegisterConfigRoutes(cr configRoutes) {
+	configGroup := cr.Router.Group("/config", cr.Auth.Middleware)
+	configGroup.Get("/", cr.GetConfig)
+	configGroup.Post("/update", cr.UpdateConfig)
 }
 
 var (
 	val = validator.New()
 )
 
-func (cr *configRoutes) GetConfig(l *log.Logger, ctx *fiber.Ctx) error {
-	cp := *config.I()
+func (cr *configRoutes) GetConfig(ctx *fiber.Ctx) error {
+	cp := *cr.Cfg
 	cp.Secret = ""
 	return ctx.JSON(cp)
 }
 
-func (cr *configRoutes) UpdateConfig(l *log.Logger, ctx *fiber.Ctx) error {
+func (cr *configRoutes) UpdateConfig(ctx *fiber.Ctx) error {
 	syncID, err := intQuery(ctx, "sync_id")
 	if err != nil {
-		l.Debug("Invalid sync_id", "error", err)
+		cr.Log.Debug().Err(err).Msg("invalid sync id")
 		return ctx.Status(fiber.StatusPreconditionRequired).JSON(fiber.Map{"error": "Invalid sync_id"})
 	}
 
 	var c config.Config
 	if err = ctx.BodyParser(&c); err != nil {
-		l.Debug("Failed to parse config", "error", err)
+		cr.Log.Debug().Err(err).Msg("invalid config body")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid config"})
 	}
 
 	if err = val.Struct(c); err != nil {
-		l.Debug("Invalid config", "error", err)
+		cr.Log.Debug().Err(err).Msg("invalid config")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	if err = config.I().Update(c, syncID); err != nil {
-		l.Error("Failed to update config", "error", err)
+	if err = cr.Cfg.Update(c, syncID); err != nil {
+		cr.Log.Error().Err(err).Msg("failed to update config")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	log.Init(config.I().Logging)
-	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(config.I().SyncId))
+	return ctx.Status(fiber.StatusOK).SendString(strconv.Itoa(cr.Cfg.SyncId))
 }

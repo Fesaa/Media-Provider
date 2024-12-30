@@ -5,8 +5,8 @@ import (
 	"github.com/Fesaa/Media-Provider/db/impl"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/glebarez/sqlite"
+	"github.com/rs/zerolog"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"path"
 )
 
@@ -17,9 +17,9 @@ type Database struct {
 	Subscriptions models.Subscriptions
 }
 
-func Connect() (*Database, error) {
+func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 	db, err := gorm.Open(sqlite.Open(path.Join(config.Dir, "media-provider.db")), &gorm.Config{
-		Logger:               logger.Default.LogMode(logger.Warn),
+		Logger:               gormLogger(log),
 		FullSaveAssociations: true,
 	})
 	if err != nil {

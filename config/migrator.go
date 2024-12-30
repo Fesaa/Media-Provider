@@ -45,7 +45,7 @@ func update(c Config) Config {
 	}
 	fmt.Println("Migration finished, saving...")
 
-	if err := c.Save(); err != nil {
+	if err := c.Save(&c); err != nil {
 		panic(err)
 	}
 

@@ -2,8 +2,6 @@ package limetorrents
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/PuerkitoBio/goquery"
 	"io"
 	"net/url"
@@ -13,10 +11,10 @@ import (
 const BASE_URl string = "https://www.limetorrents.lol"
 const SEARCH_URL string = BASE_URl + "/search/%s/%s/%d/"
 
-func Search(searchOptions SearchOptions) ([]SearchResult, error) {
+func (b *Builder) Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	searchUrl := formatUrl(searchOptions)
 
-	doc, err := getSearch(searchUrl)
+	doc, err := b.getSearch(searchUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -73,15 +71,15 @@ func hashFromUrl(url string) string {
 	return s2[0]
 }
 
-func getSearch(url string) (*goquery.Document, error) {
-	res, err := wisewolf.Client.Get(url)
+func (b *Builder) getSearch(url string) (*goquery.Document, error) {
+	res, err := b.httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
-			log.Warn("failed to close body", "error", err)
+			b.log.Warn().Err(err).Msg("failed to close body")
 		}
 	}(res.Body)
 	if res.StatusCode != 200 {

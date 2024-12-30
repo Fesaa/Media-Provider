@@ -2,13 +2,14 @@ package auth
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rs/zerolog"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
@@ -18,12 +19,31 @@ const (
 	AuthScheme = "Bearer"
 )
 
+var (
+	ErrMissingOrMalformedAPIKey = errors.New("missing or malformed API key")
+)
+
 type jwtAuth struct {
-	db *db.Database
+	DB  *db.Database
+	Cfg *config.Config
+	log zerolog.Logger
 }
 
-func newJwtAuth(db *db.Database) Provider {
-	return &jwtAuth{db}
+func NewJwtAuth(db *db.Database, cfg *config.Config, log zerolog.Logger) Provider {
+	return &jwtAuth{db, cfg, log}
+}
+
+func (jwtAuth *jwtAuth) Middleware(ctx *fiber.Ctx) error {
+	isAuthenticated, err := jwtAuth.IsAuthenticated(ctx)
+	if err != nil {
+		jwtAuth.log.Error().Err(err).Msg("error while checking authentication status")
+		return ctx.SendStatus(fiber.StatusUnauthorized)
+	}
+	if !isAuthenticated {
+		return ctx.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	return ctx.Next()
 }
 
 func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
@@ -49,7 +69,7 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 			return nil, fmt.Errorf("unexpected signing method: %s", t.Header["alg"])
 		}
 
-		return []byte(config.I().Secret), nil
+		return []byte(jwtAuth.Cfg.Secret), nil
 	})
 	if err != nil {
 		return false, err
@@ -62,7 +82,7 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 
 	// Load user from theDb in non get requests
 	if ctx.Method() != fiber.MethodGet {
-		user, err := jwtAuth.db.Users.GetByName(mpClaims.User.Name)
+		user, err := jwtAuth.DB.Users.GetByName(mpClaims.User.Name)
 		if err != nil {
 			return false, fmt.Errorf("cannot get user: %w", err)
 		}
@@ -78,9 +98,9 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 }
 
 func (jwtAuth *jwtAuth) Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
-	user, err := jwtAuth.db.Users.GetByName(loginRequest.UserName)
+	user, err := jwtAuth.DB.Users.GetByName(loginRequest.UserName)
 	if err != nil {
-		log.Error("failed to get user by username:", "name", loginRequest.UserName)
+		jwtAuth.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("user not found")
 		return nil, err
 	}
 
@@ -90,12 +110,12 @@ func (jwtAuth *jwtAuth) Login(loginRequest payload.LoginRequest) (*payload.Login
 
 	decodeString, err := base64.StdEncoding.DecodeString(user.PasswordHash)
 	if err != nil {
-		log.Error("Failed to decode password, cannot login", "error", err)
+		jwtAuth.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("failed to decode password")
 		return nil, fiber.ErrInternalServerError
 	}
 
 	if err = bcrypt.CompareHashAndPassword(decodeString, []byte(loginRequest.Password)); err != nil {
-		log.Error("Invalid password, cannot login", "error", err)
+		jwtAuth.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("invalid password")
 		return nil, badRequest("Invalid password")
 	}
 
@@ -113,7 +133,7 @@ func (jwtAuth *jwtAuth) Login(loginRequest payload.LoginRequest) (*payload.Login
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte(config.I().Secret))
+	t, err := token.SignedString([]byte(jwtAuth.Cfg.Secret))
 	if err != nil {
 		return nil, err
 	}

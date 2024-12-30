@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
 	"github.com/Fesaa/Media-Provider/utils"
 	"io"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -24,8 +24,8 @@ var (
 	rg = regexp.MustCompile("[^a-zA-Z0-9 ]+")
 )
 
-func Search(options SearchOptions) ([]SearchData, error) {
-	resp, err := wisewolf.Client.Get(searchUrl(options.Query))
+func Search(options SearchOptions, httpClient *http.Client) ([]SearchData, error) {
+	resp, err := httpClient.Get(searchUrl(options.Query))
 	if err != nil {
 		return nil, err
 	}

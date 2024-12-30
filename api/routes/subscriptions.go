@@ -6,11 +6,12 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/subscriptions"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"slices"
 )
 
@@ -21,27 +22,31 @@ var (
 )
 
 type subscriptionRoutes struct {
-	db *db.Database
+	dig.In
+
+	Router   fiber.Router
+	Auth     auth.Provider `name:"jwt-auth"`
+	DB       *db.Database
+	Provider *providers.ContentProvider
+	Log      zerolog.Logger
 }
 
-func RegisterSubscriptionRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
-	sr := subscriptionRoutes{db: db}
-
-	group := router.Group("/subscriptions", auth.Middleware)
+func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
+	group := sr.Router.Group("/subscriptions", sr.Auth.Middleware)
 	group.Get("/providers", sr.Providers)
-	group.Get("/all", wrap(sr.All))
-	group.Get("/:id", wrap(sr.Get))
-	group.Post("/update", wrap(sr.Update))
-	group.Post("/new", wrap(sr.New))
-	group.Delete("/:id", wrap(sr.Delete))
-	group.Post("/run-once/:id", wrap(sr.RunOnce))
+	group.Get("/all", sr.All)
+	group.Get("/:id", sr.Get)
+	group.Post("/update", sr.Update)
+	group.Post("/new", sr.New)
+	group.Delete("/:id", sr.Delete)
+	group.Post("/run-once/:id", sr.RunOnce)
 }
 
 func (sr *subscriptionRoutes) Providers(ctx *fiber.Ctx) error {
 	return ctx.JSON(allowedProviders)
 }
 
-func (sr *subscriptionRoutes) RunOnce(l *log.Logger, ctx *fiber.Ctx) error {
+func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id", -1)
 	if err != nil || id == -1 {
 		return ctx.Status(400).JSON(fiber.Map{
@@ -50,37 +55,37 @@ func (sr *subscriptionRoutes) RunOnce(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 	}
 
-	sub, err := sr.db.Subscriptions.Get(uint(id))
+	sub, err := sr.DB.Subscriptions.Get(uint(id))
 	if err != nil {
-		l.Error("Failed to get subscription", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to get subscription")
 		return fiber.ErrInternalServerError
 	}
 
-	err = providers.Download(payload.DownloadRequest{
+	err = sr.Provider.Download(payload.DownloadRequest{
 		Id:        sub.ContentId,
 		Provider:  sub.Provider,
 		TempTitle: sub.Info.Title,
 		BaseDir:   sub.Info.BaseDir,
 	})
 	if err != nil {
-		l.Error("Failed to download subscription", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to download subscription")
 		return fiber.ErrInternalServerError
 	}
 
 	return ctx.Status(fiber.StatusAccepted).JSON(fiber.Map{})
 }
 
-func (sr *subscriptionRoutes) All(l *log.Logger, ctx *fiber.Ctx) error {
-	subs, err := sr.db.Subscriptions.All()
+func (sr *subscriptionRoutes) All(ctx *fiber.Ctx) error {
+	subs, err := sr.DB.Subscriptions.All()
 	if err != nil {
-		l.Error("Failed to get subscriptions", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to get subscriptions")
 		return fiber.ErrInternalServerError
 	}
 
 	return ctx.JSON(subs)
 }
 
-func (sr *subscriptionRoutes) Get(l *log.Logger, ctx *fiber.Ctx) error {
+func (sr *subscriptionRoutes) Get(ctx *fiber.Ctx) error {
 	id, err := ctx.ParamsInt("id", -1)
 	if err != nil || id == -1 {
 		return ctx.Status(400).JSON(fiber.Map{
@@ -89,38 +94,38 @@ func (sr *subscriptionRoutes) Get(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 	}
 
-	sub, err := sr.db.Subscriptions.Get(uint(id))
+	sub, err := sr.DB.Subscriptions.Get(uint(id))
 	if err != nil {
-		l.Error("Failed to get subscription", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to get subscription")
 		return fiber.ErrInternalServerError
 	}
 
 	return ctx.JSON(sub)
 }
 
-func (sr *subscriptionRoutes) Update(l *log.Logger, ctx *fiber.Ctx) error {
+func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteConfig) {
-		l.Warn("user does not have permission to edit subscriptions", "user", user.Name)
+		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to edit subscriptions")
 		return fiber.ErrUnauthorized
 	}
 
 	var sub models.Subscription
 	if err := ctx.BodyParser(&sub); err != nil {
-		l.Error("Failed to parse subscription body", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to parse subscription")
 		return fiber.ErrBadRequest
 	}
 
 	if err := sr.validatorSubscription(sub); err != nil {
-		l.Error("Failed to validate subscription", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to validate subscription")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	prev, err := sr.db.Subscriptions.Get(sub.ID)
+	prev, err := sr.DB.Subscriptions.Get(sub.ID)
 	if err != nil {
-		l.Warn("Failed to get subscription", "error", err, "id", sub.ID)
+		sr.Log.Error().Err(err).Uint("id", sub.ID).Msg("Failed to get subscription")
 		return fiber.ErrInternalServerError
 	}
 
@@ -128,8 +133,8 @@ func (sr *subscriptionRoutes) Update(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	}
 
-	if err = sr.db.Subscriptions.Update(sub); err != nil {
-		l.Error("Failed to upsert subscription", "error", err, "id", sub.ID)
+	if err = sr.DB.Subscriptions.Update(sub); err != nil {
+		sr.Log.Error().Err(err).Uint("id", sub.ID).Msg("Failed to update subscription")
 		return fiber.ErrInternalServerError
 	}
 
@@ -140,31 +145,31 @@ func (sr *subscriptionRoutes) Update(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func (sr *subscriptionRoutes) New(l *log.Logger, ctx *fiber.Ctx) error {
+func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteConfig) {
-		l.Warn("user does not have permission to create subscription", "user", user.Name)
+		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to create subscriptions")
 		return fiber.ErrUnauthorized
 	}
 
 	var sub models.Subscription
 	if err := ctx.BodyParser(&sub); err != nil {
-		l.Error("Failed to parse subscription body", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to parse subscription")
 		return fiber.ErrBadRequest
 	}
 
 	sub.Info.BaseDir = CleanPath(sub.Info.BaseDir)
 
 	if err := sr.validatorSubscription(sub); err != nil {
-		l.Error("Failed to validate subscription", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to validate subscription")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	subscription, err := sr.db.Subscriptions.New(sub)
+	subscription, err := sr.DB.Subscriptions.New(sub)
 	if err != nil {
-		l.Error("Failed to create subscription", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to create subscription")
 		return fiber.ErrInternalServerError
 	}
 
@@ -193,10 +198,10 @@ func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) err
 	return nil
 }
 
-func (sr *subscriptionRoutes) Delete(l *log.Logger, ctx *fiber.Ctx) error {
+func (sr *subscriptionRoutes) Delete(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteConfig) {
-		l.Warn("user does not have permission to delete subscriptions", "user", user.Name)
+		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to delete subscriptions")
 		return fiber.ErrUnauthorized
 	}
 
@@ -215,15 +220,15 @@ func (sr *subscriptionRoutes) Delete(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err = sr.db.Subscriptions.Delete(uint(id)); err != nil {
-		l.Error("Failed to delete subscription", "error", err)
+	if err = sr.DB.Subscriptions.Delete(uint(id)); err != nil {
+		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
 	if err = subscriptions.Delete(uint(id)); err != nil {
-		l.Error("Failed to delete subscription", "error", err)
+		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
 		return fiber.ErrInternalServerError
 	}
 

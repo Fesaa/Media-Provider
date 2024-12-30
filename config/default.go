@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/Fesaa/Media-Provider/utils"
-	"log/slog"
+	"github.com/rs/zerolog"
 	"os"
 	"path"
 )
@@ -22,7 +22,7 @@ func defaultConfig() *Config {
 			Type: MEMORY,
 		},
 		Logging: Logging{
-			Level:   slog.LevelInfo,
+			Level:   zerolog.InfoLevel,
 			Source:  true,
 			Handler: LogHandlerText,
 		},

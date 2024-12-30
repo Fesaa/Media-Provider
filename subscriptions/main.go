@@ -5,36 +5,38 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
-	"log/slog"
+	"github.com/rs/zerolog"
 	"time"
 )
 
-var handler subscriptionHandler
+var handler SubscriptionHandler
 
-type subscriptionHandler struct {
+type SubscriptionHandler struct {
+	db       *db.Database
+	provider *providers.ContentProvider
+
 	scheduler gocron.Scheduler
-	db        *db.Database
 	idMapper  map[uint]uuid.UUID
-	log       *log.Logger
+	log       zerolog.Logger
 
 	subUpdator chan models.Subscription
 }
 
-func Init(db *db.Database) {
+func New(db *db.Database, provider *providers.ContentProvider, log zerolog.Logger) (*SubscriptionHandler, error) {
 	s, err := gocron.NewScheduler()
 	if err != nil {
-		log.Fatal("Failed to initialize scheduler", err)
+		return nil, err
 	}
 
-	handler = subscriptionHandler{
+	handler = SubscriptionHandler{
 		scheduler:  s,
 		db:         db,
+		provider:   provider,
 		idMapper:   make(map[uint]uuid.UUID),
-		log:        log.With("handler", "subscriptions"),
+		log:        log.With().Str("handler", "subscriptions").Logger(),
 		subUpdator: make(chan models.Subscription, 100),
 	}
 
@@ -42,18 +44,17 @@ func Init(db *db.Database) {
 
 	handler.StartAll()
 	handler.scheduler.Start()
+	return &handler, nil
 }
 
-func (h *subscriptionHandler) initUpdateProcessor() {
+func (h *SubscriptionHandler) initUpdateProcessor() {
 	go func() {
 		for sub := range h.subUpdator {
 			err := h.db.Subscriptions.Update(sub)
 			if err != nil {
-				h.log.Warn("Error updating subscription check time",
-					"id", sub.ID, "err", err)
+				h.log.Warn().Err(err).Uint("id", sub.ID).Msg("failed to update subscription")
 			} else {
-				h.log.Info("Subscription updated successfully",
-					"id", sub.ID, "lastCheck", sub.Info.LastCheck)
+				h.log.Debug().Uint("id", sub.ID).Msg("updated subscription")
 			}
 		}
 	}()
@@ -67,84 +68,94 @@ func Delete(id uint) error {
 	return handler.delete(id)
 }
 
-func (h *subscriptionHandler) delete(id uint) error {
+func (h *SubscriptionHandler) delete(id uint) error {
 	mappedUuid, ok := h.idMapper[id]
 	if !ok {
 		return errors.New("subscription not found")
 	}
 
 	if err := h.scheduler.RemoveJob(mappedUuid); err != nil {
-		h.log.Error("Failed to remove job", "id", mappedUuid, "err", err)
+		h.log.Error().Err(err).Uint("id", id).Msg("failed to remove job")
 		return err
 	}
 
 	delete(h.idMapper, id)
-	h.log.Info("Removed job", "id", mappedUuid, "subscriptionId", id)
+	h.log.Debug().Uint("id", id).Msg("removed subscription")
 	return nil
 }
 
-func (h *subscriptionHandler) refresh(id uint) {
+func (h *SubscriptionHandler) refresh(id uint) {
 	mappedUuid, ok := h.idMapper[id]
 	if ok {
 		if err := h.scheduler.RemoveJob(mappedUuid); err != nil {
-			h.log.Error("Failed to remove job", "id", mappedUuid, "err", err)
+			h.log.Error().Err(err).Uint("id", id).Msg("failed to remove job")
 			return
 		}
-		h.log.Debug("Removed job", "id", mappedUuid, "subscriptionId", id)
+		h.log.Debug().Uint("id", id).Msg("removed subscription")
 	}
 
 	sub, err := h.db.Subscriptions.Get(id)
 	if err != nil || sub == nil {
-		h.log.Error("Failed to get subscription", "id", id, "err", err)
+		h.log.Error().Err(err).Uint("id", id).Msg("failed to get subscription")
 		return
 	}
 
 	h.new(*sub)
 }
 
-func (h *subscriptionHandler) new(sub models.Subscription) {
+func (h *SubscriptionHandler) new(sub models.Subscription) {
 	diff := time.Since(sub.Info.LastCheck)
 
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
 		gocron.WithStartAt(func() gocron.StartAtOption {
 			if diff > sub.RefreshFrequency.AsDuration() {
-				h.log.Debug("subscription scheduled to execute immediately", "id", sub.ID)
+				h.log.Debug().
+					Uint("id", sub.ID).
+					Str("title", sub.Info.Title).
+					Msg("subscription scheduled to execute immediately")
 				return gocron.WithStartImmediately()
 			}
 
 			startTime := time.Now().Add(sub.RefreshFrequency.AsDuration() - diff)
 
-			h.log.Debug("subscription scheduled to execute", "id", sub.ID, "title", sub.Info.Title, slog.Time("at", startTime))
+			h.log.Debug().
+				Uint("id", sub.ID).
+				Str("title", sub.Info.Title).
+				Time("at", startTime).
+				Msg("subscription scheduled to execute")
 			return gocron.WithStartDateTime(startTime)
 		}()))
 
 	if err != nil {
-		h.log.Error("Error creating subscription job", "id", sub.ID)
+		h.log.Error().Err(err).Uint("id", sub.ID).Msg("failed to create job")
 		return
 	}
 
 	h.idMapper[sub.ID] = j.ID()
-	h.log.Debug("Subscription scheduled",
-		"subId", sub.ID, "contentId", sub.ContentId, "uuid", j.ID(), "title", sub.Info.Title,
-		slog.Duration("duration", sub.RefreshFrequency.AsDuration()))
+	h.log.Debug().
+		Uint("id", sub.ID).
+		Str("contentId", sub.ContentId).
+		Str("title", sub.Info.Title).
+		Dur("duration", sub.RefreshFrequency.AsDuration()).
+		Msg("added subscription")
 }
 
-func (h *subscriptionHandler) StartAll() {
+func (h *SubscriptionHandler) StartAll() {
 	subs, err := h.db.Subscriptions.All()
 	if err != nil {
-		h.log.Error("Error getting all subscriptions, cannot start cron jobs", "error", err)
+		h.log.Error().Err(err).Msg("failed to get subscriptions")
 		return
 	}
 
 	for _, sub := range subs {
 		h.new(sub)
 	}
-	h.log.Info("Subscriptions loaded from database, and scheduled", slog.Int("amount", len(subs)))
+	h.log.Info().Int("count", len(subs)).Msg("added subscriptions")
 }
 
-func (h *subscriptionHandler) toTask(sub models.Subscription) gocron.Task {
+func (h *SubscriptionHandler) toTask(sub models.Subscription) gocron.Task {
 	return gocron.NewTask(func() {
-		err := providers.Download(payload.DownloadRequest{
+		err := h.provider.Download(payload.DownloadRequest{
 			Id:        sub.ContentId,
 			Provider:  sub.Provider,
 			TempTitle: sub.Info.Title,
@@ -154,10 +165,10 @@ func (h *subscriptionHandler) toTask(sub models.Subscription) gocron.Task {
 		sub.Info.LastCheckSuccess = err == nil
 
 		if err != nil {
-			h.log.Error("Error downloading subscription, check config",
-				"id", sub.ID,
-				"contentId", sub.ContentId,
-				"error", err)
+			h.log.Error().Err(err).
+				Uint("id", sub.ID).
+				Str("contentId", sub.ContentId).
+				Msg("failed to download content")
 			return
 		}
 

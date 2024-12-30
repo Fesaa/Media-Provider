@@ -3,8 +3,6 @@ package subsplease
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/log"
 	"io"
 	"net/url"
 )
@@ -19,15 +17,15 @@ func (o SearchOptions) toURL() string {
 	return fmt.Sprintf(URL, url.QueryEscape(o.Query))
 }
 
-func Search(options SearchOptions) (SearchResult, error) {
+func (b *Builder) Search(options SearchOptions) (SearchResult, error) {
 	u := options.toURL()
-	req, err := wisewolf.Client.Get(u)
+	req, err := b.httpClient.Get(u)
 	if err != nil {
 		return nil, err
 	}
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
-			log.Warn("failed to close body", "error", err)
+			b.log.Warn().Err(err).Msg("failed to close body")
 		}
 	}(req.Body)
 

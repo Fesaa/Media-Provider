@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log/slog"
+	"github.com/rs/zerolog"
 )
 
 // Validate is for API requests, we manually validate stuff on startup
@@ -39,9 +39,9 @@ type Downloader struct {
 }
 
 type Logging struct {
-	Level   slog.Level `json:"level"`
-	Source  bool       `json:"source"`
-	Handler LogHandler `json:"handler" validate:"uppercase"`
+	Level   zerolog.Level `json:"level"`
+	Source  bool          `json:"source"`
+	Handler LogHandler    `json:"handler" validate:"uppercase"`
 }
 
 type LogHandler string

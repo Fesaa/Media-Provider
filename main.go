@@ -1,69 +1,51 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/log"
+	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/subscriptions"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 )
 
-var cfg *config.Config
-var database *db.Database
+func main() {
+	c := dig.New()
 
-func init() {
-	var err error
-	if cfg, err = config.Load(); err != nil {
-		panic(err)
-	}
+	utils.Must(c.Provide(utils.Identity(c)))
+	utils.Must(c.Provide(config.Load))
+	utils.Must(c.Provide(LogProvider))
+	utils.Must(c.Invoke(validateConfig))
 
-	log.Init(cfg.Logging)
-	validateConfig(cfg)
-	wisewolf.Init()
-	database, err = db.Connect()
-	if err != nil {
-		panic(err)
-	}
+	utils.Must(c.Provide(db.DatabaseProvider))
+	utils.Must(c.Provide(auth.NewJwtAuth, dig.Name("jwt-auth")))
+	utils.Must(c.Provide(auth.NewApiKeyAuth, dig.Name("api-key-auth")))
 
-	if !cfg.HasUpdatedDB {
-		fmt.Println("Please migrate your database using the python script, then manually edit the config value")
-		fmt.Println("Your application is not crashing, this is intended. ")
-		os.Exit(1)
-	}
+	utils.Must(c.Provide(wisewolf.New))
+	utils.Must(c.Provide(mangadex.NewRepository))
 
-	UpdateBaseUrlInIndex(cfg.BaseUrl)
-	auth.Init(database)
-	yoitsu.Init(cfg)
-	pasloe.Init(cfg)
-	subscriptions.Init(database)
+	utils.Must(c.Provide(yoitsu.New))
+	utils.Must(c.Provide(pasloe.New))
+	utils.Must(c.Provide(providers.New))
+	utils.Must(c.Provide(subscriptions.New))
+	utils.Must(c.Provide(ApplicationProvider))
+
+	utils.Must(c.Invoke(UpdateBaseUrlInIndex))
+	utils.Must(c.Invoke(startApp))
 }
 
-func main() {
-	log.Info("Starting Media-Provider", "baseURL", cfg.BaseUrl)
-
-	app := SetupApp(cfg.BaseUrl)
+func startApp(app *fiber.App, log zerolog.Logger, cfg *config.Config) {
+	log.Info().Str("baseUrl", cfg.BaseUrl).Msg("Starting Media-Provider")
 
 	e := app.Listen(":8080")
 	if e != nil {
-		log.Fatal("Unable to start server, exiting application", e)
-	}
-
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-	<-sc
-
-	err := app.ShutdownWithTimeout(time.Second * 30)
-	if err != nil {
-		log.Error("An error occurred during shutdown", "error", err)
-		return
+		log.Fatal().Err(e).Msg("Failed to start Media-Provider")
 	}
 }

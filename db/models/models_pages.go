@@ -18,6 +18,29 @@ const (
 	DYNASTY
 )
 
+func (p Provider) String() string {
+	switch p {
+	case SUKEBEI:
+		return "Sukebei"
+	case NYAA:
+		return "Nyaa"
+	case YTS:
+		return "YTS"
+	case LIME:
+		return "Lime"
+	case SUBSPLEASE:
+		return "SubsPlease"
+	case MANGADEX:
+		return "MangaDex"
+	case WEBTOON:
+		return "Webtoon"
+	case DYNASTY:
+		return "Dynasty"
+	default:
+		return "Unknown Provider"
+	}
+}
+
 type Page struct {
 	gorm.Model
 

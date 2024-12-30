@@ -7,37 +7,41 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
-	"log/slog"
 )
 
 type userRoutes struct {
-	db *db.Database
+	dig.In
+
+	Router fiber.Router
+	Auth   auth.Provider `name:"jwt-auth"`
+	DB     *db.Database
+	Log    zerolog.Logger
 }
 
-func RegisterUserRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
-	ur := userRoutes{db: db}
+func RegisterUserRoutes(ur userRoutes) {
 
-	router.Post("/login", wrap(ur.LoginUser))
-	router.Post("/register", wrap(ur.RegisterUser))
-	router.Get("/any-user-exists", wrap(ur.AnyUserExists))
-	router.Post("/reset-password", wrap(ur.ResetPassword))
+	ur.Router.Post("/login", ur.LoginUser)
+	ur.Router.Post("/register", ur.RegisterUser)
+	ur.Router.Get("/any-user-exists", ur.AnyUserExists)
+	ur.Router.Post("/reset-password", ur.ResetPassword)
 
-	user := router.Group("/user", auth.Middleware)
-	user.Get("/refresh-api-key", wrap(ur.RefreshApiKey))
-	user.Get("/all", wrap(ur.Users))
-	user.Post("/update", wrap(ur.UpdateUser))
-	user.Delete("/:userId", wrap(ur.DeleteUser))
-	user.Post("/reset/:userId", wrap(ur.GenerateResetPassword))
+	user := ur.Router.Group("/user", ur.Auth.Middleware)
+	user.Get("/refresh-api-key", ur.RefreshApiKey)
+	user.Get("/all", ur.Users)
+	user.Post("/update", ur.UpdateUser)
+	user.Delete("/:userId", ur.DeleteUser)
+	user.Post("/reset/:userId", ur.GenerateResetPassword)
 }
 
-func (ur *userRoutes) AnyUserExists(l *log.Logger, ctx *fiber.Ctx) error {
-	ok, err := ur.db.Users.ExistsAny()
+func (ur *userRoutes) AnyUserExists(ctx *fiber.Ctx) error {
+	ok, err := ur.DB.Users.ExistsAny()
 	if err != nil {
-		l.Error("failed to check existence of user", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to check if user exists")
 		return fiber.ErrInternalServerError
 	}
 
@@ -48,26 +52,26 @@ func (ur *userRoutes) AnyUserExists(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.SendString("false")
 }
 
-func (ur *userRoutes) RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
+func (ur *userRoutes) RegisterUser(ctx *fiber.Ctx) error {
 	var register payload.LoginRequest
 	if err := ctx.BodyParser(&register); err != nil {
-		l.Error("failed to parse body", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return fiber.ErrBadRequest
 	}
 
 	password, err := bcrypt.GenerateFromPassword([]byte(register.Password), bcrypt.MinCost)
 	if err != nil {
-		l.Error("failed to hash password", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to generate password")
 		return fiber.ErrInternalServerError
 	}
 
 	apiKey, err := utils.GenerateApiKey()
 	if err != nil {
-		l.Error("failed to generate api key", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to generate api key")
 		return fiber.ErrInternalServerError
 	}
 
-	user, err := ur.db.Users.Create(register.UserName,
+	user, err := ur.DB.Users.Create(register.UserName,
 		func(u models.User) models.User {
 			u.PasswordHash = base64.StdEncoding.EncodeToString(password)
 			u.ApiKey = apiKey
@@ -75,9 +79,9 @@ func (ur *userRoutes) RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
 		},
 		func(u models.User) models.User {
 			var ok bool
-			ok, err = ur.db.Users.ExistsAny()
+			ok, err = ur.DB.Users.ExistsAny()
 			if err != nil {
-				l.Warn("failed to check existence of user, not setting all perms", "err", err)
+				ur.Log.Warn().Err(err).Msg("failed to check existence of user, not setting all perms")
 				return u
 			}
 			if ok {
@@ -90,7 +94,7 @@ func (ur *userRoutes) RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 
 	if err != nil {
-		l.Error("failed to create user", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to register user")
 		return fiber.ErrInternalServerError
 	}
 
@@ -100,7 +104,7 @@ func (ur *userRoutes) RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
 		Remember: register.Remember,
 	}
 
-	res, err := auth.I().Login(loginRequest)
+	res, err := ur.Auth.Login(loginRequest)
 	if err != nil {
 		return err
 	}
@@ -108,14 +112,14 @@ func (ur *userRoutes) RegisterUser(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.JSON(res)
 }
 
-func (ur *userRoutes) LoginUser(l *log.Logger, ctx *fiber.Ctx) error {
+func (ur *userRoutes) LoginUser(ctx *fiber.Ctx) error {
 	var login payload.LoginRequest
 	if err := ctx.BodyParser(&login); err != nil {
-		l.Error("failed to parse body", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return fiber.ErrBadRequest
 	}
 
-	res, err := auth.I().Login(login)
+	res, err := ur.Auth.Login(login)
 	if err != nil {
 		return err
 	}
@@ -123,34 +127,34 @@ func (ur *userRoutes) LoginUser(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.JSON(res)
 }
 
-func (ur *userRoutes) RefreshApiKey(l *log.Logger, ctx *fiber.Ctx) error {
+func (ur *userRoutes) RefreshApiKey(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 
 	key, err := utils.GenerateApiKey()
 	if err != nil {
-		l.Error("failed to generate api key", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to generate api key")
 		return fiber.ErrInternalServerError
 	}
 
-	_, err = ur.db.Users.Update(user, func(u models.User) models.User {
+	_, err = ur.DB.Users.Update(user, func(u models.User) models.User {
 		u.ApiKey = key
 		return u
 	})
 
 	if err != nil {
-		l.Error("failed to update user", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to refresh api key")
 		return fiber.ErrInternalServerError
 	}
 
 	return ctx.SendString(key)
 }
 
-func (ur *userRoutes) Users(l *log.Logger, ctx *fiber.Ctx) error {
+func (ur *userRoutes) Users(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteUser) {
 		return fiber.ErrForbidden
 	}
-	users, err := ur.db.Users.All()
+	users, err := ur.DB.Users.All()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -165,7 +169,7 @@ func (ur *userRoutes) Users(l *log.Logger, ctx *fiber.Ctx) error {
 	}))
 }
 
-func (ur *userRoutes) UpdateUser(l *log.Logger, ctx *fiber.Ctx) error {
+func (ur *userRoutes) UpdateUser(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteUser) {
 		return fiber.ErrForbidden
@@ -173,20 +177,20 @@ func (ur *userRoutes) UpdateUser(l *log.Logger, ctx *fiber.Ctx) error {
 
 	var userDto payload.UserDto
 	if err := ctx.BodyParser(&userDto); err != nil {
-		l.Error("failed to parse body", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return fiber.ErrBadRequest
 	}
 
 	var err error
 	var newUser *models.User
 	if userDto.ID != 0 {
-		newUser, err = ur.db.Users.UpdateById(userDto.ID, func(u models.User) models.User {
+		newUser, err = ur.DB.Users.UpdateById(userDto.ID, func(u models.User) models.User {
 			u.Name = userDto.Name
 			u.Permission = userDto.Permission
 			return u
 		})
 	} else {
-		newUser, err = ur.db.Users.Create(userDto.Name, func(u models.User) models.User {
+		newUser, err = ur.DB.Users.Create(userDto.Name, func(u models.User) models.User {
 			u.Permission = userDto.Permission
 			return u
 		})
@@ -204,7 +208,7 @@ func (ur *userRoutes) UpdateUser(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(newUser.ID)
 }
 
-func (ur *userRoutes) DeleteUser(l *log.Logger, ctx *fiber.Ctx) error {
+func (ur *userRoutes) DeleteUser(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermDeleteUser) {
 		return fiber.ErrForbidden
@@ -215,9 +219,9 @@ func (ur *userRoutes) DeleteUser(l *log.Logger, ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	toDelete, err := ur.db.Users.GetById(uint(userId))
+	toDelete, err := ur.DB.Users.GetById(uint(userId))
 	if err != nil {
-		l.Error("could not find user specified in delete request", slog.Int("id", userId), "err", err)
+		ur.Log.Error().Int("id", userId).Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": fmt.Sprintf("user %d not found", userId),
 		})
@@ -229,9 +233,9 @@ func (ur *userRoutes) DeleteUser(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 	}
 
-	err = ur.db.Users.Delete(toDelete.ID)
+	err = ur.DB.Users.Delete(toDelete.ID)
 	if err != nil {
-		l.Error("failed to delete user", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to delete user")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -240,7 +244,7 @@ func (ur *userRoutes) DeleteUser(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (ur *userRoutes) GenerateResetPassword(l *log.Logger, ctx *fiber.Ctx) error {
+func (ur *userRoutes) GenerateResetPassword(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteUser) {
 		return fiber.ErrForbidden
@@ -251,9 +255,9 @@ func (ur *userRoutes) GenerateResetPassword(l *log.Logger, ctx *fiber.Ctx) error
 		return fiber.ErrBadRequest
 	}
 
-	reset, err := ur.db.Users.GenerateReset(uint(userId))
+	reset, err := ur.DB.Users.GenerateReset(uint(userId))
 	if err != nil {
-		l.Error("failed to generate reset password", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to generate reset password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -262,29 +266,29 @@ func (ur *userRoutes) GenerateResetPassword(l *log.Logger, ctx *fiber.Ctx) error
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (ur *userRoutes) ResetPassword(l *log.Logger, ctx *fiber.Ctx) error {
+func (ur *userRoutes) ResetPassword(ctx *fiber.Ctx) error {
 	var pl payload.ResetPasswordRequest
 	if err := ctx.BodyParser(&pl); err != nil {
-		l.Error("failed to parse body", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return fiber.ErrBadRequest
 	}
 
-	reset, err := ur.db.Users.GetReset(pl.Key)
+	reset, err := ur.DB.Users.GetReset(pl.Key)
 	if err != nil {
-		l.Error("an error occurred searching for the reset", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Failed to find reset key",
 		})
 	}
 
 	if reset == nil {
-		l.Warn("No reset found", "key", pl.Key)
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Failed to find reset key",
+		})
 	}
 
-	user, err := ur.db.Users.GetById(reset.UserId)
+	user, err := ur.DB.Users.GetById(reset.UserId)
 	if err != nil {
-		l.Error("an error occurred searching for the user", "err", err)
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Failed to find user",
 		})
@@ -295,22 +299,22 @@ func (ur *userRoutes) ResetPassword(l *log.Logger, ctx *fiber.Ctx) error {
 
 	password, err := bcrypt.GenerateFromPassword([]byte(pl.Password), bcrypt.MinCost)
 	if err != nil {
-		l.Error("failed to hash password", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to generate password")
 		return fiber.ErrInternalServerError
 	}
 
-	_, err = ur.db.Users.Update(*user, func(u models.User) models.User {
+	_, err = ur.DB.Users.Update(*user, func(u models.User) models.User {
 		u.PasswordHash = base64.StdEncoding.EncodeToString(password)
 		return u
 	})
 
 	if err != nil {
-		l.Error("failed to update user", "err", err)
+		ur.Log.Error().Err(err).Msg("failed to update user password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
-	if err = ur.db.Users.DeleteReset(pl.Key); err != nil {
-		l.Warn("failed to delete reset key", "err", err)
+	if err = ur.DB.Users.DeleteReset(pl.Key); err != nil {
+		ur.Log.Warn().Err(err).Msg("failed to delete reset key")
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})

@@ -1,15 +1,11 @@
 package dynasty_scans
 
 import (
-	"fmt"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/PuerkitoBio/goquery"
-	"io"
 )
 
 func wrapInDoc(url string) (*goquery.Document, error) {
-	res, err := wisewolf.Client.Get(url)
+	/*res, err := wisewolf.Client.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -28,5 +24,6 @@ func wrapInDoc(url string) (*goquery.Document, error) {
 		return nil, err
 	}
 
-	return doc, nil
+	return doc, nil*/
+	return nil, nil
 }

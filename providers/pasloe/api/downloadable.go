@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
+	"github.com/rs/zerolog"
 	"regexp"
 )
 
@@ -29,7 +29,7 @@ type DownloadInfoProvider[T any] interface {
 	ContentDir(t T) string
 	ContentPath(t T) string
 	ContentKey(t T) string
-	ContentLogger(t T) *log.Logger
+	ContentLogger(t T) zerolog.Logger
 
 	ContentUrls(t T) ([]string, error)
 	WriteContentMetaData(t T) error

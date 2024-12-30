@@ -3,25 +3,25 @@ package api
 import (
 	"context"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog"
 	"time"
 )
 
-func cacheStorage() fiber.Storage {
-	switch config.I().Cache.Type {
+func cacheStorage(cfg *config.Config, log zerolog.Logger) fiber.Storage {
+	switch cfg.Cache.Type {
 	case config.REDIS:
-		return newRedisCacheStorage()
+		return newRedisCacheStorage(cfg, log)
 	default:
 		// the fiber cache config falls back to memory on its own
 		return nil
 	}
 }
 
-func newRedisCacheStorage() fiber.Storage {
+func newRedisCacheStorage(cfg *config.Config, log zerolog.Logger) fiber.Storage {
 	rds := redis.NewClient(&redis.Options{
-		Addr:           config.I().Cache.RedisAddr,
+		Addr:           cfg.Cache.RedisAddr,
 		Password:       "",
 		DB:             0,
 		ClientName:     "go-fiber-storage",
@@ -29,7 +29,7 @@ func newRedisCacheStorage() fiber.Storage {
 	})
 
 	if err := rds.Ping(context.Background()).Err(); err != nil {
-		log.Warn("Cannot connect to redis server, falling back", "err", err)
+		log.Warn().Err(err).Msg("failed to connect to redis")
 		return nil
 	}
 

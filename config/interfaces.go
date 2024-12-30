@@ -6,18 +6,18 @@ import (
 	"path"
 )
 
-func (c *Config) GetRootDir() string {
-	return OrDefault(c.RootDir, path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"))
+func (current *Config) GetRootDir() string {
+	return OrDefault(current.RootDir, path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"))
 }
 
-func (c *Config) GetMaxConcurrentTorrents() int {
-	return int(math.Max(1, math.Min(10, float64(c.Downloader.MaxConcurrentTorrents))))
+func (current *Config) GetMaxConcurrentTorrents() int {
+	return int(math.Max(1, math.Min(10, float64(current.Downloader.MaxConcurrentTorrents))))
 }
 
-func (c *Config) GetMaxConcurrentMangadexImages() int {
-	return c.GetMaxConcurrentImages()
+func (current *Config) GetMaxConcurrentMangadexImages() int {
+	return current.GetMaxConcurrentImages()
 }
 
-func (c *Config) GetMaxConcurrentImages() int {
-	return int(math.Max(1, math.Min(5, float64(c.Downloader.MaxConcurrentMangadexImages))))
+func (current *Config) GetMaxConcurrentImages() int {
+	return int(math.Max(1, math.Min(5, float64(current.Downloader.MaxConcurrentMangadexImages))))
 }

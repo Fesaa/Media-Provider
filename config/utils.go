@@ -1,7 +1,5 @@
 package config
 
-var current *Config
-
 func OrDefault(value string, defaultValue ...string) string {
 	if value == "" {
 		if len(defaultValue) > 0 {
@@ -10,8 +8,4 @@ func OrDefault(value string, defaultValue ...string) string {
 		return ""
 	}
 	return value
-}
-
-func I() *Config {
-	return current
 }

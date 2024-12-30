@@ -3,8 +3,6 @@ package yts
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/log"
 	"io"
 )
 
@@ -28,15 +26,15 @@ func (o SearchOptions) toURL() string {
 	return fmt.Sprintf(URL, o.Query, o.Page, o.SortBy)
 }
 
-func Search(options SearchOptions) (*SearchResult, error) {
+func (b *Builder) Search(options SearchOptions) (*SearchResult, error) {
 	url := options.toURL()
-	req, err := wisewolf.Client.Get(url)
+	req, err := b.httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
-			log.Warn("failed to close body", "error", err)
+			b.log.Warn().Err(err).Msg("failed to close response body")
 		}
 	}(req.Body)
 

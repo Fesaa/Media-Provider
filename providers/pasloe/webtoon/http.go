@@ -2,23 +2,17 @@ package webtoon
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/PuerkitoBio/goquery"
-	"io"
+	"net/http"
 )
 
-func wrapInDoc(url string) (*goquery.Document, error) {
-	res, err := wisewolf.Client.Get(url)
+func wrapInDoc(url string, httpClient *http.Client) (*goquery.Document, error) {
+	res, err := httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
 
-	defer func(Body io.ReadCloser) {
-		if err = Body.Close(); err != nil {
-			log.Warn("failed to close body", "error", err)
-		}
-	}(res.Body)
+	defer res.Body.Close()
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}

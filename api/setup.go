@@ -3,20 +3,21 @@ package api
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/db"
-	"github.com/Fesaa/Media-Provider/log"
+	utils2 "github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/utils"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"strings"
 	"time"
 )
 
-func Setup(app fiber.Router, db *db.Database) {
-	log.Debug("registering api routes")
+func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, log zerolog.Logger) {
+	log.Debug().Msg("registering api routes")
 
 	c := cache.New(cache.Config{
-		Storage:      cacheStorage(),
+		Storage:      cacheStorage(cfg, log),
 		CacheControl: true,
 		Next: func(c *fiber.Ctx) bool {
 			return false
@@ -31,7 +32,7 @@ func Setup(app fiber.Router, db *db.Database) {
 		Expiration: time.Hour,
 		ExpirationGenerator: func(ctx *fiber.Ctx, c *cache.Config) time.Duration {
 			if strings.HasPrefix(ctx.Route().Path, "/api/proxy") {
-				if config.I().Cache.Type == config.REDIS {
+				if cfg.Cache.Type == config.REDIS {
 					return 7 * 24 * time.Hour
 				}
 				return 24 * time.Hour
@@ -41,12 +42,18 @@ func Setup(app fiber.Router, db *db.Database) {
 		},
 	})
 
-	api := app.Group("/api")
-	routes.RegisterUserRoutes(api, db, c)
-	routes.RegisterProxyRoutes(api, db, c)
-	routes.RegisterContentRoutes(api, db, c)
-	routes.RegisterIoRoutes(api, db, c)
-	routes.RegisterConfigRoutes(api, db, c)
-	routes.RegisterPageRoutes(api, db, c)
-	routes.RegisterSubscriptionRoutes(api, db, c)
+	utils2.Must(container.Provide(func() fiber.Router {
+		return router.Group("/api")
+	}))
+	utils2.Must(container.Provide(func() fiber.Handler {
+		return c
+	}))
+
+	utils2.Must(container.Invoke(routes.RegisterUserRoutes))
+	utils2.Must(container.Invoke(routes.RegisterProxyRoutes))
+	utils2.Must(container.Invoke(routes.RegisterContentRoutes))
+	utils2.Must(container.Invoke(routes.RegisterIoRoutes))
+	utils2.Must(container.Invoke(routes.RegisterConfigRoutes))
+	utils2.Must(container.Invoke(routes.RegisterPageRoutes))
+	utils2.Must(container.Invoke(routes.RegisterSubscriptionRoutes))
 }

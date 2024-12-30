@@ -4,19 +4,22 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
+	"net/http"
 	"os"
 	"path"
 	"slices"
 	"sync"
 )
 
-func newClient(c api.Config) api.Client {
+func newClient(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger) api.Client {
 	return &client{
 		config:   c,
-		registry: newRegistry(),
+		registry: newRegistry(httpClient, container),
+		log:      log,
 
 		downloads:   utils.NewSafeMap[string, api.Downloadable](),
 		queue:       utils.NewQueue[payload.QueueStat](),
@@ -28,6 +31,7 @@ func newClient(c api.Config) api.Client {
 type client struct {
 	config   api.Config
 	registry *registry
+	log      zerolog.Logger
 
 	downloads   *utils.SafeMap[string, api.Downloadable]
 	queue       utils.Queue[payload.QueueStat]
@@ -51,9 +55,9 @@ func (c *client) GetQueuedDownloads() []payload.QueueStat {
 	return c.queue.Items()
 }
 
-func (c *client) Download(req payload.DownloadRequest) (api.Downloadable, error) {
+func (c *client) Download(req payload.DownloadRequest) error {
 	if c.downloads.Has(req.Id) {
-		return nil, fmt.Errorf("manga already exists: %s", req.Id)
+		return fmt.Errorf("manga already exists: %s", req.Id)
 	}
 
 	c.mu.Lock()
@@ -62,45 +66,53 @@ func (c *client) Download(req payload.DownloadRequest) (api.Downloadable, error)
 		return downloadable.Provider() == req.Provider
 	}) {
 		c.queue.Enqueue(req.ToQueueStat())
-		return nil, nil
+		return nil
 	}
 
-	log.Info("downloading content", "id", req.Id, "into", req.BaseDir, "title?", req.TempTitle)
+	c.log.Info().
+		Str("id", req.Id).
+		Str("into", req.BaseDir).
+		Str("title?", req.TempTitle).
+		Msg("downloading content")
 	content, err := c.registry.Create(c, req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	c.downloads.Set(req.Id, content)
 	c.downloading = append(c.downloading, content)
 	content.WaitForInfoAndDownload()
-	return content, nil
+	return nil
 }
 
 func (c *client) RemoveDownload(req payload.StopRequest) error {
-	manga, ok := c.downloads.Get(req.Id)
+	content, ok := c.downloads.Get(req.Id)
 	if !ok {
 		ok = c.queue.RemoveFunc(func(item payload.QueueStat) bool {
 			return item.Id == req.Id
 		})
 		if ok {
-			log.Info("manga removed from queue", "mangaId", req.Id)
+			c.log.Info().Str("id", req.Id).Msg("content removed from queue")
 			return nil
 		}
 		return fmt.Errorf("manga not found: %s", req.Id)
 	}
 
-	log.Info("dropping manga", "mangaId", req.Id, "title", manga.Title(), "deleteFiles", req.DeleteFiles)
+	c.log.Info().
+		Str("id", req.Id).
+		Str("title", content.Title()).
+		Bool("deleteFiles", req.DeleteFiles).
+		Msg("removing content")
 	go func() {
 		c.downloads.Delete(req.Id)
-		manga.Cancel()
+		content.Cancel()
 		c.mu.Lock()
 		c.downloading = nil
 		c.mu.Unlock()
 
 		if req.DeleteFiles {
-			go c.deleteFiles(manga)
+			go c.deleteFiles(content)
 		} else {
-			go c.cleanup(manga)
+			go c.cleanup(content)
 		}
 		c.startNext()
 	}()
@@ -115,9 +127,9 @@ func (c *client) startNext() {
 	added := false
 	for !added && !c.queue.IsEmpty() {
 		q, _ := c.queue.Dequeue()
-		_, err := c.Download(q.ToDownloadRequest())
+		err := c.Download(q.ToDownloadRequest())
 		if err != nil {
-			log.Warn("error while adding manga from queue", "error", err)
+			c.log.Warn().Err(err).Msg("error while adding content from queue")
 			continue
 		}
 		added = true
@@ -127,37 +139,37 @@ func (c *client) startNext() {
 func (c *client) deleteFiles(content api.Downloadable) {
 	downloadDir := content.GetDownloadDir()
 	if downloadDir == "" {
-		log.Error("download dir is empty, not removing any files")
+		c.log.Error().Msg("download dir is empty, not removing any files")
 		return
 	}
 	dir := path.Join(c.GetBaseDir(), downloadDir)
 	skip := content.GetOnDiskContent()
 
-	l := log.With("dir", dir, "contentId", content.Id())
+	l := c.log.With().Str("dir", dir).Str("contentId", content.Id()).Logger()
 
 	if len(skip) == 0 {
-		l.Info("deleting directory")
+		l.Info().Msg("deleting directory")
 		if err := os.RemoveAll(dir); err != nil {
-			l.Error("error while deleting directory", "err", err)
+			l.Error().Err(err).Msg("error while deleting directory")
 		}
 		return
 	}
 
-	l.Info("deleting new entries in directory", "skipping", fmt.Sprintf("%+v", skip))
+	l.Info().Str("skipping", fmt.Sprintf("%+v", skip)).Msg("deleting new entries in directory")
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		l.Error("error while reading dir", "err", err)
+		l.Error().Err(err).Msg("error while reading directory")
 		return
 	}
 	for _, entry := range entries {
 		if slices.Contains(skip, entry.Name()) {
-			l.Trace("skipping inner directory", "name", entry.Name())
+			l.Trace().Str("name", entry.Name()).Msg("skipping inner dir")
 			continue
 		}
 
-		l.Trace("deleting inner directory", "name", entry.Name())
+		l.Trace().Str("name", entry.Name()).Msg("deleting inner directory")
 		if err = os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
-			l.Error("error while deleting directory", "err", err)
+			l.Error().Err(err).Str("name", entry.Name()).Msg("error while deleting directory")
 		}
 	}
 }
@@ -166,10 +178,10 @@ func (c *client) cleanup(content api.Downloadable) {
 	dir := path.Join(c.GetBaseDir(), content.GetBaseDir(), content.Title())
 	entries, err := os.ReadDir(dir)
 
-	l := log.With("dir", dir, "contentId", content.Id())
+	l := c.log.With().Str("dir", dir).Str("contentId", content.Id()).Logger()
 
 	if err != nil {
-		l.Error("error while reading directory", "err", err)
+		l.Error().Err(err).Msg("error while reading directory")
 		return
 	}
 	for _, entry := range entries {
@@ -178,12 +190,12 @@ func (c *client) cleanup(content api.Downloadable) {
 		}
 		err = utils.ZipFolder(path.Join(dir, entry.Name()), path.Join(dir, entry.Name()+".cbz"))
 		if err != nil {
-			l.Error("error while zipping directory", "err", err)
+			l.Error().Err(err).Str("name", entry.Name()).Msg("error while zipping dir")
 			continue
 		}
 
 		if err = os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
-			l.Error("error while removing old directory", "dir", entry.Name(), "err", err)
+			l.Error().Err(err).Str("name", entry.Name()).Msg("error while deleting file")
 			return
 		}
 	}

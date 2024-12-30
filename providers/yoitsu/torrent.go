@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
-	"log/slog"
+	"github.com/rs/zerolog"
 	"path"
 	"time"
 )
@@ -17,7 +16,7 @@ import (
 // Providers some specific functionality
 type torrentImpl struct {
 	t   *torrent.Torrent
-	log *log.Logger
+	log zerolog.Logger
 
 	key       string
 	baseDir   string
@@ -31,7 +30,7 @@ type torrentImpl struct {
 	lastRead int64
 }
 
-func newTorrent(t *torrent.Torrent, req payload.DownloadRequest) Torrent {
+func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Logger) Torrent {
 	tor := &torrentImpl{
 		t:         t,
 		key:       t.InfoHash().HexString(),
@@ -42,7 +41,7 @@ func newTorrent(t *torrent.Torrent, req payload.DownloadRequest) Torrent {
 		lastRead:  0,
 	}
 
-	tor.log = log.With(slog.String("infoHash", tor.key))
+	tor.log = log.With().Str("infoHash", tor.key).Logger()
 	return tor
 }
 
@@ -52,28 +51,28 @@ func (t *torrentImpl) GetTorrent() *torrent.Torrent {
 
 func (t *torrentImpl) WaitForInfoAndDownload() {
 	if t.cancel != nil {
-		t.log.Debug("already loading info")
+		t.log.Debug().Msg("already loading info")
 		return
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.ctx = ctx
 	t.cancel = cancel
-	t.log.Trace("loading torrent info")
+	t.log.Trace().Msg("loading torrent info")
 	go func() {
 		select {
 		case <-t.ctx.Done():
 			return
 		case <-t.t.GotInfo():
-			t.log = t.log.With("name", t.t.Info().BestName())
-			t.log.Debug("starting torrent download")
+			t.log = t.log.With().Str("name", t.t.Info().BestName()).Logger()
+			t.log.Debug().Msg("starting torrent download")
 			t.t.DownloadAll()
 		}
 	}()
 }
 
 func (t *torrentImpl) Cancel() error {
-	t.log.Trace("canceling torrent")
+	t.log.Trace().Msg("cancelling torrent")
 	if t.cancel == nil {
 		return fmt.Errorf("torrent is not downloading")
 	}

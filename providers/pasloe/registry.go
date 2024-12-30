@@ -7,18 +7,25 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
+	utils2 "github.com/Fesaa/Media-Provider/utils"
+	"go.uber.org/dig"
+	"net/http"
 	"sync"
 )
 
 type registry struct {
-	r  map[models.Provider]func(payload.DownloadRequest, api.Client) api.Downloadable
-	mu sync.RWMutex
+	r          map[models.Provider]func(scope *dig.Scope) api.Downloadable
+	mu         sync.RWMutex
+	httpClient *http.Client
+	container  *dig.Container
 }
 
-func newRegistry() *registry {
+func newRegistry(httpClient *http.Client, container *dig.Container) *registry {
 	r := &registry{
-		r:  make(map[models.Provider]func(payload.DownloadRequest, api.Client) api.Downloadable),
-		mu: sync.RWMutex{},
+		r:          make(map[models.Provider]func(scope *dig.Scope) api.Downloadable),
+		mu:         sync.RWMutex{},
+		httpClient: httpClient,
+		container:  container,
 	}
 
 	r.Register(models.WEBTOON, webtoon.NewWebToon)
@@ -27,7 +34,7 @@ func newRegistry() *registry {
 	return r
 }
 
-func (r *registry) Register(provider models.Provider, fn func(payload.DownloadRequest, api.Client) api.Downloadable) {
+func (r *registry) Register(provider models.Provider, fn func(scope *dig.Scope) api.Downloadable) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.r[provider] = fn
@@ -40,5 +47,11 @@ func (r *registry) Create(c api.Client, req payload.DownloadRequest) (api.Downlo
 	if !ok {
 		return nil, errors.New("unknown provider")
 	}
-	return fn(req, c), nil
+
+	scope := r.container.Scope("pasloe::registry::create")
+
+	utils2.Must(scope.Provide(utils2.Identity(c)))
+	utils2.Must(scope.Provide(utils2.Identity(req)))
+
+	return fn(scope), nil
 }

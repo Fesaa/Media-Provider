@@ -4,10 +4,11 @@ import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
+	"net/http"
 )
 
-func loadImages(chapter Chapter) ([]string, error) {
-	doc, err := wrapInDoc(chapter.Url)
+func loadImages(chapter Chapter, httpClient *http.Client) ([]string, error) {
+	doc, err := wrapInDoc(chapter.Url, httpClient)
 	if err != nil {
 		return nil, err
 	}

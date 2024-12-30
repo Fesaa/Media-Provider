@@ -6,9 +6,6 @@ import (
 	dynasty_scans "github.com/Fesaa/Media-Provider/providers/pasloe/dynasty-scans"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
-	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
-	"github.com/Fesaa/Media-Provider/providers/yoitsu/subsplease"
-	"github.com/Fesaa/Media-Provider/providers/yoitsu/yts"
 	"github.com/irevenko/go-nyaa/nyaa"
 	"net/url"
 )
@@ -41,25 +38,6 @@ func mangadexTransformer(s payload.SearchRequest) mangadex.SearchOptions {
 	}
 
 	return ms
-}
-
-func subsPleaseTransformer(s payload.SearchRequest) subsplease.SearchOptions {
-	return subsplease.SearchOptions{
-		Query: s.Query,
-	}
-}
-
-func limeTransformer(s payload.SearchRequest) limetorrents.SearchOptions {
-	categories, ok := s.Modifiers["categories"]
-	var category string
-	if ok && len(categories) > 0 {
-		category = categories[0]
-	}
-	return limetorrents.SearchOptions{
-		Category: limetorrents.ConvertCategory(category),
-		Query:    s.Query,
-		Page:     1,
-	}
 }
 
 func nyaaTransformer(p models.Provider) requestTransformerFunc[nyaa.SearchOptions] {
@@ -95,17 +73,6 @@ func nyaaTransformer(p models.Provider) requestTransformerFunc[nyaa.SearchOption
 
 		return n
 	}
-}
-
-func ytsTransformer(s payload.SearchRequest) yts.SearchOptions {
-	y := yts.SearchOptions{}
-	y.Query = s.Query
-	sortBys, ok := s.Modifiers["sortBys"]
-	if ok && len(sortBys) > 0 {
-		y.SortBy = sortBys[0]
-	}
-	y.Page = 1
-	return y
 }
 
 func webtoonTransformer(s payload.SearchRequest) webtoon.SearchOptions {

@@ -3,34 +3,28 @@ package providers
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/rs/zerolog"
+	"sync"
 )
 
-type Info struct {
-	Name        string          `json:"Name"`
-	Description string          `json:"Description"`
-	Size        string          `json:"Size"`
-	Tags        []InfoTag       `json:"Tags"`
-	Link        string          `json:"Link"`
-	InfoHash    string          `json:"InfoHash"`
-	ImageUrl    string          `json:"ImageUrl"`
-	RefUrl      string          `json:"RefUrl"`
-	Provider    models.Provider `json:"Provider"`
+type ContentProvider struct {
+	lock      *sync.Mutex
+	providers map[models.Provider]Provider
+	log       zerolog.Logger
 }
 
-type InfoTag struct {
-	Name  string `json:"Name"`
-	Value any    `json:"Value"`
+type ProviderBuilder[T, S any] interface {
+	Provider() models.Provider
+	Logger() zerolog.Logger
+	Normalize(T) []payload.Info
+	Transform(payload.SearchRequest) S
+	Search(S) (T, error)
+	Download(payload.DownloadRequest) error
+	Stop(payload.StopRequest) error
 }
 
-func of(name string, value any) InfoTag {
-	return InfoTag{
-		Name:  name,
-		Value: value,
-	}
-}
-
-type provider interface {
-	Search(payload.SearchRequest) ([]Info, error)
+type Provider interface {
+	Search(payload.SearchRequest) ([]payload.Info, error)
 	Download(payload.DownloadRequest) error
 	Stop(payload.StopRequest) error
 }

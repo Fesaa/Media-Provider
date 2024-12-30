@@ -1,13 +1,13 @@
 package config
 
-func (c *Config) Update(config Config, syncID int) error {
-	if c.SyncId != syncID {
+func (current *Config) Update(config Config, syncID int) error {
+	if current.SyncId != syncID {
 		return InvalidSyncID
 	}
 
-	config.Version = c.Version
-	config.Secret = c.Secret
+	config.Version = current.Version
+	config.Secret = current.Secret
 	config.SyncId = syncID
-	config.HasUpdatedDB = c.HasUpdatedDB
-	return Save(&config)
+	config.HasUpdatedDB = current.HasUpdatedDB
+	return current.Save(&config, true)
 }

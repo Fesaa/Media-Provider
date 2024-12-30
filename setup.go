@@ -6,7 +6,6 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
@@ -16,14 +15,27 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"log/slog"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 )
 
-func SetupApp(baseUrl string) *fiber.App {
+type appParams struct {
+	dig.In
+
+	Cfg       *config.Config
+	Container *dig.Container
+	Auth      auth.Provider `name:"api-key-auth"`
+	Log       zerolog.Logger
+}
+
+func ApplicationProvider(params appParams) *fiber.App {
+	c := params.Container
+	baseUrl := params.Cfg.BaseUrl
+
 	app := fiber.New()
 
 	if os.Getenv("DEV") == "" {
@@ -33,7 +45,7 @@ func SetupApp(baseUrl string) *fiber.App {
 	app.
 		Use(requestid.New()).
 		Use(recover.New(recover.Config{
-			EnableStackTrace: config.I().Logging.Level <= slog.LevelDebug,
+			EnableStackTrace: params.Cfg.Logging.Level <= zerolog.DebugLevel,
 		})).
 		Use(cors.New(cors.Config{
 			AllowOrigins: "http://localhost:4200",
@@ -45,7 +57,7 @@ func SetupApp(baseUrl string) *fiber.App {
 	})
 
 	prometheus := fiberprometheus.NewWithDefaultRegistry("media-provider")
-	prometheus.RegisterAt(app, "/api/metrics", auth.MiddlewareWithApiKey)
+	prometheus.RegisterAt(app, "/api/metrics", params.Auth.Middleware)
 	app.Use(prometheus.Middleware)
 
 	dontLog := []string{"/api/stats", "/", "/api/metrics"}
@@ -54,12 +66,11 @@ func SetupApp(baseUrl string) *fiber.App {
 			TimeFormat: "2006/01/02 15:04:05",
 			Format:     "${time} | ${locals:requestid} | ${status} | ${latency} | ${reqHeader:X-Real-IP} ${ip} | ${method} | ${path} | ${error}\n",
 			Next: func(c *fiber.Ctx) bool {
-				return slices.Contains(dontLog, c.Path()) || config.I().Logging.Level > slog.LevelInfo
+				return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
 			},
 		}))
 
-	router := app.Group(baseUrl)
-	api.Setup(router, database)
+	api.Setup(app.Group(baseUrl), c, params.Cfg, params.Log)
 
 	app.Static(baseUrl, "./public", fiber.Static{
 		Compress: true,
@@ -78,30 +89,31 @@ func SetupApp(baseUrl string) *fiber.App {
 	return app
 }
 
-func UpdateBaseUrlInIndex(baseUrl string) {
+func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger) error {
+	baseUrl := cfg.BaseUrl
 	if os.Getenv("DEV") != "" {
-		log.Debug("Skipping base url update in DEV environment")
-		return
+		log.Debug().Msg("Skipping base url update in DEV environment")
+		return nil
 	}
 	cwd, err := os.Getwd()
 	if err != nil {
-		log.Fatal("Unable to get current working directory", err)
+		return err
 	}
 	indexHtmlPath := filepath.Join(cwd, "public", "index.html")
 
 	file, err := os.Open(indexHtmlPath)
 	if err != nil {
-		log.Fatal("Error opening file", err)
+		return err
 	}
 	defer func(file *os.File) {
 		if err = file.Close(); err != nil {
-			log.Warn("Error closing file", "err", fmt.Sprintf("%+v", err))
+			log.Warn().Err(err).Msg("Failed to close index.html")
 		}
 	}(file)
 
 	doc, err := goquery.NewDocumentFromReader(file)
 	if err != nil {
-		log.Fatal("Error loading HTML document", err)
+		return fmt.Errorf("failed to load index.html: %w", err)
 	}
 
 	doc.Find("head base").Each(func(i int, s *goquery.Selection) {
@@ -110,16 +122,18 @@ func UpdateBaseUrlInIndex(baseUrl string) {
 
 	html, err := doc.Html()
 	if err != nil {
-		log.Fatal("Error converting document to HTML", err)
+		return fmt.Errorf("error converting document to HTML: %v", err)
 	}
 
 	err = os.WriteFile(indexHtmlPath, []byte(html), 0644)
 	if err != nil {
 		// Ignore errors when running as non-root in docker
 		if os.Getenv("DOCKER") != "true" || !errors.Is(err, os.ErrPermission) {
-			log.Fatal("Error saving modified HTML", err)
+			return fmt.Errorf("failed to update index.html: %w", err)
 		}
 	} else {
-		log.Info("Updated base URL in index.html", "baseURL", baseUrl)
+		log.Info().Str("baseURL", baseUrl).Msg("Updated base URL in index.html")
 	}
+
+	return nil
 }

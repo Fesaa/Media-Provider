@@ -4,33 +4,18 @@ import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/storage"
 	"github.com/anacrolix/torrent/types/infohash"
+	"github.com/rs/zerolog"
 	"math/rand"
 	"os"
 	"path"
 	"strings"
 	"time"
 )
-
-var yoitsu Yoitsu
-
-func I() Yoitsu {
-	return yoitsu
-}
-
-func Init(c Config) {
-	var err error
-	yoitsu, err = newYoitsu(c)
-	if err != nil {
-		log.Fatal("error while initializing Yoitsu", err)
-		panic(err)
-	}
-}
 
 type yoitsuImpl struct {
 	dir         string
@@ -40,9 +25,11 @@ type yoitsuImpl struct {
 	torrents *utils.SafeMap[string, Torrent]
 	baseDirs *utils.SafeMap[string, string]
 	queue    utils.Queue[payload.QueueStat]
+
+	log zerolog.Logger
 }
 
-func newYoitsu(c Config) (Yoitsu, error) {
+func New(c *config.Config, log zerolog.Logger) (Yoitsu, error) {
 	dir := config.OrDefault(c.GetRootDir(), "temp")
 
 	impl := &yoitsuImpl{
@@ -52,6 +39,8 @@ func newYoitsu(c Config) (Yoitsu, error) {
 		torrents: utils.NewSafeMap[string, Torrent](),
 		baseDirs: utils.NewSafeMap[string, string](),
 		queue:    utils.NewQueue[payload.QueueStat](),
+
+		log: log,
 	}
 
 	opts := storage.NewFileClientOpts{
@@ -61,7 +50,7 @@ func newYoitsu(c Config) (Yoitsu, error) {
 	conf := torrent.NewDefaultClientConfig()
 	conf.DefaultStorage = storage.NewFileOpts(opts)
 	conf.ListenPort = rand.Intn(65535-49152) + 49152
-	conf.DisableIPv6 = config.I().Downloader.DisableIpv6
+	conf.DisableIPv6 = c.Downloader.DisableIpv6
 
 	client, err := torrent.NewClient(conf)
 	if err != nil {
@@ -90,7 +79,10 @@ func (y *yoitsuImpl) AddDownload(req payload.DownloadRequest) (Torrent, error) {
 		return nil, nil
 	}
 
-	log.Info("downloading torrent", "infoHash", req.Id, "into", req.BaseDir, "title?", req.TempTitle)
+	y.log.Info().Str("infoHash", req.Id).
+		Str("into", req.BaseDir).
+		Str("title?", req.TempTitle).
+		Msg("downloading torrent")
 	return y.addDownload(req)
 }
 
@@ -103,7 +95,7 @@ func (y *yoitsuImpl) addDownload(req payload.DownloadRequest) (Torrent, error) {
 }
 
 func (y *yoitsuImpl) processTorrent(torrentInfo *torrent.Torrent, req payload.DownloadRequest) Torrent {
-	nTorrent := newTorrent(torrentInfo, req)
+	nTorrent := newTorrent(torrentInfo, req, y.log)
 	y.torrents.Set(torrentInfo.InfoHash().String(), nTorrent)
 	y.baseDirs.Set(torrentInfo.InfoHash().String(), req.BaseDir)
 	nTorrent.WaitForInfoAndDownload()
@@ -118,7 +110,7 @@ func (y *yoitsuImpl) RemoveDownload(req payload.StopRequest) error {
 			return item.Id == infoHashString
 		})
 		if ok {
-			log.Info("torrent removed from queue", "infoHash", infoHashString)
+			y.log.Info().Str("infoHash", infoHashString).Msg("torrent removed from queue")
 			return nil
 		}
 
@@ -130,15 +122,16 @@ func (y *yoitsuImpl) RemoveDownload(req payload.StopRequest) error {
 
 	err := tor.Cancel()
 	if err != nil {
-		log.Error("error while canceling torrent", "err", err)
+		y.log.Error().Err(err).Str("infoHash", infoHashString).Msg("torrent failed to cancel")
 	}
 	backingTorrent := tor.GetTorrent()
-	log.Info("dropping torrent",
-		"name", backingTorrent.Name(),
-		"infoHash", backingTorrent.InfoHash().HexString(),
-		"deleteFiles", req.DeleteFiles,
-		"downloaded", backingTorrent.BytesCompleted(),
-		"total", backingTorrent.Length())
+	y.log.Info().
+		Str("name", backingTorrent.Name()).
+		Str("infoHash", backingTorrent.InfoHash().HexString()).
+		Bool("deleteFiles", req.DeleteFiles).
+		Int64("downloaded", backingTorrent.BytesCompleted()).
+		Int64("total", backingTorrent.Length()).
+		Msg("dropping torrent")
 	backingTorrent.Drop()
 
 	y.torrents.Delete(infoHashString)
@@ -162,7 +155,7 @@ func (y *yoitsuImpl) startNext() {
 		item, _ := y.queue.Dequeue()
 		_, err := y.AddDownload(item.ToDownloadRequest())
 		if err != nil {
-			log.Warn("error while adding torrent from queue", "err", err)
+			y.log.Warn().Err(err).Msg("error while adding torrent from queue")
 			continue
 		}
 		added = true
@@ -177,39 +170,39 @@ func (y *yoitsuImpl) cleanup(tor *torrent.Torrent, baseDir string) {
 	hashDir := path.Join(y.dir, baseDir, infoHash)
 	info, err := os.ReadDir(hashDir)
 	if err != nil {
-		log.Error("error while reading directory", "dir", hashDir, "infoHash", infoHash, "err", err)
+		y.log.Error().Err(err).Str("infoHash", infoHash).Str("dir", hashDir).Msg("error reading torrent dir")
 		return
 	}
 
 	if len(info) == 0 {
-		log.Warn("downloaded torrent was empty, removing directory")
+		y.log.Warn().Msg("downloaded torrent was empty, removing directory")
 		if err = os.Remove(hashDir); err != nil {
-			log.Error("error while removing directory", "dir", hashDir, "err", err)
+			y.log.Error().Err(err).Str("dir", hashDir).Msg("error removing torrent dir")
 		}
 		return
 	}
 
 	firstDirEntry := info[0]
 	if len(info) == 1 && firstDirEntry.IsDir() {
-		log.Debug("torrent only has one directory, moving everything up", "infoHash", infoHash)
+		y.log.Debug().Str("infoHash", infoHash).Msg("torrent only has one directory, moving everything up")
 		src := path.Join(hashDir, firstDirEntry.Name())
 		dest := path.Join(y.dir, baseDir, firstDirEntry.Name())
 		if err = os.Rename(src, dest); err != nil {
-			log.Error("error while renaming directory", "from", src, "to", dest, "err", err)
+			y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error while renaming directory")
 			return
 		}
 
 		if err = os.RemoveAll(hashDir); err != nil {
-			log.Error("error while deleting directory", "dir", hashDir, "err", err, "infoHash", infoHash)
+			y.log.Error().Err(err).Str("dir", hashDir).Msg("error removing torrent dir")
 		}
 		return
 	}
 
-	log.Debug("torrent downloaded more than one dirEntry, or a file; renaming directory", "infoHash", infoHash)
+	y.log.Debug().Str("infoHash", infoHash).Msg("torrent downloaded more than one dirEntry, or a file; renaming directory")
 	src := hashDir
 	dest := path.Join(y.dir, baseDir, tor.Name())
 	if err = os.Rename(src, dest); err != nil {
-		log.Error("error while renaming directory", "from", src, "to", dest, "err", err)
+		y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error while renaming directory")
 		return
 	}
 }
@@ -221,9 +214,9 @@ func (y *yoitsuImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
 
 	infoHash := tor.InfoHash().HexString()
 	dir := path.Join(y.dir, baseDir, infoHash)
-	log.Debug("deleting directory", "dir", dir, "infoHash", infoHash)
+	y.log.Debug().Str("infoHash", infoHash).Str("dir", dir).Msg("deleting directory")
 	if err := os.RemoveAll(dir); err != nil {
-		log.Error("error while deleting directory", "dir", dir, "err", err, "infoHash", infoHash)
+		y.log.Error().Err(err).Str("infoHash", infoHash).Str("dir", dir).Msg("error removing torrent dir")
 	}
 }
 
@@ -259,12 +252,12 @@ func (y *yoitsuImpl) cleaner() {
 					DeleteFiles: false,
 				})
 				if err != nil {
-					log.Error("error while cleaning up torrent", "file", s, "err", err)
+					y.log.Error().Err(err).Str("file", s).Msg("error while cleaning up torrent")
 				}
 			}
 		})
 		if i > 0 {
-			log.Trace("auto removing torrents", "amount", i)
+			y.log.Trace().Int("amount", i).Msg("auto removing torrents")
 		}
 	}
 }

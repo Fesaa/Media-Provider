@@ -3,10 +3,8 @@ package mangadex
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
-	"log/slog"
 )
 
 var linkConverter map[string]func(string) string
@@ -71,18 +69,7 @@ func (a *MangaSearchData) CoverURL() string {
 		return r.Type == "cover_art"
 	})
 	if cover == nil {
-		log.Trace("No cover art relationship found",
-			slog.String("mangaId", a.Id),
-			slog.String("title", a.Attributes.EnTitle()))
 		return ""
-	}
-
-	if log.IsTraceEnabled() {
-		log.Trace("Cover relationship found",
-			slog.String("mangaId", a.Id),
-			slog.String("title", a.Attributes.EnTitle()),
-			slog.String("struct", fmt.Sprintf("%#v", cover)),
-		)
 	}
 
 	if fileName, ok := cover.Attributes["fileName"].(string); ok {
@@ -90,9 +77,6 @@ func (a *MangaSearchData) CoverURL() string {
 		return fmt.Sprintf("proxy/mangadex/covers/%s/%s.256.jpg", a.Id, fileName)
 	}
 
-	log.Warn("Cover art relationship found, but no url",
-		slog.String("mangaId", a.Id),
-		slog.String("title", a.Attributes.EnTitle()))
 	return ""
 }
 
@@ -203,13 +187,6 @@ func (a *MangaSearchData) FormattedLinks() []string {
 	for key, link := range a.Attributes.Links {
 		if conv, ok := linkConverter[key]; ok {
 			out = append(out, conv(link))
-		} else {
-			log.Warn("Unknown link key found",
-				slog.String("mangaId", a.Id),
-				slog.String("manga", a.Attributes.EnTitle()),
-				slog.String("key", key),
-				slog.String("link", link),
-			)
 		}
 	}
 	out = append(out, a.RefURL())

@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
+	"net/http"
 	"strings"
 	"time"
 )
 
-func constructSeriesInfo(id string) (*Series, error) {
+func constructSeriesInfo(id string, httpClient *http.Client) (*Series, error) {
 	seriesStartUrl := fmt.Sprintf(EPISODE_LIST, id)
-	doc, err := wrapInDoc(seriesStartUrl)
+	doc, err := wrapInDoc(seriesStartUrl, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +29,7 @@ func constructSeriesInfo(id string) (*Series, error) {
 
 	pages := utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
 	for index := 1; len(pages) > index; index++ {
-		doc, err = wrapInDoc(DOMAIN + pages[index])
+		doc, err = wrapInDoc(DOMAIN+pages[index], httpClient)
 		if err != nil {
 			return nil, err
 		}

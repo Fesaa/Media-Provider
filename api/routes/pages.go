@@ -6,34 +6,38 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/gofiber/fiber/v2"
-	"log/slog"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"slices"
 	"strings"
 )
 
 type pageRoutes struct {
-	db *db.Database
+	dig.In
+
+	Router fiber.Router
+	DB     *db.Database
+	Auth   auth.Provider `name:"jwt-auth"`
+	Log    zerolog.Logger
 }
 
-func RegisterPageRoutes(router fiber.Router, db *db.Database, cache fiber.Handler) {
-	pr := pageRoutes{db: db}
+func RegisterPageRoutes(pr pageRoutes) {
 
-	pages := router.Group("/pages", auth.Middleware)
-	pages.Get("/", wrap(pr.Pages))
-	pages.Get("/:index", wrap(pr.Page))
-	pages.Post("/new", wrap(pr.NewPage))
-	pages.Post("/update", wrap(pr.UpdatePage))
-	pages.Delete("/:pageId", wrap(pr.DeletePage))
-	pages.Post("/swap", wrap(pr.SwapPage))
-	pages.Post("/load-default", wrap(pr.LoadDefault))
+	pages := pr.Router.Group("/pages", pr.Auth.Middleware)
+	pages.Get("/", pr.Pages)
+	pages.Get("/:index", pr.Page)
+	pages.Post("/new", pr.NewPage)
+	pages.Post("/update", pr.UpdatePage)
+	pages.Delete("/:pageId", pr.DeletePage)
+	pages.Post("/swap", pr.SwapPage)
+	pages.Post("/load-default", pr.LoadDefault)
 }
 
-func (pr *pageRoutes) Pages(l *log.Logger, ctx *fiber.Ctx) error {
-	pages, err := pr.db.Pages.All()
+func (pr *pageRoutes) Pages(ctx *fiber.Ctx) error {
+	pages, err := pr.DB.Pages.All()
 	if err != nil {
-		l.Error("failed to retrieve pages", "error", err)
+		pr.Log.Error().Err(err).Msg("Failed to get pages")
 		return fiber.ErrInternalServerError
 	}
 
@@ -48,7 +52,7 @@ func (pr *pageRoutes) Pages(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.JSON(pages)
 }
 
-func (pr *pageRoutes) Page(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
 	id, _ := ctx.ParamsInt("index", -1)
 	if id == -1 {
 		return ctx.Status(400).JSON(fiber.Map{
@@ -56,9 +60,9 @@ func (pr *pageRoutes) Page(l *log.Logger, ctx *fiber.Ctx) error {
 		})
 	}
 
-	page, err := pr.db.Pages.Get(int64(id))
+	page, err := pr.DB.Pages.Get(int64(id))
 	if err != nil {
-		l.Error("failed to retrieve page", "error", err, slog.Int("pageId", id))
+		pr.Log.Error().Err(err).Int("pageId", id).Msg("Failed to get page")
 		return fiber.ErrInternalServerError
 	}
 
@@ -69,59 +73,59 @@ func (pr *pageRoutes) Page(l *log.Logger, ctx *fiber.Ctx) error {
 	return ctx.JSON(page)
 }
 
-func (pr *pageRoutes) UpdatePage(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWritePage) {
-		l.Warn("user does not have permission to edit pages", "user", user.Name)
+		pr.Log.Warn().Str("user", user.Name).Msg("user does not have page edit permission")
 		return fiber.ErrUnauthorized
 	}
 
 	var page models.Page
 	if err := ctx.BodyParser(&page); err != nil {
-		l.Error("failed to parse request body", "error", err)
+		pr.Log.Error().Err(err).Msg("Failed to parse page")
 		return fiber.ErrBadRequest
 	}
 
 	if err := val.Struct(page); err != nil {
-		log.Debug("page did not pass validation, contains errors", "error", err)
+		pr.Log.Error().Err(err).Msg("Failed to validate page")
 		return fiber.ErrBadRequest
 	}
 
-	if err := pr.db.Pages.Update(page); err != nil {
-		l.Error("failed to insterts new page", "error", err)
+	if err := pr.DB.Pages.Update(page); err != nil {
+		pr.Log.Error().Err(err).Msg("Failed to update page")
 		return fiber.ErrInternalServerError
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func (pr *pageRoutes) NewPage(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) NewPage(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWritePage) {
-		l.Warn("user does not have permission to edit pages", "user", user.Name)
+		pr.Log.Warn().Str("user", user.Name).Msg("user does not have page edit permission")
 		return fiber.ErrUnauthorized
 	}
 
 	var page models.Page
 	if err := ctx.BodyParser(&page); err != nil {
-		l.Error("failed to parse request body", "error", err)
+		pr.Log.Error().Err(err).Msg("Failed to parse page")
 		return fiber.ErrBadRequest
 	}
 
 	if err := val.Struct(page); err != nil {
-		log.Debug("page did not pass validation, contains errors", "error", err)
+		pr.Log.Error().Err(err).Msg("Failed to validate page")
 		return fiber.ErrBadRequest
 	}
 
-	if err := pr.db.Pages.New(page); err != nil {
-		l.Error("failed to insert new page", "error", err)
+	if err := pr.DB.Pages.New(page); err != nil {
+		pr.Log.Error().Err(err).Msg("Failed to create page")
 		return fiber.ErrInternalServerError
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func (pr *pageRoutes) DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 	id, _ := ctx.ParamsInt("pageId", -1)
 	if id == -1 {
 		return ctx.SendStatus(fiber.StatusBadRequest)
@@ -129,33 +133,33 @@ func (pr *pageRoutes) DeletePage(l *log.Logger, ctx *fiber.Ctx) error {
 
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermDeletePage) {
-		l.Warn("user does not have permission to delete page", "user", user.Name)
+		pr.Log.Warn().Str("user", user.Name).Msg("user does not have page delete permission")
 		return fiber.ErrUnauthorized
 	}
 
-	if err := pr.db.Pages.Delete(int64(id)); err != nil {
-		l.Error("failed to delete page", "error", err)
+	if err := pr.DB.Pages.Delete(int64(id)); err != nil {
+		pr.Log.Error().Err(err).Msg("Failed to delete page")
 		return fiber.ErrInternalServerError
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func (pr *pageRoutes) SwapPage(l *log.Logger, ctx *fiber.Ctx) error {
+func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
 	var m payload.SwapPageRequest
 	if err := ctx.BodyParser(&m); err != nil {
-		log.Error("Failed to parse request body", "error", err)
+		pr.Log.Error().Err(err).Msg("Failed to parse swap page")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	page1, err := pr.db.Pages.Get(m.Id1)
+	page1, err := pr.DB.Pages.Get(m.Id1)
 	if err != nil {
-		l.Error("failed to retrieve page 1 by id", "error", err, slog.Int64("id1", m.Id1))
+		pr.Log.Error().Err(err).Int64("id", m.Id1).Msg("Failed to get page1")
 		return fiber.ErrInternalServerError
 	}
-	page2, err := pr.db.Pages.Get(m.Id2)
+	page2, err := pr.DB.Pages.Get(m.Id2)
 	if err != nil {
-		l.Error("failed to retrieve page 2 by id", "error", err, slog.Int64("id2", m.Id2))
+		pr.Log.Error().Err(err).Int64("id", m.Id2).Msg("Failed to get page2")
 		return fiber.ErrInternalServerError
 	}
 
@@ -163,21 +167,21 @@ func (pr *pageRoutes) SwapPage(l *log.Logger, ctx *fiber.Ctx) error {
 	page1.SortValue = page2.SortValue
 	page2.SortValue = temp
 
-	if err = pr.db.Pages.Update(*page1); err != nil {
-		l.Error("failed to update pages", "error", err)
+	if err = pr.DB.Pages.Update(*page1); err != nil {
+		pr.Log.Error().Err(err).Int64("id", m.Id1).Msg("Failed to update page1")
 		return fiber.ErrInternalServerError
 	}
-	if err = pr.db.Pages.Update(*page2); err != nil {
-		l.Error("failed to upsert pages", "error", err)
+	if err = pr.DB.Pages.Update(*page2); err != nil {
+		pr.Log.Error().Err(err).Int64("id", m.Id2).Msg("Failed to update page2")
 		return fiber.ErrInternalServerError
 	}
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func (pr *pageRoutes) LoadDefault(l *log.Logger, ctx *fiber.Ctx) error {
-	pages, err := pr.db.Pages.All()
+func (pr *pageRoutes) LoadDefault(ctx *fiber.Ctx) error {
+	pages, err := pr.DB.Pages.All()
 	if err != nil {
-		l.Error("failed to retrieve pages", "error", err)
+		pr.Log.Error().Err(err).Msg("Failed to get pages")
 		return fiber.ErrInternalServerError
 	}
 
@@ -186,7 +190,7 @@ func (pr *pageRoutes) LoadDefault(l *log.Logger, ctx *fiber.Ctx) error {
 	}
 
 	for _, page := range models.DefaultPages {
-		if err = pr.db.Pages.New(page); err != nil {
+		if err = pr.DB.Pages.New(page); err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": fmt.Errorf("failed to load default pages %w", err).Error(),
 			})

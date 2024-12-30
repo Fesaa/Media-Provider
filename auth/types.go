@@ -18,4 +18,6 @@ type Provider interface {
 
 	// Login logs the current user in.
 	Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error)
+
+	Middleware(ctx *fiber.Ctx) error
 }

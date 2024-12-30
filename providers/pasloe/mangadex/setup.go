@@ -3,23 +3,22 @@ package mangadex
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/log"
+	"github.com/rs/zerolog"
 	"io"
 	"net/http"
 )
 
-func Init() {
-	err := loadTags()
+func Init(httpClient *http.Client, log zerolog.Logger) {
+	err := loadTags(httpClient)
 	if err != nil {
-		log.Warn("failed to load tags, filtering won't work", "err", err)
+		log.Warn().Err(err).Msg("failed to load tags, filtering won't work")
 	}
 }
 
-func loadTags() error {
+func loadTags(httpClient *http.Client) error {
 	tagUrl := URL + "/manga/tag"
 
-	resp, err := wisewolf.Client.Get(tagUrl)
+	resp, err := httpClient.Get(tagUrl)
 	if err != nil {
 		return fmt.Errorf("loadTags Get: %s", err)
 	}
@@ -28,11 +27,7 @@ func loadTags() error {
 		return fmt.Errorf("loadTags status: %s", resp.Status)
 	}
 
-	defer func(Body io.ReadCloser) {
-		if err = Body.Close(); err != nil {
-			log.Warn("failed to close body", "error", err)
-		}
-	}(resp.Body)
+	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("loadTags readAll: %s", err)

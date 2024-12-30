@@ -2,7 +2,6 @@ package mangadex
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/log"
 )
 
 type MangaCoverResponse Response[[]MangaCoverData]
@@ -28,7 +27,6 @@ type CoverFactory func(volume string) (string, bool)
 
 func (m *MangaCoverResponse) GetCoverFactory(mangaId string) CoverFactory {
 	covers := make(map[string]string)
-	log.Trace("getting cover urls for manga", "mangaId", mangaId, "amount", len(m.Data))
 
 	coverUrl := func(fileName string) string {
 		return fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s", mangaId, fileName)
@@ -43,7 +41,6 @@ func (m *MangaCoverResponse) GetCoverFactory(mangaId string) CoverFactory {
 
 	for _, cover := range m.Data {
 		url := coverUrl(cover.Attributes.FileName)
-		log.Trace("setting cover url for volume", "mangaId", mangaId, "volume", cover.Attributes.Volume, "url", url)
 		covers[cover.Attributes.Volume] = url
 	}
 

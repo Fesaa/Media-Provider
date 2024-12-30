@@ -3,39 +3,36 @@ package main
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog"
 	"os"
 	"strings"
 )
 
-func validateConfig(cfg *config.Config) {
+func validateConfig(cfg *config.Config, log zerolog.Logger) error {
 	if err := validator.New().Struct(cfg); err != nil {
-		log.Warn("error while validating config", "err", err)
-		panic(err)
+		return err
 	}
 
-	if err := validateRootConfig(cfg); err != nil {
-		log.Warn("error while validating config", "err", err)
-		panic(err)
+	if err := validateRootConfig(cfg, log); err != nil {
+		return err
 	}
 
 	if cfg.Downloader.MaxConcurrentTorrents < 1 || cfg.Downloader.MaxConcurrentTorrents > 10 {
-		log.Warn("invalid max concurrent torrents", "value", cfg.Downloader.MaxConcurrentTorrents)
-		panic("invalid max concurrent torrents")
+		return fmt.Errorf("max concurrent torrents must be between 1 and 10")
 	}
 
 	if cfg.Downloader.MaxConcurrentMangadexImages < 1 || cfg.Downloader.MaxConcurrentMangadexImages > 5 {
-		log.Warn("invalid max concurrent mangadex images", "value", cfg.Downloader.MaxConcurrentMangadexImages)
-		panic("invalid max concurrent mangadex images")
+		return fmt.Errorf("max concurrent mangadex images must be between 1 and 5")
 	}
 
-	log.Info("Config validated")
+	log.Info().Msg("Config validated")
+	return nil
 }
 
-func validateRootConfig(c *config.Config) error {
-	log.Debug("Validating root config")
+func validateRootConfig(c *config.Config, log zerolog.Logger) error {
+	log.Debug().Msg("Validating root config")
 	if strings.HasSuffix(c.GetRootDir(), "/") {
 		return fmt.Errorf("invalid root url, must not end with /: %s", c.GetRootDir())
 	}
@@ -70,15 +67,14 @@ func validateRootConfig(c *config.Config) error {
 	}
 
 	if changed {
-		log.Warn("Config was changed by validateRootConfig, saving...")
-		return c.Save()
+		log.Warn().Msg("Config was changed by validateRootConfig, saving...")
+		return c.Save(c)
 	}
 
 	return nil
 }
 
 func dirExists(path string) (bool, error) {
-	log.Trace("checking directory", "path", path)
 	info, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return false, nil

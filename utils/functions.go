@@ -57,3 +57,19 @@ func BytesToSize(bytes float64) string {
 	i := math.Floor(math.Log(bytes) / math.Log(1024))
 	return fmt.Sprintf("%.2f %s", bytes/math.Pow(1024, i), sizes[int(i)])
 }
+
+func Must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func Identity[T any](t T) func() T {
+	return func() T {
+		return t
+	}
+}
+
+func Stringify(i int) string {
+	return fmt.Sprintf("%d", i)
+}

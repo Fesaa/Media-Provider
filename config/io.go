@@ -46,11 +46,10 @@ func Load() (*Config, error) {
 	}
 
 	updatedConfig := update(*cfg)
-	current = &updatedConfig
-	return current, nil
+	return &updatedConfig, nil
 }
 
-func Save(cfg *Config, backUp ...bool) error {
+func (current *Config) Save(cfg *Config, backUp ...bool) error {
 	cfgLock.Lock()
 	defer cfgLock.Unlock()
 
@@ -72,10 +71,6 @@ func Save(cfg *Config, backUp ...bool) error {
 	return write(configPath, cfg)
 }
 
-func (c *Config) Save(backUp ...bool) error {
-	return Save(c, backUp...)
-}
-
 func write(path string, cfg *Config) error {
 	slog.Debug("Writing config", "path", path)
 	data, err := json.MarshalIndent(cfg, "", "  ")
@@ -88,7 +83,6 @@ func write(path string, cfg *Config) error {
 		return err
 	}
 
-	current = cfg
 	return nil
 }
 

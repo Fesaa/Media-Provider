@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/utils"
-	"log/slog"
+	"github.com/rs/zerolog"
 	"os"
 	"path"
 	"slices"
@@ -16,11 +15,11 @@ import (
 	"time"
 )
 
-func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block DownloadInfoProvider[T], client Client) *DownloadBase[T] {
+func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block DownloadInfoProvider[T], client Client, log zerolog.Logger) *DownloadBase[T] {
 	return &DownloadBase[T]{
 		DownloadInfoProvider: block,
 		Client:               client,
-		Log:                  log.With(slog.String("id", req.Id)),
+		Log:                  log.With().Str("id", req.Id).Logger(),
 		id:                   req.Id,
 		baseDir:              req.BaseDir,
 		TempTitle:            req.TempTitle,
@@ -34,7 +33,7 @@ type DownloadBase[T any] struct {
 	DownloadInfoProvider[T]
 
 	Client Client
-	Log    *log.Logger
+	Log    zerolog.Logger
 
 	id        string
 	baseDir   string
@@ -76,7 +75,7 @@ func (d *DownloadBase[T]) GetOnDiskContent() []string {
 }
 
 func (d *DownloadBase[T]) Cancel() {
-	d.Log.Trace("calling cancel on manga")
+	d.Log.Trace().Msg("calling cancel on content")
 	if d.cancel == nil {
 		return
 	}
@@ -89,18 +88,18 @@ func (d *DownloadBase[T]) Cancel() {
 
 func (d *DownloadBase[T]) WaitForInfoAndDownload() {
 	if d.cancel != nil {
-		d.Log.Debug("content already downloading")
+		d.Log.Debug().Msg("content already downloading")
 		return
 	}
 
 	d.ctx, d.cancel = context.WithCancel(context.Background())
-	d.Log.Trace("loading content info")
+	d.Log.Trace().Msg("loading content info")
 	go func() {
 		select {
 		case <-d.ctx.Done():
 			return
 		case <-d.LoadInfo():
-			d.Log = d.Log.With("title", d.Title())
+			d.Log = d.Log.With().Str("title", d.Title()).Logger()
 			d.checkContentOnDisk()
 			d.startDownload()
 		}
@@ -108,13 +107,13 @@ func (d *DownloadBase[T]) WaitForInfoAndDownload() {
 }
 
 func (d *DownloadBase[T]) checkContentOnDisk() {
-	d.Log.Debug("checking content on disk", slog.String("dir", d.GetDownloadDir()))
+	d.Log.Debug().Str("dir", d.GetDownloadDir()).Msg("checking content on disk")
 	entries, err := os.ReadDir(path.Join(d.Client.GetBaseDir(), d.GetDownloadDir()))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			d.Log.Trace("directory not found, fresh download")
+			d.Log.Trace().Msg("directory not found, fresh download")
 		} else {
-			d.Log.Warn("unable to check for already downloaded content. Downloading all", "err", err)
+			d.Log.Warn().Err(err).Msg("unable to check for already downloaded content. Downloading all")
 		}
 		d.existingContent = []string{}
 		return
@@ -123,7 +122,7 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 	out := make([]string, 0)
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".cbz") {
-			d.Log.Trace("skipping non content file", "file", entry.Name())
+			d.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
 			continue
 		}
 
@@ -131,32 +130,30 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 		if len(matches) < 2 {
 			continue
 		}
-		d.Log.Trace("found  content on disk",
-			slog.String("file", entry.Name()),
-			slog.String("key", matches[1]),
-		)
+		d.Log.Trace().Str("file", entry.Name()).Str("key", matches[1]).Msg("found  content on disk")
 		out = append(out, entry.Name())
 	}
 
-	d.Log.Debug("found following content on disk", "content", fmt.Sprintf("%v", out))
+	d.Log.Debug().Str("content", fmt.Sprintf("%v", out)).Msg("found following content on disk")
 	d.existingContent = out
 }
 
 func (d *DownloadBase[T]) startDownload() {
 	data := d.All()
-	d.Log.Trace("starting download", slog.Int("size", len(data)))
+	d.Log.Trace().Int("size", len(data)).Msg("downloading content")
 	d.Wg = &sync.WaitGroup{}
 	d.ToDownload = utils.Filter(data, func(t T) bool {
 		download := !slices.Contains(d.existingContent, d.ContentDir(t)+".cbz")
 		if !download {
-			d.Log.Trace("content already downloaded, skipping", slog.String("key", d.ContentKey(t)))
+			d.Log.Trace().Str("key", d.ContentKey(t)).Msg("content already downloaded, skipping")
 		}
 		return download
 	})
 
-	d.Log.Info("downloading content",
-		slog.Int("all", len(data)),
-		slog.Int("toDownload", len(d.ToDownload)))
+	d.Log.Info().
+		Int("all", len(data)).
+		Int("toDownload", len(d.ToDownload)).
+		Msg("downloading content")
 	for _, content := range d.ToDownload {
 		select {
 		case <-d.ctx.Done():
@@ -167,14 +164,14 @@ func (d *DownloadBase[T]) startDownload() {
 			err := d.downloadContent(content)
 			d.Wg.Done()
 			if err != nil {
-				d.Log.Error("error while downloading content; cleaning up", "err", err)
+				d.Log.Error().Err(err).Msg("error while downloading content; cleaning up")
 				req := payload.StopRequest{
 					Provider:    d.Req.Provider,
 					Id:          d.Id(),
 					DeleteFiles: true,
 				}
 				if err = d.Client.RemoveDownload(req); err != nil {
-					d.Log.Error("error while cleaning up", "err", err)
+					d.Log.Error().Err(err).Msg("error while cleaning up")
 				}
 				d.Wg.Wait()
 				return
@@ -189,21 +186,21 @@ func (d *DownloadBase[T]) startDownload() {
 		DeleteFiles: false,
 	}
 	if err := d.Client.RemoveDownload(req); err != nil {
-		d.Log.Error("error while cleaning up files", "err", err)
+		d.Log.Error().Err(err).Msg("error while cleaning up files")
 	}
 }
 
 func (d *DownloadBase[T]) downloadContent(t T) error {
 	l := d.ContentLogger(t)
 
-	l.Trace("downloading content")
+	l.Trace().Msg("downloading content")
 
 	if err := os.MkdirAll(d.ContentPath(t), 0755); err != nil {
 		return err
 	}
 
 	if err := d.WriteContentMetaData(t); err != nil {
-		d.Log.Warn("error writing meta data", "err", err)
+		d.Log.Warn().Err(err).Msg("error writing meta data")
 	}
 
 	urls, err := d.ContentUrls(t)
@@ -211,11 +208,11 @@ func (d *DownloadBase[T]) downloadContent(t T) error {
 		return err
 	}
 	if len(urls) == 0 {
-		l.Warn("content has no downloadable urls?")
+		l.Warn().Msg("content has no downloadable urls?")
 		return nil
 	}
 
-	l.Debug("downloading images", "size", len(urls))
+	l.Debug().Int("size", len(urls)).Msg("downloading images")
 
 	wg := &sync.WaitGroup{}
 	errCh := make(chan error, 1)

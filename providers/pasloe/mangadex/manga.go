@@ -5,14 +5,13 @@ import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/log"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"io"
-	"log/slog"
 	"net/http"
 	"os"
 	"path"
@@ -30,19 +29,32 @@ const timeLayout = "2006-01-02T15:04:05Z07:00"
 var volumeRegex = regexp.MustCompile(".* Vol\\. (\\d+).cbz")
 var chapterRegex = regexp.MustCompile(".* Ch\\. ([\\d|\\.]+).cbz")
 
-func NewManga(req payload.DownloadRequest, client api.Client) api.Downloadable {
-	block := &manga{
-		id:             req.Id,
-		volumeMetadata: make([]string, 0),
-	}
-	d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client)
-	block.DownloadBase = d
+func NewManga(scope *dig.Scope) api.Downloadable {
+	var block *manga
+
+	utils.Must(scope.Invoke(func(
+		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
+		log zerolog.Logger, repository *Repository,
+	) {
+		block = &manga{
+			id:             req.Id,
+			httpClient:     httpClient,
+			repository:     repository,
+			volumeMetadata: make([]string, 0),
+		}
+		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client, log)
+		block.DownloadBase = d
+	}))
+
 	return block
 }
 
 type manga struct {
 	*api.DownloadBase[ChapterSearchData]
 	id string
+
+	httpClient *http.Client
+	repository *Repository
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
@@ -73,17 +85,17 @@ func (m *manga) Provider() models.Provider {
 func (m *manga) LoadInfo() chan struct{} {
 	out := make(chan struct{})
 	go func() {
-		mangaInfo, err := GetManga(m.id)
+		mangaInfo, err := m.repository.GetManga(m.id)
 		if err != nil {
-			m.Log.Error("error while loading manga info", "err", err)
+			m.Log.Error().Err(err).Msg("error while loading manga info")
 			m.Cancel()
 			return
 		}
 		m.info = &mangaInfo.Data
 
-		chapters, err := GetChapters(m.id)
+		chapters, err := m.repository.GetChapters(m.id)
 		if err != nil || chapters == nil {
-			m.Log.Error("error while loading manga chapters", "err", err)
+			m.Log.Error().Err(err).Msg("error while loading manga info")
 			m.Cancel()
 			return
 		}
@@ -105,26 +117,27 @@ func (m *manga) LoadInfo() chan struct{} {
 			if _, err = strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
 				volumes.Add(ch.Attributes.Volume)
 			} else {
-				m.Log.Trace("not adding chapter, as Volume string isn't an int",
-					slog.String("volume", ch.Attributes.Volume),
-					slog.String("chapter", ch.Attributes.Chapter),
-				)
+				m.Log.Trace().
+					Str("volume", ch.Attributes.Volume).
+					Str("chapter", ch.Attributes.Chapter).
+					Msg("not adding chapter, as Volume string isn't an int")
 			}
 
 			if _, err = strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
 				chapterSet.Add(ch.Attributes.Chapter)
 			} else {
-				m.Log.Trace("not adding chapter, as Chapter string isn't an int",
-					slog.String("volume", ch.Attributes.Volume),
-					slog.String("chapter", ch.Attributes.Chapter))
+				m.Log.Trace().
+					Str("volume", ch.Attributes.Volume).
+					Str("chapter", ch.Attributes.Chapter).
+					Msg("not adding chapter, as Chapter string isn't an int")
 			}
 		}
 		m.totalVolumes = volumes.Cardinality()
 		m.totalChapters = chapterSet.Cardinality()
 
-		covers, err := GetCoverImages(m.id)
+		covers, err := m.repository.GetCoverImages(m.id)
 		if err != nil || covers == nil {
-			m.Log.Warn("error while loading manga coverFactory, ignoring", "err", err)
+			m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
 			m.coverFactory = func(volume string) (string, bool) {
 				return "", false
 			}
@@ -182,12 +195,12 @@ func (m *manga) ContentKey(chapter ChapterSearchData) string {
 	return chapter.Id
 }
 
-func (m *manga) ContentLogger(chapter ChapterSearchData) *log.Logger {
-	return m.Log.With("id", chapter.Id, "chapterTitle", chapter.Attributes.Title)
+func (m *manga) ContentLogger(chapter ChapterSearchData) zerolog.Logger {
+	return m.Log.With().Str("id", chapter.Id).Str("chapterTitle", chapter.Attributes.Title).Logger()
 }
 
 func (m *manga) ContentUrls(chapter ChapterSearchData) ([]string, error) {
-	imageInfo, err := GetChapterImages(chapter.Id)
+	imageInfo, err := m.repository.GetChapterImages(chapter.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -203,9 +216,14 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 	}()
 
 	if slices.Contains(m.volumeMetadata, metaKey) {
-		m.Log.Trace("volume metadata already written, skipping", "volume", chapter.Attributes.Volume, "chapter", chapter.Attributes.Chapter)
+		m.Log.Trace().
+			Str("volume", chapter.Attributes.Volume).
+			Str("chapter", chapter.Attributes.Chapter).
+			Msg("volume metadata already written, skipping")
 		return nil
 	}
+
+	l := m.Log.With().Str("metaKey", metaKey).Logger()
 
 	err := os.MkdirAll(metaPath, 0755)
 	if err != nil {
@@ -214,23 +232,23 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 
 	coverUrl, ok := m.coverFactory(chapter.Attributes.Volume)
 	if !ok {
-		m.Log.Debug("unable to find cover", "metaKey", metaKey)
+		l.Debug().Msg("unable to find cover")
 	} else {
-		m.Log.Trace("downloading cover image", "metaKey", metaKey, "url", coverUrl)
+		l.Trace().Str("url", coverUrl).Msg("downloading cover image")
 		// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 		// first by most readers, and in particular, kavita.
 		filePath := path.Join(metaPath, "!0000 cover.jpg")
-		if err = downloadAndWrite(coverUrl, filePath); err != nil {
+		if err = m.downloadAndWrite(coverUrl, filePath); err != nil {
 			return err
 		}
 	}
 
-	m.Log.Trace("writing comicinfoxml", "metaKey", metaKey)
+	l.Trace().Msg("writing comicinfoxml")
 	if err = comicinfo.Save(m.comicInfo(chapter), path.Join(metaPath, "comicinfo.xml")); err != nil {
 		return err
 	}
 
-	m.Log.Trace("writing MetronInfo.xml", "metaKey", metaKey)
+	l.Trace().Msg("writing MetronInfo.xml")
 	if err = m.metronInfo(chapter).Save(path.Join(metaPath, "MetronInfo.xml"), true); err != nil {
 		return err
 	}
@@ -279,7 +297,9 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 		if chapter.Attributes.PublishedAt != "" {
 			publishTime, err := time.Parse(timeLayout, chapter.Attributes.PublishedAt)
 			if err != nil {
-				m.Log.Warn("unable to parse published date", "error", err, "chapter", chapter.Attributes.Chapter)
+				m.Log.Warn().Err(err).
+					Str("chapter", chapter.Attributes.Chapter).
+					Msg("unable to parse published date")
 			} else {
 				mi.StoreDate = (*metroninfo.Date)(&publishTime)
 			}
@@ -293,11 +313,12 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 			mi.Series.VolumeCount = uint(m.totalVolumes)
 		} else if !m.hasWarned {
 			m.hasWarned = true
-			m.Log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
-				slog.String("lastChapter", m.info.Attributes.LastChapter),
-				slog.Bool("foundLastChapter", m.foundLastChapter),
-				slog.String("lastVolume", m.info.Attributes.LastVolume),
-				slog.Bool("foundLastVolume", m.foundLastVolume))
+			m.Log.Warn().
+				Str("lastChapter", m.info.Attributes.LastChapter).
+				Bool("foundLastChapter", m.foundLastChapter).
+				Str("lastVolume", m.info.Attributes.LastVolume).
+				Bool("foundLastVolume", m.foundLastVolume).
+				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
 		}
 	}
 
@@ -371,7 +392,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		if chapter.Attributes.PublishedAt != "" {
 			publishTime, err := time.Parse(timeLayout, chapter.Attributes.PublishedAt)
 			if err != nil {
-				m.Log.Warn("unable to parse published date", "error", err, "chapter", chapter.Attributes.Chapter)
+				m.Log.Warn().Err(err).Str("chapter", chapter.Attributes.Chapter).Msg("unable to parse published date")
 			} else {
 				ci.Year = publishTime.Year()
 				ci.Month = int(publishTime.Month())
@@ -394,18 +415,19 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 			ci.Count = m.totalVolumes
 		} else if !m.hasWarned {
 			m.hasWarned = true
-			m.Log.Warn("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?",
-				slog.String("lastChapter", m.info.Attributes.LastChapter),
-				slog.Bool("foundLastChapter", m.foundLastChapter),
-				slog.String("lastVolume", m.info.Attributes.LastVolume),
-				slog.Bool("foundLastVolume", m.foundLastVolume))
+			m.Log.Warn().
+				Str("lastChapter", m.info.Attributes.LastChapter).
+				Bool("foundLastChapter", m.foundLastChapter).
+				Str("lastVolume", m.info.Attributes.LastVolume).
+				Bool("foundLastVolume", m.foundLastVolume).
+				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
 		}
 	}
 
 	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {
 		ci.Volume = v
 	} else {
-		m.Log.Trace("unable to parse volume number", "volume", chapter.Attributes.Volume, "err", err)
+		m.Log.Trace().Err(err).Str("volume", chapter.Attributes.Volume).Msg("unable to parse volume number")
 	}
 
 	ci.Genre = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
@@ -444,7 +466,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 func (m *manga) DownloadContent(page int, chapter ChapterSearchData, url string) error {
 	//m.log.Trace("downloading image", "chapter", chapter.Attributes.Chapter, "url", url)
 	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(page, 4)))
-	if err := downloadAndWrite(url, filePath); err != nil {
+	if err := m.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
 	m.ImagesDownloaded++
@@ -483,7 +505,7 @@ func (m *manga) chapterDir(chapter ChapterSearchData) string {
 		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
 		return chDir
 	} else if chapter.Attributes.Chapter != "" { // Don't warm for empty chpt. They're expected to fail
-		m.Log.Warn("unable to parse chpt number, not padding", "chapter", chapter.Attributes.Chapter, "err", err)
+		m.Log.Warn().Err(err).Str("chapter", chapter.Attributes.Chapter).Msg("unable to parse chpt number, not padding")
 	}
 
 	return fmt.Sprintf("%s Ch. %s", m.Title(), chapter.Attributes.Chapter)
@@ -493,8 +515,8 @@ func (m *manga) chapterPath(chapter ChapterSearchData) string {
 	return path.Join(m.volumePath(chapter), m.chapterDir(chapter))
 }
 
-func downloadAndWrite(url string, path string, tryAgain ...bool) error {
-	resp, err := wisewolf.Client.Get(url)
+func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {
+	resp, err := m.httpClient.Get(url)
 	if err != nil {
 		return err
 	}
@@ -513,24 +535,22 @@ func downloadAndWrite(url string, path string, tryAgain ...bool) error {
 			t := time.Unix(unix, 0)
 
 			if len(tryAgain) > 0 && !tryAgain[0] {
-				log.Error("Reached rate limit, after sleeping. What is going on?")
+				m.Log.Error().Msg("Reached rate limit, after sleeping. What is going on?")
 				return fmt.Errorf("bad status: %s", resp.Status)
 			}
 
 			d := time.Until(t)
-			log.Warn("Hit rate limit, try again after it's over",
-				slog.String("retryAfter", retryAfter),
-				slog.Duration("sleeping_for", d))
+			m.Log.Warn().Str("retryAfter", retryAfter).Dur("sleeping_for", d).Msg("Hit rate limit, try again after it's over")
 
 			time.Sleep(d)
-			return downloadAndWrite(url, path, false)
+			return m.downloadAndWrite(url, path, false)
 		}
 
 	}
 
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
-			log.Warn("error while closing response body", "err", err)
+			m.Log.Warn().Err(err).Msg("error closing body")
 		}
 	}(resp.Body)
 	data, err := io.ReadAll(resp.Body)

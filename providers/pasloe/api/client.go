@@ -8,7 +8,7 @@ type Config interface {
 }
 
 type Client interface {
-	Download(request payload.DownloadRequest) (Downloadable, error)
+	Download(request payload.DownloadRequest) error
 	RemoveDownload(request payload.StopRequest) error
 
 	GetBaseDir() string

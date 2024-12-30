@@ -1,15 +1,16 @@
 package wisewolf
 
 import (
+	"github.com/rs/zerolog"
 	"net/http"
 	"time"
 )
 
-var Client http.Client
-
-func Init() {
-	Client = http.Client{
-		Transport: &loggingTransport{},
-		Timeout:   time.Second * 30,
+func New(log zerolog.Logger) *http.Client {
+	return &http.Client{
+		Transport: &loggingTransport{
+			log: log.With().Str("handler", "httpClient").Logger(),
+		},
+		Timeout: time.Second * 30,
 	}
 }
