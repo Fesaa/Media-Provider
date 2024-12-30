@@ -42,7 +42,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			repository:     repository,
 			volumeMetadata: make([]string, 0),
 		}
-		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client, log)
+		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client, log.With().Str("handler", "mangadex").Logger())
 		block.DownloadBase = d
 	}))
 

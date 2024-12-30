@@ -28,7 +28,9 @@ type apiKeyAuthParams struct {
 }
 
 func NewApiKeyAuth(params apiKeyAuthParams) Provider {
-	return apiKeyAuth{params.DB, params.JWT, params.Log}
+	return apiKeyAuth{params.DB, params.JWT,
+		params.Log.With().Str("handler", "api-key-auth").Logger(),
+	}
 }
 
 func (a apiKeyAuth) Middleware(ctx *fiber.Ctx) error {

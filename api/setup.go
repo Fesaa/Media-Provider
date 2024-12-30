@@ -16,7 +16,7 @@ import (
 func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, log zerolog.Logger) {
 	log.Debug().Msg("registering api routes")
 
-	c := cache.New(cache.Config{
+	cacheHandler := cache.New(cache.Config{
 		Storage:      cacheStorage(cfg, log),
 		CacheControl: true,
 		Next: func(c *fiber.Ctx) bool {
@@ -42,14 +42,17 @@ func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, lo
 		},
 	})
 
-	utils2.Must(container.Provide(utils2.Identity(router.Group("/api"))))
-	utils2.Must(container.Provide(utils2.Identity(c)))
+	scope := container.Scope("mp::http::api")
+	
+	utils2.Must(scope.Decorate(utils2.Identity(log.With().Str("handler", "http").Logger())))
+	utils2.Must(scope.Provide(utils2.Identity(router.Group("/api"))))
+	utils2.Must(scope.Provide(utils2.Identity(cacheHandler), dig.Name("cache")))
 
-	utils2.Must(container.Invoke(routes.RegisterUserRoutes))
-	utils2.Must(container.Invoke(routes.RegisterProxyRoutes))
-	utils2.Must(container.Invoke(routes.RegisterContentRoutes))
-	utils2.Must(container.Invoke(routes.RegisterIoRoutes))
-	utils2.Must(container.Invoke(routes.RegisterConfigRoutes))
-	utils2.Must(container.Invoke(routes.RegisterPageRoutes))
-	utils2.Must(container.Invoke(routes.RegisterSubscriptionRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterUserRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterProxyRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterContentRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterIoRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterConfigRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterPageRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterSubscriptionRoutes))
 }

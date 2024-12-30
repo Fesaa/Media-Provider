@@ -17,7 +17,7 @@ type proxyRoutes struct {
 
 	Router     fiber.Router
 	Auth       auth.Provider `name:"api-key-auth"`
-	Cache      fiber.Handler
+	Cache      fiber.Handler `name:"cache"`
 	Log        zerolog.Logger
 	HttpClient *http.Client
 }

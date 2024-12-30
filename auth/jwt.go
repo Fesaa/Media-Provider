@@ -30,7 +30,9 @@ type jwtAuth struct {
 }
 
 func NewJwtAuth(db *db.Database, cfg *config.Config, log zerolog.Logger) Provider {
-	return &jwtAuth{db, cfg, log}
+	return &jwtAuth{db, cfg,
+		log.With().Str("handler", "jwt-auth").Logger(),
+	}
 }
 
 func (jwtAuth *jwtAuth) Middleware(ctx *fiber.Ctx) error {

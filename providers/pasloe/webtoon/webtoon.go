@@ -34,7 +34,7 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 			httpClient: httpClient,
 		}
 
-		d := api.NewDownloadableFromBlock[Chapter](req, wt, client, log)
+		d := api.NewDownloadableFromBlock[Chapter](req, wt, client, log.With().Str("handler", "webtoon").Logger())
 		wt.DownloadBase = d
 	}))
 	return wt

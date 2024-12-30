@@ -23,7 +23,6 @@ COPY ./comicinfo ./comicinfo
 COPY ./config ./config
 COPY ./db ./db
 COPY ./http ./http
-COPY ./log ./log
 COPY ./providers ./providers
 COPY ./subscriptions ./subscriptions
 COPY ./utils ./utils

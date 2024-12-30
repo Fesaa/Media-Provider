@@ -16,7 +16,7 @@ type contentRoutes struct {
 	dig.In
 
 	Router   fiber.Router
-	Cache    fiber.Handler
+	Cache    fiber.Handler `name:"cache"`
 	Auth     auth.Provider `name:"jwt-auth"`
 	Provider *providers.ContentProvider
 	YS       yoitsu.Yoitsu
