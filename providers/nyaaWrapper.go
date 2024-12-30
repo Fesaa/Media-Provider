@@ -88,5 +88,5 @@ func (b *NyaaBuilder) Stop(request payload.StopRequest) error {
 }
 
 func NewNyaaBuilder(log zerolog.Logger, httpClient *http.Client, ys yoitsu.Yoitsu) *NyaaBuilder {
-	return &NyaaBuilder{log.With().Str("handler", "yts-provider").Logger(), httpClient, ys}
+	return &NyaaBuilder{log.With().Str("handler", "nyaa-provider").Logger(), httpClient, ys}
 }

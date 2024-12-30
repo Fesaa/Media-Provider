@@ -19,7 +19,7 @@ func newClient(c *config.Config, httpClient *http.Client, container *dig.Contain
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
-		log:      log,
+		log:      log.With().Str("handler", "pasloe").Logger(),
 
 		downloads:   utils.NewSafeMap[string, api.Downloadable](),
 		queue:       utils.NewQueue[payload.QueueStat](),

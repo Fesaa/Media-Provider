@@ -36,7 +36,9 @@ func ApplicationProvider(params appParams) *fiber.App {
 	c := params.Container
 	baseUrl := params.Cfg.BaseUrl
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		AppName: "Media-Provider",
+	})
 
 	if os.Getenv("DEV") == "" {
 		app.Use(favicon.New(favicon.Config{File: "public/favicon.ico"}))
@@ -61,8 +63,9 @@ func ApplicationProvider(params appParams) *fiber.App {
 	app.Use(prometheus.Middleware)
 
 	dontLog := []string{"/api/stats", "/", "/api/metrics"}
+	httpLogger := params.Log.With().Str("handler", "http").Logger()
 	app.Use(fiberzerolog.New(fiberzerolog.Config{
-		Logger: &params.Log,
+		Logger: &httpLogger,
 		Next: func(c *fiber.Ctx) bool {
 			return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
 		},

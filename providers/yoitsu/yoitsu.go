@@ -40,7 +40,7 @@ func New(c *config.Config, log zerolog.Logger) (Yoitsu, error) {
 		baseDirs: utils.NewSafeMap[string, string](),
 		queue:    utils.NewQueue[payload.QueueStat](),
 
-		log: log,
+		log: log.With().Str("handler", "yoitsu").Logger(),
 	}
 
 	opts := storage.NewFileClientOpts{
