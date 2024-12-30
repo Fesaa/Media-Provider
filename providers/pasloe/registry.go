@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	utils2 "github.com/Fesaa/Media-Provider/utils"
@@ -30,6 +31,7 @@ func newRegistry(httpClient *http.Client, container *dig.Container) *registry {
 
 	r.Register(models.WEBTOON, webtoon.NewWebToon)
 	r.Register(models.MANGADEX, mangadex.NewManga)
+	r.Register(models.DYNASTY, dynasty.NewManga)
 
 	return r
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
@@ -23,6 +24,7 @@ func (p *ContentProvider) registerAll(container *dig.Container) {
 	utils.Must(scope.Provide(limetorrents.NewBuilder))
 	utils.Must(scope.Provide(webtoon.NewBuilder))
 	utils.Must(scope.Provide(mangadex.NewBuilder))
+	utils.Must(scope.Provide(dynasty.NewBuilder))
 	utils.Must(scope.Provide(NewNyaaBuilder))
 
 	utils.Must(scope.Invoke(func(builder *yts.Builder) {
@@ -38,6 +40,9 @@ func (p *ContentProvider) registerAll(container *dig.Container) {
 		p.register(NewProvider(builder))
 	}))
 	utils.Must(scope.Invoke(func(builder *mangadex.Builder) {
+		p.register(NewProvider(builder))
+	}))
+	utils.Must(scope.Invoke(func(builder *dynasty.Builder) {
 		p.register(NewProvider(builder))
 	}))
 	utils.Must(scope.Invoke(func(builder *NyaaBuilder) {
