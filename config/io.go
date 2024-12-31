@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	Dir           string
-	configPath    string
-	cfgLock       = sync.RWMutex{}
-	InvalidSyncID = errors.New("invalid sync id")
+	Dir              string
+	configPath       string
+	cfgLock          = sync.RWMutex{}
+	ErrInvalidSyncID = errors.New("invalid sync id")
 )
 
 func init() {
@@ -55,10 +55,10 @@ func (current *Config) Save(cfg *Config, backUp ...bool) error {
 
 	if current != nil {
 		if current.SyncId != cfg.SyncId {
-			return InvalidSyncID
+			return ErrInvalidSyncID
 		}
 	}
-	cfg.SyncId = cfg.SyncId + 1
+	cfg.SyncId++
 
 	if len(backUp) > 0 && backUp[0] {
 		backUpPath := path.Join(Dir, "backup", fmt.Sprintf("%d_config.json", time.Now().UTC().Unix()))

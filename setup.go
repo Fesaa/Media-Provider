@@ -33,6 +33,7 @@ type appParams struct {
 	Log       zerolog.Logger
 }
 
+//nolint:funlen
 func ApplicationProvider(params appParams) *fiber.App {
 	c := params.Container
 	baseUrl := params.Cfg.BaseUrl
@@ -137,7 +138,7 @@ func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger) error {
 
 	html, err := doc.Html()
 	if err != nil {
-		return fmt.Errorf("error converting document to HTML: %v", err)
+		return fmt.Errorf("error converting document to HTML: %w", err)
 	}
 
 	err = os.WriteFile(indexHtmlPath, []byte(html), 0644)

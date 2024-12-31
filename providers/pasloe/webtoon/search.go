@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	DOMAIN       = "https://www.webtoons.com"
-	BASE_URL     = "https://www.webtoons.com/en/"
-	SEARCH_URL   = BASE_URL + "search/immediate?keyword=%s"
-	IMAGE_PREFIX = "https://webtoon-phinf.pstatic.net/"
-	EPISODE_LIST = DOMAIN + "/episodeList?titleNo=%s"
+	Domain      = "https://www.webtoons.com"
+	BaseUrl     = "https://www.webtoons.com/en/"
+	SearchUrl   = BaseUrl + "search/immediate?keyword=%s"
+	ImagePrefix = "https://webtoon-phinf.pstatic.net/"
+	EpisodeList = Domain + "/episodeList?titleNo=%s"
 )
 
 var (
@@ -48,9 +48,7 @@ func Search(options SearchOptions, httpClient *http.Client) ([]SearchData, error
 }
 
 func constructProxyImg(imageUrl string) string {
-	if strings.HasPrefix(imageUrl, IMAGE_PREFIX) {
-		imageUrl = strings.TrimPrefix(imageUrl, IMAGE_PREFIX)
-	}
+	imageUrl = strings.TrimPrefix(imageUrl, ImagePrefix)
 	parts := strings.Split(imageUrl, "/")
 	if len(parts) != 4 {
 		return ""
@@ -70,11 +68,11 @@ func constructProxyImg(imageUrl string) string {
 
 func searchUrl(keyword string) string {
 	keyword = strings.TrimSpace(rg.ReplaceAllString(keyword, " "))
-	return fmt.Sprintf(SEARCH_URL, url.QueryEscape(keyword))
+	return fmt.Sprintf(SearchUrl, url.QueryEscape(keyword))
 }
 
 func (s *SearchData) Url() string {
-	return fmt.Sprintf(BASE_URL+"%s/%s/list?title_no=%d", s.Genre, url.PathEscape(s.Name), s.Id)
+	return fmt.Sprintf(BaseUrl+"%s/%s/list?title_no=%d", s.Genre, url.PathEscape(s.Name), s.Id)
 }
 
 func (s *SearchData) ProxiedImage() string {

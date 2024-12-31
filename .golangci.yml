@@ -1,0 +1,146 @@
+linters:
+  disable:
+    - inamedparam
+    - wsl
+    - nlreturn
+    - containedctx
+    - depguard
+    - wrapcheck
+    - varnamelen
+    - mnd
+    - interfacebloat
+    - forcetypeassert
+    - bodyclose
+    - whitespace
+    - tagalign
+    - lll
+    - gofumpt
+    - godox
+    - godot
+    - gci
+    - goimports
+    - tagliatelle
+    - err113
+    - gochecknoinits
+    - forbidigo
+    - stylecheck
+    - noctx
+    - perfsprint
+    - ireturn
+    - nilnil
+    - gochecknoglobals
+    - exhaustruct
+    - cyclop
+    - canonicalheader
+
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - contextcheck
+    - copyloopvar
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - funlen
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - gosmopolitan
+    - govet
+    - grouper
+    - iface
+    - importas
+    - ineffassign
+    - intrange
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - recvcheck
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - tenv
+    - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - zerologlint
+
+  # Enable presets.
+  # https://golangci-lint.run/usage/linters
+  # Default: []
+  presets:
+    - bugs
+    - comment
+    - complexity
+    - error
+    - format
+    - import
+    - metalinter
+    - module
+    - performance
+    - sql
+    - style
+    - test
+    - unused
+
+linters-settings:
+  revive:
+    rules:
+      - name: var-naming
+        disabled: true
+  staticcheck:
+    checks:
+      - "all"
+      - "-SA9004"
+  gosimple:
+    checks:
+      - "all"
+      - "-S1007"
+  gosec:
+    excludes:
+      - G306

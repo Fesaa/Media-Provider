@@ -17,9 +17,8 @@ import (
 )
 
 var (
-	allowedProviders   = []models.Provider{models.MANGADEX, models.WEBTOON, models.DYNASTY}
-	disallowedProvider = errors.New("the passed provider does not support subscription")
-	notADir            = errors.New("the passed baseDir is not a directory")
+	allowedProviders      = []models.Provider{models.MANGADEX, models.WEBTOON, models.DYNASTY}
+	errDisallowedProvider = errors.New("the passed provider does not support subscription")
 )
 
 type subscriptionRoutes struct {
@@ -51,15 +50,15 @@ func (sr *subscriptionRoutes) Providers(ctx *fiber.Ctx) error {
 }
 
 func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
-	id, err := ctx.ParamsInt("id", -1)
-	if err != nil || id == -1 {
+	id, err := ParamsUInt(ctx, "id")
+	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"error": "Invalid id",
 			"id":    utils.CopyString(ctx.Params("id", "")),
 		})
 	}
 
-	sub, err := sr.DB.Subscriptions.Get(uint(id))
+	sub, err := sr.DB.Subscriptions.Get(id)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscription")
 		return fiber.ErrInternalServerError
@@ -90,15 +89,15 @@ func (sr *subscriptionRoutes) All(ctx *fiber.Ctx) error {
 }
 
 func (sr *subscriptionRoutes) Get(ctx *fiber.Ctx) error {
-	id, err := ctx.ParamsInt("id", -1)
-	if err != nil || id == -1 {
+	id, err := ParamsUInt(ctx, "id")
+	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"error": "Invalid id",
 			"id":    utils.CopyString(ctx.Params("id", "")),
 		})
 	}
 
-	sub, err := sr.DB.Subscriptions.Get(uint(id))
+	sub, err := sr.DB.Subscriptions.Get(id)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscription")
 		return fiber.ErrInternalServerError
@@ -187,17 +186,8 @@ func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) err
 	}
 
 	if !slices.Contains(allowedProviders, sub.Provider) {
-		return disallowedProvider
+		return errDisallowedProvider
 	}
-
-	/*info, err := os.Stat(sub.Info.BaseDir)
-	if err != nil {
-		return err
-	}
-
-	if !info.IsDir() {
-		return notADir
-	}*/
 
 	return nil
 }
@@ -209,7 +199,7 @@ func (sr *subscriptionRoutes) Delete(ctx *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
-	id, err := ctx.ParamsInt("id", -1)
+	id, err := ParamsUInt(ctx, "id")
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"error": "Invalid id",
@@ -217,21 +207,14 @@ func (sr *subscriptionRoutes) Delete(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if id == -1 {
-		return ctx.Status(400).JSON(fiber.Map{
-			"error": "Invalid id",
-			"id":    utils.CopyString(ctx.Params("id", "")),
-		})
-	}
-
-	if err = sr.DB.Subscriptions.Delete(uint(id)); err != nil {
+	if err = sr.DB.Subscriptions.Delete(id); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	if err = sr.SubscriptionService.Delete(uint(id)); err != nil {
+	if err = sr.SubscriptionService.Delete(id); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
 		return fiber.ErrInternalServerError
 	}

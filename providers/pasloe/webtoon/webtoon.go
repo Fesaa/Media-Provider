@@ -219,7 +219,7 @@ func (w *webtoon) chapterPath(number string) string {
 }
 
 func (w *webtoon) downloadAndWrite(url string, path string, tryAgain ...bool) error {
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
@@ -231,48 +231,47 @@ func (w *webtoon) downloadAndWrite(url string, path string, tryAgain ...bool) er
 		return err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode != http.StatusTooManyRequests {
-			return fmt.Errorf("bad status: %s", resp.Status)
-		}
-
-		retryAfter := resp.Header.Get("X-RateLimit-Retry-After")
-		if retryAfter == "" {
-			return fmt.Errorf("bad status: %s", resp.Status)
-		}
-
-		if unix, err := strconv.ParseInt(retryAfter, 10, 64); err == nil {
-			t := time.Unix(unix, 0)
-
-			if len(tryAgain) > 0 && !tryAgain[0] {
-				w.Log.Error().Msg("Reached rate limit, after sleeping. What is going on?")
-				return fmt.Errorf("bad status: %s", resp.Status)
-			}
-
-			d := time.Until(t)
-			w.Log.Warn().Str("retryAfter", retryAfter).Dur("sleeping_for", d).Msg("Hit rate limit, try again after it's over")
-
-			time.Sleep(d)
-			return w.downloadAndWrite(url, path, false)
-		}
-
-	}
-
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
 			w.Log.Warn().Err(err).Msg("error closing body")
 		}
 	}(resp.Body)
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
+
+	if resp.StatusCode == http.StatusOK {
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		if err = os.WriteFile(path, data, 0755); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	if err = os.WriteFile(path, data, 0755); err != nil {
-		return err
+	if resp.StatusCode != http.StatusTooManyRequests {
+		return fmt.Errorf("bad status: %s", resp.Status)
 	}
 
-	return nil
+	if len(tryAgain) > 0 && !tryAgain[0] {
+		w.Log.Error().Msg("Reached rate limit, after sleeping. What is going on?")
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	retryAfter := resp.Header.Get("X-RateLimit-Retry-After")
+	var d time.Duration
+	if unix, err := strconv.ParseInt(retryAfter, 10, 64); err == nil {
+		t := time.Unix(unix, 0)
+		d = time.Until(t)
+	} else {
+		w.Log.Debug().Err(err).Str("retry-after", retryAfter).Msg("Could not parse retry-after")
+		d = time.Minute
+	}
+
+	w.Log.Warn().Str("retryAfter", retryAfter).Dur("sleeping_for", d).Msg("Hit rate limit, try again after it's over")
+	time.Sleep(d)
+	return w.downloadAndWrite(url, path, false)
 }
 
 func webToonUrl(s string) string {

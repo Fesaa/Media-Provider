@@ -4,6 +4,7 @@ import (
 	"github.com/lib/pq"
 )
 
+//nolint:mnd,gochecknoglobals
 var DefaultPages = []Page{
 	{
 		Title:     "Anime",

@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 )
 
-const BASE_URl string = "https://www.limetorrents.lol"
-const SEARCH_URL string = BASE_URl + "/search/%s/%s/%d/"
+const BaseUrl string = "https://www.limetorrents.lol"
+const SearchUrl string = BaseUrl + "/search/%s/%s/%d/"
 
 func (b *Builder) Search(searchOptions SearchOptions) ([]SearchResult, error) {
 	searchUrl := formatUrl(searchOptions)
@@ -52,7 +53,7 @@ func searchFromNode(_ int, s *goquery.Selection) SearchResult {
 		Seed:    seed,
 		Leach:   leach,
 		Added:   added,
-		PageUrl: BASE_URl + pageUrl,
+		PageUrl: BaseUrl + pageUrl,
 	}
 }
 
@@ -82,7 +83,7 @@ func (b *Builder) getSearch(url string) (*goquery.Document, error) {
 			b.log.Warn().Err(err).Msg("failed to close body")
 		}
 	}(res.Body)
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}
 
@@ -95,5 +96,5 @@ func (b *Builder) getSearch(url string) (*goquery.Document, error) {
 }
 
 func formatUrl(s SearchOptions) string {
-	return fmt.Sprintf(SEARCH_URL, s.Category, url.QueryEscape(s.Query), s.Page)
+	return fmt.Sprintf(SearchUrl, s.Category, url.QueryEscape(s.Query), s.Page)
 }

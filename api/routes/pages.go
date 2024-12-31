@@ -29,7 +29,7 @@ func RegisterPageRoutes(pr pageRoutes) {
 	pages := pr.Router.Group("/pages", pr.Auth.Middleware)
 	pages.Get("/", pr.Pages)
 	pages.Get("/:index", pr.Page)
-	pages.Post("/new", pr.NewPage)
+	pages.Post("/new", pr.UpdatePage)
 	pages.Post("/update", pr.UpdatePage)
 	pages.Delete("/:pageId", pr.DeletePage)
 	pages.Post("/swap", pr.SwapPage)
@@ -101,32 +101,6 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
-func (pr *pageRoutes) NewPage(ctx *fiber.Ctx) error {
-	user := ctx.Locals("user").(models.User)
-	if !user.HasPermission(models.PermWritePage) {
-		pr.Log.Warn().Str("user", user.Name).Msg("user does not have page edit permission")
-		return fiber.ErrUnauthorized
-	}
-
-	var page models.Page
-	if err := ctx.BodyParser(&page); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to parse page")
-		return fiber.ErrBadRequest
-	}
-
-	if err := pr.Val.Struct(page); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to validate page")
-		return fiber.ErrBadRequest
-	}
-
-	if err := pr.DB.Pages.New(page); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to create page")
-		return fiber.ErrInternalServerError
-	}
-
-	return ctx.SendStatus(fiber.StatusOK)
-}
-
 func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 	id, _ := ctx.ParamsInt("pageId", -1)
 	if id == -1 {
@@ -165,9 +139,7 @@ func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	temp := page1.SortValue
-	page1.SortValue = page2.SortValue
-	page2.SortValue = temp
+	page1.SortValue, page2.SortValue = page2.SortValue, page1.SortValue
 
 	if err = pr.DB.Pages.Update(*page1); err != nil {
 		pr.Log.Error().Err(err).Int64("id", m.Id1).Msg("Failed to update page1")

@@ -190,6 +190,7 @@ func (d *DownloadBase[T]) startDownload() {
 	}
 }
 
+//nolint:funlen,gocognit
 func (d *DownloadBase[T]) downloadContent(t T) error {
 	l := d.infoProvider.ContentLogger(t)
 

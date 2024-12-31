@@ -13,6 +13,8 @@ func cacheStorage(cfg *config.Config, log zerolog.Logger) fiber.Storage {
 	switch cfg.Cache.Type {
 	case config.REDIS:
 		return newRedisCacheStorage(cfg, log)
+	case config.MEMORY:
+		return nil
 	default:
 		// the fiber cache config falls back to memory on its own
 		return nil

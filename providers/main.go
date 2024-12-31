@@ -34,14 +34,14 @@ func (p *ContentProvider) Search(req payload.SearchRequest) ([]payload.Info, err
 		s, ok := p.providers[prov]
 		if !ok {
 			p.log.Warn().Int("provider", int(prov)).Msg("provider not supported")
-			errors = append(errors, fmt.Errorf("provider %q not supported", p))
+			errors = append(errors, fmt.Errorf("provider %d not supported", prov))
 			continue
 		}
 
 		search, err := s.Search(req)
 		if err != nil {
 			p.log.Warn().Int("provider", int(prov)).Err(err).Msg("searching failed")
-			errors = append(errors, fmt.Errorf("provider %q: %w", p, err))
+			errors = append(errors, fmt.Errorf("provider %d: %w", prov, err))
 			continue
 		}
 

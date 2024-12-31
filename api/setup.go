@@ -43,7 +43,7 @@ func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, lo
 	})
 
 	scope := container.Scope("mp::http::api")
-	
+
 	utils2.Must(scope.Decorate(utils2.Identity(log.With().Str("handler", "http").Logger())))
 	utils2.Must(scope.Provide(utils2.Identity(router.Group("/api"))))
 	utils2.Must(scope.Provide(utils2.Identity(cacheHandler), dig.Name("cache")))

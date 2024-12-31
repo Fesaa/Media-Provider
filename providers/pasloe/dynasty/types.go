@@ -47,7 +47,7 @@ type Series struct {
 }
 
 func (s *Series) RefUrl() string {
-	return seriesUrl(s.Id)
+	return seriesURL(s.Id)
 }
 
 type Chapter struct {

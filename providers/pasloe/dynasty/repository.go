@@ -22,10 +22,13 @@ const (
 	CHAPTER = DOMAIN + "/chapters/%s"
 
 	RELEASEDATAFORMAT = "Jan 2 '06"
+
+	jsonOffset = 2
 )
 
 var (
-	chapterTitleRegex = regexp.MustCompile(`Chapter\s+([\d.]+):\s*(.+)`)
+	chapterTitleRegex        = regexp.MustCompile(`Chapter\s+([\d.]+):\s*(.+)`)
+	chapterTitleRegexMatches = 3
 )
 
 type Repository interface {
@@ -47,7 +50,7 @@ func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
 }
 
 func (r *repository) ChapterImages(id string) ([]string, error) {
-	doc, err := r.wrapInDoc(chapterUrl(id))
+	doc, err := r.wrapInDoc(chapterURL(id))
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +78,7 @@ func (r *repository) ChapterImages(id string) ([]string, error) {
 
 func (r *repository) extractImageIDs(sel *goquery.Selection) ([]string, error) {
 	var scriptContent string
-	sel.Each(func(i int, s *goquery.Selection) {
+	sel.Each(func(_ int, s *goquery.Selection) {
 		text := s.Text()
 		if strings.Contains(text, "var pages") {
 			scriptContent = text
@@ -87,7 +90,7 @@ func (r *repository) extractImageIDs(sel *goquery.Selection) ([]string, error) {
 	}
 
 	start := strings.Index(scriptContent, "[{")
-	end := strings.LastIndex(scriptContent, "}]") + 2
+	end := strings.LastIndex(scriptContent, "}]") + jsonOffset
 	if start == -1 || end == -1 {
 		return nil, fmt.Errorf("could not find json data in script content")
 	}
@@ -100,7 +103,7 @@ func (r *repository) extractImageIDs(sel *goquery.Selection) ([]string, error) {
 	var images []Image
 	err := json.Unmarshal([]byte(jsonData), &images)
 	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal json data: %v", err)
+		return nil, fmt.Errorf("could not unmarshal json data: %w", err)
 	}
 
 	return utils.Map(images, func(t Image) string {
@@ -108,22 +111,36 @@ func (r *repository) extractImageIDs(sel *goquery.Selection) ([]string, error) {
 	}), nil
 }
 
-func chapterUrl(id string) string {
+func chapterURL(id string) string {
 	return fmt.Sprintf(CHAPTER, id)
 }
 
 func (r *repository) SeriesInfo(id string) (*Series, error) {
-	doc, err := r.wrapInDoc(seriesUrl(id))
+	doc, err := r.wrapInDoc(seriesURL(id))
 	if err != nil {
 		return nil, err
 	}
 
-	chapterElement := doc.Find(".chapter-list")
+	series := &Series{
+		Id:          id,
+		Title:       doc.Find(".tag-title b").Text(),
+		AltTitle:    doc.Find(".aliases b").Text(),
+		Description: doc.Find(".description p").Text(),
+		CoverUrl:    DOMAIN + doc.Find(".thumbnail").AttrOr("src", ""),
+		Status:      SeriesStatus(strings.TrimPrefix(doc.Find(".tag-title small").Text(), "— ")),
+		Tags:        goquery.Map(doc.Find(".tag-tags a"), toTag),
+		Authors:     goquery.Map(doc.Find(".tag-title a"), toAuthor),
+		Chapters:    r.readChapters(doc.Find(".chapter-list")),
+	}
 
+	return series, nil
+}
+
+func (r *repository) readChapters(chapterElement *goquery.Selection) []Chapter {
 	var chapters []Chapter
 	currentVolume := ""
 
-	chapterElement.Children().Each(func(i int, s *goquery.Selection) {
+	chapterElement.Children().Each(func(_ int, s *goquery.Selection) {
 		if goquery.NodeName(s) == "dt" {
 			if strings.Contains(s.Text(), "Volume") {
 				currentVolume = strings.TrimPrefix(s.Text(), "Volume ")
@@ -143,7 +160,7 @@ func (r *repository) SeriesInfo(id string) (*Series, error) {
 		chapter, title := func() (string, string) {
 			chapterText := titleElement.Text()
 			matches := chapterTitleRegex.FindStringSubmatch(chapterText)
-			if len(matches) == 3 {
+			if len(matches) == chapterTitleRegexMatches {
 				return matches[1], matches[2]
 			}
 			return "", chapterText
@@ -164,27 +181,15 @@ func (r *repository) SeriesInfo(id string) (*Series, error) {
 		})
 	})
 
-	series := &Series{
-		Id:          id,
-		Title:       doc.Find(".tag-title b").Text(),
-		AltTitle:    doc.Find(".aliases b").Text(),
-		Description: doc.Find(".description p").Text(),
-		CoverUrl:    DOMAIN + doc.Find(".thumbnail").AttrOr("src", ""),
-		Status:      SeriesStatus(strings.TrimPrefix(doc.Find(".tag-title small").Text(), "— ")),
-		Tags:        goquery.Map(doc.Find(".tag-tags a"), toTag),
-		Authors:     goquery.Map(doc.Find(".tag-title a"), toAuthor),
-		Chapters:    chapters,
-	}
-
-	return series, nil
+	return chapters
 }
 
-func seriesUrl(id string) string {
+func seriesURL(id string) string {
 	return fmt.Sprintf(SERIES, id)
 }
 
 func (r *repository) SearchSeries(opt SearchOptions) ([]SearchData, error) {
-	doc, err := r.wrapInDoc(searchUrl(opt.Query))
+	doc, err := r.wrapInDoc(searchURL(opt.Query))
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +198,7 @@ func (r *repository) SearchSeries(opt SearchOptions) ([]SearchData, error) {
 	return goquery.Map(series, r.selectionToSearchData), nil
 }
 
-func searchUrl(keyword string) string {
+func searchURL(keyword string) string {
 	return fmt.Sprintf(SEARCH, url.QueryEscape(keyword))
 }
 
@@ -221,10 +226,7 @@ func (r *repository) selectionToSearchData(_ int, sel *goquery.Selection) Search
 }
 
 func toAuthor(_ int, s *goquery.Selection) Author {
-	href := s.AttrOr("href", "")
-	if strings.HasPrefix(href, "/authors/") {
-		href = strings.TrimPrefix(href, "/authors/")
-	}
+	href := strings.TrimPrefix(s.AttrOr("href", ""), "/authors/")
 
 	return Author{
 		DisplayName: s.Text(),
@@ -233,10 +235,7 @@ func toAuthor(_ int, s *goquery.Selection) Author {
 }
 
 func toTag(_ int, s *goquery.Selection) Tag {
-	href := s.AttrOr("href", "")
-	if strings.HasPrefix(href, "/tags/") {
-		href = strings.TrimPrefix(href, "/tags/")
-	}
+	href := strings.TrimPrefix(s.AttrOr("href", ""), "/tags/")
 
 	return Tag{
 		DisplayName: s.Text(),
@@ -255,7 +254,7 @@ func (r *repository) wrapInDoc(url string) (*goquery.Document, error) {
 			r.log.Warn().Err(err).Msg("failed to close body")
 		}
 	}(res.Body)
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}
 

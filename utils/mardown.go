@@ -28,8 +28,8 @@ func MdToSafeHtml(mdString string) string {
 	// Instead of replacing it ourselves
 	unsafeHtml := string(markdown.ToHTML(mdBytes, p, renderer))
 
-	unsafeHtml = strings.Replace(unsafeHtml, "<p>", "", -1)
-	unsafeHtml = strings.Replace(unsafeHtml, "</p>", "", -1)
+	unsafeHtml = strings.ReplaceAll(unsafeHtml, "<p>", "")
+	unsafeHtml = strings.ReplaceAll(unsafeHtml, "</p>", "")
 	return SanitizeHtml(unsafeHtml)
 }
 

@@ -49,7 +49,7 @@ func New(c *config.Config, log zerolog.Logger) (Yoitsu, error) {
 	}
 	conf := torrent.NewDefaultClientConfig()
 	conf.DefaultStorage = storage.NewFileOpts(opts)
-	conf.ListenPort = rand.Intn(65535-49152) + 49152
+	conf.ListenPort = rand.Intn(65535-49152) + 49152 //nolint:gosec
 	conf.DisableIPv6 = c.Downloader.DisableIpv6
 
 	client, err := torrent.NewClient(conf)

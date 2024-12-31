@@ -2,7 +2,7 @@ package config
 
 func (current *Config) Update(config Config, syncID int) error {
 	if current.SyncId != syncID {
-		return InvalidSyncID
+		return ErrInvalidSyncID
 	}
 
 	config.Version = current.Version

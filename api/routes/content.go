@@ -100,18 +100,15 @@ func (cr *contentRoutes) Stats(ctx *fiber.Ctx) error {
 		Running: []payload.InfoStat{},
 		Queued:  []payload.QueueStat{},
 	}
-	cr.YS.GetRunningTorrents().ForEachSafe(func(key string, torrent yoitsu.Torrent) {
+	cr.YS.GetRunningTorrents().ForEachSafe(func(_ string, torrent yoitsu.Torrent) {
 		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
 	})
 	for _, download := range cr.PS.GetCurrentDownloads() {
 		statsResponse.Running = append(statsResponse.Running, download.GetInfo())
 	}
 
-	for _, queueStat := range cr.YS.GetQueuedTorrents() {
-		statsResponse.Queued = append(statsResponse.Queued, queueStat)
-	}
-	for _, queueStat := range cr.PS.GetQueuedDownloads() {
-		statsResponse.Queued = append(statsResponse.Queued, queueStat)
-	}
+	statsResponse.Queued = append(statsResponse.Queued, cr.YS.GetQueuedTorrents()...)
+	statsResponse.Queued = append(statsResponse.Queued, cr.PS.GetQueuedDownloads()...)
+
 	return ctx.JSON(statsResponse)
 }

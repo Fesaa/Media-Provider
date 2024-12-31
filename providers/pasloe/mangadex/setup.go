@@ -16,11 +16,11 @@ func Init(httpClient *http.Client, log zerolog.Logger) {
 }
 
 func loadTags(httpClient *http.Client) error {
-	tagUrl := URL + "/manga/tag"
+	tagURL := URL + "/manga/tag"
 
-	resp, err := httpClient.Get(tagUrl)
+	resp, err := httpClient.Get(tagURL)
 	if err != nil {
-		return fmt.Errorf("loadTags Get: %s", err)
+		return fmt.Errorf("loadTags Get: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -30,13 +30,13 @@ func loadTags(httpClient *http.Client) error {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("loadTags readAll: %s", err)
+		return fmt.Errorf("loadTags readAll: %w", err)
 	}
 
 	var tagResponse TagResponse
 	err = json.Unmarshal(body, &tagResponse)
 	if err != nil {
-		return fmt.Errorf("loadTags unmarshal: %s", err)
+		return fmt.Errorf("loadTags unmarshal: %w", err)
 	}
 
 	for _, tag := range tagResponse.Data {

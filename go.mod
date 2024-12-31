@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.3
 
 require (
-	github.com/Fesaa/go-metroninfo v0.0.0-20241229162734-4f3c260bb1b3
+	github.com/Fesaa/go-metroninfo v0.0.0-20241231131407-ab0e840cd3f7
 	github.com/PuerkitoBio/goquery v1.10.1
 	github.com/anacrolix/torrent v1.58.0
 	github.com/ansrivas/fiberprometheus/v2 v2.7.1-0.20241120084230-7b0adcaf663f

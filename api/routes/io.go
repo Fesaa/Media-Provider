@@ -97,7 +97,7 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 }
 
 func CleanPath(path string) string {
-	path = strings.Replace(path, "\\", "/", -1)
+	path = strings.ReplaceAll(path, "\\", "/")
 	parts := strings.Split(path, "/")
 	filtered := slices.DeleteFunc(parts, func(s string) bool {
 		return s == ".." || s == "."

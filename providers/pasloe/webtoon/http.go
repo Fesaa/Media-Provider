@@ -13,7 +13,7 @@ func wrapInDoc(url string, httpClient *http.Client) (*goquery.Document, error) {
 	}
 
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
 	}
 

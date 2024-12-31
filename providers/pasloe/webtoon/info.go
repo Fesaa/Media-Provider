@@ -10,7 +10,7 @@ import (
 )
 
 func constructSeriesInfo(id string, httpClient *http.Client) (*Series, error) {
-	seriesStartUrl := fmt.Sprintf(EPISODE_LIST, id)
+	seriesStartUrl := fmt.Sprintf(EpisodeList, id)
 	doc, err := wrapInDoc(seriesStartUrl, httpClient)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func constructSeriesInfo(id string, httpClient *http.Client) (*Series, error) {
 
 	pages := utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
 	for index := 1; len(pages) > index; index++ {
-		doc, err = wrapInDoc(DOMAIN+pages[index], httpClient)
+		doc, err = wrapInDoc(Domain+pages[index], httpClient)
 		if err != nil {
 			return nil, err
 		}
@@ -48,8 +48,9 @@ func constructSeriesInfo(id string, httpClient *http.Client) (*Series, error) {
 	return series, nil
 }
 
-func extractChapters(doc *goquery.Document) (chapters []Chapter) {
-	return goquery.Map(doc.Find("#_listUl li a"), func(_ int, s *goquery.Selection) (chapter Chapter) {
+func extractChapters(doc *goquery.Document) []Chapter {
+	return goquery.Map(doc.Find("#_listUl li a"), func(_ int, s *goquery.Selection) Chapter {
+		chapter := Chapter{}
 		chapter.Url = s.AttrOr("href", "")
 		chapter.ImageUrl = s.Find("span img").AttrOr("src", "")
 		chapter.Title = s.Find(".subj span").Text()

@@ -31,7 +31,7 @@ func RegisterUserRoutes(ur userRoutes) {
 	ur.Router.Post("/reset-password", ur.ResetPassword)
 
 	user := ur.Router.Group("/user", ur.Auth.Middleware)
-	user.Get("/refresh-api-key", ur.RefreshApiKey)
+	user.Get("/refresh-api-key", ur.RefreshAPIKey)
 	user.Get("/all", ur.Users)
 	user.Post("/update", ur.UpdateUser)
 	user.Delete("/:userId", ur.DeleteUser)
@@ -127,7 +127,7 @@ func (ur *userRoutes) LoginUser(ctx *fiber.Ctx) error {
 	return ctx.JSON(res)
 }
 
-func (ur *userRoutes) RefreshApiKey(ctx *fiber.Ctx) error {
+func (ur *userRoutes) RefreshAPIKey(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 
 	key, err := utils.GenerateApiKey()
@@ -214,16 +214,16 @@ func (ur *userRoutes) DeleteUser(ctx *fiber.Ctx) error {
 		return fiber.ErrForbidden
 	}
 
-	userId, _ := ctx.ParamsInt("userId", -1)
-	if userId == -1 {
+	userID, err := ParamsUInt(ctx, "id")
+	if err != nil {
 		return fiber.ErrBadRequest
 	}
 
-	toDelete, err := ur.DB.Users.GetById(uint(userId))
+	toDelete, err := ur.DB.Users.GetById(userID)
 	if err != nil {
-		ur.Log.Error().Int("id", userId).Err(err).Msg("failed to check if user exists")
+		ur.Log.Error().Uint("id", userID).Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": fmt.Sprintf("user %d not found", userId),
+			"error": fmt.Sprintf("user %d not found", userID),
 		})
 	}
 
@@ -250,12 +250,12 @@ func (ur *userRoutes) GenerateResetPassword(ctx *fiber.Ctx) error {
 		return fiber.ErrForbidden
 	}
 
-	userId, _ := ctx.ParamsInt("userId", -1)
-	if userId == -1 {
+	userId, err := ParamsUInt(ctx, "id")
+	if err != nil {
 		return fiber.ErrBadRequest
 	}
 
-	reset, err := ur.DB.Users.GenerateReset(uint(userId))
+	reset, err := ur.DB.Users.GenerateReset(userId)
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to generate reset password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
