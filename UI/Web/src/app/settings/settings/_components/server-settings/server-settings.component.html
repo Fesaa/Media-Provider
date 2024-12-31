@@ -19,7 +19,7 @@
 
           <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
             <app-form-select
-              pTooltip="Requires restart atm"
+              pTooltip="Requires a restart"
               tooltipPosition="bottom"
               [formGroupName]="'logging'"
               [formGroup]="settingsForm"
@@ -29,8 +29,6 @@
               [values]="Object.keys(LogHandler)" />
 
             <app-form-select
-              pTooltip="Requires restart atm"
-              tooltipPosition="bottom"
               [formGroupName]="'logging'"
               [formGroup]="settingsForm"
               label="Level" controlName="level"

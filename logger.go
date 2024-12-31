@@ -25,11 +25,14 @@ func LogProvider(cfg *config.Config) zerolog.Logger {
 		ctx = ctx.Caller()
 	}
 
+	// Application logger logs everything, zerolog.GlobalLevel is only source of truth.
+	// Allows for updating the log level without restarting the application
+	zerolog.SetGlobalLevel(cfg.Logging.Level)
 	return ctx.
 		Timestamp().
 		Str("handler", "core").
 		Logger().
-		Level(cfg.Logging.Level)
+		Level(zerolog.TraceLevel)
 }
 
 func consoleWriter() zerolog.ConsoleWriter {

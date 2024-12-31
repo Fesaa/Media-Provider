@@ -50,6 +50,7 @@ func (cr *configRoutes) UpdateConfig(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	zerolog.SetGlobalLevel(c.Logging.Level)
 	if err = cr.Cfg.Update(c, syncID); err != nil {
 		cr.Log.Error().Err(err).Msg("failed to update config")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
