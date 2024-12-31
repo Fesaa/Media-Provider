@@ -144,3 +144,6 @@ linters-settings:
   gosec:
     excludes:
       - G306
+
+run:
+  timeout: 5m
