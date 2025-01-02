@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	chapterTitleRegex        = regexp.MustCompile(`Chapter\s+([\d.]+):\s*(.+)`)
+	chapterTitleRegex        = regexp.MustCompile(`Chapter\s+([\d.]+)(?::\s*(.+))?`)
 	chapterTitleRegexMatches = 3
 )
 
