@@ -1,14 +1,34 @@
 <div class="bg-gray-50 dark:bg-gray-900 min-h-screen w-full">
 
   <div class="flex flex-col items-cen p-2">
-    @for (sub of subscriptions; track sub.ID) {
-      <app-subscription [subscription]="sub" [providers]="allowedProviders" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
-    } @empty {
-      <span>No subscriptions</span>
+
+    <div class="w-2/3 mx-auto flex justify-start mt-4">
+      <div (click)="toggle()"
+           class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg shadow-md hover:from-pink-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 hover:cursor-pointer">
+        {{show ? "Hide" : "Show" }}
+      </div>
+    </div>
+
+    @if (show) {
+      <div [@dropDown]>
+        @for (sub of subscriptions; track sub.ID) {
+          <app-subscription class=".dropdown-item" [subscription]="sub" [providers]="allowedProviders" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
+        }
+      </div>
+    } @else {
+      <div [@dropDown]>
+        @for (sub of newSubscriptions(); track sub.ID) {
+          <app-subscription class=".dropdown-item" [subscription]="sub" [providers]="allowedProviders" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
+        }
+      </div>
     }
 
-    <div class="p-6 w-2/3 mx-auto my-4 text-black dark:text-white flex justify-end">
-      <ng-icon name="heroPlusCircle" size="48" (click)="addNew()"></ng-icon>
+
+    <div class="p-6 w-2/3 mx-auto my-4 flex justify-end mt-4">
+      <div (click)="addNew()"
+           class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg shadow-md hover:from-pink-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 hover:cursor-pointer">
+        + Add Subscription
+      </div>
     </div>
 
 

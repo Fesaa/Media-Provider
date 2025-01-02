@@ -4,21 +4,22 @@ import {SubscriptionService} from '../_services/subscription.service';
 import {RefreshFrequency, Subscription} from "../_models/subscription";
 import {Provider} from "../_models/page";
 import {SubscriptionComponent} from "./components/subscription/subscription.component";
-import {NgIcon} from "@ng-icons/core";
+import {dropAnimation} from "../_animations/drop-animation";
 
 @Component({
     selector: 'app-subscription-manager',
     imports: [
         SubscriptionComponent,
-        NgIcon
     ],
     templateUrl: './subscription-manager.component.html',
-    styleUrl: './subscription-manager.component.css'
+    styleUrl: './subscription-manager.component.css',
+    animations: [dropAnimation]
 })
 export class SubscriptionManagerComponent implements OnInit {
 
   allowedProviders: Provider[] = [];
   subscriptions: Subscription[] = [];
+  show: boolean = true;
 
   constructor(private navService: NavService,
               private subscriptionService: SubscriptionService,
@@ -43,6 +44,14 @@ export class SubscriptionManagerComponent implements OnInit {
     this.subscriptionService.all().subscribe(s => {
       this.subscriptions = s ?? [];
     })
+  }
+
+  newSubscriptions() {
+    return this.subscriptions.filter(s => s.ID === 0);
+  }
+
+  toggle() {
+    this.show = !this.show;
   }
 
 
