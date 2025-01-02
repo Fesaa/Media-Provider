@@ -11,32 +11,25 @@
             type="text"
             [(ngModel)]="subscription.info.title"
             name="title"
-            class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
+            class="border border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
             required
           />
         </div>
 
         <div class="flex flex-col">
-          <label for="contentId"
-                 pTooltip="The id used by your provider. Make sure this is correct, consult documentation if you're unsure"
-                 tooltipPosition="bottom"
-                 class="text-sm font-medium">Content Id</label>
+          <a
+            href="{{subscription.contentId | subscriptionExternalUrl:subscription.provider}}"
+            pTooltip="The id used by your provider. Make sure this is correct, consult documentation if you're unsure"
+            tooltipPosition="right"
+            class="text-sm font-medium hover:text-blue-800 hover:underline">Content Id</a>
           <input
             id="contentId"
             type="text"
             [(ngModel)]="subscription.contentId"
             name="contentId"
-            class="border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
+            class="border border-gray-300 dark:border-gray-500 dark:bg-gray-700 rounded px-3 py-2 mt-1"
             required
           />
-          <a
-            class="hover:text-blue-800 hover:underline text-sm"
-            href="{{subscription.contentId | subscriptionExternalUrl:subscription.provider}}"
-            target="_blank"
-            pTooltip="Click to try out"
-          >
-            External link
-          </a>
         </div>
 
         <!--
