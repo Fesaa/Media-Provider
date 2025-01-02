@@ -50,6 +50,17 @@ export class SubscriptionComponent implements OnInit {
 
   toggleEditMode() {
     this.editMode = !this.editMode;
+
+    if (this.editMode || this.subscription.ID !== 0) {
+      return;
+    }
+
+    const emptyTitle = this.subscription.info.title.trim() === "";
+    const emptyContentID = this.subscription.contentId.trim() === "";
+
+    if (emptyTitle && emptyContentID) {
+      this.onDelete.emit(this.subscription.ID)
+    }
   }
 
   ngOnInit(): void {
