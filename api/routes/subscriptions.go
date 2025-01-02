@@ -142,7 +142,7 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 	}
 
 	if sub.ShouldRefresh(prev) {
-		sr.SubscriptionService.Refresh(sub.ID)
+		sr.SubscriptionService.Refresh(sub.ID, false)
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
@@ -176,7 +176,7 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	sr.SubscriptionService.Refresh(subscription.ID)
+	sr.SubscriptionService.Refresh(subscription.ID, true)
 	return ctx.JSON(subscription)
 }
 

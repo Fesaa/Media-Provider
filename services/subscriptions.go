@@ -16,7 +16,7 @@ type SubscriptionService interface {
 	// Delete the subscription, stops the tasks. Does not remove subscription from db
 	Delete(uint) error
 	// Refresh stops the current task if exists. And starts a new one
-	Refresh(uint)
+	Refresh(uint, bool)
 }
 
 type subscriptionService struct {
@@ -81,7 +81,7 @@ func (h *subscriptionService) Delete(id uint) error {
 	return nil
 }
 
-func (h *subscriptionService) Refresh(id uint) {
+func (h *subscriptionService) Refresh(id uint, forceNow bool) {
 	mappedUuid, ok := h.idMapper[id]
 	if ok {
 		if err := h.scheduler.RemoveJob(mappedUuid); err != nil {
@@ -97,15 +97,15 @@ func (h *subscriptionService) Refresh(id uint) {
 		return
 	}
 
-	h.new(*sub)
+	h.new(*sub, forceNow)
 }
 
-func (h *subscriptionService) new(sub models.Subscription) {
+func (h *subscriptionService) new(sub models.Subscription, forceNow bool) {
 	diff := time.Since(sub.Info.LastCheck)
 
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
 		gocron.WithStartAt(func() gocron.StartAtOption {
-			if diff > sub.RefreshFrequency.AsDuration() {
+			if forceNow || diff > sub.RefreshFrequency.AsDuration() {
 				h.log.Debug().
 					Uint("id", sub.ID).
 					Str("title", sub.Info.Title).
@@ -145,7 +145,7 @@ func (h *subscriptionService) StartAll() {
 	}
 
 	for _, sub := range subs {
-		h.new(sub)
+		h.new(sub, false)
 	}
 	h.log.Info().Int("count", len(subs)).Msg("added subscriptions")
 }
