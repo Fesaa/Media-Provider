@@ -489,7 +489,7 @@ func (m *manga) ContentRegex() *regexp.Regexp {
 func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {
 	download := !slices.Contains(m.ExistingContent, m.ContentDir(chapter)+".cbz")
 
-	// Backwards compatability check if volume has been downloaded
+	// Backwards compatibility check if volume has been downloaded
 	if chapter.Attributes.Volume != "" {
 		if slices.Contains(m.ExistingContent, m.volumeDir(chapter.Attributes.Volume)+".cbz") {
 			download = false

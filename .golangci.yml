@@ -32,6 +32,7 @@ linters:
     - exhaustruct
     - cyclop
     - canonicalheader
+    - unused
 
   enable:
     - asasalint
@@ -105,7 +106,6 @@ linters:
     - tparallel
     - unconvert
     - unparam
-    - unused
     - usestdlibvars
     - wastedassign
     - zerologlint
