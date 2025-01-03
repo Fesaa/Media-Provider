@@ -36,4 +36,5 @@ type DownloadInfoProvider[T any] interface {
 	DownloadContent(idx int, t T, url string) error
 
 	ContentRegex() *regexp.Regexp
+	ShouldDownload(t T) bool
 }

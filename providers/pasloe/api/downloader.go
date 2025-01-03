@@ -9,7 +9,6 @@ import (
 	"github.com/rs/zerolog"
 	"os"
 	"path"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -42,7 +41,7 @@ type DownloadBase[T any] struct {
 	Req       payload.DownloadRequest
 
 	ToDownload      []T
-	existingContent []string
+	ExistingContent []string
 
 	ContentDownloaded int
 	ImagesDownloaded  int
@@ -71,7 +70,7 @@ func (d *DownloadBase[T]) GetDownloadDir() string {
 }
 
 func (d *DownloadBase[T]) GetOnDiskContent() []string {
-	return d.existingContent
+	return d.ExistingContent
 }
 
 func (d *DownloadBase[T]) Cancel() {
@@ -115,7 +114,7 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 		} else {
 			d.Log.Warn().Err(err).Msg("unable to check for already downloaded content. Downloading all")
 		}
-		d.existingContent = []string{}
+		d.ExistingContent = []string{}
 		return
 	}
 
@@ -135,20 +134,14 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 	}
 
 	d.Log.Debug().Str("content", fmt.Sprintf("%v", out)).Msg("found following content on disk")
-	d.existingContent = out
+	d.ExistingContent = out
 }
 
 func (d *DownloadBase[T]) startDownload() {
 	data := d.infoProvider.All()
 	d.Log.Trace().Int("size", len(data)).Msg("downloading content")
 	d.Wg = &sync.WaitGroup{}
-	d.ToDownload = utils.Filter(data, func(t T) bool {
-		download := !slices.Contains(d.existingContent, d.infoProvider.ContentDir(t)+".cbz")
-		if !download {
-			d.Log.Trace().Str("key", d.infoProvider.ContentKey(t)).Msg("content already downloaded, skipping")
-		}
-		return download
-	})
+	d.ToDownload = utils.Filter(data, d.infoProvider.ShouldDownload)
 
 	d.Log.Info().
 		Int("all", len(data)).

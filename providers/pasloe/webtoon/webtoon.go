@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -204,6 +205,14 @@ func (w *webtoon) DownloadContent(page int, chapter Chapter, url string) error {
 
 func (w *webtoon) ContentRegex() *regexp.Regexp {
 	return chapterRegex
+}
+
+func (w *webtoon) ShouldDownload(chapter Chapter) bool {
+	download := !slices.Contains(w.ExistingContent, w.ContentDir(chapter)+".cbz")
+	if !download {
+		w.Log.Trace().Str("key", w.ContentKey(chapter)).Msg("content already downloaded, skipping")
+	}
+	return download
 }
 
 func (w *webtoon) webToonPath() string {

@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -184,6 +185,14 @@ func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
 
 func (m *manga) ContentRegex() *regexp.Regexp {
 	return chapterRegex
+}
+
+func (m *manga) ShouldDownload(chapter Chapter) bool {
+	download := !slices.Contains(m.ExistingContent, m.ContentDir(chapter)+".cbz")
+	if !download {
+		m.Log.Trace().Str("key", m.ContentKey(chapter)).Msg("content already downloaded, skipping")
+	}
+	return download
 }
 
 func (m *manga) chapterDir(chapter Chapter) string {
