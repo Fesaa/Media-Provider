@@ -4,11 +4,15 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/rs/zerolog"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
 func LogProvider(cfg *config.Config) zerolog.Logger {
 	zerolog.DurationFieldUnit = time.Second
+	zerolog.CallerMarshalFunc = callerMarshal
 
 	ctx := func() zerolog.Logger {
 		switch cfg.Logging.Handler {
@@ -33,6 +37,13 @@ func LogProvider(cfg *config.Config) zerolog.Logger {
 		Str("handler", "core").
 		Logger().
 		Level(zerolog.TraceLevel)
+}
+
+func callerMarshal(pc uintptr, file string, line int) string {
+	if strings.Contains(file, "go/pkg/mod") {
+		file = filepath.Base(file)
+	}
+	return file + ":" + strconv.Itoa(line)
 }
 
 func consoleWriter() zerolog.ConsoleWriter {
