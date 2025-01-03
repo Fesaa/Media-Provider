@@ -164,7 +164,12 @@ func (m *manga) GetInfo() payload.InfoStat {
 			}
 			return title
 		}(),
-		RefUrl:      m.info.RefURL(),
+		RefUrl: func() string {
+			if m.info == nil {
+				return ""
+			}
+			return m.info.RefURL()
+		}(),
 		Size:        strconv.Itoa(len(m.ToDownload)) + " Chapters",
 		Downloading: m.Wg != nil,
 		Progress:    utils.Percent(int64(m.ContentDownloaded), int64(len(m.ToDownload))),
@@ -188,7 +193,7 @@ func (m *manga) ContentDir(chapter ChapterSearchData) string {
 
 func (m *manga) ContentPath(chapter ChapterSearchData) string {
 	if chapter.Attributes.Volume == "" {
-		path.Join(m.mangaPath(), m.ContentDir(chapter))
+		return path.Join(m.mangaPath(), m.ContentDir(chapter))
 	}
 	return path.Join(m.mangaPath(), m.volumeDir(chapter.Attributes.Volume), m.ContentDir(chapter))
 }

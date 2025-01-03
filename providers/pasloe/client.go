@@ -68,7 +68,7 @@ func (c *client) Download(req payload.DownloadRequest) error {
 		return nil
 	}
 
-	c.log.Info().
+	c.log.Debug().
 		Str("id", req.Id).
 		Str("into", req.BaseDir).
 		Str("title?", req.TempTitle).

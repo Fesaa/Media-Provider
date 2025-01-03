@@ -98,7 +98,12 @@ func (m *manga) GetInfo() payload.InfoStat {
 			}
 			return title
 		}(),
-		RefUrl:      m.seriesInfo.RefUrl(),
+		RefUrl: func() string {
+			if m.seriesInfo == nil {
+				return ""
+			}
+			return m.seriesInfo.RefUrl()
+		}(),
 		Size:        strconv.Itoa(len(m.ToDownload)) + " Chapters",
 		Downloading: m.Wg != nil,
 		Progress:    utils.Percent(int64(m.ContentDownloaded), int64(len(m.ToDownload))),

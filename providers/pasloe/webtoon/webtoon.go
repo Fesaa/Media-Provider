@@ -124,7 +124,12 @@ func (w *webtoon) GetInfo() payload.InfoStat {
 			}
 			return ""
 		}(),
-		RefUrl:      w.searchInfo.Url(),
+		RefUrl: func() string {
+			if w.searchInfo == nil {
+				return ""
+			}
+			return w.searchInfo.Url()
+		}(),
 		Downloading: w.Wg != nil,
 		Progress:    utils.Percent(int64(w.ContentDownloaded), int64(len(w.ToDownload))),
 		SpeedType:   payload.IMAGES,

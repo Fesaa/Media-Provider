@@ -169,6 +169,7 @@ func (d *DownloadBase[T]) startDownload() {
 	d.Log.Info().
 		Int("all", len(data)).
 		Int("toDownload", len(d.ToDownload)).
+		Str("into", d.GetDownloadDir()).
 		Msg("downloading content")
 	for _, content := range d.ToDownload {
 		select {
