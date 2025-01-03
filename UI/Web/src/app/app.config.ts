@@ -33,6 +33,7 @@ import {
   heroUser,
   heroXCircle,
   heroXMark,
+  heroFolderArrowDown,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {provideToastr} from "ngx-toastr";
@@ -84,7 +85,8 @@ export const appConfig: ApplicationConfig = {
       heroUser,
       heroCheckCircle,
       heroXCircle,
-      heroPencil
+      heroPencil,
+      heroFolderArrowDown,
     })), provideAnimationsAsync(),
     providePrimeNG({
       theme: {

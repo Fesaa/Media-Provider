@@ -33,6 +33,19 @@ func (s subscriptionImpl) Get(i uint) (*models.Subscription, error) {
 	return &subscription, nil
 }
 
+func (s subscriptionImpl) GetByContentId(contentID string) (*models.Subscription, error) {
+	var subscription models.Subscription
+	res := s.db.Preload("Info").
+		Where(&models.Subscription{ContentId: contentID}).
+		First(&subscription)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &subscription, nil
+}
+
 func (s subscriptionImpl) New(subscription models.Subscription) (*models.Subscription, error) {
 	res := s.db.Create(&subscription)
 	if res.Error != nil {

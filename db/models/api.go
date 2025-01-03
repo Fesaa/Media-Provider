@@ -13,6 +13,7 @@ type Pages interface {
 type Subscriptions interface {
 	All() ([]Subscription, error)
 	Get(uint) (*Subscription, error)
+	GetByContentId(string) (*Subscription, error)
 
 	New(Subscription) (*Subscription, error)
 	Update(Subscription) error

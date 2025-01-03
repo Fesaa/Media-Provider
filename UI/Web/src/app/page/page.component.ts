@@ -2,7 +2,7 @@ import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {PageService} from "../_services/page.service";
 import {DownloadService} from "../_services/download.service";
-import {Modifier, ModifierType, Page} from "../_models/page";
+import {Modifier, ModifierType, Page, Provider} from "../_models/page";
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {SearchRequest} from "../_models/search";
 import {DropdownModifierComponent} from "./_components/dropdown-modifier/dropdown-modifier.component";
@@ -18,6 +18,7 @@ import {NgIcon} from "@ng-icons/core";
 import {FormInputComponent} from "../shared/form/form-input/form-input.component";
 import {DialogService} from "../_services/dialog.service";
 import {fadeOut} from "../_animations/fade-out";
+import {SubscriptionService} from "../_services/subscription.service";
 
 @Component({
     selector: 'app-page',
@@ -40,6 +41,7 @@ export class PageComponent implements OnInit{
   page: Page | undefined = undefined;
 
   modifiers: Modifier[] = [];
+  providers: Provider[] = [];
 
   searchResult: SearchInfo[] = [];
   currentPage: number = 1;
@@ -53,6 +55,7 @@ export class PageComponent implements OnInit{
               private fb: FormBuilder,
               private toastr: ToastrService,
               private dialogService: DialogService,
+              private subscriptionService: SubscriptionService
   ) {
     this.navService.setNavVisibility(true);
     this.downloadService.loadStats(false);
@@ -73,6 +76,10 @@ export class PageComponent implements OnInit{
           this.cdRef.detectChanges()
         }, this.page === undefined ? 0 : 800)
       });
+    })
+
+    this.subscriptionService.providers().subscribe(providers => {
+      this.providers = providers;
     })
   }
 

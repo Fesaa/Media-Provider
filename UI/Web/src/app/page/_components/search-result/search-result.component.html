@@ -28,6 +28,16 @@
       <button class="btn btn-primary" (click)="download()">
         <ng-icon name="heroArrowDownTray" class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer"></ng-icon>
       </button>
+
+      @if (providers.length > 0 && providers.includes(searchResult.Provider)) {
+        <button class="btn btn-primary" (click)="addAsSub()"
+                pTooltip="Add as a subscription"
+                tooltipPosition="left"
+        >
+          <ng-icon name="heroFolderArrowDown" class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer"></ng-icon>
+        </button>
+      }
+
     </div>
   </div>
 

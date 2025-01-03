@@ -170,6 +170,20 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 		})
 	}
 
+	existing, err := sr.DB.Subscriptions.GetByContentId(sub.ContentId)
+	if err != nil {
+		sr.Log.Error().Err(err).Msg("Failed to get existing subscription")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if existing != nil {
+		return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "Subscription for this contentID already exists",
+		})
+	}
+
 	subscription, err := sr.DB.Subscriptions.New(sub)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to create subscription")

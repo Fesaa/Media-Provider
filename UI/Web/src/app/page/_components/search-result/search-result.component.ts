@@ -1,7 +1,7 @@
 import {ChangeDetectorRef, Component, Input} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {FormGroup} from "@angular/forms";
-import {Page} from "../../../_models/page";
+import {Page, Provider} from "../../../_models/page";
 import {DownloadService} from "../../../_services/download.service";
 import {DownloadRequest} from "../../../_models/search";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
@@ -9,12 +9,16 @@ import {NgIcon} from "@ng-icons/core";
 import {dropAnimation} from "../../../_animations/drop-animation";
 import {ToastrService} from "ngx-toastr";
 import {ImageService} from "../../../_services/image.service";
+import {SubscriptionService} from "../../../_services/subscription.service";
+import {RefreshFrequency} from "../../../_models/subscription";
+import {Tooltip} from "primeng/tooltip";
 
 @Component({
     selector: 'app-search-result',
-    imports: [
-        NgIcon
-    ],
+  imports: [
+    NgIcon,
+    Tooltip
+  ],
     templateUrl: './search-result.component.html',
     styleUrl: './search-result.component.css',
     animations: [bounceIn200ms, dropAnimation]
@@ -24,6 +28,7 @@ export class SearchResultComponent {
   @Input({required: true}) page!: Page;
   @Input({required: true}) form!: FormGroup;
   @Input({required: true}) searchResult!: SearchInfo;
+  @Input({required: true}) providers!: Provider[];
 
   showExtra: boolean = false;
 
@@ -45,7 +50,31 @@ export class SearchResultComponent {
               private cdRef: ChangeDetectorRef,
               private toastR: ToastrService,
               private imageService: ImageService,
+              private subscriptionService: SubscriptionService,
   ) {
+  }
+
+  addAsSub() {
+    this.subscriptionService.new({
+      ID: 0,
+      contentId: this.searchResult.InfoHash,
+      provider: this.searchResult.Provider,
+      info: {
+        title: this.searchResult.Name,
+        baseDir: this.downloadDir(),
+        lastCheckSuccess: true,
+        lastCheck: new Date()
+      },
+      refreshFrequency: RefreshFrequency.Week
+    }).subscribe({
+      next: sub => {
+        this.toastR.success(`Added ${sub.info.title} as a subscription`, "Success")
+      },
+      error: err => {
+        console.log(err);
+        this.toastR.error(`An error occurred: ${err.error.error}`, "Failed");
+      }
+    })
   }
 
   loadImage() {
@@ -62,10 +91,13 @@ export class SearchResultComponent {
     }
   }
 
-  download() {
-
+  downloadDir() {
     const customDir = this.form.value["customDir"];
-    const dir = customDir ? customDir : this.form.value["dir"];
+    return customDir ? customDir : this.form.value["dir"];
+  }
+
+  download() {
+    const dir = this.downloadDir()
 
     const req: DownloadRequest = {
       provider: this.searchResult.Provider,
