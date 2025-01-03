@@ -125,10 +125,19 @@ func (m *manga) ContentKey(chapter Chapter) string {
 }
 
 func (m *manga) ContentLogger(chapter Chapter) zerolog.Logger {
-	return m.Log.With().
+	builder := m.Log.With().
 		Str("id", chapter.Id).
-		Str("title", chapter.Title).
-		Logger()
+		Str("chapter", chapter.Chapter)
+
+	if chapter.Title != "" {
+		builder = builder.Str("title", chapter.Title)
+	}
+
+	if chapter.Volume != "" {
+		builder = builder.Str("volume", chapter.Volume)
+	}
+
+	return builder.Logger()
 }
 
 func (m *manga) ContentUrls(chapter Chapter) ([]string, error) {
