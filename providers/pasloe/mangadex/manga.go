@@ -187,7 +187,10 @@ func (m *manga) ContentDir(chapter ChapterSearchData) string {
 }
 
 func (m *manga) ContentPath(chapter ChapterSearchData) string {
-	return path.Join(m.mangaPath(), m.ContentDir(chapter))
+	if chapter.Attributes.Volume == "" {
+		path.Join(m.mangaPath(), m.ContentDir(chapter))
+	}
+	return path.Join(m.mangaPath(), m.volumeDir(chapter.Attributes.Volume), m.ContentDir(chapter))
 }
 
 func (m *manga) ContentKey(chapter ChapterSearchData) string {

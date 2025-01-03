@@ -16,7 +16,11 @@ type Downloadable interface {
 	GetInfo() payload.InfoStat
 	WaitForInfoAndDownload()
 	GetDownloadDir() string
+	// GetOnDiskContent returns the name of the files that have been identified as already existing content
 	GetOnDiskContent() []string
+	// GetNewContent returns the full (relative) path of downloaded content.
+	// This will be a slice of paths produced by DownloadInfoProvider.ContentPath
+	GetNewContent() []string
 }
 
 type DownloadInfoProvider[T any] interface {

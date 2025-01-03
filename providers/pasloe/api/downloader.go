@@ -41,6 +41,7 @@ type DownloadBase[T any] struct {
 	Req       payload.DownloadRequest
 
 	ToDownload      []T
+	HasDownloaded   []string
 	ExistingContent []string
 
 	ContentDownloaded int
@@ -71,6 +72,10 @@ func (d *DownloadBase[T]) GetDownloadDir() string {
 
 func (d *DownloadBase[T]) GetOnDiskContent() []string {
 	return d.ExistingContent
+}
+
+func (d *DownloadBase[T]) GetNewContent() []string {
+	return d.HasDownloaded
 }
 
 func (d *DownloadBase[T]) Cancel() {
@@ -107,7 +112,7 @@ func (d *DownloadBase[T]) WaitForInfoAndDownload() {
 
 func (d *DownloadBase[T]) checkContentOnDisk() {
 	d.Log.Debug().Str("dir", d.GetDownloadDir()).Msg("checking content on disk")
-	entries, err := os.ReadDir(path.Join(d.Client.GetBaseDir(), d.GetDownloadDir()))
+	content, err := d.readDirectoryForContent(d.GetDownloadDir())
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			d.Log.Trace().Msg("directory not found, fresh download")
@@ -118,11 +123,30 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 		return
 	}
 
+	d.Log.Debug().Str("content", fmt.Sprintf("%v", content)).Msg("found following content on disk")
+	d.ExistingContent = content
+}
+
+func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]string, error) {
+	entries, err := os.ReadDir(path.Join(d.Client.GetBaseDir(), p))
+	if err != nil {
+		return nil, err
+	}
 	out := make([]string, 0)
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".cbz") {
+		if entry.IsDir() {
+			dirContent, err2 := d.readDirectoryForContent(path.Join(p, entry.Name()))
+			if err2 != nil {
+				return nil, err2
+			}
+			out = append(out, dirContent...)
+			continue
+		}
+
+		if !strings.HasSuffix(entry.Name(), ".cbz") {
 			d.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
 			continue
+
 		}
 
 		matches := d.infoProvider.ContentRegex().FindStringSubmatch(entry.Name())
@@ -133,8 +157,7 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 		out = append(out, entry.Name())
 	}
 
-	d.Log.Debug().Str("content", fmt.Sprintf("%v", out)).Msg("found following content on disk")
-	d.ExistingContent = out
+	return out, nil
 }
 
 func (d *DownloadBase[T]) startDownload() {
@@ -189,9 +212,11 @@ func (d *DownloadBase[T]) downloadContent(t T) error {
 
 	l.Trace().Msg("downloading content")
 
-	if err := os.MkdirAll(d.infoProvider.ContentPath(t), 0755); err != nil {
+	contentPath := d.infoProvider.ContentPath(t)
+	if err := os.MkdirAll(contentPath, 0755); err != nil {
 		return err
 	}
+	d.HasDownloaded = append(d.HasDownloaded, contentPath)
 
 	urls, err := d.infoProvider.ContentUrls(t)
 	if err != nil {

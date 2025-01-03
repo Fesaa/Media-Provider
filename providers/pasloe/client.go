@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"slices"
 	"sync"
 )
 
@@ -143,59 +142,67 @@ func (c *client) deleteFiles(content api.Downloadable) {
 		return
 	}
 	dir := path.Join(c.GetBaseDir(), downloadDir)
-	skip := content.GetOnDiskContent()
-
 	l := c.log.With().Str("dir", dir).Str("contentId", content.Id()).Logger()
 
-	if len(skip) == 0 {
-		l.Info().Msg("deleting directory")
+	if len(content.GetOnDiskContent()) == 0 {
+		l.Info().Msg("no existing content downloaded, removing entire directory")
 		if err := os.RemoveAll(dir); err != nil {
 			l.Error().Err(err).Msg("error while deleting directory")
 		}
 		return
 	}
 
-	l.Info().Str("skipping", fmt.Sprintf("%+v", skip)).Msg("deleting new entries in directory")
+	for _, contentPath := range content.GetNewContent() {
+		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
+		if err := os.RemoveAll(contentPath); err != nil {
+			l.Error().Err(err).Str("path", contentPath).Msg("error while new content dir")
+		}
+	}
+
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		l.Error().Err(err).Msg("error while reading directory")
+		l.Error().Err(err).Str("dir", dir).Msg("error while reading dir, unable to remove empty dirs")
 		return
 	}
+
 	for _, entry := range entries {
-		if slices.Contains(skip, entry.Name()) {
-			l.Trace().Str("name", entry.Name()).Msg("skipping inner dir")
+		if !entry.IsDir() {
 			continue
 		}
 
-		l.Trace().Str("name", entry.Name()).Msg("deleting inner directory")
-		if err = os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
-			l.Error().Err(err).Str("name", entry.Name()).Msg("error while deleting directory")
+		innerEntries, err := os.ReadDir(path.Join(dir, entry.Name()))
+		if err != nil {
+			l.Error().Err(err).Str("dir", dir).Str("name", entry.Name()).
+				Msg("error while reading dir, will not remove")
+			continue
+		}
+
+		if len(innerEntries) > 0 {
+			l.Trace().Str("dir", dir).Str("name", entry.Name()).
+				Msg("Dir has content, not removing any files")
+			continue
+		}
+
+		l.Trace().Str("dir", dir).Str("name", entry.Name()).
+			Msg("Dir has content, removing entire directory")
+		if err := os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
+			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
 		}
 	}
 }
 
 func (c *client) cleanup(content api.Downloadable) {
-	dir := path.Join(c.GetBaseDir(), content.GetBaseDir(), content.Title())
-	entries, err := os.ReadDir(dir)
-
-	l := c.log.With().Str("dir", dir).Str("contentId", content.Id()).Logger()
-
-	if err != nil {
-		l.Error().Err(err).Msg("error while reading directory")
-		return
-	}
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		err = utils.ZipFolder(path.Join(dir, entry.Name()), path.Join(dir, entry.Name()+".cbz"))
+	l := c.log.With().Str("contentId", content.Id()).Logger()
+	for _, contentPath := range content.GetNewContent() {
+		l.Debug().Str("path", contentPath).Msg("Zipping file")
+		err := utils.ZipFolder(contentPath, contentPath+".cbz")
 		if err != nil {
-			l.Error().Err(err).Str("name", entry.Name()).Msg("error while zipping dir")
+			l.Error().Err(err).Str("path", contentPath).Msg("error while zipping dir")
 			continue
 		}
 
-		if err = os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
-			l.Error().Err(err).Str("name", entry.Name()).Msg("error while deleting file")
+		if err = os.RemoveAll(contentPath); err != nil {
+			l.Error().Err(err).Str("path", contentPath).Msg("error while deleting file")
 			return
 		}
 	}
