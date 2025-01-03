@@ -84,7 +84,7 @@ export class SubscriptionComponent implements OnInit {
         this.toastR.success("Success")
       },
       error: (err) => {
-        this.toastR.error("Failed to run once", err.message)
+        this.toastR.error(err.error.message, "Failed to run once")
       }
       })
   }
@@ -103,12 +103,10 @@ export class SubscriptionComponent implements OnInit {
     this.subscriptionService.delete(this.subscription.ID).subscribe({
       next: () => {
         this.toastR.success('Subscription deleted');
+        this.onDelete.emit(this.subscription.ID);
       },
       error: err => {
-        this.toastR.error(err.message);
-      },
-      complete: () => {
-        this.onDelete.emit(this.subscription.ID);
+        this.toastR.error(err.error.message, "Failed to delete the subscription");
       }
     })
   }
@@ -160,12 +158,10 @@ export class SubscriptionComponent implements OnInit {
     obs.subscribe({
       next: () => {
         this.toastR.success('Subscription updated the subscription');
+        this.onSave.emit();
       },
       error: err => {
-        this.toastR.error(err.message);
-      },
-      complete: () => {
-        this.onSave.emit();
+        this.toastR.error(err.error.message, "Failed to save");
       }
     })
   }

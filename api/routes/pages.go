@@ -58,7 +58,7 @@ func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
 	id, _ := ctx.ParamsInt("index", -1)
 	if id == -1 {
 		return ctx.Status(400).JSON(fiber.Map{
-			"error": "Invalid id",
+			"message": "Invalid id",
 		})
 	}
 

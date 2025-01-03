@@ -71,8 +71,7 @@ export class SearchResultComponent {
         this.toastR.success(`Added ${sub.info.title} as a subscription`, "Success")
       },
       error: err => {
-        console.log(err);
-        this.toastR.error(`An error occurred: ${err.error.error}`, "Failed");
+        this.toastR.error(`An error occurred: ${err.error.message}`, "Failed");
       }
     })
   }
@@ -111,7 +110,7 @@ export class SearchResultComponent {
         this.toastR.success(`Downloaded started for ${this.searchResult.Name}`, "Success")
       },
       error: (err) => {
-        this.toastR.error(`Download failed ${err.error.error}`, "Error")
+        this.toastR.error(`Download failed ${err.error.message}`, "Error")
       }
   })
   }

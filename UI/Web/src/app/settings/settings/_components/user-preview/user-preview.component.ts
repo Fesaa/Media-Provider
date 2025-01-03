@@ -50,7 +50,7 @@ export class UserPreviewComponent implements OnInit {
         this.toastR.success("Refreshed API key");
       },
       error: err => {
-        this.toastR.error("Failed to refresh API key", err.message);
+        this.toastR.error(err.error.message, "Failed to refresh API key");
       }
   })
   }
@@ -99,7 +99,7 @@ export class UserPreviewComponent implements OnInit {
         this.toastR.success(`${dto.name} updated successfully`, 'Success');
       },
       error: (err) => {
-        this.toastR.error(err.error.error, 'Error');
+        this.toastR.error(err.error.message, 'Error');
       },
       complete: () => {
         this.edit = false;
@@ -130,7 +130,7 @@ export class UserPreviewComponent implements OnInit {
         this.toastR.success(`Deleted ${this.user.name} successfully`, 'Success');
       },
       error: (err) => {
-        this.toastR.error(err.error.error, 'Error');
+        this.toastR.error(err.error.message, 'Error');
       }
     })
   }
@@ -168,7 +168,7 @@ export class UserPreviewComponent implements OnInit {
         this.toastR.success(`${this.user.name} generated reset successfully. View server logs for the key`, 'Success');
       },
       error: (err) => {
-        this.toastR.error(err.error.error, 'Error');
+        this.toastR.error(err.error.message, 'Error');
       }
     });
   }

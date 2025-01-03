@@ -34,7 +34,7 @@ func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to parse request")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
@@ -48,7 +48,7 @@ func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
 	if err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to read dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
@@ -73,13 +73,13 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to parse request")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
 	if strings.Contains(req.NewDir, "..") || strings.Contains(req.BaseDir, "..") {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid path",
+			"message": "Invalid path",
 		})
 	}
 
@@ -89,7 +89,7 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 	if err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to create dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 

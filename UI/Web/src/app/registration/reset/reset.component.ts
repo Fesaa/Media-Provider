@@ -56,7 +56,7 @@ export class ResetComponent implements OnInit {
         this.router.navigateByUrl('/login');
       },
       error: err => {
-        this.toastR.error(`Failed to reset password: ${err}`, "Error");
+        this.toastR.error(`Failed to reset password: ${err.error.message}`, "Error");
       }
     });
   }

@@ -34,7 +34,7 @@ export class SuggestionDashboardComponent {
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(err.error, 'Error');
+        this.toastR.error(err.error.message, 'Error');
       }
     })
   }

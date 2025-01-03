@@ -36,8 +36,7 @@ export class ImageService {
         reader.readAsDataURL(blob);
       },
       error: err => {
-        console.error(err);
-        this.toastR.error("Unable to download image " + imageUrl, "Error");
+        this.toastR.error("Unable to download image " + imageUrl + ":\n" + err.error.message, "Error");
       }
     })
     return imageSrc.asObservable();

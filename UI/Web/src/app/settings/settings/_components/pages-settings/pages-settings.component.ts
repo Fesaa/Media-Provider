@@ -140,7 +140,7 @@ export class PagesSettingsComponent implements OnInit {
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(`Failed to upsert page ${err.error.error}`, 'Error');
+        this.toastR.error(`Failed to upsert page ${err.error.message}`, 'Error');
       }
     });
     return;
@@ -170,7 +170,7 @@ export class PagesSettingsComponent implements OnInit {
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(err.error.error, 'Error');
+        this.toastR.error(err.error.message, 'Error');
       }
     });
   }
@@ -194,7 +194,7 @@ export class PagesSettingsComponent implements OnInit {
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.toastR.error(err.error.error, 'Error');
+        this.toastR.error(err.error.messsage, 'Error');
       }
     });
   }

@@ -157,7 +157,7 @@ func (ur *userRoutes) Users(ctx *fiber.Ctx) error {
 	users, err := ur.DB.Users.All()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 	return ctx.JSON(utils.Map(users, func(u models.User) payload.UserDto {
@@ -198,7 +198,7 @@ func (ur *userRoutes) UpdateUser(ctx *fiber.Ctx) error {
 
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 	if newUser == nil {
@@ -223,13 +223,13 @@ func (ur *userRoutes) DeleteUser(ctx *fiber.Ctx) error {
 	if err != nil {
 		ur.Log.Error().Uint("id", userID).Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": fmt.Sprintf("user %d not found", userID),
+			"message": fmt.Sprintf("user %d not found", userID),
 		})
 	}
 
 	if toDelete.Original {
 		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"error": "You may not delete the main user",
+			"message": "You may not delete the main user",
 		})
 	}
 
@@ -237,7 +237,7 @@ func (ur *userRoutes) DeleteUser(ctx *fiber.Ctx) error {
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to delete user")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
@@ -259,7 +259,7 @@ func (ur *userRoutes) GenerateResetPassword(ctx *fiber.Ctx) error {
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to generate reset password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 	fmt.Printf("A reset link has been generated for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.", reset.UserId, reset.Key, reset.Key)
@@ -277,20 +277,20 @@ func (ur *userRoutes) ResetPassword(ctx *fiber.Ctx) error {
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Failed to find reset key",
+			"message": "Failed to find reset key",
 		})
 	}
 
 	if reset == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Failed to find reset key",
+			"message": "Failed to find reset key",
 		})
 	}
 
 	user, err := ur.DB.Users.GetById(reset.UserId)
 	if err != nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Failed to find user",
+			"message": "Failed to find user",
 		})
 	}
 	if user == nil {

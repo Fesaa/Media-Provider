@@ -123,7 +123,7 @@ export class ServerSettingsComponent implements OnInit {
         });
       },
       error: (error) => {
-        this.toastr.error(error.error.error, 'Failed to save settings');
+        this.toastr.error(error.error.message, 'Failed to save settings');
       }
     });
   }

@@ -35,14 +35,14 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
 	var searchRequest payload.SearchRequest
 	if err := ctx.BodyParser(&searchRequest); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
 	search, err := cr.Provider.Search(searchRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 	return ctx.JSON(search)
@@ -53,14 +53,14 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		cr.Log.Error().Err(err).Msg("error while parsing body")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
 	if req.BaseDir == "" {
 		cr.Log.Warn().Msg("trying to download Torrent to empty baseDir, returning error.")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "base dir cannot be null",
+			"message": "base dir cannot be null",
 		})
 	}
 
@@ -70,7 +70,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 			Str("debug_info", fmt.Sprintf("%#v", req)).
 			Msg("error while downloading torrent")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
@@ -82,13 +82,13 @@ func (cr *contentRoutes) Stop(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		cr.Log.Error().Err(err).Msg("error while parsing body")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 	if err := cr.Provider.Stop(req); err != nil {
 		cr.Log.Error().Str("id", req.Id).Msg("error while stopping download")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 

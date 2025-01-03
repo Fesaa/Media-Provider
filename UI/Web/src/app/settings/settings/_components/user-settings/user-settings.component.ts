@@ -33,7 +33,7 @@ export class UserSettingsComponent {
         this.users = users;
       },
       error: err => {
-        this.toastR.error(err.error.error, "Unable to load all users")
+        this.toastR.error(err.error.message, "Unable to load all users")
       }
     })
   }

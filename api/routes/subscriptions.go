@@ -53,8 +53,8 @@ func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 	id, err := ParamsUInt(ctx, "id")
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"error": "Invalid id",
-			"id":    utils.CopyString(ctx.Params("id", "")),
+			"message": "Invalid id",
+			"id":      utils.CopyString(ctx.Params("id", "")),
 		})
 	}
 
@@ -92,8 +92,8 @@ func (sr *subscriptionRoutes) Get(ctx *fiber.Ctx) error {
 	id, err := ParamsUInt(ctx, "id")
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"error": "Invalid id",
-			"id":    utils.CopyString(ctx.Params("id", "")),
+			"message": "Invalid id",
+			"id":      utils.CopyString(ctx.Params("id", "")),
 		})
 	}
 
@@ -122,7 +122,7 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 	if err := sr.validatorSubscription(sub); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to validate subscription")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
@@ -166,7 +166,7 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 	if err := sr.validatorSubscription(sub); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to validate subscription")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
@@ -174,13 +174,13 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get existing subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 
 	if existing != nil {
 		return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "Subscription for this contentID already exists",
+			"message": "Subscription for this contentID already exists",
 		})
 	}
 
@@ -216,15 +216,15 @@ func (sr *subscriptionRoutes) Delete(ctx *fiber.Ctx) error {
 	id, err := ParamsUInt(ctx, "id")
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"error": "Invalid id",
-			"id":    utils.CopyString(ctx.Params("id", "")),
+			"message": "Invalid id",
+			"id":      utils.CopyString(ctx.Params("id", "")),
 		})
 	}
 
 	if err = sr.DB.Subscriptions.Delete(id); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 

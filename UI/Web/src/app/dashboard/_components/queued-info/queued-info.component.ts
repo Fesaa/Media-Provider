@@ -37,7 +37,7 @@ export class QueuedInfoComponent {
         this.toastR.success(`Download stopped ${this.contentTitle.transform(this.info.name)}`, "Success")
       },
       error: (err) => {
-        this.toastR.error(`Failed to stop download: ${err.message}`, "Error")
+        this.toastR.error(`Failed to stop download: ${err.error.message}`, "Error")
       }
     })
   }

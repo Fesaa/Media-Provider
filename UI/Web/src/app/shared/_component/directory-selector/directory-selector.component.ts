@@ -98,7 +98,7 @@ export class DirectorySelectorComponent implements OnInit {
         this.loadChildren(this.routeStack.items.join('/'));
       },
       error: (err) => {
-        this.toastR.error(`Failed to create directory ${this.newDirName}`, 'Error');
+        this.toastR.error(`Failed to create directory ${this.newDirName}\n${err.error.message}`, 'Error');
         console.error(err);
       }
     });
@@ -143,6 +143,7 @@ export class DirectorySelectorComponent implements OnInit {
       error: (err) => {
         this.routeStack.pop();
         console.error(err);
+        this.toastR.error(err.error.message, "Failed to load children")
       }
     })
   }
