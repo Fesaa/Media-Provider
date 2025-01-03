@@ -13,6 +13,8 @@ export class SubscriptionExternalUrlPipe implements PipeTransform {
         return "https://mangadex.org/title/" + contentId;
       case Provider.WEBTOON:
         return "https://www.webtoons.com/episodeList?titleNo=" + contentId;
+      case Provider.DYNASTY:
+        return "https://dynasty-scans.com/series/" + contentId;
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }
