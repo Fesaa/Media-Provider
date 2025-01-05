@@ -37,7 +37,8 @@ func (s subscriptionImpl) GetByContentId(contentID string) (*models.Subscription
 	var subscription models.Subscription
 	res := s.db.Preload("Info").
 		Where(&models.Subscription{ContentId: contentID}).
-		First(&subscription)
+		Limit(1).
+		Find(&subscription)
 
 	if res.Error != nil {
 		return nil, res.Error
