@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"errors"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"gorm.io/gorm"
 )
@@ -37,8 +38,11 @@ func (s subscriptionImpl) GetByContentId(contentID string) (*models.Subscription
 	var subscription models.Subscription
 	res := s.db.Preload("Info").
 		Where(&models.Subscription{ContentId: contentID}).
-		Limit(1).
-		Find(&subscription)
+		First(&subscription)
+
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 
 	if res.Error != nil {
 		return nil, res.Error
