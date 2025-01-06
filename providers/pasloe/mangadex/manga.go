@@ -504,7 +504,7 @@ func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {
 	if !download {
 		m.Log.Trace().Str("key", m.ContentKey(chapter)).Msg("content already downloaded, skipping")
 	} else {
-		m.Log.Debug().Str("key", m.ContentKey(chapter)).Msg("adding content to download queue")
+		m.Log.Trace().Str("key", m.ContentKey(chapter)).Msg("adding content to download queue")
 	}
 	return download
 }
