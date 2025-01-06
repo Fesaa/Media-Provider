@@ -158,7 +158,14 @@ titleArrayLoop:
 	if enAltTitle != "" {
 		return enAltTitle
 	}
-	return ""
+
+	// fallback to first title, any language
+	for _, value := range a.Title {
+		return value
+	}
+
+	// Last resort fallback title, this should never happen- mangadex should have at least one title
+	return "Media-Provider-Fallback-title"
 }
 
 func (a *MangaAttributes) EnAltTitles() []string {
