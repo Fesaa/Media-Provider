@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -39,22 +40,42 @@ func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 	})
 
 	for _, m := range toDo {
-		log.Info().Str("name", m.name).Msg("Running manual migration")
-		if err := m.f(db); err != nil {
-			log.Error().Err(err).Str("name", m.name).Msg("Failed to run migration")
+		err := db.Transaction(func(tx *gorm.DB) error {
+			log.Info().Str("name", m.name).Msg("Running manual migration")
+			var errorTally []error
+			err := m.f(tx)
+			if err != nil {
+				errorTally = append(errorTally, err)
+			}
+
+			model := models.ManualMigration{
+				Name:    m.name,
+				Success: len(errorTally) == 0,
+			}
+
+			err = tx.Save(&model).Error
+			if err != nil {
+				log.Warn().Err(err).Str("name", m.name).Msg("Failed to save manual migration")
+				errorTally = append(errorTally, err)
+			}
+
+			if len(errorTally) > 0 {
+				err = tx.Rollback().Error
+				if err != nil {
+					log.Warn().Err(err).Str("name", m.name).Msg("Failed to rollback manual migration")
+				}
+
+				errorTally = append(errorTally, err)
+				return errors.Join(errorTally...)
+			}
+
+			log.Info().Str("name", m.name).Msg("Finished running manual migration")
+			return nil
+		})
+
+		if err != nil {
 			return err
 		}
-
-		model := models.ManualMigration{
-			Name:    m.name,
-			Success: true,
-		}
-
-		if err := db.Save(&model).Error; err != nil {
-			log.Warn().Err(err).Str("name", m.name).Msg("Failed to save manual migration")
-			return err
-		}
-		log.Info().Str("name", m.name).Msg("Finished running manual migration")
 	}
 
 	return nil
