@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"github.com/Fesaa/Media-Provider/db/manual"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -17,7 +18,7 @@ type migration struct {
 var manualMigrations = []migration{
 	{
 		name: "SubscriptionDurationChanges",
-		f:    subscriptionDurationChanges,
+		f:    manual.SubscriptionDurationChanges,
 	},
 }
 
@@ -75,25 +76,6 @@ func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 
 		if err != nil {
 			return err
-		}
-	}
-
-	return nil
-}
-
-func subscriptionDurationChanges(db *gorm.DB) error {
-	var subscriptions []models.Subscription
-	res := db.Find(&subscriptions)
-	if res.Error != nil {
-		return res.Error
-	}
-
-	for _, sub := range subscriptions {
-		if sub.RefreshFrequency < 2 {
-			sub.RefreshFrequency = 2
-			if err := db.Save(&sub).Error; err != nil {
-				return err
-			}
 		}
 	}
 
