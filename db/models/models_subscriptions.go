@@ -36,22 +36,19 @@ type SubscriptionInfo struct {
 type RefreshFrequency int
 
 const (
-	OneHour RefreshFrequency = iota
-	HalfDay
-	FullDay
+	Day RefreshFrequency = iota + 2
 	Week
+	Month
 )
 
 func (f RefreshFrequency) AsDuration() time.Duration {
 	switch f {
-	case OneHour:
-		return time.Hour * 1
-	case HalfDay:
-		return time.Hour * 12
-	case FullDay:
+	case Day:
 		return time.Hour * 24
 	case Week:
 		return time.Hour * 24 * 7
+	case Month:
+		return time.Hour * 24 * 30
 	}
 	panic("invalid refresh frequency")
 }

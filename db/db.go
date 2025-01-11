@@ -30,6 +30,10 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 		return nil, err
 	}
 
+	if err = manualMigration(db, log); err != nil {
+		return nil, err
+	}
+
 	return &Database{
 		db:            db,
 		Users:         impl.Users(db),
