@@ -15,6 +15,12 @@ func (c ChapterSearchResponse) FilterOneEnChapter() ChapterSearchResponse {
 		if data.Attributes.TranslatedLanguage != "en" {
 			continue
 		}
+
+		// Skip over official publisher chapters, we cannot download these from mangadex
+		if data.Attributes.ExternalUrl != "" {
+			continue
+		}
+
 		newData = append(newData, data)
 		lastChapter = data.Attributes.Chapter
 		lastVolume = data.Attributes.Volume
