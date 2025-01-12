@@ -101,25 +101,26 @@ func (h *subscriptionService) Refresh(id uint, startNow bool) {
 }
 
 func (h *subscriptionService) new(sub models.Subscription, startNow bool) {
-	nextExecution, err := sub.NextExecution(h.db.Preferences)
+	nextExecutionTime, err := sub.NextExecution(h.db.Preferences)
 	if err != nil {
 		h.log.Error().Err(err).Uint("id", sub.ID).Msg("failed to get next execution")
 		return
 	}
 
-	if startNow {
-		nextExecution = time.Now()
-	}
+	nextExecution := func() gocron.StartAtOption {
+		if startNow {
+			return gocron.WithStartImmediately()
+		}
+		return gocron.WithStartDateTime(nextExecutionTime)
+	}()
 
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
-		gocron.WithStartAt(func() gocron.StartAtOption {
-			return gocron.WithStartDateTime(nextExecution)
-		}()))
+		gocron.WithStartAt(nextExecution))
 
 	if err != nil {
 		h.log.Error().Err(err).
 			Uint("id", sub.ID).
-			Time("nextExecution", nextExecution).
+			Time("nextExecution", nextExecutionTime).
 			Msg("failed to create job")
 		return
 	}
@@ -129,7 +130,7 @@ func (h *subscriptionService) new(sub models.Subscription, startNow bool) {
 		Uint("id", sub.ID).
 		Str("contentId", sub.ContentId).
 		Str("title", sub.Info.Title).
-		Time("nextExecution", nextExecution).
+		Time("nextExecution", nextExecutionTime).
 		Dur("duration", sub.RefreshFrequency.AsDuration()).
 		Msg("added subscription")
 }
