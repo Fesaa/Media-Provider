@@ -17,8 +17,12 @@ type migration struct {
 
 var manualMigrations = []migration{
 	{
-		name: "SubscriptionDurationChanges",
+		name: "20250112_SubscriptionDurationChanges",
 		f:    manual.SubscriptionDurationChanges,
+	},
+	{
+		name: "20250112_InsertDefaultPreferences",
+		f:    manual.InsertDefaultPreferences,
 	},
 }
 

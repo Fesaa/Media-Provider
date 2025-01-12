@@ -21,6 +21,19 @@ func (s *Subscription) ShouldRefresh(old *Subscription) bool {
 		s.Info.BaseDir != old.Info.BaseDir
 }
 
+func (s *Subscription) Normalize(p Preferences) error {
+	pref, err := p.Get()
+	if err != nil {
+		return err
+	}
+
+	t := s.Info.LastCheck
+	newTime := time.Date(t.Year(), t.Month(), t.Day(), pref.SubscriptionRefreshHour, 0, 0, 0, time.UTC)
+	s.Info.LastCheck = newTime
+
+	return nil
+}
+
 type SubscriptionInfo struct {
 	gorm.Model
 

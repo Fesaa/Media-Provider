@@ -10,6 +10,11 @@ type Pages interface {
 	Delete(id int64) error
 }
 
+type Preferences interface {
+	Get() (*Preference, error)
+	Update(pref Preference) error
+}
+
 type Subscriptions interface {
 	All() ([]Subscription, error)
 	Get(uint) (*Subscription, error)

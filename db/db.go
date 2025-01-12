@@ -15,6 +15,7 @@ type Database struct {
 	Users         models.Users
 	Pages         models.Pages
 	Subscriptions models.Subscriptions
+	Preferences   models.Preferences
 }
 
 func DatabaseProvider(log zerolog.Logger) (*Database, error) {
@@ -39,5 +40,6 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 		Users:         impl.Users(db),
 		Pages:         impl.Pages(db),
 		Subscriptions: impl.Subscriptions(db),
+		Preferences:   impl.Preferences(db),
 	}, nil
 }

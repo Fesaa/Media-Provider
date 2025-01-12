@@ -9,4 +9,5 @@ var MODELS = []any{
 	&Modifier{},
 	&ModifierValue{},
 	&ManualMigration{},
+	&Preference{},
 }

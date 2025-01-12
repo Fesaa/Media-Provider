@@ -136,6 +136,11 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	}
 
+	if err = sub.Normalize(sr.DB.Preferences); err != nil {
+		sr.Log.Error().Err(err).Msg("Failed to normalize subscription")
+		return fiber.ErrInternalServerError
+	}
+
 	if err = sr.DB.Subscriptions.Update(sub); err != nil {
 		sr.Log.Error().Err(err).Uint("id", sub.ID).Msg("Failed to update subscription")
 		return fiber.ErrInternalServerError
@@ -182,6 +187,11 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
 			"message": "Subscription for this contentID already exists",
 		})
+	}
+
+	if err = sub.Normalize(sr.DB.Preferences); err != nil {
+		sr.Log.Error().Err(err).Msg("Failed to normalize subscription")
+		return fiber.ErrInternalServerError
 	}
 
 	subscription, err := sr.DB.Subscriptions.New(sub)

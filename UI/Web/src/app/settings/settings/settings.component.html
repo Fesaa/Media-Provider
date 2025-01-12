@@ -1,5 +1,5 @@
 <div class="flex flex-col w-full items-center bg-gray-50 dark:bg-gray-900 min-h-screen text-black dark:text-white">
-  <div class="flex flex-col w-full md:w-2/3 items-center py-1 md:py-5 px-2 md:p-10">
+  <div class="flex flex-col w-full md:w-11/12 items-center py-1 md:py-5 px-2 md:p-10">
 
     <div
       class="flex flex-row justify-between w-full space-x-2 border-b-2 border-black-100 dark:border-white items-center">
@@ -49,6 +49,14 @@
           @if (selected === SettingsID.Server && canSee(SettingsID.Server)) {
             <div class="mt-5 md:ml-5">
               <app-server-settings></app-server-settings>
+            </div>
+          }
+        }
+
+        @defer (when selected == SettingsID.Preferences; prefetch on idle) {
+          @if (selected === SettingsID.Preferences && canSee(SettingsID.Preferences)) {
+            <div class="mt-5 md:ml-5">
+              <app-preference-settings></app-preference-settings>
             </div>
           }
         }

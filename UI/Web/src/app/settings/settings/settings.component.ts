@@ -8,10 +8,12 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {hasPermission, Perm, User} from "../../_models/user";
 import {AccountService} from "../../_services/account.service";
 import {UserSettingsComponent} from "./_components/user-settings/user-settings.component";
+import {PreferenceSettingsComponent} from "./_components/preference-settings/preference-settings.component";
 
 export enum SettingsID {
 
   Server = "server",
+  Preferences = "preferences",
   Pages = "pages",
   User = "user"
 
@@ -19,12 +21,13 @@ export enum SettingsID {
 
 @Component({
     selector: 'app-settings',
-    imports: [
-        NgIcon,
-        ServerSettingsComponent,
-        PagesSettingsComponent,
-        UserSettingsComponent
-    ],
+  imports: [
+    NgIcon,
+    ServerSettingsComponent,
+    PagesSettingsComponent,
+    UserSettingsComponent,
+    PreferenceSettingsComponent
+  ],
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.css',
     animations: [dropAnimation]
@@ -40,6 +43,12 @@ export class SettingsComponent implements OnInit{
       title: 'Server',
       icon: 'heroServerStack',
       perm: Perm.WriteConfig
+    },
+    {
+      id: SettingsID.Preferences,
+      title: "Preferences",
+      icon: 'heroAdjustmentsHorizontal',
+      perm: Perm.WriteConfig,
     },
     {
       id: SettingsID.Pages,
