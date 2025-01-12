@@ -27,11 +27,42 @@ func (s *Subscription) Normalize(p Preferences) error {
 		return err
 	}
 
-	t := s.Info.LastCheck
-	newTime := time.Date(t.Year(), t.Month(), t.Day(), pref.SubscriptionRefreshHour, 0, 0, 0, time.UTC)
-	s.Info.LastCheck = newTime
+	s.Info.LastCheck = s.normalize(s.Info.LastCheck, pref.SubscriptionRefreshHour)
 
 	return nil
+}
+
+func (s *Subscription) normalize(t time.Time, hour int) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), hour, 0, 0, 0, time.UTC)
+}
+
+func (s *Subscription) NextExecution(p Preferences) (time.Time, error) {
+	pref, err := p.Get()
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	diff := time.Since(s.Info.LastCheck)
+
+	if diff > s.RefreshFrequency.AsDuration() {
+		next := s.normalize(time.Now(), pref.SubscriptionRefreshHour)
+
+		if time.Now().After(next) {
+			next = next.Add(time.Hour * 24)
+		}
+
+		return next, nil
+	}
+
+	next := time.Now().Add(s.RefreshFrequency.AsDuration() - diff)
+	next = s.normalize(next, pref.SubscriptionRefreshHour)
+
+	// Save guard, but should not happen
+	if time.Now().After(next) {
+		next = next.Add(time.Hour * 24)
+	}
+
+	return next, nil
 }
 
 type SubscriptionInfo struct {

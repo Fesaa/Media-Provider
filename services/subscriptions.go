@@ -81,7 +81,7 @@ func (h *subscriptionService) Delete(id uint) error {
 	return nil
 }
 
-func (h *subscriptionService) Refresh(id uint, forceNow bool) {
+func (h *subscriptionService) Refresh(id uint, startNow bool) {
 	mappedUuid, ok := h.idMapper[id]
 	if ok {
 		if err := h.scheduler.RemoveJob(mappedUuid); err != nil {
@@ -97,34 +97,30 @@ func (h *subscriptionService) Refresh(id uint, forceNow bool) {
 		return
 	}
 
-	h.new(*sub, forceNow)
+	h.new(*sub, startNow)
 }
 
-func (h *subscriptionService) new(sub models.Subscription, forceNow bool) {
-	diff := time.Since(sub.Info.LastCheck)
+func (h *subscriptionService) new(sub models.Subscription, startNow bool) {
+	nextExecution, err := sub.NextExecution(h.db.Preferences)
+	if err != nil {
+		h.log.Error().Err(err).Uint("id", sub.ID).Msg("failed to get next execution")
+		return
+	}
+
+	if startNow {
+		nextExecution = time.Now().UTC()
+	}
 
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
 		gocron.WithStartAt(func() gocron.StartAtOption {
-			if forceNow || diff > sub.RefreshFrequency.AsDuration() {
-				h.log.Debug().
-					Uint("id", sub.ID).
-					Str("title", sub.Info.Title).
-					Msg("subscription scheduled to execute immediately")
-				return gocron.WithStartImmediately()
-			}
-
-			startTime := time.Now().Add(sub.RefreshFrequency.AsDuration() - diff)
-
-			h.log.Debug().
-				Uint("id", sub.ID).
-				Str("title", sub.Info.Title).
-				Time("at", startTime).
-				Msg("subscription scheduled to execute")
-			return gocron.WithStartDateTime(startTime)
+			return gocron.WithStartDateTime(nextExecution)
 		}()))
 
 	if err != nil {
-		h.log.Error().Err(err).Uint("id", sub.ID).Msg("failed to create job")
+		h.log.Error().Err(err).
+			Uint("id", sub.ID).
+			Time("nextExecution", nextExecution).
+			Msg("failed to create job")
 		return
 	}
 
@@ -133,6 +129,7 @@ func (h *subscriptionService) new(sub models.Subscription, forceNow bool) {
 		Uint("id", sub.ID).
 		Str("contentId", sub.ContentId).
 		Str("title", sub.Info.Title).
+		Time("nextExecution", nextExecution).
 		Dur("duration", sub.RefreshFrequency.AsDuration()).
 		Msg("added subscription")
 }
