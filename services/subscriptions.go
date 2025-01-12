@@ -108,7 +108,7 @@ func (h *subscriptionService) new(sub models.Subscription, startNow bool) {
 	}
 
 	if startNow {
-		nextExecution = time.Now().UTC()
+		nextExecution = time.Now()
 	}
 
 	j, err := h.scheduler.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), h.toTask(sub),
