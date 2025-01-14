@@ -9,10 +9,6 @@ export class RefreshFrequencyPipe implements PipeTransform {
 
   transform(value: RefreshFrequency): string {
     switch (value) {
-      case RefreshFrequency.OneHour:
-        return '1 Hour';
-      case RefreshFrequency.HalfDay:
-        return '12 Hours';
       case RefreshFrequency.Day:
         return '1 Day';
       case RefreshFrequency.Week:

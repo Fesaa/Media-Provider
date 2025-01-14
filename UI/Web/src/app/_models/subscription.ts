@@ -17,9 +17,7 @@ export type SubscriptionInfo = {
 }
 
 export enum RefreshFrequency {
-  OneHour = 0,
-  HalfDay,
-  Day,
+  Day = 2,
   Week,
   Month,
 }
