@@ -7,13 +7,15 @@ import {Stack} from "../../data-structures/stack";
 import {IoService} from "../../../_services/io.service";
 import {ToastrService} from "ngx-toastr";
 import {Clipboard} from "@angular/cdk/clipboard";
+import {FormsModule} from "@angular/forms";
 
 @Component({
     selector: 'app-directory-selector',
-    imports: [
-        NgClass,
-        NgIcon
-    ],
+  imports: [
+    NgClass,
+    NgIcon,
+    FormsModule
+  ],
     templateUrl: './directory-selector.component.html',
     styleUrl: './directory-selector.component.css'
 })

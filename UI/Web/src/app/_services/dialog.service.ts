@@ -13,11 +13,15 @@ export class DialogService {
     private appRef: ApplicationRef,
   ) {}
 
-  openDirBrowser(root: string): Promise<string| undefined> {
+  openDirBrowser(root: string,
+                 options: {create: boolean, copy: boolean, filter: boolean}
+                 = {create: false, copy: false, filter: true}
+  ): Promise<string| undefined> {
     const component = this.viewContainerRef!.createComponent(DirectorySelectorComponent)
     component.instance.root = root;
-    component.instance.filter = true;
-    component.instance.copy = false;
+    component.instance.filter = options.filter;
+    component.instance.copy = options.copy;
+    component.instance.create = options.create;
 
     return new Promise<string | undefined>((resolve, reject) => {
       component.instance.getResult().subscribe(result => {
