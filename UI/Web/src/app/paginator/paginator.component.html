@@ -1,6 +1,8 @@
 @if (totalPages > 1) {
   <div class="flex items-center justify-center space-x-2">
-    <ng-icon class="text-center hover:cursor-pointer" name="heroChevronLeft" size="16" (click)="previousPage()"></ng-icon>
+    <button>
+      <ng-icon class="text-center hover:cursor-pointer" name="heroChevronLeft" size="16" (click)="previousPage()"></ng-icon>
+    </button>
 
     <div class="flex items-center space-x-1">
       @for (page of pages; track $index) {
@@ -13,6 +15,8 @@
       }
     </div>
 
-    <ng-icon class="text-center hover:cursor-pointer" name="heroChevronRight" size="16" (click)="nextPage()"></ng-icon>
+    <button>
+      <ng-icon class="text-center hover:cursor-pointer" name="heroChevronRight" size="16" (click)="nextPage()"></ng-icon>
+    </button>
   </div>
 }
