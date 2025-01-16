@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -15,13 +15,14 @@ import (
 type contentRoutes struct {
 	dig.In
 
-	Router   fiber.Router
-	Cache    fiber.Handler `name:"cache"`
-	Auth     auth.Provider `name:"jwt-auth"`
-	Provider *providers.ContentProvider
-	YS       yoitsu.Yoitsu
-	PS       api.Client
-	Log      zerolog.Logger
+	Router fiber.Router
+	Cache  fiber.Handler `name:"cache"`
+	Auth   auth.Provider `name:"jwt-auth"`
+	YS     yoitsu.Yoitsu
+	PS     api.Client
+	Log    zerolog.Logger
+
+	ContentService services.ContentService
 }
 
 func RegisterContentRoutes(cr contentRoutes) {
@@ -39,7 +40,7 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
 		})
 	}
 
-	search, err := cr.Provider.Search(searchRequest)
+	search, err := cr.ContentService.Search(searchRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
@@ -64,7 +65,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err := cr.Provider.Download(req); err != nil {
+	if err := cr.ContentService.Download(req); err != nil {
 		cr.Log.Error().
 			Err(err).
 			Str("debug_info", fmt.Sprintf("%#v", req)).
@@ -85,7 +86,7 @@ func (cr *contentRoutes) Stop(ctx *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
-	if err := cr.Provider.Stop(req); err != nil {
+	if err := cr.ContentService.Stop(req); err != nil {
 		cr.Log.Error().Str("id", req.Id).Msg("error while stopping download")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),

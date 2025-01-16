@@ -6,7 +6,6 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
@@ -31,15 +30,16 @@ type SubscriptionService interface {
 
 type subscriptionService struct {
 	cronService    CronService
-	contentService *providers.ContentProvider
-	db             *db.Database
-	log            zerolog.Logger
+	contentService ContentService
+	
+	db  *db.Database
+	log zerolog.Logger
 
 	mapper  *utils.SafeMap[uint, uuid.UUID]
 	updator chan models.Subscription
 }
 
-func SubscriptionServiceProvider(db *db.Database, provider *providers.ContentProvider,
+func SubscriptionServiceProvider(db *db.Database, provider ContentService,
 	log zerolog.Logger, cronService CronService) SubscriptionService {
 	service := &subscriptionService{
 		cronService:    cronService,

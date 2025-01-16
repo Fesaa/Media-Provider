@@ -5,7 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/wisewolf"
-	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
@@ -36,7 +35,7 @@ func main() {
 
 	utils.Must(c.Provide(yoitsu.New))
 	utils.Must(c.Provide(pasloe.New))
-	utils.Must(c.Provide(providers.New))
+	utils.Must(c.Provide(services.ContentServiceProvider))
 	utils.Must(c.Provide(services.CronServiceProvider))
 	utils.Must(c.Provide(services.SubscriptionServiceProvider))
 	utils.Must(c.Provide(ApplicationProvider))

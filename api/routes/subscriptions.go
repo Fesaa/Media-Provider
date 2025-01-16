@@ -5,7 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -24,13 +23,13 @@ var (
 type subscriptionRoutes struct {
 	dig.In
 
-	Router   fiber.Router
-	Auth     auth.Provider `name:"jwt-auth"`
-	Provider *providers.ContentProvider
-	Log      zerolog.Logger
-	Val      *validator.Validate
+	Router fiber.Router
+	Auth   auth.Provider `name:"jwt-auth"`
+	Log    zerolog.Logger
+	Val    *validator.Validate
 
 	SubscriptionService services.SubscriptionService
+	ContentService      services.ContentService
 }
 
 func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
@@ -63,7 +62,7 @@ func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	err = sr.Provider.Download(payload.DownloadRequest{
+	err = sr.ContentService.Download(payload.DownloadRequest{
 		Id:        sub.ContentId,
 		Provider:  sub.Provider,
 		TempTitle: sub.Info.Title,

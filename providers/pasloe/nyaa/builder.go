@@ -1,4 +1,4 @@
-package providers
+package nyaa
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -11,21 +11,21 @@ import (
 	"net/url"
 )
 
-type NyaaBuilder struct {
+type Builder struct {
 	log        zerolog.Logger
 	httpClient *http.Client
 	ys         yoitsu.Yoitsu
 }
 
-func (b *NyaaBuilder) Provider() models.Provider {
+func (b *Builder) Provider() models.Provider {
 	return models.NYAA
 }
 
-func (b *NyaaBuilder) Logger() zerolog.Logger {
+func (b *Builder) Logger() zerolog.Logger {
 	return b.log
 }
 
-func (b *NyaaBuilder) Normalize(torrents []types.Torrent) []payload.Info {
+func (b *Builder) Normalize(torrents []types.Torrent) []payload.Info {
 	torrentsInfo := make([]payload.Info, len(torrents))
 	for i, t := range torrents {
 		torrentsInfo[i] = payload.Info{
@@ -48,7 +48,7 @@ func (b *NyaaBuilder) Normalize(torrents []types.Torrent) []payload.Info {
 	return torrentsInfo
 }
 
-func (b *NyaaBuilder) Transform(s payload.SearchRequest) nyaa.SearchOptions {
+func (b *Builder) Transform(s payload.SearchRequest) nyaa.SearchOptions {
 	so := nyaa.SearchOptions{}
 	so.Query = url.QueryEscape(s.Query)
 	so.Provider = "nyaa"
@@ -70,7 +70,7 @@ func (b *NyaaBuilder) Transform(s payload.SearchRequest) nyaa.SearchOptions {
 	return so
 }
 
-func (b *NyaaBuilder) Search(opts nyaa.SearchOptions) ([]types.Torrent, error) {
+func (b *Builder) Search(opts nyaa.SearchOptions) ([]types.Torrent, error) {
 	search, err := nyaa.Search(opts)
 	if err != nil {
 		return nil, err
@@ -78,15 +78,15 @@ func (b *NyaaBuilder) Search(opts nyaa.SearchOptions) ([]types.Torrent, error) {
 	return search, nil
 }
 
-func (b *NyaaBuilder) Download(request payload.DownloadRequest) error {
+func (b *Builder) Download(request payload.DownloadRequest) error {
 	_, err := b.ys.AddDownload(request)
 	return err
 }
 
-func (b *NyaaBuilder) Stop(request payload.StopRequest) error {
+func (b *Builder) Stop(request payload.StopRequest) error {
 	return b.ys.RemoveDownload(request)
 }
 
-func NewNyaaBuilder(log zerolog.Logger, httpClient *http.Client, ys yoitsu.Yoitsu) *NyaaBuilder {
-	return &NyaaBuilder{log.With().Str("handler", "nyaa-provider").Logger(), httpClient, ys}
+func NewNyaaBuilder(log zerolog.Logger, httpClient *http.Client, ys yoitsu.Yoitsu) *Builder {
+	return &Builder{log.With().Str("handler", "nyaa-provider").Logger(), httpClient, ys}
 }
