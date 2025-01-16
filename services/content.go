@@ -20,6 +20,7 @@ import (
 type ContentService interface {
 	Search(payload.SearchRequest) ([]payload.Info, error)
 	Download(payload.DownloadRequest) error
+	DownloadSubscription(*models.Subscription) error
 	Stop(payload.StopRequest) error
 }
 
@@ -85,6 +86,15 @@ func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, erro
 	}
 
 	return data, nil
+}
+
+func (s *contentService) DownloadSubscription(sub *models.Subscription) error {
+	return s.Download(payload.DownloadRequest{
+		Provider:  sub.Provider,
+		Id:        sub.ContentId,
+		BaseDir:   sub.Info.BaseDir,
+		TempTitle: sub.Info.Title,
+	})
 }
 
 func (s *contentService) Download(req payload.DownloadRequest) error {

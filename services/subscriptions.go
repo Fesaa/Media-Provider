@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
@@ -19,11 +18,11 @@ type SubscriptionService interface {
 	// All returns all active subscriptions
 	All() ([]models.Subscription, error)
 	// Add a new subscription, saved to DB and starts the cron job
-	// optionally starting it immediately. Subscription is normalized in the process
-	Add(models.Subscription, ...bool) (*models.Subscription, error)
+	// Subscription is normalized in the process
+	Add(models.Subscription) (*models.Subscription, error)
 	// Update an existing subscription, updates DB, and restarts cron job
-	// optionally starting the new job immediately. Subscription is normalized in the process
-	Update(models.Subscription, ...bool) error
+	// Subscription is normalized in the process
+	Update(models.Subscription) error
 	// Delete the subscription with ID
 	Delete(uint) error
 }
@@ -31,7 +30,7 @@ type SubscriptionService interface {
 type subscriptionService struct {
 	cronService    CronService
 	contentService ContentService
-	
+
 	db  *db.Database
 	log zerolog.Logger
 
@@ -65,7 +64,7 @@ func (s *subscriptionService) onStartUp() {
 
 	failed := 0
 	for _, sub := range subs {
-		if err = s.schedule(sub, false); err != nil {
+		if err = s.schedule(sub); err != nil {
 			failed++
 			s.log.Error().Err(err).
 				Uint("ID", sub.ID).
@@ -96,9 +95,7 @@ func (s *subscriptionService) Get(id uint) (*models.Subscription, error) {
 	return s.db.Subscriptions.Get(id)
 }
 
-func (s *subscriptionService) Add(sub models.Subscription, startNows ...bool) (*models.Subscription, error) {
-	startNow := utils.OrDefault(startNows, false)
-
+func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription, error) {
 	existing, err := s.db.Subscriptions.GetByContentId(sub.ContentId)
 	if err != nil {
 		return nil, err
@@ -118,7 +115,7 @@ func (s *subscriptionService) Add(sub models.Subscription, startNows ...bool) (*
 		return nil, err
 	}
 
-	err = s.schedule(*newSub, startNow)
+	err = s.schedule(*newSub)
 	if err != nil {
 		return nil, err
 	}
@@ -126,9 +123,7 @@ func (s *subscriptionService) Add(sub models.Subscription, startNows ...bool) (*
 	return newSub, nil
 }
 
-func (s *subscriptionService) Update(sub models.Subscription, startNows ...bool) error {
-	startNow := utils.OrDefault(startNows, false)
-
+func (s *subscriptionService) Update(sub models.Subscription) error {
 	var existing *models.Subscription
 	var err error
 
@@ -147,7 +142,7 @@ func (s *subscriptionService) Update(sub models.Subscription, startNows ...bool)
 		return err
 	}
 
-	if !!startNow && (existing != nil && !sub.ShouldRefresh(existing)) {
+	if existing != nil && !sub.ShouldRefresh(existing) {
 		s.log.Debug().Uint("id", sub.ID).Msg("not refreshing subscription job")
 		return nil
 	}
@@ -161,7 +156,7 @@ func (s *subscriptionService) Update(sub models.Subscription, startNows ...bool)
 		s.log.Trace().Err(err).Uint("id", sub.ID).Msg("updating subscription with no running job?")
 	}
 
-	err = s.schedule(sub, startNow)
+	err = s.schedule(sub)
 	if err != nil {
 		return err
 	}
@@ -184,17 +179,15 @@ func (s *subscriptionService) Delete(id uint) error {
 
 // schedule the job for the passed subscription, optionally starting immediately
 // Adds the job UUID to the mapper, does not save to DB.
-func (s *subscriptionService) schedule(sub models.Subscription, startNow bool) error {
+func (s *subscriptionService) schedule(sub models.Subscription) error {
 	nextExecutionTime, err := sub.NextExecution(s.db.Preferences)
 	if err != nil {
 		s.log.Error().Err(err).Uint("id", sub.ID).Msg("failed to get next execution")
 		return err
 	}
 
-	nextExecution := utils.Ternary(startNow, gocron.WithStartImmediately(), gocron.WithStartDateTime(nextExecutionTime))
-
 	job, err := s.cronService.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), s.toTask(sub),
-		gocron.WithStartAt(nextExecution))
+		gocron.WithStartAt(gocron.WithStartDateTime(nextExecutionTime)))
 	if err != nil {
 		s.log.Error().Err(err).
 			Uint("id", sub.ID).
@@ -216,12 +209,7 @@ func (s *subscriptionService) schedule(sub models.Subscription, startNow bool) e
 
 func (s *subscriptionService) toTask(sub models.Subscription) gocron.Task {
 	return gocron.NewTask(func() {
-		err := s.contentService.Download(payload.DownloadRequest{
-			Id:        sub.ContentId,
-			Provider:  sub.Provider,
-			TempTitle: sub.Info.Title,
-			BaseDir:   sub.Info.BaseDir,
-		})
+		err := s.contentService.DownloadSubscription(&sub)
 		sub.Info.LastCheck = time.Now()
 		sub.Info.LastCheckSuccess = err == nil
 

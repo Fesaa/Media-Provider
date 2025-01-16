@@ -27,7 +27,7 @@ type pageService struct {
 func PageServiceProvider(db *db.Database, log zerolog.Logger) PageService {
 	return &pageService{
 		db:  db,
-		log: log.With().Str("hander", "page-service").Logger(),
+		log: log.With().Str("handler", "page-service").Logger(),
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -62,12 +61,7 @@ func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	err = sr.ContentService.Download(payload.DownloadRequest{
-		Id:        sub.ContentId,
-		Provider:  sub.Provider,
-		TempTitle: sub.Info.Title,
-		BaseDir:   sub.Info.BaseDir,
-	})
+	err = sr.ContentService.DownloadSubscription(sub)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to download subscription")
 		return fiber.ErrInternalServerError
@@ -156,11 +150,17 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 		})
 	}
 
-	subscription, err := sr.SubscriptionService.Add(sub, true)
+	subscription, err := sr.SubscriptionService.Add(sub)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to add subscription")
 		return fiber.ErrInternalServerError
 	}
+
+	go func() {
+		if err = sr.ContentService.DownloadSubscription(subscription); err != nil {
+			sr.Log.Warn().Err(err).Msg("failed to download subscription, will run again as scheduled. May have issues?")
+		}
+	}()
 
 	return ctx.JSON(subscription)
 }
