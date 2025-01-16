@@ -37,7 +37,8 @@ func main() {
 	utils.Must(c.Provide(yoitsu.New))
 	utils.Must(c.Provide(pasloe.New))
 	utils.Must(c.Provide(providers.New))
-	utils.Must(c.Provide(services.NewSubscriptionService))
+	utils.Must(c.Provide(services.CronServiceProvider))
+	utils.Must(c.Provide(services.SubscriptionServiceProvider))
 	utils.Must(c.Provide(ApplicationProvider))
 
 	utils.Must(c.Invoke(UpdateBaseUrlInIndex))

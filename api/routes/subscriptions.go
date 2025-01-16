@@ -3,7 +3,6 @@ package routes
 import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/auth"
-	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers"
@@ -13,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
+	"path"
 	"slices"
 )
 
@@ -26,7 +26,6 @@ type subscriptionRoutes struct {
 
 	Router   fiber.Router
 	Auth     auth.Provider `name:"jwt-auth"`
-	DB       *db.Database
 	Provider *providers.ContentProvider
 	Log      zerolog.Logger
 	Val      *validator.Validate
@@ -58,7 +57,7 @@ func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 		})
 	}
 
-	sub, err := sr.DB.Subscriptions.Get(id)
+	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscription")
 		return fiber.ErrInternalServerError
@@ -79,7 +78,7 @@ func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 }
 
 func (sr *subscriptionRoutes) All(ctx *fiber.Ctx) error {
-	subs, err := sr.DB.Subscriptions.All()
+	subs, err := sr.SubscriptionService.All()
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscriptions")
 		return fiber.ErrInternalServerError
@@ -97,7 +96,7 @@ func (sr *subscriptionRoutes) Get(ctx *fiber.Ctx) error {
 		})
 	}
 
-	sub, err := sr.DB.Subscriptions.Get(id)
+	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscription")
 		return fiber.ErrInternalServerError
@@ -126,28 +125,11 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 		})
 	}
 
-	prev, err := sr.DB.Subscriptions.Get(sub.ID)
-	if err != nil {
-		sr.Log.Error().Err(err).Uint("id", sub.ID).Msg("Failed to get subscription")
-		return fiber.ErrInternalServerError
-	}
-
-	if prev == nil {
-		return fiber.ErrNotFound
-	}
-
-	if err = sub.Normalize(sr.DB.Preferences); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to normalize subscription")
-		return fiber.ErrInternalServerError
-	}
-
-	if err = sr.DB.Subscriptions.Update(sub); err != nil {
-		sr.Log.Error().Err(err).Uint("id", sub.ID).Msg("Failed to update subscription")
-		return fiber.ErrInternalServerError
-	}
-
-	if sub.ShouldRefresh(prev) {
-		sr.SubscriptionService.Refresh(sub.ID, false)
+	if err := sr.SubscriptionService.Update(sub); err != nil {
+		sr.Log.Error().Err(err).Msg("Failed to update subscription")
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
@@ -166,7 +148,7 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	sub.Info.BaseDir = CleanPath(sub.Info.BaseDir)
+	sub.Info.BaseDir = path.Clean(sub.Info.BaseDir)
 
 	if err := sr.validatorSubscription(sub); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to validate subscription")
@@ -175,32 +157,12 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 		})
 	}
 
-	existing, err := sr.DB.Subscriptions.GetByContentId(sub.ContentId)
+	subscription, err := sr.SubscriptionService.Add(sub, true)
 	if err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to get existing subscription")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	if existing != nil {
-		return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"message": "Subscription for this contentID already exists",
-		})
-	}
-
-	if err = sub.Normalize(sr.DB.Preferences); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to normalize subscription")
+		sr.Log.Error().Err(err).Msg("Failed to add subscription")
 		return fiber.ErrInternalServerError
 	}
 
-	subscription, err := sr.DB.Subscriptions.New(sub)
-	if err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to create subscription")
-		return fiber.ErrInternalServerError
-	}
-
-	sr.SubscriptionService.Refresh(subscription.ID, true)
 	return ctx.JSON(subscription)
 }
 
@@ -231,16 +193,11 @@ func (sr *subscriptionRoutes) Delete(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err = sr.DB.Subscriptions.Delete(id); err != nil {
+	if err = sr.SubscriptionService.Delete(id); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
-	}
-
-	if err = sr.SubscriptionService.Delete(id); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
-		return fiber.ErrInternalServerError
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)

@@ -8,7 +8,6 @@ import (
 	"go.uber.org/dig"
 	"os"
 	"path"
-	"slices"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -38,13 +37,7 @@ func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: I don't know if this is enough, would need to properly check.
-	// This endpoint is behind auth, so you'd already need om some access.
-	// But would still want to check.
-	cleanedPath := CleanPath(req.Dir)
-
-	root := ior.Cfg.GetRootDir()
-	entries, err := os.ReadDir(path.Join(root, cleanedPath))
+	entries, err := os.ReadDir(path.Join(ior.Cfg.GetRootDir(), path.Clean(req.Dir)))
 	if err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to read dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -94,13 +87,4 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.SendStatus(fiber.StatusCreated)
-}
-
-func CleanPath(path string) string {
-	path = strings.ReplaceAll(path, "\\", "/")
-	parts := strings.Split(path, "/")
-	filtered := slices.DeleteFunc(parts, func(s string) bool {
-		return s == ".." || s == "."
-	})
-	return strings.Join(filtered, "/")
 }

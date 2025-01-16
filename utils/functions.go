@@ -73,3 +73,20 @@ func Identity[T any](t T) func() T {
 func Stringify(i int) string {
 	return fmt.Sprintf("%d", i)
 }
+
+func OrDefault[T any](array []T, defaultValue T) T {
+	if len(array) == 0 {
+		return defaultValue
+	}
+	return array[0]
+}
+
+func Ternary[T any](condition bool, tuple ...T) T {
+	if len(tuple) != 2 {
+		panic("Tuple should be of length 2")
+	}
+	if condition {
+		return tuple[0]
+	}
+	return tuple[1]
+}
