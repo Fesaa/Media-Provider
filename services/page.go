@@ -14,19 +14,24 @@ var (
 	ErrExistingPagesFound = errors.New("some pages already exists")
 )
 
-type PageService struct {
+type PageService interface {
+	SwapPages(int64, int64) error
+	LoadDefaultPages() error
+}
+
+type pageService struct {
 	db  *db.Database
 	log zerolog.Logger
 }
 
-func PageServiceProvider(db *db.Database, log zerolog.Logger) *PageService {
-	return &PageService{
+func PageServiceProvider(db *db.Database, log zerolog.Logger) PageService {
+	return &pageService{
 		db:  db,
 		log: log.With().Str("hander", "page-service").Logger(),
 	}
 }
 
-func (ps *PageService) SwapPages(id1, id2 int64) error {
+func (ps *pageService) SwapPages(id1, id2 int64) error {
 	page1, err := ps.db.Pages.Get(id1)
 	if err != nil {
 		ps.log.Error().Err(err).Int64("id", id1).Msg("Failed to get page1")
@@ -63,7 +68,7 @@ func (ps *PageService) SwapPages(id1, id2 int64) error {
 	return nil
 }
 
-func (ps *PageService) LoadDefaultPages() error {
+func (ps *pageService) LoadDefaultPages() error {
 	pages, err := ps.db.Pages.All()
 	if err != nil {
 		ps.log.Error().Err(err).Msg("Failed to load existing pages, not loading default pages")
