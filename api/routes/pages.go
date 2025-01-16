@@ -1,11 +1,11 @@
 package routes
 
 import (
-	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -22,6 +22,8 @@ type pageRoutes struct {
 	Auth   auth.Provider `name:"jwt-auth"`
 	Log    zerolog.Logger
 	Val    *validator.Validate
+
+	PageService services.PageService
 }
 
 func RegisterPageRoutes(pr pageRoutes) {
@@ -125,50 +127,28 @@ func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
 	var m payload.SwapPageRequest
 	if err := ctx.BodyParser(&m); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse swap page")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
 	}
 
-	page1, err := pr.DB.Pages.Get(m.Id1)
-	if err != nil {
-		pr.Log.Error().Err(err).Int64("id", m.Id1).Msg("Failed to get page1")
-		return fiber.ErrInternalServerError
-	}
-	page2, err := pr.DB.Pages.Get(m.Id2)
-	if err != nil {
-		pr.Log.Error().Err(err).Int64("id", m.Id2).Msg("Failed to get page2")
-		return fiber.ErrInternalServerError
+	if err := pr.PageService.SwapPages(m.Id2, m.Id2); err != nil {
+		pr.Log.Error().Err(err).Msg("Failed to swap page")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to swap page",
+		})
 	}
 
-	page1.SortValue, page2.SortValue = page2.SortValue, page1.SortValue
-
-	if err = pr.DB.Pages.Update(*page1); err != nil {
-		pr.Log.Error().Err(err).Int64("id", m.Id1).Msg("Failed to update page1")
-		return fiber.ErrInternalServerError
-	}
-	if err = pr.DB.Pages.Update(*page2); err != nil {
-		pr.Log.Error().Err(err).Int64("id", m.Id2).Msg("Failed to update page2")
-		return fiber.ErrInternalServerError
-	}
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
 func (pr *pageRoutes) LoadDefault(ctx *fiber.Ctx) error {
-	pages, err := pr.DB.Pages.All()
-	if err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to get pages")
-		return fiber.ErrInternalServerError
-	}
 
-	if len(pages) != 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot load default pages while other pages are present"})
-	}
-
-	for _, page := range models.DefaultPages {
-		if err = pr.DB.Pages.New(page); err != nil {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": fmt.Errorf("failed to load default pages %w", err).Error(),
-			})
-		}
+	if err := pr.PageService.LoadDefaultPages(); err != nil {
+		pr.Log.Error().Err(err).Msg("Failed to load default pages")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to load default pages",
+		})
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)

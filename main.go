@@ -35,6 +35,7 @@ func main() {
 
 	utils.Must(c.Provide(yoitsu.New))
 	utils.Must(c.Provide(pasloe.New))
+	utils.Must(c.Provide(services.PageServiceProvider))
 	utils.Must(c.Provide(services.ContentServiceProvider))
 	utils.Must(c.Provide(services.CronServiceProvider))
 	utils.Must(c.Provide(services.SubscriptionServiceProvider))

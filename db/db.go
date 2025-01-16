@@ -18,6 +18,10 @@ type Database struct {
 	Preferences   models.Preferences
 }
 
+func (db *Database) DB() *gorm.DB {
+	return db.db
+}
+
 func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 	db, err := gorm.Open(sqlite.Open(path.Join(config.Dir, "media-provider.db")), &gorm.Config{
 		Logger:               gormLogger(log),
