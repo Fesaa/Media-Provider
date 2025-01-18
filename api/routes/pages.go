@@ -132,7 +132,7 @@ func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err := pr.PageService.SwapPages(m.Id2, m.Id2); err != nil {
+	if err := pr.PageService.SwapPages(m.Id1, m.Id2); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to swap page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to swap page",
