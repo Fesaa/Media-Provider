@@ -80,7 +80,7 @@ export class PagesSettingsComponent implements OnInit {
     if (page === undefined) {
       page = {
         ID: 0,
-        sort_value: 0,
+        sortValue: 0,
         dirs: [],
         title: '',
         modifiers: [],
@@ -122,7 +122,7 @@ export class PagesSettingsComponent implements OnInit {
 
     const page = this.pageForm.value as Page;
     page.ID = this.selectedPage.ID;
-    page.sort_value = this.selectedPage.sort_value;
+    page.sortValue = this.selectedPage.sortValue;
     // Filter some stuff out
     page.modifiers = page.modifiers
       .filter(m => m.key !== "");

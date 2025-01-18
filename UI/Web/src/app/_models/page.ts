@@ -1,7 +1,7 @@
 
 export type Page = {
   ID: number;
-  sort_value: number;
+  sortValue: number;
   title: string;
   providers: Provider[];
   modifiers: Modifier[];

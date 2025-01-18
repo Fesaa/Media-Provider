@@ -63,7 +63,7 @@ export class ModifierSettingsComponent implements OnInit {
     }
 
     this.controlGroup.value.push({
-      id: -1,
+      id: 0,
       key: '',
       title: '',
       values: [],
@@ -123,8 +123,9 @@ export class ModifierSettingsComponent implements OnInit {
     if (!await this.dialogService.openDialog(`Are you sure you want to remove ${valueKey}?`)) {
       return;
     }
+    const modifier = this.controlGroup.value.find(m => m.key === key)!;
+    modifier.values = modifier.values.filter(m => m.key !== valueKey);
 
-    this.controlGroup.setValue(this.controlGroup.value.filter(m => m.key !== valueKey));
     this.toastR.warning(`Removed value ${valueKey}`, 'Success');
   }
 
