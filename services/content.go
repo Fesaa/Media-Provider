@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -24,31 +25,21 @@ type ContentService interface {
 	Stop(payload.StopRequest) error
 }
 
-type requestMapper interface {
+type ProviderAdapter interface {
 	Search(payload.SearchRequest) ([]payload.Info, error)
 	Download(payload.DownloadRequest) error
 	Stop(payload.StopRequest) error
 }
 
-type builder[T, S any] interface {
-	Provider() models.Provider
-	Logger() zerolog.Logger
-	Normalize(T) []payload.Info
-	Transform(payload.SearchRequest) S
-	Search(S) (T, error)
-	Download(payload.DownloadRequest) error
-	Stop(payload.StopRequest) error
-}
-
 type contentService struct {
-	providers *utils.SafeMap[models.Provider, requestMapper]
+	providers *utils.SafeMap[models.Provider, ProviderAdapter]
 	log       zerolog.Logger
 }
 
 func ContentServiceProvider(container *dig.Container, log zerolog.Logger) ContentService {
 	service := &contentService{
-		providers: utils.NewSafeMap[models.Provider, requestMapper](),
-		log:       log,
+		providers: utils.NewSafeMap[models.Provider, ProviderAdapter](),
+		log:       log.With().Str("handler", "content-service").Logger(),
 	}
 
 	service.registerAll(container)
@@ -57,35 +48,40 @@ func ContentServiceProvider(container *dig.Container, log zerolog.Logger) Conten
 
 func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, error) {
 	s.log.Trace().Str("req", fmt.Sprintf("%+v", req)).Msg("searching")
+	start := time.Now()
+	defer func(start time.Time) {
+		dur := time.Since(start)
+		s.log.Trace().Dur("elapsed", dur).Msg("search has completed")
+	}(start)
 
-	data := make([]payload.Info, 0)
 	// A page may have several providers, that don't share the same modifiers
 	// So we bottle them up, instead of instantly returning an error
-	errors := make([]error, 0)
+	var results []payload.Info
+	var errs []error
 
 	for _, provider := range req.Provider {
-		reqMapper, ok := s.providers.Get(provider)
+		adapter, ok := s.providers.Get(provider)
 		if !ok {
-			s.log.Warn().Int("provider", int(provider)).Msg("provider not supported")
-			errors = append(errors, fmt.Errorf("provider %d not supported", provider))
+			s.log.Warn().Any("provider", provider).Msg("provider not supported")
+			errs = append(errs, fmt.Errorf("provider %d not supported", provider))
 			continue
 		}
 
-		search, err := reqMapper.Search(req)
+		search, err := adapter.Search(req)
 		if err != nil {
-			s.log.Warn().Int("provider", int(provider)).Err(err).Msg("searching failed")
-			errors = append(errors, fmt.Errorf("provider %d: %w", provider, err))
+			s.log.Warn().Any("provider", provider).Err(err).Msg("searching failed")
+			errs = append(errs, fmt.Errorf("provider %d: %w", provider, err))
 			continue
 		}
 
-		data = append(data, search...)
+		results = append(results, search...)
 	}
 
-	if len(data) == 0 && len(errors) > 0 {
-		return nil, fmt.Errorf("no results found: %v", errors)
+	if len(results) == 0 && len(errs) > 0 {
+		return nil, errors.Join(errs...)
 	}
 
-	return data, nil
+	return results, nil
 }
 
 func (s *contentService) DownloadSubscription(sub *models.Subscription) error {
@@ -100,22 +96,22 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription) error {
 func (s *contentService) Download(req payload.DownloadRequest) error {
 	s.log.Trace().Str("req", fmt.Sprintf("%+v", req)).Msg("downloading")
 
-	reqMapper, ok := s.providers.Get(req.Provider)
+	adapter, ok := s.providers.Get(req.Provider)
 	if !ok {
 		return fmt.Errorf("provider %q not supported", req.Provider)
 	}
 
-	return reqMapper.Download(req)
+	return adapter.Download(req)
 }
 
 func (s *contentService) Stop(req payload.StopRequest) error {
 	s.log.Trace().Str("req", fmt.Sprintf("%+v", req)).Msg("stopping")
 
-	reqMapper, ok := s.providers.Get(req.Provider)
+	adapter, ok := s.providers.Get(req.Provider)
 	if !ok {
 		return fmt.Errorf("provider %q not supported", req.Provider)
 	}
-	return reqMapper.Stop(req)
+	return adapter.Stop(req)
 }
 
 func (s *contentService) registerAll(container *dig.Container) {
@@ -129,19 +125,28 @@ func (s *contentService) registerAll(container *dig.Container) {
 	utils.Must(scope.Provide(dynasty.NewBuilder))
 	utils.Must(scope.Provide(nyaa.NewNyaaBuilder))
 
-	utils.Must(registerRequestMapper[*yts.Builder](s, scope))
-	utils.Must(registerRequestMapper[*subsplease.Builder](s, scope))
-	utils.Must(registerRequestMapper[*limetorrents.Builder](s, scope))
-	utils.Must(registerRequestMapper[*webtoon.Builder](s, scope))
-	utils.Must(registerRequestMapper[*mangadex.Builder](s, scope))
-	utils.Must(registerRequestMapper[*dynasty.Builder](s, scope))
-	utils.Must(registerRequestMapper[*nyaa.Builder](s, scope))
+	utils.Must(registerProviderAdapter[*yts.Builder](s, scope))
+	utils.Must(registerProviderAdapter[*subsplease.Builder](s, scope))
+	utils.Must(registerProviderAdapter[*limetorrents.Builder](s, scope))
+	utils.Must(registerProviderAdapter[*webtoon.Builder](s, scope))
+	utils.Must(registerProviderAdapter[*mangadex.Builder](s, scope))
+	utils.Must(registerProviderAdapter[*dynasty.Builder](s, scope))
+	utils.Must(registerProviderAdapter[*nyaa.Builder](s, scope))
 }
 
-func registerRequestMapper[B builder[T, S], T, S any](s *contentService, scope *dig.Scope) error {
-	return scope.Invoke(func(builder B) {
+type builder[T, S any] interface {
+	Provider() models.Provider
+	Logger() zerolog.Logger
+	Normalize(T) []payload.Info
+	Transform(payload.SearchRequest) S
+	Search(S) (T, error)
+	Download(payload.DownloadRequest) error
+	Stop(payload.StopRequest) error
+}
 
-		reqMapper := &requestMapperImpl[T, S]{
+func registerProviderAdapter[B builder[T, S], T, S any](s *contentService, scope *dig.Scope) error {
+	return scope.Invoke(func(builder B) {
+		reqMapper := &DefaultProviderAdapter[T, S]{
 			transformer: builder.Transform,
 			normalizer:  builder.Normalize,
 			searcher:    builder.Search,
@@ -155,7 +160,7 @@ func registerRequestMapper[B builder[T, S], T, S any](s *contentService, scope *
 	})
 }
 
-type requestMapperImpl[T any, S any] struct {
+type DefaultProviderAdapter[T any, S any] struct {
 	transformer func(payload.SearchRequest) S
 	searcher    func(S) (T, error)
 	normalizer  func(T) []payload.Info
@@ -165,15 +170,15 @@ type requestMapperImpl[T any, S any] struct {
 	log         zerolog.Logger
 }
 
-func (s *requestMapperImpl[T, S]) Download(req payload.DownloadRequest) error {
+func (s *DefaultProviderAdapter[T, S]) Download(req payload.DownloadRequest) error {
 	return s.downloader(req)
 }
 
-func (s *requestMapperImpl[T, S]) Stop(req payload.StopRequest) error {
+func (s *DefaultProviderAdapter[T, S]) Stop(req payload.StopRequest) error {
 	return s.stopper(req)
 }
 
-func (s *requestMapperImpl[T, S]) Search(req payload.SearchRequest) ([]payload.Info, error) {
+func (s *DefaultProviderAdapter[T, S]) Search(req payload.SearchRequest) ([]payload.Info, error) {
 	t := s.transformer(req)
 
 	start := time.Now()
