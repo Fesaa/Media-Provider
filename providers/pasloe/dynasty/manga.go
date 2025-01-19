@@ -14,7 +14,6 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -202,7 +201,8 @@ func (m *manga) ContentRegex() *regexp.Regexp {
 }
 
 func (m *manga) ShouldDownload(chapter Chapter) bool {
-	return !slices.Contains(m.ExistingContentNames(), m.ContentDir(chapter)+".cbz")
+	_, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
+	return !ok
 }
 
 func (m *manga) chapterDir(chapter Chapter) string {

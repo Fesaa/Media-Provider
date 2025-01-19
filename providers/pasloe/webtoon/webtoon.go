@@ -15,7 +15,6 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -213,7 +212,8 @@ func (w *webtoon) ContentRegex() *regexp.Regexp {
 }
 
 func (w *webtoon) ShouldDownload(chapter Chapter) bool {
-	return !slices.Contains(w.ExistingContentNames(), w.ContentDir(chapter)+".cbz")
+	_, ok := w.GetContentByName(w.ContentDir(chapter) + ".cbz")
+	return !ok
 }
 
 func (w *webtoon) webToonPath() string {

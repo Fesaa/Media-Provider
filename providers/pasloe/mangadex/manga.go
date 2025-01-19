@@ -493,7 +493,7 @@ func (m *manga) ContentRegex() *regexp.Regexp {
 
 func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {
 	// Backwards compatibility check if volume has been downloaded
-	if slices.Contains(m.ExistingContentNames(), m.volumeDir(chapter.Attributes.Volume)+".cbz") {
+	if _, ok := m.GetContentByName(m.volumeDir(chapter.Attributes.Volume) + ".cbz"); ok {
 		return false
 	}
 
