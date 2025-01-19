@@ -187,7 +187,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 
 		l.Trace().Str("dir", dir).Str("name", entry.Name()).
 			Msg("Dir has no content, removing entire directory")
-		if err := os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
+		if err := os.Remove(path.Join(dir, entry.Name())); err != nil {
 			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
 		}
 	}
