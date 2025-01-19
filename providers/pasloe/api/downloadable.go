@@ -17,7 +17,7 @@ type Downloadable interface {
 	WaitForInfoAndDownload()
 	GetDownloadDir() string
 	// GetOnDiskContent returns the name of the files that have been identified as already existing content
-	GetOnDiskContent() []string
+	GetOnDiskContent() []Content
 	// GetNewContent returns the full (relative) path of downloaded content.
 	// This will be a slice of paths produced by DownloadInfoProvider.ContentPath
 	GetNewContent() []string

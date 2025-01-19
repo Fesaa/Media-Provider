@@ -213,7 +213,7 @@ func (w *webtoon) ContentRegex() *regexp.Regexp {
 }
 
 func (w *webtoon) ShouldDownload(chapter Chapter) bool {
-	download := !slices.Contains(w.ExistingContent, w.ContentDir(chapter)+".cbz")
+	download := !slices.Contains(w.ExistingContentNames(), w.ContentDir(chapter)+".cbz")
 	if !download {
 		w.Log.Trace().Str("key", w.ContentKey(chapter)).Msg("content already downloaded, skipping")
 	}

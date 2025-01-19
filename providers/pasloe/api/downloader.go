@@ -28,6 +28,11 @@ func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block Download
 	}
 }
 
+type Content struct {
+	Name string
+	Path string
+}
+
 type DownloadBase[T any] struct {
 	infoProvider DownloadInfoProvider[T]
 
@@ -42,7 +47,7 @@ type DownloadBase[T any] struct {
 
 	ToDownload      []T
 	HasDownloaded   []string
-	ExistingContent []string
+	ExistingContent []Content
 
 	ContentDownloaded int
 	ImagesDownloaded  int
@@ -70,8 +75,14 @@ func (d *DownloadBase[T]) GetDownloadDir() string {
 	return path.Join(d.baseDir, title)
 }
 
-func (d *DownloadBase[T]) GetOnDiskContent() []string {
+func (d *DownloadBase[T]) GetOnDiskContent() []Content {
 	return d.ExistingContent
+}
+
+func (d *DownloadBase[T]) ExistingContentNames() []string {
+	return utils.Map(d.ExistingContent, func(t Content) string {
+		return t.Name
+	})
 }
 
 func (d *DownloadBase[T]) GetNewContent() []string {
@@ -119,7 +130,7 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 		} else {
 			d.Log.Warn().Err(err).Msg("unable to check for already downloaded content. Downloading all")
 		}
-		d.ExistingContent = []string{}
+		d.ExistingContent = []Content{}
 		return
 	}
 
@@ -127,12 +138,13 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 	d.ExistingContent = content
 }
 
-func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]string, error) {
+func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]Content, error) {
 	entries, err := os.ReadDir(path.Join(d.Client.GetBaseDir(), p))
 	if err != nil {
 		return nil, err
 	}
-	out := make([]string, 0)
+
+	out := make([]Content, 0)
 	for _, entry := range entries {
 		if entry.IsDir() {
 			dirContent, err2 := d.readDirectoryForContent(path.Join(p, entry.Name()))
@@ -154,7 +166,10 @@ func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]string, error) {
 			continue
 		}
 		d.Log.Trace().Str("file", entry.Name()).Str("key", matches[1]).Msg("found  content on disk")
-		out = append(out, entry.Name())
+		out = append(out, Content{
+			Name: entry.Name(),
+			Path: path.Join(p, entry.Name()),
+		})
 	}
 
 	return out, nil

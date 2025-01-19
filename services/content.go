@@ -7,9 +7,9 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/nyaa"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
+	"github.com/Fesaa/Media-Provider/providers/yoitsu/nyaa"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/subsplease"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/yts"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -123,7 +123,7 @@ func (s *contentService) registerAll(container *dig.Container) {
 	utils.Must(scope.Provide(webtoon.NewBuilder))
 	utils.Must(scope.Provide(mangadex.NewBuilder))
 	utils.Must(scope.Provide(dynasty.NewBuilder))
-	utils.Must(scope.Provide(nyaa.NewNyaaBuilder))
+	utils.Must(scope.Provide(nyaa.NewBuilder))
 
 	utils.Must(registerProviderAdapter[*yts.Builder](s, scope))
 	utils.Must(registerProviderAdapter[*subsplease.Builder](s, scope))

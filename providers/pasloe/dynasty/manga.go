@@ -202,7 +202,7 @@ func (m *manga) ContentRegex() *regexp.Regexp {
 }
 
 func (m *manga) ShouldDownload(chapter Chapter) bool {
-	download := !slices.Contains(m.ExistingContent, m.ContentDir(chapter)+".cbz")
+	download := !slices.Contains(m.ExistingContentNames(), m.ContentDir(chapter)+".cbz")
 	if !download {
 		m.Log.Trace().Str("key", m.ContentKey(chapter)).Msg("content already downloaded, skipping")
 	}
