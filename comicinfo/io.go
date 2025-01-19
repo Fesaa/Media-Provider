@@ -28,12 +28,46 @@ https://github.com/fmartingr/go-comicinfo/blob/latest/io.go
 package comicinfo
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
+
+var ErrNoComicInfo = errors.New("zip file does not contain comic info")
+
+// ReadInZip tries to find a comicinfo.xml file inside a zip archive
+func ReadInZip(path string) (*ComicInfo, error) {
+	reader, err := zip.OpenReader(path)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	var ciFile *zip.File
+	for _, file := range reader.File {
+		if strings.ToLower(file.Name) == "comicinfo.xml" {
+			ciFile = file
+			break
+		}
+	}
+
+	if ciFile == nil {
+		return nil, ErrNoComicInfo
+	}
+
+	f, err := ciFile.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+	return Read(f)
+}
 
 // Read reads the ComicInfo spec from the specified reader
 func Read(r io.Reader) (*ComicInfo, error) {

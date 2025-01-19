@@ -85,6 +85,24 @@ func (d *DownloadBase[T]) ExistingContentNames() []string {
 	})
 }
 
+func (d *DownloadBase[T]) GetContentByName(name string) (Content, bool) {
+	for _, content := range d.ExistingContent {
+		if content.Name == name {
+			return content, true
+		}
+	}
+	return Content{}, false
+}
+
+func (d *DownloadBase[T]) GetContentByPath(path string) (Content, bool) {
+	for _, content := range d.ExistingContent {
+		if content.Path == path {
+			return content, true
+		}
+	}
+	return Content{}, false
+}
+
 func (d *DownloadBase[T]) GetNewContent() []string {
 	return d.HasDownloaded
 }
@@ -179,7 +197,15 @@ func (d *DownloadBase[T]) startDownload() {
 	data := d.infoProvider.All()
 	d.Log.Trace().Int("size", len(data)).Msg("downloading content")
 	d.Wg = &sync.WaitGroup{}
-	d.ToDownload = utils.Filter(data, d.infoProvider.ShouldDownload)
+	d.ToDownload = utils.Filter(data, func(t T) bool {
+		download := d.infoProvider.ShouldDownload(t)
+		if !download {
+			d.Log.Trace().Str("key", d.infoProvider.ContentKey(t)).Msg("content already downloaded, skipping")
+		} else {
+			d.Log.Trace().Str("key", d.infoProvider.ContentKey(t)).Msg("adding content to download queue")
+		}
+		return download
+	})
 
 	d.Log.Info().
 		Int("all", len(data)).

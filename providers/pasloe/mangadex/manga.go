@@ -492,21 +492,52 @@ func (m *manga) ContentRegex() *regexp.Regexp {
 }
 
 func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {
-	download := !slices.Contains(m.ExistingContentNames(), m.ContentDir(chapter)+".cbz")
-
 	// Backwards compatibility check if volume has been downloaded
-	if chapter.Attributes.Volume != "" {
-		if slices.Contains(m.ExistingContentNames(), m.volumeDir(chapter.Attributes.Volume)+".cbz") {
-			download = false
-		}
+	if slices.Contains(m.ExistingContentNames(), m.volumeDir(chapter.Attributes.Volume)+".cbz") {
+		return false
 	}
 
-	if !download {
-		m.Log.Trace().Str("key", m.ContentKey(chapter)).Msg("content already downloaded, skipping")
-	} else {
-		m.Log.Trace().Str("key", m.ContentKey(chapter)).Msg("adding content to download queue")
+	content, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
+	if !ok {
+		return true
 	}
-	return download
+
+	// No extra I/O needing, empty volumes will never be replaced
+	if chapter.Attributes.Volume == "" {
+		return true
+	}
+
+	return m.replaceAndShouldDownload(chapter, content)
+}
+
+func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.Content) bool {
+	l := m.ContentLogger(chapter)
+	fullPath := path.Join(m.Client.GetBaseDir(), content.Path)
+
+	ci, err := comicinfo.ReadInZip(fullPath)
+	if err != nil {
+		l.Warn().Err(err).Str("path", fullPath).Msg("unable to read comic info in zip")
+		return false
+	}
+
+	if strconv.Itoa(ci.Volume) == chapter.Attributes.Volume {
+		l.Debug().Str("path", fullPath).Msg("Volume on disk matches, not replaces")
+		return false
+	}
+
+	l.Debug().Int("onDiskVolume", ci.Volume).Str("path", fullPath).
+		Msg("Loose chapter has been assigned to a volume, replacing")
+
+	// Opted to remove, and redownload the entire chapter if the volume marker changes
+	// One could argue that only the comicinfo.xml should be replaced if this happens.
+	// Making the assumption that new content may be added in a chapter once it's added to a volume.
+	// Especially the first, and last chapter of the volume.
+	if err = os.Remove(fullPath); err != nil {
+		l.Error().Err(err).Str("path", fullPath).Msg("unable to remove old chapter, not downloading new")
+		return false
+	}
+
+	return true
 }
 
 func (m *manga) mangaPath() string {
