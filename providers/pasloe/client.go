@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -14,7 +15,8 @@ import (
 	"sync"
 )
 
-func newClient(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger) api.Client {
+func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger) api.Client {
+	utils.Must(container.Invoke(mangadex.Init))
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
@@ -184,7 +186,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 		}
 
 		l.Trace().Str("dir", dir).Str("name", entry.Name()).
-			Msg("Dir has content, removing entire directory")
+			Msg("Dir has no content, removing entire directory")
 		if err := os.RemoveAll(path.Join(dir, entry.Name())); err != nil {
 			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
 		}

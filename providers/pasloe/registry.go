@@ -8,7 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
-	utils2 "github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/utils"
 	"go.uber.org/dig"
 	"net/http"
 	"sync"
@@ -52,8 +52,8 @@ func (r *registry) Create(c api.Client, req payload.DownloadRequest) (api.Downlo
 
 	scope := r.container.Scope("pasloe::registry::create")
 
-	utils2.Must(scope.Provide(utils2.Identity(c)))
-	utils2.Must(scope.Provide(utils2.Identity(req)))
+	utils.Must(scope.Provide(utils.Identity(c)))
+	utils.Must(scope.Provide(utils.Identity(req)))
 
 	return fn(scope), nil
 }
