@@ -504,7 +504,7 @@ func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {
 
 	// No extra I/O needing, empty volumes will never be replaced
 	if chapter.Attributes.Volume == "" {
-		return true
+		return false
 	}
 
 	return m.replaceAndShouldDownload(chapter, content)
