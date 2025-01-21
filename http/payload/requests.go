@@ -36,6 +36,7 @@ type LoginRequest struct {
 
 type LoginResponse struct {
 	Id          uint   `json:"id"`
+	Name        string `json:"name"`
 	Token       string `json:"token"`
 	ApiKey      string `json:"apiKey,omitempty"`
 	Permissions int    `json:"permissions"`

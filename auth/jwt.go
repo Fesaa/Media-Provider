@@ -142,6 +142,7 @@ func (jwtAuth *jwtAuth) Login(loginRequest payload.LoginRequest) (*payload.Login
 
 	return &payload.LoginResponse{
 		Id:          user.ID,
+		Name:        user.Name,
 		Token:       t,
 		ApiKey:      user.ApiKey,
 		Permissions: user.Permission,
