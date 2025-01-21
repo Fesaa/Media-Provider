@@ -46,6 +46,11 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
+
+	if search == nil || len(search) == 0 {
+		return ctx.JSON([]payload.Info{})
+	}
+
 	return ctx.JSON(search)
 }
 
@@ -75,7 +80,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.SendStatus(fiber.StatusAccepted)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
 func (cr *contentRoutes) Stop(ctx *fiber.Ctx) error {
@@ -93,7 +98,7 @@ func (cr *contentRoutes) Stop(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.SendStatus(fiber.StatusAccepted)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
 func (cr *contentRoutes) Stats(ctx *fiber.Ctx) error {

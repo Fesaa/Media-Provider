@@ -59,11 +59,11 @@ export class DownloadService {
   }
 
   download(req: DownloadRequest) {
-    return this.httpClient.post(this.baseUrl + 'download', req, {responseType: 'text'});
+    return this.httpClient.post(this.baseUrl + 'download', req);
   }
 
   stop(req: StopRequest) {
-    return this.httpClient.post(this.baseUrl + 'stop', req, {responseType: 'text'})
+    return this.httpClient.post(this.baseUrl + 'stop', req)
   }
 
   private refreshStats() {

@@ -131,12 +131,12 @@ export class PageComponent implements OnInit{
     };
 
     this.downloadService.search(req).subscribe(info => {
-      if (info.length == 0) {
+      if (!info || info.length == 0) {
         this.toastr.error("No results found")
       } else {
         this.toastr.success(`Found ${info.length} items`,"Search completed")
       }
-      this.searchResult = info;
+      this.searchResult = info || [];
       this.currentPage = 1;
       this.showSearchForm = false;
     })

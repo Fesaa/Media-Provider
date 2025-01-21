@@ -32,7 +32,7 @@ func (pr *preferencesRoute) Get(ctx *fiber.Ctx) error {
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to get preferences")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"message": err.Error(),
 		})
 	}
 	return ctx.JSON(pref)
@@ -61,5 +61,5 @@ func (pr *preferencesRoute) Update(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }

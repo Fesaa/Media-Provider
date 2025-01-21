@@ -17,6 +17,6 @@ export class PreferencesService {
   }
 
   save(preference: Preferences) {
-    return this.httpClient.post(this.baseUrl + '/save', preference, {responseType: "text"})
+    return this.httpClient.post(this.baseUrl + '/save', preference)
   }
 }
