@@ -13,11 +13,8 @@ import {Toast} from "primeng/toast";
 @Component({
     selector: 'app-nav-header',
   imports: [
-    RouterLink,
-    NgClass,
     AsyncPipe,
-    Menubar,
-    Toast
+    Menubar
   ],
     templateUrl: './nav-header.component.html',
     styleUrl: './nav-header.component.css',

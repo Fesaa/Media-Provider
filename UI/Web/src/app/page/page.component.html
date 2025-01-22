@@ -1,5 +1,5 @@
 @if (page !== undefined && searchForm !== undefined) {
-    <div class="justify-items-center bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <div class="justify-items-center">
       @if ((searchResult.length == 0 || showSearchForm) && !hideSearchForm) {
         <div class="flex flex-row justify-center px-6 py-8 lg:py-0" [@dropDown]>
           <div class="w-full rounded-lg bg-white shadow sm:max-w-md xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800 mt-10">
@@ -84,7 +84,7 @@
 
       }
 
-      <section id="search-results" class="flex flex-col space-y-2 pt-5">
+      <section id="search-results" class="flex flex-col space-y-2 pt-5 mb-10">
         @if (searchResult.length > 0) {
           @for (res of toShowResults(); track res.InfoHash) {
             <app-search-result [form]="searchForm" [page]="page" [searchResult]="res" [providers]="providers" [@fadeAnimation]></app-search-result>

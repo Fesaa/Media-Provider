@@ -1,12 +1,12 @@
 @if (this.loading) {
-  <div class='flex space-x-2 justify-center items-center h-screen bg-gray-50 dark:bg-gray-900'>
+  <div class='flex space-x-2 justify-center items-center mt-10'>
     <span class='sr-only'>Loading...</span>
     <div class='h-4 w-4 bg-black rounded-full animate-bounce [animation-delay:-0.3s]'></div>
     <div class='h-4 w-4 bg-black rounded-full animate-bounce [animation-delay:-0.15s]'></div>
     <div class='h-4 w-4 bg-black rounded-full animate-bounce'></div>
   </div>
 } @else {
-  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen w-full">
+  <div class="w-full">
     @if (running.length === 0 && queued.length === 0 && !this.loading) {
       <app-suggestion-dashboard></app-suggestion-dashboard>
     }
