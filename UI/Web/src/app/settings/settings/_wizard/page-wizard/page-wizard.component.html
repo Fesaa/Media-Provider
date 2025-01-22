@@ -9,19 +9,19 @@
     <div class="min-h-[75vh] p-5 md:px-20 mb-20 md:mb-0">
       @defer (when sections[index].id == PageWizardID.General; prefetch on idle) {
         @if (sections[index].id === PageWizardID.General) {
-          <app-page-wizard-general [page]="page" (next)="index = 1" />
+          <app-page-wizard-general [page]="page" (next)="navigateToPage(1)" />
         }
       }
 
       @defer (when sections[index].id == PageWizardID.Dirs; prefetch on idle) {
         @if (sections[index].id === PageWizardID.Dirs) {
-          <app-page-wizard-dirs [page]="page" (next)="index = 2" (back)="index = 0"/>
+          <app-page-wizard-dirs [page]="page" (next)="navigateToPage(2)" (back)="navigateToPage(0)"/>
         }
       }
 
       @defer (when sections[index].id == PageWizardID.Modifiers; prefetch on idle) {
         @if (sections[index].id === PageWizardID.Modifiers) {
-          <app-page-wizard-modifiers/>
+          <app-page-wizard-modifiers [page]="page" (next)="navigateToPage(3)" (back)="navigateToPage(1)"/>
         }
       }
     </div>

@@ -7,11 +7,7 @@ import {NgIcon} from "@ng-icons/core";
 import {ToastrService} from "ngx-toastr";
 import {dropAnimation} from "../../../../_animations/drop-animation";
 import {DialogService} from "../../../../_services/dialog.service";
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
-import {ModifierSettingsComponent} from "../modifier-settings/modifier-settings.component";
-import {DirectorySettingsComponent} from "../directory-settings/directory-settings.component";
-import {ProviderSettingsComponent} from "../provider-settings/provider-settings.component";
+import {FormBuilder, ReactiveFormsModule} from "@angular/forms";
 import {hasPermission, Perm, User} from "../../../../_models/user";
 import {AccountService} from "../../../../_services/account.service";
 
@@ -21,10 +17,6 @@ import {AccountService} from "../../../../_services/account.service";
         RouterLink,
         NgIcon,
         ReactiveFormsModule,
-        FormInputComponent,
-        ModifierSettingsComponent,
-        DirectorySettingsComponent,
-        ProviderSettingsComponent
     ],
     templateUrl: './pages-settings.component.html',
     styleUrl: './pages-settings.component.css',

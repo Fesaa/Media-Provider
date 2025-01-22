@@ -7,7 +7,7 @@ import {MenuItem} from "primeng/api";
 import {PageWizardGeneralComponent} from "./_components/page-wizard-general/page-wizard-general.component";
 import {PageWizardDirsComponent} from "./_components/page-wizard-dirs/page-wizard-dirs.component";
 import {PageWizardModifiersComponent} from "./_components/page-wizard-modifiers/page-wizard-modifiers.component";
-import {ActivatedRoute, Router} from "@angular/router";
+import {ActivatedRoute, NavigationExtras, Router} from "@angular/router";
 import {Skeleton} from "primeng/skeleton";
 import {Card} from "primeng/card";
 import {ToastrService} from "ngx-toastr";
@@ -16,6 +16,7 @@ export enum PageWizardID {
   General = 'General',
   Dirs = 'Dirs',
   Modifiers = 'Modifiers',
+  Save = 'Save',
 }
 
 @Component({
@@ -59,6 +60,10 @@ export class PageWizardComponent {
       id: PageWizardID.Modifiers,
       label: "Modifiers"
     },
+    {
+      id: PageWizardID.Save,
+      label: "Save"
+    }
   ];
 
   constructor(private pageService: PageService,
@@ -99,6 +104,32 @@ export class PageWizardComponent {
         this.page = this.defaultPage;
       }
     })
+    this.route.fragment.subscribe(fragment => {
+      const section = this.sections.filter(section => section.id == fragment)
+      if (section && section.length > 0) {
+        this.navigateToPage(this.sections.indexOf(section[0]))
+      } else {
+        this.navigateToPage(0)
+      }
+    })
+  }
+
+  navigateToPage(index: number) {
+    this.index = index;
+
+    const sectionId = this.sections[this.index].id;
+
+    const extras: NavigationExtras = {
+      fragment: sectionId
+    };
+
+    if (this.page && this.page.ID !== 0) {
+      extras.queryParams = {
+        pageId: this.page.ID
+      }
+    }
+
+    this.router.navigate([], extras)
   }
 
 
