@@ -40,7 +40,7 @@ import {provideToastr} from "ngx-toastr";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {providePrimeNG} from "primeng/config";
-import Aura from '@primeng/themes/aura';
+import Nora from '@primeng/themes/Nora';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -90,7 +90,7 @@ export const appConfig: ApplicationConfig = {
     })), provideAnimationsAsync(),
     providePrimeNG({
       theme: {
-        preset: Aura
+        preset: Nora
       }
     })
   ]
