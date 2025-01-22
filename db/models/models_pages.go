@@ -42,6 +42,7 @@ type Page struct {
 	gorm.Model
 
 	Title         string         `json:"title"`
+	Icon          string         `json:"icon"`
 	SortValue     int            `json:"sortValue"`
 	Providers     pq.Int64Array  `gorm:"type:integer[]" json:"providers"`
 	Modifiers     []Modifier     `json:"modifiers"`

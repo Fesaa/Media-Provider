@@ -7,6 +7,8 @@ import {FormsModule} from "@angular/forms";
 import {TitleCasePipe} from "@angular/common";
 import {Fieldset} from "primeng/fieldset";
 import {ToastrService} from "ngx-toastr";
+import {IconField} from "primeng/iconfield";
+import {InputIcon} from "primeng/inputicon";
 
 @Component({
   selector: 'app-page-wizard-general',
@@ -16,7 +18,9 @@ import {ToastrService} from "ngx-toastr";
     InputText,
     FormsModule,
     TitleCasePipe,
-    Fieldset
+    Fieldset,
+    IconField,
+    InputIcon
   ],
   templateUrl: './page-wizard-general.component.html',
   styleUrl: './page-wizard-general.component.css'

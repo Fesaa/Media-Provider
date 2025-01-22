@@ -44,7 +44,8 @@ export class NavHeaderComponent implements OnInit {
         return {
           label: page.title,
           routerLink: 'page',
-          queryParams: { index: page.ID }
+          queryParams: { index: page.ID },
+          icon: page.icon === '' ? undefined : 'pi ' + page.icon,
         }
       })
       this.pageItems = [{

@@ -7,14 +7,30 @@
       navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which things
       you can filter while downloading. For more information see the
       <a href="https://fesaa.github.io/Media-Provider/" target="_blank" class="hover:underline text-blue-400">wiki</a>.
+      <br> <br>
+
+      A page must have a title, at least one provider, and may have an icon. The list of names for the icons can be found
+      <a href="https://primeng.org/icons#list" target="_blank" class="hover:underline text-blue-400"> here</a>
     </p>
   </p-fieldset>
 
   <div class="mt-10 flex flex-col items-center">
-    <p-floatlabel variant="in">
-      <input id="title" pInputText [(ngModel)]="page.title" />
-      <label for="title">Title</label>
-    </p-floatlabel>
+    <div class="flex flex-row justify-between space-x-5">
+      <p-floatlabel variant="in">
+        <input id="title" pInputText [(ngModel)]="page.title" />
+        <label for="title">Title</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="in">
+
+        <p-iconfield>
+          <input id="icon" pInputText [(ngModel)]="page.icon" />
+          <p-inputicon [styleClass]="'pi ' + page.icon" />
+        </p-iconfield>
+
+        <label for="icon">Icon</label>
+      </p-floatlabel>
+    </div>
 
     <div class="flex flex-col space-y-4 items-center md:items-start my-2">
       <label
@@ -43,8 +59,8 @@
     </div>
   </div>
 
-  <div class="flex flex-row w-full justify-end items-center mb-5" (click)="nextCallback()">
-    <div
+  <div class="flex flex-row w-full justify-end items-center mb-5">
+    <div (click)="nextCallback()"
       class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer"
     >
       Next

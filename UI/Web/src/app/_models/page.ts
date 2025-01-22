@@ -3,6 +3,7 @@ export type Page = {
   ID: number;
   sortValue: number;
   title: string;
+  icon: string;
   providers: Provider[];
   modifiers: Modifier[];
   dirs: string[];

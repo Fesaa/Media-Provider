@@ -40,6 +40,7 @@ export class PageWizardComponent {
     ID: 0,
     title: "",
     custom_root_dir: "",
+    icon: "",
     dirs: [],
     providers: [],
     modifiers: [],
