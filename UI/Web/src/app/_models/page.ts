@@ -23,7 +23,7 @@ export type ModifierValue = {
 }
 
 export enum Provider {
-  NYAA,
+  NYAA = 2,
   YTS,
   LIMETORRENTS,
   SUBSPLEASE,
