@@ -6,6 +6,7 @@ import {InputText} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {TitleCasePipe} from "@angular/common";
 import {Fieldset} from "primeng/fieldset";
+import {ToastrService} from "ngx-toastr";
 
 @Component({
   selector: 'app-page-wizard-general',
@@ -24,6 +25,23 @@ export class PageWizardGeneralComponent {
 
   @Input({required:true}) page!: Page;
   @Output() next: EventEmitter<void> = new EventEmitter();
+
+  constructor(private toastr: ToastrService) {
+  }
+
+  nextCallback() {
+    if (this.page.title === '') {
+      this.toastr.error("You most provide a title")
+      return;
+    }
+
+    if (this.page.providers.length == 0) {
+      this.toastr.error("You most provide at least one provider")
+      return;
+    }
+
+    this.next.emit();
+  }
 
   hasProvider(provider: Provider) {
     return this.page.providers.includes(provider);

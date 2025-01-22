@@ -37,19 +37,19 @@ export class PageService {
   }
 
   removePage(pageId: number) {
-    return this.httpClient.delete(this.baseUrl + pageId, {responseType: 'text'});
+    return this.httpClient.delete(this.baseUrl + pageId);
   }
 
   new(page: Page) {
-    return this.httpClient.post(this.baseUrl + 'new', page, {responseType: 'text'});
+    return this.httpClient.post<Page>(this.baseUrl + 'new', page);
   }
 
   update(page: Page) {
-    return this.httpClient.post(this.baseUrl + 'update', page, {responseType: 'text'});
+    return this.httpClient.post<Page>(this.baseUrl + 'update', page);
   }
 
   swapPages(id1: number, id2: number) {
-    return this.httpClient.post(this.baseUrl + 'swap', {id1, id2}, {responseType: 'text'});
+    return this.httpClient.post(this.baseUrl + 'swap', {id1, id2});
   }
 
   loadDefault() {
@@ -57,7 +57,7 @@ export class PageService {
       throw "Cannot load default while pages are available"
     }
 
-    return this.httpClient.post(this.baseUrl + "load-default", {}, {responseType: 'text'})
+    return this.httpClient.post(this.baseUrl + "load-default", {})
   }
 
 }

@@ -24,6 +24,13 @@
           <app-page-wizard-modifiers [page]="page" (next)="navigateToPage(3)" (back)="navigateToPage(1)"/>
         }
       }
+
+      @defer (when sections[index].id == PageWizardID.Save; prefetch on idle) {
+        @if (sections[index].id === PageWizardID.Save) {
+           <app-page-wizard-save [page]="page" (back)="navigateToPage(2)" />
+        }
+      }
+
     </div>
   } @else {
     <div class="min-h-[75vh] p-5 md:px-20 mb-20 md:mb-0">

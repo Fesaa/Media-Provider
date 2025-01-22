@@ -42,6 +42,15 @@ export class PageWizardDirsComponent {
   ) {
   }
 
+  nextCallback(): void {
+    if (this.page.dirs.length == 0) {
+      this.toastR.error("You must provide at least one download directory");
+      return;
+    }
+
+    this.next.emit();
+  }
+
   removeDir(index: number) {
     this.page.dirs.splice(index, 1);
   }

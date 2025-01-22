@@ -42,7 +42,9 @@ func (pr *pageRoutes) Pages(ctx *fiber.Ctx) error {
 	pages, err := pr.DB.Pages.All()
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to get pages")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	slices.SortFunc(pages, func(a, b models.Page) int {
@@ -73,7 +75,7 @@ func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
 	}
 
 	if page == nil {
-		return ctx.SendStatus(fiber.StatusNotFound)
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
 	}
 
 	return ctx.JSON(page)
@@ -83,46 +85,56 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWritePage) {
 		pr.Log.Warn().Str("user", user.Name).Msg("user does not have page edit permission")
-		return fiber.ErrUnauthorized
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
 
 	var page models.Page
 	if err := ctx.BodyParser(&page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse page")
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	if err := pr.Val.Struct(page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to validate page")
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
-	if err := pr.DB.Pages.Update(page); err != nil {
+	if err := pr.DB.Pages.Update(&page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to update page")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).JSON(page)
 }
 
 func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 	id, _ := ctx.ParamsInt("pageId", -1)
 	if id == -1 {
-		return ctx.SendStatus(fiber.StatusBadRequest)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "pageId must be a positive integer",
+		})
 	}
 
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermDeletePage) {
 		pr.Log.Warn().Str("user", user.Name).Msg("user does not have page delete permission")
-		return fiber.ErrUnauthorized
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
 
 	if err := pr.DB.Pages.Delete(int64(id)); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to delete page")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
 func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
@@ -141,7 +153,7 @@ func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
 func (pr *pageRoutes) LoadDefault(ctx *fiber.Ctx) error {
@@ -153,5 +165,5 @@ func (pr *pageRoutes) LoadDefault(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }

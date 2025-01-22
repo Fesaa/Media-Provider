@@ -37,12 +37,12 @@ func (p *pagesImpl) Get(id int64) (*models.Page, error) {
 	return &page, nil
 }
 
-func (p *pagesImpl) New(page models.Page) error {
-	return p.db.Create(&page).Error
+func (p *pagesImpl) New(page *models.Page) error {
+	return p.db.Create(page).Error
 }
 
-func (p *pagesImpl) Update(page models.Page) error {
-	return p.db.Save(&page).Error
+func (p *pagesImpl) Update(page *models.Page) error {
+	return p.db.Save(page).Error
 }
 
 func (p *pagesImpl) Delete(id int64) error {

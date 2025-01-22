@@ -11,6 +11,7 @@ import {ActivatedRoute, NavigationExtras, Router} from "@angular/router";
 import {Skeleton} from "primeng/skeleton";
 import {Card} from "primeng/card";
 import {ToastrService} from "ngx-toastr";
+import {PageWizardSaveComponent} from "./_components/page-wizard-save/page-wizard-save.component";
 
 export enum PageWizardID {
   General = 'General',
@@ -27,7 +28,8 @@ export enum PageWizardID {
     PageWizardDirsComponent,
     PageWizardModifiersComponent,
     Skeleton,
-    Card
+    Card,
+    PageWizardSaveComponent
   ],
   templateUrl: './page-wizard.component.html',
   styleUrl: './page-wizard.component.css'
