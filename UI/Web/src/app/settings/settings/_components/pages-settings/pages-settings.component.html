@@ -1,6 +1,5 @@
 <div class="flex flex-col flex-grow w-full">
-
-  @if (selectedPage == null && this.user != null) {
+  @if (this.user != null) {
     @if (hasPermission(this.user, Perm.WritePage)) {
       <div class="flex flex-row w-full justify-end items-center mb-5" routerLink="/settings/wizard/page">
         <div
@@ -17,7 +16,7 @@
 
             @if (hasPermission(this.user, Perm.WritePage)) {
               <div class="hover:cursor-pointer hidden md:block">
-                <ng-icon name="heroDocument" size="48" (click)="setSelectedPage($index, page)"></ng-icon>
+                <ng-icon name="heroDocument" size="48" routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}" ></ng-icon>
               </div>
             } @else {
               <div class="hidden md:block">
@@ -26,7 +25,7 @@
             }
 
 
-            <div class="flex flex-col justify-center w-full hover:cursor-pointer" (click)="setSelectedPage($index, page)">
+            <div class="flex flex-col justify-center w-full hover:cursor-pointer" routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}">
               <h1 class="text-xl">{{ page.title }}</h1>
               <a class="text-xs ml-1 text-blue-400 dark:text-blue-500 hover:underline" [routerLink]="['/page']" [queryParams]="{ index: page.ID }">
                 load page
@@ -56,36 +55,5 @@
         }
       </div>
     }
-  } @else if (!cooldown && pageForm !== undefined && selectedPage != null) {
-
-    <div class="w-full h-full">
-        <ng-icon name="heroChevronLeft" size="32" class="hover:cursor-pointer" (click)="setSelectedPage(undefined, null)"></ng-icon>
-
-      <form [formGroup]="pageForm" (ngSubmit)="submit()">
-
-        <h1 class="w-2/5 border-b-2 border-black dark:border-white mb-2">General</h1>
-
-        <app-form-input [formGroup]="pageForm" controlName="title" label="Title"></app-form-input>
-
-        <app-provider-settings [pageForm]="pageForm" [page]="selectedPage"></app-provider-settings>
-
-       <app-directory-settings [pageForm]="pageForm"></app-directory-settings>
-
-        <app-modifier-settings [pageForm]="pageForm"></app-modifier-settings>
-
-        <div class="flex w-full flex-grow flex-row justify-center md:justify-end mt-4 md:mt-2">
-          <button
-            type="submit"
-            class="w-full md:w-1/6 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
-          >
-            Save
-          </button>
-        </div>
-
-      </form>
-
-    </div>
-
   }
-
 </div>

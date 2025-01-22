@@ -1,26 +1,38 @@
 
 <div class="flex flex-grow flex-col justify-between">
 
-  <div class="h-[75vh] p-5 md:p-20 mb-20 md:mb-0">
-    @defer (when sections[index].id == PageWizardID.General; prefetch on idle) {
-      @if (sections[index].id === PageWizardID.General) {
-        <app-page-wizard-general [page]="page" (next)="index = 1" />
-      }
-    }
-
-    @defer (when sections[index].id == PageWizardID.Dirs; prefetch on idle) {
-      @if (sections[index].id === PageWizardID.Dirs) {
-        <app-page-wizard-dirs [page]="page" (next)="index = 2" (back)="index = 0"/>
-      }
-    }
-
-    @defer (when sections[index].id == PageWizardID.Modifiers; prefetch on idle) {
-      @if (sections[index].id === PageWizardID.Modifiers) {
-        <app-page-wizard-modifiers/>
-      }
-    }
+  <div class="mt-5">
+    <p-steps [model]="sections" [activeIndex]="index" />
   </div>
 
+  @if (page !== undefined) {
+    <div class="min-h-[75vh] p-5 md:px-20 mb-20 md:mb-0">
+      @defer (when sections[index].id == PageWizardID.General; prefetch on idle) {
+        @if (sections[index].id === PageWizardID.General) {
+          <app-page-wizard-general [page]="page" (next)="index = 1" />
+        }
+      }
 
-  <p-steps [model]="sections" [activeIndex]="index" />
+      @defer (when sections[index].id == PageWizardID.Dirs; prefetch on idle) {
+        @if (sections[index].id === PageWizardID.Dirs) {
+          <app-page-wizard-dirs [page]="page" (next)="index = 2" (back)="index = 0"/>
+        }
+      }
+
+      @defer (when sections[index].id == PageWizardID.Modifiers; prefetch on idle) {
+        @if (sections[index].id === PageWizardID.Modifiers) {
+          <app-page-wizard-modifiers/>
+        }
+      }
+    </div>
+  } @else {
+    <div class="min-h-[75vh] p-5 md:px-20 mb-20 md:mb-0">
+      <p-card>
+        <p-skeleton width="20rem" height="4rem" />
+        <p-skeleton height="5rem" styleClass="mt-2" />
+      </p-card>
+    </div>
+  }
+
+
 </div>

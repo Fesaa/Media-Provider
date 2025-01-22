@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"errors"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"gorm.io/gorm"
 )
@@ -27,6 +28,10 @@ func (p *pagesImpl) Get(id int64) (*models.Page, error) {
 	var page models.Page
 	result := p.db.Preload("Modifiers").Preload("Modifiers.Values").First(&page, id)
 	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+
 		return nil, result.Error
 	}
 	return &page, nil

@@ -5,6 +5,7 @@ import {FloatLabel} from "primeng/floatlabel";
 import {InputText} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {TitleCasePipe} from "@angular/common";
+import {Fieldset} from "primeng/fieldset";
 
 @Component({
   selector: 'app-page-wizard-general',
@@ -13,7 +14,8 @@ import {TitleCasePipe} from "@angular/common";
     FloatLabel,
     InputText,
     FormsModule,
-    TitleCasePipe
+    TitleCasePipe,
+    Fieldset
   ],
   templateUrl: './page-wizard-general.component.html',
   styleUrl: './page-wizard-general.component.css'

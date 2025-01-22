@@ -67,7 +67,9 @@ func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
 	page, err := pr.DB.Pages.Get(int64(id))
 	if err != nil {
 		pr.Log.Error().Err(err).Int("pageId", id).Msg("Failed to get page")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	if page == nil {
