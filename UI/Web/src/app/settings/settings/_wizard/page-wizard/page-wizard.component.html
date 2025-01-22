@@ -1,0 +1,26 @@
+
+<div class="flex flex-grow flex-col justify-between">
+
+  <div class="h-[75vh] p-5 md:p-20 mb-20 md:mb-0">
+    @defer (when sections[index].id == PageWizardID.General; prefetch on idle) {
+      @if (sections[index].id === PageWizardID.General) {
+        <app-page-wizard-general [page]="page" (next)="index = 1" />
+      }
+    }
+
+    @defer (when sections[index].id == PageWizardID.Dirs; prefetch on idle) {
+      @if (sections[index].id === PageWizardID.Dirs) {
+        <app-page-wizard-dirs [page]="page" (next)="index = 2" (back)="index = 0"/>
+      }
+    }
+
+    @defer (when sections[index].id == PageWizardID.Modifiers; prefetch on idle) {
+      @if (sections[index].id === PageWizardID.Modifiers) {
+        <app-page-wizard-modifiers/>
+      }
+    }
+  </div>
+
+
+  <p-steps [model]="sections" [activeIndex]="index" />
+</div>

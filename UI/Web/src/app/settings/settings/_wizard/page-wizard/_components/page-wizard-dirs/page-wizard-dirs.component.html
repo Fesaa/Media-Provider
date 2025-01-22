@@ -1,0 +1,41 @@
+
+<p-card header="Directories">
+
+  <p class="py-2 px-2 md:px-5">
+    You must provide at least one directory for the page to download into by default, if you provide more than one
+    a dropdown menu with all options will be made available on the page. <br> <br>
+
+    Each page will also have a directory picker, this will open a browser on the root directory as configured in
+    <a routerLink="settings" target="_blank" class="text-blue-400 hover:underline">settings</a>, if you wish to use
+    a different root directory to open up in, you may configure so here. <br>
+
+    If a directory has been selected with the picker, the content will be download into there instead.
+
+  </p>
+
+  <div class="mt-10 flex flex-col items-center">
+
+    <div class="flex flex-row space-x-5 items-center">
+      <p-floatlabel variant="in">
+        <input id="customDir" pInputText [(ngModel)]="page.custom_root_dir" />
+        <label for="customDir">Custom root directory</label>
+      </p-floatlabel>
+      <div (click)="updateCustomDir()" class="hover:cursor-pointer text-black dark:text-white flex flex-col justify-around">
+        <div></div>
+        <ng-icon name="heroSquare3Stack3d" size="32"></ng-icon>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="flex flex-row w-full justify-between items-center mb-5">
+    <div (click)="back.emit()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
+      Back
+    </div>
+
+    <div (click)="next.emit()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
+      Next
+    </div>
+  </div>
+
+</p-card>

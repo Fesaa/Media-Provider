@@ -63,7 +63,7 @@
 
         @defer (when selected == SettingsID.Pages; prefetch on idle) {
           @if (selected === SettingsID.Pages && canSee(SettingsID.Pages)) {
-            <div class="mt-5 md:ml-5">
+            <div class="md:ml-5">
               <app-pages-settings></app-pages-settings>
             </div>
           }

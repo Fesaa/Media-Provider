@@ -1,0 +1,52 @@
+
+<p-card header="General">
+
+  <p class="py-2 px-2 md:px-5">
+    Pages form the central way to search and download content with Media-Provider, each page will be a tab in the
+    navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which things
+    you can filter while downloading. For more information see the
+    <a href="https://fesaa.github.io/Media-Provider/" target="_blank" class="hover:underline text-blue-400">wiki</a>.
+  </p>
+
+  <div class="mt-10 flex flex-col items-center">
+    <p-floatlabel variant="in">
+      <input id="title" pInputText [(ngModel)]="page.title" />
+      <label for="title">Title</label>
+    </p-floatlabel>
+
+    <div class="flex flex-col space-y-4 items-center md:items-start my-2">
+      <label
+        [for]="'providers'"
+        class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
+      >
+        Providers
+      </label>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        @for (provider of providerValues; track provider) {
+          <div class="flex items-center hover:cursor-pointer pb-2" >
+            <input
+              type="checkbox"
+              id="{{provider}}"
+              [value]="provider"
+              [checked]="hasProvider(provider)"
+              (click)="onProviderCheckboxChange(provider)"
+              class="rounded border-gray-300 text-primary-600 focus:ring-primary-600 focus:border-primary-600 shadow-sm focus:ring focus:ring-opacity-50 h-4 w-4 mr-2"
+            />
+            <label [for]="provider" class="text-xs hover:cursor-pointer select-none text-black dark:text-white">
+              {{providerNames[$index] | titlecase}}
+            </label>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-row w-full justify-end items-center mb-5" (click)="next.emit()">
+    <div
+      class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer"
+    >
+      Next
+    </div>
+  </div>
+
+</p-card>

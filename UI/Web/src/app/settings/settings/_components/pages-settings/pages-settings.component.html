@@ -1,6 +1,15 @@
-<div class="flex flex-grow w-full">
+<div class="flex flex-col flex-grow w-full">
 
   @if (selectedPage == null && this.user != null) {
+    @if (hasPermission(this.user, Perm.WritePage)) {
+      <div class="flex flex-row w-full justify-end items-center mb-5">
+        <div
+             class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg shadow-md hover:from-pink-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 hover:cursor-pointer">
+          New page
+        </div>
+      </div>
+    }
+
     @if (pages.length > 0) {
       <div class="flex flex-col space-y-2 w-full" [@dropDown]>
         @for (page of pages; track $index) {
@@ -45,21 +54,7 @@
             }
           </div>
         }
-
-        @if (hasPermission(this.user, Perm.WritePage)) {
-          <div class="flex flex-row w-full justify-start items-center space-x-3">
-            <ng-icon name="heroPlusCircle" size="48" (click)="setSelectedPage(undefined)"></ng-icon>
-            <h1 class="text-xl hover:cursor-pointer" (click)="setSelectedPage(undefined)">New page</h1>
-          </div>
-        }
       </div>
-    } @else {
-      @if (hasPermission(this.user, Perm.WritePage)) {
-        <div class="flex flex-row w-full justify-start items-center space-x-3">
-          <ng-icon name="heroPlusCircle" size="48" (click)="setSelectedPage(undefined)"></ng-icon>
-          <h1 class="text-xl hover:cursor-pointer" (click)="setSelectedPage(undefined)">New page</h1>
-        </div>
-      }
     }
   } @else if (!cooldown && pageForm !== undefined && selectedPage != null) {
 
