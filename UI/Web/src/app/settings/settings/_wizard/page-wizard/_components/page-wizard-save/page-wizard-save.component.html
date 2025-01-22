@@ -17,7 +17,7 @@
         <div class="mt-4">
           <strong>Providers</strong>
           <ul class="list-disc ml-5">
-            <li *ngFor="let provider of page.providers">{{ provider }}</li>
+            <li *ngFor="let provider of page.providers">{{ provider | providerName }}</li>
           </ul>
         </div>
 

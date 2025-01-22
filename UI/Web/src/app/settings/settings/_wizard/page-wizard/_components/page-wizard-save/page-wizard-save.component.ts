@@ -8,6 +8,7 @@ import {FormControl, FormGroup, FormsModule} from "@angular/forms";
 import {NgForOf} from "@angular/common";
 import {Router} from "@angular/router";
 import {DialogService} from "../../../../../../_services/dialog.service";
+import {ProviderNamePipe} from "../../../../../../_pipes/provider-name.pipe";
 
 @Component({
   selector: 'app-page-wizard-save',
@@ -16,6 +17,7 @@ import {DialogService} from "../../../../../../_services/dialog.service";
     Fieldset,
     FormsModule,
     NgForOf,
+    ProviderNamePipe,
   ],
   templateUrl: './page-wizard-save.component.html',
   styleUrl: './page-wizard-save.component.css'
