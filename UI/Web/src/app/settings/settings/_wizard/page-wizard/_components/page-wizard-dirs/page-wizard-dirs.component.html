@@ -15,9 +15,9 @@
     </p>
   </p-fieldset>
 
-  <div class="p-5 flex flex-row">
+  <div class="p-5 flex flex-col md:flex-row">
 
-    <div class="w-1/3 flex flex-grow items-center">
+    <div class="md:w-1/3 flex flex-grow items-center">
       <p-floatlabel variant="on">
         <p-iconfield>
           <p-inputicon class="pi pi-folder hover:cursor-pointer" (click)="updateCustomDir()" />
@@ -27,10 +27,10 @@
       </p-floatlabel>
     </div>
 
-    <div class="w-2/3">
+    <div class="md:w-2/3">
       <p-fieldset legend="Download directories">
 
-        <div class="grid grid-cols-2 gap-2 mb-4">
+        <div class="flex flex-col md:grid md:grid-cols-2 md:gap-2 mb-4">
           <p-iconfield *ngFor="let item of [].constructor(page.dirs.length); let i = index">
               <p-inputicon class="pi pi-folder hover:cursor-pointer" (click)="updateDir(i)" />
               <input [id]="'dir_' + i" pInputText [(ngModel)]="page.dirs[i]" />

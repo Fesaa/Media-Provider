@@ -24,7 +24,7 @@
     </p>
   </p-fieldset>
 
-  <div class="p-5 flex flex-col">
+  <div class="md:p-5 flex flex-col">
       <p-button severity="secondary" (onClick)="addNewModifier()">
         Add new
       </p-button>
@@ -32,7 +32,7 @@
       <div class="w-full flex flex-col space-y-5">
         <p-fieldset *ngFor="let mod of page.modifiers" [legend]="mod.title" [toggleable]="true" [collapsed]="mod.title !== ''">
 
-          <div class="w-full flex flex-row items-center justify-between my-3">
+          <div class="w-full flex flex-col md:flex-row items-center justify-between space-y-5 md:space-y-0 my-3">
             <div class="flex items-center">
               <p-floatlabel variant="on">
                 <label [for]="'title_' + mod.id" class="font-semibold w-24">Title</label>
@@ -54,8 +54,8 @@
             <span class="pi pi-trash hover:cursor-pointer" (click)="delete(mod)"></span>
           </div>
 
-          <div class="grid grid-cols-2 gap-4 gap-y-10 mt-10">
-            <div *ngFor="let modV of mod.values" class="flex flex-row justify-between items-center">
+          <div class="flex flex-col space-y-5 md:grid md:grid-cols-2 md:gap-4 md:gap-y-10 md:mt-10 md:space-y-0">
+            <div *ngFor="let modV of mod.values" class="flex flex-col md:flex-row mb-5 md:mt-0 justify-between items-center">
               <p-floatlabel>
                 <label [for]="mod.id + '_key_' + modV.key">Key</label>
 
@@ -66,7 +66,7 @@
 
               </p-floatlabel>
 
-              <span class="pi pi-arrow-right"></span>
+              <span class="pi pi-arrow-down md:pi-arrow-right my-3 md:my-0"></span>
 
               <p-floatlabel>
                 <label [for]="mod.id + '_val_' + modV.key">Value</label>

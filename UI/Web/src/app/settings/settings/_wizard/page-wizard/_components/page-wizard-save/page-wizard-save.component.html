@@ -25,7 +25,7 @@
     </p-fieldset>
 
     <p-fieldset legend="Modifiers" toggleable collapsed>
-      <div class="grid grid-cols-3 gap-4">
+      <div class="grid md:grid-cols-3 gap-4">
         <div *ngFor="let modifier of page.modifiers" class="border border-gray-200 p-3 rounded-lg shadow">
           <h4 class="font-semibold text-lg">{{ modifier.title }}</h4>
           <div class="text-sm text-gray-600">
@@ -36,12 +36,6 @@
       </div>
     </p-fieldset>
   </div>
-
-
-
-
-
-
 
   <div class="flex flex-row w-full justify-between items-center my-5">
     <div (click)="back.emit()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
