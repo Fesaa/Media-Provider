@@ -15,15 +15,14 @@
 
       <div class="hidden md:flex flex-col space-y-4">
         @for (setting of settings; track setting.id) {
-
           @if (canSee(setting.id)) {
-            <div (click)="setSettings(setting.id)"
-                 class="flex flex-row space-x-2 items-center rounded-xl hover:cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-950 p-2 {{selected === setting.id ? 'bg-gray-200 dark:bg-gray-950': '' }}">
-              <ng-icon name="{{setting.icon}}" size="16"></ng-icon>
-              <span class="hover:cursor-pointer">{{ setting.title }}</span>
-            </div>
+            <p-button
+              [label]="setting.title"
+              [icon]="'pi ' + setting.icon"
+              (click)="setSettings(setting.id)"
+              severity="secondary"
+            />
           }
-
         }
       </div>
 

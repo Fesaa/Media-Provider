@@ -9,6 +9,7 @@ import {hasPermission, Perm, User} from "../../_models/user";
 import {AccountService} from "../../_services/account.service";
 import {UserSettingsComponent} from "./_components/user-settings/user-settings.component";
 import {PreferenceSettingsComponent} from "./_components/preference-settings/preference-settings.component";
+import {Button} from "primeng/button";
 
 export enum SettingsID {
 
@@ -26,7 +27,8 @@ export enum SettingsID {
     ServerSettingsComponent,
     PagesSettingsComponent,
     UserSettingsComponent,
-    PreferenceSettingsComponent
+    PreferenceSettingsComponent,
+    Button
   ],
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.css',
@@ -41,25 +43,25 @@ export class SettingsComponent implements OnInit{
     {
       id: SettingsID.Server,
       title: 'Server',
-      icon: 'heroServerStack',
+      icon: 'pi-server',
       perm: Perm.WriteConfig
     },
     {
       id: SettingsID.Preferences,
       title: "Preferences",
-      icon: 'heroAdjustmentsHorizontal',
+      icon: 'pi-ethereum',
       perm: Perm.WriteConfig,
     },
     {
       id: SettingsID.Pages,
       title: 'Pages',
-      icon: 'heroDocument',
+      icon: 'pi-thumbtack',
       perm: Perm.All,
     },
     {
       id: SettingsID.User,
       title: 'Users',
-      icon: 'heroUser',
+      icon: 'pi-users',
       perm: Perm.WriteUser,
     },
   ]
