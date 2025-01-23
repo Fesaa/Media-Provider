@@ -60,7 +60,7 @@ func TestQueueImpl_Dequeue(t *testing.T) {
 		t.Fatalf("queue dequeue got %v, want %v", item, "b")
 	}
 
-	item, err = queue.Dequeue()
+	_, err = queue.Dequeue()
 
 	if !errors.Is(err, ErrQueueEmpty) {
 		t.Fatalf("queue dequeue got %v, want %v", err, ErrQueueEmpty)

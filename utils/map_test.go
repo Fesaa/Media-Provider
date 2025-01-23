@@ -178,9 +178,7 @@ func TestMapKeys(t *testing.T) {
 }
 
 func TestMapValues(t *testing.T) {
-	got := MapValues(map[string]int{"a": 1, "b": 2, "c": 3}, func(v int) string {
-		return strconv.Itoa(v)
-	})
+	got := MapValues(map[string]int{"a": 1, "b": 2, "c": 3}, strconv.Itoa)
 
 	want := []string{"1", "2", "3"}
 

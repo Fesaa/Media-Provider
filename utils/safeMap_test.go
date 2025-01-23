@@ -115,7 +115,7 @@ func TestSafeMapConcurrency(t *testing.T) {
 	m := NewSafeMap[int, int]()
 	wg := sync.WaitGroup{}
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -128,7 +128,7 @@ func TestSafeMapConcurrency(t *testing.T) {
 		t.Errorf("Expected length 100, got %d", m.Len())
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()

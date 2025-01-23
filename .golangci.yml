@@ -33,6 +33,8 @@ linters:
     - cyclop
     - canonicalheader
     - unused
+    - paralleltest
+    - testpackage
 
   enable:
     - asasalint
@@ -85,7 +87,6 @@ linters:
     - nolintlint
     - nonamedreturns
     - nosprintfhostport
-    - paralleltest
     - prealloc
     - predeclared
     - promlinter
@@ -101,7 +102,6 @@ linters:
     - tenv
     - testableexamples
     - testifylint
-    - testpackage
     - thelper
     - tparallel
     - unconvert

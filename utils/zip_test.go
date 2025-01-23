@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+//nolint:funlen
 func TestZipFolder(t *testing.T) {
 	tempDir := t.TempDir()
 
