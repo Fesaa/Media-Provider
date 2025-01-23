@@ -54,8 +54,8 @@
             <span class="pi pi-trash hover:cursor-pointer" (click)="delete(mod)"></span>
           </div>
 
-          <div class="flex flex-col space-y-5 md:grid md:grid-cols-2 md:gap-4 md:gap-y-10 md:mt-10 md:space-y-0">
-            <div *ngFor="let modV of mod.values" class="flex flex-col md:flex-row mb-5 md:mt-0 justify-between items-center">
+          <div class="flex flex-col md:grid md:grid-cols-2 md:gap-4 md:gap-y-10 md:mt-10 md:space-y-0">
+            <div *ngFor="let modV of mod.values" class="flex flex-col md:flex-row mb-7 md:mb-0 md:mt-0 justify-between items-center">
               <p-floatlabel>
                 <label [for]="mod.id + '_key_' + modV.key">Key</label>
 
@@ -66,7 +66,8 @@
 
               </p-floatlabel>
 
-              <span class="pi pi-arrow-down md:pi-arrow-right my-3 md:my-0"></span>
+              <span class="pi pi-arrow-right hidden md:flex my-3 md:my-0"></span>
+              <span class="pi pi-arrow-down flex md:hidden my-3 md:my-0"></span>
 
               <p-floatlabel>
                 <label [for]="mod.id + '_val_' + modV.key">Value</label>
