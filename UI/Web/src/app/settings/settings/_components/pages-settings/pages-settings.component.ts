@@ -1,23 +1,26 @@
-import {ChangeDetectorRef, Component, HostListener, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {Page} from "../../../../_models/page";
 import {PageService} from "../../../../_services/page.service";
-import {ConfigService} from "../../../../_services/config.service";
 import {RouterLink} from "@angular/router";
-import {NgIcon} from "@ng-icons/core";
 import {ToastrService} from "ngx-toastr";
 import {dropAnimation} from "../../../../_animations/drop-animation";
 import {DialogService} from "../../../../_services/dialog.service";
-import {FormBuilder, ReactiveFormsModule} from "@angular/forms";
+import {ReactiveFormsModule} from "@angular/forms";
 import {hasPermission, Perm, User} from "../../../../_models/user";
 import {AccountService} from "../../../../_services/account.service";
+import {Button} from "primeng/button";
+import {TableModule} from "primeng/table";
+import {Tooltip} from "primeng/tooltip";
 
 @Component({
     selector: 'app-pages-settings',
-    imports: [
-        RouterLink,
-        NgIcon,
-        ReactiveFormsModule,
-    ],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    Button,
+    TableModule,
+    Tooltip,
+  ],
     templateUrl: './pages-settings.component.html',
     styleUrl: './pages-settings.component.css',
     animations: [dropAnimation]
@@ -26,17 +29,17 @@ export class PagesSettingsComponent {
 
   user: User | null = null;
   pages: Page[] = []
+  loading: boolean = true;
 
-  constructor(private configService: ConfigService,
-              private toastR: ToastrService,
+  constructor(private toastR: ToastrService,
               private pageService: PageService,
               private dialogService: DialogService,
-              private fb: FormBuilder,
-              private cdRef: ChangeDetectorRef,
               private accountService: AccountService,
   ) {
-    this.configService.getConfig().subscribe();
-    this.pageService.pages$.subscribe(pages => this.pages = pages);
+    this.pageService.pages$.subscribe(pages => {
+      this.pages = pages
+      this.loading = false;
+    });
     this.accountService.currentUser$.subscribe(user => {
       if (user) {
         this.user = user;
@@ -46,7 +49,7 @@ export class PagesSettingsComponent {
 
 
   async remove(page: Page) {
-    if (!await this.dialogService.openDialog('Are you sure you want to remove this page?')) {
+    if (!await this.dialogService.openDialog(`Are you sure you want to remove page > ${page.title}?`)) {
       return;
     }
 
@@ -61,16 +64,30 @@ export class PagesSettingsComponent {
     });
   }
 
-  moveUp(index: number) {
-    const page1 = this.pages[index];
-    const page2 = this.pages[index-1];
-    this.swap(page1, page2);
+  isFirst(page: Page): boolean {
+    if (this.pages.length == 0) {
+      return false;
+    }
+    return this.pages[0].ID === page.ID;
   }
 
-  moveDown(index: number) {
-    const page1 = this.pages[index];
-    const page2 = this.pages[index+1];
-    this.swap(page1, page2);
+  isLast(page: Page): boolean {
+    if (this.pages.length == 0) {
+      return false;
+    }
+    return this.pages[this.pages.length-1].ID === page.ID;
+  }
+
+  moveUp(page: Page) {
+    const index = this.pages.indexOf(page);
+    const other = this.pages[index-1];
+    this.swap(page, other);
+  }
+
+  moveDown(page: Page) {
+    const index = this.pages.indexOf(page);
+    const other = this.pages[index+1];
+    this.swap(page, other);
   }
 
   swap(page1: Page, page2: Page) {

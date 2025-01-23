@@ -1,59 +1,55 @@
-<div class="flex flex-col flex-grow w-full">
-  @if (this.user != null) {
-    @if (hasPermission(this.user, Perm.WritePage)) {
-      <div class="flex flex-row w-full justify-end items-center mb-5" routerLink="/settings/wizard/page">
-        <div
-             class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg shadow-md hover:from-pink-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 hover:cursor-pointer">
-          New page
+
+@if (user) {
+  <p-table
+    [value]="pages"
+    dataKey="id"
+    [rows]="10"
+    [paginator]="true"
+    [loading]="loading"
+
+  >
+    <ng-template #header>
+      <tr>
+        <th style="width:10%">Icon</th>
+        <th style="width:56%">Name</th>
+        <th style="width:33%">Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-page>
+      <tr>
+        <td>
+          @if (page.icon !== "") {
+            <span [class]="'pi ' + page.icon"></span>
+          }
+        </td>
+        <td>
+          <a routerLink="/page" [queryParams]="{index: page.ID}" class="hover:cursor-pointer">{{page.title}}</a>
+        </td>
+        <td class="flex flex-row space-x-5">
+          @if (hasPermission(user, Perm.WritePage)) {
+            <p-button routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}"
+                      pTooltip="Edit page" tooltipPosition="bottom" icon="pi pi-file-edit" severity="info" />
+          }
+
+          @if (hasPermission(user, Perm.DeletePage)) {
+            <p-button (click)="remove(page)"
+                      pTooltip="Delete Page" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" />
+          }
+          <p-button [disabled]="isFirst(page)" (click)="moveUp(page)" icon="pi pi-sort-up-fill" severity="secondary"/>
+          <p-button [disabled]="isLast(page)" (click)="moveDown(page)" icon="pi pi-sort-down-fill" severity="secondary"/>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #caption>
+      @if (hasPermission(user, Perm.WritePage)) {
+        <div class="flex flex-grow justify-end">
+          <p-button routerLink="/settings/wizard/page"
+            label="New Page" icon="pi pi-user-plus" />
         </div>
-      </div>
-    }
+      }
+    </ng-template>
+  </p-table>
 
-    @if (pages.length > 0) {
-      <div class="flex flex-col space-y-2 w-full" [@dropDown]>
-        @for (page of pages; track $index) {
-          <div class="w-full flex flex-row space-x-6 md:space-x-3 p-2 md:p-3 bg-white dark:bg-gray-800 rounded shadow dropdown-item">
-
-            @if (hasPermission(this.user, Perm.WritePage)) {
-              <div class="hover:cursor-pointer hidden md:block">
-                <ng-icon name="heroDocument" size="48" routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}" ></ng-icon>
-              </div>
-            } @else {
-              <div class="hidden md:block">
-                <ng-icon name="heroDocument" size="48"></ng-icon>
-              </div>
-            }
-
-
-            <div class="flex flex-col justify-center w-full hover:cursor-pointer" routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}">
-              <h1 class="text-xl">{{ page.title }}</h1>
-              <a class="text-xs ml-1 text-blue-400 dark:text-blue-500 hover:underline" [routerLink]="['/page']" [queryParams]="{ index: page.ID }">
-                load page
-              </a>
-            </div>
-
-            @if (hasPermission(this.user, Perm.WritePage)) {
-              <div class="flex flex-col justify-between">
-                @if ($index != 0) {
-                  <ng-icon name="heroChevronUp" class="hover:cursor-pointer" (click)="moveUp($index)"></ng-icon>
-                } @else {
-                  <div></div>
-                }
-
-                @if (hasPermission(this.user, Perm.DeletePage)) {
-                  <ng-icon name="heroMinus" class="hover:cursor-pointer" (click)="remove(page)"></ng-icon>
-                }
-
-                @if ($index != pages.length - 1) {
-                  <ng-icon name="heroChevronDown" class="hover:cursor-pointer" (click)="moveDown($index)"></ng-icon>
-                } @else {
-                  <div></div>
-                }
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-  }
-</div>
+}
