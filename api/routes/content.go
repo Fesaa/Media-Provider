@@ -47,7 +47,7 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if search == nil || len(search) == 0 {
+	if len(search) == 0 {
 		return ctx.JSON([]payload.Info{})
 	}
 

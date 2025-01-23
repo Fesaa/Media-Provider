@@ -37,7 +37,10 @@ func PageServiceProvider(db *db.Database, log zerolog.Logger) PageService {
 
 func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 	var other models.Page
-	err := ps.db.DB().First(&other, &models.Page{SortValue: page.SortValue}).Error
+	err := ps.db.DB().
+		Not(models.Page{Model: gorm.Model{ID: page.ID}}).
+		First(&other, models.Page{SortValue: page.SortValue}).
+		Error
 	// Must return gorm.ErrRecordNotFound
 	if err == nil || !errors.Is(err, gorm.ErrRecordNotFound) {
 		ps.log.Error().Err(err).Msg("Error occurred during sort check")
