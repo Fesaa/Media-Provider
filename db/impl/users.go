@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"errors"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
@@ -128,6 +129,18 @@ func (u *userImpl) GetReset(key string) (*models.PasswordReset, error) {
 	res := u.db.Where(&models.PasswordReset{Key: key}).First(&reset)
 	if res.Error != nil {
 		return nil, res.Error
+	}
+	return &reset, nil
+}
+
+func (u *userImpl) GetResetByUserId(userId uint) (*models.PasswordReset, error) {
+	var reset models.PasswordReset
+	res := u.db.Where(&models.PasswordReset{UserId: userId}).First(&reset)
+	if res.Error != nil {
+		if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return nil, res.Error
+		}
+		return nil, nil
 	}
 	return &reset, nil
 }

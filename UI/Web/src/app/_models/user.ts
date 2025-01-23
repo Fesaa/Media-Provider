@@ -2,6 +2,7 @@ export interface UserDto {
   id: number;
   name: string;
   permissions: number;
+  canDelete: boolean;
 }
 
 export interface User {
@@ -26,6 +27,10 @@ export enum Perm {
 
 export function hasPermission(user: User | UserDto, perm: Perm): boolean {
   return (user.permissions&perm)===perm
+}
+
+export function roles(user: User | UserDto): Perm[] {
+  return permissionValues.filter(val => hasPermission(user, val))
 }
 
 export const permissionNames = Object.keys(Perm)

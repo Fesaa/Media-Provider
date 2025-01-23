@@ -38,6 +38,7 @@ type Users interface {
 	UpdateById(id uint, opts ...Option[User]) (*User, error)
 
 	GenerateReset(userId uint) (*PasswordReset, error)
+	GetResetByUserId(userId uint) (*PasswordReset, error)
 	GetReset(key string) (*PasswordReset, error)
 	DeleteReset(key string) error
 

@@ -84,7 +84,7 @@ func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 
 	// Load user from theDb in non get requests
 	if ctx.Method() != fiber.MethodGet {
-		user, err := jwtAuth.DB.Users.GetByName(mpClaims.User.Name)
+		user, err := jwtAuth.DB.Users.GetById(mpClaims.User.ID)
 		if err != nil {
 			return false, fmt.Errorf("cannot get user: %w", err)
 		}

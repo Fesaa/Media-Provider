@@ -1,24 +1,92 @@
 
 @if (authUser) {
-  <div class="flex flex-col space-y-2 w-full flex-grow">
 
-      @for (user of users; track user.id) {
-        <div class="w-full">
-          <app-user-preview
-            (updateIdEmitter)="handleUpdateId($event)"
-            (deleteUserEmitter)="handleDeleteUser($event)"
-            [user]="user" [delete]="hasPermission(authUser, Perm.DeleteUser) && users.length > 1 && user.id !== authUser.id">
+  <p-table
+    [value]="users"
+    dataKey="id"
+    [rows]="10"
+    [paginator]="true"
+    [loading]="loading"
+    [tableStyle]="{ 'min-width': '75rem' }"
+  >
 
-          </app-user-preview>
+    <ng-template #header>
+      <tr>
+        <th></th>
+        <th>Name</th>
+        <th class="flex justify-center">Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-user>
+      <tr>
+        <td><span class="pi pi-user"></span></td>
+        <td>
+          {{user.name}}
+        </td>
+        <td class="flex flex-row justify-center space-x-5">
+          @if (user.id == authUser.id) {
+            <p-button (click)="resetApiKey()"
+                      pTooltip="Regenerate ApiKey" tooltipPosition="bottom" icon="pi pi-key" severity="info" />
+            <p-button (click)="copyApiKey()"
+              pTooltip="Copy ApiKey" tooltipPosition="bottom" icon="pi pi-copy" severity="secondary" />
+          }
+
+          <p-button (click)="editUser(user)"
+            pTooltip="Edit user" tooltipPosition="bottom" icon="pi pi-user-edit" />
+
+          @if (user.canDelete) {
+            <p-button (click)="deleteUser(user)"
+              pTooltip="Delete user" tooltipPosition="bottom" icon="pi pi-user-minus" severity="danger" />
+          }
+
+          @if (hasPermission(authUser, Perm.WriteUser)) {
+            <p-button (click)="resetPassword(user)"
+              pTooltip="Reset password" tooltipPosition="bottom" icon="pi pi-refresh" severity="warn" />
+          }
+
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #caption>
+      @if (hasPermission(authUser, Perm.WriteUser) && !emptyUserPresent()) {
+        <div class="flex flex-grow justify-end">
+          <p-button (click)="newUser()"
+            label="New User" icon="pi pi-user-plus" />
         </div>
       }
+    </ng-template>
+  </p-table>
 
-    @if (hasPermission(authUser, Perm.WriteUser) && !emptyUserPresent()) {
-      <div class="flex flex-row w-full justify-start items-center space-x-3">
-        <ng-icon name="heroPlusCircle" size="48" (click)="addNew()"></ng-icon>
+  <p-dialog [(visible)]="showEditUserModal" [style]="{ width: '25rem'}">
+
+    <ng-template #headless>
+      <div class="p-5">
+
+        <h1 class="mb-5">Edit user</h1>
+
+        @if (editingUser !== null) {
+          <div class="flex items-center mb-6">
+            <p-floatlabel variant="on">
+              <label for="username" class="font-semibold">Username</label>
+              <input pInputText [(ngModel)]="editingUser.name" id="username" class="flex-auto" autocomplete="off" />
+            </p-floatlabel>
+          </div>
+
+          <p-floatlabel>
+            <label for="permissions" class="font-semibold">Permissions</label>
+            <p-multiSelect id="permissions" [(ngModel)]="editPermissions" [options]="possiblePermissions" styleClass="w-full md:w-80" />
+          </p-floatlabel>
+        }
+
+        <div class="my-5 flex flex-row justify-end space-x-5">
+          <p-button label="Cancel" [text]="true" severity="secondary" (click)="showEditUserModal = false" />
+          <p-button label="Save" [outlined]="true" severity="secondary" (click)="saveEdit()" />
+        </div>
+
       </div>
-    }
+    </ng-template>
+  </p-dialog>
 
-
-  </div>
 }

@@ -5,6 +5,7 @@ import {User, UserDto} from "../_models/user";
 import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {PasswordReset} from "../_models/password_reset";
 
 @Injectable({
   providedIn: 'root'
@@ -81,8 +82,19 @@ export class AccountService {
     return this.httpClient.get<UserDto[]>(this.baseUrl + 'user/all');
   }
 
-  update(dto: UserDto) {
-    return this.httpClient.post<number>(this.baseUrl + 'user/update', dto)
+  updateOrCreate(dto: UserDto) {
+    return this.httpClient.post<UserDto>(this.baseUrl + 'user/update', dto).pipe(tap(dto => {
+      if (dto.id !== this.currentUser?.id) {
+        return;
+      }
+
+      // TODO: This should be changed to refresh, with a refresh token. I think
+      this.setCurrentUser({
+        ...this.currentUser,
+        name: dto.name,
+        permissions: dto.permissions,
+      })
+    }))
   }
 
   delete(id: number) {
@@ -90,7 +102,7 @@ export class AccountService {
   }
 
   generateReset(id: number) {
-    return this.httpClient.post(this.baseUrl + 'user/reset/' + id, {})
+    return this.httpClient.post<PasswordReset>(this.baseUrl + 'user/reset/' + id, {})
   }
 
   resetPassword(model: {key: string, password: string}) {
@@ -98,8 +110,8 @@ export class AccountService {
   }
 
   refreshApiKey() {
-    return this.httpClient.get(this.baseUrl + 'user/refresh-api-key', {responseType: 'text'}).pipe(tap(key => {
-      this.currentUser!.apiKey = key
+    return this.httpClient.get<{ApiKey: string}>(this.baseUrl + 'user/refresh-api-key').pipe(tap(res => {
+      this.currentUser!.apiKey = res.ApiKey
       this.setCurrentUser(this.currentUser)
     }));
   }

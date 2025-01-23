@@ -133,7 +133,9 @@ func (ur *userRoutes) RefreshAPIKey(ctx *fiber.Ctx) error {
 	key, err := utils.GenerateApiKey()
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to generate api key")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	_, err = ur.DB.Users.Update(user, func(u models.User) models.User {
@@ -143,10 +145,14 @@ func (ur *userRoutes) RefreshAPIKey(ctx *fiber.Ctx) error {
 
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to refresh api key")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
-	return ctx.SendString(key)
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"ApiKey": key,
+	})
 }
 
 func (ur *userRoutes) Users(ctx *fiber.Ctx) error {
@@ -165,6 +171,7 @@ func (ur *userRoutes) Users(ctx *fiber.Ctx) error {
 			ID:         u.ID,
 			Name:       u.Name,
 			Permission: u.Permission,
+			CanDelete:  !u.Original,
 		}
 	}))
 }
@@ -172,13 +179,17 @@ func (ur *userRoutes) Users(ctx *fiber.Ctx) error {
 func (ur *userRoutes) UpdateUser(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteUser) {
-		return fiber.ErrForbidden
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": fiber.ErrForbidden.Error(),
+		})
 	}
 
 	var userDto payload.UserDto
 	if err := ctx.BodyParser(&userDto); err != nil {
 		ur.Log.Error().Err(err).Msg("failed to parse body")
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	var err error
@@ -205,18 +216,27 @@ func (ur *userRoutes) UpdateUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(newUser.ID)
+	return ctx.Status(fiber.StatusOK).JSON(payload.UserDto{
+		ID:         newUser.ID,
+		Name:       newUser.Name,
+		Permission: newUser.Permission,
+		CanDelete:  !newUser.Original,
+	})
 }
 
 func (ur *userRoutes) DeleteUser(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermDeleteUser) {
-		return fiber.ErrForbidden
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": fiber.ErrForbidden.Error(),
+		})
 	}
 
-	userID, err := ParamsUInt(ctx, "id")
+	userID, err := ParamsUInt(ctx, "userId")
 	if err != nil {
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	toDelete, err := ur.DB.Users.GetById(userID)
@@ -247,23 +267,32 @@ func (ur *userRoutes) DeleteUser(ctx *fiber.Ctx) error {
 func (ur *userRoutes) GenerateResetPassword(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteUser) {
-		return fiber.ErrForbidden
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{})
 	}
 
-	userId, err := ParamsUInt(ctx, "id")
+	userId, err := ParamsUInt(ctx, "userId")
 	if err != nil {
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
-	reset, err := ur.DB.Users.GenerateReset(userId)
+	reset, err := ur.DB.Users.GetResetByUserId(userId)
+	if err == nil && reset != nil {
+		return ctx.Status(fiber.StatusOK).JSON(reset)
+	} else if err != nil {
+		ur.Log.Warn().Err(err).Msg("failed to check for existing reset key")
+	}
+
+	reset, err = ur.DB.Users.GenerateReset(userId)
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to generate reset password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}
-	fmt.Printf("A reset link has been generated for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.", reset.UserId, reset.Key, reset.Key)
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+	fmt.Printf("A reset link has been generated for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.\n", reset.UserId, reset.Key, reset.Key)
+	return ctx.Status(fiber.StatusOK).JSON(reset)
 }
 
 func (ur *userRoutes) ResetPassword(ctx *fiber.Ctx) error {
