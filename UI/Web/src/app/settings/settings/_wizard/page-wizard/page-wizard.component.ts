@@ -44,7 +44,7 @@ export class PageWizardComponent {
     dirs: [],
     providers: [],
     modifiers: [],
-    sortValue: 1000, // TODO: GET THIS FIXED
+    sortValue: PageService.DEFAULT_PAGE_SORT,
   };
 
   page: Page | undefined;

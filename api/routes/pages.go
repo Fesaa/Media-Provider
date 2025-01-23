@@ -103,7 +103,7 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err := pr.DB.Pages.Update(&page); err != nil {
+	if err := pr.PageService.UpdateOrCreate(&page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to update page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),

@@ -12,9 +12,13 @@ import (
 var (
 	ErrPageNotFound       = errors.New("page not found")
 	ErrExistingPagesFound = errors.New("some pages already exists")
+	ErrFailedToSortCheck  = errors.New("error during sort checks")
+
+	DefaultPageSort = 9999
 )
 
 type PageService interface {
+	UpdateOrCreate(page *models.Page) error
 	SwapPages(int64, int64) error
 	LoadDefaultPages() error
 }
@@ -29,6 +33,28 @@ func PageServiceProvider(db *db.Database, log zerolog.Logger) PageService {
 		db:  db,
 		log: log.With().Str("handler", "page-service").Logger(),
 	}
+}
+
+func (ps *pageService) UpdateOrCreate(page *models.Page) error {
+	var other models.Page
+	err := ps.db.DB().First(&other, &models.Page{SortValue: page.SortValue}).Error
+	// Must return gorm.ErrRecordNotFound
+	if err == nil || !errors.Is(err, gorm.ErrRecordNotFound) {
+		ps.log.Error().Err(err).Msg("Error occurred during sort check")
+		return ErrFailedToSortCheck
+	}
+
+	if page.SortValue == DefaultPageSort {
+		var maxPageSort int
+		err = ps.db.DB().Model(&models.Page{}).Select("MAX(sort_value) AS maxPageSort").Scan(&maxPageSort).Error
+		if err != nil {
+			ps.log.Error().Err(err).Msg("Error occurred while getting max page sort")
+			return ErrFailedToSortCheck
+		}
+		page.SortValue = maxPageSort + 1
+	}
+
+	return ps.db.Pages.Update(page)
 }
 
 func (ps *pageService) SwapPages(id1, id2 int64) error {

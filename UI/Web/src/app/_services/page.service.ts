@@ -9,6 +9,8 @@ import {Observable, of, ReplaySubject} from "rxjs";
 })
 export class PageService {
 
+  public static readonly DEFAULT_PAGE_SORT = 9999;
+
   private readonly destroyRef = inject(DestroyRef);
   baseUrl = environment.apiUrl + "pages/";
 
