@@ -3,6 +3,7 @@ package mangadex
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -133,6 +134,7 @@ func chapter() ChapterSearchData {
 			Title:              "My Lover",
 			TranslatedLanguage: "en",
 			Pages:              22,
+			PublishedAt:        "2024-09-29T15:41:17+00:00",
 		},
 		Relationships: nil,
 	}
@@ -143,6 +145,31 @@ func mangaResp() *MangaSearchData {
 		Attributes: MangaAttributes{
 			Title: map[string]string{
 				"en": "Rainbows After Storms",
+			},
+			AltTitles: []map[string]string{
+				{
+					"en": "Flowers After Storms",
+				},
+			},
+			Tags: []TagData{
+				{
+					Attributes: TagAttributes{
+						Name:  map[string]string{"en": "A Genre"},
+						Group: genreTag,
+					},
+				},
+				{
+					Attributes: TagAttributes{
+						Name:  map[string]string{"en": "Not a Genre"},
+						Group: "not a genre",
+					},
+				},
+				{
+					Attributes: TagAttributes{
+						Name:  map[string]string{"cn": "Non English"},
+						Group: genreTag,
+					},
+				},
 			},
 		},
 	}
@@ -551,4 +578,275 @@ func TestManga_WriteContentMetaData(t *testing.T) {
 	if !strings.Contains(log, want) {
 		t.Errorf("got %s, want %s", log, want)
 	}
+}
+
+func TestManga_writeCIStatusNotCompleted(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	ci := comicinfo.NewComicInfo()
+
+	m.info = mangaResp()
+	m.info.Attributes.Status = StatusCancelled
+
+	m.writeCIStatus(ci)
+	if ci.Count != 0 {
+		t.Errorf("got %d, want 0", ci.Count)
+	}
+
+}
+
+func TestManga_writeCIStatusOnlyChapters(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	ci := comicinfo.NewComicInfo()
+
+	m.info = mangaResp()
+	m.info.Attributes.Status = StatusCompleted
+	m.totalVolumes = 0
+	m.totalChapters = 10
+	m.foundLastChapter = true
+
+	m.writeCIStatus(ci)
+	if ci.Count != 10 {
+		t.Errorf("got %d, want 10", ci.Count)
+	}
+
+}
+
+func TestManga_writeCIStatusVolumes(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	ci := comicinfo.NewComicInfo()
+
+	m.info = mangaResp()
+	m.info.Attributes.Status = StatusCompleted
+	m.foundLastChapter = true
+	m.foundLastVolume = true
+	m.totalVolumes = 12
+
+	m.writeCIStatus(ci)
+	if ci.Count != 12 {
+		t.Errorf("got %d, want 12", ci.Count)
+	}
+
+}
+
+func TestManga_writeCIStatusDontWarnTwice(t *testing.T) {
+	var buf bytes.Buffer
+	m := tempManga(t, req(), &buf)
+	ci := comicinfo.NewComicInfo()
+
+	m.info = mangaResp()
+	m.info.Attributes.Status = StatusCompleted
+
+	m.writeCIStatus(ci)
+	m.writeCIStatus(ci)
+	m.writeCIStatus(ci)
+
+	count := strings.Count(buf.String(), "Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
+	if count != 1 {
+		t.Errorf("got %d, want 1", count)
+	}
+
+}
+
+func TestManga_DownloadContent(t *testing.T) {
+	var buffer bytes.Buffer
+	m := tempManga(t, req(), &buffer)
+
+	urls, err := m.ContentUrls(chapter())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(urls) == 0 {
+		t.Fatal("len(urls) = 0, want > 0")
+	}
+
+	if err = os.MkdirAll(path.Join(m.ContentPath(chapter())), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = m.DownloadContent(1, chapter(), urls[0]); err != nil {
+		t.Fatal(err)
+	}
+
+	filePath := path.Join(m.ContentPath(chapter()), fmt.Sprintf("page %s.jpg", utils.PadInt(1, 4)))
+	_, err = os.Stat(filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestManga_ContentRegex(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+
+	type test struct {
+		name string
+		s    string
+		want bool
+	}
+
+	tests := []test{
+		{
+			name: "Test Volume",
+			s:    RainbowsAfterStorms + " Vol. 7.cbz",
+			want: true,
+		},
+		{
+			name: "Test Chapter",
+			s:    RainbowsAfterStorms + " Ch. 7.cbz",
+			want: true,
+		},
+		{
+			name: "Test Random",
+			s:    "DFGHJK",
+			want: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if m.ContentRegex().MatchString(tc.s) != tc.want {
+				t.Errorf("got %v, want %v for %s", !tc.want, tc.want, tc.s)
+			}
+		})
+	}
+
+}
+
+func TestManga_ShouldDownload(t *testing.T) {
+
+	type test struct {
+		name          string
+		contentOnDisk []api.Content
+		chapter       func() ChapterSearchData
+		command       func(*manga, *testing.T)
+		want          bool
+		logInclude    string
+		after         func(*manga, *testing.T)
+	}
+
+	tests := []test{
+		{
+			name:          "New Download",
+			contentOnDisk: []api.Content{},
+			chapter:       chapter,
+			want:          true,
+		},
+		{
+			name: "Volume on disk",
+			contentOnDisk: []api.Content{
+				{Name: RainbowsAfterStorms + " Vol. 13.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13.cbz")},
+			},
+			chapter: chapter,
+			want:    false,
+		},
+		{
+			name: "Chapter on disk, no volume",
+			contentOnDisk: []api.Content{
+				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162.cbz")},
+			},
+			chapter: func() ChapterSearchData {
+				ch := chapter()
+				ch.Attributes.Volume = ""
+				return ch
+			},
+			want: false,
+		},
+		{
+			name: "Chapter on disk, fail volume check",
+			contentOnDisk: []api.Content{
+				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162.cbz")},
+			},
+			chapter:    chapter,
+			command:    nil,
+			want:       false,
+			logInclude: "unable to read comic info in zip",
+			after:      nil,
+		},
+		{
+			name: "Chapter on disk, same volume on disk",
+			contentOnDisk: []api.Content{
+				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162.cbz")},
+			},
+			chapter: chapter,
+			command: func(m *manga, t *testing.T) {
+				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162")
+				ci := comicinfo.NewComicInfo()
+				ci.Volume = 13
+				if err := os.MkdirAll(fullpath, 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := comicinfo.Save(ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
+					t.Fatal(err)
+				}
+
+				if err := utils.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
+					t.Fatal(err)
+				}
+			},
+			want:       false,
+			logInclude: "Volume on disk matches, not replacing",
+			after:      nil,
+		},
+		{
+			name: "Chapter on disk, replacing loose chapter",
+			contentOnDisk: []api.Content{
+				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162.cbz")},
+			},
+			chapter: chapter,
+			command: func(m *manga, t *testing.T) {
+				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162")
+				ci := comicinfo.NewComicInfo()
+				if err := os.MkdirAll(fullpath, 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := comicinfo.Save(ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
+					t.Fatal(err)
+				}
+
+				if err := utils.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
+					t.Fatal(err)
+				}
+			},
+			want:       true,
+			logInclude: "Loose chapter has been assigned to a volume, replacing",
+			after: func(m *manga, t *testing.T) {
+				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 162.cbz")
+				_, err := os.Stat(fullpath)
+				if !errors.Is(err, os.ErrNotExist) {
+					t.Fatalf("expected %s to not exist", fullpath)
+				}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var buffer bytes.Buffer
+			m := tempManga(t, req(), &buffer)
+			m.ExistingContent = tc.contentOnDisk
+			m.info = mangaResp()
+
+			if tc.command != nil {
+				tc.command(m, t)
+			}
+
+			got := m.ShouldDownload(tc.chapter())
+			if got != tc.want {
+				t.Errorf("got %v, want %v", got, tc.want)
+			}
+
+			if tc.logInclude != "" {
+				log := buffer.String()
+				if !strings.Contains(log, tc.logInclude) {
+					t.Errorf("Failed to log: got %s, want %s", log, tc.logInclude)
+				}
+			}
+
+			if tc.after != nil {
+				tc.after(m, t)
+			}
+
+		})
+	}
+
 }

@@ -425,24 +425,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		ci.LocalizedSeries = alts[0]
 	}
 
-	// Add the comicinfo#count field if the manga has completed, so Kavita can add the correct Completed marker
-	// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
-	if m.info.Attributes.Status == StatusCompleted {
-		switch {
-		case m.totalVolumes == 0 && m.foundLastChapter:
-			ci.Count = m.totalChapters
-		case m.foundLastChapter && m.foundLastVolume:
-			ci.Count = m.totalVolumes
-		case !m.hasWarned:
-			m.hasWarned = true
-			m.Log.Warn().
-				Str("lastChapter", m.info.Attributes.LastChapter).
-				Bool("foundLastChapter", m.foundLastChapter).
-				Str("lastVolume", m.info.Attributes.LastVolume).
-				Bool("foundLastVolume", m.foundLastVolume).
-				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
-		}
-	}
+	m.writeCIStatus(ci)
 
 	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {
 		ci.Volume = v
@@ -481,6 +464,28 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 	ci.Notes = comicInfoNote
 	return ci
+}
+
+// writeStatus Add the comicinfo#count field if the manga has completed, so Kavita can add the correct Completed marker
+// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
+func (m *manga) writeCIStatus(ci *comicinfo.ComicInfo) {
+	if m.info.Attributes.Status != StatusCompleted {
+		return
+	}
+	switch {
+	case m.totalVolumes == 0 && m.foundLastChapter:
+		ci.Count = m.totalChapters
+	case m.foundLastChapter && m.foundLastVolume:
+		ci.Count = m.totalVolumes
+	case !m.hasWarned:
+		m.hasWarned = true
+		m.Log.Warn().
+			Str("lastChapter", m.info.Attributes.LastChapter).
+			Bool("foundLastChapter", m.foundLastChapter).
+			Str("lastVolume", m.info.Attributes.LastVolume).
+			Bool("foundLastVolume", m.foundLastVolume).
+			Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
+	}
 }
 
 func (m *manga) DownloadContent(page int, chapter ChapterSearchData, url string) error {
@@ -526,7 +531,7 @@ func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.
 	}
 
 	if strconv.Itoa(ci.Volume) == chapter.Attributes.Volume {
-		l.Debug().Str("path", fullPath).Msg("Volume on disk matches, not replaces")
+		l.Debug().Str("path", fullPath).Msg("Volume on disk matches, not replacing")
 		return false
 	}
 
