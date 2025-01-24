@@ -127,7 +127,7 @@ func (r *repository) SeriesInfo(id string) (*Series, error) {
 		AltTitle:    doc.Find(".aliases b").Text(),
 		Description: doc.Find(".description p").Text(),
 		CoverUrl:    DOMAIN + doc.Find(".thumbnail").AttrOr("src", ""),
-		Status:      SeriesStatus(strings.TrimPrefix(doc.Find(".tag-title small").Text(), "— ")),
+		Status:      SeriesStatus(strings.TrimPrefix(doc.Find(".tag-title small:nth-of-type(2)").Text(), "— ")),
 		Tags:        goquery.Map(doc.Find(".tag-tags a"), toTag),
 		Authors:     goquery.Map(doc.Find(".tag-title a"), toAuthor),
 		Chapters:    r.readChapters(doc.Find(".chapter-list")),
@@ -209,14 +209,7 @@ func (r *repository) selectionToSearchData(_ int, sel *goquery.Selection) Search
 	sd.Title = nameElement.Text()
 	sd.Id = func() string {
 		ref := nameElement.AttrOr("href", "")
-		if ref == "" {
-			return ref
-		}
-
-		if strings.HasPrefix(ref, "/series/") {
-			return strings.TrimPrefix(ref, "/series/")
-		}
-		return ref
+		return strings.TrimPrefix(ref, "/series/")
 	}()
 
 	sd.Tags = goquery.Map(sel.Find(".tags a"), toTag)

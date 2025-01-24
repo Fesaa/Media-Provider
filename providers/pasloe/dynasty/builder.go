@@ -29,9 +29,9 @@ func (b *Builder) Normalize(mangas []SearchData) []payload.Info {
 		return []payload.Info{}
 	}
 
-	info := make([]payload.Info, 0)
-	for _, manga := range mangas {
-		info = append(info, payload.Info{
+	info := make([]payload.Info, len(mangas))
+	for i, manga := range mangas {
+		info[i] = payload.Info{
 			Name: manga.Title,
 			Tags: utils.Map(manga.Tags, func(t Tag) payload.InfoTag {
 				return payload.Of(t.DisplayName, "")
@@ -39,7 +39,7 @@ func (b *Builder) Normalize(mangas []SearchData) []payload.Info {
 			InfoHash: manga.Id,
 			RefUrl:   manga.RefUrl(),
 			Provider: models.DYNASTY,
-		})
+		}
 	}
 
 	return info

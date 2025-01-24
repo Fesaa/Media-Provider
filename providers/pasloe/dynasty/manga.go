@@ -70,6 +70,7 @@ func (m *manga) LoadInfo() chan struct{} {
 		if err != nil {
 			m.Log.Error().Err(err).Msg("error while loading series info")
 			m.Cancel()
+			close(out)
 			return
 		}
 
@@ -130,7 +131,7 @@ func (m *manga) ContentKey(chapter Chapter) string {
 
 func (m *manga) ContentLogger(chapter Chapter) zerolog.Logger {
 	builder := m.Log.With().
-		Str("id", chapter.Id).
+		Str("chapterId", chapter.Id).
 		Str("chapter", chapter.Chapter)
 
 	if chapter.Title != "" {
