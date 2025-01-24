@@ -18,6 +18,7 @@ import (
 var loadedTags = false
 
 func tempRepo(t *testing.T, w io.Writer) Repository {
+	t.Helper()
 	if !loadedTags {
 		if err := loadTags(http.DefaultClient); err != nil {
 			t.Fatal(err)

@@ -20,6 +20,7 @@ import (
 )
 
 func tempContentService(t *testing.T) (*db.Database, ContentService) {
+	t.Helper()
 	must := func(err error) {
 		if err != nil {
 			t.Fatal(err)

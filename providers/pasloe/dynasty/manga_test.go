@@ -19,6 +19,10 @@ import (
 	"time"
 )
 
+const (
+	SailorGirlFriend = "Sailor Girlfriend"
+)
+
 type mockClient struct {
 	baseDir string
 }
@@ -56,6 +60,7 @@ func (m mockClient) GetConfig() api.Config {
 }
 
 func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
+	t.Helper()
 	must := func(err error) {
 		if err != nil {
 			t.Fatal(err)
@@ -87,7 +92,7 @@ func req() payload.DownloadRequest {
 		Provider:  models.DYNASTY,
 		Id:        "sailor_girlfriend",
 		BaseDir:   "",
-		TempTitle: "Sailor Girlfriend",
+		TempTitle: SailorGirlFriend,
 	}
 }
 
@@ -141,7 +146,7 @@ func TestManga_Title(t *testing.T) {
 		t.Fatal("m.LoadInfo() timeout")
 	}
 
-	want = "Sailor Girlfriend"
+	want = SailorGirlFriend
 	if m.Title() != want {
 		t.Errorf("m.Title() = %q, want %q", m.Title(), want)
 	}
@@ -184,7 +189,7 @@ func TestManga_GetInfoBeforeLoad(t *testing.T) {
 
 	got := m.GetInfo()
 
-	want := "Sailor Girlfriend"
+	want := SailorGirlFriend
 	if got.Name != want {
 		t.Errorf("got.Name = %q, want %q", got.Name, want)
 	}
@@ -358,7 +363,7 @@ func TestManga_WriteContentMetaData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if string(b.Bytes()) != string(data) {
+	if b.String() != string(data) {
 		t.Errorf("m.comicInfo() = %q, want %q", b, data)
 	}
 

@@ -20,7 +20,7 @@ var (
 
 type PageService interface {
 	UpdateOrCreate(page *models.Page) error
-	SwapPages(int64, int64) error
+	SwapPages(uint, uint) error
 	LoadDefaultPages() error
 }
 
@@ -66,15 +66,15 @@ func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 	return ps.db.Pages.Update(page)
 }
 
-func (ps *pageService) SwapPages(id1, id2 int64) error {
+func (ps *pageService) SwapPages(id1, id2 uint) error {
 	page1, err := ps.db.Pages.Get(id1)
 	if err != nil {
-		ps.log.Error().Err(err).Int64("id", id1).Msg("Failed to get page1")
+		ps.log.Error().Err(err).Uint("id", id1).Msg("Failed to get page1")
 		return ErrPageNotFound
 	}
 	page2, err := ps.db.Pages.Get(id2)
 	if err != nil {
-		ps.log.Error().Err(err).Int64("id", id2).Msg("Failed to get page2")
+		ps.log.Error().Err(err).Uint("id", id2).Msg("Failed to get page2")
 		return ErrPageNotFound
 	}
 
@@ -98,8 +98,8 @@ func (ps *pageService) SwapPages(id1, id2 int64) error {
 
 	if err != nil {
 		ps.log.Error().Err(err).
-			Int64("id1", id1).
-			Int64("id2", id2).
+			Uint("id1", id1).
+			Uint("id2", id2).
 			Msg("Failed to swap pages")
 		return fmt.Errorf("failed to swap pages: %w", err)
 	}

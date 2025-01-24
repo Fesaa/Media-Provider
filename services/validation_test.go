@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -140,7 +141,7 @@ func TestValidationService_ValidateCtxBadBody(t *testing.T) {
 		return nil
 	})
 
-	req := httptest.NewRequest("POST", "/", bytes.NewReader([]byte{1, 4, 2, 9}))
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte{1, 4, 2, 9}))
 	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
 	if _, err := app.Test(req, -1); err != nil {
 		t.Error(err)
@@ -171,7 +172,7 @@ func TestValidationService_ValidateCtxInvalidStruct(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := httptest.NewRequest("POST", "/", &body)
+	req := httptest.NewRequest(http.MethodPost, "/", &body)
 	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
 
 	if _, err = app.Test(req, -1); err != nil {

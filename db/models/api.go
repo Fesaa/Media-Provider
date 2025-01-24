@@ -2,12 +2,12 @@ package models
 
 type Pages interface {
 	All() ([]Page, error)
-	Get(id int64) (*Page, error)
+	Get(id uint) (*Page, error)
 
 	New(page *Page) error
 	Update(page *Page) error
 
-	Delete(id int64) error
+	Delete(id uint) error
 }
 
 type Preferences interface {

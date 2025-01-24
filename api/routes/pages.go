@@ -58,16 +58,16 @@ func (pr *pageRoutes) Pages(ctx *fiber.Ctx) error {
 }
 
 func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
-	id, _ := ctx.ParamsInt("index", -1)
-	if id == -1 {
+	id, err := ParamsUInt(ctx, "pageId")
+	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"message": "Invalid id",
 		})
 	}
 
-	page, err := pr.DB.Pages.Get(int64(id))
+	page, err := pr.DB.Pages.Get(id)
 	if err != nil {
-		pr.Log.Error().Err(err).Int("pageId", id).Msg("Failed to get page")
+		pr.Log.Error().Err(err).Uint("pageId", id).Msg("Failed to get page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -106,8 +106,8 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 }
 
 func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
-	id, _ := ctx.ParamsInt("pageId", -1)
-	if id == -1 {
+	id, err := ParamsUInt(ctx, "pageId")
+	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "pageId must be a positive integer",
 		})
@@ -119,7 +119,7 @@ func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
 
-	if err := pr.DB.Pages.Delete(int64(id)); err != nil {
+	if err := pr.DB.Pages.Delete(id); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to delete page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),

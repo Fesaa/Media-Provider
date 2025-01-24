@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/go-co-op/gocron/v2"
@@ -14,7 +13,8 @@ import (
 	"time"
 )
 
-func tempSubscriptionService(t *testing.T) (*db.Database, SubscriptionService) {
+func tempSubscriptionService(t *testing.T) SubscriptionService {
+	t.Helper()
 	log := zerolog.New(zerolog.NewConsoleWriter())
 
 	tempDir := t.TempDir()
@@ -26,7 +26,7 @@ func tempSubscriptionService(t *testing.T) (*db.Database, SubscriptionService) {
 		t.Fatal(err)
 	}
 
-	return database, SubscriptionServiceProvider(database, cs, log, cron)
+	return SubscriptionServiceProvider(database, cs, log, cron)
 }
 
 func defaultSub() models.Subscription {
@@ -45,7 +45,7 @@ func defaultSub() models.Subscription {
 
 func TestSubscriptionService_All(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 
 	sub := defaultSub()
 
@@ -66,7 +66,7 @@ func TestSubscriptionService_All(t *testing.T) {
 
 func TestSubscriptionService_Add(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 	sub := defaultSub()
 	s, err := ss.Add(sub)
 	if err != nil {
@@ -81,7 +81,7 @@ func TestSubscriptionService_Add(t *testing.T) {
 
 func TestSubscriptionService_AddDupe(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 
 	sub := defaultSub()
 	_, err := ss.Add(sub)
@@ -117,7 +117,7 @@ func (b *brokenPreferences) Update(pref models.Preference) error {
 
 func TestSubscriptionService_AddBadPreference(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 
 	ssImpl := ss.(*subscriptionService)
 	ssImpl.db.Preferences = &brokenPreferences{
@@ -147,7 +147,7 @@ func TestSubscriptionService_AddBadPreference(t *testing.T) {
 
 func TestSubscriptionService_UpdateNoRefresh(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 
 	ssImpl := ss.(*subscriptionService)
 	var buffer bytes.Buffer
@@ -172,7 +172,7 @@ func TestSubscriptionService_UpdateNoRefresh(t *testing.T) {
 
 func TestSubscriptionService_UpdateBadPreference(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 	ssImpl := ss.(*subscriptionService)
 	sub := defaultSub()
 	_, err := ss.Add(sub)
@@ -189,7 +189,7 @@ func TestSubscriptionService_UpdateBadPreference(t *testing.T) {
 
 func TestSubscriptionService_UpdateRefresh(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 	sub := defaultSub()
 	_, err := ss.Add(sub)
 	if err != nil {
@@ -205,7 +205,7 @@ func TestSubscriptionService_UpdateRefresh(t *testing.T) {
 
 func TestSubscriptionService_toTask(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 	sub := defaultSub()
 
 	ssImpl := ss.(*subscriptionService)
@@ -340,7 +340,7 @@ func TestSubscriptionServiceProvider_FailAtStartUp(t *testing.T) {
 
 func TestSubscriptionServiceProvider_Delete(t *testing.T) {
 	t.Parallel()
-	_, ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t)
 	sub := defaultSub()
 
 	newSub, err := ss.Add(sub)

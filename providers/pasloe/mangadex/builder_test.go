@@ -16,6 +16,7 @@ const (
 	RainbowsAfterStormsLastChapterID = "7d327897-5903-4fa1-92d7-f01c3c686a36"
 )
 
+//nolint:funlen
 func TestBuilder_Transform(t *testing.T) {
 	tests := []struct {
 		name string

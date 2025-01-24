@@ -47,8 +47,8 @@ type UpdatePasswordRequest struct {
 }
 
 type SwapPageRequest struct {
-	Id1 int64 `json:"id1" validate:"required"`
-	Id2 int64 `json:"id2" validate:"required,diff=Id1"`
+	Id1 uint `json:"id1" validate:"required"`
+	Id2 uint `json:"id2" validate:"required,diff=Id1"`
 }
 
 type ResetPasswordRequest struct {

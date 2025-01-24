@@ -9,7 +9,8 @@ import (
 	"testing"
 )
 
-func tempPageService(t *testing.T) (*db.Database, PageService) {
+func tempPageService(t *testing.T) PageService {
+	t.Helper()
 	log := zerolog.New(zerolog.NewConsoleWriter())
 
 	tempDir := t.TempDir()
@@ -20,11 +21,11 @@ func tempPageService(t *testing.T) (*db.Database, PageService) {
 		t.Fatal(err)
 	}
 
-	return database, PageServiceProvider(database, log)
+	return PageServiceProvider(database, log)
 }
 
 func TestPageService_LoadDefaultPages(t *testing.T) {
-	_, ps := tempPageService(t)
+	ps := tempPageService(t)
 
 	if err := ps.LoadDefaultPages(); err != nil {
 		t.Fatal(err)
@@ -32,7 +33,7 @@ func TestPageService_LoadDefaultPages(t *testing.T) {
 }
 
 func TestPageService_UpdateOrCreate(t *testing.T) {
-	_, ps := tempPageService(t)
+	ps := tempPageService(t)
 
 	page := models.Page{
 		Title:         "MyTitle",
@@ -50,7 +51,7 @@ func TestPageService_UpdateOrCreate(t *testing.T) {
 }
 
 func TestPageService_UpdateOrCreateInvalidSortValue(t *testing.T) {
-	_, ps := tempPageService(t)
+	ps := tempPageService(t)
 	page := models.Page{
 		Title:         "MyTitle",
 		Icon:          "pi-heart",
@@ -82,7 +83,7 @@ func TestPageService_UpdateOrCreateInvalidSortValue(t *testing.T) {
 }
 
 func TestPageService_UpdateOrCreateDefaultSortValue(t *testing.T) {
-	_, ps := tempPageService(t)
+	ps := tempPageService(t)
 
 	page := models.Page{
 		Title:         "MyTitle",
@@ -123,7 +124,7 @@ func TestPageService_UpdateOrCreateDefaultSortValue(t *testing.T) {
 }
 
 func TestPageService_SwapPages(t *testing.T) {
-	_, ps := tempPageService(t)
+	ps := tempPageService(t)
 
 	page1 := models.Page{
 		Title:         "MyTitle",
@@ -153,14 +154,14 @@ func TestPageService_SwapPages(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := ps.SwapPages(int64(page1.ID), int64(page2.ID)); err != nil {
+	if err := ps.SwapPages(page1.ID, page2.ID); err != nil {
 		t.Fatal(err)
 	}
 
 }
 
 func TestPageService_SwapPagesInvalidID(t *testing.T) {
-	_, ps := tempPageService(t)
+	ps := tempPageService(t)
 
 	if err := ps.SwapPages(1, 1); !errors.Is(err, ErrPageNotFound) {
 		t.Errorf("expected ErrPageNotFound, got %v", err)
@@ -180,7 +181,7 @@ func TestPageService_SwapPagesInvalidID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := ps.SwapPages(int64(page.ID), 999); !errors.Is(err, ErrPageNotFound) {
+	if err := ps.SwapPages(page.ID, 999); !errors.Is(err, ErrPageNotFound) {
 		t.Errorf("expected ErrPageNotFound, got %v", err)
 	}
 

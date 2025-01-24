@@ -89,6 +89,7 @@ func (m mockRepo) GetCoverImages(id string, offset ...int) (*MangaCoverResponse,
 }
 
 func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...string) *manga {
+	t.Helper()
 	must := func(err error) {
 		if err != nil {
 			t.Fatal(err)
@@ -217,6 +218,7 @@ func TestManga_LoadInfoBadId(t *testing.T) {
 
 }
 
+//nolint:funlen
 func TestManga_LoadInfoFoundAll(t *testing.T) {
 	var buf bytes.Buffer
 	m := tempManga(t, req(), &buf)
@@ -288,6 +290,7 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 
 }
 
+//nolint:funlen
 func TestManga_LoadInfoErrors(t *testing.T) {
 	var buf bytes.Buffer
 	m := tempManga(t, req(), &buf)
@@ -564,7 +567,7 @@ func TestManga_WriteContentMetaData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if string(b.Bytes()) != string(data) {
+	if b.String() != string(data) {
 		t.Errorf("m.comicInfo() = %q, want %q", b, data)
 	}
 
@@ -712,16 +715,17 @@ func TestManga_ContentRegex(t *testing.T) {
 
 }
 
+//nolint:funlen,gocognit
 func TestManga_ShouldDownload(t *testing.T) {
 
 	type test struct {
 		name          string
 		contentOnDisk []api.Content
 		chapter       func() ChapterSearchData
-		command       func(*manga, *testing.T)
+		command       func(*testing.T, *manga)
 		want          bool
 		logInclude    string
-		after         func(*manga, *testing.T)
+		after         func(*testing.T, *manga)
 	}
 
 	tests := []test{
@@ -768,7 +772,8 @@ func TestManga_ShouldDownload(t *testing.T) {
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter: chapter,
-			command: func(m *manga, t *testing.T) {
+			command: func(t *testing.T, m *manga) {
+				t.Helper()
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162")
 				ci := comicinfo.NewComicInfo()
 				ci.Volume = 13
@@ -793,7 +798,8 @@ func TestManga_ShouldDownload(t *testing.T) {
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter: chapter,
-			command: func(m *manga, t *testing.T) {
+			command: func(t *testing.T, m *manga) {
+				t.Helper()
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162")
 				ci := comicinfo.NewComicInfo()
 				if err := os.MkdirAll(fullpath, 0755); err != nil {
@@ -809,7 +815,8 @@ func TestManga_ShouldDownload(t *testing.T) {
 			},
 			want:       true,
 			logInclude: "Loose chapter has been assigned to a volume, replacing",
-			after: func(m *manga, t *testing.T) {
+			after: func(t *testing.T, m *manga) {
+				t.Helper()
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 162.cbz")
 				_, err := os.Stat(fullpath)
 				if !errors.Is(err, os.ErrNotExist) {
@@ -827,7 +834,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 			m.info = mangaResp()
 
 			if tc.command != nil {
-				tc.command(m, t)
+				tc.command(t, m)
 			}
 
 			got := m.ShouldDownload(tc.chapter())
@@ -843,7 +850,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 			}
 
 			if tc.after != nil {
-				tc.after(m, t)
+				tc.after(t, m)
 			}
 
 		})
