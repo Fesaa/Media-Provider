@@ -134,6 +134,8 @@ type MangaAttributes struct {
 	Tags             []TagData           `json:"tags"`
 }
 
+// EnTitle returns the best guess English title for the manga
+// In order of tries; Title(en), AltTitles(en), Title(any), Fixed string with non 0 length
 func (a *MangaAttributes) EnTitle() string {
 	// Note: for some reason the en title may still be in Japanese, don't really have a way of checking if it is
 	// as the Japanese title is in the latin alphabet. We'll just have to be fine with it, as the alternative titles

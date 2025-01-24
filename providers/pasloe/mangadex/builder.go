@@ -16,7 +16,7 @@ type Builder struct {
 	log        zerolog.Logger
 	httpClient *http.Client
 	ps         api.Client
-	repository *Repository
+	repository Repository
 }
 
 func (b *Builder) Provider() models.Provider {
@@ -35,10 +35,6 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 	info := make([]payload.Info, 0)
 	for _, data := range mangas.Data {
 		enTitle := data.Attributes.EnTitle()
-		if enTitle == "" {
-			continue
-		}
-
 		info = append(info, payload.Info{
 			Name:        enTitle,
 			Description: data.Attributes.EnDescription(),
@@ -93,7 +89,6 @@ func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
 		ms.PublicationDemographic = pd
 	}
 
-	b.log.Info().Msgf("Transforming search request: %+v -> %+v", s, ms)
 	return ms
 }
 
@@ -109,7 +104,7 @@ func (b *Builder) Stop(request payload.StopRequest) error {
 	return b.ps.RemoveDownload(request)
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository *Repository) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository Repository) *Builder {
 	return &Builder{log.With().Str("handler", "mangadex-provider").Logger(),
 		httpClient, ps, repository}
 }

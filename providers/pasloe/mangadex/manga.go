@@ -34,7 +34,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger, repository *Repository,
+		log zerolog.Logger, repository Repository,
 	) {
 		block = &manga{
 			id:             req.Id,
@@ -54,7 +54,7 @@ type manga struct {
 	id string
 
 	httpClient *http.Client
-	repository *Repository
+	repository Repository
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
@@ -89,14 +89,16 @@ func (m *manga) LoadInfo() chan struct{} {
 		if err != nil {
 			m.Log.Error().Err(err).Msg("error while loading manga info")
 			m.Cancel()
+			close(out)
 			return
 		}
 		m.info = &mangaInfo.Data
 
 		chapters, err := m.repository.GetChapters(m.id)
 		if err != nil || chapters == nil {
-			m.Log.Error().Err(err).Msg("error while loading manga info")
+			m.Log.Error().Err(err).Msg("error while loading chapter info")
 			m.Cancel()
+			close(out)
 			return
 		}
 		m.chapters = chapters.FilterOneEnChapter()
@@ -180,6 +182,10 @@ func (m *manga) GetInfo() payload.InfoStat {
 }
 
 func (m *manga) ContentDir(chapter ChapterSearchData) string {
+	if chapter.Attributes.Chapter == "" { // TODO: Check if this is a good enough check
+		return fmt.Sprintf("%s OneShot", m.Title())
+	}
+
 	if chpt, err := strconv.ParseFloat(chapter.Attributes.Chapter, 32); err == nil {
 		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
 		return chDir
@@ -188,7 +194,6 @@ func (m *manga) ContentDir(chapter ChapterSearchData) string {
 	}
 
 	return fmt.Sprintf("%s Ch. %s", m.Title(), chapter.Attributes.Chapter)
-	// return m.volumeDir(chapter.Attributes.Volume)
 }
 
 func (m *manga) ContentPath(chapter ChapterSearchData) string {
@@ -204,7 +209,7 @@ func (m *manga) ContentKey(chapter ChapterSearchData) string {
 
 func (m *manga) ContentLogger(chapter ChapterSearchData) zerolog.Logger {
 	builder := m.Log.With().
-		Str("id", chapter.Id).
+		Str("chapterId", chapter.Id).
 		Str("chapter", chapter.Attributes.Chapter)
 
 	if chapter.Attributes.Volume != "" {
