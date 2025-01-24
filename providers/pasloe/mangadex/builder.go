@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"net/http"
 	"strconv"
@@ -60,9 +61,40 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 }
 
 func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
-	return SearchOptions{
+	ms := SearchOptions{
 		Query: s.Query,
 	}
+
+	skip, ok := s.Modifiers["SkipNotFoundTags"]
+	if ok {
+		ms.SkipNotFoundTags = utils.OrDefault(skip, "true") == "true"
+	} else {
+		ms.SkipNotFoundTags = true
+	}
+
+	iT, ok := s.Modifiers["includeTags"]
+	if ok {
+		ms.IncludedTags = iT
+	}
+	eT, ok := s.Modifiers["excludeTags"]
+	if ok {
+		ms.ExcludedTags = eT
+	}
+	st, ok := s.Modifiers["status"]
+	if ok {
+		ms.Status = st
+	}
+	cr, ok := s.Modifiers["contentRating"]
+	if ok {
+		ms.ContentRating = cr
+	}
+	pd, ok := s.Modifiers["publicationDemographic"]
+	if ok {
+		ms.PublicationDemographic = pd
+	}
+
+	b.log.Info().Msgf("Transforming search request: %+v -> %+v", s, ms)
+	return ms
 }
 
 func (b *Builder) Search(s SearchOptions) (*MangaSearchResponse, error) {

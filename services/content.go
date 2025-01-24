@@ -67,11 +67,18 @@ func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, erro
 			continue
 		}
 
+		searchStart := time.Now()
 		search, err := adapter.Search(req)
+		searchDuration := time.Since(searchStart)
 		if err != nil {
 			s.log.Warn().Any("provider", provider).Err(err).Msg("searching failed")
 			errs = append(errs, fmt.Errorf("provider %d: %w", provider, err))
 			continue
+		}
+
+		s.log.Debug().Dur("elapsed", searchDuration).Str("request", fmt.Sprintf("%+v", req)).Msg("search done")
+		if searchDuration > time.Second*1 {
+			s.log.Warn().Dur("elapsed", searchDuration).Msg("searching took more than one second")
 		}
 
 		results = append(results, search...)
@@ -180,18 +187,8 @@ func (s *DefaultProviderAdapter[T, S]) Stop(req payload.StopRequest) error {
 
 func (s *DefaultProviderAdapter[T, S]) Search(req payload.SearchRequest) ([]payload.Info, error) {
 	t := s.transformer(req)
-
-	start := time.Now()
 	data, err := s.searcher(t)
-	since := time.Since(start)
-
-	s.log.Debug().Dur("elapsed", since).Str("request", fmt.Sprintf("%+v", req)).Msg("search done")
-	if since > time.Second*1 {
-		s.log.Warn().Dur("elapsed", since).Msg("searching took more than one second")
-	}
-
 	if err != nil {
-		s.log.Error().Err(err).Msg("search failed")
 		return nil, err
 	}
 	return s.normalizer(data), nil

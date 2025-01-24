@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db"
@@ -48,13 +49,18 @@ func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 	}
 
 	if page.SortValue == DefaultPageSort {
-		var maxPageSort int
+		var maxPageSort sql.NullInt64
 		err = ps.db.DB().Model(&models.Page{}).Select("MAX(sort_value) AS maxPageSort").Scan(&maxPageSort).Error
 		if err != nil {
 			ps.log.Error().Err(err).Msg("Error occurred while getting max page sort")
 			return ErrFailedToSortCheck
 		}
-		page.SortValue = maxPageSort + 1
+
+		if maxPageSort.Valid {
+			page.SortValue = int(maxPageSort.Int64) + 1
+		} else {
+			page.SortValue = 0 // First page being inserted
+		}
 	}
 
 	return ps.db.Pages.Update(page)
@@ -69,6 +75,10 @@ func (ps *pageService) SwapPages(id1, id2 int64) error {
 	page2, err := ps.db.Pages.Get(id2)
 	if err != nil {
 		ps.log.Error().Err(err).Int64("id", id2).Msg("Failed to get page2")
+		return ErrPageNotFound
+	}
+
+	if page1 == nil || page2 == nil {
 		return ErrPageNotFound
 	}
 

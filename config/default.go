@@ -7,7 +7,7 @@ import (
 	"path"
 )
 
-func defaultConfig() *Config {
+func DefaultConfig() *Config {
 	secret, err := utils.GenerateSecret(64)
 	if err != nil {
 		panic(err)

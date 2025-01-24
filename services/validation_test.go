@@ -95,6 +95,20 @@ func TestDiff(t *testing.T) {
 	}
 }
 
+func TestDiffInvalid(t *testing.T) {
+	type testStruct struct {
+		One string
+		Two string `validate:"diff=Three"`
+	}
+
+	if err := service.Validate(testStruct{
+		One: "",
+		Two: "",
+	}); err == nil {
+		t.Error("Expected error, as One is different")
+	}
+}
+
 func TestSwapPage(t *testing.T) {
 	r := payload.SwapPageRequest{
 		Id1: 0,
