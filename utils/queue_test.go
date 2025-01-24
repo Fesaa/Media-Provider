@@ -84,3 +84,22 @@ func TestQueueImpl_RemoveFunc(t *testing.T) {
 		t.Fatalf("queue has size %d, want %d", queue.Size(), 1)
 	}
 }
+
+func TestQueueImpl_Items(t *testing.T) {
+	queue := NewQueue[string]()
+	queue.Enqueue("a")
+	queue.Enqueue("b")
+
+	items := queue.Items()
+	if len(items) != 2 {
+		t.Fatalf("queue has size %d, want %d", len(items), 2)
+	}
+
+	if items[0] != "a" {
+		t.Fatalf("queue got %v, want %v", items[0], "a")
+	}
+
+	if items[1] != "b" {
+		t.Fatalf("queue got %v, want %v", items[1], "b")
+	}
+}

@@ -78,3 +78,20 @@ func TestZipFolder(t *testing.T) {
 		t.Errorf("Missing files in zip: %v", expectedFiles)
 	}
 }
+
+func TestZipInvalidFolder(t *testing.T) {
+	err := ZipFolder("SRDETCFYVGUBHINJK", "EDTRFYGUJIK.zip")
+	if err == nil {
+		t.Errorf("ZipFolder should have failed on invalid folder")
+	}
+}
+
+func TestZipInvalidFile(t *testing.T) {
+	tempDir := t.TempDir()
+	testFile1 := filepath.Join(tempDir, "////")
+
+	err := ZipFolder(tempDir, testFile1)
+	if err == nil {
+		t.Errorf("ZipFolder should have failed on invalid file")
+	}
+}

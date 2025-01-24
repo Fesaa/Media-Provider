@@ -1,9 +1,13 @@
 package services
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -107,6 +111,56 @@ func TestSwapPage(t *testing.T) {
 	}
 
 	if err := service.Validate(&r); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestValidationService_ValidateCtxBadBody(t *testing.T) {
+	app := fiber.New()
+
+	app.Post("/", func(c *fiber.Ctx) error {
+		var login payload.LoginRequest
+		if err := service.ValidateCtx(c, &login); err == nil {
+			t.Error("Should have error")
+		}
+		return nil
+	})
+
+	req := httptest.NewRequest("POST", "/", bytes.NewReader([]byte{1, 4, 2, 9}))
+	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	if _, err := app.Test(req, -1); err != nil {
+		t.Error(err)
+	}
+
+}
+
+func TestValidationService_ValidateCtxInvalidStruct(t *testing.T) {
+	app := fiber.New()
+
+	app.Post("/", func(c *fiber.Ctx) error {
+		var login payload.LoginRequest
+		if err := service.ValidateCtx(c, &login); err != nil {
+			t.Error(err)
+		}
+		return nil
+	})
+
+	logingRequest := payload.LoginRequest{
+		UserName: "username",
+		Password: "password",
+		Remember: false,
+	}
+
+	var body bytes.Buffer
+	err := json.NewEncoder(&body).Encode(&logingRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest("POST", "/", &body)
+	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+
+	if _, err = app.Test(req, -1); err != nil {
 		t.Error(err)
 	}
 }

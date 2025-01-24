@@ -31,7 +31,7 @@ type ListDirsRequest struct {
 type LoginRequest struct {
 	UserName string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required"`
-	Remember bool   `json:"remember,omitempty" validate:"required"`
+	Remember bool   `json:"remember,omitempty"`
 }
 
 type LoginResponse struct {

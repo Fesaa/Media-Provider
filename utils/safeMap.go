@@ -73,11 +73,3 @@ func (s *SafeMap[K, V]) ForEach(f func(K, V)) {
 	}
 	s.lock.Unlock()
 }
-
-func (s *SafeMap[K, V]) Lock() {
-	s.lock.Lock()
-}
-
-func (s *SafeMap[K, V]) Unlock() {
-	s.lock.Unlock()
-}
