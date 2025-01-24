@@ -6,7 +6,6 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -21,8 +20,8 @@ type pageRoutes struct {
 	DB     *db.Database
 	Auth   auth.Provider `name:"jwt-auth"`
 	Log    zerolog.Logger
-	Val    *validator.Validate
 
+	Val         services.ValidationService
 	PageService services.PageService
 }
 
@@ -89,15 +88,8 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 	}
 
 	var page models.Page
-	if err := ctx.BodyParser(&page); err != nil {
+	if err := pr.Val.ValidateCtx(ctx, &page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse page")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	if err := pr.Val.Struct(page); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to validate page")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -139,7 +131,7 @@ func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 
 func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
 	var m payload.SwapPageRequest
-	if err := ctx.BodyParser(&m); err != nil {
+	if err := pr.Val.ValidateCtx(ctx, &m); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse swap page")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",

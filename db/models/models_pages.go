@@ -7,6 +7,7 @@ import (
 
 type Provider int
 
+// Also update in services/custom_validation.go
 const (
 	NYAA Provider = iota + 2
 	YTS

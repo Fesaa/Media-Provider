@@ -3,7 +3,7 @@ package routes
 import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/go-playground/validator/v10"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -16,8 +16,8 @@ type configRoutes struct {
 	Cfg    *config.Config
 	Router fiber.Router
 	Auth   auth.Provider `name:"jwt-auth"`
+	Val    services.ValidationService
 	Log    zerolog.Logger
-	Val    *validator.Validate
 }
 
 func RegisterConfigRoutes(cr configRoutes) {
@@ -40,12 +40,7 @@ func (cr *configRoutes) UpdateConfig(ctx *fiber.Ctx) error {
 	}
 
 	var c config.Config
-	if err = ctx.BodyParser(&c); err != nil {
-		cr.Log.Debug().Err(err).Msg("invalid config body")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid config"})
-	}
-
-	if err = cr.Val.Struct(c); err != nil {
+	if err = cr.Val.ValidateCtx(ctx, &c); err != nil {
 		cr.Log.Debug().Err(err).Msg("invalid config")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

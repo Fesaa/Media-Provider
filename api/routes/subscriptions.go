@@ -5,7 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
@@ -25,8 +24,8 @@ type subscriptionRoutes struct {
 	Router fiber.Router
 	Auth   auth.Provider `name:"jwt-auth"`
 	Log    zerolog.Logger
-	Val    *validator.Validate
 
+	Val                 services.ValidationService
 	SubscriptionService services.SubscriptionService
 	ContentService      services.ContentService
 }
@@ -166,7 +165,7 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 }
 
 func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) error {
-	if err := sr.Val.Struct(&sub); err != nil {
+	if err := sr.Val.Validate(sub); err != nil {
 		return err
 	}
 
