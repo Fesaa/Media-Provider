@@ -6,14 +6,47 @@ import (
 )
 
 func TestPercent(t *testing.T) {
-	got := Percent(5, 10)
-	if got != 50 {
-		t.Errorf("Percent(5, 10) = %v, want 50", got)
+	type testCase struct {
+		name     string
+		inputA   int64
+		inputB   int64
+		expected int64
 	}
 
-	got = Percent(5, 0)
-	if got != 100 {
-		t.Errorf("Percent(5, 0) = %v, want 5", got)
+	testCases := []testCase{
+		{
+			name:     "Normal",
+			inputA:   5,
+			inputB:   10,
+			expected: 50,
+		},
+		{
+			name:     "BZero",
+			inputA:   5,
+			inputB:   0,
+			expected: 100,
+		},
+		{
+			name:     "AllZero",
+			inputA:   0,
+			inputB:   0,
+			expected: 100,
+		},
+		{
+			name:     "A > B",
+			inputA:   5,
+			inputB:   2,
+			expected: 100,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := Percent(tc.inputA, tc.inputB)
+			if got != tc.expected {
+				t.Errorf("got %d, want %d", got, tc.expected)
+			}
+		})
 	}
 }
 
