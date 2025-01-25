@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
@@ -123,6 +124,10 @@ func TestRepository_ChapterImages(t *testing.T) {
 
 	images, err := repo.ChapterImages("canaries_dream_of_shining_stars_ch01")
 	if err != nil {
+		if strings.Contains(err.Error(), "status code error: 503") {
+			t.Skipf("Skipping test as 3rd party server error")
+		}
+
 		t.Fatalf("ChapterImages: %v", err)
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -45,6 +46,7 @@ func tempContentService(t *testing.T) (*db.Database, ContentService) {
 	must(cont.Provide(utils.Identity(database)))
 	must(cont.Provide(utils.Identity(http.DefaultClient)))
 	must(cont.Provide(utils.Identity(cfg)))
+	must(cont.Provide(webtoon.NewRepository))
 	must(cont.Provide(mangadex.NewRepository))
 	must(cont.Provide(dynasty.NewRepository))
 	must(cont.Provide(yoitsu.New))
