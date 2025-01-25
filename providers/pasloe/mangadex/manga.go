@@ -197,10 +197,11 @@ func (m *manga) ContentDir(chapter ChapterSearchData) string {
 }
 
 func (m *manga) ContentPath(chapter ChapterSearchData) string {
+	base := path.Join(m.Client.GetBaseDir(), m.GetBaseDir(), m.Title())
 	if chapter.Attributes.Volume == "" {
-		return path.Join(m.mangaPath(), m.ContentDir(chapter))
+		return path.Join(base, m.ContentDir(chapter))
 	}
-	return path.Join(m.mangaPath(), m.volumeDir(chapter.Attributes.Volume), m.ContentDir(chapter))
+	return path.Join(base, m.volumeDir(chapter.Attributes.Volume), m.ContentDir(chapter))
 }
 
 func (m *manga) ContentKey(chapter ChapterSearchData) string {
@@ -548,10 +549,6 @@ func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.
 	}
 
 	return true
-}
-
-func (m *manga) mangaPath() string {
-	return path.Join(m.Client.GetBaseDir(), m.GetBaseDir(), m.Title())
 }
 
 func (m *manga) volumeDir(v string) string {

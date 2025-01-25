@@ -118,11 +118,18 @@ func (m *manga) All() []Chapter {
 }
 
 func (m *manga) ContentDir(chapter Chapter) string {
-	return m.chapterDir(chapter)
+	if chpt, err := strconv.ParseFloat(chapter.Chapter, 32); err == nil {
+		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
+		return chDir
+	} else if chapter.Chapter != "" {
+		m.Log.Warn().Err(err).Str("chapter", chapter.Chapter).Msg("unable to parse chapter number, not padding")
+	}
+
+	return fmt.Sprintf("%s Ch. %s", m.Title(), chapter.Chapter)
 }
 
 func (m *manga) ContentPath(chapter Chapter) string {
-	return m.chapterPath(chapter)
+	return path.Join(m.Client.GetBaseDir(), m.GetBaseDir(), m.Title(), m.ContentDir(chapter))
 }
 
 func (m *manga) ContentKey(chapter Chapter) string {
@@ -152,13 +159,13 @@ func (m *manga) ContentUrls(chapter Chapter) ([]string, error) {
 func (m *manga) WriteContentMetaData(chapter Chapter) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
-	filePath := path.Join(m.chapterPath(chapter), "!0000 cover.jpg")
+	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
 	if err := m.downloadAndWrite(m.seriesInfo.CoverUrl, filePath); err != nil {
 		return err
 	}
 
 	m.Log.Trace().Str("chapter", chapter.Chapter).Msg("writing comicinfoxml")
-	return comicinfo.Save(m.comicInfo(chapter), path.Join(m.chapterPath(chapter), "ComicInfo.xml"))
+	return comicinfo.Save(m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
 }
 
 func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
@@ -189,7 +196,7 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 }
 
 func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
-	filePath := path.Join(m.chapterPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(idx, 4)))
+	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(idx, 4)))
 	if err := m.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
@@ -204,26 +211,6 @@ func (m *manga) ContentRegex() *regexp.Regexp {
 func (m *manga) ShouldDownload(chapter Chapter) bool {
 	_, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
 	return !ok
-}
-
-func (m *manga) chapterDir(chapter Chapter) string {
-	if chpt, err := strconv.ParseFloat(chapter.Chapter, 32); err == nil {
-		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
-		return chDir
-	} else if chapter.Chapter != "" {
-		m.Log.Warn().Err(err).Str("chapter", chapter.Chapter).Msg("unable to parse chapter number, not padding")
-	}
-
-	return fmt.Sprintf("%s Ch. %s", m.Title(), chapter.Chapter)
-
-}
-
-func (m *manga) chapterPath(chapter Chapter) string {
-	return path.Join(m.mangaPath(), m.chapterDir(chapter))
-}
-
-func (m *manga) mangaPath() string {
-	return path.Join(m.Client.GetBaseDir(), m.GetBaseDir(), m.Title())
 }
 
 func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {

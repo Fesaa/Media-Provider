@@ -21,6 +21,10 @@ import (
 
 const (
 	SailorGirlFriend = "Sailor Girlfriend"
+
+	// For tests with special non-chapter; https://dynasty-scans.com/series/shiawase_trimming
+	ShiawaseTrimming   = "Shiawase Trimming"
+	ShiawaseTrimmingId = "shiawase_trimming"
 )
 
 type mockClient struct {
@@ -346,7 +350,7 @@ func TestManga_WriteContentMetaData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	p := path.Join(m.chapterPath(chapter()), "ComicInfo.xml")
+	p := path.Join(m.ContentPath(chapter()), "ComicInfo.xml")
 	_, err = os.Stat(p)
 	if err != nil {
 		t.Fatal(err)
@@ -390,7 +394,7 @@ func TestManga_DownloadContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	filePath := path.Join(m.chapterPath(chapter()), fmt.Sprintf("page %s.jpg", utils.PadInt(1, 4)))
+	filePath := path.Join(m.ContentPath(chapter()), fmt.Sprintf("page %s.jpg", utils.PadInt(1, 4)))
 	_, err = os.Stat(filePath)
 	if err != nil {
 		t.Fatal(err)
