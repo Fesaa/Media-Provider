@@ -27,11 +27,12 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger,
+		log zerolog.Logger, repository Repository,
 	) {
 		wt = &webtoon{
 			id:         req.Id,
 			httpClient: httpClient,
+			repository: repository,
 		}
 
 		d := api.NewDownloadableFromBlock[Chapter](req, wt, client, log.With().Str("handler", "webtoon").Logger())
@@ -42,6 +43,7 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 
 type webtoon struct {
 	httpClient *http.Client
+	repository Repository
 
 	*api.DownloadBase[Chapter]
 	id string
@@ -72,10 +74,11 @@ func (w *webtoon) Provider() models.Provider {
 func (w *webtoon) LoadInfo() chan struct{} {
 	out := make(chan struct{})
 	go func() {
-		info, err := constructSeriesInfo(w.id, w.httpClient)
+		info, err := w.repository.SeriesInfo(w.id)
 		if err != nil {
 			w.Log.Error().Err(err).Msg("error while loading webtoon info")
 			w.Cancel()
+			close(out)
 			return
 		}
 
@@ -83,7 +86,7 @@ func (w *webtoon) LoadInfo() chan struct{} {
 
 		// TempTitle is the title we previously got from the search, just should ensure we get the correct stuff
 		// WebToons search is surprisingly bad at correcting for spaces, special characters, etc...
-		search, err := Search(SearchOptions{Query: w.Req.TempTitle}, w.httpClient)
+		search, err := w.repository.Search(SearchOptions{Query: w.Req.TempTitle})
 		if err != nil {
 			w.Log.Error().Err(err).Msg("error while loading webtoon info")
 			w.Cancel()
@@ -154,7 +157,7 @@ func (w *webtoon) ContentLogger(chapter Chapter) zerolog.Logger {
 }
 
 func (w *webtoon) ContentUrls(chapter Chapter) ([]string, error) {
-	return loadImages(chapter, w.httpClient)
+	return w.repository.LoadImages(chapter)
 }
 
 func (w *webtoon) WriteContentMetaData(chapter Chapter) error {

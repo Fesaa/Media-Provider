@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -30,6 +31,7 @@ func main() {
 	utils.Must(c.Provide(auth.NewApiKeyAuth, dig.Name("api-key-auth")))
 
 	utils.Must(c.Provide(wisewolf.New))
+	utils.Must(c.Provide(webtoon.NewRepository))
 	utils.Must(c.Provide(mangadex.NewRepository))
 	utils.Must(c.Provide(dynasty.NewRepository))
 

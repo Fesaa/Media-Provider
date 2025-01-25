@@ -3,6 +3,7 @@ package routes
 import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -34,7 +35,7 @@ func (pr *proxyRoutes) mangadexUrl(id, fileName string) string {
 }
 
 func (pr *proxyRoutes) webToonUrl(date, id, fileName string) string {
-	return fmt.Sprintf("https://webtoon-phinf.pstatic.net/%s/%s/%s?type=q90", date, id, fileName)
+	return fmt.Sprintf("%s%s/%s/%s?type=q90", webtoon.ImagePrefix, date, id, fileName)
 }
 
 func (pr *proxyRoutes) encoding(fileName string) string {
