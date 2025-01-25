@@ -40,12 +40,12 @@ func (s *SearchData) Url() string {
 
 func (s *SearchData) ProxiedImage() string {
 	parts := strings.Split(strings.TrimPrefix(s.ThumbnailMobile, ImagePrefix), "/")
-	if len(parts) != 4 {
+	if len(parts) != 3 {
 		return ""
 	}
-	date := parts[1]
-	id := parts[2]
-	fileName := strings.TrimSuffix(parts[3], "?type=q90")
+	date := parts[0]
+	id := parts[1]
+	fileName := strings.TrimSuffix(parts[2], "?type=q90")
 	return fmt.Sprintf("proxy/webtoon/covers/%s/%s/%s", date, id, fileName)
 }
 
@@ -59,7 +59,7 @@ func (s *SearchData) ComicInfoRating() comicinfo.AgeRating {
 type Series struct {
 	Id          string
 	Name        string
-	Author      string
+	Authors     []string
 	Description string
 	Genre       string
 	Completed   bool

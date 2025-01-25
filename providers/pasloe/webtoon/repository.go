@@ -102,7 +102,7 @@ func (r *repository) SeriesInfo(id string) (*Series, error) {
 	info := doc.Find(".detail_header .info")
 	series.Genre = info.Find(".genre").Text()
 	series.Name = info.Find(".subj").Text()
-	series.Author = strings.TrimSpace(info.Find(".author_area").Children().Remove().End().Text())
+	series.Authors = extractAuthors(info.Find(".author_area"))
 
 	detail := doc.Find(".detail")
 	series.Description = detail.Find(".summary").Text()
@@ -133,6 +133,19 @@ func (r *repository) SeriesInfo(id string) (*Series, error) {
 func searchUrl(keyword string) string {
 	keyword = strings.TrimSpace(rg.ReplaceAllString(keyword, " "))
 	return fmt.Sprintf(SearchUrl, url.QueryEscape(keyword))
+}
+
+func extractAuthors(sel *goquery.Selection) []string {
+	sel.Find("button").Remove()
+
+	authors := goquery.Map(sel.Find("a"), func(_ int, s *goquery.Selection) string {
+		return s.Text()
+	})
+
+	plainTextAuthors := strings.ReplaceAll(sel.Text(), "...", "")
+	authors = append(authors, strings.Split(plainTextAuthors, ",")...)
+
+	return utils.Map(authors, strings.TrimSpace)
 }
 
 func extractChapters(doc *goquery.Document) []Chapter {
