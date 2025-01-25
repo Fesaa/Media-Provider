@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -45,12 +46,10 @@ type mockUsers struct {
 }
 
 func (m mockUsers) All() ([]models.User, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m mockUsers) ExistsAny() (bool, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
@@ -78,42 +77,34 @@ func (m mockUsers) GetByApiKey(key string) (*models.User, error) {
 }
 
 func (m mockUsers) Create(name string, opts ...models.Option[models.User]) (*models.User, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m mockUsers) Update(user models.User, opts ...models.Option[models.User]) (*models.User, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m mockUsers) UpdateById(id uint, opts ...models.Option[models.User]) (*models.User, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m mockUsers) GenerateReset(userId uint) (*models.PasswordReset, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m mockUsers) GetResetByUserId(userId uint) (*models.PasswordReset, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m mockUsers) GetReset(key string) (*models.PasswordReset, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m mockUsers) DeleteReset(key string) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m mockUsers) Delete(id uint) error {
-	//TODO implement me
 	panic("implement me")
 }
 
@@ -135,7 +126,7 @@ func TestApiKeyAuth_IsAuthenticated(t *testing.T) {
 		return c.JSON(fiber.Map{})
 	})
 
-	resp, err := app.Test(httptest.NewRequest("GET", "/", nil))
+	resp, err := app.Test(httptest.NewRequest(http.MethodGet, "/", nil))
 	if err != nil {
 		t.Errorf("TestApiKeyAuth_IsAuthenticated() error = %v, resp %v", err, resp)
 	}
@@ -144,7 +135,7 @@ func TestApiKeyAuth_IsAuthenticated(t *testing.T) {
 		t.Errorf("TestApiKeyAuth_IsAuthenticated() error = %v, resp %v", resp.StatusCode, resp)
 	}
 
-	resp, err = app.Test(httptest.NewRequest("GET", "/?api-key=test", nil))
+	resp, err = app.Test(httptest.NewRequest(http.MethodGet, "/?api-key=test", nil))
 	if err != nil {
 		t.Errorf("TestApiKeyAuth_IsAuthenticated() error = %v, resp %v", err, resp)
 	}
@@ -154,7 +145,7 @@ func TestApiKeyAuth_IsAuthenticated(t *testing.T) {
 	}
 
 	jwt.succes = true
-	resp, err = app.Test(httptest.NewRequest("GET", "/", nil))
+	resp, err = app.Test(httptest.NewRequest(http.MethodGet, "/", nil))
 	if err != nil {
 		t.Errorf("TestApiKeyAuth_IsAuthenticated() error = %v, resp %v", err, resp)
 	}
