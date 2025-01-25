@@ -365,7 +365,7 @@ func TestWebtoon_WriteContentMetaData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ciPath := path.Join(w.ContentPath(chapter()), "comicinfo.xml")
+	ciPath := path.Join(w.ContentPath(chapter()), "ComicInfo.xml")
 	_, err := os.Stat(ciPath)
 	if err != nil {
 		t.Fatal(err)
