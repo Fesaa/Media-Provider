@@ -1,5 +1,12 @@
 package webtoon
 
+import (
+	"fmt"
+	"github.com/Fesaa/Media-Provider/comicinfo"
+	"net/url"
+	"strings"
+)
+
 type SearchOptions struct {
 	Query string
 }
@@ -27,10 +34,32 @@ type SearchData struct {
 	Rating          bool     `json:"titleUnsuitableForChildren"`
 }
 
+func (s *SearchData) Url() string {
+	return fmt.Sprintf(BaseUrl+"%s/%s/list?title_no=%d", s.Genre, url.PathEscape(s.Name), s.Id)
+}
+
+func (s *SearchData) ProxiedImage() string {
+	parts := strings.Split(strings.TrimPrefix(s.ThumbnailMobile, ImagePrefix), "/")
+	if len(parts) != 3 {
+		return ""
+	}
+	date := parts[0]
+	id := parts[1]
+	fileName := strings.TrimSuffix(parts[2], "?type=q90")
+	return fmt.Sprintf("proxy/webtoon/covers/%s/%s/%s", date, id, fileName)
+}
+
+func (s *SearchData) ComicInfoRating() comicinfo.AgeRating {
+	if s.Rating {
+		return comicinfo.AgeRatingMaturePlus17
+	}
+	return comicinfo.AgeRatingEveryone
+}
+
 type Series struct {
 	Id          string
 	Name        string
-	Author      string
+	Authors     []string
 	Description string
 	Genre       string
 	Completed   bool

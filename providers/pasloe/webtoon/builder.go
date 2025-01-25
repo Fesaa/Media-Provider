@@ -6,12 +6,11 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"net/http"
 )
 
 type Builder struct {
 	log        zerolog.Logger
-	httpClient *http.Client
+	repository Repository
 	ps         api.Client
 }
 
@@ -46,7 +45,7 @@ func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
 }
 
 func (b *Builder) Search(s SearchOptions) ([]SearchData, error) {
-	return Search(s, b.httpClient)
+	return b.repository.Search(s)
 }
 
 func (b *Builder) Download(request payload.DownloadRequest) error {
@@ -57,6 +56,10 @@ func (b *Builder) Stop(request payload.StopRequest) error {
 	return b.ps.RemoveDownload(request)
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client) *Builder {
-	return &Builder{log.With().Str("handler", "webtoon-provider").Logger(), httpClient, ps}
+func NewBuilder(log zerolog.Logger, ps api.Client, repository Repository) *Builder {
+	return &Builder{
+		log:        log.With().Str("handler", "webtoon-provider").Logger(),
+		repository: repository,
+		ps:         ps,
+	}
 }

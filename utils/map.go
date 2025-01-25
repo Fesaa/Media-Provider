@@ -44,6 +44,7 @@ func Filter[T any](in []T, f func(T) bool) []T {
 	return out
 }
 
+// Find returns the first element in the slice that returns true for the function
 func Find[T any](in []T, f func(T) bool) *T {
 	for _, t := range in {
 		if f(t) {

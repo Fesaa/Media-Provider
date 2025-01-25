@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"net/http"
 	"strconv"
@@ -15,7 +16,7 @@ type Builder struct {
 	log        zerolog.Logger
 	httpClient *http.Client
 	ps         api.Client
-	repository *Repository
+	repository Repository
 }
 
 func (b *Builder) Provider() models.Provider {
@@ -34,10 +35,6 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 	info := make([]payload.Info, 0)
 	for _, data := range mangas.Data {
 		enTitle := data.Attributes.EnTitle()
-		if enTitle == "" {
-			continue
-		}
-
 		info = append(info, payload.Info{
 			Name:        enTitle,
 			Description: data.Attributes.EnDescription(),
@@ -60,9 +57,39 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 }
 
 func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
-	return SearchOptions{
+	ms := SearchOptions{
 		Query: s.Query,
 	}
+
+	skip, ok := s.Modifiers["SkipNotFoundTags"]
+	if ok {
+		ms.SkipNotFoundTags = utils.OrDefault(skip, "true") == "true"
+	} else {
+		ms.SkipNotFoundTags = true
+	}
+
+	iT, ok := s.Modifiers["includeTags"]
+	if ok {
+		ms.IncludedTags = iT
+	}
+	eT, ok := s.Modifiers["excludeTags"]
+	if ok {
+		ms.ExcludedTags = eT
+	}
+	st, ok := s.Modifiers["status"]
+	if ok {
+		ms.Status = st
+	}
+	cr, ok := s.Modifiers["contentRating"]
+	if ok {
+		ms.ContentRating = cr
+	}
+	pd, ok := s.Modifiers["publicationDemographic"]
+	if ok {
+		ms.PublicationDemographic = pd
+	}
+
+	return ms
 }
 
 func (b *Builder) Search(s SearchOptions) (*MangaSearchResponse, error) {
@@ -77,7 +104,7 @@ func (b *Builder) Stop(request payload.StopRequest) error {
 	return b.ps.RemoveDownload(request)
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository *Repository) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository Repository) *Builder {
 	return &Builder{log.With().Str("handler", "mangadex-provider").Logger(),
 		httpClient, ps, repository}
 }

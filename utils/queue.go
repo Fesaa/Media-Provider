@@ -5,9 +5,13 @@ import (
 	"slices"
 )
 
+var (
+	ErrQueueEmpty = errors.New("dequeue called on empty queue")
+)
+
 type Queue[T comparable] interface {
 	Enqueue(item T)
-	Dequeue() (*T, error)
+	Dequeue() (*T, error) // TODO: Change to (T, error)
 	IsEmpty() bool
 	Size() int
 	Items() []T
@@ -28,7 +32,7 @@ func (q *queueImpl[T]) Enqueue(item T) {
 
 func (q *queueImpl[T]) Dequeue() (*T, error) {
 	if q.IsEmpty() {
-		return nil, errors.New("queue is empty")
+		return nil, ErrQueueEmpty
 	}
 	item := q.items[0]
 	q.items = q.items[1:]

@@ -6,7 +6,6 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -21,8 +20,8 @@ type pageRoutes struct {
 	DB     *db.Database
 	Auth   auth.Provider `name:"jwt-auth"`
 	Log    zerolog.Logger
-	Val    *validator.Validate
 
+	Val         services.ValidationService
 	PageService services.PageService
 }
 
@@ -59,16 +58,16 @@ func (pr *pageRoutes) Pages(ctx *fiber.Ctx) error {
 }
 
 func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
-	id, _ := ctx.ParamsInt("index", -1)
-	if id == -1 {
+	id, err := ParamsUInt(ctx, "pageId")
+	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"message": "Invalid id",
 		})
 	}
 
-	page, err := pr.DB.Pages.Get(int64(id))
+	page, err := pr.DB.Pages.Get(id)
 	if err != nil {
-		pr.Log.Error().Err(err).Int("pageId", id).Msg("Failed to get page")
+		pr.Log.Error().Err(err).Uint("pageId", id).Msg("Failed to get page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -89,15 +88,8 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 	}
 
 	var page models.Page
-	if err := ctx.BodyParser(&page); err != nil {
+	if err := pr.Val.ValidateCtx(ctx, &page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse page")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	if err := pr.Val.Struct(page); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to validate page")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -114,8 +106,8 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 }
 
 func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
-	id, _ := ctx.ParamsInt("pageId", -1)
-	if id == -1 {
+	id, err := ParamsUInt(ctx, "pageId")
+	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "pageId must be a positive integer",
 		})
@@ -127,7 +119,7 @@ func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
 
-	if err := pr.DB.Pages.Delete(int64(id)); err != nil {
+	if err := pr.DB.Pages.Delete(id); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to delete page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
@@ -139,7 +131,7 @@ func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 
 func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
 	var m payload.SwapPageRequest
-	if err := ctx.BodyParser(&m); err != nil {
+	if err := pr.Val.ValidateCtx(ctx, &m); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse swap page")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",

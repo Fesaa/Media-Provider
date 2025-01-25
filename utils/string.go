@@ -6,10 +6,13 @@ import (
 	"strings"
 )
 
+// PadInt returns the i as a string s, with 0's added to the left until len(s) >= n
 func PadInt(i int, n int) string {
 	return pad(strconv.Itoa(i), n)
 }
 
+// PadFloat returns the float as a string, with pad called on the whole part
+// and the first decimal part added, if present
 func PadFloat(f float64, n int) string {
 	full := fmt.Sprintf("%.1f", f)
 	parts := strings.Split(full, ".")

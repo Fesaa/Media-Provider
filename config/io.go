@@ -37,7 +37,7 @@ func Load() (*Config, error) {
 
 	if errors.Is(err, os.ErrNotExist) {
 		slog.Warn("Config file not found, creating new one", "path", configPath)
-		cfg = defaultConfig()
+		cfg = DefaultConfig()
 		err = write(configPath, cfg)
 	}
 

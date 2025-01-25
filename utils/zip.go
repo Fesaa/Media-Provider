@@ -45,6 +45,10 @@ func addFileToZip(zipWriter *zip.Writer, filename string, baseDir string) error 
 }
 
 func ZipFolder(folderPath string, zipFileName string) error {
+	_, err := os.Stat(folderPath)
+	if os.IsNotExist(err) {
+		return err
+	}
 	zipFile, err := os.Create(zipFileName)
 	if err != nil {
 		return err

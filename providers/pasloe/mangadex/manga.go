@@ -34,7 +34,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger, repository *Repository,
+		log zerolog.Logger, repository Repository,
 	) {
 		block = &manga{
 			id:             req.Id,
@@ -54,7 +54,7 @@ type manga struct {
 	id string
 
 	httpClient *http.Client
-	repository *Repository
+	repository Repository
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
@@ -89,14 +89,16 @@ func (m *manga) LoadInfo() chan struct{} {
 		if err != nil {
 			m.Log.Error().Err(err).Msg("error while loading manga info")
 			m.Cancel()
+			close(out)
 			return
 		}
 		m.info = &mangaInfo.Data
 
 		chapters, err := m.repository.GetChapters(m.id)
 		if err != nil || chapters == nil {
-			m.Log.Error().Err(err).Msg("error while loading manga info")
+			m.Log.Error().Err(err).Msg("error while loading chapter info")
 			m.Cancel()
+			close(out)
 			return
 		}
 		m.chapters = chapters.FilterOneEnChapter()
@@ -180,6 +182,10 @@ func (m *manga) GetInfo() payload.InfoStat {
 }
 
 func (m *manga) ContentDir(chapter ChapterSearchData) string {
+	if chapter.Attributes.Chapter == "" { // TODO: Check if this is a good enough check
+		return fmt.Sprintf("%s OneShot", m.Title())
+	}
+
 	if chpt, err := strconv.ParseFloat(chapter.Attributes.Chapter, 32); err == nil {
 		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
 		return chDir
@@ -188,14 +194,14 @@ func (m *manga) ContentDir(chapter ChapterSearchData) string {
 	}
 
 	return fmt.Sprintf("%s Ch. %s", m.Title(), chapter.Attributes.Chapter)
-	// return m.volumeDir(chapter.Attributes.Volume)
 }
 
 func (m *manga) ContentPath(chapter ChapterSearchData) string {
+	base := path.Join(m.Client.GetBaseDir(), m.GetBaseDir(), m.Title())
 	if chapter.Attributes.Volume == "" {
-		return path.Join(m.mangaPath(), m.ContentDir(chapter))
+		return path.Join(base, m.ContentDir(chapter))
 	}
-	return path.Join(m.mangaPath(), m.volumeDir(chapter.Attributes.Volume), m.ContentDir(chapter))
+	return path.Join(base, m.volumeDir(chapter.Attributes.Volume), m.ContentDir(chapter))
 }
 
 func (m *manga) ContentKey(chapter ChapterSearchData) string {
@@ -204,7 +210,7 @@ func (m *manga) ContentKey(chapter ChapterSearchData) string {
 
 func (m *manga) ContentLogger(chapter ChapterSearchData) zerolog.Logger {
 	builder := m.Log.With().
-		Str("id", chapter.Id).
+		Str("chapterId", chapter.Id).
 		Str("chapter", chapter.Attributes.Chapter)
 
 	if chapter.Attributes.Volume != "" {
@@ -420,24 +426,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		ci.LocalizedSeries = alts[0]
 	}
 
-	// Add the comicinfo#count field if the manga has completed, so Kavita can add the correct Completed marker
-	// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
-	if m.info.Attributes.Status == StatusCompleted {
-		switch {
-		case m.totalVolumes == 0 && m.foundLastChapter:
-			ci.Count = m.totalChapters
-		case m.foundLastChapter && m.foundLastVolume:
-			ci.Count = m.totalVolumes
-		case !m.hasWarned:
-			m.hasWarned = true
-			m.Log.Warn().
-				Str("lastChapter", m.info.Attributes.LastChapter).
-				Bool("foundLastChapter", m.foundLastChapter).
-				Str("lastVolume", m.info.Attributes.LastVolume).
-				Bool("foundLastVolume", m.foundLastVolume).
-				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
-		}
-	}
+	m.writeCIStatus(ci)
 
 	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {
 		ci.Volume = v
@@ -476,6 +465,28 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 	ci.Notes = comicInfoNote
 	return ci
+}
+
+// writeStatus Add the comicinfo#count field if the manga has completed, so Kavita can add the correct Completed marker
+// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
+func (m *manga) writeCIStatus(ci *comicinfo.ComicInfo) {
+	if m.info.Attributes.Status != StatusCompleted {
+		return
+	}
+	switch {
+	case m.totalVolumes == 0 && m.foundLastChapter:
+		ci.Count = m.totalChapters
+	case m.foundLastChapter && m.foundLastVolume:
+		ci.Count = m.totalVolumes
+	case !m.hasWarned:
+		m.hasWarned = true
+		m.Log.Warn().
+			Str("lastChapter", m.info.Attributes.LastChapter).
+			Bool("foundLastChapter", m.foundLastChapter).
+			Str("lastVolume", m.info.Attributes.LastVolume).
+			Bool("foundLastVolume", m.foundLastVolume).
+			Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
+	}
 }
 
 func (m *manga) DownloadContent(page int, chapter ChapterSearchData, url string) error {
@@ -521,7 +532,7 @@ func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.
 	}
 
 	if strconv.Itoa(ci.Volume) == chapter.Attributes.Volume {
-		l.Debug().Str("path", fullPath).Msg("Volume on disk matches, not replaces")
+		l.Debug().Str("path", fullPath).Msg("Volume on disk matches, not replacing")
 		return false
 	}
 
@@ -538,10 +549,6 @@ func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.
 	}
 
 	return true
-}
-
-func (m *manga) mangaPath() string {
-	return path.Join(m.Client.GetBaseDir(), m.GetBaseDir(), m.Title())
 }
 
 func (m *manga) volumeDir(v string) string {

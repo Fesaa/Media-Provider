@@ -24,7 +24,7 @@ func (p *pagesImpl) All() ([]models.Page, error) {
 	return pages, nil
 }
 
-func (p *pagesImpl) Get(id int64) (*models.Page, error) {
+func (p *pagesImpl) Get(id uint) (*models.Page, error) {
 	var page models.Page
 	result := p.db.Preload("Modifiers").Preload("Modifiers.Values").First(&page, id)
 	if result.Error != nil {
@@ -45,6 +45,6 @@ func (p *pagesImpl) Update(page *models.Page) error {
 	return p.db.Save(page).Error
 }
 
-func (p *pagesImpl) Delete(id int64) error {
+func (p *pagesImpl) Delete(id uint) error {
 	return p.db.Delete(&models.Page{}, id).Error
 }

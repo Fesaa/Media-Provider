@@ -4,7 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/go-playground/validator/v10"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -17,7 +17,7 @@ type preferencesRoute struct {
 	Auth   auth.Provider `name:"jwt-auth"`
 	DB     *db.Database
 	Log    zerolog.Logger
-	Val    *validator.Validate
+	Val    services.ValidationService
 }
 
 func RegisterPreferencesRoutes(pr preferencesRoute) {
@@ -40,15 +40,8 @@ func (pr *preferencesRoute) Get(ctx *fiber.Ctx) error {
 
 func (pr *preferencesRoute) Update(ctx *fiber.Ctx) error {
 	var pref models.Preference
-	if err := ctx.BodyParser(&pref); err != nil {
+	if err := pr.Val.ValidateCtx(ctx, &pref); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse preferences")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	if err := pr.Val.Struct(&pref); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to validate preferences")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
 		})

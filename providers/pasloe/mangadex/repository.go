@@ -9,13 +9,21 @@ import (
 	"net/http"
 )
 
-type Repository struct {
+type Repository interface {
+	GetManga(id string) (*GetMangaResponse, error)
+	SearchManga(options SearchOptions) (*MangaSearchResponse, error)
+	GetChapters(id string, offset ...int) (*ChapterSearchResponse, error)
+	GetChapterImages(id string) (*ChapterImageSearchResponse, error)
+	GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error)
+}
+
+type repository struct {
 	httpClient *http.Client
 	log        zerolog.Logger
 }
 
-func NewRepository(httpClient *http.Client, log zerolog.Logger) *Repository {
-	return &Repository{
+func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
+	return &repository{
 		httpClient: httpClient,
 		log:        log,
 	}
@@ -38,7 +46,7 @@ func mapTags(in []string, skip bool) ([]string, error) {
 	return mappedTags, nil
 }
 
-func (r *Repository) GetManga(id string) (*GetMangaResponse, error) {
+func (r *repository) GetManga(id string) (*GetMangaResponse, error) {
 	url := getMangaURL(id)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetManga")
 	var getMangaResponse GetMangaResponse
@@ -49,7 +57,7 @@ func (r *Repository) GetManga(id string) (*GetMangaResponse, error) {
 	return &getMangaResponse, nil
 }
 
-func (r *Repository) SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
+func (r *repository) SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
 	url, err := searchMangaURL(options)
 	if err != nil {
 		return nil, err
@@ -63,7 +71,7 @@ func (r *Repository) SearchManga(options SearchOptions) (*MangaSearchResponse, e
 	return &searchResponse, nil
 }
 
-func (r *Repository) GetChapters(id string, offset ...int) (*ChapterSearchResponse, error) {
+func (r *repository) GetChapters(id string, offset ...int) (*ChapterSearchResponse, error) {
 	url := chapterURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapters")
 	var searchResponse ChapterSearchResponse
@@ -84,7 +92,7 @@ func (r *Repository) GetChapters(id string, offset ...int) (*ChapterSearchRespon
 	return &searchResponse, nil
 }
 
-func (r *Repository) GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
+func (r *repository) GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
 	url := chapterImageUrl(id)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapterImages")
 	var searchResponse ChapterImageSearchResponse
@@ -95,7 +103,7 @@ func (r *Repository) GetChapterImages(id string) (*ChapterImageSearchResponse, e
 	return &searchResponse, nil
 }
 
-func (r *Repository) GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error) {
+func (r *repository) GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error) {
 	url := getCoverURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Str("offset", fmt.Sprintf("%#v", offset)).Msg("GetCoverImages")
 	var searchResponse MangaCoverResponse

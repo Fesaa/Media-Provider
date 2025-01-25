@@ -5,53 +5,53 @@ import (
 )
 
 type SearchRequest struct {
-	Provider  []models.Provider   `json:"provider"`
+	Provider  []models.Provider   `json:"provider" validate:"required,min=1,dive,provider"`
 	Query     string              `json:"query"`
-	Modifiers map[string][]string `json:"modifiers,omitempty"`
+	Modifiers map[string][]string `json:"modifiers,omitempty" validate:"dive,keys,required,endkeys,dive,required"`
 }
 
 type DownloadRequest struct {
-	Provider  models.Provider `json:"provider"`
-	Id        string          `json:"id"`
-	BaseDir   string          `json:"dir"`
-	TempTitle string          `json:"title"`
+	Provider  models.Provider `json:"provider" validate:"required,provider"`
+	Id        string          `json:"id" validate:"required"`
+	BaseDir   string          `json:"dir" validate:"required"`
+	TempTitle string          `json:"title" validate:"required"`
 }
 
 type StopRequest struct {
-	Provider    models.Provider `json:"provider"`
-	Id          string          `json:"id"`
-	DeleteFiles bool            `json:"delete"`
+	Provider    models.Provider `json:"provider" validate:"required,provider"`
+	Id          string          `json:"id" validate:"required"`
+	DeleteFiles bool            `json:"delete" validate:"required"`
 }
 
 type ListDirsRequest struct {
-	Dir       string `json:"dir"`
-	ShowFiles bool   `json:"files"`
+	Dir       string `json:"dir" validate:"required"`
+	ShowFiles bool   `json:"files" validate:"required"`
 }
 
 type LoginRequest struct {
-	UserName string `json:"username"`
-	Password string `json:"password"`
+	UserName string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
 	Remember bool   `json:"remember,omitempty"`
 }
 
 type LoginResponse struct {
-	Id          uint   `json:"id"`
-	Name        string `json:"name"`
-	Token       string `json:"token"`
+	Id          uint   `json:"id" validate:"required"`
+	Name        string `json:"name" validate:"required"`
+	Token       string `json:"token" validate:"required"`
 	ApiKey      string `json:"apiKey,omitempty"`
-	Permissions int    `json:"permissions"`
+	Permissions int    `json:"permissions" validate:"gte=0"`
 }
 
 type UpdatePasswordRequest struct {
-	Password string `json:"password"`
+	Password string `json:"password" validate:"required"`
 }
 
 type SwapPageRequest struct {
-	Id1 int64 `json:"id1"`
-	Id2 int64 `json:"id2"`
+	Id1 uint `json:"id1" validate:"required"`
+	Id2 uint `json:"id2" validate:"required,diff=Id1"`
 }
 
 type ResetPasswordRequest struct {
-	Key      string `json:"key"`
-	Password string `json:"password"`
+	Key      string `json:"key" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }

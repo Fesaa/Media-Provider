@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -18,13 +19,8 @@ type cronService struct {
 }
 
 func CronServiceProvider(log zerolog.Logger) (CronService, error) {
-	s, err := gocron.NewScheduler()
-	if err != nil {
-		return nil, err
-	}
-
+	s := utils.MustReturn(gocron.NewScheduler())
 	s.Start()
-
 	return cronService{
 		Scheduler: s,
 		log:       log,

@@ -27,11 +27,12 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger,
+		log zerolog.Logger, repository Repository,
 	) {
 		wt = &webtoon{
 			id:         req.Id,
 			httpClient: httpClient,
+			repository: repository,
 		}
 
 		d := api.NewDownloadableFromBlock[Chapter](req, wt, client, log.With().Str("handler", "webtoon").Logger())
@@ -42,6 +43,7 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 
 type webtoon struct {
 	httpClient *http.Client
+	repository Repository
 
 	*api.DownloadBase[Chapter]
 	id string
@@ -72,10 +74,11 @@ func (w *webtoon) Provider() models.Provider {
 func (w *webtoon) LoadInfo() chan struct{} {
 	out := make(chan struct{})
 	go func() {
-		info, err := constructSeriesInfo(w.id, w.httpClient)
+		info, err := w.repository.SeriesInfo(w.id)
 		if err != nil {
 			w.Log.Error().Err(err).Msg("error while loading webtoon info")
 			w.Cancel()
+			close(out)
 			return
 		}
 
@@ -83,10 +86,11 @@ func (w *webtoon) LoadInfo() chan struct{} {
 
 		// TempTitle is the title we previously got from the search, just should ensure we get the correct stuff
 		// WebToons search is surprisingly bad at correcting for spaces, special characters, etc...
-		search, err := Search(SearchOptions{Query: w.Req.TempTitle}, w.httpClient)
+		search, err := w.repository.Search(SearchOptions{Query: w.Req.TempTitle})
 		if err != nil {
 			w.Log.Error().Err(err).Msg("error while loading webtoon info")
 			w.Cancel()
+			close(out)
 			return
 		}
 
@@ -138,11 +142,11 @@ func (w *webtoon) GetInfo() payload.InfoStat {
 }
 
 func (w *webtoon) ContentDir(chapter Chapter) string {
-	return w.chapterDir(chapter.Number)
+	return fmt.Sprintf("%s Ch. %s", w.Title(), chapter.Number)
 }
 
 func (w *webtoon) ContentPath(chapter Chapter) string {
-	return w.chapterPath(chapter.Number)
+	return path.Join(w.Client.GetBaseDir(), w.GetBaseDir(), w.Title(), w.ContentDir(chapter))
 }
 
 func (w *webtoon) ContentKey(chapter Chapter) string {
@@ -154,13 +158,13 @@ func (w *webtoon) ContentLogger(chapter Chapter) zerolog.Logger {
 }
 
 func (w *webtoon) ContentUrls(chapter Chapter) ([]string, error) {
-	return loadImages(chapter, w.httpClient)
+	return w.repository.LoadImages(chapter)
 }
 
 func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
-	filePath := path.Join(w.chapterPath(chapter.Number), "!0000 cover.jpg")
+	filePath := path.Join(w.ContentPath(chapter), "!0000 cover.jpg")
 	imageUrl := func() string {
 		// Kavita uses the image of the first chapter as the cover image in lists
 		// We replace this with the nicer looking image. As this software is still targeting Kavita
@@ -174,7 +178,7 @@ func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
 	}
 
 	w.Log.Trace().Str("chapter", chapter.Number).Msg("writing comicinfoxml")
-	return comicinfo.Save(w.comicInfo(), path.Join(w.chapterPath(chapter.Number), "ComicInfo.xml"))
+	return comicinfo.Save(w.comicInfo(), path.Join(w.ContentPath(chapter), "ComicInfo.xml"))
 }
 
 func (w *webtoon) comicInfo() *comicinfo.ComicInfo {
@@ -199,7 +203,7 @@ func (w *webtoon) comicInfo() *comicinfo.ComicInfo {
 }
 
 func (w *webtoon) DownloadContent(page int, chapter Chapter, url string) error {
-	filePath := path.Join(w.chapterPath(chapter.Number), fmt.Sprintf("page %s.jpg", utils.PadInt(page, 4)))
+	filePath := path.Join(w.ContentPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(page, 4)))
 	if err := w.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
@@ -214,18 +218,6 @@ func (w *webtoon) ContentRegex() *regexp.Regexp {
 func (w *webtoon) ShouldDownload(chapter Chapter) bool {
 	_, ok := w.GetContentByName(w.ContentDir(chapter) + ".cbz")
 	return !ok
-}
-
-func (w *webtoon) webToonPath() string {
-	return path.Join(w.Client.GetBaseDir(), w.GetBaseDir(), w.Title())
-}
-
-func (w *webtoon) chapterDir(number string) string {
-	return fmt.Sprintf("%s Ch. %s", w.Title(), number)
-}
-
-func (w *webtoon) chapterPath(number string) string {
-	return path.Join(w.webToonPath(), w.chapterDir(number))
 }
 
 func (w *webtoon) downloadAndWrite(url string, path string, tryAgain ...bool) error {

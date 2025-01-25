@@ -22,6 +22,7 @@ type contentRoutes struct {
 	PS     api.Client
 	Log    zerolog.Logger
 
+	Val            services.ValidationService
 	ContentService services.ContentService
 }
 
@@ -34,7 +35,7 @@ func RegisterContentRoutes(cr contentRoutes) {
 
 func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
 	var searchRequest payload.SearchRequest
-	if err := ctx.BodyParser(&searchRequest); err != nil {
+	if err := cr.Val.ValidateCtx(ctx, &searchRequest); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -56,7 +57,7 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
 
 func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 	var req payload.DownloadRequest
-	if err := ctx.BodyParser(&req); err != nil {
+	if err := cr.Val.ValidateCtx(ctx, &req); err != nil {
 		cr.Log.Error().Err(err).Msg("error while parsing body")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
@@ -85,7 +86,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 
 func (cr *contentRoutes) Stop(ctx *fiber.Ctx) error {
 	var req payload.StopRequest
-	if err := ctx.BodyParser(&req); err != nil {
+	if err := cr.Val.ValidateCtx(ctx, &req); err != nil {
 		cr.Log.Error().Err(err).Msg("error while parsing body")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),

@@ -1,8 +1,13 @@
 package models
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"time"
+)
+
+var (
+	ErrFailedToLoadPreferences = errors.New("failed to load preferences")
 )
 
 type Subscription struct {
@@ -24,7 +29,7 @@ func (s *Subscription) ShouldRefresh(old *Subscription) bool {
 func (s *Subscription) Normalize(p Preferences) error {
 	pref, err := p.Get()
 	if err != nil {
-		return err
+		return ErrFailedToLoadPreferences
 	}
 
 	s.Info.LastCheck = s.normalize(s.Info.LastCheck, pref.SubscriptionRefreshHour)
@@ -39,7 +44,7 @@ func (s *Subscription) normalize(t time.Time, hour int) time.Time {
 func (s *Subscription) NextExecution(p Preferences) (time.Time, error) {
 	pref, err := p.Get()
 	if err != nil {
-		return time.Time{}, err
+		return time.Time{}, ErrFailedToLoadPreferences
 	}
 
 	diff := time.Since(s.Info.LastCheck)

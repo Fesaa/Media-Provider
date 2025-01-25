@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -21,6 +22,8 @@ type userRoutes struct {
 	Auth   auth.Provider `name:"jwt-auth"`
 	DB     *db.Database
 	Log    zerolog.Logger
+
+	Val services.ValidationService
 }
 
 func RegisterUserRoutes(ur userRoutes) {
@@ -54,7 +57,7 @@ func (ur *userRoutes) AnyUserExists(ctx *fiber.Ctx) error {
 
 func (ur *userRoutes) RegisterUser(ctx *fiber.Ctx) error {
 	var register payload.LoginRequest
-	if err := ctx.BodyParser(&register); err != nil {
+	if err := ur.Val.ValidateCtx(ctx, &register); err != nil {
 		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return fiber.ErrBadRequest
 	}
@@ -114,7 +117,7 @@ func (ur *userRoutes) RegisterUser(ctx *fiber.Ctx) error {
 
 func (ur *userRoutes) LoginUser(ctx *fiber.Ctx) error {
 	var login payload.LoginRequest
-	if err := ctx.BodyParser(&login); err != nil {
+	if err := ur.Val.ValidateCtx(ctx, &login); err != nil {
 		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return fiber.ErrBadRequest
 	}
@@ -185,7 +188,7 @@ func (ur *userRoutes) UpdateUser(ctx *fiber.Ctx) error {
 	}
 
 	var userDto payload.UserDto
-	if err := ctx.BodyParser(&userDto); err != nil {
+	if err := ur.Val.ValidateCtx(ctx, &userDto); err != nil {
 		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
@@ -297,7 +300,7 @@ func (ur *userRoutes) GenerateResetPassword(ctx *fiber.Ctx) error {
 
 func (ur *userRoutes) ResetPassword(ctx *fiber.Ctx) error {
 	var pl payload.ResetPasswordRequest
-	if err := ctx.BodyParser(&pl); err != nil {
+	if err := ur.Val.ValidateCtx(ctx, &pl); err != nil {
 		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return fiber.ErrBadRequest
 	}

@@ -10,11 +10,6 @@ import (
 	"strings"
 )
 
-func ValidatorProvider() *validator.Validate {
-	val := validator.New()
-	return val
-}
-
 func validateConfig(cfg *config.Config, log zerolog.Logger, val *validator.Validate) error {
 	if err := val.Struct(cfg); err != nil {
 		return err

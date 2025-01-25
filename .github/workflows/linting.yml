@@ -1,4 +1,4 @@
-name: Validate
+name: Validate - Linter
 
 on:
   push:
@@ -7,10 +7,9 @@ on:
   pull_request:
     branches:
       - master
-  merge_group:
 
 jobs:
-  job:
+  linter:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,10 +18,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.21
+          go-version: 1.23
 
       - name: 🧹 Lint
         uses: golangci/golangci-lint-action@v6
-
-      - name: 🧪 Test
-        run: go test -v ./...

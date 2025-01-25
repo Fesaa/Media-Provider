@@ -52,6 +52,9 @@ func (s *SafeMap[K, V]) Len() int {
 	return len(s.m)
 }
 
+// ForEachSafe iterates over the map, does not unlock during functionc all.
+//
+// Use SafeMap.ForEach if you need to modify the map
 func (s *SafeMap[K, V]) ForEachSafe(f func(K, V)) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -60,6 +63,7 @@ func (s *SafeMap[K, V]) ForEachSafe(f func(K, V)) {
 	}
 }
 
+// ForEach iterates over the map, and unlocks during function call
 func (s *SafeMap[K, V]) ForEach(f func(K, V)) {
 	s.lock.Lock()
 	for k, v := range s.m {
@@ -67,13 +71,5 @@ func (s *SafeMap[K, V]) ForEach(f func(K, V)) {
 		f(k, v)
 		s.lock.Lock()
 	}
-	s.lock.Unlock()
-}
-
-func (s *SafeMap[K, V]) Lock() {
-	s.lock.Lock()
-}
-
-func (s *SafeMap[K, V]) Unlock() {
 	s.lock.Unlock()
 }

@@ -30,9 +30,11 @@ func MdToSafeHtml(mdString string) string {
 
 	unsafeHtml = strings.ReplaceAll(unsafeHtml, "<p>", "")
 	unsafeHtml = strings.ReplaceAll(unsafeHtml, "</p>", "")
-	return SanitizeHtml(unsafeHtml)
+	return strings.TrimSuffix(SanitizeHtml(unsafeHtml), "\n")
 }
 
 func SanitizeHtml(htmlString string) string {
-	return bluemonday.UGCPolicy().Sanitize(htmlString)
+	return bluemonday.UGCPolicy().
+		AllowAttrs("target").OnElements("a").
+		Sanitize(htmlString)
 }

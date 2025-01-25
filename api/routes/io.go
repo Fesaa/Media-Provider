@@ -4,6 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"os"
@@ -20,6 +21,7 @@ type ioRoutes struct {
 	Cfg    *config.Config
 	Auth   auth.Provider `name:"jwt-auth"`
 	Log    zerolog.Logger
+	Val    services.ValidationService
 }
 
 func RegisterIoRoutes(ior ioRoutes) {
@@ -30,7 +32,7 @@ func RegisterIoRoutes(ior ioRoutes) {
 
 func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
 	var req payload.ListDirsRequest
-	if err := ctx.BodyParser(&req); err != nil {
+	if err := ior.Val.ValidateCtx(ctx, &req); err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to parse request")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
@@ -63,7 +65,7 @@ type CreateDirRequest struct {
 
 func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 	var req CreateDirRequest
-	if err := ctx.BodyParser(&req); err != nil {
+	if err := ior.Val.ValidateCtx(ctx, &req); err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to parse request")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
