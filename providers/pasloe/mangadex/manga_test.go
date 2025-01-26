@@ -860,3 +860,45 @@ func TestManga_ShouldDownload(t *testing.T) {
 	}
 
 }
+
+func TestChapterSearchResponse_FilterOneEnChapter(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	m.language = "en"
+
+	res, err := m.repository.GetChapters(RainbowsAfterStormsID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filtered := m.FilterChapters(res)
+	if len(filtered.Data) != 172 {
+		t.Errorf("Expected 172 chapters, got %d", len(filtered.Data))
+	}
+}
+
+func TestChapterSearchResponse_FilterOneEnChapterSkipOfficial(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	m.language = "en"
+
+	c := ChapterSearchResponse{
+		Result:   "",
+		Response: "",
+		Data: []ChapterSearchData{
+			{
+				Attributes: ChapterAttributes{
+					ExternalUrl:        "some external url",
+					TranslatedLanguage: "en",
+				},
+			},
+		},
+		Limit:  0,
+		Offset: 0,
+		Total:  0,
+	}
+
+	filtered := m.FilterChapters(&c)
+	if len(filtered.Data) != 0 {
+		t.Errorf("Expected 0 chapters, got %d", len(filtered.Data))
+	}
+
+}

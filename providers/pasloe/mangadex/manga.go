@@ -108,34 +108,9 @@ func (m *manga) LoadInfo() chan struct{} {
 			close(out)
 			return
 		}
-		m.chapters = chapters.FilterToLanguage(m.language)
 
-		volumes := mapset.NewSet[string]()
-		chapterSet := mapset.NewSet[string]()
-		m.foundLastVolume = false
-		for _, ch := range m.chapters.Data {
-			if ch.Attributes.Volume == m.info.Attributes.LastVolume && m.info.Attributes.LastVolume != "" {
-				m.foundLastVolume = true
-			}
-			if ch.Attributes.Chapter == m.info.Attributes.LastChapter && m.info.Attributes.LastChapter != "" {
-				m.foundLastChapter = true
-			}
-			if _, err = strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
-				volumes.Add(ch.Attributes.Volume)
-			} else {
-				m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
-					Msg("not adding chapter, as Volume string isn't an int")
-			}
-
-			if _, err = strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
-				chapterSet.Add(ch.Attributes.Chapter)
-			} else {
-				m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
-					Msg("not adding chapter, as Chapter string isn't an int")
-			}
-		}
-		m.totalVolumes = volumes.Cardinality()
-		m.totalChapters = chapterSet.Cardinality()
+		m.chapters = m.FilterChapters(chapters)
+		m.SetSeriesStatus()
 
 		covers, err := m.repository.GetCoverImages(m.id)
 		if err != nil || covers == nil {
@@ -150,6 +125,105 @@ func (m *manga) LoadInfo() chan struct{} {
 		close(out)
 	}()
 	return out
+}
+
+func (m *manga) SetSeriesStatus() {
+	volumes := mapset.NewSet[string]()
+	chapterSet := mapset.NewSet[string]()
+
+	// If there is a last chapter present, but no last volume is given. We assume that the series does not use volumes
+	m.foundLastVolume = m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter != ""
+	for _, ch := range m.chapters.Data {
+		if ch.Attributes.Volume == m.info.Attributes.LastVolume && m.info.Attributes.LastVolume != "" {
+			m.foundLastVolume = true
+		}
+		if ch.Attributes.Chapter == m.info.Attributes.LastChapter && m.info.Attributes.LastChapter != "" {
+			m.foundLastChapter = true
+		}
+
+		if _, err := strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
+			volumes.Add(ch.Attributes.Volume)
+		} else {
+			m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
+				Msg("not adding chapter, as Volume string isn't an int")
+		}
+
+		if _, err := strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
+			chapterSet.Add(ch.Attributes.Chapter)
+		} else {
+			m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
+				Msg("not adding chapter, as Chapter string isn't an int")
+		}
+	}
+	m.totalVolumes = volumes.Cardinality()
+	m.totalChapters = chapterSet.Cardinality()
+}
+
+func (m *manga) FilterChapters(c *ChapterSearchResponse) ChapterSearchResponse {
+	scanlation := func() string {
+		if scanlationGroup, ok := m.Req.GetString(ScanlationGroupKey); ok {
+			m.Log.Debug().Str("scanlationGroup", scanlationGroup).
+				Msg("loading manga info, prioritizing chapters from a specific Scanlation group or user")
+			return scanlationGroup
+		}
+
+		return ""
+	}()
+	chaptersMap := utils.GroupBy(c.Data, func(v ChapterSearchData) string {
+		return v.Attributes.Chapter
+	})
+
+	newData := make([]ChapterSearchData, 0)
+	for _, chapters := range chaptersMap {
+		chapter := utils.Find(chapters, m.chapterSearchFunc(scanlation, true))
+
+		// Retry by skipping scanlation check
+		if chapter == nil && scanlation != "" {
+			chapter = utils.Find(chapters, m.chapterSearchFunc("", true))
+		}
+
+		if chapter != nil {
+			newData = append(newData, *chapter)
+		}
+	}
+
+	if m.Req.GetBool(DownloadOneShotKey) {
+		// OneShots do not have a chapter, so will be mapped under the empty string
+		if chapters, ok := chaptersMap[""]; ok {
+			newData = append(newData, utils.Filter(chapters, m.chapterSearchFunc(scanlation, false))...)
+		}
+	}
+
+	c.Data = newData
+	return *c
+}
+
+func (m *manga) chapterSearchFunc(scanlation string, skipOneShot bool) func(ChapterSearchData) bool {
+	return func(data ChapterSearchData) bool {
+		if data.Attributes.TranslatedLanguage != m.language {
+			return false
+		}
+		// Skip over official publisher chapters, we cannot download these from mangadex
+		if data.Attributes.ExternalUrl != "" {
+			return false
+		}
+
+		if data.Attributes.Chapter == "" && skipOneShot {
+			return false
+		}
+
+		if scanlation == "" {
+			return true
+		}
+
+		return slices.ContainsFunc(data.Relationships, func(relationship Relationship) bool {
+			if relationship.Type != "scanlation_group" && relationship.Type != "user" {
+				return false
+			}
+
+			return relationship.Id == scanlation
+		})
+	}
 }
 
 func (m *manga) All() []ChapterSearchData {
@@ -189,8 +263,8 @@ func (m *manga) GetInfo() payload.InfoStat {
 }
 
 func (m *manga) ContentDir(chapter ChapterSearchData) string {
-	if chapter.Attributes.Chapter == "" { // TODO: Check if this is a good enough check
-		return fmt.Sprintf("%s OneShot", m.Title())
+	if chapter.Attributes.Chapter == "" {
+		return fmt.Sprintf("%s OneShot %s", m.Title(), chapter.Attributes.Title)
 	}
 
 	if chpt, err := strconv.ParseFloat(chapter.Attributes.Chapter, 32); err == nil {
@@ -434,7 +508,10 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		ci.LocalizedSeries = alts[0]
 	}
 
-	m.writeCIStatus(ci)
+	// OneShots do not have status
+	if chapter.Attributes.Chapter != "" {
+		m.writeCIStatus(ci)
+	}
 
 	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {
 		ci.Volume = v
