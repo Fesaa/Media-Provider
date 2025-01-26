@@ -96,4 +96,5 @@ export class DownloadDialogComponent implements OnInit {
 
   protected readonly DownloadMetadataFormType = DownloadMetadataFormType;
   protected readonly Boolean = Boolean;
+  protected readonly HTMLInputElement = HTMLInputElement;
 }

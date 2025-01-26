@@ -61,5 +61,6 @@ export type MetadataOption = {
 export enum DownloadMetadataFormType {
   SWITCH,
   DROPDOWN,
-  MULTI
+  MULTI,
+  TEXT
 }

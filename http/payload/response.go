@@ -35,4 +35,5 @@ const (
 	SWITCH DownloadMetadataFormType = iota
 	DROPDOWN
 	MULTI
+	TEXT
 )

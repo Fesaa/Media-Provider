@@ -60,6 +60,9 @@
                                (onChange)="changeChoice(meta, $event.value)"
                                [id]="meta.key" />
               }
+              @case (DownloadMetadataFormType.TEXT) {
+                <input pInputText #inputElement (change)="changeChoice(meta, inputElement.value)" />
+              }
             }
           </div>
         </div>
