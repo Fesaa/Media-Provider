@@ -15,7 +15,7 @@ import (
 
 func tempSubscriptionService(t *testing.T) SubscriptionService {
 	t.Helper()
-	log := zerolog.New(zerolog.NewConsoleWriter())
+	log := zerolog.Nop()
 
 	tempDir := t.TempDir()
 	config.Dir = tempDir
