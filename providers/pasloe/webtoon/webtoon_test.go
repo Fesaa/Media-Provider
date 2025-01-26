@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -106,6 +107,7 @@ func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
 	must(scope.Provide(utils.Identity(zerolog.New(w))))
 	must(scope.Provide(utils.Identity(req())))
 	must(scope.Provide(NewRepository))
+	must(scope.Provide(services.MarkdownServiceProvider))
 
 	web := NewWebToon(scope)
 	return web.(*webtoon)
