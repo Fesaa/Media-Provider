@@ -5,10 +5,8 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/wisewolf"
+	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -31,10 +29,6 @@ func main() {
 	utils.Must(c.Provide(auth.NewApiKeyAuth, dig.Name("api-key-auth")))
 
 	utils.Must(c.Provide(wisewolf.New))
-	utils.Must(c.Provide(webtoon.NewRepository))
-	utils.Must(c.Provide(mangadex.NewRepository))
-	utils.Must(c.Provide(dynasty.NewRepository))
-
 	utils.Must(c.Provide(yoitsu.New))
 	utils.Must(c.Provide(pasloe.New))
 	utils.Must(c.Provide(services.ValidationServiceProvider))
@@ -44,6 +38,7 @@ func main() {
 	utils.Must(c.Provide(services.SubscriptionServiceProvider))
 	utils.Must(c.Provide(ApplicationProvider))
 
+	utils.Must(c.Invoke(providers.RegisterProviders))
 	utils.Must(c.Invoke(UpdateBaseUrlInIndex))
 	utils.Must(c.Invoke(startApp))
 }
