@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -87,6 +88,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
 	must(scope.Provide(utils.Identity(http.DefaultClient)))
 	must(scope.Provide(utils.Identity(repo)))
 	must(scope.Provide(utils.Identity(req)))
+	must(scope.Provide(services.MarkdownServiceProvider))
 
 	return NewManga(scope).(*manga)
 }

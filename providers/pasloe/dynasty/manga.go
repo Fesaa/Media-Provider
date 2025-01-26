@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -26,12 +27,13 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger, repository Repository,
+		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
 	) {
 		m = &manga{
-			id:         req.Id,
-			httpClient: httpClient,
-			repository: repository,
+			id:              req.Id,
+			httpClient:      httpClient,
+			repository:      repository,
+			markdownService: markdownService,
 		}
 
 		d := api.NewDownloadableFromBlock[Chapter](req, m, client, log.With().Str("handler", "dynasty-manga").Logger())
@@ -44,8 +46,9 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 type manga struct {
 	*api.DownloadBase[Chapter]
 
-	httpClient *http.Client
-	repository Repository
+	httpClient      *http.Client
+	repository      Repository
+	markdownService services.MarkdownService
 
 	id         string
 	seriesInfo *Series
@@ -173,7 +176,7 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 	ci.Series = m.seriesInfo.Title
 	ci.AlternateSeries = m.seriesInfo.AltTitle
-	ci.Summary = m.seriesInfo.Description
+	ci.Summary = m.markdownService.SanitizeHtml(m.seriesInfo.Description)
 	ci.Manga = comicinfo.MangaYes
 	ci.Title = chapter.Title
 	if vol, err := strconv.Atoi(chapter.Volume); err == nil {

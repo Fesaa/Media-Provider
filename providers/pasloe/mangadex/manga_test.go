@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -112,6 +113,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 	must(scope.Provide(utils.Identity(http.DefaultClient)))
 	must(scope.Provide(utils.Identity(repo)))
 	must(scope.Provide(utils.Identity(req)))
+	must(scope.Provide(services.MarkdownServiceProvider))
 
 	return NewManga(scope).(*manga)
 }
@@ -717,6 +719,7 @@ func TestManga_ContentRegex(t *testing.T) {
 
 //nolint:funlen,gocognit
 func TestManga_ShouldDownload(t *testing.T) {
+	ios := services.IOServiceProvider(zerolog.Nop())
 
 	type test struct {
 		name          string
@@ -784,7 +787,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if err := utils.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
+				if err := ios.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -809,7 +812,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if err := utils.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
+				if err := ios.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
 					t.Fatal(err)
 				}
 			},

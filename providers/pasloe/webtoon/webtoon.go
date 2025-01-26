@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -27,12 +28,13 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger, repository Repository,
+		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
 	) {
 		wt = &webtoon{
-			id:         req.Id,
-			httpClient: httpClient,
-			repository: repository,
+			id:              req.Id,
+			httpClient:      httpClient,
+			repository:      repository,
+			markdownService: markdownService,
 		}
 
 		d := api.NewDownloadableFromBlock[Chapter](req, wt, client, log.With().Str("handler", "webtoon").Logger())
@@ -42,8 +44,9 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 }
 
 type webtoon struct {
-	httpClient *http.Client
-	repository Repository
+	httpClient      *http.Client
+	repository      Repository
+	markdownService services.MarkdownService
 
 	*api.DownloadBase[Chapter]
 	id string
@@ -185,7 +188,7 @@ func (w *webtoon) comicInfo() *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
 	ci.Series = w.Title()
-	ci.Summary = utils.SanitizeHtml(w.info.Description)
+	ci.Summary = w.markdownService.SanitizeHtml(w.info.Description)
 	ci.Manga = comicinfo.MangaYes
 	ci.Genre = w.info.Genre
 

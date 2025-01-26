@@ -11,7 +11,7 @@ import (
 
 func tempPageService(t *testing.T) PageService {
 	t.Helper()
-	log := zerolog.New(zerolog.NewConsoleWriter())
+	log := zerolog.Nop()
 
 	tempDir := t.TempDir()
 	config.Dir = tempDir

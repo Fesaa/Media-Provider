@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -15,12 +16,14 @@ import (
 	"sync"
 )
 
-func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger) api.Client {
+func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
+	ioService services.IOService) api.Client {
 	utils.Must(container.Invoke(mangadex.Init))
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
 		log:      log.With().Str("handler", "pasloe").Logger(),
+		io:       ioService,
 
 		downloads:   utils.NewSafeMap[string, api.Downloadable](),
 		queue:       utils.NewQueue[payload.QueueStat](),
@@ -33,6 +36,7 @@ type client struct {
 	config   api.Config
 	registry *registry
 	log      zerolog.Logger
+	io       services.IOService
 
 	downloads   *utils.SafeMap[string, api.Downloadable]
 	queue       utils.Queue[payload.QueueStat]
@@ -197,7 +201,7 @@ func (c *client) cleanup(content api.Downloadable) {
 	l := c.log.With().Str("contentId", content.Id()).Logger()
 	for _, contentPath := range content.GetNewContent() {
 		l.Debug().Str("path", contentPath).Msg("Zipping file")
-		err := utils.ZipFolder(contentPath, contentPath+".cbz")
+		err := c.io.ZipToCbz(contentPath)
 		if err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while zipping dir")
 			continue

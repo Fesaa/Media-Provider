@@ -1,7 +1,8 @@
-package utils
+package services
 
 import (
 	"archive/zip"
+	"github.com/rs/zerolog"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 
 //nolint:funlen
 func TestZipFolder(t *testing.T) {
+	ios := IOServiceProvider(zerolog.Nop())
 	tempDir := t.TempDir()
 
 	testFile1 := filepath.Join(tempDir, "file1.txt")
@@ -32,7 +34,7 @@ func TestZipFolder(t *testing.T) {
 
 	zipFile := filepath.Join(tempDir, "test.zip")
 
-	if err := ZipFolder(tempDir, zipFile); err != nil {
+	if err := ios.ZipFolder(tempDir, zipFile); err != nil {
 		t.Fatalf("ZipFolder failed: %v", err)
 	}
 
@@ -80,17 +82,19 @@ func TestZipFolder(t *testing.T) {
 }
 
 func TestZipInvalidFolder(t *testing.T) {
-	err := ZipFolder("SRDETCFYVGUBHINJK", "EDTRFYGUJIK.zip")
+	ios := IOServiceProvider(zerolog.Nop())
+	err := ios.ZipFolder("SRDETCFYVGUBHINJK", "EDTRFYGUJIK.zip")
 	if err == nil {
 		t.Errorf("ZipFolder should have failed on invalid folder")
 	}
 }
 
 func TestZipInvalidFile(t *testing.T) {
+	ios := IOServiceProvider(zerolog.Nop())
 	tempDir := t.TempDir()
 	testFile1 := filepath.Join(tempDir, "////")
 
-	err := ZipFolder(tempDir, testFile1)
+	err := ios.ZipFolder(tempDir, testFile1)
 	if err == nil {
 		t.Errorf("ZipFolder should have failed on invalid file")
 	}

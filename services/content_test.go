@@ -6,15 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
-	"github.com/Fesaa/Media-Provider/providers/yoitsu"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"go.uber.org/dig"
-	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -22,13 +14,8 @@ import (
 
 func tempContentService(t *testing.T) (*db.Database, ContentService) {
 	t.Helper()
-	must := func(err error) {
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
 
-	log := zerolog.New(zerolog.NewConsoleWriter())
+	log := zerolog.Nop()
 
 	tempDir := t.TempDir()
 	config.Dir = tempDir
@@ -41,19 +28,16 @@ func tempContentService(t *testing.T) (*db.Database, ContentService) {
 	cfg := config.DefaultConfig()
 	cfg.RootDir = tempDir
 
-	cont := dig.New()
-	must(cont.Provide(utils.Identity(log)))
-	must(cont.Provide(utils.Identity(database)))
-	must(cont.Provide(utils.Identity(http.DefaultClient)))
-	must(cont.Provide(utils.Identity(cfg)))
-	must(cont.Provide(webtoon.NewRepository))
-	must(cont.Provide(mangadex.NewRepository))
-	must(cont.Provide(dynasty.NewRepository))
-	must(cont.Provide(yoitsu.New))
-	must(cont.Provide(pasloe.New))
-	must(cont.Provide(utils.Identity(cont)))
+	cs := ContentServiceProvider(log)
+	cs.RegisterProvider(models.LIME, providerAdapterMock{})
+	cs.RegisterProvider(models.YTS, providerAdapterMock{})
+	cs.RegisterProvider(models.NYAA, providerAdapterMock{})
+	cs.RegisterProvider(models.MANGADEX, providerAdapterMock{})
+	cs.RegisterProvider(models.SUBSPLEASE, providerAdapterMock{})
+	cs.RegisterProvider(models.DYNASTY, providerAdapterMock{})
+	cs.RegisterProvider(models.WEBTOON, providerAdapterMock{})
 
-	return database, ContentServiceProvider(cont, log)
+	return database, cs
 }
 
 func TestContentService_Search(t *testing.T) {
@@ -66,13 +50,9 @@ func TestContentService_Search(t *testing.T) {
 		Modifiers: nil,
 	}
 
-	data, err := cs.Search(req)
+	_, err := cs.Search(req)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	if len(data) == 0 {
-		t.Fatal("Empty result")
 	}
 }
 
@@ -160,24 +140,6 @@ func TestContentService_DownloadSub(t *testing.T) {
 	}
 }
 
-func TestContentService_SearchInvalidSearchOptiosn(t *testing.T) {
-	t.Parallel()
-	_, cs := tempContentService(t)
-	req := payload.SearchRequest{
-		Provider: []models.Provider{models.MANGADEX},
-		Query:    "Spice And Wolf",
-		Modifiers: map[string][]string{
-			"SkipNotFoundTags": {"false"},
-			"includeTags":      {"Random Not Matching Tag"},
-		},
-	}
-
-	_, err := cs.Search(req)
-	if err == nil {
-		t.Fatal("Should have errored")
-	}
-}
-
 func TestContentService_SearchVerySlow(t *testing.T) {
 	t.Parallel()
 	_, cst := tempContentService(t)
@@ -205,6 +167,20 @@ func TestContentService_SearchVerySlow(t *testing.T) {
 		t.Fatalf("Log should contain \"searching took more than one second\", got \n\n%s", log)
 	}
 
+}
+
+type providerAdapterMock struct{}
+
+func (p providerAdapterMock) Search(request payload.SearchRequest) ([]payload.Info, error) {
+	return []payload.Info{}, nil
+}
+
+func (p providerAdapterMock) Download(request payload.DownloadRequest) error {
+	return nil
+}
+
+func (p providerAdapterMock) Stop(request payload.StopRequest) error {
+	return nil
 }
 
 type slowBuilder struct{}
