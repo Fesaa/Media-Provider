@@ -84,8 +84,8 @@ type StopRequest struct {
 }
 
 type ListDirsRequest struct {
-	Dir       string `json:"dir" validate:"required"`
-	ShowFiles bool   `json:"files" validate:"required"`
+	Dir       string `json:"dir"`
+	ShowFiles bool   `json:"files"`
 }
 
 type LoginRequest struct {
