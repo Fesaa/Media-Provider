@@ -19,9 +19,9 @@ import (
 func RegisterProviders(s services.ContentService, container *dig.Container) {
 	scope := container.Scope("content-providers")
 
-	utils.Must(scope.Provide(webtoon.NewRepository))
-	utils.Must(scope.Provide(mangadex.NewRepository))
-	utils.Must(scope.Provide(dynasty.NewRepository))
+	utils.Must(container.Provide(webtoon.NewRepository))
+	utils.Must(container.Provide(mangadex.NewRepository))
+	utils.Must(container.Provide(dynasty.NewRepository))
 
 	utils.Must(scope.Provide(yts.NewBuilder))
 	utils.Must(scope.Provide(subsplease.NewBuilder))
