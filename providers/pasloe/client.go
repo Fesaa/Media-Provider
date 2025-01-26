@@ -5,7 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -18,7 +17,6 @@ import (
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
 	ioService services.IOService) api.Client {
-	utils.Must(container.Invoke(mangadex.Init))
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
