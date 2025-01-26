@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
 	mapset "github.com/deckarep/golang-set/v2"
@@ -34,13 +35,14 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger, repository Repository,
+		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
 	) {
 		block = &manga{
-			id:             req.Id,
-			httpClient:     httpClient,
-			repository:     repository,
-			volumeMetadata: make([]string, 0),
+			id:              req.Id,
+			httpClient:      httpClient,
+			repository:      repository,
+			markdownService: markdownService,
+			volumeMetadata:  make([]string, 0),
 		}
 		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client, log.With().Str("handler", "mangadex").Logger())
 		block.DownloadBase = d
@@ -53,8 +55,9 @@ type manga struct {
 	*api.DownloadBase[ChapterSearchData]
 	id string
 
-	httpClient *http.Client
-	repository Repository
+	httpClient      *http.Client
+	repository      Repository
+	markdownService services.MarkdownService
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
@@ -303,7 +306,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 			return out
 		})),
 	}
-	mi.Summary = utils.MdToSafeHtml(m.info.Attributes.EnDescription())
+	mi.Summary = m.markdownService.MdToSafeHtml(m.info.Attributes.EnDescription())
 	mi.AgeRating = m.info.Attributes.ContentRating.MetronInfoAgeRating()
 	mi.URLs = utils.Map(m.info.FormattedLinks(), func(t string) metroninfo.URL {
 		return metroninfo.URL{
@@ -404,7 +407,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 	ci.Series = m.info.Attributes.EnTitle()
 	ci.Year = m.info.Attributes.Year
-	ci.Summary = utils.MdToSafeHtml(m.info.Attributes.EnDescription())
+	ci.Summary = m.markdownService.MdToSafeHtml(m.info.Attributes.EnDescription())
 	ci.Manga = comicinfo.MangaYes
 	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
 	ci.Web = strings.Join(m.info.FormattedLinks(), ",")

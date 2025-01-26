@@ -1,24 +1,35 @@
-package utils
+package services
 
 import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/rs/zerolog"
 	"strings"
 )
 
-var (
-	renderer *html.Renderer
-)
-
-func init() {
-	htmlFlags := html.CommonFlags | html.HrefTargetBlank
-	opts := html.RendererOptions{Flags: htmlFlags}
-	renderer = html.NewRenderer(opts)
+type MarkdownService interface {
+	MdToSafeHtml(string) string
+	SanitizeHtml(string) string
 }
 
-func MdToSafeHtml(mdString string) string {
+type markdownService struct {
+	renderer *html.Renderer
+	log      zerolog.Logger
+}
+
+func MarkdownServiceProvider(log zerolog.Logger) MarkdownService {
+	htmlFlags := html.CommonFlags | html.HrefTargetBlank
+	opts := html.RendererOptions{Flags: htmlFlags}
+	renderer := html.NewRenderer(opts)
+	return &markdownService{
+		renderer: renderer,
+		log:      log.With().Str("handler", "markdown-service").Logger(),
+	}
+}
+
+func (m *markdownService) MdToSafeHtml(mdString string) string {
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
 	p := parser.NewWithExtensions(extensions)
 
@@ -26,14 +37,14 @@ func MdToSafeHtml(mdString string) string {
 
 	// TODO: Have it not add <p> tags. These cause it to be a little too big for Kavita most of the time.
 	// Instead of replacing it ourselves
-	unsafeHtml := string(markdown.ToHTML(mdBytes, p, renderer))
+	unsafeHtml := string(markdown.ToHTML(mdBytes, p, m.renderer))
 
 	unsafeHtml = strings.ReplaceAll(unsafeHtml, "<p>", "")
 	unsafeHtml = strings.ReplaceAll(unsafeHtml, "</p>", "")
-	return strings.TrimSuffix(SanitizeHtml(unsafeHtml), "\n")
+	return strings.TrimSuffix(m.SanitizeHtml(unsafeHtml), "\n")
 }
 
-func SanitizeHtml(htmlString string) string {
+func (m *markdownService) SanitizeHtml(htmlString string) string {
 	return bluemonday.UGCPolicy().
 		AllowAttrs("target").OnElements("a").
 		Sanitize(htmlString)

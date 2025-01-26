@@ -31,6 +31,7 @@ func main() {
 	utils.Must(c.Provide(wisewolf.New))
 	utils.Must(c.Provide(yoitsu.New))
 	utils.Must(c.Provide(pasloe.New))
+	utils.Must(c.Provide(services.MarkdownServiceProvider))
 	utils.Must(c.Provide(services.ValidationServiceProvider))
 	utils.Must(c.Provide(services.PageServiceProvider))
 	utils.Must(c.Provide(services.ContentServiceProvider))
