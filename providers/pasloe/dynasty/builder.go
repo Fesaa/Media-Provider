@@ -63,6 +63,10 @@ func (b *Builder) Stop(request payload.StopRequest) error {
 	return b.ps.RemoveDownload(request)
 }
 
+func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
+	return payload.DownloadMetadata{}
+}
+
 func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository Repository) *Builder {
 	return &Builder{log.With().Str("handler", "dynasty-provider").Logger(),
 		httpClient, ps, repository}

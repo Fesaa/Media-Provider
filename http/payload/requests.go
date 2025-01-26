@@ -2,6 +2,8 @@ package payload
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
+	"strconv"
+	"strings"
 )
 
 type SearchRequest struct {
@@ -11,10 +13,68 @@ type SearchRequest struct {
 }
 
 type DownloadRequest struct {
-	Provider  models.Provider `json:"provider" validate:"required,provider"`
-	Id        string          `json:"id" validate:"required"`
-	BaseDir   string          `json:"dir" validate:"required"`
-	TempTitle string          `json:"title" validate:"required"`
+	Provider         models.Provider     `json:"provider" validate:"required,provider"`
+	Id               string              `json:"id" validate:"required"`
+	BaseDir          string              `json:"dir" validate:"required"`
+	TempTitle        string              `json:"title" validate:"required"`
+	DownloadMetadata map[string][]string `json:"downloadMetadata,omitempty"`
+}
+
+// IncludesMetadataSlice returns true if the request includes metadata for all passed keys, false otherwise
+func (r DownloadRequest) IncludesMetadataSlice(keys []string) bool {
+	return r.IncludesMetadata(keys...)
+}
+
+// IncludesMetadata returns true if the request includes metadata for all passed keys, false otherwise
+func (r DownloadRequest) IncludesMetadata(keys ...string) bool {
+	for _, key := range keys {
+		if _, ok := r.DownloadMetadata[key]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// GetStrings returns the metadata associated with the key as a slice of strings
+// An empty slice will return false
+func (r DownloadRequest) GetStrings(key string) ([]string, bool) {
+	values, ok := r.DownloadMetadata[key]
+	return values, ok && len(values) > 0
+}
+
+// GetString returns the metadata associated with the key as a string,
+// an empty string is returned if not present
+func (r DownloadRequest) GetString(key string) (string, bool) {
+	values, ok := r.GetStrings(key)
+	if !ok {
+		return "", false
+	}
+
+	return values[0], true
+}
+
+// GetInt returns the metadata associated with the key as an int,
+// zero is returned if the value is not present or if conversion failed
+func (r DownloadRequest) GetInt(key string) (int, error) {
+	val, ok := r.GetString(key)
+	if !ok {
+		return 0, nil
+	}
+	i, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, err
+	}
+	return i, nil
+}
+
+// GetBool returns the metadata associated with the key as a bool,
+// returns true if the value is equal to "true" while ignoring case
+func (r DownloadRequest) GetBool(key string) bool {
+	val, ok := r.GetString(key)
+	if !ok {
+		return false
+	}
+	return strings.ToLower(val) == "true"
 }
 
 type StopRequest struct {

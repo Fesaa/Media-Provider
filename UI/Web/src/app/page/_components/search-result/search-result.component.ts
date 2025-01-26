@@ -1,7 +1,7 @@
 import {ChangeDetectorRef, Component, Input} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {FormGroup} from "@angular/forms";
-import {Page, Provider} from "../../../_models/page";
+import {DownloadMetadata, Page, Provider} from "../../../_models/page";
 import {DownloadService} from "../../../_services/download.service";
 import {DownloadRequest} from "../../../_models/search";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
@@ -12,12 +12,16 @@ import {ImageService} from "../../../_services/image.service";
 import {SubscriptionService} from "../../../_services/subscription.service";
 import {RefreshFrequency} from "../../../_models/subscription";
 import {Tooltip} from "primeng/tooltip";
+import {Dialog} from "primeng/dialog";
+import {DownloadDialogComponent} from "../download-dialog/download-dialog.component";
 
 @Component({
     selector: 'app-search-result',
   imports: [
     NgIcon,
-    Tooltip
+    Tooltip,
+    Dialog,
+    DownloadDialogComponent
   ],
     templateUrl: './search-result.component.html',
     styleUrl: './search-result.component.css',
@@ -29,8 +33,10 @@ export class SearchResultComponent {
   @Input({required: true}) form!: FormGroup;
   @Input({required: true}) searchResult!: SearchInfo;
   @Input({required: true}) providers!: Provider[];
+  @Input({required: true}) metadata!: DownloadMetadata | undefined;
 
   showExtra: boolean = false;
+  showDownloadDialog: boolean = false;
 
   colours = [
     "bg-blue-200 dark:bg-blue-800",
@@ -96,23 +102,7 @@ export class SearchResultComponent {
   }
 
   download() {
-    const dir = this.downloadDir()
-
-    const req: DownloadRequest = {
-      provider: this.searchResult.Provider,
-      title: this.searchResult.Name,
-      id: this.searchResult.InfoHash,
-      dir: dir,
-    }
-
-    this.downloadService.download(req).subscribe({
-      complete: () => {
-        this.toastR.success(`Downloaded started for ${this.searchResult.Name}`, "Success")
-      },
-      error: (err) => {
-        this.toastR.error(`Download failed ${err.error.message}`, "Error")
-      }
-  })
+    this.showDownloadDialog = true;
   }
 
   getColour(idx: number): string {

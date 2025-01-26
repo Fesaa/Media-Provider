@@ -1,0 +1,40 @@
+
+<div class="flex flex-col items-center space-y-5 mt-5 mx-2 mb-2">
+
+  <div class="card flex">
+    <p-floatlabel variant="on">
+      <p-iconfield>
+        <input pInputText [(ngModel)]="downloadDir" id="download_dir" type="text" autocomplete="off" >
+        <p-inputicon class="pi pi-folder" />
+      </p-iconfield>
+      <label for="download_dir">Download directory</label>
+    </p-floatlabel>
+  </div>
+
+  @if (metadata) {
+    @for (meta of metadata.definitions; track meta.key) {
+      @switch (meta.formType) {
+        @case (DownloadMetadataFormType.SWITCH) {
+          <div class="flex flex-row gap-4 items-center">
+            <label [for]="meta.key">{{meta.title}}</label>
+            <p-toggle-switch [id]="meta.key" (onChange)="changeChoice(meta, $event.checked)" />
+          </div>
+        }
+        @case (DownloadMetadataFormType.DROPDOWN) {
+          <p-select [required]="meta.required" [placeholder]="meta.title"
+                    optionLabel="value" optionValue="key" [options]="meta.options"
+                    (onChange)="changeChoice(meta, $event.value)" />
+        }
+
+        @case (DownloadMetadataFormType.MULTI) {
+
+        }
+      }
+    }
+  }
+
+  <div class="flex w-full flex-grow justify-end gap-4">
+      <p-button label="Cancel" severity="secondary" (click)="close()" />
+      <p-button label="Download" (click)="download()" />
+  </div>
+</div>

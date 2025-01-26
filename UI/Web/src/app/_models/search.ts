@@ -11,6 +11,7 @@ export type DownloadRequest = {
   id: string;
   dir: string;
   title: string;
+  downloadMetadata: {[key: string]: string[]};
 }
 
 export type StopRequest = {

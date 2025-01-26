@@ -16,12 +16,14 @@ type ContentService interface {
 	DownloadSubscription(*models.Subscription) error
 	Stop(payload.StopRequest) error
 	RegisterProvider(models.Provider, ProviderAdapter)
+	DownloadMetadata(models.Provider) (payload.DownloadMetadata, error)
 }
 
 type ProviderAdapter interface {
 	Search(payload.SearchRequest) ([]payload.Info, error)
 	Download(payload.DownloadRequest) error
 	Stop(payload.StopRequest) error
+	DownloadMetadata() payload.DownloadMetadata
 }
 
 type contentService struct {
@@ -34,6 +36,14 @@ func ContentServiceProvider(log zerolog.Logger) ContentService {
 		providers: utils.NewSafeMap[models.Provider, ProviderAdapter](),
 		log:       log.With().Str("handler", "content-service").Logger(),
 	}
+}
+
+func (s *contentService) DownloadMetadata(provider models.Provider) (payload.DownloadMetadata, error) {
+	adapter, ok := s.providers.Get(provider)
+	if !ok {
+		return payload.DownloadMetadata{}, fmt.Errorf("provider %q not supported", provider)
+	}
+	return adapter.DownloadMetadata(), nil
 }
 
 func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, error) {
