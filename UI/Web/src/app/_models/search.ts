@@ -11,7 +11,12 @@ export type DownloadRequest = {
   id: string;
   dir: string;
   title: string;
-  downloadMetadata: {[key: string]: string[]};
+  downloadMetadata: DownloadRequestMetadata;
+}
+
+export type DownloadRequestMetadata = {
+  startImmediately: boolean;
+  extra: {[key: string]: string[]};
 }
 
 export type StopRequest = {

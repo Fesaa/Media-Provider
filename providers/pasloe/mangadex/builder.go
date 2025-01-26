@@ -105,36 +105,7 @@ func (b *Builder) Stop(request payload.StopRequest) error {
 }
 
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
-	return payload.DownloadMetadata{
-		Definitions: []payload.DownloadMetadataDefinition{
-			{
-				Title:    "Download Language",
-				Key:      "download-language",
-				FormType: payload.DROPDOWN,
-				Required: false,
-				Options: []payload.MetadataOption{
-					{
-						Key:   "en",
-						Value: "English",
-					},
-					{
-						Key:   "fr",
-						Value: "French",
-					},
-					{
-						Key:   "ja",
-						Value: "Japanese",
-					},
-				},
-			},
-			{
-				Title:    "Download now",
-				Key:      "download-now",
-				FormType: payload.SWITCH,
-				Required: true,
-			},
-		},
-	}
+	return payload.DownloadMetadata{}
 }
 
 func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository Repository) *Builder {

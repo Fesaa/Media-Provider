@@ -49,7 +49,7 @@ export type DownloadMetadataDefinition = {
   title: string;
   key: string;
   formType: DownloadMetadataFormType;
-  required: boolean;
+  defaultOption: string;
   options: MetadataOption[];
 }
 

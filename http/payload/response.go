@@ -17,11 +17,11 @@ type DownloadMetadata struct {
 }
 
 type DownloadMetadataDefinition struct {
-	Title    string                   `json:"title"`
-	Key      string                   `json:"key"`
-	FormType DownloadMetadataFormType `json:"formType"`
-	Required bool                     `json:"required"`
-	Options  []MetadataOption         `json:"options"`
+	Title         string                   `json:"title"`
+	Key           string                   `json:"key"`
+	FormType      DownloadMetadataFormType `json:"formType"`
+	DefaultOption string                   `json:"defaultOption"`
+	Options       []MetadataOption         `json:"options"`
 }
 
 type MetadataOption struct {

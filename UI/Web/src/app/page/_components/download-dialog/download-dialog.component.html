@@ -1,39 +1,74 @@
-
-<div class="flex flex-col items-center space-y-5 mt-5 mx-2 mb-2">
+<div class="flex flex-col space-y-5 mt-5 mb-2">
 
   <div class="card flex">
     <p-floatlabel variant="on">
-      <p-iconfield>
-        <input pInputText [(ngModel)]="downloadDir" id="download_dir" type="text" autocomplete="off" >
-        <p-inputicon class="pi pi-folder" />
-      </p-iconfield>
+      <input pInputText [(ngModel)]="downloadDir" id="download_dir"
+             type="text" autocomplete="off" class="w-96 p-2" />
       <label for="download_dir">Download directory</label>
     </p-floatlabel>
   </div>
 
+  <div class="flex flex-row flex-grow w-full items-center">
+    <label for="startImmediately" class="w-1/2">Start download immediately</label>
+    <div class="flex flex-row w-1/2 justify-center">
+      <p-toggle-switch id="startImmediately" [(ngModel)]="requestMetadata.startImmediately"/>
+    </div>
+  </div>
+
   @if (metadata) {
-    @for (meta of metadata.definitions; track meta.key) {
-      @switch (meta.formType) {
-        @case (DownloadMetadataFormType.SWITCH) {
-          <div class="flex flex-row gap-4 items-center">
-            <label [for]="meta.key">{{meta.title}}</label>
-            <p-toggle-switch [id]="meta.key" (onChange)="changeChoice(meta, $event.checked)" />
+
+    <div class="flex flex-col items-start">
+
+      <h1 class="text-start m-2 font-bold w-2/3 border-b-4 border-gray-200 rounded">Extra metadata</h1>
+
+      <div class="flex flex-col space-y-4 w-full">
+        @for (meta of metadata.definitions; track meta.key) {
+        <div class="flex flex-row flex-grow w-full items-center">
+          <label [for]="meta.key" class="w-1/2">{{meta.title}}</label>
+
+          <div class="flex flex-row w-1/2 justify-center">
+            @switch (meta.formType) {
+              @case (DownloadMetadataFormType.SWITCH) {
+                  <p-toggle-switch [id]="meta.key"
+                                   [ngModel]="Boolean(meta.defaultOption)"
+                                   (onChange)="changeChoice(meta, $event.checked)" />
+              }
+              @case (DownloadMetadataFormType.DROPDOWN) {
+                <p-select styleClass="w-full"
+                          size="small"
+                          variant="filled"
+                          [placeholder]="meta.title"
+                          [ngModel]="meta.defaultOption"
+                          optionLabel="value"
+                          optionValue="key"
+                          [options]="meta.options"
+                          (onChange)="changeChoice(meta, $event.value)"
+                          [id]="meta.key" />
+              }
+              @case (DownloadMetadataFormType.MULTI) {
+                <p-multiSelect [filter]="false"
+                               [selectAll]="false"
+                               size="small"
+                               variant="filled"
+                               [showToggleAll]="false"
+                               styleClass="w-full"
+                               [placeholder]="meta.title"
+                               [ngModel]="meta.defaultOption"
+                               optionLabel="value"
+                               optionValue="key"
+                               [options]="meta.options"
+                               (onChange)="changeChoice(meta, $event.value)"
+                               [id]="meta.key" />
+              }
+            }
           </div>
-        }
-        @case (DownloadMetadataFormType.DROPDOWN) {
-          <p-select [required]="meta.required" [placeholder]="meta.title"
-                    optionLabel="value" optionValue="key" [options]="meta.options"
-                    (onChange)="changeChoice(meta, $event.value)" />
-        }
-
-        @case (DownloadMetadataFormType.MULTI) {
-
-        }
+        </div>
       }
-    }
+      </div>
+    </div>
   }
 
-  <div class="flex w-full flex-grow justify-end gap-4">
+  <div class="flex w-full flex-grow justify-end gap-4 mt-10">
       <p-button label="Cancel" severity="secondary" (click)="close()" />
       <p-button label="Download" (click)="download()" />
   </div>
