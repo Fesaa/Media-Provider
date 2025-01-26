@@ -75,6 +75,13 @@ func MustReturn[T any](result T, err error) T {
 	return result
 }
 
+func MustHave[T any](result T, ok bool) T {
+	if !ok {
+		panic("MustHave[T] was not true")
+	}
+	return result
+}
+
 func Identity[T any](t T) func() T {
 	return func() T {
 		return t

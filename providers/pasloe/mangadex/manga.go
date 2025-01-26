@@ -43,6 +43,8 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			repository:      repository,
 			markdownService: markdownService,
 			volumeMetadata:  make([]string, 0),
+
+			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
 		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client, log.With().Str("handler", "mangadex").Logger())
 		block.DownloadBase = d
@@ -71,6 +73,8 @@ type manga struct {
 	foundLastChapter bool
 
 	hasWarned bool
+
+	language string
 }
 
 func (m *manga) Title() string {
@@ -78,7 +82,7 @@ func (m *manga) Title() string {
 		return m.id
 	}
 
-	return m.info.Attributes.EnTitle()
+	return m.info.Attributes.LangTitle(m.language)
 }
 
 func (m *manga) Provider() models.Provider {
@@ -104,7 +108,7 @@ func (m *manga) LoadInfo() chan struct{} {
 			close(out)
 			return
 		}
-		m.chapters = chapters.FilterOneEnChapter()
+		m.chapters = chapters.FilterToLanguage(m.language)
 
 		volumes := mapset.NewSet[string]()
 		chapterSet := mapset.NewSet[string]()
@@ -293,7 +297,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 	}
 
 	mi.Series = metroninfo.Series{
-		Name:      m.info.Attributes.EnTitle(),
+		Name:      m.info.Attributes.LangTitle(m.language),
 		StartYear: m.info.Attributes.Year,
 		AlternativeNames: utils.FlatMap(utils.Map(m.info.Attributes.AltTitles, func(t map[string]string) []metroninfo.AlternativeName {
 			var out []metroninfo.AlternativeName
@@ -306,7 +310,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 			return out
 		})),
 	}
-	mi.Summary = m.markdownService.MdToSafeHtml(m.info.Attributes.EnDescription())
+	mi.Summary = m.markdownService.MdToSafeHtml(m.info.Attributes.LangDescription(m.language))
 	mi.AgeRating = m.info.Attributes.ContentRating.MetronInfoAgeRating()
 	mi.URLs = utils.Map(m.info.FormattedLinks(), func(t string) metroninfo.URL {
 		return metroninfo.URL{
@@ -348,7 +352,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 	}
 
 	mi.Genres = utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (metroninfo.Genre, bool) {
-		n, ok := t.Attributes.Name["en"]
+		n, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return metroninfo.Genre{}, false
 		}
@@ -362,7 +366,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 		}, true
 	})
 	mi.Tags = utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (metroninfo.Tag, bool) {
-		n, ok := t.Attributes.Name["en"]
+		n, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return metroninfo.Tag{}, false
 		}
@@ -405,12 +409,13 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
-	ci.Series = m.info.Attributes.EnTitle()
+	ci.Series = m.info.Attributes.LangTitle(m.language)
 	ci.Year = m.info.Attributes.Year
-	ci.Summary = m.markdownService.MdToSafeHtml(m.info.Attributes.EnDescription())
+	ci.Summary = m.markdownService.MdToSafeHtml(m.info.Attributes.LangDescription(m.language))
 	ci.Manga = comicinfo.MangaYes
 	ci.AgeRating = m.info.Attributes.ContentRating.ComicInfoAgeRating()
 	ci.Web = strings.Join(m.info.FormattedLinks(), ",")
+	ci.LanguageISO = m.language
 
 	ci.Title = chapter.Attributes.Title
 	if chapter.Attributes.PublishedAt != "" {
@@ -424,7 +429,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		}
 	}
 
-	alts := m.info.Attributes.EnAltTitles()
+	alts := m.info.Attributes.LangAltTitles(m.language)
 	if len(alts) > 0 {
 		ci.LocalizedSeries = alts[0]
 	}
@@ -438,7 +443,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	}
 
 	ci.Genre = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
-		n, ok := t.Attributes.Name["en"]
+		n, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return "", false
 		}
@@ -451,7 +456,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	}), ",")
 
 	ci.Tags = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
-		n, ok := t.Attributes.Name["en"]
+		n, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return "", false
 		}

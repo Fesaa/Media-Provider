@@ -2,7 +2,7 @@ package mangadex
 
 type ChapterSearchResponse Response[[]ChapterSearchData]
 
-func (c ChapterSearchResponse) FilterOneEnChapter() ChapterSearchResponse {
+func (c ChapterSearchResponse) FilterToLanguage(language string) ChapterSearchResponse {
 	c2 := c
 	newData := make([]ChapterSearchData, 0)
 
@@ -12,7 +12,7 @@ func (c ChapterSearchResponse) FilterOneEnChapter() ChapterSearchResponse {
 		if data.Attributes.Volume == lastVolume && data.Attributes.Chapter == lastChapter {
 			continue
 		}
-		if data.Attributes.TranslatedLanguage != "en" {
+		if data.Attributes.TranslatedLanguage != language {
 			continue
 		}
 

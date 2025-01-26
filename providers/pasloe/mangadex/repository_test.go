@@ -36,8 +36,8 @@ func TestRepository_GetManga(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if res.Data.Attributes.EnTitle() != RainbowsAfterStorms {
-		t.Errorf("got %s expected %s", res.Data.Attributes.EnTitle(), RainbowsAfterStorms)
+	if res.Data.Attributes.LangTitle() != RainbowsAfterStorms {
+		t.Errorf("got %s expected %s", res.Data.Attributes.LangTitle(), RainbowsAfterStorms)
 	}
 }
 

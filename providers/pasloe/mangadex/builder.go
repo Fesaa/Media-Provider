@@ -34,10 +34,10 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 
 	info := make([]payload.Info, 0)
 	for _, data := range mangas.Data {
-		enTitle := data.Attributes.EnTitle()
+		enTitle := data.Attributes.LangTitle("en")
 		info = append(info, payload.Info{
 			Name:        enTitle,
-			Description: data.Attributes.EnDescription(),
+			Description: data.Attributes.LangDescription("en"),
 			Size: func() string {
 				volumes := config.OrDefault(data.Attributes.LastVolume, "unknown")
 				chapters := config.OrDefault(data.Attributes.LastChapter, "unknown")
@@ -108,11 +108,22 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{
 		Definitions: []payload.DownloadMetadataDefinition{
 			{
-				Title:         "",
-				Key:           "",
-				FormType:      0,
-				DefaultOption: "",
-				Options:       nil,
+				Title:         "Language",
+				Key:           LanguageKey,
+				FormType:      payload.DROPDOWN,
+				DefaultOption: "en",
+				Options:       languages,
+			},
+			{
+				Title:    "Scanlation group",
+				Key:      ScanlationGroupKey,
+				FormType: payload.TEXT,
+			},
+			{
+				Title:         "Download OneShots",
+				Key:           DownloadOneShotKey,
+				FormType:      payload.SWITCH,
+				DefaultOption: "false",
 			},
 		},
 	}

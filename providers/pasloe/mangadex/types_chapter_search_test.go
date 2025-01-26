@@ -13,7 +13,7 @@ func TestChapterSearchResponse_FilterOneEnChapter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	filtered := res.FilterOneEnChapter()
+	filtered := res.FilterToLanguage("en")
 	if len(filtered.Data) != 172 {
 		t.Errorf("Expected 172 chapters, got %d", len(filtered.Data))
 	}
@@ -37,7 +37,7 @@ func TestChapterSearchResponse_FilterOneEnChapterSkipOfficial(t *testing.T) {
 		Total:  0,
 	}
 
-	filtered := c.FilterOneEnChapter()
+	filtered := c.FilterToLanguage("en")
 	if len(filtered.Data) != 0 {
 		t.Errorf("Expected 0 chapters, got %d", len(filtered.Data))
 	}
