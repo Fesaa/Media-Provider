@@ -62,8 +62,12 @@
                 <p-tag [value]="info.contentStatus" [severity]="getSeverity(info)" />
               </th>
               <th>
-                <p-button (click)="stop(info)"
-                  pTooltip="Stop download" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" />
+                <div class="space-x-5">
+                  <p-button (click)="browse(info)"
+                            pTooltip="Browse directory" tooltipPosition="bottom" icon="pi pi-folder" severity="success" />
+                  <p-button (click)="stop(info)"
+                            pTooltip="Stop download" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" />
+                </div>
               </th>
             </tr>
           </ng-template>

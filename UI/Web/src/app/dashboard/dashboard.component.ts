@@ -86,6 +86,10 @@ export class DashboardComponent implements OnInit,OnDestroy {
     })
   }
 
+  browse(info: InfoStat) {
+    this.dialogService.openDirBrowser(info.download_dir, {showFiles: true, width: '40rem',})
+  }
+
   getSeverity(info: InfoStat): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
     switch (info.contentStatus) {
       case ContentStatus.Downloading:

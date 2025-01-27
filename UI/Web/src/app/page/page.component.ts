@@ -178,11 +178,7 @@ export class PageComponent implements OnInit{
       return;
     }
 
-    const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir, {
-      create: true,
-      copy: false,
-      filter: true,
-    });
+    const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir, {create: true,});
     if (dir) {
       this.searchForm?.get('customDir')?.setValue(dir);
     }

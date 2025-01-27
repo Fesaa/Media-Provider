@@ -13,15 +13,20 @@ export class DialogService {
     private appRef: ApplicationRef,
   ) {}
 
-  openDirBrowser(root: string,
-                 options: {create: boolean, copy: boolean, filter: boolean}
-                 = {create: false, copy: false, filter: true}
-  ): Promise<string| undefined> {
+  openDirBrowser(
+    root: string,
+    options: Partial<{ create: boolean; copy: boolean; filter: boolean; showFiles: boolean, width: string }> = {}
+  ): Promise<string | undefined> {
+    const defaultOptions = { create: false, copy: false, filter: true, showFiles: false, width: '25rem' };
+    const finalOptions = { ...defaultOptions, ...options };
+
     const component = this.viewContainerRef!.createComponent(DirectorySelectorComponent)
     component.instance.root = root;
-    component.instance.filter = options.filter;
-    component.instance.copy = options.copy;
-    component.instance.create = options.create;
+    component.instance.filter = finalOptions.filter;
+    component.instance.copy = finalOptions.copy;
+    component.instance.create = finalOptions.create;
+    component.instance.showFiles = finalOptions.showFiles;
+    component.instance.customWidth = finalOptions.width
 
     return new Promise<string | undefined>((resolve, reject) => {
       component.instance.getResult().subscribe(result => {
@@ -31,9 +36,10 @@ export class DialogService {
     });
   }
 
-  openDialog(text: string): Promise<boolean> {
+  openDialog(text: string, header: string = "Confirm"): Promise<boolean> {
     const component = this.viewContainerRef!.createComponent(DialogComponent)
     component.instance.text = text;
+    component.instance.header = header;
 
     return new Promise<boolean>((resolve, reject) => {
       component.instance.getResult().subscribe(result => {

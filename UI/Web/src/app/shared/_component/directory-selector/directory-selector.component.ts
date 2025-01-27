@@ -8,13 +8,17 @@ import {IoService} from "../../../_services/io.service";
 import {ToastrService} from "ngx-toastr";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {FormsModule} from "@angular/forms";
+import {Dialog} from "primeng/dialog";
+import {Button} from "primeng/button";
 
 @Component({
     selector: 'app-directory-selector',
   imports: [
     NgClass,
     NgIcon,
-    FormsModule
+    FormsModule,
+    Dialog,
+    Button
   ],
     templateUrl: './directory-selector.component.html',
     styleUrl: './directory-selector.component.css'
@@ -28,6 +32,7 @@ export class DirectorySelectorComponent implements OnInit {
   @Input() filter: boolean = false;
   @Input() copy: boolean = true;
   @Input() create: boolean = false;
+  @Input() customWidth: string = '25rem';
 
   currentRoot = '';
   entries: DirEntry[] = [];
@@ -35,6 +40,7 @@ export class DirectorySelectorComponent implements OnInit {
 
   query: string = '';
   newDirName: string = '';
+  visible: boolean = true;
   private result = new ReplaySubject<string | undefined>(1)
 
   constructor(private ioService: IoService,
@@ -126,6 +132,7 @@ export class DirectorySelectorComponent implements OnInit {
   closeDialog() {
     this.result.next(undefined);
     this.result.complete();
+    this.visible = false;
   }
 
   confirm() {
@@ -135,6 +142,7 @@ export class DirectorySelectorComponent implements OnInit {
     }
     this.result.next(path);
     this.result.complete();
+    this.visible = false;
   }
 
   private loadChildren(dir: string) {
