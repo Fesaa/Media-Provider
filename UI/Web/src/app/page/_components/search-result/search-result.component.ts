@@ -14,6 +14,7 @@ import {RefreshFrequency} from "../../../_models/subscription";
 import {Tooltip} from "primeng/tooltip";
 import {Dialog} from "primeng/dialog";
 import {DownloadDialogComponent} from "../download-dialog/download-dialog.component";
+import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-dialog.component";
 
 @Component({
     selector: 'app-search-result',
@@ -21,7 +22,8 @@ import {DownloadDialogComponent} from "../download-dialog/download-dialog.compon
     NgIcon,
     Tooltip,
     Dialog,
-    DownloadDialogComponent
+    DownloadDialogComponent,
+    SubscriptionDialogComponent
   ],
     templateUrl: './search-result.component.html',
     styleUrl: './search-result.component.css',
@@ -37,6 +39,7 @@ export class SearchResultComponent {
 
   showExtra: boolean = false;
   showDownloadDialog: boolean = false;
+  showSubscriptionDialog: boolean = false;
 
   colours = [
     "bg-blue-200 dark:bg-blue-800",
@@ -52,34 +55,13 @@ export class SearchResultComponent {
   imageSource: string | null = null;
 
 
-  constructor(private downloadService: DownloadService,
-              private cdRef: ChangeDetectorRef,
-              private toastR: ToastrService,
+  constructor(private cdRef: ChangeDetectorRef,
               private imageService: ImageService,
-              private subscriptionService: SubscriptionService,
   ) {
   }
 
   addAsSub() {
-    this.subscriptionService.new({
-      ID: 0,
-      contentId: this.searchResult.InfoHash,
-      provider: this.searchResult.Provider,
-      info: {
-        title: this.searchResult.Name,
-        baseDir: this.downloadDir(),
-        lastCheckSuccess: true,
-        lastCheck: new Date()
-      },
-      refreshFrequency: RefreshFrequency.Week
-    }).subscribe({
-      next: sub => {
-        this.toastR.success(`Added ${sub.info.title} as a subscription`, "Success")
-      },
-      error: err => {
-        this.toastR.error(`An error occurred: ${err.error.message}`, "Failed");
-      }
-    })
+    this.showSubscriptionDialog = true;
   }
 
   loadImage() {

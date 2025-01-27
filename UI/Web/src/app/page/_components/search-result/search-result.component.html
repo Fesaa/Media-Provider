@@ -38,6 +38,10 @@
         >
           <ng-icon name="heroFolderArrowDown" class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer"></ng-icon>
         </button>
+
+        <p-dialog resizable="false" [(visible)]="showSubscriptionDialog" header="Subscribe" [style]="{ width: '30rem'}" [contentStyle]="{ 'overflow': 'visible' }">
+          <app-subscription-dialog [(visible)]="showSubscriptionDialog" [downloadDir]="downloadDir()" [searchResult]="searchResult" />
+        </p-dialog>
       }
 
     </div>

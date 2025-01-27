@@ -21,3 +21,9 @@ export enum RefreshFrequency {
   Week,
   Month,
 }
+
+export const RefreshFrequencies = [
+  {label: "Day", value: RefreshFrequency.Day},
+  {label: "Week", value: RefreshFrequency.Week},
+  {label: "Month", value: RefreshFrequency.Month},
+];
