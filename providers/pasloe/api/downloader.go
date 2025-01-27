@@ -179,11 +179,12 @@ func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]Content, error) {
 
 		}
 
-		matches := d.infoProvider.ContentRegex().FindStringSubmatch(entry.Name())
-		if len(matches) < 2 {
+		matches := d.infoProvider.IsContent(entry.Name())
+		if !matches {
+			d.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
 			continue
 		}
-		d.Log.Trace().Str("file", entry.Name()).Str("key", matches[1]).Msg("found  content on disk")
+		d.Log.Trace().Str("file", entry.Name()).Msg("found  content on disk")
 		out = append(out, Content{
 			Name: entry.Name(),
 			Path: path.Join(p, entry.Name()),

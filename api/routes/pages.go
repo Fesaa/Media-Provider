@@ -21,20 +21,22 @@ type pageRoutes struct {
 	Auth   auth.Provider `name:"jwt-auth"`
 	Log    zerolog.Logger
 
-	Val         services.ValidationService
-	PageService services.PageService
+	Val            services.ValidationService
+	PageService    services.PageService
+	ContentService services.ContentService
 }
 
 func RegisterPageRoutes(pr pageRoutes) {
 
 	pages := pr.Router.Group("/pages", pr.Auth.Middleware)
 	pages.Get("/", pr.Pages)
-	pages.Get("/:index", pr.Page)
 	pages.Post("/new", pr.UpdatePage)
 	pages.Post("/update", pr.UpdatePage)
 	pages.Delete("/:pageId", pr.DeletePage)
 	pages.Post("/swap", pr.SwapPage)
 	pages.Post("/load-default", pr.LoadDefault)
+	pages.Get("/download-metadata", pr.DownloadMetadata)
+	pages.Get("/:pageId", pr.Page)
 }
 
 func (pr *pageRoutes) Pages(ctx *fiber.Ctx) error {
@@ -61,7 +63,7 @@ func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
 	id, err := ParamsUInt(ctx, "pageId")
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"message": "Invalid id",
+			"message": err.Error(),
 		})
 	}
 
@@ -109,7 +111,7 @@ func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 	id, err := ParamsUInt(ctx, "pageId")
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "pageId must be a positive integer",
+			"message": err.Error(),
 		})
 	}
 
@@ -158,4 +160,21 @@ func (pr *pageRoutes) LoadDefault(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+}
+
+func (pr *pageRoutes) DownloadMetadata(ctx *fiber.Ctx) error {
+	id := ctx.QueryInt("provider", -1)
+	if id == -1 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "No provider specified",
+		})
+	}
+
+	metadata, err := pr.ContentService.DownloadMetadata(models.Provider(id))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(metadata)
 }

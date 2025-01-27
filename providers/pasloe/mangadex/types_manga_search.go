@@ -134,13 +134,13 @@ type MangaAttributes struct {
 	Tags             []TagData           `json:"tags"`
 }
 
-// EnTitle returns the best guess English title for the manga
-// In order of tries; Title(en), AltTitles(en), Title(any), Fixed string with non 0 length
-func (a *MangaAttributes) EnTitle() string {
+// LangTitle returns the best guess English title for the manga
+// In order of tries; Title(language), AltTitles(language), Title(any), Fixed string with non 0 length
+func (a *MangaAttributes) LangTitle(language string) string {
 	// Note: for some reason the en title may still be in Japanese, don't really have a way of checking if it is
 	// as the Japanese title is in the latin alphabet. We'll just have to be fine with it, as the alternative titles
 	// are just plain weird from time to time
-	enTitle, ok := a.Title["en"]
+	enTitle, ok := a.Title[language]
 	if ok {
 		return enTitle
 	}
@@ -150,7 +150,7 @@ func (a *MangaAttributes) EnTitle() string {
 titleArrayLoop:
 	for _, altTitle := range a.AltTitles {
 		for key, value := range altTitle {
-			if key == "en" {
+			if key == language {
 				enAltTitle = value
 				break titleArrayLoop
 			}
@@ -170,11 +170,11 @@ titleArrayLoop:
 	return "Media-Provider-Fallback-title"
 }
 
-func (a *MangaAttributes) EnAltTitles() []string {
+func (a *MangaAttributes) LangAltTitles(language string) []string {
 	var enAltTitles []string
 	for _, altTitle := range a.AltTitles {
 		for key, value := range altTitle {
-			if key == "en" {
+			if key == language {
 				enAltTitles = append(enAltTitles, value)
 				break
 			}
@@ -183,8 +183,8 @@ func (a *MangaAttributes) EnAltTitles() []string {
 	return enAltTitles
 }
 
-func (a *MangaAttributes) EnDescription() string {
-	enDescription, ok := a.Description["en"]
+func (a *MangaAttributes) LangDescription(language string) string {
+	enDescription, ok := a.Description[language]
 	if ok {
 		return enDescription
 	}

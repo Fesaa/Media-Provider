@@ -127,6 +127,28 @@ func TestMustReturnErr(t *testing.T) {
 
 }
 
+func TestMustHave(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Must() did panic")
+		}
+	}()
+	MustHave(func() (string, bool) {
+		return "", true
+	}())
+}
+
+func TestMustHavePanic(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Must() did not panic")
+		}
+	}()
+	MustHave(func() (string, bool) {
+		return "", false
+	}())
+}
+
 func TestOrDefault(t *testing.T) {
 	got := OrDefault([]int{1, 2, 3}, 2)
 	if got != 1 {

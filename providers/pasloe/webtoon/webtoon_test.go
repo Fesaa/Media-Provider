@@ -48,8 +48,8 @@ func (m mockClient) GetCurrentDownloads() []api.Downloadable {
 	return []api.Downloadable{}
 }
 
-func (m mockClient) GetQueuedDownloads() []payload.QueueStat {
-	return []payload.QueueStat{}
+func (m mockClient) GetQueuedDownloads() []payload.InfoStat {
+	return []payload.InfoStat{}
 }
 
 func (m mockClient) GetConfig() api.Config {
@@ -443,8 +443,8 @@ func TestWebtoon_ContentRegex(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if wt.ContentRegex().MatchString(tt.s) != tt.match {
-				t.Errorf("got %v, want %v", wt.ContentRegex().MatchString(tt.s), tt.match)
+			if got := wt.IsContent(tt.s); got != tt.match {
+				t.Errorf("got %v, want %v", got, tt.match)
 			}
 		})
 	}

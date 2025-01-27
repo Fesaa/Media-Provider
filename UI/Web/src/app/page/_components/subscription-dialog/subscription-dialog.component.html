@@ -1,0 +1,34 @@
+<div class="flex flex-col space-y-5 mt-5 mb-2">
+
+  <div class="card flex">
+    <p-floatlabel variant="on" [style]="{width: '100%'}">
+      <input pInputText [(ngModel)]="this.subscription.info.title" id="title"
+             type="text" autocomplete="off" class="w-full p-2" />
+      <label for="title">Title</label>
+    </p-floatlabel>
+  </div>
+
+  <div class="card flex w-full">
+    <p-floatlabel variant="on" [style]="{width: '100%'}">
+      <input pInputText [(ngModel)]="this.subscription.info.baseDir" id="download_dir"
+             type="text" autocomplete="off" class="w-full flex-grow p-2" />
+      <label for="download_dir">Download directory</label>
+    </p-floatlabel>
+  </div>
+
+  <div class="card flex">
+    <p-floatlabel variant="on" [style]="{width: '100%'}">
+      <p-select styleClass="w-full"
+                [(ngModel)]="this.subscription.refreshFrequency"
+                [options]="RefreshFrequencies"
+                id="refresh_frequency"  />
+      <label for="refresh_frequency">Refresh Frequency</label>
+    </p-floatlabel>
+  </div>
+
+
+  <div class="flex w-full flex-grow justify-end gap-4 mt-10">
+    <p-button label="Cancel" severity="secondary" (click)="close()" />
+    <p-button label="Subscribe" (click)="subscribe()" />
+  </div>
+</div>

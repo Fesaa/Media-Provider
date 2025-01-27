@@ -2,7 +2,7 @@ import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {PageService} from "../_services/page.service";
 import {DownloadService} from "../_services/download.service";
-import {Modifier, ModifierType, Page, Provider} from "../_models/page";
+import {DownloadMetadata, Modifier, ModifierType, Page, Provider} from "../_models/page";
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {SearchRequest} from "../_models/search";
 import {DropdownModifierComponent} from "./_components/dropdown-modifier/dropdown-modifier.component";
@@ -19,6 +19,7 @@ import {FormInputComponent} from "../shared/form/form-input/form-input.component
 import {DialogService} from "../_services/dialog.service";
 import {fadeOut} from "../_animations/fade-out";
 import {SubscriptionService} from "../_services/subscription.service";
+import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
 
 @Component({
     selector: 'app-page',
@@ -42,6 +43,7 @@ export class PageComponent implements OnInit{
 
   modifiers: Modifier[] = [];
   providers: Provider[] = [];
+  metadata: Map<Provider, DownloadMetadata> = new Map();
 
   searchResult: SearchInfo[] = [];
   currentPage: number = 1;
@@ -55,7 +57,8 @@ export class PageComponent implements OnInit{
               private fb: FormBuilder,
               private toastr: ToastrService,
               private dialogService: DialogService,
-              private subscriptionService: SubscriptionService
+              private subscriptionService: SubscriptionService,
+              private providerNamePipe: ProviderNamePipe,
   ) {
     this.navService.setNavVisibility(true);
     this.downloadService.loadStats(false);
@@ -73,6 +76,7 @@ export class PageComponent implements OnInit{
           this.modifiers = this.page.modifiers;
           this.buildForm(page);
           this.hideSearchForm = false;
+          this.loadMetadata()
           this.cdRef.detectChanges()
         }, this.page === undefined ? 0 : 800)
       });
@@ -81,6 +85,28 @@ export class PageComponent implements OnInit{
     this.subscriptionService.providers().subscribe(providers => {
       this.providers = providers;
     })
+  }
+
+  private loadMetadata() {
+    if (!this.page) {
+      return;
+    }
+
+    for (const provider of this.page.providers) {
+      this.pageService.metadata(provider).subscribe({
+        next: metadata => {
+          this.metadata.set(provider, metadata);
+        },
+        error: error => {
+          this.toastr.error(error.error.message,
+            `Failed to load download metadata for: ${this.providerNamePipe.transform(provider)}`)
+        }
+      })
+    }
+  }
+
+  getDownloadMetadata(provider: Provider) {
+    return this.metadata.get(provider)
   }
 
   buildForm(page: Page) {
@@ -152,11 +178,7 @@ export class PageComponent implements OnInit{
       return;
     }
 
-    const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir, {
-      create: true,
-      copy: false,
-      filter: true,
-    });
+    const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir, {create: true,});
     if (dir) {
       this.searchForm?.get('customDir')?.setValue(dir);
     }

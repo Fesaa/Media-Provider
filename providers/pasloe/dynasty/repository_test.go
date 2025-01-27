@@ -135,3 +135,40 @@ func TestRepository_ChapterImages(t *testing.T) {
 		t.Fatalf("ChapterImages: expected 43 images, got %d", len(images))
 	}
 }
+
+func TestRepository_SearchSeriesOneShotChapters(t *testing.T) {
+	var buf bytes.Buffer
+	repo := tempRepository(&buf)
+
+	res, err := repo.SeriesInfo("shiawase_trimming")
+	if err != nil {
+		if strings.Contains(err.Error(), "status code error: 503") {
+			t.Skipf("Skipping test as 3rd party server error")
+		}
+		t.Fatalf("SeriesInfo: %v", err)
+	}
+
+	if len(res.Chapters) < 23 {
+		t.Fatalf("SeriesInfo: expected at least 23 chapters, got %d", len(res.Chapters))
+	}
+
+	firstChapter := res.Chapters[0]
+
+	want := "Manga Time Kirara 20th Anniversary Special Collaboration: Stardust Telepath x Shiawase Trimming"
+	if firstChapter.Title != want {
+		t.Errorf("SeriesInfo: expected %s got %s", want, firstChapter.Title)
+	}
+
+	if firstChapter.Volume != "" || firstChapter.Chapter != "" {
+		t.Errorf("SeriesInfo: expected empty chapter got Vol. %s Ch. %s", firstChapter.Volume, firstChapter.Chapter)
+	}
+
+	if len(firstChapter.Authors) != 2 {
+		t.Errorf("SeriesInfo: expected 2 authors, got %d", len(firstChapter.Authors))
+	}
+
+	if len(firstChapter.Tags) != 1 {
+		t.Errorf("SeriesInfo: expected 1 tags, got %d", len(firstChapter.Tags))
+	}
+
+}

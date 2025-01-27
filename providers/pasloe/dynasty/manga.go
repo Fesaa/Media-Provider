@@ -20,8 +20,6 @@ import (
 	"time"
 )
 
-var chapterRegex = regexp.MustCompile(".* Ch\\. ([\\d|\\.]+).cbz")
-
 func NewManga(scope *dig.Scope) api.Downloadable {
 	var m *manga
 
@@ -92,8 +90,9 @@ func (m *manga) GetInfo() payload.InfoStat {
 	m.LastTime = time.Now()
 
 	return payload.InfoStat{
-		Provider: models.DYNASTY,
-		Id:       m.id,
+		Provider:      models.DYNASTY,
+		Id:            m.id,
+		ContentStatus: utils.Ternary(m.Wg == nil, payload.ContentStatusLoading, payload.ContentStatusDownloading),
 		Name: func() string {
 			title := m.Title()
 			if title == m.id && m.TempTitle != "" {
@@ -121,6 +120,10 @@ func (m *manga) All() []Chapter {
 }
 
 func (m *manga) ContentDir(chapter Chapter) string {
+	if chapter.Chapter == "" {
+		return fmt.Sprintf("%s OneShot %s", m.Title(), chapter.Title)
+	}
+
 	if chpt, err := strconv.ParseFloat(chapter.Chapter, 32); err == nil {
 		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
 		return chDir
@@ -207,13 +210,30 @@ func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
 	return nil
 }
 
-func (m *manga) ContentRegex() *regexp.Regexp {
-	return chapterRegex
+var (
+	chapterRegex = regexp.MustCompile(".* Ch\\. ([\\d|\\.]+).cbz")
+	oneShotRegex = regexp.MustCompile(".+ OneShot .+\\.cbz")
+)
+
+func (m *manga) IsContent(name string) bool {
+	if chapterRegex.MatchString(name) {
+		return true
+	}
+
+	if oneShotRegex.MatchString(name) {
+		return true
+	}
+
+	return false
 }
 
 func (m *manga) ShouldDownload(chapter Chapter) bool {
 	_, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
-	return !ok
+	if ok || (chapter.Chapter == "" && !m.Req.GetBool(DownloadOneShotKey)) {
+		return false
+	}
+
+	return true
 }
 
 func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {

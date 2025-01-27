@@ -49,8 +49,8 @@ func (m mockClient) GetCurrentDownloads() []api.Downloadable {
 	return []api.Downloadable{}
 }
 
-func (m mockClient) GetQueuedDownloads() []payload.QueueStat {
-	return []payload.QueueStat{}
+func (m mockClient) GetQueuedDownloads() []payload.InfoStat {
+	return []payload.InfoStat{}
 }
 
 func (m mockClient) GetConfig() api.Config {
@@ -97,7 +97,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 		}
 	}
 
-	log := zerolog.New(w)
+	log := zerolog.New(w).Level(zerolog.TraceLevel)
 
 	c := dig.New()
 	scope := c.Scope("testScope")
@@ -354,6 +354,7 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 			{Attributes: ChapterAttributes{
 				TranslatedLanguage: "en",
 				Volume:             "NotANumber",
+				Chapter:            "1", // Needed so it doesn't get picked up as a OneShot, and skipped
 			}},
 		},
 	}
@@ -385,7 +386,10 @@ func TestManga_All(t *testing.T) {
 	mock := mockRepo{t: t}
 	mock.chapters = ChapterSearchResponse{
 		Data: []ChapterSearchData{
-			{Attributes: ChapterAttributes{TranslatedLanguage: "en"}},
+			{Attributes: ChapterAttributes{
+				TranslatedLanguage: "en",
+				Chapter:            "1", // Needed so it doesn't get picked up as a OneShot, and skipped
+			}},
 		},
 	}
 	m.repository = mock
@@ -438,7 +442,7 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 
 	chpt.Attributes.Chapter = ""
 	got = m.ContentDir(chpt)
-	want = "Rainbows After Storms OneShot"
+	want = "Rainbows After Storms OneShot My Lover"
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}
@@ -705,11 +709,16 @@ func TestManga_ContentRegex(t *testing.T) {
 			s:    "DFGHJK",
 			want: false,
 		},
+		{
+			name: "Test OneShot",
+			s:    RainbowsAfterStorms + " OneShot Shopping With Friends.cbz",
+			want: true,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if m.ContentRegex().MatchString(tc.s) != tc.want {
+			if m.IsContent(tc.s) != tc.want {
 				t.Errorf("got %v, want %v for %s", !tc.want, tc.want, tc.s)
 			}
 		})
@@ -857,6 +866,48 @@ func TestManga_ShouldDownload(t *testing.T) {
 			}
 
 		})
+	}
+
+}
+
+func TestChapterSearchResponse_FilterOneEnChapter(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	m.language = "en"
+
+	res, err := m.repository.GetChapters(RainbowsAfterStormsID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filtered := m.FilterChapters(res)
+	if len(filtered.Data) != 172 {
+		t.Errorf("Expected 172 chapters, got %d", len(filtered.Data))
+	}
+}
+
+func TestChapterSearchResponse_FilterOneEnChapterSkipOfficial(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	m.language = "en"
+
+	c := ChapterSearchResponse{
+		Result:   "",
+		Response: "",
+		Data: []ChapterSearchData{
+			{
+				Attributes: ChapterAttributes{
+					ExternalUrl:        "some external url",
+					TranslatedLanguage: "en",
+				},
+			},
+		},
+		Limit:  0,
+		Offset: 0,
+		Total:  0,
+	}
+
+	filtered := m.FilterChapters(&c)
+	if len(filtered.Data) != 0 {
+		t.Errorf("Expected 0 chapters, got %d", len(filtered.Data))
 	}
 
 }

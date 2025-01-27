@@ -20,21 +20,61 @@ type Repository interface {
 type repository struct {
 	httpClient *http.Client
 	log        zerolog.Logger
+	tags       *utils.SafeMap[string, string]
 }
 
 func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
-	return &repository{
+	r := &repository{
 		httpClient: httpClient,
 		log:        log,
+		tags:       utils.NewSafeMap[string, string](),
 	}
+	if err := r.loadTags(); err != nil {
+		r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
+	} else {
+		r.log.Debug().Int("size", r.tags.Len()).Msg("loaded tags")
+	}
+	return r
 }
 
-var tags = utils.NewSafeMap[string, string]()
+func (r *repository) loadTags() error {
+	tagURL := URL + "/manga/tag"
 
-func mapTags(in []string, skip bool) ([]string, error) {
+	resp, err := r.httpClient.Get(tagURL)
+	if err != nil {
+		return fmt.Errorf("loadTags Get: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("loadTags status: %s", resp.Status)
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("loadTags readAll: %w", err)
+	}
+
+	var tagResponse TagResponse
+	err = json.Unmarshal(body, &tagResponse)
+	if err != nil {
+		return fmt.Errorf("loadTags unmarshal: %w", err)
+	}
+
+	for _, tag := range tagResponse.Data {
+		enName, ok := tag.Attributes.Name["en"]
+		if !ok {
+			continue
+		}
+		r.tags.Set(enName, tag.Id)
+	}
+	return nil
+}
+
+func (r *repository) mapTags(in []string, skip bool) ([]string, error) {
 	mappedTags := make([]string, 0)
 	for _, tag := range in {
-		id, ok := tags.Get(tag)
+		id, ok := r.tags.Get(tag)
 		if !ok {
 			if skip {
 				continue
@@ -58,7 +98,7 @@ func (r *repository) GetManga(id string) (*GetMangaResponse, error) {
 }
 
 func (r *repository) SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
-	url, err := searchMangaURL(options)
+	url, err := r.searchMangaURL(options)
 	if err != nil {
 		return nil, err
 	}

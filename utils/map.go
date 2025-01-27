@@ -90,3 +90,14 @@ func MapValues[K comparable, V, T any](m map[K]V, f func(V) T) []T {
 	}
 	return out
 }
+
+func GroupBy[K comparable, V any](s []V, f func(V) K) map[K][]V {
+	out := map[K][]V{}
+
+	for _, v := range s {
+		key := f(v)
+		out[key] = append(out[key], v)
+	}
+
+	return out
+}

@@ -5,7 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -18,7 +17,6 @@ import (
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
 	ioService services.IOService) api.Client {
-	utils.Must(container.Invoke(mangadex.Init))
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
@@ -56,8 +54,16 @@ func (c *client) GetCurrentDownloads() []api.Downloadable {
 	return c.downloading
 }
 
-func (c *client) GetQueuedDownloads() []payload.QueueStat {
-	return c.queue.Items()
+func (c *client) GetQueuedDownloads() []payload.InfoStat {
+	return utils.Map(c.queue.Items(), func(item payload.QueueStat) payload.InfoStat {
+		return payload.InfoStat{
+			Provider:      item.Provider,
+			Id:            item.Id,
+			ContentStatus: payload.ContentStatusQueued,
+			Name:          item.Name,
+			Progress:      0,
+		}
+	})
 }
 
 func (c *client) Download(req payload.DownloadRequest) error {

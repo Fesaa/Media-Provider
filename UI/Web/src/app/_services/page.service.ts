@@ -1,7 +1,7 @@
 import {DestroyRef, inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
-import {Page} from "../_models/page";
+import {DownloadMetadata, Page, Provider} from "../_models/page";
 import {Observable, of, ReplaySubject} from "rxjs";
 
 @Injectable({
@@ -60,6 +60,10 @@ export class PageService {
     }
 
     return this.httpClient.post(this.baseUrl + "load-default", {})
+  }
+
+  metadata(provider: Provider) {
+    return this.httpClient.get<DownloadMetadata>(this.baseUrl + `download-metadata?provider=${provider}`)
   }
 
 }

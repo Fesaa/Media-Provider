@@ -7,39 +7,73 @@
   </div>
 } @else {
   <div class="w-full">
-    @if (running.length === 0 && queued.length === 0 && !this.loading) {
+    @if (info.length === 0 && !this.loading) {
       <app-suggestion-dashboard></app-suggestion-dashboard>
     }
 
-    <div class="w-full pt-1 md:pt-5">
-      @if (running.length > 0) {
-        <div class="flex flex-row justify-center items-center w-full">
-          <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-2 pb-4 relative w-3/4">
-            <span
-              class="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-400">Downloading</span>
-            <span
-              class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-400"></span>
-          </h1>
-        </div>
-        @for (info of running; track $index) {
-          <app-running-info [info]="info"></app-running-info>
-        }
-      }
-
-      @if (queued.length > 0) {
-        <div class="flex flex-row justify-center items-center w-full">
-          <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-2 pb-4 relative w-3/4">
-            <span
-              class="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-400">Queued</span>
-            <span
-              class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-400"></span>
-          </h1>
-        </div>
-        @for (info of queued; track $index) {
-          <app-queued-info [info]="info"></app-queued-info>
-        }
-      }
-    </div>
+    @if (info.length > 0) {
+      <div class="w-full pt-1 md:pt-5 m-5">
+        <p-table
+          [value]="info"
+          [rows]="10"
+          [paginator]="true"
+          stripedRows
+          [rowsPerPageOptions]="[5, 10, 20]"
+        >
+          <ng-template #header>
+            <tr>
+              <th style="width:24%">Name</th>
+              <th style="width:5%">Size</th>
+              <th style="width:30%">Progress</th>
+              <th style="width:10%">Status</th>
+              <th style="width:15%">Action</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-info>
+            <tr>
+              <th>
+                @if (info.ref_url === "") {
+                  <h2 class="text-lg font-semibold">{{ info.name | contentTitle }}</h2>
+                } @else {
+                  <a class="text-lg font-semibold hover:underline" target="_blank" [href]="info.ref_url">{{ info.name | contentTitle }}</a>
+                }
+              </th>
+              <th>
+                <span class="font-semibold">{{ info.size }}</span>
+              </th>
+              <th>
+                <div class="relative pt-1 m-2">
+                  <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                    <div
+                      class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 dark:bg-blue-400"
+                      [style.width.%]="info.progress"
+                    ></div>
+                  </div>
+                  <div class="flex justify-between text-sm text-gray-500 dark:text-white mt-1">
+                    <span>{{info.speed.speed | speed:info.speed_type}} {{info.speed_type | speedType }}</span>
+                    @if (info.estimated) {
+                      <span class="hidden md:inline">{{info.estimated | time}}</span>
+                    }
+                    <span>{{ info.progress }}%</span>
+                  </div>
+                </div>
+              </th>
+              <th>
+                <p-tag [value]="info.contentStatus" [severity]="getSeverity(info)" />
+              </th>
+              <th>
+                <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
+                  <p-button (click)="browse(info)"
+                            pTooltip="Browse directory" tooltipPosition="bottom" icon="pi pi-folder" severity="success" />
+                  <p-button (click)="stop(info)"
+                            pTooltip="Stop download" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" />
+                </div>
+              </th>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
   </div>
 }
 

@@ -127,7 +127,7 @@ func (r *repository) SeriesInfo(id string) (*Series, error) {
 		AltTitle:    doc.Find(".aliases b").Text(),
 		Description: doc.Find(".description p").Text(),
 		CoverUrl:    DOMAIN + doc.Find(".thumbnail").AttrOr("src", ""),
-		Status:      SeriesStatus(strings.TrimPrefix(doc.Find(".tag-title small:nth-of-type(2)").Text(), "— ")),
+		Status:      SeriesStatus(strings.TrimPrefix(doc.Find(".tag-title small").Last().Text(), "— ")),
 		Tags:        goquery.Map(doc.Find(".tag-tags a"), toTag),
 		Authors:     goquery.Map(doc.Find(".tag-title a"), toAuthor),
 		Chapters:    r.readChapters(doc.Find(".chapter-list")),
@@ -156,6 +156,7 @@ func (r *repository) readChapters(chapterElement *goquery.Selection) []Chapter {
 		titleElement := s.Find(".name")
 		releaseDate := s.Find("small")
 		tags := goquery.Map(s.Find(".label"), toTag)
+		authors := goquery.Map(s.Find("a:not(.label):not(.name)"), toAuthor)
 
 		chapter, title := func() (string, string) {
 			chapterText := titleElement.Text()
@@ -178,6 +179,7 @@ func (r *repository) readChapters(chapterElement *goquery.Selection) []Chapter {
 			Chapter:     chapter,
 			ReleaseDate: &releaseTime,
 			Tags:        tags,
+			Authors:     authors,
 		})
 	})
 

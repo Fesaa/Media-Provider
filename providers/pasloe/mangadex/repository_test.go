@@ -19,12 +19,6 @@ var loadedTags = false
 
 func tempRepo(t *testing.T, w io.Writer) Repository {
 	t.Helper()
-	if !loadedTags {
-		if err := loadTags(http.DefaultClient); err != nil {
-			t.Fatal(err)
-		}
-		loadedTags = true
-	}
 	return NewRepository(http.DefaultClient, zerolog.New(w))
 }
 
@@ -36,8 +30,8 @@ func TestRepository_GetManga(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if res.Data.Attributes.EnTitle() != RainbowsAfterStorms {
-		t.Errorf("got %s expected %s", res.Data.Attributes.EnTitle(), RainbowsAfterStorms)
+	if res.Data.Attributes.LangTitle("en") != RainbowsAfterStorms {
+		t.Errorf("got %s expected %s", res.Data.Attributes.LangTitle("en"), RainbowsAfterStorms)
 	}
 }
 

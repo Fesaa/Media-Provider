@@ -14,12 +14,12 @@ func addRange(u string, param string, r []string) string {
 	return u
 }
 
-func searchMangaURL(s SearchOptions) (string, error) {
-	includedTagIds, err := mapTags(s.IncludedTags, s.SkipNotFoundTags)
+func (r *repository) searchMangaURL(s SearchOptions) (string, error) {
+	includedTagIds, err := r.mapTags(s.IncludedTags, s.SkipNotFoundTags)
 	if err != nil {
 		return "", err
 	}
-	excludedTagIds, err := mapTags(s.ExcludedTags, s.SkipNotFoundTags)
+	excludedTagIds, err := r.mapTags(s.ExcludedTags, s.SkipNotFoundTags)
 	if err != nil {
 		return "", err
 	}

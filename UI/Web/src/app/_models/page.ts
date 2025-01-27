@@ -40,3 +40,27 @@ export enum ModifierType {
   DROPDOWN = 1,
   MULTI,
 }
+
+export type DownloadMetadata = {
+  definitions: DownloadMetadataDefinition[];
+}
+
+export type DownloadMetadataDefinition = {
+  title: string;
+  key: string;
+  formType: DownloadMetadataFormType;
+  defaultOption: string;
+  options: MetadataOption[];
+}
+
+export type MetadataOption = {
+  key: string;
+  value: string;
+}
+
+export enum DownloadMetadataFormType {
+  SWITCH,
+  DROPDOWN,
+  MULTI,
+  TEXT
+}

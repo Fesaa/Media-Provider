@@ -2,7 +2,6 @@ package mangadex
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -34,14 +33,20 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 
 	info := make([]payload.Info, 0)
 	for _, data := range mangas.Data {
-		enTitle := data.Attributes.EnTitle()
+		enTitle := data.Attributes.LangTitle("en")
 		info = append(info, payload.Info{
 			Name:        enTitle,
-			Description: data.Attributes.EnDescription(),
+			Description: data.Attributes.LangDescription("en"),
 			Size: func() string {
-				volumes := config.OrDefault(data.Attributes.LastVolume, "unknown")
-				chapters := config.OrDefault(data.Attributes.LastChapter, "unknown")
-				return fmt.Sprintf("%s Vol. %s Ch.", volumes, chapters)
+				s := ""
+				if data.Attributes.LastVolume != "" {
+					s += fmt.Sprintf("%s Vol.", data.Attributes.LastVolume)
+				}
+
+				if data.Attributes.LastChapter != "" {
+					s += fmt.Sprintf(" %s Ch.", data.Attributes.LastChapter)
+				}
+				return s
 			}(),
 			Tags: []payload.InfoTag{
 				payload.Of("Date", strconv.Itoa(data.Attributes.Year)),
@@ -102,6 +107,30 @@ func (b *Builder) Download(request payload.DownloadRequest) error {
 
 func (b *Builder) Stop(request payload.StopRequest) error {
 	return b.ps.RemoveDownload(request)
+}
+
+func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
+	return payload.DownloadMetadata{
+		Definitions: []payload.DownloadMetadataDefinition{
+			{
+				Title:         "Language",
+				Key:           LanguageKey,
+				FormType:      payload.DROPDOWN,
+				DefaultOption: "en",
+				Options:       languages,
+			},
+			{
+				Title:    "Scanlation group",
+				Key:      ScanlationGroupKey,
+				FormType: payload.TEXT,
+			},
+			{
+				Title:    "Download OneShots",
+				Key:      DownloadOneShotKey,
+				FormType: payload.SWITCH,
+			},
+		},
+	}
 }
 
 func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository Repository) *Builder {

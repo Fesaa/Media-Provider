@@ -4,7 +4,6 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/rs/zerolog"
-	"regexp"
 )
 
 type Downloadable interface {
@@ -39,6 +38,6 @@ type DownloadInfoProvider[T any] interface {
 	WriteContentMetaData(t T) error
 	DownloadContent(idx int, t T, url string) error
 
-	ContentRegex() *regexp.Regexp
+	IsContent(string) bool
 	ShouldDownload(t T) bool
 }

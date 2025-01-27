@@ -56,6 +56,10 @@ func (b *Builder) Stop(request payload.StopRequest) error {
 	return b.ps.RemoveDownload(request)
 }
 
+func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
+	return payload.DownloadMetadata{}
+}
+
 func NewBuilder(log zerolog.Logger, ps api.Client, repository Repository) *Builder {
 	return &Builder{
 		log:        log.With().Str("handler", "webtoon-provider").Logger(),

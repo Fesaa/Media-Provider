@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"reflect"
 	"slices"
 	"strconv"
 	"testing"
@@ -194,5 +195,44 @@ func TestMapValues(t *testing.T) {
 
 	if len(got) != 0 {
 		t.Fatalf("got %v; want %v", got, want)
+	}
+}
+
+func TestGroupBy(t *testing.T) {
+	type testType struct {
+		name string
+		in   []string
+		want map[int][]string
+		f    func(string) int
+	}
+
+	tests := []testType{
+		{
+			name: "empty",
+			in:   []string{},
+			want: map[int][]string{},
+			f:    func(s string) int { return len(s) },
+		},
+		{
+			name: "single",
+			in:   []string{"a"},
+			want: map[int][]string{1: {"a"}},
+			f:    func(s string) int { return len(s) },
+		},
+		{
+			name: "multiple",
+			in:   []string{"a", "b", "c", "ab", "abc"},
+			want: map[int][]string{1: {"a", "b", "c"}, 2: {"ab"}, 3: {"abc"}},
+			f:    func(s string) int { return len(s) },
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := GroupBy(test.in, test.f)
+			if !reflect.DeepEqual(got, test.want) {
+				t.Fatalf("got %v; want %v", got, test.want)
+			}
+		})
 	}
 }
