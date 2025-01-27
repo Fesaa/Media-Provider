@@ -120,10 +120,9 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				FormType: payload.TEXT,
 			},
 			{
-				Title:         "Download OneShots",
-				Key:           DownloadOneShotKey,
-				FormType:      payload.SWITCH,
-				DefaultOption: "false",
+				Title:    "Download OneShots",
+				Key:      DownloadOneShotKey,
+				FormType: payload.SWITCH,
 			},
 		},
 	}

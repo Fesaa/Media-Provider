@@ -48,7 +48,7 @@ export class DownloadDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (!this.metadata) {
+    if (!this.metadata || !this.metadata.definitions) {
       return;
     }
 
