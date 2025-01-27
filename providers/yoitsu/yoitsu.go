@@ -224,8 +224,16 @@ func (y *yoitsuImpl) GetRunningTorrents() *utils.SafeMap[string, Torrent] {
 	return y.torrents
 }
 
-func (y *yoitsuImpl) GetQueuedTorrents() []payload.QueueStat {
-	return y.queue.Items()
+func (y *yoitsuImpl) GetQueuedTorrents() []payload.InfoStat {
+	return utils.Map(y.queue.Items(), func(item payload.QueueStat) payload.InfoStat {
+		return payload.InfoStat{
+			Provider:      item.Provider,
+			Id:            item.Id,
+			ContentStatus: payload.ContentStatusQueued,
+			Name:          item.Name,
+			Progress:      0,
+		}
+	})
 }
 
 // GetTorrentDirFilePathMaker appending the infohash allows us to always clean up the torrent files on delete

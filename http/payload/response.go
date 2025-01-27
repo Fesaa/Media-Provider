@@ -1,8 +1,7 @@
 package payload
 
 type StatsResponse struct {
-	Running []InfoStat  `json:"running"`
-	Queued  []QueueStat `json:"queued"`
+	Running []InfoStat `json:"running"`
 }
 
 type ListDirResponse []DirEntry

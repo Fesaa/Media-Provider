@@ -119,9 +119,10 @@ func (w *webtoon) GetInfo() payload.InfoStat {
 	w.LastTime = time.Now()
 
 	return payload.InfoStat{
-		Provider: models.WEBTOON,
-		Id:       w.id,
-		Name:     w.Title(),
+		Provider:      models.WEBTOON,
+		Id:            w.id,
+		ContentStatus: utils.Ternary(w.Wg == nil, payload.ContentStatusLoading, payload.ContentStatusDownloading),
+		Name:          w.Title(),
 		Size: func() string {
 			if w.info != nil {
 				return strconv.Itoa(len(w.ToDownload)) + " Chapters"

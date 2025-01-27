@@ -54,8 +54,16 @@ func (c *client) GetCurrentDownloads() []api.Downloadable {
 	return c.downloading
 }
 
-func (c *client) GetQueuedDownloads() []payload.QueueStat {
-	return c.queue.Items()
+func (c *client) GetQueuedDownloads() []payload.InfoStat {
+	return utils.Map(c.queue.Items(), func(item payload.QueueStat) payload.InfoStat {
+		return payload.InfoStat{
+			Provider:      item.Provider,
+			Id:            item.Id,
+			ContentStatus: payload.ContentStatusQueued,
+			Name:          item.Name,
+			Progress:      0,
+		}
+	})
 }
 
 func (c *client) Download(req payload.DownloadRequest) error {

@@ -13,6 +13,6 @@ type Client interface {
 
 	GetBaseDir() string
 	GetCurrentDownloads() []Downloadable
-	GetQueuedDownloads() []payload.QueueStat
+	GetQueuedDownloads() []payload.InfoStat
 	GetConfig() Config
 }
