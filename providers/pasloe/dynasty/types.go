@@ -57,6 +57,7 @@ type Chapter struct {
 	Chapter     string
 	ReleaseDate *time.Time
 	Tags        []Tag
+	Authors     []Author
 }
 
 type SeriesStatus string
