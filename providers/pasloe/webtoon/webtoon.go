@@ -21,8 +21,6 @@ import (
 	"time"
 )
 
-var chapterRegex = regexp.MustCompile(".* Ch\\. (\\d+).cbz")
-
 func NewWebToon(scope *dig.Scope) api.Downloadable {
 	var wt *webtoon
 
@@ -214,8 +212,10 @@ func (w *webtoon) DownloadContent(page int, chapter Chapter, url string) error {
 	return nil
 }
 
-func (w *webtoon) ContentRegex() *regexp.Regexp {
-	return chapterRegex
+var chapterRegex = regexp.MustCompile(".* Ch\\. (\\d+).cbz")
+
+func (w *webtoon) IsContent(name string) bool {
+	return chapterRegex.MatchString(name)
 }
 
 func (w *webtoon) ShouldDownload(chapter Chapter) bool {

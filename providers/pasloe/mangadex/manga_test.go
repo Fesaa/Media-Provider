@@ -705,11 +705,16 @@ func TestManga_ContentRegex(t *testing.T) {
 			s:    "DFGHJK",
 			want: false,
 		},
+		{
+			name: "Test OneShot",
+			s:    RainbowsAfterStorms + " OneShot Shopping With Friends.cbz",
+			want: true,
+		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if m.ContentRegex().MatchString(tc.s) != tc.want {
+			if m.IsContent(tc.s) != tc.want {
 				t.Errorf("got %v, want %v for %s", !tc.want, tc.want, tc.s)
 			}
 		})

@@ -407,11 +407,15 @@ func TestManga_ContentRegex(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer)
 
-	if m.ContentRegex().MatchString("Not a Valid Chapter") {
+	if m.IsContent("Not a Valid Chapter") {
 		t.Error("m.ContentRegex().MatchString() returned true")
 	}
 
-	if !m.ContentRegex().MatchString("Sailor Girlfriend Ch. 0004.5.cbz") {
+	if !m.IsContent("Sailor Girlfriend Ch. 0004.5.cbz") {
+		t.Error("m.ContentRegex().MatchString() returned false")
+	}
+
+	if !m.IsContent("Shiawase Trimming OneShot Manga Time Kirara 20th Anniversary Special Collaboration: Stardust Telepath x Shiawase Trimming.cbz") {
 		t.Error("m.ContentRegex().MatchString() returned false")
 	}
 }

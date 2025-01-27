@@ -20,8 +20,6 @@ import (
 	"time"
 )
 
-var chapterRegex = regexp.MustCompile(".* Ch\\. ([\\d|\\.]+).cbz")
-
 func NewManga(scope *dig.Scope) api.Downloadable {
 	var m *manga
 
@@ -211,8 +209,21 @@ func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
 	return nil
 }
 
-func (m *manga) ContentRegex() *regexp.Regexp {
-	return chapterRegex
+var (
+	chapterRegex = regexp.MustCompile(".* Ch\\. ([\\d|\\.]+).cbz")
+	oneShotRegex = regexp.MustCompile(".+ OneShot .+\\.cbz")
+)
+
+func (m *manga) IsContent(name string) bool {
+	if chapterRegex.MatchString(name) {
+		return true
+	}
+
+	if oneShotRegex.MatchString(name) {
+		return true
+	}
+
+	return false
 }
 
 func (m *manga) ShouldDownload(chapter Chapter) bool {
