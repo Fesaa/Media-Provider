@@ -217,7 +217,11 @@ func (m *manga) ContentRegex() *regexp.Regexp {
 
 func (m *manga) ShouldDownload(chapter Chapter) bool {
 	_, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
-	return !ok
+	if ok || (chapter.Chapter == "" && !m.Req.GetBool(DownloadOneShotKey)) {
+		return false
+	}
+
+	return true
 }
 
 func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {

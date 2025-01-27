@@ -64,7 +64,16 @@ func (b *Builder) Stop(request payload.StopRequest) error {
 }
 
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
-	return payload.DownloadMetadata{}
+	return payload.DownloadMetadata{
+		Definitions: []payload.DownloadMetadataDefinition{
+			{
+				Title:         "Download OneShots",
+				Key:           DownloadOneShotKey,
+				FormType:      payload.SWITCH,
+				DefaultOption: "false",
+			},
+		},
+	}
 }
 
 func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository Repository) *Builder {
