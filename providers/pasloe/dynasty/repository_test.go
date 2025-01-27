@@ -142,6 +142,9 @@ func TestRepository_SearchSeriesOneShotChapters(t *testing.T) {
 
 	res, err := repo.SeriesInfo("shiawase_trimming")
 	if err != nil {
+		if strings.Contains(err.Error(), "status code error: 503") {
+			t.Skipf("Skipping test as 3rd party server error")
+		}
 		t.Fatalf("SeriesInfo: %v", err)
 	}
 

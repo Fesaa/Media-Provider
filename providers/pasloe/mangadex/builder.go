@@ -44,7 +44,7 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 				}
 
 				if data.Attributes.LastChapter != "" {
-					s += fmt.Sprintf(" %s Chapter.", data.Attributes.LastChapter)
+					s += fmt.Sprintf(" %s Ch.", data.Attributes.LastChapter)
 				}
 				return s
 			}(),
