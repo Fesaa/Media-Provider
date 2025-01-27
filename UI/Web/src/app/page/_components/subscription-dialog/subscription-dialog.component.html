@@ -1,27 +1,27 @@
 <div class="flex flex-col space-y-5 mt-5 mb-2">
 
   <div class="card flex">
-    <p-floatlabel variant="on">
+    <p-floatlabel variant="on" [style]="{width: '100%'}">
       <input pInputText [(ngModel)]="this.subscription.info.title" id="title"
-             type="text" autocomplete="off" class="w-96 p-2" />
+             type="text" autocomplete="off" class="w-full p-2" />
       <label for="title">Title</label>
     </p-floatlabel>
   </div>
 
-  <div class="card flex">
-    <p-floatlabel variant="on">
+  <div class="card flex w-full">
+    <p-floatlabel variant="on" [style]="{width: '100%'}">
       <input pInputText [(ngModel)]="this.subscription.info.baseDir" id="download_dir"
-             type="text" autocomplete="off" class="w-96 p-2" />
+             type="text" autocomplete="off" class="w-full flex-grow p-2" />
       <label for="download_dir">Download directory</label>
     </p-floatlabel>
   </div>
 
   <div class="card flex">
-    <p-floatlabel variant="on">
-      <p-select styleClass="w-96"
+    <p-floatlabel variant="on" [style]="{width: '100%'}">
+      <p-select styleClass="w-full"
                 [(ngModel)]="this.subscription.refreshFrequency"
                 [options]="RefreshFrequencies"
-                id="refresh_frequency" />
+                id="refresh_frequency"  />
       <label for="refresh_frequency">Refresh Frequency</label>
     </p-floatlabel>
   </div>

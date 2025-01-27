@@ -49,7 +49,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 	app.
 		Use(requestid.New()).
 		Use(recover.New(recover.Config{
-			EnableStackTrace: params.Cfg.Logging.Level <= zerolog.DebugLevel,
+			EnableStackTrace: true,
 		})).
 		Use(cors.New(cors.Config{
 			AllowOrigins: "http://localhost:4200",
@@ -65,7 +65,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 	app.Use(prometheus.Middleware)
 
 	dontLog := []string{"/api/stats", "/", "/api/metrics"}
-	dontLogExt := []string{".js", ".html", ".css", ".svg"}
+	dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2"}
 	httpLogger := params.Log.With().Str("handler", "http").Logger()
 	app.Use(fiberzerolog.New(fiberzerolog.Config{
 		Logger: &httpLogger,

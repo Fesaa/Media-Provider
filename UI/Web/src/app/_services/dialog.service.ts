@@ -17,7 +17,7 @@ export class DialogService {
     root: string,
     options: Partial<{ create: boolean; copy: boolean; filter: boolean; showFiles: boolean, width: string }> = {}
   ): Promise<string | undefined> {
-    const defaultOptions = { create: false, copy: false, filter: true, showFiles: false, width: '25rem' };
+    const defaultOptions = { create: false, copy: false, filter: true, showFiles: false, width: '50vw' };
     const finalOptions = { ...defaultOptions, ...options };
 
     const component = this.viewContainerRef!.createComponent(DirectorySelectorComponent)

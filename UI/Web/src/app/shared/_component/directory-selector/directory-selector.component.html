@@ -2,7 +2,7 @@
 <p-dialog
   [(visible)]="visible"
   header="Directory picker"
-  [style]="{ width: customWidth }"
+  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: customWidth }"
 >
 
   <div class="flex flex-col py-5">

@@ -1,13 +1,11 @@
 import {Component, HostListener, Input, OnInit} from '@angular/core';
 import {ReplaySubject} from "rxjs";
-import {NgClass} from "@angular/common";
 import {Dialog} from "primeng/dialog";
 import {Button} from "primeng/button";
 
 @Component({
     selector: 'app-dialog',
   imports: [
-    NgClass,
     Dialog,
     Button
   ],

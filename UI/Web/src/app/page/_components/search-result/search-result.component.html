@@ -14,20 +14,22 @@
         </button>
       }
 
-      <a [href]="searchResult.RefUrl" class="hover:underline hover:-translate-y-0.5 text-xl"
-         target="_blank">{{ searchResult.Name }}
-      </a>
+      <div class="flex flex-col flex-grow md:flex-row justify-between">
+        <a [href]="searchResult.RefUrl" class="hover:underline hover:-translate-y-0.5 text-xl"
+           target="_blank">{{ searchResult.Name }}
+        </a>
+        @if (searchResult.Size) {
+          <span class="whitespace-nowrap">({{ searchResult.Size }})</span>
+        }
+      </div>
     </div>
 
     <div class="flex flex-row space-x-2">
-      @if (searchResult.Size) {
-        <span class="whitespace-nowrap">({{ searchResult.Size }})</span>
-      }
       <button class="btn btn-primary" (click)="download()">
         <ng-icon name="heroArrowDownTray" class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer"></ng-icon>
       </button>
 
-      <p-dialog resizable="false" [(visible)]="showDownloadDialog" header="Download" [style]="{ width: '30rem'}" [contentStyle]="{ 'overflow': 'visible' }" >
+      <p-dialog resizable="false" [(visible)]="showDownloadDialog" header="Download" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }" [contentStyle]="{ 'overflow-y': 'visible' }" >
         <app-download-dialog [downloadDir]="downloadDir()" [metadata]="metadata" [searchResult]="searchResult" [(visible)]="showDownloadDialog" />
       </p-dialog>
 
@@ -39,7 +41,7 @@
           <ng-icon name="heroFolderArrowDown" class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer"></ng-icon>
         </button>
 
-        <p-dialog resizable="false" [(visible)]="showSubscriptionDialog" header="Subscribe" [style]="{ width: '30rem'}" [contentStyle]="{ 'overflow': 'visible' }">
+        <p-dialog resizable="false" [(visible)]="showSubscriptionDialog" header="Subscribe" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '30vw' }" [contentStyle]="{ 'overflow': 'visible' }">
           <app-subscription-dialog [(visible)]="showSubscriptionDialog" [downloadDir]="downloadDir()" [searchResult]="searchResult" />
         </p-dialog>
       }
@@ -54,12 +56,10 @@
         <img [src]="imageSource" alt="Image" class="w-32 h-48 rounded shadow shadow-black dropdown-item">
       }
 
-      <div class="flex flex-col space-x-2 dropdown-item ml-2">
-
+      <div class="flex flex-col space-x-2 dropdown-item ml-2 flex-wrap">
         <div class="flex flex-row space-x-2 p-1">
-
           @for (tag of searchResult.Tags; track $index) {
-            <div class="shadow rounded p-1 space-x-2 whitespace-nowrap flex flex-row text-sm {{getColour($index)}} dropdown-item">
+            <div class="shadow rounded p-1 space-x-2 flex flex-row text-sm {{getColour($index)}} dropdown-item">
               <span class="whitespace-nowrap">{{tag.Name}}</span>
               <span class="whitespace-nowrap">{{ tag.Value }}</span>
             </div>

@@ -52,7 +52,7 @@
                   <div class="flex justify-between text-sm text-gray-500 dark:text-white mt-1">
                     <span>{{info.speed.speed | speed:info.speed_type}} {{info.speed_type | speedType }}</span>
                     @if (info.estimated) {
-                      <span>{{info.estimated | time}}</span>
+                      <span class="hidden md:inline">{{info.estimated | time}}</span>
                     }
                     <span>{{ info.progress }}%</span>
                   </div>
@@ -62,7 +62,7 @@
                 <p-tag [value]="info.contentStatus" [severity]="getSeverity(info)" />
               </th>
               <th>
-                <div class="space-x-5">
+                <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
                   <p-button (click)="browse(info)"
                             pTooltip="Browse directory" tooltipPosition="bottom" icon="pi pi-folder" severity="success" />
                   <p-button (click)="stop(info)"

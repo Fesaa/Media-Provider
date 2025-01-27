@@ -1,5 +1,4 @@
 import {Component, HostListener, Input, OnInit} from '@angular/core';
-import {NgClass} from "@angular/common";
 import {ReplaySubject} from "rxjs";
 import {NgIcon} from "@ng-icons/core";
 import {DirEntry} from "../../../_models/io";
@@ -14,7 +13,6 @@ import {Button} from "primeng/button";
 @Component({
     selector: 'app-directory-selector',
   imports: [
-    NgClass,
     NgIcon,
     FormsModule,
     Dialog,
@@ -32,7 +30,7 @@ export class DirectorySelectorComponent implements OnInit {
   @Input() filter: boolean = false;
   @Input() copy: boolean = true;
   @Input() create: boolean = false;
-  @Input() customWidth: string = '25rem';
+  @Input() customWidth: string = '50vw';
 
   currentRoot = '';
   entries: DirEntry[] = [];

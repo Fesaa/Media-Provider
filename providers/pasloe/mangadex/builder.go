@@ -2,7 +2,6 @@ package mangadex
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -39,9 +38,15 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 			Name:        enTitle,
 			Description: data.Attributes.LangDescription("en"),
 			Size: func() string {
-				volumes := config.OrDefault(data.Attributes.LastVolume, "unknown")
-				chapters := config.OrDefault(data.Attributes.LastChapter, "unknown")
-				return fmt.Sprintf("%s Vol. %s Ch.", volumes, chapters)
+				s := ""
+				if data.Attributes.LastVolume != "" {
+					s += fmt.Sprintf("%s Vol.", data.Attributes.LastVolume)
+				}
+
+				if data.Attributes.LastChapter != "" {
+					s += fmt.Sprintf(" %s Chapter.", data.Attributes.LastChapter)
+				}
+				return s
 			}(),
 			Tags: []payload.InfoTag{
 				payload.Of("Date", strconv.Itoa(data.Attributes.Year)),
