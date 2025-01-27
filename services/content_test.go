@@ -171,6 +171,10 @@ func TestContentService_SearchVerySlow(t *testing.T) {
 
 type providerAdapterMock struct{}
 
+func (p providerAdapterMock) DownloadMetadata() payload.DownloadMetadata {
+	return payload.DownloadMetadata{}
+}
+
 func (p providerAdapterMock) Search(request payload.SearchRequest) ([]payload.Info, error) {
 	return []payload.Info{}, nil
 }
@@ -184,6 +188,10 @@ func (p providerAdapterMock) Stop(request payload.StopRequest) error {
 }
 
 type slowBuilder struct{}
+
+func (slowBuilder) DownloadMetadata() payload.DownloadMetadata {
+	return payload.DownloadMetadata{}
+}
 
 func (slowBuilder) Search(request payload.SearchRequest) ([]payload.Info, error) {
 	time.Sleep(3 * time.Second)

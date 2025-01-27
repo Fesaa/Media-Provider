@@ -56,8 +56,8 @@ func (m mockClient) GetCurrentDownloads() []api.Downloadable {
 	return []api.Downloadable{}
 }
 
-func (m mockClient) GetQueuedDownloads() []payload.QueueStat {
-	return []payload.QueueStat{}
+func (m mockClient) GetQueuedDownloads() []payload.InfoStat {
+	return []payload.InfoStat{}
 }
 
 func (m mockClient) GetConfig() api.Config {

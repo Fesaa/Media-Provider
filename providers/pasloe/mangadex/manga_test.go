@@ -49,8 +49,8 @@ func (m mockClient) GetCurrentDownloads() []api.Downloadable {
 	return []api.Downloadable{}
 }
 
-func (m mockClient) GetQueuedDownloads() []payload.QueueStat {
-	return []payload.QueueStat{}
+func (m mockClient) GetQueuedDownloads() []payload.InfoStat {
+	return []payload.InfoStat{}
 }
 
 func (m mockClient) GetConfig() api.Config {
@@ -97,7 +97,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 		}
 	}
 
-	log := zerolog.New(w)
+	log := zerolog.New(w).Level(zerolog.TraceLevel)
 
 	c := dig.New()
 	scope := c.Scope("testScope")
@@ -354,6 +354,7 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 			{Attributes: ChapterAttributes{
 				TranslatedLanguage: "en",
 				Volume:             "NotANumber",
+				Chapter:            "1", // Needed so it doesn't get picked up as a OneShot, and skipped
 			}},
 		},
 	}
@@ -385,7 +386,10 @@ func TestManga_All(t *testing.T) {
 	mock := mockRepo{t: t}
 	mock.chapters = ChapterSearchResponse{
 		Data: []ChapterSearchData{
-			{Attributes: ChapterAttributes{TranslatedLanguage: "en"}},
+			{Attributes: ChapterAttributes{
+				TranslatedLanguage: "en",
+				Chapter:            "1", // Needed so it doesn't get picked up as a OneShot, and skipped
+			}},
 		},
 	}
 	m.repository = mock
@@ -438,7 +442,7 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 
 	chpt.Attributes.Chapter = ""
 	got = m.ContentDir(chpt)
-	want = "Rainbows After Storms OneShot"
+	want = "Rainbows After Storms OneShot My Lover"
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}
