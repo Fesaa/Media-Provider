@@ -121,6 +121,10 @@ func (m *manga) All() []Chapter {
 }
 
 func (m *manga) ContentDir(chapter Chapter) string {
+	if chapter.Chapter == "" {
+		return fmt.Sprintf("%s OneShot %s", m.Title(), chapter.Title)
+	}
+
 	if chpt, err := strconv.ParseFloat(chapter.Chapter, 32); err == nil {
 		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
 		return chDir
