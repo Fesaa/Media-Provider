@@ -40,7 +40,7 @@ type Yoitsu interface {
 	RemoveDownload(request payload.StopRequest) error
 
 	// GetRunningTorrents returns a map of all running torrents, indexed by their info hash
-	GetRunningTorrents() *utils.SafeMap[string, Torrent]
+	GetRunningTorrents() utils.SafeMap[string, Torrent]
 	GetQueuedTorrents() []payload.InfoStat
 
 	GetBaseDir() string

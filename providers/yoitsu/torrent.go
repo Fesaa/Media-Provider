@@ -94,9 +94,9 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 	t.lastTime = time.Now()
 
 	return payload.InfoStat{
-		Provider:      t.provider,
-		Id:            t.key,
-		ContentStatus: utils.Ternary(t.t.Info() == nil, payload.ContentStatusLoading, payload.ContentStatusDownloading),
+		Provider:     t.provider,
+		Id:           t.key,
+		ContentState: utils.Ternary(t.t.Info() == nil, payload.ContentStateLoading, payload.ContentStateDownloading),
 		Name: func() string {
 			if t.t.Info() != nil {
 				return t.t.Info().BestName()

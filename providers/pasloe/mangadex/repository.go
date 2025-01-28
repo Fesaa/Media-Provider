@@ -20,7 +20,7 @@ type Repository interface {
 type repository struct {
 	httpClient *http.Client
 	log        zerolog.Logger
-	tags       *utils.SafeMap[string, string]
+	tags       utils.SafeMap[string, string]
 }
 
 func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {

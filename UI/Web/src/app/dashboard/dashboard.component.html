@@ -59,7 +59,7 @@
                 </div>
               </th>
               <th>
-                <p-tag [value]="info.contentStatus" [severity]="getSeverity(info)" />
+                <p-tag [value]="info.contentState | contentState" [severity]="getSeverity(info)" />
               </th>
               <th>
                 <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">

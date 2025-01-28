@@ -236,9 +236,9 @@ func (m *manga) GetInfo() payload.InfoStat {
 	m.LastTime = time.Now()
 
 	return payload.InfoStat{
-		Provider:      models.MANGADEX,
-		Id:            m.id,
-		ContentStatus: utils.Ternary(m.Wg == nil, payload.ContentStatusLoading, payload.ContentStatusDownloading),
+		Provider:     models.MANGADEX,
+		Id:           m.id,
+		ContentState: m.ContentState,
 		Name: func() string {
 			title := m.Title()
 			if title == m.id && m.TempTitle != "" {

@@ -2,7 +2,7 @@ import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {DownloadService} from "../_services/download.service";
-import {ContentStatus, ContentStatusWeight, InfoStat, QueueStat} from "../_models/stats";
+import {ContentState, InfoStat} from "../_models/stats";
 import {TableModule} from "primeng/table";
 import {Tag} from 'primeng/tag';
 import {ContentTitlePipe} from "../_pipes/content-title.pipe";
@@ -14,6 +14,7 @@ import {TimePipe} from "../_pipes/time.pipe";
 import {StopRequest} from "../_models/search";
 import {ToastrService} from "ngx-toastr";
 import {DialogService} from "../_services/dialog.service";
+import {ContentStatePipe} from "../_pipes/content-state.pipe";
 
 @Component({
     selector: 'app-dashboard',
@@ -26,7 +27,8 @@ import {DialogService} from "../_services/dialog.service";
     Tooltip,
     SpeedPipe,
     SpeedTypePipe,
-    TimePipe
+    TimePipe,
+    ContentStatePipe
   ],
     templateUrl: './dashboard.component.html',
     styleUrl: './dashboard.component.css'
@@ -56,11 +58,11 @@ export class DashboardComponent implements OnInit,OnDestroy {
     this.downloadService.stats$.subscribe(stats => {
       this.loading = false;
       this.info = (stats.running || []).sort((a, b) => {
-        if (a.contentStatus == b.contentStatus) {
+        if (a.contentState == b.contentState) {
           return a.id.localeCompare(b.id)
         }
 
-        return ContentStatusWeight(a.contentStatus) - ContentStatusWeight(a.contentStatus);
+        return a.contentState - b.contentState;
       });
     })
   }
@@ -91,13 +93,14 @@ export class DashboardComponent implements OnInit,OnDestroy {
   }
 
   getSeverity(info: InfoStat): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
-    switch (info.contentStatus) {
-      case ContentStatus.Downloading:
+    switch (info.contentState) {
+      case ContentState.Downloading:
         return "success";
-      case ContentStatus.Waiting:
+      case ContentState.Ready:
+      case ContentState.Waiting:
         return "info";
-      case ContentStatus.Queued:
-      case ContentStatus.Loading:
+      case ContentState.Queued:
+      case ContentState.Loading:
       default:
         return "secondary"
     }

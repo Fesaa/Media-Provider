@@ -27,7 +27,7 @@ type ProviderAdapter interface {
 }
 
 type contentService struct {
-	providers *utils.SafeMap[models.Provider, ProviderAdapter]
+	providers utils.SafeMap[models.Provider, ProviderAdapter]
 	log       zerolog.Logger
 }
 

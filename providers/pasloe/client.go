@@ -1,8 +1,10 @@
 package pasloe
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/services"
@@ -12,7 +14,11 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"sync"
+)
+
+var (
+	ErrContentAlreadyExists = errors.New("content already exists")
+	ErrContentNotFound      = errors.New("content not found")
 )
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
@@ -23,10 +29,7 @@ func New(c *config.Config, httpClient *http.Client, container *dig.Container, lo
 		log:      log.With().Str("handler", "pasloe").Logger(),
 		io:       ioService,
 
-		downloads:   utils.NewSafeMap[string, api.Downloadable](),
-		queue:       utils.NewQueue[payload.QueueStat](),
-		downloading: make([]api.Downloadable, 0),
-		mu:          sync.Mutex{},
+		content: utils.NewSafeMap[string, api.Downloadable](),
 	}
 }
 
@@ -36,10 +39,85 @@ type client struct {
 	log      zerolog.Logger
 	io       services.IOService
 
-	downloads   *utils.SafeMap[string, api.Downloadable]
-	queue       utils.Queue[payload.QueueStat]
-	downloading []api.Downloadable
-	mu          sync.Mutex
+	content utils.SafeMap[string, api.Downloadable]
+}
+
+func (c *client) Download(req payload.DownloadRequest) error {
+	if c.content.Has(req.Id) {
+		return c.wrapError(ErrContentAlreadyExists)
+	}
+
+	content, err := c.registry.Create(c, req)
+	if err != nil {
+		return c.wrapError(err)
+	}
+
+	c.content.Set(content.Id(), content)
+	if c.shouldQueue(content.Provider()) {
+		return nil
+	}
+
+	go func() {
+		content.StartLoadInfo()
+
+		c.loadAllInfo(content.Provider())
+
+		// We are certain it's fine to start, as shouldQueue was false (i.e. the provider has nothing making requests)
+		if content.State() == payload.ContentStateReady {
+			c.log.Debug().
+				Str("id", content.Id()).
+				Str("into", content.GetBaseDir()).
+				Str("title", content.Title()).
+				Msg("downloading content")
+			content.StartDownload()
+		} else {
+			c.log.Debug().
+				Str("id", content.Id()).
+				Str("title", content.Title()).
+				Msg("Content cannot be downloaded yet, checking if an other can start")
+			c.startNext(content.Provider())
+		}
+	}()
+	return nil
+}
+
+func (c *client) RemoveDownload(req payload.StopRequest) error {
+	content, ok := c.content.Get(req.Id)
+	if !ok {
+		return c.wrapError(ErrContentNotFound)
+	}
+
+	c.content.Delete(req.Id)
+	if content.State() != payload.ContentStateDownloading {
+		// The removed content has not written anything to disk yet. Nothing to clean up,
+		// and no need to start the next content.
+		c.log.Info().
+			Str("id", req.Id).
+			Str("title", content.Title()).
+			Msg("content won't be downloaded")
+		return nil
+	}
+
+	c.log.Info().
+		Str("id", req.Id).
+		Str("title", content.Title()).
+		Bool("deleteFiles", req.DeleteFiles).
+		Msg("removing content")
+	go func() {
+		content.Cancel()
+
+		if req.DeleteFiles {
+			go c.deleteFiles(content)
+		} else {
+			go c.cleanup(content)
+		}
+		c.startNext(content.Provider())
+	}()
+	return nil
+}
+
+func (c *client) GetCurrentDownloads() []api.Downloadable {
+	return c.content.Values()
 }
 
 func (c *client) GetBaseDir() string {
@@ -50,101 +128,48 @@ func (c *client) GetConfig() api.Config {
 	return c.config
 }
 
-func (c *client) GetCurrentDownloads() []api.Downloadable {
-	return c.downloading
-}
-
-func (c *client) GetQueuedDownloads() []payload.InfoStat {
-	return utils.Map(c.queue.Items(), func(item payload.QueueStat) payload.InfoStat {
-		return payload.InfoStat{
-			Provider:      item.Provider,
-			Id:            item.Id,
-			ContentStatus: payload.ContentStatusQueued,
-			Name:          item.Name,
-			Progress:      0,
-		}
+func (c *client) shouldQueue(provider models.Provider) bool {
+	providerBusy := c.content.Any(func(k string, d api.Downloadable) bool {
+		return d.Provider() == provider &&
+			d.State() < payload.ContentStateQueued &&
+			d.State() != payload.ContentStateWaiting
 	})
+
+	return providerBusy
 }
 
-func (c *client) Download(req payload.DownloadRequest) error {
-	if c.downloads.Has(req.Id) {
-		return fmt.Errorf("manga already exists: %s", req.Id)
+func (c *client) loadAllInfo(provider models.Provider) {
+	nextQueue := func(id string, d api.Downloadable) bool {
+		return d.Provider() == provider && d.State() == payload.ContentStateQueued
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if utils.Any(c.downloading, func(downloadable api.Downloadable) bool {
-		return downloadable.Provider() == req.Provider
-	}) {
-		c.queue.Enqueue(req.ToQueueStat())
-		return nil
-	}
+	for {
+		next, ok := c.content.Find(nextQueue)
+		if !ok {
+			break
+		}
 
-	c.log.Debug().
-		Str("id", req.Id).
-		Str("into", req.BaseDir).
-		Str("title?", req.TempTitle).
-		Msg("downloading content")
-	content, err := c.registry.Create(c, req)
-	if err != nil {
-		return err
+		(*next).StartLoadInfo()
 	}
-	c.downloads.Set(req.Id, content)
-	c.downloading = append(c.downloading, content)
-	content.WaitForInfoAndDownload()
-	return nil
 }
 
-func (c *client) RemoveDownload(req payload.StopRequest) error {
-	content, ok := c.downloads.Get(req.Id)
+func (c *client) startNext(provider models.Provider) {
+	c.loadAllInfo(provider)
+
+	inext, ok := c.content.Find(func(k string, d api.Downloadable) bool {
+		return d.Provider() == provider && d.State() == payload.ContentStateReady
+	})
 	if !ok {
-		ok = c.queue.RemoveFunc(func(item payload.QueueStat) bool {
-			return item.Id == req.Id
-		})
-		if ok {
-			c.log.Info().Str("id", req.Id).Msg("content removed from queue")
-			return nil
-		}
-		return fmt.Errorf("manga not found: %s", req.Id)
-	}
-
-	c.log.Info().
-		Str("id", req.Id).
-		Str("title", content.Title()).
-		Bool("deleteFiles", req.DeleteFiles).
-		Msg("removing content")
-	go func() {
-		c.downloads.Delete(req.Id)
-		content.Cancel()
-		c.mu.Lock()
-		c.downloading = nil
-		c.mu.Unlock()
-
-		if req.DeleteFiles {
-			go c.deleteFiles(content)
-		} else {
-			go c.cleanup(content)
-		}
-		c.startNext()
-	}()
-	return nil
-}
-
-func (c *client) startNext() {
-	if c.queue.IsEmpty() {
 		return
 	}
 
-	added := false
-	for !added && !c.queue.IsEmpty() {
-		q, _ := c.queue.Dequeue()
-		err := c.Download(q.ToDownloadRequest())
-		if err != nil {
-			c.log.Warn().Err(err).Msg("error while adding content from queue")
-			continue
-		}
-		added = true
-	}
+	next := *inext
+	c.log.Debug().
+		Str("id", next.Id()).
+		Str("into", next.GetBaseDir()).
+		Str("title", next.Title()).
+		Msg("downloading content")
+	next.StartDownload()
 }
 
 func (c *client) deleteFiles(content api.Downloadable) {
@@ -218,4 +243,8 @@ func (c *client) cleanup(content api.Downloadable) {
 			return
 		}
 	}
+}
+
+func (c *client) wrapError(err error) error {
+	return fmt.Errorf("pasloe client error: %w", err)
 }

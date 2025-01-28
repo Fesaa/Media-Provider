@@ -114,7 +114,6 @@ func (cr *contentRoutes) Stats(ctx *fiber.Ctx) error {
 	}
 
 	statsResponse.Running = append(statsResponse.Running, cr.YS.GetQueuedTorrents()...)
-	statsResponse.Running = append(statsResponse.Running, cr.PS.GetQueuedDownloads()...)
 
 	return ctx.JSON(statsResponse)
 }

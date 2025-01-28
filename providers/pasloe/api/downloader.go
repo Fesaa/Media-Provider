@@ -25,6 +25,7 @@ func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block Download
 		maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 4),
 		Req:          req,
 		LastTime:     time.Now(),
+		ContentState: payload.ContentStateQueued,
 	}
 }
 
@@ -36,8 +37,9 @@ type Content struct {
 type DownloadBase[T any] struct {
 	infoProvider DownloadInfoProvider[T]
 
-	Client Client
-	Log    zerolog.Logger
+	Client       Client
+	Log          zerolog.Logger
+	ContentState payload.ContentState
 
 	id        string
 	baseDir   string
@@ -119,24 +121,36 @@ func (d *DownloadBase[T]) Cancel() {
 	d.Wg.Wait()
 }
 
-func (d *DownloadBase[T]) WaitForInfoAndDownload() {
+func (d *DownloadBase[T]) StartLoadInfo() {
 	if d.cancel != nil {
-		d.Log.Debug().Msg("content already downloading")
+		d.Log.Debug().Msg("content already started")
 		return
 	}
 
+	d.ContentState = payload.ContentStateLoading
 	d.ctx, d.cancel = context.WithCancel(context.Background())
-	d.Log.Trace().Msg("loading content info")
-	go func() {
-		select {
-		case <-d.ctx.Done():
-			return
-		case <-d.infoProvider.LoadInfo():
-			d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
-			d.checkContentOnDisk()
-			d.startDownload()
-		}
-	}()
+	d.Log.Debug().Msg("loading content info")
+	select {
+	case <-d.ctx.Done():
+		break
+	case <-d.infoProvider.LoadInfo():
+		d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
+		d.checkContentOnDisk()
+		d.ContentState = utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
+			payload.ContentStateReady,
+			payload.ContentStateWaiting)
+
+		d.Log.Debug().Msg("Content has downloaded all information")
+	}
+}
+
+func (d *DownloadBase[T]) StartDownload() {
+	d.ContentState = payload.ContentStateDownloading
+	go d.startDownload()
+}
+
+func (d *DownloadBase[T]) State() payload.ContentState {
+	return d.ContentState
 }
 
 func (d *DownloadBase[T]) checkContentOnDisk() {

@@ -22,8 +22,8 @@ type yoitsuImpl struct {
 	maxTorrents int
 
 	client   *torrent.Client
-	torrents *utils.SafeMap[string, Torrent]
-	baseDirs *utils.SafeMap[string, string]
+	torrents utils.SafeMap[string, Torrent]
+	baseDirs utils.SafeMap[string, string]
 	queue    utils.Queue[payload.QueueStat]
 
 	log zerolog.Logger
@@ -220,18 +220,18 @@ func (y *yoitsuImpl) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
 	}
 }
 
-func (y *yoitsuImpl) GetRunningTorrents() *utils.SafeMap[string, Torrent] {
+func (y *yoitsuImpl) GetRunningTorrents() utils.SafeMap[string, Torrent] {
 	return y.torrents
 }
 
 func (y *yoitsuImpl) GetQueuedTorrents() []payload.InfoStat {
 	return utils.Map(y.queue.Items(), func(item payload.QueueStat) payload.InfoStat {
 		return payload.InfoStat{
-			Provider:      item.Provider,
-			Id:            item.Id,
-			ContentStatus: payload.ContentStatusQueued,
-			Name:          item.Name,
-			Progress:      0,
+			Provider:     item.Provider,
+			Id:           item.Id,
+			ContentState: payload.ContentStateQueued,
+			Name:         item.Name,
+			Progress:     0,
 		}
 	})
 }
