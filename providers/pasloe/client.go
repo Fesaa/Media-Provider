@@ -1,7 +1,6 @@
 package pasloe
 
 import (
-	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -14,11 +13,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-)
-
-var (
-	ErrContentAlreadyExists = errors.New("content already exists")
-	ErrContentNotFound      = errors.New("content not found")
 )
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
@@ -42,9 +36,17 @@ type client struct {
 	content utils.SafeMap[string, api.Downloadable]
 }
 
+func (c *client) Content(id string) services.Content {
+	content, ok := c.content.Get(id)
+	if !ok {
+		return nil
+	}
+	return content
+}
+
 func (c *client) Download(req payload.DownloadRequest) error {
 	if c.content.Has(req.Id) {
-		return c.wrapError(ErrContentAlreadyExists)
+		return c.wrapError(services.ErrContentAlreadyExists)
 	}
 
 	content, err := c.registry.Create(c, req)
@@ -84,7 +86,7 @@ func (c *client) Download(req payload.DownloadRequest) error {
 func (c *client) RemoveDownload(req payload.StopRequest) error {
 	content, ok := c.content.Get(req.Id)
 	if !ok {
-		return c.wrapError(ErrContentNotFound)
+		return c.wrapError(services.ErrContentNotFound)
 	}
 
 	c.content.Delete(req.Id)

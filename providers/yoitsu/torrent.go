@@ -45,6 +45,31 @@ func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Log
 	return tor
 }
 
+func (t *torrentImpl) Id() string {
+	return t.key
+}
+
+func (t *torrentImpl) Title() string {
+	if t.t.Info() != nil {
+		return t.t.Info().BestName()
+	}
+	return t.tempTitle
+}
+
+func (t *torrentImpl) Provider() models.Provider {
+	return t.provider
+}
+
+func (t *torrentImpl) State() payload.ContentState {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (t *torrentImpl) Message(message payload.Message) (payload.Message, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (t *torrentImpl) GetTorrent() *torrent.Torrent {
 	return t.t
 }
@@ -97,15 +122,10 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 		Provider:     t.provider,
 		Id:           t.key,
 		ContentState: utils.Ternary(t.t.Info() == nil, payload.ContentStateLoading, payload.ContentStateDownloading),
-		Name: func() string {
-			if t.t.Info() != nil {
-				return t.t.Info().BestName()
-			}
-			return t.tempTitle
-		}(),
-		Size:        utils.BytesToSize(float64(t.t.Length())),
-		Downloading: t.t.Info() != nil,
-		Progress:    utils.Percent(t.t.BytesCompleted(), t.t.Length()),
+		Name:         t.Title(),
+		Size:         utils.BytesToSize(float64(t.t.Length())),
+		Downloading:  t.t.Info() != nil,
+		Progress:     utils.Percent(t.t.BytesCompleted(), t.t.Length()),
 		Estimated: func() *int64 {
 			if speed == 0 {
 				return nil

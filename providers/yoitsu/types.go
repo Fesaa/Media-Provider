@@ -2,6 +2,7 @@ package yoitsu
 
 import (
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 )
@@ -13,6 +14,7 @@ type Config interface {
 
 // Torrent wrapper around torrent.Torrent
 type Torrent interface {
+	services.Content
 	// GetTorrent returns the wrapped torrent.Torrent
 	GetTorrent() *torrent.Torrent
 	// WaitForInfoAndDownload loads the torrent.Torrent's info and starts downloading afters.
@@ -21,23 +23,14 @@ type Torrent interface {
 	WaitForInfoAndDownload()
 	// Cancel stops WaitForInfoAndDownload, returns an error if it wasn't started yet
 	Cancel() error
-	// GetInfo returns useful information about the torrent
-	GetInfo() payload.InfoStat
 	GetDownloadDir() string
 }
 
 // Yoitsu wrapper around the torrent.Client struct
 type Yoitsu interface {
+	services.Client
 	// GetBackingClient returns the torrent.Client
 	GetBackingClient() *torrent.Client
-
-	// AddDownload adds a new download to the client.
-	// A nill error does NOT mean Torrent is not nill, if the torrent is queued
-	// both will be nill
-	AddDownload(payload.DownloadRequest) (Torrent, error)
-
-	// RemoveDownload removes a download from the wrapper, optionally deleting the files
-	RemoveDownload(request payload.StopRequest) error
 
 	// GetRunningTorrents returns a map of all running torrents, indexed by their info hash
 	GetRunningTorrents() utils.SafeMap[string, Torrent]

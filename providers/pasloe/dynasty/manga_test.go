@@ -64,6 +64,10 @@ func (m mockClient) GetConfig() api.Config {
 	return m
 }
 
+func (m mockClient) Content(id string) services.Content {
+	return nil
+}
+
 func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
 	t.Helper()
 	must := func(err error) {

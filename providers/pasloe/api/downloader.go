@@ -61,6 +61,10 @@ type DownloadBase[T any] struct {
 	Wg     *sync.WaitGroup
 }
 
+func (d *DownloadBase[T]) Message(msg payload.Message) (payload.Message, error) {
+	return payload.Message{}, nil
+}
+
 func (d *DownloadBase[T]) Id() string {
 	return d.id
 }

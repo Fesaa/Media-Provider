@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"github.com/anacrolix/torrent/metainfo"
@@ -62,6 +63,14 @@ func New(c *config.Config, log zerolog.Logger) (Yoitsu, error) {
 	return impl, nil
 }
 
+func (y *yoitsuImpl) Content(id string) services.Content {
+	content, ok := y.torrents.Get(id)
+	if !ok {
+		return nil
+	}
+	return content
+}
+
 func (y *yoitsuImpl) GetBackingClient() *torrent.Client {
 	return y.client
 }
@@ -70,13 +79,13 @@ func (y *yoitsuImpl) GetBaseDir() string {
 	return y.dir
 }
 
-func (y *yoitsuImpl) AddDownload(req payload.DownloadRequest) (Torrent, error) {
+func (y *yoitsuImpl) Download(req payload.DownloadRequest) error {
 	if y.maxTorrents <= 0 {
 		return y.addDownload(req)
 	}
 	if y.torrents.Len() >= y.maxTorrents {
 		y.queue.Enqueue(req.ToQueueStat())
-		return nil, nil
+		return nil
 	}
 
 	y.log.Info().Str("infoHash", req.Id).
@@ -86,20 +95,20 @@ func (y *yoitsuImpl) AddDownload(req payload.DownloadRequest) (Torrent, error) {
 	return y.addDownload(req)
 }
 
-func (y *yoitsuImpl) addDownload(req payload.DownloadRequest) (Torrent, error) {
+func (y *yoitsuImpl) addDownload(req payload.DownloadRequest) error {
 	torrentInfo, nTorrent := y.client.AddTorrentInfoHash(infohash.FromHexString(strings.ToLower(req.Id)))
 	if !nTorrent {
-		return nil, errors.New("torrent already exists")
+		return errors.New("torrent already exists")
 	}
-	return y.processTorrent(torrentInfo, req), nil
+	y.processTorrent(torrentInfo, req)
+	return nil
 }
 
-func (y *yoitsuImpl) processTorrent(torrentInfo *torrent.Torrent, req payload.DownloadRequest) Torrent {
+func (y *yoitsuImpl) processTorrent(torrentInfo *torrent.Torrent, req payload.DownloadRequest) {
 	nTorrent := newTorrent(torrentInfo, req, y.log)
 	y.torrents.Set(torrentInfo.InfoHash().String(), nTorrent)
 	y.baseDirs.Set(torrentInfo.InfoHash().String(), req.BaseDir)
 	nTorrent.WaitForInfoAndDownload()
-	return nTorrent
 }
 
 func (y *yoitsuImpl) RemoveDownload(req payload.StopRequest) error {
@@ -153,8 +162,7 @@ func (y *yoitsuImpl) startNext() {
 	added := false
 	for !added && !y.queue.IsEmpty() {
 		item, _ := y.queue.Dequeue()
-		_, err := y.AddDownload(item.ToDownloadRequest())
-		if err != nil {
+		if err := y.Download(item.ToDownloadRequest()); err != nil {
 			y.log.Warn().Err(err).Msg("error while adding torrent from queue")
 			continue
 		}

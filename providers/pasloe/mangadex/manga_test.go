@@ -57,6 +57,10 @@ func (m mockClient) GetConfig() api.Config {
 	return m
 }
 
+func (m mockClient) Content(id string) services.Content {
+	return nil
+}
+
 type mockRepo struct {
 	t           *testing.T
 	manga       GetMangaResponse

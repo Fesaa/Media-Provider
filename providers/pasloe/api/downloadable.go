@@ -3,16 +3,14 @@ package api
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/rs/zerolog"
 )
 
 type Downloadable interface {
-	Title() string
-	Id() string
-	Provider() models.Provider
+	services.Content
 	GetBaseDir() string
 	Cancel()
-	GetInfo() payload.InfoStat
 	GetDownloadDir() string
 	// GetOnDiskContent returns the name of the files that have been identified as already existing content
 	GetOnDiskContent() []Content
@@ -20,7 +18,6 @@ type Downloadable interface {
 	// This will be a slice of paths produced by DownloadInfoProvider.ContentPath
 	GetNewContent() []string
 
-	State() payload.ContentState
 	StartLoadInfo()
 	StartDownload()
 }

@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+var (
+	ErrProviderNotSupported = errors.New("provider not supported")
+	ErrContentAlreadyExists = errors.New("content already exists")
+	ErrContentNotFound      = errors.New("content not found")
+)
+
 type ContentService interface {
 	Search(payload.SearchRequest) ([]payload.Info, error)
 	Download(payload.DownloadRequest) error
@@ -17,13 +23,41 @@ type ContentService interface {
 	Stop(payload.StopRequest) error
 	RegisterProvider(models.Provider, ProviderAdapter)
 	DownloadMetadata(models.Provider) (payload.DownloadMetadata, error)
+	Message(payload.Message) (payload.Message, error)
+}
+
+type Content interface {
+	// Id returns a string that uniquely identifies this Content
+	Id() string
+	// Title returns the title of the Content, depending on how much info has been loaded, this may be equal to Id
+	Title() string
+	// Provider returns the provider this Content uses
+	Provider() models.Provider
+	// GetInfo returns the information to be displayed in the UI
+	GetInfo() payload.InfoStat
+	// State returns the payload.ContentState this Content currently is in
+	State() payload.ContentState
+	// Message passes any payload.Message to the Content, and returns its response
+	// The logic of what happens with the message may depend on the underlying Content
+	Message(payload.Message) (payload.Message, error)
+}
+
+type Client interface {
+	// Download starts the download of the Content associated with the id. The returned error
+	// might be because of the Content already have been added, or because of an error with the data
+	// provider to create the Content
+	Download(payload.DownloadRequest) error
+	// RemoveDownload stops the download of the Content associated with the id. Will start cleanup,
+	// should only return an error if the id has no associated Content
+	RemoveDownload(payload.StopRequest) error
+	// Content returns the Content associated with the passed id. If none is found, returns nil
+	Content(string) Content
 }
 
 type ProviderAdapter interface {
 	Search(payload.SearchRequest) ([]payload.Info, error)
-	Download(payload.DownloadRequest) error
-	Stop(payload.StopRequest) error
 	DownloadMetadata() payload.DownloadMetadata
+	Client() Client
 }
 
 type contentService struct {
@@ -38,11 +72,26 @@ func ContentServiceProvider(log zerolog.Logger) ContentService {
 	}
 }
 
+func (s *contentService) Message(message payload.Message) (payload.Message, error) {
+	adapter, ok := s.providers.Get(message.Provider)
+	if !ok {
+		return payload.Message{}, ErrProviderNotSupported
+	}
+
+	content := adapter.Client().Content(message.ContentId)
+	if content == nil {
+		return payload.Message{}, ErrContentNotFound
+	}
+
+	return content.Message(message)
+}
+
 func (s *contentService) DownloadMetadata(provider models.Provider) (payload.DownloadMetadata, error) {
 	adapter, ok := s.providers.Get(provider)
 	if !ok {
-		return payload.DownloadMetadata{}, fmt.Errorf("provider %q not supported", provider)
+		return payload.DownloadMetadata{}, ErrProviderNotSupported
 	}
+
 	return adapter.DownloadMetadata(), nil
 }
 
@@ -72,7 +121,7 @@ func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, erro
 		searchDuration := time.Since(searchStart)
 		if err != nil {
 			s.log.Warn().Any("provider", provider).Err(err).Msg("searching failed")
-			errs = append(errs, fmt.Errorf("provider %d: %w", provider, err))
+			errs = append(errs, fmt.Errorf("searched failed for provider %d: %w", provider, err))
 			continue
 		}
 
@@ -88,6 +137,11 @@ func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, erro
 		return nil, errors.Join(errs...)
 	}
 
+	if len(errs) > 0 {
+		s.log.Warn().Err(errors.Join(errs...)).
+			Msg("At least one error occurred while searching, retuning found results")
+	}
+
 	return results, nil
 }
 
@@ -101,26 +155,29 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription) error {
 }
 
 func (s *contentService) Download(req payload.DownloadRequest) error {
-	s.log.Trace().Str("req", fmt.Sprintf("%+v", req)).Msg("downloading")
-
 	adapter, ok := s.providers.Get(req.Provider)
 	if !ok {
-		return fmt.Errorf("provider %q not supported", req.Provider)
+		return ErrProviderNotSupported
 	}
 
-	return adapter.Download(req)
+	s.log.Trace().Str("req", fmt.Sprintf("%+v", req)).Msg("downloading")
+	return adapter.Client().Download(req)
 }
 
 func (s *contentService) Stop(req payload.StopRequest) error {
-	s.log.Trace().Str("req", fmt.Sprintf("%+v", req)).Msg("stopping")
-
 	adapter, ok := s.providers.Get(req.Provider)
 	if !ok {
-		return fmt.Errorf("provider %q not supported", req.Provider)
+		return ErrProviderNotSupported
 	}
-	return adapter.Stop(req)
+
+	s.log.Trace().Str("req", fmt.Sprintf("%+v", req)).Msg("stopping")
+	return adapter.Client().RemoveDownload(req)
 }
 
-func (s *contentService) RegisterProvider(model models.Provider, adapter ProviderAdapter) {
-	s.providers.Set(model, adapter)
+func (s *contentService) RegisterProvider(provider models.Provider, adapter ProviderAdapter) {
+	if s.providers.Has(provider) {
+		s.log.Warn().Any("provider", provider).Msg("provider already registered")
+	}
+
+	s.providers.Set(provider, adapter)
 }
