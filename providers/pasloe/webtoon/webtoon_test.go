@@ -59,6 +59,11 @@ func (m mockClient) GetConfig() api.Config {
 func (m mockClient) Content(id string) services.Content {
 	return nil
 }
+
+func (m mockClient) CanStart(models.Provider) bool {
+	return true
+}
+
 func req() payload.DownloadRequest {
 	return payload.DownloadRequest{
 		Provider:  models.WEBTOON,

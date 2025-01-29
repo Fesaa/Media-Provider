@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -31,6 +32,34 @@ func RegisterContentRoutes(cr contentRoutes) {
 	cr.Router.Post("/download", cr.Auth.Middleware, cr.Download)
 	cr.Router.Post("/stop", cr.Auth.Middleware, cr.Stop)
 	cr.Router.Get("/stats", cr.Auth.Middleware, cr.Stats)
+	cr.Router.Post("/message", cr.Auth.Middleware, cr.Message)
+}
+
+func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
+	var msg payload.Message
+	if err := ctx.BodyParser(&msg); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	resp, err := cr.ContentService.Message(msg)
+	if err != nil {
+		if errors.Is(err, services.ErrContentNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
+		}
+
+		if errors.Is(err, services.ErrUnknownMessageType) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
+		}
+
+		cr.Log.Error().Err(err).Msg("An error occurred while sending a message down to Content") // TODO: better msg
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(resp)
 }
 
 func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {

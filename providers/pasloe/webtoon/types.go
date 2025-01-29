@@ -73,3 +73,7 @@ type Chapter struct {
 	Number   string
 	Date     string
 }
+
+func (c Chapter) ID() string {
+	return c.Number
+}

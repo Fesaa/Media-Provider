@@ -261,6 +261,43 @@ func (m *manga) GetInfo() payload.InfoStat {
 	}
 }
 
+func (m *manga) ContentList() []payload.ListContentData {
+	if len(m.chapters.Data) == 0 {
+		return nil
+	}
+
+	data := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
+		return v.Attributes.Volume
+	})
+
+	childrenFunc := func(chapters []ChapterSearchData) []payload.ListContentData {
+		slices.SortFunc(chapters, func(a, b ChapterSearchData) int {
+			if a.Attributes.Volume != b.Attributes.Volume {
+				return (int)(a.Volume() - b.Volume())
+			}
+			return (int)(a.Chapter() - b.Chapter())
+		})
+
+		return utils.Map(chapters, func(chapter ChapterSearchData) payload.ListContentData {
+			return payload.ListContentData{
+				SubContentId: chapter.Id,
+				Label: utils.Ternary(chapter.Attributes.Title == "",
+					m.Title()+" "+chapter.Label(),
+					chapter.Label()),
+			}
+		})
+	}
+
+	out := make([]payload.ListContentData, 0, len(data))
+	for volume, chapters := range data {
+		out = append(out, payload.ListContentData{
+			Label:    utils.Ternary(volume == "", "No Volume", fmt.Sprintf("Volume %s", volume)),
+			Children: childrenFunc(chapters),
+		})
+	}
+	return out
+}
+
 func (m *manga) ContentDir(chapter ChapterSearchData) string {
 	if chapter.Attributes.Chapter == "" {
 		return fmt.Sprintf("%s OneShot %s", m.Title(), chapter.Attributes.Title)

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
 )
 
@@ -14,4 +15,5 @@ type Client interface {
 	GetBaseDir() string
 	GetCurrentDownloads() []Downloadable
 	GetConfig() Config
+	CanStart(models.Provider) bool
 }

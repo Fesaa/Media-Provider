@@ -28,6 +28,7 @@ type DownloadInfoProvider[T any] interface {
 	LoadInfo() chan struct{}
 	GetInfo() payload.InfoStat
 	All() []T
+	ContentList() []payload.ListContentData
 
 	ContentDir(t T) string
 	ContentPath(t T) string

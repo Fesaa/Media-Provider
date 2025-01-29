@@ -14,6 +14,7 @@ var (
 	ErrProviderNotSupported = errors.New("provider not supported")
 	ErrContentAlreadyExists = errors.New("content already exists")
 	ErrContentNotFound      = errors.New("content not found")
+	ErrUnknownMessageType   = errors.New("unknown message type")
 )
 
 type ContentService interface {

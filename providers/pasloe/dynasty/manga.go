@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -113,6 +114,43 @@ func (m *manga) GetInfo() payload.InfoStat {
 		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: m.GetDownloadDir(),
 	}
+}
+
+func (m *manga) ContentList() []payload.ListContentData {
+	if m.seriesInfo == nil {
+		return nil
+	}
+
+	data := utils.GroupBy(m.seriesInfo.Chapters, func(v Chapter) string {
+		return v.Volume
+	})
+
+	childrenFunc := func(chapters []Chapter) []payload.ListContentData {
+		slices.SortFunc(chapters, func(a, b Chapter) int {
+			if a.Volume != b.Volume {
+				return (int)(a.VolumeFloat() - b.VolumeFloat())
+			}
+			return (int)(a.ChapterFloat() - b.ChapterFloat())
+		})
+
+		return utils.Map(chapters, func(chapter Chapter) payload.ListContentData {
+			return payload.ListContentData{
+				SubContentId: chapter.Id,
+				Label: utils.Ternary(chapter.Title == "",
+					m.Title()+" "+chapter.Label(),
+					chapter.Label()),
+			}
+		})
+	}
+
+	out := make([]payload.ListContentData, 0, len(data))
+	for volume, chapters := range data {
+		out = append(out, payload.ListContentData{
+			Label:    utils.Ternary(volume == "", "No Volume", fmt.Sprintf("Volume %s", volume)),
+			Children: childrenFunc(chapters),
+		})
+	}
+	return out
 }
 
 func (m *manga) All() []Chapter {

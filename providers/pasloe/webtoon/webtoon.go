@@ -143,6 +143,19 @@ func (w *webtoon) GetInfo() payload.InfoStat {
 	}
 }
 
+func (w *webtoon) ContentList() []payload.ListContentData {
+	if w.info == nil {
+		return nil
+	}
+
+	return utils.Map(w.info.Chapters, func(chapter Chapter) payload.ListContentData {
+		return payload.ListContentData{
+			SubContentId: chapter.Number,
+			Label:        fmt.Sprintf("%s #%s - %s", w.info.Name, chapter.Number, chapter.Title),
+		}
+	})
+}
+
 func (w *webtoon) ContentDir(chapter Chapter) string {
 	return fmt.Sprintf("%s Ch. %s", w.Title(), chapter.Number)
 }

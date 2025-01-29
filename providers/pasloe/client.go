@@ -55,7 +55,7 @@ func (c *client) Download(req payload.DownloadRequest) error {
 	}
 
 	c.content.Set(content.Id(), content)
-	if c.shouldQueue(content.Provider()) {
+	if !c.CanStart(content.Provider()) {
 		return nil
 	}
 
@@ -64,7 +64,7 @@ func (c *client) Download(req payload.DownloadRequest) error {
 
 		c.loadAllInfo(content.Provider())
 
-		// We are certain it's fine to start, as shouldQueue was false (i.e. the provider has nothing making requests)
+		// We are certain it's fine to start, as CanStart was true (i.e. the provider has nothing making requests)
 		if content.State() == payload.ContentStateReady {
 			c.log.Debug().
 				Str("id", content.Id()).
@@ -130,14 +130,14 @@ func (c *client) GetConfig() api.Config {
 	return c.config
 }
 
-func (c *client) shouldQueue(provider models.Provider) bool {
+func (c *client) CanStart(provider models.Provider) bool {
 	providerBusy := c.content.Any(func(k string, d api.Downloadable) bool {
 		return d.Provider() == provider &&
 			d.State() < payload.ContentStateQueued &&
 			d.State() != payload.ContentStateWaiting
 	})
 
-	return providerBusy
+	return !providerBusy
 }
 
 func (c *client) loadAllInfo(provider models.Provider) {

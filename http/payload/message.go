@@ -9,7 +9,19 @@ type Message struct {
 	Provider    models.Provider `json:"provider"`
 	ContentId   string          `json:"contentId"`
 	MessageType MessageType     `json:"type"`
-	Data        json.RawMessage `json:"data"`
+	Data        json.RawMessage `json:"data,omitempty"`
 }
 
 type MessageType int
+
+const (
+	MessageListContent MessageType = iota
+	SetToDownload
+	StartDownload
+)
+
+type ListContentData struct {
+	SubContentId string            `json:"subContentId,omitempty"`
+	Label        string            `json:"label"`
+	Children     []ListContentData `json:"children,omitempty"`
+}

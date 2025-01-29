@@ -68,6 +68,10 @@ func (m mockClient) Content(id string) services.Content {
 	return nil
 }
 
+func (m mockClient) CanStart(models.Provider) bool {
+	return true
+}
+
 func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
 	t.Helper()
 	must := func(err error) {
