@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -135,12 +136,44 @@ func (t *torrentImpl) ContentList() []payload.ListContentData {
 		return nil
 	}
 
-	return utils.Map(t.t.Files(), func(file *torrent.File) payload.ListContentData {
-		return payload.ListContentData{
-			SubContentId: file.Path(),
-			Label:        file.Path(),
-		}
+	paths := utils.Map(t.t.Files(), func(file *torrent.File) []string {
+		return strings.Split(file.Path(), "/")
 	})
+
+	return buildTree(paths)
+}
+
+func buildTree(paths [][]string, depths ...int) []payload.ListContentData {
+	depth := utils.OrDefault(depths, 0)
+	var tree []payload.ListContentData
+	pathByFirstDir := utils.GroupBy(paths, func(v []string) string {
+		if depth >= len(v) {
+			return ""
+		}
+		return v[depth]
+	})
+
+	for dir, subPaths := range pathByFirstDir {
+		if dir == "" {
+			continue
+		}
+
+		if len(subPaths[0]) == depth+1 {
+			tree = append(tree, payload.ListContentData{
+				Label:        dir,
+				SubContentId: path.Join(subPaths[0]...),
+			})
+			continue
+		}
+
+		children := buildTree(subPaths, depth+1)
+		tree = append(tree, payload.ListContentData{
+			Label:    dir,
+			Children: children,
+		})
+	}
+
+	return tree
 }
 
 func (t *torrentImpl) GetTorrent() *torrent.Torrent {
