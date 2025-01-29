@@ -50,38 +50,6 @@ func TestPageService_UpdateOrCreate(t *testing.T) {
 	}
 }
 
-func TestPageService_UpdateOrCreateInvalidSortValue(t *testing.T) {
-	ps := tempPageService(t)
-	page := models.Page{
-		Title:         "MyTitle",
-		Icon:          "pi-heart",
-		SortValue:     2,
-		Providers:     []int64{2},
-		Modifiers:     nil,
-		Dirs:          []string{"dir1", "dir2"},
-		CustomRootDir: "",
-	}
-
-	if err := ps.UpdateOrCreate(&page); err != nil {
-		t.Fatal(err)
-	}
-
-	newPage := models.Page{
-		Title:         "MyTitle2",
-		Icon:          "pi-heart",
-		SortValue:     2,
-		Providers:     []int64{2},
-		Modifiers:     nil,
-		Dirs:          []string{"dir1", "dir2"},
-		CustomRootDir: "",
-	}
-
-	if err := ps.UpdateOrCreate(&newPage); !errors.Is(err, ErrFailedToSortCheck) {
-		t.Fatal("expected ErrFailedToSortCheck")
-	}
-
-}
-
 func TestPageService_UpdateOrCreateDefaultSortValue(t *testing.T) {
 	ps := tempPageService(t)
 

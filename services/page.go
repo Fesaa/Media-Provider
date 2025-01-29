@@ -40,12 +40,15 @@ func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 	var other models.Page
 	err := ps.db.DB().
 		Not(models.Page{Model: gorm.Model{ID: page.ID}}).
-		First(&other, models.Page{SortValue: page.SortValue}).
+		Where(map[string]interface{}{"SortValue": 0}). // https://gorm.io/docs/query.html#Struct-amp-Map-Conditions
+		First(&other).
 		Error
 	// Must return gorm.ErrRecordNotFound
 	if err == nil || !errors.Is(err, gorm.ErrRecordNotFound) {
-		ps.log.Error().Err(err).Msg("Error occurred during sort check")
-		return ErrFailedToSortCheck
+		ps.log.Error().Str("other", fmt.Sprintf("%+v", other)).Err(err).
+			Msg("Unwanted error, or found matching sort value, resetting to default value")
+		// While this should never happen, forcefully reset the sort is better than having the page be un-editable.
+		page.SortValue = DefaultPageSort
 	}
 
 	if page.SortValue == DefaultPageSort {
