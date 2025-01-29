@@ -103,8 +103,7 @@ func (t *torrentImpl) Message(msg payload.Message) (payload.Message, error) {
 }
 
 func (t *torrentImpl) MarkReady() error {
-	if t.state < payload.ContentStateReady ||
-		t.state > payload.ContentStateWaiting {
+	if t.state != payload.ContentStateWaiting {
 		return services.ErrWrongState
 	}
 	if t.client.CanStartNext() {

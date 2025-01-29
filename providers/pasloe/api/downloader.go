@@ -80,7 +80,7 @@ func (d *DownloadBase[T]) Message(msg payload.Message) (payload.Message, error) 
 	case payload.SetToDownload:
 		err = d.SetUserFiltered(msg.Data)
 	case payload.StartDownload:
-		d.MarkReady()
+		err = d.MarkReady()
 	default:
 		return payload.Message{}, services.ErrUnknownMessageType
 	}
@@ -97,16 +97,26 @@ func (d *DownloadBase[T]) Message(msg payload.Message) (payload.Message, error) 
 	}, nil
 }
 
-func (d *DownloadBase[T]) MarkReady() {
+func (d *DownloadBase[T]) MarkReady() error {
+	if d.ContentState != payload.ContentStateWaiting {
+		return services.ErrWrongState
+	}
+
 	if d.Client.CanStart(d.Req.Provider) {
 		go d.StartDownload()
-		return
+		return nil
 	}
 
 	d.ContentState = payload.ContentStateReady
+	return nil
 }
 
 func (d *DownloadBase[T]) SetUserFiltered(msg json.RawMessage) error {
+	if d.ContentState != payload.ContentStateWaiting &&
+		d.ContentState != payload.ContentStateReady {
+		return services.ErrWrongState
+	}
+
 	var filter []string
 	err := json.Unmarshal(msg, &filter)
 	if err != nil {
