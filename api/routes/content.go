@@ -46,11 +46,21 @@ func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
 	resp, err := cr.ContentService.Message(msg)
 	if err != nil {
 		if errors.Is(err, services.ErrContentNotFound) {
-			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"message": err.Error(),
+			})
 		}
 
 		if errors.Is(err, services.ErrUnknownMessageType) {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
+
+		if errors.Is(err, services.ErrWrongState) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": err.Error(),
+			})
 		}
 
 		cr.Log.Error().Err(err).Msg("An error occurred while sending a message down to Content") // TODO: better msg
@@ -135,14 +145,12 @@ func (cr *contentRoutes) Stats(ctx *fiber.Ctx) error {
 	statsResponse := payload.StatsResponse{
 		Running: []payload.InfoStat{},
 	}
-	cr.YS.GetRunningTorrents().ForEachSafe(func(_ string, torrent yoitsu.Torrent) {
+	cr.YS.GetTorrents().ForEachSafe(func(_ string, torrent yoitsu.Torrent) {
 		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
 	})
 	for _, download := range cr.PS.GetCurrentDownloads() {
 		statsResponse.Running = append(statsResponse.Running, download.GetInfo())
 	}
-
-	statsResponse.Running = append(statsResponse.Running, cr.YS.GetQueuedTorrents()...)
 
 	return ctx.JSON(statsResponse)
 }

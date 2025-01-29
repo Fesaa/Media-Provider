@@ -2,26 +2,35 @@ package yoitsu
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"github.com/rs/zerolog"
+	"os"
 	"path"
+	"slices"
 	"time"
 )
 
 // torrentImpl wrapper around the torrent.Torrent struct
 // Providers some specific functionality
 type torrentImpl struct {
-	t   *torrent.Torrent
-	log zerolog.Logger
+	t      *torrent.Torrent
+	log    zerolog.Logger
+	client Yoitsu
 
+	req       payload.DownloadRequest
 	key       string
 	baseDir   string
 	tempTitle string
 	provider  models.Provider
+	state     payload.ContentState
+
+	userFilter []string
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -30,15 +39,18 @@ type torrentImpl struct {
 	lastRead int64
 }
 
-func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Logger) Torrent {
+func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Logger, client Yoitsu) Torrent {
 	tor := &torrentImpl{
 		t:         t,
+		client:    client,
 		key:       t.InfoHash().HexString(),
+		req:       req,
 		baseDir:   req.BaseDir,
 		tempTitle: req.TempTitle,
 		provider:  req.Provider,
 		lastTime:  time.Now(),
 		lastRead:  0,
+		state:     payload.ContentStateQueued,
 	}
 
 	tor.log = log.With().Str("infoHash", tor.key).Logger()
@@ -61,39 +73,125 @@ func (t *torrentImpl) Provider() models.Provider {
 }
 
 func (t *torrentImpl) State() payload.ContentState {
-	//TODO implement me
-	panic("implement me")
+	return t.state
 }
 
-func (t *torrentImpl) Message(message payload.Message) (payload.Message, error) {
-	//TODO implement me
-	panic("implement me")
+func (t *torrentImpl) Message(msg payload.Message) (payload.Message, error) {
+	var jsonData []byte
+	var err error
+	switch msg.MessageType {
+	case payload.MessageListContent:
+		jsonData, err = json.Marshal(t.ContentList())
+	case payload.SetToDownload:
+		err = t.SetUserFiltered(msg.Data)
+	case payload.StartDownload:
+		err = t.MarkReady()
+	default:
+		err = services.ErrUnknownMessageType
+	}
+
+	if err != nil {
+		return payload.Message{}, err
+	}
+
+	return payload.Message{
+		Provider:    t.Provider(),
+		ContentId:   t.key,
+		MessageType: msg.MessageType,
+		Data:        jsonData,
+	}, nil
+}
+
+func (t *torrentImpl) MarkReady() error {
+	if t.state < payload.ContentStateReady ||
+		t.state > payload.ContentStateWaiting {
+		return services.ErrWrongState
+	}
+	if t.client.CanStartNext() {
+		go t.StartDownload()
+		return nil
+	}
+
+	t.state = payload.ContentStateReady
+	return nil
+}
+
+func (t *torrentImpl) SetUserFiltered(data json.RawMessage) error {
+	if t.state != payload.ContentStateWaiting &&
+		t.state != payload.ContentStateReady {
+		return services.ErrWrongState
+	}
+
+	var filter []string
+	if err := json.Unmarshal(data, &filter); err != nil {
+		return err
+	}
+
+	t.userFilter = filter
+	return nil
+}
+
+func (t *torrentImpl) ContentList() []payload.ListContentData {
+	if t.t.Info() == nil {
+		return nil
+	}
+
+	return utils.Map(t.t.Files(), func(file *torrent.File) payload.ListContentData {
+		return payload.ListContentData{
+			SubContentId: file.Path(),
+			Label:        file.Path(),
+		}
+	})
 }
 
 func (t *torrentImpl) GetTorrent() *torrent.Torrent {
 	return t.t
 }
 
-func (t *torrentImpl) WaitForInfoAndDownload() {
+func (t *torrentImpl) LoadInfo() {
 	if t.cancel != nil {
 		t.log.Debug().Msg("already loading info")
 		return
 	}
 
+	t.state = payload.ContentStateLoading
 	ctx, cancel := context.WithCancel(context.Background())
 	t.ctx = ctx
 	t.cancel = cancel
 	t.log.Trace().Msg("loading torrent info")
-	go func() {
-		select {
-		case <-t.ctx.Done():
-			return
-		case <-t.t.GotInfo():
-			t.log = t.log.With().Str("name", t.t.Info().BestName()).Logger()
-			t.log.Debug().Msg("starting torrent download")
-			t.t.DownloadAll()
+	select {
+	case <-t.ctx.Done():
+		return
+	case <-t.t.GotInfo():
+		t.log = t.log.With().Str("name", t.t.Info().BestName()).Logger()
+	}
+
+	t.log.Info().Msg("torrent has downloaded all info")
+
+	t.state = utils.Ternary(t.req.DownloadMetadata.StartImmediately,
+		payload.ContentStateReady,
+		payload.ContentStateWaiting)
+}
+
+func (t *torrentImpl) StartDownload() {
+	t.log.Info().Str("infoHash", t.key).
+		Str("into", t.GetDownloadDir()).
+		Str("title", t.Title()).
+		Msg("downloading torrent")
+	t.state = payload.ContentStateDownloading
+
+	if len(t.userFilter) == 0 {
+		t.t.DownloadAll()
+		return
+	}
+
+	for _, file := range t.t.Files() {
+		if slices.Contains(t.userFilter, file.Path()) {
+			file.SetPriority(torrent.PiecePriorityNormal)
+		} else {
+			file.SetPriority(torrent.PiecePriorityNone)
 		}
-	}()
+	}
 }
 
 func (t *torrentImpl) Cancel() error {
@@ -118,23 +216,86 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 	t.lastRead = bytesRead
 	t.lastTime = time.Now()
 
+	size := t.size()
 	return payload.InfoStat{
 		Provider:     t.provider,
 		Id:           t.key,
-		ContentState: utils.Ternary(t.t.Info() == nil, payload.ContentStateLoading, payload.ContentStateDownloading),
+		ContentState: t.state,
 		Name:         t.Title(),
-		Size:         utils.BytesToSize(float64(t.t.Length())),
-		Downloading:  t.t.Info() != nil,
-		Progress:     utils.Percent(t.t.BytesCompleted(), t.t.Length()),
+		Size:         utils.BytesToSize(float64(size)),
+		Downloading:  t.state == payload.ContentStateDownloading,
+		Progress:     utils.Percent(t.t.BytesCompleted(), size),
 		Estimated: func() *int64 {
 			if speed == 0 {
 				return nil
 			}
-			es := (t.t.Length() - bytesRead) / speed
+			es := (size - bytesRead) / speed
 			return &es
 		}(),
 		SpeedType:   payload.BYTES,
 		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
 		DownloadDir: t.GetDownloadDir(),
 	}
+}
+
+// Cleanup is needed in case of user filtered content. While the pieces priority is set to none,
+// the file is still added as zero bytes, and the pieces closeby pieces with priority have some overflow
+func (t *torrentImpl) Cleanup(root string) {
+	if len(t.userFilter) == 0 {
+		return
+	}
+
+	for _, file := range t.t.Files() {
+		if slices.Contains(t.userFilter, file.Path()) {
+			continue
+		}
+
+		filePath := path.Join(root, file.Path())
+		t.log.Debug().Str("path", filePath).Msg("removing file, as it wasn't wanted")
+		if err := os.Remove(filePath); err != nil {
+			t.log.Error().Str("path", filePath).Err(err).Msg("failed to remove file")
+		}
+	}
+}
+
+func (t *torrentImpl) IsDone() bool {
+	if t.state != payload.ContentStateDownloading {
+		return false
+	}
+
+	if len(t.userFilter) == 0 {
+		return t.t.Length() == t.t.BytesCompleted()
+	}
+
+	// Since we have to check with >= below (overflow), lets make sure every file is completely downloaded
+	// and that we do cross the threshold with overflow, and leave a wanted file corrupted
+	for _, file := range t.t.Files() {
+		if !slices.Contains(t.userFilter, file.Path()) {
+			continue
+		}
+
+		if file.BytesCompleted() != file.Length() {
+			return false
+		}
+	}
+
+	return t.t.BytesCompleted() >= t.size()
+}
+
+func (t *torrentImpl) size() int64 {
+	if t.t.Info() == nil {
+		return 0
+	}
+
+	if len(t.userFilter) == 0 {
+		return t.t.Length()
+	}
+
+	var size int64
+	for _, file := range t.t.Files() {
+		if slices.Contains(t.userFilter, file.Path()) {
+			size += file.Length()
+		}
+	}
+	return size
 }

@@ -42,10 +42,10 @@ func HumanReadableSpeed(s int64) string {
 	return fmt.Sprintf("%.2f MB/s", speed)
 }
 
-// Percent returns the % of a contained in b. At most 100 is returned. Percent(a, 0) = 100
+// Percent returns the % of a contained in b. At most 100 is returned. Percent(a, 0) = 100 for a != 0, Percent(0,0) = 0
 func Percent(a, b int64) int64 {
 	if b == 0 {
-		return 100
+		return (int64)(Ternary(a == 0, 0, 100))
 	}
 	b = max(b, a)
 	ratio := (float64)(a) / (float64)(b)

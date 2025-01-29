@@ -13,6 +13,7 @@ type SafeMap[K comparable, V any] interface {
 	ForEach(f func(k K, v V))
 	ForEachSafe(f func(k K, v V))
 	Any(f func(k K, v V) bool) bool
+	Count(f func(k K, v V) bool) int
 	Find(f func(k K, v V) bool) (*V, bool)
 }
 
@@ -32,6 +33,18 @@ func NewSafeMap[K comparable, V any](m ...map[K]V) SafeMap[K, V] {
 		m:    startMap,
 		lock: sync.RWMutex{},
 	}
+}
+
+func (s *safeMap[K, V]) Count(f func(K, V) bool) int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	i := 0
+	for k, v := range s.m {
+		if f(k, v) {
+			i++
+		}
+	}
+	return i
 }
 
 func (s *safeMap[K, V]) Find(f func(k K, v V) bool) (*V, bool) {

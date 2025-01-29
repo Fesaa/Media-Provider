@@ -15,6 +15,7 @@ var (
 	ErrContentAlreadyExists = errors.New("content already exists")
 	ErrContentNotFound      = errors.New("content not found")
 	ErrUnknownMessageType   = errors.New("unknown message type")
+	ErrWrongState           = errors.New("message not allowed in current state")
 )
 
 type ContentService interface {
