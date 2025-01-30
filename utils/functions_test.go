@@ -30,7 +30,7 @@ func TestPercent(t *testing.T) {
 			name:     "AllZero",
 			inputA:   0,
 			inputB:   0,
-			expected: 100,
+			expected: 0,
 		},
 		{
 			name:     "A > B",

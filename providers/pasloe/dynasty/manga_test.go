@@ -148,7 +148,7 @@ func TestManga_Title(t *testing.T) {
 
 	m := tempManga(t, req(), &buffer)
 
-	want := "sailor_girlfriend"
+	want := SailorGirlFriend
 	if m.Title() != want {
 		t.Errorf("m.Title() = %q, want %q", m.Title(), want)
 	}
@@ -269,7 +269,7 @@ func TestManga_ContentDir(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	got := m.ContentDir(chapter())
-	want := "sailor_girlfriend Ch. 0004.5"
+	want := SailorGirlFriend + " Ch. 0004.5"
 
 	if got != want {
 		t.Errorf("m.ContentDir() = %q, want %q", got, want)
@@ -282,7 +282,7 @@ func TestManga_ContentPath(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	got := m.ContentPath(chapter())
-	want := path.Join(m.Client.GetBaseDir(), "sailor_girlfriend/sailor_girlfriend Ch. 0004.5")
+	want := path.Join(m.Client.GetBaseDir(), fmt.Sprintf("%s/%s Ch. 0004.5", SailorGirlFriend, SailorGirlFriend))
 	if got != want {
 		t.Errorf("m.ContentPath() = %q, want %q", got, want)
 	}
