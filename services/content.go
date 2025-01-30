@@ -153,6 +153,9 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription) error {
 		Id:        sub.ContentId,
 		BaseDir:   sub.Info.BaseDir,
 		TempTitle: sub.Info.Title,
+		DownloadMetadata: payload.DownloadRequestMetadata{
+			StartImmediately: true,
+		},
 	})
 }
 
