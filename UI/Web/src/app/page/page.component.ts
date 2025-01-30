@@ -1,7 +1,7 @@
 import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {PageService} from "../_services/page.service";
-import {DownloadService} from "../_services/download.service";
+import {ContentService} from "../_services/content.service";
 import {DownloadMetadata, Modifier, ModifierType, Page, Provider} from "../_models/page";
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {SearchRequest} from "../_models/search";
@@ -52,7 +52,7 @@ export class PageComponent implements OnInit{
 
   constructor(private navService: NavService,
               private pageService: PageService,
-              private downloadService: DownloadService,
+              private downloadService: ContentService,
               private cdRef: ChangeDetectorRef,
               private fb: FormBuilder,
               private toastr: ToastrService,

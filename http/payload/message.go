@@ -23,5 +23,6 @@ const (
 type ListContentData struct {
 	SubContentId string            `json:"subContentId,omitempty"`
 	Label        string            `json:"label"`
+	Selected     bool              `json:"selected"`
 	Children     []ListContentData `json:"children,omitempty"`
 }

@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType} from "../../../_models/page";
 import {DownloadRequest, DownloadRequestMetadata} from "../../../_models/search";
-import {DownloadService} from "../../../_services/download.service";
+import {ContentService} from "../../../_services/content.service";
 import {ToastrService} from "ngx-toastr";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Button} from "primeng/button";
@@ -42,7 +42,7 @@ export class DownloadDialogComponent implements OnInit {
   }
 
   constructor(
-    private downloadService: DownloadService,
+    private downloadService: ContentService,
     private toastR: ToastrService,
   ) {
   }
@@ -75,8 +75,6 @@ export class DownloadDialogComponent implements OnInit {
       dir: this.downloadDir,
       downloadMetadata: this.requestMetadata,
     }
-
-    console.log(req)
 
     this.downloadService.download(req).subscribe({
       next: () => {

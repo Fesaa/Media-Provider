@@ -1,0 +1,145 @@
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {InfoStat} from "../../../_models/stats";
+import {ContentService} from "../../../_services/content.service";
+import {ToastrService} from "ngx-toastr";
+import {ListContentData} from "../../../_models/messages";
+import {TreeNode} from "primeng/api";
+import {Tree} from "primeng/tree";
+import {Button} from "primeng/button";
+
+@Component({
+  selector: 'app-content-picker-dialog',
+  imports: [
+    Tree,
+    Button
+  ],
+  templateUrl: './content-picker-dialog.component.html',
+  styleUrl: './content-picker-dialog.component.css'
+})
+export class ContentPickerDialogComponent implements OnInit {
+
+  @Input({required: true}) visible!: boolean;
+  @Output() visibleChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Input({required: true}) info!: InfoStat;
+
+  content: ListContentData[] = [];
+  selection: ListContentData[] = [];
+
+
+  constructor(
+    private contentService: ContentService,
+    private toastr: ToastrService,
+  ) {
+  }
+
+  ngOnInit(): void {
+    this.contentService.listContent(this.info.provider, this.info.id).subscribe(contents => {
+      this.content = contents;
+      this.selection = this.flatten(contents);
+    })
+  }
+
+  unselectAll() {
+    this.selection = [];
+  }
+
+  selectAll() {
+    this.selection = this.flatten(this.content)
+  }
+
+  reverse() {
+    this.content = this.content.reverse();
+  }
+
+  close() {
+    this.visibleChange.emit(false);
+  }
+
+  submit() {
+    const ids = this.getAllSubContentIds(this.selection);
+
+    if (ids.length == 0) {
+      this.toastr.warning("Remove the content if you wish nothing to be downloaded", "Not saving")
+      return;
+    }
+
+    this.contentService.setFilter(this.info.provider, this.info.id, ids).subscribe({
+      next: () => {
+        this.toastr.success(`Set filter to ${this.selection.length} items`, "Success");
+      },
+      error: (err) => {
+        this.toastr.error(`Failed:\n ${err.error.message}`, "Error");
+      }
+    }).add(() => (
+      this.close()
+    ))
+  }
+
+  private flatten(list: ListContentData[]): ListContentData[] {
+    const result: ListContentData[] = [];
+
+    function isFullySelected(data: ListContentData & TreeNode): boolean {
+      if (data.subContentId && !data.selected) {
+        return false;
+      }
+
+      if (data.subContentId && data.selected) {
+        return true;
+      }
+
+      let allSelected = true;
+      let atLeastOne = false;
+
+      for (const child of data.children) {
+        if (isFullySelected(child)) {
+          atLeastOne = true;
+        } else {
+          allSelected = false;
+        }
+      }
+
+      if (atLeastOne && !allSelected) {
+        data.partialSelected = true;
+      }
+
+      return allSelected || atLeastOne;
+    }
+
+    function traverse(items: ListContentData[]) {
+      for (const item of items) {
+
+        if (isFullySelected(item)) {
+          result.push(item);
+        }
+
+        if (item.children && item.children.length > 0) {
+          traverse(item.children);
+        }
+      }
+    }
+
+    traverse(list);
+    return result;
+  }
+
+
+  private getAllSubContentIds(list: ListContentData[]): string[] {
+    const result: string[] = [];
+
+    function traverse(items: ListContentData[]) {
+      for (const item of items) {
+        if (item.subContentId !== undefined && !result.includes(item.subContentId)) {
+          result.push(item.subContentId);
+        }
+        if (item.children && item.children.length > 0) {
+          traverse(item.children);
+        }
+      }
+    }
+
+    traverse(list);
+    return result;
+  }
+
+
+}

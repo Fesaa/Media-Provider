@@ -22,7 +22,7 @@ type InfoStat struct {
 	Progress     int64           `json:"progress"`
 	Estimated    *int64          `json:"estimated,omitempty"`
 	SpeedType    SpeedType       `json:"speed_type"`
-	Speed        SpeedData       `json:"speed"`
+	Speed        int64           `json:"speed"`
 	DownloadDir  string          `json:"download_dir"`
 }
 
@@ -49,8 +49,3 @@ const (
 	VOLUMES
 	IMAGES
 )
-
-type SpeedData struct {
-	T     int64 `json:"time"`
-	Speed int64 `json:"speed"`
-}

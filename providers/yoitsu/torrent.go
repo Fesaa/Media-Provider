@@ -140,10 +140,10 @@ func (t *torrentImpl) ContentList() []payload.ListContentData {
 		return strings.Split(file.Path(), "/")
 	})
 
-	return buildTree(paths)
+	return t.buildTree(paths)
 }
 
-func buildTree(paths [][]string, depths ...int) []payload.ListContentData {
+func (t *torrentImpl) buildTree(paths [][]string, depths ...int) []payload.ListContentData {
 	depth := utils.OrDefault(depths, 0)
 	var tree []payload.ListContentData
 	pathByFirstDir := utils.GroupBy(paths, func(v []string) string {
@@ -159,18 +159,24 @@ func buildTree(paths [][]string, depths ...int) []payload.ListContentData {
 		}
 
 		if len(subPaths[0]) == depth+1 {
+			id := path.Join(subPaths[0]...)
 			tree = append(tree, payload.ListContentData{
 				Label:        dir,
-				SubContentId: path.Join(subPaths[0]...),
+				Selected:     len(t.userFilter) == 0 || slices.Contains(t.userFilter, id),
+				SubContentId: id,
 			})
 			continue
 		}
 
-		children := buildTree(subPaths, depth+1)
+		children := t.buildTree(subPaths, depth+1)
 		tree = append(tree, payload.ListContentData{
 			Label:    dir,
 			Children: children,
 		})
+	}
+
+	if len(tree) == 1 {
+		return tree[0].Children
 	}
 
 	return tree
@@ -265,7 +271,7 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 			return &es
 		}(),
 		SpeedType:   payload.BYTES,
-		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
+		Speed:       speed,
 		DownloadDir: t.GetDownloadDir(),
 	}
 }

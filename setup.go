@@ -64,7 +64,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 	prometheus.RegisterAt(app, "/api/metrics", params.Auth.Middleware)
 	app.Use(prometheus.Middleware)
 
-	dontLog := []string{"/api/stats", "/", "/api/metrics"}
+	dontLog := []string{"/api/content/stats", "/", "/api/metrics"}
 	dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2"}
 	httpLogger := params.Log.With().Str("handler", "http").Logger()
 	app.Use(fiberzerolog.New(fiberzerolog.Config{

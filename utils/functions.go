@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strconv"
 )
 
 func GenerateSecret(length int) (string, error) {
@@ -107,4 +108,22 @@ func Ternary[T any](condition bool, tuple ...T) T {
 		return tuple[0]
 	}
 	return tuple[1]
+}
+
+func SortFloats(a, b string) int {
+	if a == b {
+		return 0
+	}
+
+	if a == "" {
+		return 1
+	}
+
+	if b == "" {
+		return -1
+	}
+
+	fa, _ := strconv.ParseFloat(a, 64)
+	fb, _ := strconv.ParseFloat(b, 64)
+	return (int)(fb - fa)
 }

@@ -16,6 +16,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -112,9 +113,24 @@ func (w *webtoon) All() []Chapter {
 }
 
 func (w *webtoon) GetInfo() payload.InfoStat {
-	imageDiff := w.ImagesDownloaded - w.LastRead
-	timeDiff := max(time.Since(w.LastTime).Seconds(), 1)
-	speed := max(int64(float64(imageDiff)/timeDiff), 1)
+	speed := func() int64 {
+		if w.ContentState != payload.ContentStateDownloading {
+			return 0
+		}
+
+		volumeDiff := w.ImagesDownloaded - w.LastRead
+		timeDiff := max(time.Since(w.LastTime).Seconds(), 1)
+		return max(int64(float64(volumeDiff)/timeDiff), 1)
+	}()
+
+	size := func() int {
+		if len(w.ToDownloadUserSelected) == 0 {
+			return len(w.ToDownload)
+		}
+
+		return len(w.ToDownloadUserSelected)
+	}()
+
 	w.LastRead = w.ImagesDownloaded
 	w.LastTime = time.Now()
 
@@ -123,12 +139,7 @@ func (w *webtoon) GetInfo() payload.InfoStat {
 		Id:           w.id,
 		ContentState: w.ContentState,
 		Name:         w.Title(),
-		Size: func() string {
-			if w.info != nil {
-				return strconv.Itoa(len(w.ToDownload)) + " Chapters"
-			}
-			return ""
-		}(),
+		Size:         strconv.Itoa(size) + " Chapters",
 		RefUrl: func() string {
 			if w.searchInfo == nil {
 				return ""
@@ -136,9 +147,9 @@ func (w *webtoon) GetInfo() payload.InfoStat {
 			return w.searchInfo.Url()
 		}(),
 		Downloading: w.Wg != nil,
-		Progress:    utils.Percent(int64(w.ContentDownloaded), int64(len(w.ToDownload))),
+		Progress:    utils.Percent(int64(w.ContentDownloaded), int64(size)),
 		SpeedType:   payload.IMAGES,
-		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
+		Speed:       speed,
 		DownloadDir: w.GetDownloadDir(),
 	}
 }
@@ -151,6 +162,7 @@ func (w *webtoon) ContentList() []payload.ListContentData {
 	return utils.Map(w.info.Chapters, func(chapter Chapter) payload.ListContentData {
 		return payload.ListContentData{
 			SubContentId: chapter.Number,
+			Selected:     len(w.ToDownloadUserSelected) == 0 || slices.Contains(w.ToDownloadUserSelected, chapter.Number),
 			Label:        fmt.Sprintf("%s #%s - %s", w.info.Name, chapter.Number, chapter.Title),
 		}
 	})

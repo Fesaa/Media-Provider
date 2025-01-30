@@ -28,11 +28,12 @@ type contentRoutes struct {
 }
 
 func RegisterContentRoutes(cr contentRoutes) {
-	cr.Router.Post("/search", cr.Auth.Middleware, cr.Cache, cr.Search)
-	cr.Router.Post("/download", cr.Auth.Middleware, cr.Download)
-	cr.Router.Post("/stop", cr.Auth.Middleware, cr.Stop)
-	cr.Router.Get("/stats", cr.Auth.Middleware, cr.Stats)
-	cr.Router.Post("/message", cr.Auth.Middleware, cr.Message)
+	router := cr.Router.Group("/content", cr.Auth.Middleware)
+	router.Post("/search", cr.Cache, cr.Search)
+	router.Post("/download", cr.Download)
+	router.Post("/stop", cr.Stop)
+	router.Get("/stats", cr.Stats)
+	router.Post("/message", cr.Message)
 }
 
 func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
