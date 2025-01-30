@@ -73,6 +73,14 @@ func (w *webtoon) Provider() models.Provider {
 	return w.Req.Provider
 }
 
+func (w *webtoon) RefUrl() string {
+	if w.searchInfo != nil {
+		return w.searchInfo.Url()
+	}
+
+	return ""
+}
+
 func (w *webtoon) LoadInfo() chan struct{} {
 	out := make(chan struct{})
 	go func() {
@@ -110,48 +118,6 @@ func (w *webtoon) LoadInfo() chan struct{} {
 
 func (w *webtoon) All() []Chapter {
 	return w.info.Chapters
-}
-
-func (w *webtoon) GetInfo() payload.InfoStat {
-	speed := func() int64 {
-		if w.ContentState != payload.ContentStateDownloading {
-			return 0
-		}
-
-		volumeDiff := w.ImagesDownloaded - w.LastRead
-		timeDiff := max(time.Since(w.LastTime).Seconds(), 1)
-		return max(int64(float64(volumeDiff)/timeDiff), 1)
-	}()
-
-	size := func() int {
-		if len(w.ToDownloadUserSelected) == 0 {
-			return len(w.ToDownload)
-		}
-
-		return len(w.ToDownloadUserSelected)
-	}()
-
-	w.LastRead = w.ImagesDownloaded
-	w.LastTime = time.Now()
-
-	return payload.InfoStat{
-		Provider:     models.WEBTOON,
-		Id:           w.id,
-		ContentState: w.ContentState,
-		Name:         w.Title(),
-		Size:         strconv.Itoa(size) + " Chapters",
-		RefUrl: func() string {
-			if w.searchInfo == nil {
-				return ""
-			}
-			return w.searchInfo.Url()
-		}(),
-		Downloading: w.Wg != nil,
-		Progress:    utils.Percent(int64(w.ContentDownloaded), int64(size)),
-		SpeedType:   payload.IMAGES,
-		Speed:       speed,
-		DownloadDir: w.GetDownloadDir(),
-	}
 }
 
 func (w *webtoon) ContentList() []payload.ListContentData {

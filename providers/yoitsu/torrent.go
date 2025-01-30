@@ -169,6 +169,9 @@ func (t *torrentImpl) buildTree(paths [][]string, depths ...int) []payload.ListC
 		}
 
 		children := t.buildTree(subPaths, depth+1)
+		slices.SortFunc(children, func(a, b payload.ListContentData) int {
+			return strings.Compare(a.Label, b.Label)
+		})
 		tree = append(tree, payload.ListContentData{
 			Label:    dir,
 			Children: children,

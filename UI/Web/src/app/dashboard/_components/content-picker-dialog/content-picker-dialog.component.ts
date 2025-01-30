@@ -65,7 +65,7 @@ export class ContentPickerDialogComponent implements OnInit {
 
     this.contentService.setFilter(this.info.provider, this.info.id, ids).subscribe({
       next: () => {
-        this.toastr.success(`Set filter to ${this.selection.length} items`, "Success");
+        this.toastr.success(`Set filter to ${ids.length} items`, "Success");
       },
       error: (err) => {
         this.toastr.error(`Failed:\n ${err.error.message}`, "Error");
@@ -85,6 +85,11 @@ export class ContentPickerDialogComponent implements OnInit {
 
       if (data.subContentId && data.selected) {
         return true;
+      }
+
+      if (!data.children) {
+        // Empty directory?
+        return false;
       }
 
       let allSelected = true;

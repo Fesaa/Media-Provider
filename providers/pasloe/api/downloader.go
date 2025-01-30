@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"path"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -172,6 +174,43 @@ func (d *DownloadBase[T]) GetContentByPath(path string) (Content, bool) {
 
 func (d *DownloadBase[T]) GetNewContent() []string {
 	return d.HasDownloaded
+}
+
+func (d *DownloadBase[T]) GetInfo() payload.InfoStat {
+	speed := func() int64 {
+		if d.ContentState != payload.ContentStateDownloading {
+			return 0
+		}
+
+		diff := d.ImagesDownloaded - d.LastRead
+		timeDiff := max(time.Since(d.LastTime).Seconds(), 1)
+		return max(int64(float64(diff)/timeDiff), 1)
+	}()
+
+	size := func() int {
+		if len(d.ToDownloadUserSelected) == 0 {
+			return len(d.ToDownload)
+		}
+
+		return len(d.ToDownloadUserSelected)
+	}()
+
+	d.LastRead = d.ImagesDownloaded
+	d.LastTime = time.Now()
+
+	return payload.InfoStat{
+		Provider:     models.DYNASTY,
+		Id:           d.Id(),
+		ContentState: d.ContentState,
+		Name:         d.infoProvider.Title(),
+		RefUrl:       d.infoProvider.RefUrl(),
+		Size:         strconv.Itoa(size) + " Chapters",
+		Downloading:  d.Wg != nil,
+		Progress:     utils.Percent(int64(d.ContentDownloaded), int64(size)),
+		SpeedType:    payload.IMAGES,
+		Speed:        speed,
+		DownloadDir:  d.GetDownloadDir(),
+	}
 }
 
 func (d *DownloadBase[T]) Cancel() {

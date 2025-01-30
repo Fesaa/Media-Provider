@@ -87,6 +87,14 @@ func (m *manga) Provider() models.Provider {
 	return m.Req.Provider
 }
 
+func (m *manga) RefUrl() string {
+	if m.info == nil {
+		return ""
+	}
+
+	return m.info.RefURL()
+}
+
 func (m *manga) LoadInfo() chan struct{} {
 	out := make(chan struct{})
 	go func() {
@@ -226,54 +234,6 @@ func (m *manga) chapterSearchFunc(scanlation string, skipOneShot bool) func(Chap
 
 func (m *manga) All() []ChapterSearchData {
 	return m.chapters.Data
-}
-
-func (m *manga) GetInfo() payload.InfoStat {
-	speed := func() int64 {
-		if m.ContentState != payload.ContentStateDownloading {
-			return 0
-		}
-
-		volumeDiff := m.ImagesDownloaded - m.LastRead
-		timeDiff := max(time.Since(m.LastTime).Seconds(), 1)
-		return max(int64(float64(volumeDiff)/timeDiff), 1)
-	}()
-
-	size := func() int {
-		if len(m.ToDownloadUserSelected) == 0 {
-			return len(m.ToDownload)
-		}
-
-		return len(m.ToDownloadUserSelected)
-	}()
-
-	m.LastRead = m.ImagesDownloaded
-	m.LastTime = time.Now()
-
-	return payload.InfoStat{
-		Provider:     models.MANGADEX,
-		Id:           m.id,
-		ContentState: m.ContentState,
-		Name: func() string {
-			title := m.Title()
-			if title == m.id && m.TempTitle != "" {
-				return m.TempTitle
-			}
-			return title
-		}(),
-		RefUrl: func() string {
-			if m.info == nil {
-				return ""
-			}
-			return m.info.RefURL()
-		}(),
-		Size:        strconv.Itoa(size) + " Chapters",
-		Downloading: m.Wg != nil,
-		Progress:    utils.Percent(int64(m.ContentDownloaded), int64(size)),
-		SpeedType:   payload.IMAGES,
-		Speed:       speed,
-		DownloadDir: m.GetDownloadDir(),
-	}
 }
 
 func (m *manga) ContentList() []payload.ListContentData {

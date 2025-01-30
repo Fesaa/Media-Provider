@@ -72,7 +72,7 @@ func (c *client) Download(req payload.DownloadRequest) error {
 				Str("title", content.Title()).
 				Msg("downloading content")
 			content.StartDownload()
-		} else {
+		} else if content.State() == payload.ContentStateWaiting {
 			c.log.Debug().
 				Str("id", content.Id()).
 				Str("title", content.Title()).

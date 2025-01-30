@@ -107,7 +107,7 @@ func (y *yoitsu) Download(req payload.DownloadRequest) error {
 
 		if torrentWrapper.State() == payload.ContentStateReady {
 			torrentWrapper.StartDownload()
-		} else {
+		} else if torrentWrapper.State() == payload.ContentStateWaiting {
 			y.log.Info().Str("infoHash", torrentWrapper.Id()).
 				Str("title?", torrentWrapper.Title()).
 				Msg("torrent is not ready for download, checking if an other can start")

@@ -24,6 +24,7 @@ type Downloadable interface {
 
 type DownloadInfoProvider[T any] interface {
 	Title() string
+	RefUrl() string
 	Provider() models.Provider
 	LoadInfo() chan struct{}
 	GetInfo() payload.InfoStat
