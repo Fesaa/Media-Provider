@@ -64,9 +64,11 @@
               <th>
                 <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
 
-                  <p-dialog resizable="false" header="Content picker" [(visible)]="displayContentPicker[info.id]" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }" [contentStyle]="{ 'overflow-y': 'visible' }">
-                    <app-content-picker-dialog [info]="info" [(visible)]="displayContentPicker[info.id]" />
-                  </p-dialog>
+                  @defer (when displayContentPicker[info.id]) {
+                    <p-dialog resizable="false" header="Content picker" [(visible)]="displayContentPicker[info.id]" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }" [contentStyle]="{ 'overflow-y': 'visible' }">
+                      <app-content-picker-dialog [info]="info" [(visible)]="displayContentPicker[info.id]" />
+                    </p-dialog>
+                  }
 
                   @if (info.contentState == ContentState.Downloading) {
                     <p-button (click)="browse(info)"
