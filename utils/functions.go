@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strconv"
 )
 
 func GenerateSecret(length int) (string, error) {
@@ -42,10 +43,10 @@ func HumanReadableSpeed(s int64) string {
 	return fmt.Sprintf("%.2f MB/s", speed)
 }
 
-// Percent returns the % of a contained in b. At most 100 is returned. Percent(a, 0) = 100
+// Percent returns the % of a contained in b. At most 100 is returned. Percent(a, 0) = 100 for a != 0, Percent(0,0) = 0
 func Percent(a, b int64) int64 {
 	if b == 0 {
-		return 100
+		return (int64)(Ternary(a == 0, 0, 100))
 	}
 	b = max(b, a)
 	ratio := (float64)(a) / (float64)(b)
@@ -107,4 +108,22 @@ func Ternary[T any](condition bool, tuple ...T) T {
 		return tuple[0]
 	}
 	return tuple[1]
+}
+
+func SortFloats(a, b string) int {
+	if a == b {
+		return 0
+	}
+
+	if a == "" {
+		return 1
+	}
+
+	if b == "" {
+		return -1
+	}
+
+	fa, _ := strconv.ParseFloat(a, 64)
+	fb, _ := strconv.ParseFloat(b, 64)
+	return (int)(fb - fa)
 }

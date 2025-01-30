@@ -87,6 +87,14 @@ func (m *manga) Provider() models.Provider {
 	return m.Req.Provider
 }
 
+func (m *manga) RefUrl() string {
+	if m.info == nil {
+		return ""
+	}
+
+	return m.info.RefURL()
+}
+
 func (m *manga) LoadInfo() chan struct{} {
 	out := make(chan struct{})
 	go func() {
@@ -228,37 +236,53 @@ func (m *manga) All() []ChapterSearchData {
 	return m.chapters.Data
 }
 
-func (m *manga) GetInfo() payload.InfoStat {
-	volumeDiff := m.ImagesDownloaded - m.LastRead
-	timeDiff := max(time.Since(m.LastTime).Seconds(), 1)
-	speed := max(int64(float64(volumeDiff)/timeDiff), 1)
-	m.LastRead = m.ImagesDownloaded
-	m.LastTime = time.Now()
-
-	return payload.InfoStat{
-		Provider:      models.MANGADEX,
-		Id:            m.id,
-		ContentStatus: utils.Ternary(m.Wg == nil, payload.ContentStatusLoading, payload.ContentStatusDownloading),
-		Name: func() string {
-			title := m.Title()
-			if title == m.id && m.TempTitle != "" {
-				return m.TempTitle
-			}
-			return title
-		}(),
-		RefUrl: func() string {
-			if m.info == nil {
-				return ""
-			}
-			return m.info.RefURL()
-		}(),
-		Size:        strconv.Itoa(len(m.ToDownload)) + " Chapters",
-		Downloading: m.Wg != nil,
-		Progress:    utils.Percent(int64(m.ContentDownloaded), int64(len(m.ToDownload))),
-		SpeedType:   payload.IMAGES,
-		Speed:       payload.SpeedData{T: time.Now().Unix(), Speed: speed},
-		DownloadDir: m.GetDownloadDir(),
+func (m *manga) ContentList() []payload.ListContentData {
+	if len(m.chapters.Data) == 0 {
+		return nil
 	}
+
+	data := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
+		return v.Attributes.Volume
+	})
+
+	childrenFunc := func(chapters []ChapterSearchData) []payload.ListContentData {
+		slices.SortFunc(chapters, func(a, b ChapterSearchData) int {
+			if a.Attributes.Volume != b.Attributes.Volume {
+				return (int)(b.Volume() - a.Volume())
+			}
+			return (int)(b.Chapter() - a.Chapter())
+		})
+
+		return utils.Map(chapters, func(chapter ChapterSearchData) payload.ListContentData {
+			return payload.ListContentData{
+				SubContentId: chapter.Id,
+				Selected:     len(m.ToDownloadUserSelected) == 0 || slices.Contains(m.ToDownloadUserSelected, chapter.Id),
+				Label: utils.Ternary(chapter.Attributes.Title == "",
+					m.Title()+" "+chapter.Label(),
+					chapter.Label()),
+			}
+		})
+	}
+
+	sortSlice := utils.Keys(data)
+	slices.SortFunc(sortSlice, utils.SortFloats)
+
+	out := make([]payload.ListContentData, 0, len(data))
+	for _, volume := range sortSlice {
+		chapters := data[volume]
+
+		// Do not add No Volume label if there are no volumes
+		if volume == "" && len(sortSlice) == 1 {
+			out = append(out, childrenFunc(chapters)...)
+			continue
+		}
+
+		out = append(out, payload.ListContentData{
+			Label:    utils.Ternary(volume == "", "No Volume", fmt.Sprintf("Volume %s", volume)),
+			Children: childrenFunc(chapters),
+		})
+	}
+	return out
 }
 
 func (m *manga) ContentDir(chapter ChapterSearchData) string {

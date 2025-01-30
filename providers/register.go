@@ -44,9 +44,8 @@ type defaultProviderAdapter[T any, S any] struct {
 	transformer func(payload.SearchRequest) S
 	searcher    func(S) (T, error)
 	normalizer  func(T) []payload.Info
-	downloader  func(payload.DownloadRequest) error
-	stopper     func(payload.StopRequest) error
 	metadata    func() payload.DownloadMetadata
+	client      func() services.Client
 	provider    models.Provider
 	log         zerolog.Logger
 }
@@ -57,11 +56,10 @@ func registerProviderAdapter[B builder[T, S], T, S any](s services.ContentServic
 			transformer: builder.Transform,
 			normalizer:  builder.Normalize,
 			searcher:    builder.Search,
-			downloader:  builder.Download,
-			stopper:     builder.Stop,
 			provider:    builder.Provider(),
 			metadata:    builder.DownloadMetadata,
 			log:         builder.Logger(),
+			client:      builder.Client,
 		}
 
 		s.RegisterProvider(builder.Provider(), reqMapper)
@@ -74,17 +72,8 @@ type builder[T, S any] interface {
 	Normalize(T) []payload.Info
 	Transform(payload.SearchRequest) S
 	Search(S) (T, error)
-	Download(payload.DownloadRequest) error
-	Stop(payload.StopRequest) error
 	DownloadMetadata() payload.DownloadMetadata
-}
-
-func (s *defaultProviderAdapter[T, S]) Download(req payload.DownloadRequest) error {
-	return s.downloader(req)
-}
-
-func (s *defaultProviderAdapter[T, S]) Stop(req payload.StopRequest) error {
-	return s.stopper(req)
+	Client() services.Client
 }
 
 func (s *defaultProviderAdapter[T, S]) Search(req payload.SearchRequest) ([]payload.Info, error) {
@@ -98,4 +87,8 @@ func (s *defaultProviderAdapter[T, S]) Search(req payload.SearchRequest) ([]payl
 
 func (s *defaultProviderAdapter[T, S]) DownloadMetadata() payload.DownloadMetadata {
 	return s.metadata()
+}
+
+func (s *defaultProviderAdapter[T, S]) Client() services.Client {
+	return s.client()
 }

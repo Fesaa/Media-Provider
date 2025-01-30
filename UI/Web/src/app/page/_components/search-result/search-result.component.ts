@@ -2,7 +2,7 @@ import {ChangeDetectorRef, Component, Input} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {FormGroup} from "@angular/forms";
 import {DownloadMetadata, Page, Provider} from "../../../_models/page";
-import {DownloadService} from "../../../_services/download.service";
+import {ContentService} from "../../../_services/content.service";
 import {DownloadRequest} from "../../../_models/search";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
 import {NgIcon} from "@ng-icons/core";

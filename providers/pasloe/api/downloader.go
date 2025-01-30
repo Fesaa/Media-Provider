@@ -2,19 +2,28 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"os"
 	"path"
+	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
-func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block DownloadInfoProvider[T], client Client, log zerolog.Logger) *DownloadBase[T] {
+type IDAble interface {
+	ID() string
+}
+
+func NewDownloadableFromBlock[T IDAble](req payload.DownloadRequest, block DownloadInfoProvider[T], client Client, log zerolog.Logger) *DownloadBase[T] {
 	return &DownloadBase[T]{
 		infoProvider: block,
 		Client:       client,
@@ -25,6 +34,7 @@ func NewDownloadableFromBlock[T any](req payload.DownloadRequest, block Download
 		maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 4),
 		Req:          req,
 		LastTime:     time.Now(),
+		ContentState: payload.ContentStateQueued,
 	}
 }
 
@@ -33,11 +43,12 @@ type Content struct {
 	Path string
 }
 
-type DownloadBase[T any] struct {
+type DownloadBase[T IDAble] struct {
 	infoProvider DownloadInfoProvider[T]
 
-	Client Client
-	Log    zerolog.Logger
+	Client       Client
+	Log          zerolog.Logger
+	ContentState payload.ContentState
 
 	id        string
 	baseDir   string
@@ -49,6 +60,9 @@ type DownloadBase[T any] struct {
 	HasDownloaded   []string
 	ExistingContent []Content
 
+	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
+	ToDownloadUserSelected []string
+
 	ContentDownloaded int
 	ImagesDownloaded  int
 	LastTime          time.Time
@@ -57,6 +71,61 @@ type DownloadBase[T any] struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	Wg     *sync.WaitGroup
+}
+
+func (d *DownloadBase[T]) Message(msg payload.Message) (payload.Message, error) {
+	var jsonBytes []byte
+	var err error
+	switch msg.MessageType {
+	case payload.MessageListContent:
+		jsonBytes, err = json.Marshal(d.infoProvider.ContentList())
+	case payload.SetToDownload:
+		err = d.SetUserFiltered(msg.Data)
+	case payload.StartDownload:
+		err = d.MarkReady()
+	default:
+		return payload.Message{}, services.ErrUnknownMessageType
+	}
+
+	if err != nil {
+		return payload.Message{}, err
+	}
+
+	return payload.Message{
+		Provider:    d.Req.Provider,
+		ContentId:   d.id,
+		MessageType: msg.MessageType,
+		Data:        jsonBytes,
+	}, nil
+}
+
+func (d *DownloadBase[T]) MarkReady() error {
+	if d.ContentState != payload.ContentStateWaiting {
+		return services.ErrWrongState
+	}
+
+	if d.Client.CanStart(d.Req.Provider) {
+		go d.StartDownload()
+		return nil
+	}
+
+	d.ContentState = payload.ContentStateReady
+	return nil
+}
+
+func (d *DownloadBase[T]) SetUserFiltered(msg json.RawMessage) error {
+	if d.ContentState != payload.ContentStateWaiting &&
+		d.ContentState != payload.ContentStateReady {
+		return services.ErrWrongState
+	}
+
+	var filter []string
+	err := json.Unmarshal(msg, &filter)
+	if err != nil {
+		return err
+	}
+	d.ToDownloadUserSelected = filter
+	return nil
 }
 
 func (d *DownloadBase[T]) Id() string {
@@ -107,6 +176,43 @@ func (d *DownloadBase[T]) GetNewContent() []string {
 	return d.HasDownloaded
 }
 
+func (d *DownloadBase[T]) GetInfo() payload.InfoStat {
+	speed := func() int64 {
+		if d.ContentState != payload.ContentStateDownloading {
+			return 0
+		}
+
+		diff := d.ImagesDownloaded - d.LastRead
+		timeDiff := max(time.Since(d.LastTime).Seconds(), 1)
+		return max(int64(float64(diff)/timeDiff), 1)
+	}()
+
+	size := func() int {
+		if len(d.ToDownloadUserSelected) == 0 {
+			return len(d.ToDownload)
+		}
+
+		return len(d.ToDownloadUserSelected)
+	}()
+
+	d.LastRead = d.ImagesDownloaded
+	d.LastTime = time.Now()
+
+	return payload.InfoStat{
+		Provider:     models.DYNASTY,
+		Id:           d.Id(),
+		ContentState: d.ContentState,
+		Name:         d.infoProvider.Title(),
+		RefUrl:       d.infoProvider.RefUrl(),
+		Size:         strconv.Itoa(size) + " Chapters",
+		Downloading:  d.Wg != nil,
+		Progress:     utils.Percent(int64(d.ContentDownloaded), int64(size)),
+		SpeedType:    payload.IMAGES,
+		Speed:        speed,
+		DownloadDir:  d.GetDownloadDir(),
+	}
+}
+
 func (d *DownloadBase[T]) Cancel() {
 	d.Log.Trace().Msg("calling cancel on content")
 	if d.cancel == nil {
@@ -119,24 +225,51 @@ func (d *DownloadBase[T]) Cancel() {
 	d.Wg.Wait()
 }
 
-func (d *DownloadBase[T]) WaitForInfoAndDownload() {
+func (d *DownloadBase[T]) StartLoadInfo() {
 	if d.cancel != nil {
-		d.Log.Debug().Msg("content already downloading")
+		d.Log.Debug().Msg("content already started")
 		return
 	}
 
+	d.ContentState = payload.ContentStateLoading
 	d.ctx, d.cancel = context.WithCancel(context.Background())
-	d.Log.Trace().Msg("loading content info")
-	go func() {
-		select {
-		case <-d.ctx.Done():
-			return
-		case <-d.infoProvider.LoadInfo():
-			d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
-			d.checkContentOnDisk()
-			d.startDownload()
+	d.Log.Debug().Msg("loading content info")
+	select {
+	case <-d.ctx.Done():
+		return
+	case <-d.infoProvider.LoadInfo():
+	}
+
+	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
+	d.checkContentOnDisk()
+	d.ContentState = utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
+		payload.ContentStateReady,
+		payload.ContentStateWaiting)
+
+	d.Log.Debug().Msg("Content has downloaded all information")
+
+	data := d.infoProvider.All()
+	d.ToDownload = utils.Filter(data, func(t T) bool {
+		download := d.infoProvider.ShouldDownload(t)
+		if !download {
+			d.Log.Trace().Str("key", d.infoProvider.ContentKey(t)).Msg("content already downloaded, skipping")
+		} else {
+			d.Log.Trace().Str("key", d.infoProvider.ContentKey(t)).Msg("adding content to download queue")
 		}
-	}()
+		return download
+	})
+
+	d.Log.Debug().Int("all", len(data)).Int("filtered", len(d.ToDownload)).
+		Msg("downloaded content filtered")
+}
+
+func (d *DownloadBase[T]) StartDownload() {
+	d.ContentState = payload.ContentStateDownloading
+	go d.startDownload()
+}
+
+func (d *DownloadBase[T]) State() payload.ContentState {
+	return d.ContentState
 }
 
 func (d *DownloadBase[T]) checkContentOnDisk() {
@@ -198,15 +331,15 @@ func (d *DownloadBase[T]) startDownload() {
 	data := d.infoProvider.All()
 	d.Log.Trace().Int("size", len(data)).Msg("downloading content")
 	d.Wg = &sync.WaitGroup{}
-	d.ToDownload = utils.Filter(data, func(t T) bool {
-		download := d.infoProvider.ShouldDownload(t)
-		if !download {
-			d.Log.Trace().Str("key", d.infoProvider.ContentKey(t)).Msg("content already downloaded, skipping")
-		} else {
-			d.Log.Trace().Str("key", d.infoProvider.ContentKey(t)).Msg("adding content to download queue")
-		}
-		return download
-	})
+
+	if len(d.ToDownloadUserSelected) > 0 {
+		currentSize := len(d.ToDownload)
+		d.ToDownload = utils.Filter(d.ToDownload, func(t T) bool {
+			return slices.Contains(d.ToDownloadUserSelected, t.ID())
+		})
+		d.Log.Debug().Int("size", currentSize).Int("newSize", len(d.ToDownload)).
+			Msg("content further filtered after user has made a selecting in the UI")
+	}
 
 	d.Log.Info().
 		Int("all", len(data)).

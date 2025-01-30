@@ -4,6 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"net/http"
@@ -68,17 +69,12 @@ func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
 	return y
 }
 
-func (b *Builder) Download(request payload.DownloadRequest) error {
-	_, err := b.ys.AddDownload(request)
-	return err
-}
-
-func (b *Builder) Stop(request payload.StopRequest) error {
-	return b.ys.RemoveDownload(request)
-}
-
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{}
+}
+
+func (b *Builder) Client() services.Client {
+	return b.ys
 }
 
 func NewBuilder(log zerolog.Logger, httpClient *http.Client, ys yoitsu.Yoitsu) *Builder {

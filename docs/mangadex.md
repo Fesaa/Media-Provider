@@ -32,6 +32,8 @@ The mangadex provider allows for a few options to be set alongside which manga t
 *The system is currently not smart enough to provide you with the id/names of which scanlation are an option. 
 You will have to provide these yourself from mangadex's site. Will check for scanlation group OR user
 
+![Preview](assets/mangadex-download-metadata.png)
+
 ## Config
 
 Mangadex supports a lot of different filtering options, the following are currently support.
@@ -45,6 +47,8 @@ Ex.
 - Official Colored
 - Girls' Love
 - Isekai
+
+Check [our implementation](../providers/pasloe/mangadex/repository.go) for the api endpoint if needed.
 
 ### Status (`status`)
 The following values are possible

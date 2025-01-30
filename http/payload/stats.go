@@ -12,27 +12,34 @@ type QueueStat struct {
 }
 
 type InfoStat struct {
-	Provider      models.Provider `json:"provider"`
-	Id            string          `json:"id"`
-	ContentStatus ContentStatus   `json:"contentStatus"`
-	Name          string          `json:"name"`
-	RefUrl        string          `json:"ref_url"`
-	Size          string          `json:"size"`
-	Downloading   bool            `json:"downloading"`
-	Progress      int64           `json:"progress"`
-	Estimated     *int64          `json:"estimated,omitempty"`
-	SpeedType     SpeedType       `json:"speed_type"`
-	Speed         SpeedData       `json:"speed"`
-	DownloadDir   string          `json:"download_dir"`
+	Provider     models.Provider `json:"provider"`
+	Id           string          `json:"id"`
+	ContentState ContentState    `json:"contentState"`
+	Name         string          `json:"name"`
+	RefUrl       string          `json:"ref_url"`
+	Size         string          `json:"size"`
+	Downloading  bool            `json:"downloading"`
+	Progress     int64           `json:"progress"`
+	Estimated    *int64          `json:"estimated,omitempty"`
+	SpeedType    SpeedType       `json:"speed_type"`
+	Speed        int64           `json:"speed"`
+	DownloadDir  string          `json:"download_dir"`
 }
 
-type ContentStatus string
+type ContentState int
 
 const (
-	ContentStatusDownloading ContentStatus = "downloading"
-	ContentStatusWaiting     ContentStatus = "waiting"
-	ContentStatusLoading     ContentStatus = "loading"
-	ContentStatusQueued      ContentStatus = "queued"
+	// ContentStateDownloading indicates the content is currently being downloaded
+	ContentStateDownloading ContentState = iota
+	// ContentStateReady indicates the content has been marked for download, but cannot start downloading yet
+	ContentStateReady
+	// ContentStateWaiting indicates the content was prevented from downloaded imitatively, and has loaded all information
+	// to start downloading
+	ContentStateWaiting
+	// ContentStateLoading indicates the content is still retrieving the information needed to start downloading
+	ContentStateLoading
+	// ContentStateQueued indicates the content cannot start retrieving information yet
+	ContentStateQueued
 )
 
 type SpeedType int
@@ -42,8 +49,3 @@ const (
 	VOLUMES
 	IMAGES
 )
-
-type SpeedData struct {
-	T     int64 `json:"time"`
-	Speed int64 `json:"speed"`
-}

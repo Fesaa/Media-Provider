@@ -169,7 +169,23 @@ func TestContentService_SearchVerySlow(t *testing.T) {
 
 }
 
-type providerAdapterMock struct{}
+type mockClient struct {
+}
+
+func (m mockClient) Download(request payload.DownloadRequest) error {
+	return nil
+}
+
+func (m mockClient) RemoveDownload(request payload.StopRequest) error {
+	return nil
+}
+
+func (m mockClient) Content(s string) Content {
+	return nil
+}
+
+type providerAdapterMock struct {
+}
 
 func (p providerAdapterMock) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{}
@@ -179,12 +195,8 @@ func (p providerAdapterMock) Search(request payload.SearchRequest) ([]payload.In
 	return []payload.Info{}, nil
 }
 
-func (p providerAdapterMock) Download(request payload.DownloadRequest) error {
-	return nil
-}
-
-func (p providerAdapterMock) Stop(request payload.StopRequest) error {
-	return nil
+func (p providerAdapterMock) Client() Client {
+	return mockClient{}
 }
 
 type slowBuilder struct{}
@@ -198,12 +210,22 @@ func (slowBuilder) Search(request payload.SearchRequest) ([]payload.Info, error)
 	return []payload.Info{}, nil
 }
 
-func (slowBuilder) Download(request payload.DownloadRequest) error {
+func (p slowBuilder) Client() Client {
+	return slowMockClient{}
+}
+
+type slowMockClient struct{}
+
+func (s slowMockClient) Download(request payload.DownloadRequest) error {
 	time.Sleep(3 * time.Second)
 	return nil
 }
 
-func (slowBuilder) Stop(request payload.StopRequest) error {
+func (s slowMockClient) RemoveDownload(request payload.StopRequest) error {
 	time.Sleep(3 * time.Second)
+	return nil
+}
+
+func (s slowMockClient) Content(s2 string) Content {
 	return nil
 }

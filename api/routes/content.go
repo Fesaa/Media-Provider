@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -27,10 +28,49 @@ type contentRoutes struct {
 }
 
 func RegisterContentRoutes(cr contentRoutes) {
-	cr.Router.Post("/search", cr.Auth.Middleware, cr.Cache, cr.Search)
-	cr.Router.Post("/download", cr.Auth.Middleware, cr.Download)
-	cr.Router.Post("/stop", cr.Auth.Middleware, cr.Stop)
-	cr.Router.Get("/stats", cr.Auth.Middleware, cr.Stats)
+	router := cr.Router.Group("/content", cr.Auth.Middleware)
+	router.Post("/search", cr.Cache, cr.Search)
+	router.Post("/download", cr.Download)
+	router.Post("/stop", cr.Stop)
+	router.Get("/stats", cr.Stats)
+	router.Post("/message", cr.Message)
+}
+
+func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
+	var msg payload.Message
+	if err := ctx.BodyParser(&msg); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	resp, err := cr.ContentService.Message(msg)
+	if err != nil {
+		if errors.Is(err, services.ErrContentNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
+
+		if errors.Is(err, services.ErrUnknownMessageType) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
+
+		if errors.Is(err, services.ErrWrongState) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
+
+		cr.Log.Error().Err(err).Msg("An error occurred while sending a message down to Content") // TODO: better msg
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(resp)
 }
 
 func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
@@ -106,15 +146,12 @@ func (cr *contentRoutes) Stats(ctx *fiber.Ctx) error {
 	statsResponse := payload.StatsResponse{
 		Running: []payload.InfoStat{},
 	}
-	cr.YS.GetRunningTorrents().ForEachSafe(func(_ string, torrent yoitsu.Torrent) {
+	cr.YS.GetTorrents().ForEachSafe(func(_ string, torrent yoitsu.Torrent) {
 		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
 	})
 	for _, download := range cr.PS.GetCurrentDownloads() {
 		statsResponse.Running = append(statsResponse.Running, download.GetInfo())
 	}
-
-	statsResponse.Running = append(statsResponse.Running, cr.YS.GetQueuedTorrents()...)
-	statsResponse.Running = append(statsResponse.Running, cr.PS.GetQueuedDownloads()...)
 
 	return ctx.JSON(statsResponse)
 }

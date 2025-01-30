@@ -4,6 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"net/http"
@@ -55,14 +56,6 @@ func (b *Builder) Search(s SearchOptions) ([]SearchData, error) {
 	return b.repository.SearchSeries(s)
 }
 
-func (b *Builder) Download(request payload.DownloadRequest) error {
-	return b.ps.Download(request)
-}
-
-func (b *Builder) Stop(request payload.StopRequest) error {
-	return b.ps.RemoveDownload(request)
-}
-
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{
 		Definitions: []payload.DownloadMetadataDefinition{
@@ -73,6 +66,10 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 			},
 		},
 	}
+}
+
+func (b *Builder) Client() services.Client {
+	return b.ps
 }
 
 func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository Repository) *Builder {

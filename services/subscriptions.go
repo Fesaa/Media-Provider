@@ -34,7 +34,7 @@ type subscriptionService struct {
 	db  *db.Database
 	log zerolog.Logger
 
-	mapper  *utils.SafeMap[uint, uuid.UUID]
+	mapper  utils.SafeMap[uint, uuid.UUID]
 	updator chan models.Subscription
 }
 

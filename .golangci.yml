@@ -35,6 +35,7 @@ linters:
     - unused
     - paralleltest
     - testpackage
+    - prealloc
 
   enable:
     - asasalint
@@ -87,7 +88,6 @@ linters:
     - nolintlint
     - nonamedreturns
     - nosprintfhostport
-    - prealloc
     - predeclared
     - promlinter
     - protogetter

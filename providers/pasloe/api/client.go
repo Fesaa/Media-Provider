@@ -1,6 +1,9 @@
 package api
 
-import "github.com/Fesaa/Media-Provider/http/payload"
+import (
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/services"
+)
 
 type Config interface {
 	GetRootDir() string
@@ -8,11 +11,9 @@ type Config interface {
 }
 
 type Client interface {
-	Download(request payload.DownloadRequest) error
-	RemoveDownload(request payload.StopRequest) error
-
+	services.Client
 	GetBaseDir() string
 	GetCurrentDownloads() []Downloadable
-	GetQueuedDownloads() []payload.InfoStat
 	GetConfig() Config
+	CanStart(models.Provider) bool
 }
