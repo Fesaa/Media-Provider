@@ -36,6 +36,7 @@ linters:
     - paralleltest
     - testpackage
     - prealloc
+    - nonamedreturns
 
   enable:
     - asasalint
@@ -86,7 +87,6 @@ linters:
     - nestif
     - nilerr
     - nolintlint
-    - nonamedreturns
     - nosprintfhostport
     - predeclared
     - promlinter
