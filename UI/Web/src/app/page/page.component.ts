@@ -12,7 +12,6 @@ import {SearchResultComponent} from "./_components/search-result/search-result.c
 import {PaginatorComponent} from "../paginator/paginator.component";
 import {dropAnimation} from "../_animations/drop-animation";
 import {bounceIn500ms} from "../_animations/bounce-in";
-import {ToastrService} from "ngx-toastr";
 import {flyInOutAnimation} from "../_animations/fly-animation";
 import {NgIcon} from "@ng-icons/core";
 import {FormInputComponent} from "../shared/form/form-input/form-input.component";
@@ -20,6 +19,7 @@ import {DialogService} from "../_services/dialog.service";
 import {fadeOut} from "../_animations/fade-out";
 import {SubscriptionService} from "../_services/subscription.service";
 import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
+import {MessageService} from "../_services/message.service";
 
 @Component({
     selector: 'app-page',
@@ -55,7 +55,7 @@ export class PageComponent implements OnInit{
               private downloadService: ContentService,
               private cdRef: ChangeDetectorRef,
               private fb: FormBuilder,
-              private toastr: ToastrService,
+              private msgService: MessageService,
               private dialogService: DialogService,
               private subscriptionService: SubscriptionService,
               private providerNamePipe: ProviderNamePipe,
@@ -98,8 +98,7 @@ export class PageComponent implements OnInit{
           this.metadata.set(provider, metadata);
         },
         error: error => {
-          this.toastr.error(error.error.message,
-            `Failed to load download metadata for: ${this.providerNamePipe.transform(provider)}`)
+          this.msgService.error(`Failed to load download metadata for: ${this.providerNamePipe.transform(provider)}`, error.error.message)
         }
       })
     }
@@ -139,7 +138,7 @@ export class PageComponent implements OnInit{
 
   search() {
     if (!this.searchForm || !this.searchForm.valid || !this.page) {
-      this.toastr.error(`Cannot search`, "Error");
+      this.msgService.error("Error", `Cannot search`);
       return;
     }
     const modifiers: { [key: string]: string[] } = {};
@@ -156,15 +155,20 @@ export class PageComponent implements OnInit{
       modifiers: modifiers,
     };
 
-    this.downloadService.search(req).subscribe(info => {
-      if (!info || info.length == 0) {
-        this.toastr.error("No results found")
-      } else {
-        this.toastr.success(`Found ${info.length} items`,"Search completed")
+    this.downloadService.search(req).subscribe({
+      next: info => {
+        if (!info || info.length == 0) {
+          this.msgService.error("No results found")
+        } else {
+          this.msgService.success("Search completed", `Found ${info.length} items`)
+        }
+        this.searchResult = info || [];
+        this.currentPage = 1;
+        this.showSearchForm = false;
+      },
+      error: error => {
+        this.msgService.error("Search failed", error.error.message);
       }
-      this.searchResult = info || [];
-      this.currentPage = 1;
-      this.showSearchForm = false;
     })
   }
 

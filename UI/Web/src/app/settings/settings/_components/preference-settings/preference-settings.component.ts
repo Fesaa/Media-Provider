@@ -1,10 +1,10 @@
 import {Component, OnInit} from '@angular/core';
 import { PreferencesService } from '../../../../_services/preferences.service';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
-import {ToastrService} from "ngx-toastr";
 import {Preferences} from "../../../../_models/preferences";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {Tooltip} from "primeng/tooltip";
+import { MessageService } from '../../../../_services/message.service';
 
 @Component({
   selector: 'app-preference-settings',
@@ -25,7 +25,7 @@ export class PreferenceSettingsComponent implements OnInit {
 
   constructor(private preferencesService: PreferencesService,
               private fb: FormBuilder,
-              private toastr: ToastrService
+              private msgService: MessageService,
               ) {
   }
 
@@ -41,12 +41,12 @@ export class PreferenceSettingsComponent implements OnInit {
       return;
     }
     if (!this.preferencesForm.dirty) {
-      this.toastr.warning('No changes detected', 'Not saving');
+      this.msgService.warning('Not saving', 'No changes detected');
       return;
     }
 
     if (!this.preferencesForm.valid) {
-      this.toastr.warning('Please fill out all required fields correctly', 'Not saving');
+      this.msgService.warning('Not saving', 'Please fill out all required fields correctly');
       return;
     }
 
@@ -58,10 +58,10 @@ export class PreferenceSettingsComponent implements OnInit {
     this.preferencesService.save(pref).subscribe({
       next: () => {
         this.preferences = this.preferencesForm!.value as Preferences;
-        this.toastr.success('Saved changes detected', 'Saved');
+        this.msgService.success('Saved', 'Saved changes detected', );
       },
       error: err => {
-        this.toastr.error(err.error.message, 'Error');
+        this.msgService.error('Error', err.error.message);
       }
     })
   }

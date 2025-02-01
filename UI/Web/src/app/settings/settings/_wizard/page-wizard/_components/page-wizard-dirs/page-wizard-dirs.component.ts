@@ -11,7 +11,7 @@ import {Button} from "primeng/button";
 import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
 import {Fieldset} from "primeng/fieldset";
-import {ToastrService} from "ngx-toastr";
+import {MessageService} from "../../../../../../_services/message.service";
 
 @Component({
   selector: 'app-page-wizard-dirs',
@@ -38,13 +38,13 @@ export class PageWizardDirsComponent {
   @Output() back: EventEmitter<void> = new EventEmitter();
 
   constructor(private dialogService: DialogService,
-              private toastR: ToastrService,
+              private msgService: MessageService,
   ) {
   }
 
   nextCallback(): void {
     if (this.page.dirs.length == 0) {
-      this.toastR.error("You must provide at least one download directory");
+      this.msgService.error("You must provide at least one download directory");
       return;
     }
 
@@ -62,12 +62,12 @@ export class PageWizardDirsComponent {
     }
 
     if (newDir === "") {
-      this.toastR.warning("Cannot add empty directory.");
+      this.msgService.warning("Cannot add empty directory.");
       return;
     }
 
     if (this.page.dirs.includes(newDir)) {
-      this.toastR.warning("Not adding duplicate directory.");
+      this.msgService.warning("Not adding duplicate directory.");
       return;
     }
 

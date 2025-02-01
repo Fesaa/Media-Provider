@@ -5,12 +5,12 @@ import {DatePipe, NgClass, NgForOf, TitleCasePipe} from "@angular/common";
 import {RefreshFrequencyPipe} from "../../../_pipes/refresh-frequency.pipe";
 import {NgIcon} from "@ng-icons/core";
 import {SubscriptionExternalUrlPipe} from "../../../_pipes/subscription-external-url.pipe";
-import {ToastrService} from "ngx-toastr";
 import {DialogService} from "../../../_services/dialog.service";
 import {FormsModule} from "@angular/forms";
 import {Observable} from "rxjs";
 import {Tooltip} from "primeng/tooltip";
 import {Provider} from "../../../_models/page";
+import {MessageService} from "../../../_services/message.service";
 
 @Component({
     selector: 'app-subscription',
@@ -43,7 +43,7 @@ export class SubscriptionComponent implements OnInit {
 
   providerOptions!: {label: string; value: Provider}[];
   constructor(private subscriptionService: SubscriptionService,
-              private toastR: ToastrService,
+              private msgService: MessageService,
               private dialogService: DialogService,
   ) {
   }
@@ -81,10 +81,10 @@ export class SubscriptionComponent implements OnInit {
 
     this.subscriptionService.runOnce(this.subscription.ID).subscribe({
       next: () => {
-        this.toastR.success("Success")
+        this.msgService.success("Success")
       },
       error: (err) => {
-        this.toastR.error(err.error.message, "Failed to run once")
+        this.msgService.error("Failed to run once", err.error.message)
       }
       })
   }
@@ -102,11 +102,11 @@ export class SubscriptionComponent implements OnInit {
 
     this.subscriptionService.delete(this.subscription.ID).subscribe({
       next: () => {
-        this.toastR.success('Subscription deleted');
+        this.msgService.success('Subscription deleted');
         this.onDelete.emit(this.subscription.ID);
       },
       error: err => {
-        this.toastR.error(err.error.message, "Failed to delete the subscription");
+        this.msgService.error("Failed to delete the subscription", err.error.message);
       }
     })
   }
@@ -122,17 +122,17 @@ export class SubscriptionComponent implements OnInit {
 
   private valid(): boolean {
     if (this.subscription.contentId == "") {
-      this.toastR.error("Subscription id must be set");
+      this.msgService.error("Subscription id must be set");
       return false;
     }
 
     if (this.subscription.info.title == "") {
-      this.toastR.error("Subscription title must be set");
+      this.msgService.error("Subscription title must be set");
       return false;
     }
 
     if (this.subscription.info.baseDir == "") {
-      this.toastR.error("Subscription baseDir must be set");
+      this.msgService.error("Subscription baseDir must be set");
       return false;
     }
 
@@ -157,11 +157,11 @@ export class SubscriptionComponent implements OnInit {
 
     obs.subscribe({
       next: () => {
-        this.toastR.success('Subscription updated the subscription');
+        this.msgService.success('Subscription updated the subscription');
         this.onSave.emit();
       },
       error: err => {
-        this.toastR.error(err.error.message, "Failed to save");
+        this.msgService.error("Failed to save", err.error.message);
       }
     })
   }

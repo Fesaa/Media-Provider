@@ -12,11 +12,11 @@ import {SpeedPipe} from "../_pipes/speed.pipe";
 import {SpeedTypePipe} from "../_pipes/speed-type.pipe";
 import {TimePipe} from "../_pipes/time.pipe";
 import {StopRequest} from "../_models/search";
-import {ToastrService} from "ngx-toastr";
 import {DialogService} from "../_services/dialog.service";
 import {ContentStatePipe} from "../_pipes/content-state.pipe";
 import {Dialog} from "primeng/dialog";
 import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
+import {MessageService} from "../_services/message.service";
 
 @Component({
     selector: 'app-dashboard',
@@ -48,7 +48,7 @@ export class DashboardComponent implements OnInit,OnDestroy {
   constructor(private navService: NavService,
               private contentService: ContentService,
               private cdRef: ChangeDetectorRef,
-              private toastR: ToastrService,
+              private msgService: MessageService,
               private contentTitle: ContentTitlePipe,
               private dialogService: DialogService,
   ) {
@@ -93,10 +93,10 @@ export class DashboardComponent implements OnInit,OnDestroy {
 
     this.contentService.stop(req).subscribe({
       next: () => {
-        this.toastR.success(`Download stopped ${this.contentTitle.transform(info.name)}`, "Success")
+        this.msgService.success("Success", `Download stopped ${this.contentTitle.transform(info.name)}`)
       },
       error: (err) => {
-        this.toastR.error(`Failed to stop download: ${err.error.message}`, "Error")
+        this.msgService.error("Error", `Failed to stop download: ${err.error.message}`)
       }
     })
   }
@@ -108,10 +108,10 @@ export class DashboardComponent implements OnInit,OnDestroy {
   markReady(info: InfoStat) {
     this.contentService.startDownload(info.provider, info.id).subscribe({
       next: () => {
-        this.toastR.success("Content marked as ready for download, will begin as soon as possible", "Success")
+        this.msgService.success("Success", "Content marked as ready for download, will begin as soon as possible")
       },
       error: (err) => {
-        this.toastR.error(`Failed to mark as ready:\n ${err.error.message}`, "Error")
+        this.msgService.error("Error", `Failed to mark as ready:\n ${err.error.message}`)
       }
     })
   }

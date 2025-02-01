@@ -3,7 +3,6 @@ import {SearchInfo} from "../../../_models/Info";
 import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType} from "../../../_models/page";
 import {DownloadRequest, DownloadRequestMetadata} from "../../../_models/search";
 import {ContentService} from "../../../_services/content.service";
-import {ToastrService} from "ngx-toastr";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Button} from "primeng/button";
 import {FloatLabel} from "primeng/floatlabel";
@@ -11,6 +10,7 @@ import {InputText} from "primeng/inputtext";
 import {Select} from "primeng/select";
 import {ToggleSwitch} from "primeng/toggleswitch";
 import {MultiSelect} from "primeng/multiselect";
+import {MessageService} from "../../../_services/message.service";
 
 @Component({
   selector: 'app-download-dialog',
@@ -43,7 +43,7 @@ export class DownloadDialogComponent implements OnInit {
 
   constructor(
     private downloadService: ContentService,
-    private toastR: ToastrService,
+    private msgService: MessageService,
   ) {
   }
 
@@ -78,10 +78,10 @@ export class DownloadDialogComponent implements OnInit {
 
     this.downloadService.download(req).subscribe({
       next: () => {
-        this.toastR.success(`Downloaded started for ${this.searchResult.Name}`, "Success")
+        this.msgService.success( "Success", `Downloaded started for ${this.searchResult.Name}`)
       },
       error: (err) => {
-        this.toastR.error(`Download failed ${err.error.message}`, "Error")
+        this.msgService.error("Error", `Download failed ${err.error.message}`)
       }
     }).add(() => {
       this.close()
@@ -94,5 +94,4 @@ export class DownloadDialogComponent implements OnInit {
 
   protected readonly DownloadMetadataFormType = DownloadMetadataFormType;
   protected readonly Boolean = Boolean;
-  protected readonly HTMLInputElement = HTMLInputElement;
 }

@@ -3,7 +3,7 @@ import {FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/
 import {ActivatedRoute, Router} from "@angular/router";
 import {AccountService} from "../../_services/account.service";
 import {NavService} from "../../_services/nav.service";
-import {ToastrService} from "ngx-toastr";
+import {MessageService} from "../../_services/message.service";
 
 @Component({
     selector: 'app-reset',
@@ -26,7 +26,7 @@ export class ResetComponent implements OnInit {
               private navService: NavService,
               private router: Router,
               private readonly cdRef: ChangeDetectorRef,
-              private toastR: ToastrService,
+              private msgService: MessageService,
   ) {}
 
   ngOnInit(): void {
@@ -56,7 +56,7 @@ export class ResetComponent implements OnInit {
         this.router.navigateByUrl('/login');
       },
       error: err => {
-        this.toastR.error(`Failed to reset password: ${err.error.message}`, "Error");
+        this.msgService.error("Error", `Failed to reset password: ${err.error.message}`);
       }
     });
   }

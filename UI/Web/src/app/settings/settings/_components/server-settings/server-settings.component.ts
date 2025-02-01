@@ -5,10 +5,10 @@ import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/BoundNumberValidator";
-import {ToastrService} from "ngx-toastr";
 import {NgIcon} from "@ng-icons/core";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Tooltip} from "primeng/tooltip";
+import {MessageService} from "../../../../_services/message.service";
 
 @Component({
     selector: 'app-server-settings',
@@ -33,7 +33,7 @@ export class ServerSettingsComponent implements OnInit {
   constructor(private configService: ConfigService,
               private fb: FormBuilder,
               private cdRef: ChangeDetectorRef,
-              private toastr: ToastrService,
+              private msgService: MessageService,
               private clipBoardService: Clipboard
   ) {
   }
@@ -101,12 +101,12 @@ export class ServerSettingsComponent implements OnInit {
 
     const errors = this.errors();
     if (errors > 0) {
-      this.toastr.error(`Found ${errors} errors in the form`, 'Cannot submit');
+      this.msgService.error('Cannot submit', `Found ${errors} errors in the form`);
       return;
     }
 
     if (!this.settingsForm.dirty) {
-      this.toastr.warning('No changes detected', 'Not saving');
+      this.msgService.warning('Not saving', 'No changes detected');
       return;
     }
 
@@ -119,11 +119,11 @@ export class ServerSettingsComponent implements OnInit {
         this.configService.getConfig().subscribe(config => {
           this.config = config;
           this.buildForm();
-          this.toastr.success('Settings saved', 'Success');
+          this.msgService.success('Success', 'Settings saved');
         });
       },
       error: (error) => {
-        this.toastr.error(error.error.message, 'Failed to save settings');
+        this.msgService.error('Failed to save settings', error.error.message);
       }
     });
   }

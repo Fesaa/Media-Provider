@@ -8,11 +8,11 @@ import {InputText} from "primeng/inputtext";
 import {Tooltip} from "primeng/tooltip";
 import {FloatLabel} from "primeng/floatlabel";
 import {Select} from "primeng/select";
-import {ToastrService} from "ngx-toastr";
 import {NgForOf} from "@angular/common";
 import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
 import {DialogService} from "../../../../../../_services/dialog.service";
+import {MessageService} from "../../../../../../_services/message.service";
 
 @Component({
   selector: 'app-page-wizard-modifiers',
@@ -44,7 +44,7 @@ export class PageWizardModifiersComponent {
   @Output() back: EventEmitter<void> = new EventEmitter();
 
   constructor(
-    private toastr: ToastrService,
+    private msgService: MessageService,
     private dialogService: DialogService,
   ) {
   }
@@ -53,13 +53,13 @@ export class PageWizardModifiersComponent {
     for (const mod of this.page.modifiers) {
       if (mod.key === '' || mod.title === '') {
         const title = mod.title === '' ? mod.key : mod.title;
-        this.toastr.error("Ensure all modifiers have their key and title set", `Invalid modifier ${title}`);
+        this.msgService.error(`Invalid modifier ${title}`, "Ensure all modifiers have their key and title set");
         return;
       }
 
       for (const val of mod.values) {
         if (val.key === '' || val.value === '') {
-          this.toastr.error("Ensure all modifier values have their key and value set", `Invalid modifier ${mod.title}`)
+          this.msgService.error(`Invalid modifier ${mod.title}`, "Ensure all modifier values have their key and value set")
           return;
         }
       }
@@ -70,7 +70,7 @@ export class PageWizardModifiersComponent {
 
   addNewModifierValue(mod: Modifier) {
     if (mod.values.filter(v => v.key == '' || v.value == '').length > 0) {
-      this.toastr.warning("All modifiers must be filled in before adding a new one", "Cannot add modifier value")
+      this.msgService.warning("Cannot add modifier value", "All modifiers must be filled in before adding a new one")
       return;
     }
 

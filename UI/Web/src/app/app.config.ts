@@ -36,25 +36,16 @@ import {
   heroFolderArrowDown,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
-import {provideToastr} from "ngx-toastr";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {providePrimeNG} from "primeng/config";
 import Aura from '@primeng/themes/aura';
 import {ProviderNamePipe} from "./_pipes/provider-name.pipe";
+import {MessageService} from "primeng/api";
 
 export const appConfig: ApplicationConfig = {
   providers: [
     CommonModule,
-    provideToastr({
-      countDuplicates: true,
-      preventDuplicates: true,
-      maxOpened: 5,
-      resetTimeoutOnDuplicate: true,
-      includeTitleDuplicates: true,
-      progressBar: true,
-      positionClass: 'toast-bottom-right',
-    }),
     ContentTitlePipe,
     ProviderNamePipe,
     provideZoneChangeDetection({ eventCoalescing: true }),
@@ -94,6 +85,7 @@ export const appConfig: ApplicationConfig = {
       theme: {
         preset: Aura
       }
-    })
+    }),
+    MessageService,
   ]
 };

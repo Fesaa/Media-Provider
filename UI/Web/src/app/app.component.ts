@@ -5,10 +5,12 @@ import {NavHeaderComponent} from "./nav-header/nav-header.component";
 import {Title} from "@angular/platform-browser";
 import {DialogService} from "./_services/dialog.service";
 import {SignalRService} from "./_services/signal-r.service";
+import {Toast} from "primeng/toast";
+import {MessageService} from "primeng/api";
 
 @Component({
     selector: 'app-root',
-    imports: [RouterOutlet, NavHeaderComponent],
+  imports: [RouterOutlet, NavHeaderComponent, Toast],
     templateUrl: './app.component.html',
     styleUrl: './app.component.css'
 })
@@ -21,6 +23,7 @@ export class AppComponent implements OnInit {
     private vcr: ViewContainerRef,
     private ds: DialogService,
     private signalR: SignalRService,
+    private messageService: MessageService,
   ) {
     this.titleService.setTitle(this.title);
     this.ds.viewContainerRef = this.vcr;
