@@ -1,5 +1,3 @@
-
-
 export type ListDirRequest = {
   dir: string;
   files: boolean;

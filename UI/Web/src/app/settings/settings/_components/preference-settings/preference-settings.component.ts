@@ -1,10 +1,10 @@
 import {Component, OnInit} from '@angular/core';
-import { PreferencesService } from '../../../../_services/preferences.service';
+import {PreferencesService} from '../../../../_services/preferences.service';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
 import {Preferences} from "../../../../_models/preferences";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {Tooltip} from "primeng/tooltip";
-import { MessageService } from '../../../../_services/message.service';
+import {MessageService} from '../../../../_services/message.service';
 
 @Component({
   selector: 'app-preference-settings',
@@ -26,7 +26,7 @@ export class PreferenceSettingsComponent implements OnInit {
   constructor(private preferencesService: PreferencesService,
               private fb: FormBuilder,
               private msgService: MessageService,
-              ) {
+  ) {
   }
 
   ngOnInit(): void {
@@ -58,7 +58,7 @@ export class PreferenceSettingsComponent implements OnInit {
     this.preferencesService.save(pref).subscribe({
       next: () => {
         this.preferences = this.preferencesForm!.value as Preferences;
-        this.msgService.success('Saved', 'Saved changes detected', );
+        this.msgService.success('Saved', 'Saved changes detected',);
       },
       error: err => {
         this.msgService.error('Error', err.error.message);

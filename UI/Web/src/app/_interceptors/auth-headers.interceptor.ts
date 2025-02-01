@@ -6,7 +6,8 @@ import {AccountService} from "../_services/account.service";
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private accountService: AccountService) {}
+  constructor(private accountService: AccountService) {
+  }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return this.accountService.currentUser$.pipe(

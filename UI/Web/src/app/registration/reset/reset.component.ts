@@ -6,12 +6,12 @@ import {NavService} from "../../_services/nav.service";
 import {MessageService} from "../../_services/message.service";
 
 @Component({
-    selector: 'app-reset',
-    imports: [
-        ReactiveFormsModule
-    ],
-    templateUrl: './reset.component.html',
-    styleUrl: './reset.component.css'
+  selector: 'app-reset',
+  imports: [
+    ReactiveFormsModule
+  ],
+  templateUrl: './reset.component.html',
+  styleUrl: './reset.component.css'
 })
 export class ResetComponent implements OnInit {
 
@@ -27,7 +27,8 @@ export class ResetComponent implements OnInit {
               private router: Router,
               private readonly cdRef: ChangeDetectorRef,
               private msgService: MessageService,
-  ) {}
+  ) {
+  }
 
   ngOnInit(): void {
     this.navService.setNavVisibility(false);

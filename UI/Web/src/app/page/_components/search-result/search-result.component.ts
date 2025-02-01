@@ -12,7 +12,7 @@ import {DownloadDialogComponent} from "../download-dialog/download-dialog.compon
 import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-dialog.component";
 
 @Component({
-    selector: 'app-search-result',
+  selector: 'app-search-result',
   imports: [
     NgIcon,
     Tooltip,
@@ -20,9 +20,9 @@ import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-d
     DownloadDialogComponent,
     SubscriptionDialogComponent
   ],
-    templateUrl: './search-result.component.html',
-    styleUrl: './search-result.component.css',
-    animations: [bounceIn200ms, dropAnimation]
+  templateUrl: './search-result.component.html',
+  styleUrl: './search-result.component.css',
+  animations: [bounceIn200ms, dropAnimation]
 })
 export class SearchResultComponent {
 

@@ -35,7 +35,8 @@
                 @if (info.ref_url === "") {
                   <h2 class="text-lg font-semibold">{{ info.name | contentTitle }}</h2>
                 } @else {
-                  <a class="text-lg font-semibold hover:underline" target="_blank" [href]="info.ref_url">{{ info.name | contentTitle }}</a>
+                  <a class="text-lg font-semibold hover:underline" target="_blank"
+                     [href]="info.ref_url">{{ info.name | contentTitle }}</a>
                 }
               </th>
               <th>
@@ -50,39 +51,42 @@
                     ></div>
                   </div>
                   <div class="flex flex-col md:flex-row justify-between text-sm text-gray-500 dark:text-white mt-1">
-                    <span>{{info.speed | speed:info.speed_type}} {{info.speed_type | speedType }}</span>
+                    <span>{{ info.speed | speed:info.speed_type }} {{ info.speed_type | speedType }}</span>
                     @if (info.estimated) {
-                      <span class="hidden md:inline">{{info.estimated | time}}</span>
+                      <span class="hidden md:inline">{{ info.estimated | time }}</span>
                     }
                     <span>{{ info.progress }}%</span>
                   </div>
                 </div>
               </th>
               <th>
-                <p-tag [value]="info.contentState | contentState" [severity]="getSeverity(info)" />
+                <p-tag [value]="info.contentState | contentState" [severity]="getSeverity(info)"/>
               </th>
               <th>
                 <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
 
-                  <p-dialog resizable="false" header="Content picker" [(visible)]="displayContentPicker[info.id]" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }" [contentStyle]="{ 'overflow-y': 'visible' }">
-                    <app-content-picker-dialog [info]="info" [(visible)]="displayContentPicker[info.id]" />
+                  <p-dialog resizable="false" header="Content picker" [(visible)]="displayContentPicker[info.id]"
+                            [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }"
+                            [contentStyle]="{ 'overflow-y': 'visible' }">
+                    <app-content-picker-dialog [info]="info" [(visible)]="displayContentPicker[info.id]"/>
                   </p-dialog>
 
                   @if (info.contentState == ContentState.Downloading) {
                     <p-button (click)="browse(info)"
-                              pTooltip="Browse directory" tooltipPosition="bottom" icon="pi pi-folder" severity="info" />
+                              pTooltip="Browse directory" tooltipPosition="bottom" icon="pi pi-folder" severity="info"/>
                   }
 
                   @if (info.contentState == ContentState.Waiting) {
                     <p-button (click)="pickContent(info)"
-                              pTooltip="Set content" tooltipPosition="bottom" icon="pi pi-cart-arrow-down" severity="info" />
+                              pTooltip="Set content" tooltipPosition="bottom" icon="pi pi-cart-arrow-down"
+                              severity="info"/>
 
                     <p-button (click)="markReady(info)"
-                              pTooltip="Mark ready" tooltipPosition="bottom" icon="pi pi-check" severity="success" />
+                              pTooltip="Mark ready" tooltipPosition="bottom" icon="pi pi-check" severity="success"/>
                   }
 
                   <p-button (click)="stop(info)"
-                            pTooltip="Stop download" tooltipPosition="bottom" icon="pi pi-trash" severity="danger" />
+                            pTooltip="Stop download" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
                 </div>
               </th>
             </tr>

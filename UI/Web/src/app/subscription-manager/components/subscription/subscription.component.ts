@@ -13,7 +13,7 @@ import {Provider} from "../../../_models/page";
 import {MessageService} from "../../../_services/message.service";
 
 @Component({
-    selector: 'app-subscription',
+  selector: 'app-subscription',
   imports: [
     NgClass,
     RefreshFrequencyPipe,
@@ -25,8 +25,8 @@ import {MessageService} from "../../../_services/message.service";
     TitleCasePipe,
     DatePipe
   ],
-    templateUrl: './subscription.component.html',
-    styleUrl: './subscription.component.css'
+  templateUrl: './subscription.component.html',
+  styleUrl: './subscription.component.css'
 })
 export class SubscriptionComponent implements OnInit {
 
@@ -39,9 +39,10 @@ export class SubscriptionComponent implements OnInit {
 
   refreshFrequencies = Object.keys(RefreshFrequency)
     .filter((key) => isNaN(Number(key)))
-    .map((key) => ({ label: key, value: RefreshFrequency[key as keyof typeof RefreshFrequency] }));
+    .map((key) => ({label: key, value: RefreshFrequency[key as keyof typeof RefreshFrequency]}));
 
-  providerOptions!: {label: string; value: Provider}[];
+  providerOptions!: { label: string; value: Provider }[];
+
   constructor(private subscriptionService: SubscriptionService,
               private msgService: MessageService,
               private dialogService: DialogService,
@@ -70,7 +71,7 @@ export class SubscriptionComponent implements OnInit {
 
     this.providerOptions = this.providers.map((provider) => {
       const key = Provider[provider];
-      return { label: key, value: provider };
+      return {label: key, value: provider};
     });
   }
 
@@ -86,7 +87,7 @@ export class SubscriptionComponent implements OnInit {
       error: (err) => {
         this.msgService.error("Failed to run once", err.error.message)
       }
-      })
+    })
   }
 
   async delete() {
@@ -120,25 +121,6 @@ export class SubscriptionComponent implements OnInit {
     this.subscription.info.baseDir = dir;
   }
 
-  private valid(): boolean {
-    if (this.subscription.contentId == "") {
-      this.msgService.error("Subscription id must be set");
-      return false;
-    }
-
-    if (this.subscription.info.title == "") {
-      this.msgService.error("Subscription title must be set");
-      return false;
-    }
-
-    if (this.subscription.info.baseDir == "") {
-      this.msgService.error("Subscription baseDir must be set");
-      return false;
-    }
-
-    return true;
-  }
-
   saveSubscription() {
     if (!this.valid()) {
       return;
@@ -164,5 +146,24 @@ export class SubscriptionComponent implements OnInit {
         this.msgService.error("Failed to save", err.error.message);
       }
     })
+  }
+
+  private valid(): boolean {
+    if (this.subscription.contentId == "") {
+      this.msgService.error("Subscription id must be set");
+      return false;
+    }
+
+    if (this.subscription.info.title == "") {
+      this.msgService.error("Subscription title must be set");
+      return false;
+    }
+
+    if (this.subscription.info.baseDir == "") {
+      this.msgService.error("Subscription baseDir must be set");
+      return false;
+    }
+
+    return true;
   }
 }

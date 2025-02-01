@@ -21,7 +21,7 @@ export enum SettingsID {
 }
 
 @Component({
-    selector: 'app-settings',
+  selector: 'app-settings',
   imports: [
     NgIcon,
     ServerSettingsComponent,
@@ -30,16 +30,16 @@ export enum SettingsID {
     PreferenceSettingsComponent,
     Button
   ],
-    templateUrl: './settings.component.html',
-    styleUrl: './settings.component.css',
-    animations: [dropAnimation]
+  templateUrl: './settings.component.html',
+  styleUrl: './settings.component.css',
+  animations: [dropAnimation]
 })
-export class SettingsComponent implements OnInit{
+export class SettingsComponent implements OnInit {
   showMobileConfig = false;
 
   user: User | null = null;
   selected: SettingsID = SettingsID.Server;
-  settings: {id: SettingsID, title: string, icon: string, perm: Perm}[] = [
+  settings: { id: SettingsID, title: string, icon: string, perm: Perm }[] = [
     {
       id: SettingsID.Server,
       title: 'Server',
@@ -65,6 +65,7 @@ export class SettingsComponent implements OnInit{
       perm: Perm.WriteUser,
     },
   ]
+  protected readonly SettingsID = SettingsID;
 
   constructor(private navService: NavService,
               private cdRef: ChangeDetectorRef,
@@ -121,6 +122,4 @@ export class SettingsComponent implements OnInit{
 
     return hasPermission(this.user, setting.perm);
   }
-
-  protected readonly SettingsID = SettingsID;
 }

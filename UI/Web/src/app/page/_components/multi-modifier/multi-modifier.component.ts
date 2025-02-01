@@ -5,13 +5,13 @@ import {NgIcon} from "@ng-icons/core";
 import {dropAnimation} from "../../../_animations/drop-animation";
 
 @Component({
-    selector: 'app-multi-modifier',
-    imports: [
-        NgIcon
-    ],
-    templateUrl: './multi-modifier.component.html',
-    styleUrl: './multi-modifier.component.css',
-    animations: [dropAnimation]
+  selector: 'app-multi-modifier',
+  imports: [
+    NgIcon
+  ],
+  templateUrl: './multi-modifier.component.html',
+  styleUrl: './multi-modifier.component.css',
+  animations: [dropAnimation]
 })
 export class MultiModifierComponent {
 
@@ -25,7 +25,6 @@ export class MultiModifierComponent {
 
   constructor(private cdRef: ChangeDetectorRef) {
   }
-
 
 
   toggleDropdown() {

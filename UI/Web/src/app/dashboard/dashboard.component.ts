@@ -19,7 +19,7 @@ import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/
 import {MessageService} from "../_services/message.service";
 
 @Component({
-    selector: 'app-dashboard',
+  selector: 'app-dashboard',
   imports: [
     SuggestionDashboardComponent,
     TableModule,
@@ -34,16 +34,17 @@ import {MessageService} from "../_services/message.service";
     Dialog,
     ContentPickerDialogComponent
   ],
-    templateUrl: './dashboard.component.html',
-    styleUrl: './dashboard.component.css'
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit,OnDestroy {
+export class DashboardComponent implements OnInit, OnDestroy {
 
   loading = true;
   info: InfoStat[] | [] = [];
   infoString: string = '';
 
-  displayContentPicker: {[key: string]: boolean} = {};
+  displayContentPicker: { [key: string]: boolean } = {};
+  protected readonly ContentState = ContentState;
 
   constructor(private navService: NavService,
               private contentService: ContentService,
@@ -81,7 +82,7 @@ export class DashboardComponent implements OnInit,OnDestroy {
   }
 
   async stop(info: InfoStat) {
-    if (! await this.dialogService.openDialog(`Are you sure you want to stop ${this.contentTitle.transform(info.name)}`)) {
+    if (!await this.dialogService.openDialog(`Are you sure you want to stop ${this.contentTitle.transform(info.name)}`)) {
       return;
     }
 
@@ -133,6 +134,4 @@ export class DashboardComponent implements OnInit,OnDestroy {
         return "secondary"
     }
   }
-
-  protected readonly ContentState = ContentState;
 }

@@ -33,7 +33,7 @@ import {MessageService} from "../../../../../../_services/message.service";
 })
 export class PageWizardDirsComponent {
 
-  @Input({required:true}) page!: Page;
+  @Input({required: true}) page!: Page;
   @Output() next: EventEmitter<void> = new EventEmitter();
   @Output() back: EventEmitter<void> = new EventEmitter();
 

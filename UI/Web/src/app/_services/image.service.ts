@@ -27,7 +27,7 @@ export class ImageService {
     }
 
     const imageSrc = new Subject<string>();
-    this.httpClient.get(this.baseUrl + imageUrl, { responseType: 'blob' }).subscribe({
+    this.httpClient.get(this.baseUrl + imageUrl, {responseType: 'blob'}).subscribe({
       next: blob => {
         const reader = new FileReader();
         reader.onloadend = () => {

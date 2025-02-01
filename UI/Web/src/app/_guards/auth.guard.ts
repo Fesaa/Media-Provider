@@ -7,7 +7,7 @@ import {map, take} from "rxjs";
   providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
-  public static readonly urlKey= 'mp--auth-interceptor--url';
+  public static readonly urlKey = 'mp--auth-interceptor--url';
 
   constructor(private router: Router, private accountService: AccountService) {
   }

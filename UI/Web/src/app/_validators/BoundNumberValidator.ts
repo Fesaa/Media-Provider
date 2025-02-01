@@ -12,7 +12,7 @@ export class IntegerFormControl extends FormControl {
 export function BoundNumberValidator(min: number, max: number): ValidatorFn {
   return (control: AbstractControl): { [key: string]: any } | null => {
     if (control.value !== null && (isNaN(control.value) || control.value < min || control.value > max)) {
-      return { 'boundNumber': { value: control.value } };
+      return {'boundNumber': {value: control.value}};
     }
     return null;
   };

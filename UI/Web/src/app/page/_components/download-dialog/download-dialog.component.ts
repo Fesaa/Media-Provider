@@ -40,6 +40,8 @@ export class DownloadDialogComponent implements OnInit {
     extra: {},
     startImmediately: true,
   }
+  protected readonly DownloadMetadataFormType = DownloadMetadataFormType;
+  protected readonly Boolean = Boolean;
 
   constructor(
     private downloadService: ContentService,
@@ -78,7 +80,7 @@ export class DownloadDialogComponent implements OnInit {
 
     this.downloadService.download(req).subscribe({
       next: () => {
-        this.msgService.success( "Success", `Downloaded started for ${this.searchResult.Name}`)
+        this.msgService.success("Success", `Downloaded started for ${this.searchResult.Name}`)
       },
       error: (err) => {
         this.msgService.error("Error", `Download failed ${err.error.message}`)
@@ -91,7 +93,4 @@ export class DownloadDialogComponent implements OnInit {
   close() {
     this.visibleChange.emit(false);
   }
-
-  protected readonly DownloadMetadataFormType = DownloadMetadataFormType;
-  protected readonly Boolean = Boolean;
 }

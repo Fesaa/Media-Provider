@@ -1,25 +1,24 @@
-
 <div class="flex flex-col mb-2">
 
-  <h1>{{info.name}}</h1>
+  <h1>{{ info.name }}</h1>
 
   <div class="flex w-full flex-grow justify-start gap-4">
-    <p-button icon="pi pi-arrows-v" (click)="reverse()" severity="secondary" />
-    <p-button icon="pi pi-times" severity="secondary" (click)="unselectAll()" />
-    <p-button icon="pi pi-check" severity="primary" (click)="selectAll()" />
+    <p-button (click)="reverse()" icon="pi pi-arrows-v" severity="secondary"/>
+    <p-button (click)="unselectAll()" icon="pi pi-times" severity="secondary"/>
+    <p-button (click)="selectAll()" icon="pi pi-check" severity="primary"/>
   </div>
 
   <div class="max-h-80 overflow-auto">
-    <p-tree [value]="content"
+    <p-tree [(selection)]="selection"
+            [value]="content"
             selectionMode="checkbox"
             styleClass="w-full"
-            [(selection)]="selection"
     />
   </div>
 
 
   <div class="flex w-full flex-grow justify-end gap-4 mt-10">
-    <p-button label="Cancel" severity="secondary" (click)="close()" />
-    <p-button label="Set filter" (click)="submit()" />
+    <p-button (click)="close()" label="Cancel" severity="secondary"/>
+    <p-button (click)="submit()" label="Set filter"/>
   </div>
 </div>

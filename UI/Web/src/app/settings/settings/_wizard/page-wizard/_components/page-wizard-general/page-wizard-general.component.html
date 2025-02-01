@@ -1,31 +1,32 @@
-
 <p-card header="General">
 
-  <p-fieldset legend="Information" [toggleable]="true">
+  <p-fieldset [toggleable]="true" legend="Information">
     <p class="py-2 px-2 md:px-5">
       Pages form the central way to search and download content with Media-Provider, each page will be a tab in the
-      navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which things
+      navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which
+      things
       you can filter while downloading. For more information see the
-      <a href="https://fesaa.github.io/Media-Provider/" target="_blank" class="hover:underline text-blue-400">wiki</a>.
+      <a class="hover:underline text-blue-400" href="https://fesaa.github.io/Media-Provider/" target="_blank">wiki</a>.
       <br> <br>
 
-      A page must have a title, at least one provider, and may have an icon. The list of names for the icons can be found
-      <a href="https://primeng.org/icons#list" target="_blank" class="hover:underline text-blue-400"> here</a>
+      A page must have a title, at least one provider, and may have an icon. The list of names for the icons can be
+      found
+      <a class="hover:underline text-blue-400" href="https://primeng.org/icons#list" target="_blank"> here</a>
     </p>
   </p-fieldset>
 
   <div class="mt-10 flex flex-col items-center">
     <div class="flex flex-col md:flex-row justify-between space-y-5 md:space-y-0 md:space-x-5">
       <p-floatlabel variant="in">
-        <input id="title" pInputText [(ngModel)]="page.title" />
+        <input [(ngModel)]="page.title" id="title" pInputText/>
         <label for="title">Title</label>
       </p-floatlabel>
 
       <p-floatlabel variant="in">
 
         <p-iconfield>
-          <input id="icon" pInputText [(ngModel)]="page.icon" />
-          <p-inputicon [styleClass]="'pi ' + page.icon" />
+          <input [(ngModel)]="page.icon" id="icon" pInputText/>
+          <p-inputicon [styleClass]="'pi ' + page.icon"/>
         </p-iconfield>
 
         <label for="icon">Icon</label>
@@ -41,7 +42,7 @@
       </label>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
         @for (provider of providerValues; track provider) {
-          <div class="flex items-center hover:cursor-pointer pb-2" >
+          <div class="flex items-center hover:cursor-pointer pb-2">
             <input
               type="checkbox"
               id="{{provider}}"
@@ -51,7 +52,7 @@
               class="rounded border-gray-300 text-primary-600 focus:ring-primary-600 focus:border-primary-600 shadow-sm focus:ring focus:ring-opacity-50 h-4 w-4 mr-2"
             />
             <label [for]="provider" class="text-xs hover:cursor-pointer select-none text-black dark:text-white">
-              {{providerNames[$index] | titlecase}}
+              {{ providerNames[$index] | titlecase }}
             </label>
           </div>
         }
@@ -61,7 +62,7 @@
 
   <div class="flex flex-row w-full justify-end items-center mb-5">
     <div (click)="nextCallback()"
-      class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer"
+         class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer"
     >
       Next
     </div>

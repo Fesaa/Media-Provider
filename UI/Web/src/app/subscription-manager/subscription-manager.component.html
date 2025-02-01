@@ -5,7 +5,7 @@
     <div class="md:w-2/3 mx-auto flex flex-col md:flex-row space-y-2 md:space-y-0 md:justify-between mt-4">
       <div (click)="toggle()"
            class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg shadow-md hover:from-pink-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 hover:cursor-pointer">
-        {{show ? "Hide" : "Show" }}
+        {{ show ? "Hide" : "Show" }}
       </div>
 
       <div (click)="addNew()"
@@ -15,18 +15,21 @@
     </div>
 
     @if (newSubscription !== null) {
-      <app-subscription class=".dropdown-item" [subscription]="newSubscription" [providers]="allowedProviders" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
+      <app-subscription class=".dropdown-item" [subscription]="newSubscription" [providers]="allowedProviders"
+                        (onDelete)="remove($event)" (onSave)="reload()"></app-subscription>
     }
 
     @if (subscriptions.length > 0) {
       <div [@dropDown]>
         @for (sub of toDisplay(); track sub.ID) {
-          <app-subscription class=".dropdown-item" [subscription]="sub" [providers]="allowedProviders" (onDelete)="remove($event)" (onSave)="reload()" ></app-subscription>
+          <app-subscription class=".dropdown-item" [subscription]="sub" [providers]="allowedProviders"
+                            (onDelete)="remove($event)" (onSave)="reload()"></app-subscription>
         }
       </div>
 
       @if (show) {
-        <app-paginator [totalPages]="Math.ceil(subscriptions.length/pageSize)" [currentPage]="currentPage" (pageChange)="onPageChange($event)" ></app-paginator>
+        <app-paginator [totalPages]="Math.ceil(subscriptions.length/pageSize)" [currentPage]="currentPage"
+                       (pageChange)="onPageChange($event)"></app-paginator>
       }
     }
   </div>

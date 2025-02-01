@@ -1,9 +1,8 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {PageService} from "../../../../_services/page.service";
 import {NavService} from "../../../../_services/nav.service";
 import {Page} from "../../../../_models/page";
 import {Steps} from "primeng/steps";
-import {MenuItem} from "primeng/api";
 import {PageWizardGeneralComponent} from "./_components/page-wizard-general/page-wizard-general.component";
 import {PageWizardDirsComponent} from "./_components/page-wizard-dirs/page-wizard-dirs.component";
 import {PageWizardModifiersComponent} from "./_components/page-wizard-modifiers/page-wizard-modifiers.component";
@@ -36,21 +35,9 @@ export enum PageWizardID {
 })
 export class PageWizardComponent {
 
-  private readonly defaultPage: Page = {
-    ID: 0,
-    title: "",
-    custom_root_dir: "",
-    icon: "",
-    dirs: [],
-    providers: [],
-    modifiers: [],
-    sortValue: PageService.DEFAULT_PAGE_SORT,
-  };
-
   page: Page | undefined;
-
   index: number = 0;
-  sections: {id: PageWizardID, label: string}[] = [
+  sections: { id: PageWizardID, label: string }[] = [
     {
       id: PageWizardID.General,
       label: "General"
@@ -68,6 +55,17 @@ export class PageWizardComponent {
       label: "Save"
     }
   ];
+  protected readonly PageWizardID = PageWizardID;
+  private readonly defaultPage: Page = {
+    ID: 0,
+    title: "",
+    custom_root_dir: "",
+    icon: "",
+    dirs: [],
+    providers: [],
+    modifiers: [],
+    sortValue: PageService.DEFAULT_PAGE_SORT,
+  };
 
   constructor(private pageService: PageService,
               private navService: NavService,
@@ -134,7 +132,4 @@ export class PageWizardComponent {
 
     this.router.navigate([], extras)
   }
-
-
-  protected readonly PageWizardID = PageWizardID;
 }

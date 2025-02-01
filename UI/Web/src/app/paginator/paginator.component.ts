@@ -2,11 +2,11 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {NgIcon} from "@ng-icons/core";
 
 @Component({
-    selector: 'app-paginator',
-    templateUrl: './paginator.component.html',
-    imports: [
-        NgIcon,
-    ]
+  selector: 'app-paginator',
+  templateUrl: './paginator.component.html',
+  imports: [
+    NgIcon,
+  ]
 })
 export class PaginatorComponent implements OnInit {
   @Input() totalPages: number = 1;
@@ -16,7 +16,7 @@ export class PaginatorComponent implements OnInit {
   pages: number[] = [];
 
   ngOnInit() {
-    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    this.pages = Array.from({length: this.totalPages}, (_, i) => i + 1);
   }
 
   goToPage(page: number) {

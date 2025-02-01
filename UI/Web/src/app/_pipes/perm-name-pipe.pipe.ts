@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import {Pipe, PipeTransform} from '@angular/core';
 import {Perm} from "../_models/user";
 
 @Pipe({
@@ -20,8 +20,8 @@ export class PermNamePipePipe implements PipeTransform {
         return 'Write Page';
       case Perm.WriteUser:
         return 'Write User';
-        default:
-          return 'Unknown';
+      default:
+        return 'Unknown';
     }
   }
 

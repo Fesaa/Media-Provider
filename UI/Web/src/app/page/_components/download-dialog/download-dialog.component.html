@@ -2,16 +2,16 @@
 
   <div class="card flex w-full">
     <p-floatlabel variant="on">
-      <input pInputText [(ngModel)]="downloadDir" id="download_dir"
-             type="text" autocomplete="off" class="w-full p-2" />
+      <input [(ngModel)]="downloadDir" autocomplete="off" class="w-full p-2"
+             id="download_dir" pInputText type="text"/>
       <label for="download_dir">Download directory</label>
     </p-floatlabel>
   </div>
 
   <div class="flex flex-row flex-grow w-full items-center">
-    <label for="startImmediately" class="w-1/2">Start download immediately</label>
+    <label class="w-1/2" for="startImmediately">Start download immediately</label>
     <div class="flex flex-row w-1/2 justify-center">
-      <p-toggle-switch id="startImmediately" [(ngModel)]="requestMetadata.startImmediately"/>
+      <p-toggle-switch [(ngModel)]="requestMetadata.startImmediately" id="startImmediately"/>
     </div>
   </div>
 
@@ -23,56 +23,56 @@
 
       <div class="flex flex-col space-y-4 w-full">
         @for (meta of metadata.definitions; track meta.key) {
-        <div class="flex flex-col md:flex-row flex-grow w-full items-start md:items-center">
-          <label [for]="meta.key" class="w-full md:w-1/2 text-start md:text-center">{{meta.title}}</label>
+          <div class="flex flex-col md:flex-row flex-grow w-full items-start md:items-center">
+            <label [for]="meta.key" class="w-full md:w-1/2 text-start md:text-center">{{ meta.title }}</label>
 
-          <div class="flex flex-row w-full md:w-1/2 justify-center">
-            @switch (meta.formType) {
-              @case (DownloadMetadataFormType.SWITCH) {
+            <div class="flex flex-row w-full md:w-1/2 justify-center">
+              @switch (meta.formType) {
+                @case (DownloadMetadataFormType.SWITCH) {
                   <p-toggle-switch [id]="meta.key"
                                    [ngModel]="Boolean(meta.defaultOption)"
-                                   (onChange)="changeChoice(meta, $event.checked)" />
+                                   (onChange)="changeChoice(meta, $event.checked)"/>
+                }
+                @case (DownloadMetadataFormType.DROPDOWN) {
+                  <p-select styleClass="w-full"
+                            size="small"
+                            variant="filled"
+                            [placeholder]="meta.title"
+                            [ngModel]="meta.defaultOption"
+                            optionLabel="value"
+                            optionValue="key"
+                            [options]="meta.options"
+                            (onChange)="changeChoice(meta, $event.value)"
+                            [id]="meta.key"/>
+                }
+                @case (DownloadMetadataFormType.MULTI) {
+                  <p-multiSelect [filter]="false"
+                                 [selectAll]="false"
+                                 size="small"
+                                 variant="filled"
+                                 [showToggleAll]="false"
+                                 styleClass="w-full"
+                                 [placeholder]="meta.title"
+                                 [ngModel]="meta.defaultOption"
+                                 optionLabel="value"
+                                 optionValue="key"
+                                 [options]="meta.options"
+                                 (onChange)="changeChoice(meta, $event.value)"
+                                 [id]="meta.key"/>
+                }
+                @case (DownloadMetadataFormType.TEXT) {
+                  <input pInputText #inputElement (change)="changeChoice(meta, inputElement.value)"/>
+                }
               }
-              @case (DownloadMetadataFormType.DROPDOWN) {
-                <p-select styleClass="w-full"
-                          size="small"
-                          variant="filled"
-                          [placeholder]="meta.title"
-                          [ngModel]="meta.defaultOption"
-                          optionLabel="value"
-                          optionValue="key"
-                          [options]="meta.options"
-                          (onChange)="changeChoice(meta, $event.value)"
-                          [id]="meta.key" />
-              }
-              @case (DownloadMetadataFormType.MULTI) {
-                <p-multiSelect [filter]="false"
-                               [selectAll]="false"
-                               size="small"
-                               variant="filled"
-                               [showToggleAll]="false"
-                               styleClass="w-full"
-                               [placeholder]="meta.title"
-                               [ngModel]="meta.defaultOption"
-                               optionLabel="value"
-                               optionValue="key"
-                               [options]="meta.options"
-                               (onChange)="changeChoice(meta, $event.value)"
-                               [id]="meta.key" />
-              }
-              @case (DownloadMetadataFormType.TEXT) {
-                <input pInputText #inputElement (change)="changeChoice(meta, inputElement.value)" />
-              }
-            }
+            </div>
           </div>
-        </div>
-      }
+        }
       </div>
     </div>
   }
 
   <div class="flex w-full flex-grow justify-end gap-4 mt-10">
-      <p-button label="Cancel" severity="secondary" (click)="close()" />
-      <p-button label="Download" (click)="download()" />
+    <p-button (click)="close()" label="Cancel" severity="secondary"/>
+    <p-button (click)="download()" label="Download"/>
   </div>
 </div>

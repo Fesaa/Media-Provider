@@ -1,13 +1,12 @@
-
 <p-card header="Directories">
 
-  <p-fieldset legend="Information" [toggleable]="true">
+  <p-fieldset [toggleable]="true" legend="Information">
     <p class="py-2 px-2 md:px-5">
       You must provide at least one directory for the page to download into by default, if you provide more than one
       a dropdown menu with all options will be made available on the page. <br> <br>
 
       Each page will also have a directory picker, this will open a browser on the root directory as configured in
-      <a routerLink="settings" target="_blank" class="text-blue-400 hover:underline">settings</a>, if you wish to use
+      <a class="text-blue-400 hover:underline" routerLink="settings" target="_blank">settings</a>, if you wish to use
       a different root directory to open up in, you may configure so here. <br>
 
       If a directory has been selected with the picker, the content will be download into there instead.
@@ -20,8 +19,8 @@
     <div class="md:w-1/3 flex flex-grow items-center">
       <p-floatlabel variant="on">
         <p-iconfield>
-          <p-inputicon class="pi pi-folder hover:cursor-pointer" (click)="updateCustomDir()" />
-          <input id="customDir" pInputText [(ngModel)]="page.custom_root_dir" />
+          <p-inputicon (click)="updateCustomDir()" class="pi pi-folder hover:cursor-pointer"/>
+          <input [(ngModel)]="page.custom_root_dir" id="customDir" pInputText/>
         </p-iconfield>
         <label for="customDir">Custom root directory</label>
       </p-floatlabel>
@@ -32,14 +31,14 @@
 
         <div class="flex flex-col md:grid md:grid-cols-2 md:gap-2 mb-4">
           <p-iconfield *ngFor="let item of [].constructor(page.dirs.length); let i = index">
-              <p-inputicon class="pi pi-folder hover:cursor-pointer" (click)="updateDir(i)" />
-              <input [id]="'dir_' + i" pInputText [(ngModel)]="page.dirs[i]" />
-              <p-inputicon class="pi pi-trash hover:cursor-pointer" (click)="removeDir(i)" />
+            <p-inputicon (click)="updateDir(i)" class="pi pi-folder hover:cursor-pointer"/>
+            <input [(ngModel)]="page.dirs[i]" [id]="'dir_' + i" pInputText/>
+            <p-inputicon (click)="removeDir(i)" class="pi pi-trash hover:cursor-pointer"/>
           </p-iconfield>
         </div>
 
         <div class="justify-self-end">
-          <p-button severity="secondary" (onClick)="updateDir(page.dirs.length)">
+          <p-button (onClick)="updateDir(page.dirs.length)" severity="secondary">
             Add
           </p-button>
         </div>
@@ -51,11 +50,13 @@
   </div>
 
   <div class="flex flex-row w-full justify-between items-center mb-5">
-    <div (click)="back.emit()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
+    <div (click)="back.emit()"
+         class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
       Back
     </div>
 
-    <div (click)="nextCallback()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
+    <div (click)="nextCallback()"
+         class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
       Next
     </div>
   </div>

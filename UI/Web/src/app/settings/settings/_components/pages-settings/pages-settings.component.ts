@@ -13,7 +13,7 @@ import {Tooltip} from "primeng/tooltip";
 import {MessageService} from "../../../../_services/message.service";
 
 @Component({
-    selector: 'app-pages-settings',
+  selector: 'app-pages-settings',
   imports: [
     RouterLink,
     ReactiveFormsModule,
@@ -21,15 +21,17 @@ import {MessageService} from "../../../../_services/message.service";
     TableModule,
     Tooltip,
   ],
-    templateUrl: './pages-settings.component.html',
-    styleUrl: './pages-settings.component.css',
-    animations: [dropAnimation]
+  templateUrl: './pages-settings.component.html',
+  styleUrl: './pages-settings.component.css',
+  animations: [dropAnimation]
 })
 export class PagesSettingsComponent {
 
   user: User | null = null;
   pages: Page[] = []
   loading: boolean = true;
+  protected readonly hasPermission = hasPermission;
+  protected readonly Perm = Perm;
 
   constructor(private msgService: MessageService,
               private pageService: PageService,
@@ -47,13 +49,12 @@ export class PagesSettingsComponent {
     });
   }
 
-
   async remove(page: Page) {
     if (!await this.dialogService.openDialog(`Are you sure you want to remove page > ${page.title}?`)) {
       return;
     }
 
-   this.pageService.removePage(page.ID).subscribe({
+    this.pageService.removePage(page.ID).subscribe({
       next: () => {
         this.msgService.success('Success', `${page.title} removed`);
         this.pageService.refreshPages();
@@ -75,18 +76,18 @@ export class PagesSettingsComponent {
     if (this.pages.length == 0) {
       return false;
     }
-    return this.pages[this.pages.length-1].ID === page.ID;
+    return this.pages[this.pages.length - 1].ID === page.ID;
   }
 
   moveUp(page: Page) {
     const index = this.pages.indexOf(page);
-    const other = this.pages[index-1];
+    const other = this.pages[index - 1];
     this.swap(page, other);
   }
 
   moveDown(page: Page) {
     const index = this.pages.indexOf(page);
-    const other = this.pages[index+1];
+    const other = this.pages[index + 1];
     this.swap(page, other);
   }
 
@@ -101,8 +102,4 @@ export class PagesSettingsComponent {
       }
     });
   }
-
-
-  protected readonly hasPermission = hasPermission;
-  protected readonly Perm = Perm;
 }

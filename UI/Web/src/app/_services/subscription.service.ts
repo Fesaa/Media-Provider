@@ -12,7 +12,8 @@ export class SubscriptionService {
 
   baseUrl = environment.apiUrl + "subscriptions";
 
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient) {
+  }
 
   get(id: number): Observable<Subscription> {
     return this.httpClient.get<Subscription>(`${this.baseUrl}/${id}`);

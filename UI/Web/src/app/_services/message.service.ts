@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {MessageService as PrimeNgMessageService, ToastMessageOptions} from "primeng/api";
 
 @Injectable({
@@ -6,7 +6,8 @@ import {MessageService as PrimeNgMessageService, ToastMessageOptions} from "prim
 })
 export class MessageService {
 
-  constructor(private msgService: PrimeNgMessageService) { }
+  constructor(private msgService: PrimeNgMessageService) {
+  }
 
   info(title: string, message?: string, opts?: ToastMessageOptions) {
     this.msgService.add({

@@ -23,6 +23,7 @@ import {
   heroEye,
   heroEyeSlash,
   heroFolder,
+  heroFolderArrowDown,
   heroMinus,
   heroPencil,
   heroPlus,
@@ -33,7 +34,6 @@ import {
   heroUser,
   heroXCircle,
   heroXMark,
-  heroFolderArrowDown,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
@@ -48,10 +48,10 @@ export const appConfig: ApplicationConfig = {
     CommonModule,
     ContentTitlePipe,
     ProviderNamePipe,
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideZoneChangeDetection({eventCoalescing: true}),
     provideRouter(routes),
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
-    { provide: HTTP_INTERCEPTORS, useClass: AuthRedirectInterceptor, multi: true },
+    {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true},
+    {provide: HTTP_INTERCEPTORS, useClass: AuthRedirectInterceptor, multi: true},
     provideHttpClient(withInterceptorsFromDi()),
     importProvidersFrom(BrowserAnimationsModule, NgIconsModule.withIcons({
       heroChevronDoubleRight,

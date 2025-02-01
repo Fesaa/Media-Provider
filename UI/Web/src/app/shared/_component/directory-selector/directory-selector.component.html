@@ -1,8 +1,7 @@
-
 <p-dialog
   [(visible)]="visible"
-  header="Directory picker"
-  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: customWidth }"
+  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+  [style]="{ width: customWidth }" header="Directory picker"
 >
 
   <div class="flex flex-col py-5">
@@ -32,31 +31,31 @@
         </div>
       }
 
-        <div class="flex flex-col space-y-2 min-h-40">
-          @if (getEntries().length > 0) {
-              @for (entry of getEntries(); track $index) {
-                <div
-                  class="flex items-center space-x-2 p-2 rounded-lg border bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 dropdown-item"
-                >
-                  <ng-icon name="{{ entry.dir ? 'heroFolder' : 'heroDocument' }}" size="16"></ng-icon>
-                  <span
-                    class="w-full font-bold text-left {{ entry.dir ? 'hover:underline hover:cursor-pointer' : '' }}"
-                    (click)="selectNode(entry)"
-                  >{{ entry.name }}</span>
+      <div class="flex flex-col space-y-2 min-h-40">
+        @if (getEntries().length > 0) {
+          @for (entry of getEntries(); track $index) {
+            <div
+              class="flex items-center space-x-2 p-2 rounded-lg border bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 dropdown-item"
+            >
+              <ng-icon name="{{ entry.dir ? 'heroFolder' : 'heroDocument' }}" size="16"></ng-icon>
+              <span
+                class="w-full font-bold text-left {{ entry.dir ? 'hover:underline hover:cursor-pointer' : '' }}"
+                (click)="selectNode(entry)"
+              >{{ entry.name }}</span>
 
-                  <!-- Copy Path Icon (if copy is enabled) -->
-                  @if (copy) {
-                    <ng-icon
-                      name="heroClipboard"
-                      size="16"
-                      class="hover:cursor-pointer"
-                      (click)="copyPath(entry)"
-                    ></ng-icon>
-                  }
-                </div>
+              <!-- Copy Path Icon (if copy is enabled) -->
+              @if (copy) {
+                <ng-icon
+                  name="heroClipboard"
+                  size="16"
+                  class="hover:cursor-pointer"
+                  (click)="copyPath(entry)"
+                ></ng-icon>
               }
+            </div>
           }
-        </div>
+        }
+      </div>
     </div>
 
     @if (create) {
@@ -79,8 +78,8 @@
   </div>
 
   <div class="flex justify-end gap-2">
-    <p-button label="Cancel" severity="secondary" (click)="closeDialog()" />
-    <p-button label="Confirm" severity="primary" (click)="confirm()" />
+    <p-button (click)="closeDialog()" label="Cancel" severity="secondary"/>
+    <p-button (click)="confirm()" label="Confirm" severity="primary"/>
   </div>
 
 </p-dialog>

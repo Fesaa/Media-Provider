@@ -7,14 +7,14 @@ import {Page} from "../../../_models/page";
 import {MessageService} from "../../../_services/message.service";
 
 @Component({
-    selector: 'app-suggestion-dashboard',
-    imports: [
-        RouterLink,
-        NgIcon
-    ],
-    templateUrl: './suggestion-dashboard.component.html',
-    styleUrl: './suggestion-dashboard.component.css',
-    animations: [dropAnimation]
+  selector: 'app-suggestion-dashboard',
+  imports: [
+    RouterLink,
+    NgIcon
+  ],
+  templateUrl: './suggestion-dashboard.component.html',
+  styleUrl: './suggestion-dashboard.component.css',
+  animations: [dropAnimation]
 })
 export class SuggestionDashboardComponent {
 

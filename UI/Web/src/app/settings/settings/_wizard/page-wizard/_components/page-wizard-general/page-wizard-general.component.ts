@@ -27,8 +27,10 @@ import {MessageService} from "../../../../../../_services/message.service";
 })
 export class PageWizardGeneralComponent {
 
-  @Input({required:true}) page!: Page;
+  @Input({required: true}) page!: Page;
   @Output() next: EventEmitter<void> = new EventEmitter();
+  protected readonly providerValues = providerValues;
+  protected readonly providerNames = providerNames;
 
   constructor(private msgService: MessageService,) {
   }
@@ -58,7 +60,4 @@ export class PageWizardGeneralComponent {
       this.page.providers = [...this.page.providers, provider];
     }
   }
-
-  protected readonly providerValues = providerValues;
-  protected readonly providerNames = providerNames;
 }

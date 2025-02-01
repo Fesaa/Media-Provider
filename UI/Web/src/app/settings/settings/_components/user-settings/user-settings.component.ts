@@ -11,10 +11,10 @@ import {InputText} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {MultiSelect} from "primeng/multiselect";
 import {FloatLabel} from "primeng/floatlabel";
-import { MessageService } from '../../../../_services/message.service';
+import {MessageService} from '../../../../_services/message.service';
 
 @Component({
-    selector: 'app-user-settings',
+  selector: 'app-user-settings',
   imports: [
     TableModule,
     Button,
@@ -25,8 +25,8 @@ import { MessageService } from '../../../../_services/message.service';
     MultiSelect,
     FloatLabel
   ],
-    templateUrl: './user-settings.component.html',
-    styleUrl: './user-settings.component.css'
+  templateUrl: './user-settings.component.html',
+  styleUrl: './user-settings.component.css'
 })
 export class UserSettingsComponent {
 
@@ -38,19 +38,24 @@ export class UserSettingsComponent {
   editingUser: UserDto | null = null;
   editPermissions: Perm[] = [];
 
-  possiblePermissions: {label: string, value: Perm}[] = [
+  possiblePermissions: { label: string, value: Perm }[] = [
     {value: Perm.WriteUser, label: 'Write User'},
     {value: Perm.DeleteUser, label: 'Delete User'},
     {value: Perm.WritePage, label: 'Write Page'},
     {value: Perm.DeletePage, label: 'Delete User'},
     {value: Perm.WriteConfig, label: 'Write Config'},
   ];
+  protected readonly hasPermission = hasPermission;
+  protected readonly Perm = Perm;
+  protected readonly roles = roles;
+  protected readonly permissionValues = permissionValues;
+  protected readonly permissionNames = permissionNames;
 
   constructor(private accountService: AccountService,
               private msgService: MessageService,
               private dialogService: DialogService,
               private clipBoard: Clipboard,
-              ) {
+  ) {
     this.accountService.currentUser$.subscribe(user => {
       if (user) {
         this.authUser = user;
@@ -115,7 +120,7 @@ export class UserSettingsComponent {
   }
 
   async resetApiKey() {
-    if (! await this.dialogService.openDialog(`Reset your ApiKey`)) {
+    if (!await this.dialogService.openDialog(`Reset your ApiKey`)) {
       return;
     }
 
@@ -131,7 +136,7 @@ export class UserSettingsComponent {
   }
 
   async resetPassword(user: UserDto) {
-    if (! await this.dialogService.openDialog(`Reset password ${user.name}`)) {
+    if (!await this.dialogService.openDialog(`Reset password ${user.name}`)) {
       return;
     }
 
@@ -147,7 +152,7 @@ export class UserSettingsComponent {
   }
 
   async deleteUser(user: UserDto) {
-    if (! await this.dialogService.openDialog(`Delete ${user.name}`)) {
+    if (!await this.dialogService.openDialog(`Delete ${user.name}`)) {
       return;
     }
 
@@ -165,10 +170,4 @@ export class UserSettingsComponent {
   emptyUserPresent() {
     return this.users.find(user => user.id === 0) !== undefined;
   }
-
-  protected readonly hasPermission = hasPermission;
-  protected readonly Perm = Perm;
-  protected readonly roles = roles;
-  protected readonly permissionValues = permissionValues;
-  protected readonly permissionNames = permissionNames;
 }

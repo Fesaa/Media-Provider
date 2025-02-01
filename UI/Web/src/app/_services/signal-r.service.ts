@@ -1,16 +1,14 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HubConnection, HubConnectionBuilder} from "@microsoft/signalr";
 import {environment} from "../../environments/environment";
-import {Observable} from "rxjs";
 import {User} from "../_models/user";
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalRService {
-  private hubConnection!: HubConnection;
-
   baseUrl = environment.apiUrl;
+  private hubConnection!: HubConnection;
 
   constructor() {
 

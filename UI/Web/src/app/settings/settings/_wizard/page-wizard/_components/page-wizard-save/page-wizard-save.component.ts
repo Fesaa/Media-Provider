@@ -55,7 +55,7 @@ export class PageWizardSaveComponent {
       return;
     }
 
-    if (! await this.dialogService.openDialog("Are you sure you want save? ")) {
+    if (!await this.dialogService.openDialog("Are you sure you want save? ")) {
       return;
     }
 

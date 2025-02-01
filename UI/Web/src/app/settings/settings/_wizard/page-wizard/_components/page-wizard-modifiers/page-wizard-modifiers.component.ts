@@ -39,7 +39,7 @@ export class PageWizardModifiersComponent {
     {label: "Multi select", value: ModifierType.MULTI},
   ]
 
-  @Input({required:true}) page!: Page;
+  @Input({required: true}) page!: Page;
   @Output() next: EventEmitter<void> = new EventEmitter();
   @Output() back: EventEmitter<void> = new EventEmitter();
 
@@ -81,7 +81,7 @@ export class PageWizardModifiersComponent {
   }
 
   async deleteModifierValue(mod: Modifier, key: string) {
-    if (! await this.dialogService.openDialog(`Certain you want to delete ${mod.title} > ${key}`)) {
+    if (!await this.dialogService.openDialog(`Certain you want to delete ${mod.title} > ${key}`)) {
       return;
     }
 
@@ -89,7 +89,7 @@ export class PageWizardModifiersComponent {
   }
 
   async delete(toDelete: Modifier) {
-    if (! await this.dialogService.openDialog(`Certain you want to delete ${toDelete.title}`)) {
+    if (!await this.dialogService.openDialog(`Certain you want to delete ${toDelete.title}`)) {
       return;
     }
 

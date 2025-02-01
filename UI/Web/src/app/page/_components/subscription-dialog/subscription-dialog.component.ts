@@ -31,6 +31,7 @@ export class SubscriptionDialogComponent implements OnInit {
   @Input({required: true}) searchResult!: SearchInfo;
 
   subscription!: Subscription;
+  protected readonly RefreshFrequencies = RefreshFrequencies;
 
   constructor(
     private subscriptionService: SubscriptionService,
@@ -69,6 +70,4 @@ export class SubscriptionDialogComponent implements OnInit {
       this.visibleChange.emit(false);
     })
   }
-
-  protected readonly RefreshFrequencies = RefreshFrequencies;
 }

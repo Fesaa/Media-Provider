@@ -11,15 +11,15 @@ import {Button} from "primeng/button";
 import {MessageService} from "../../../_services/message.service";
 
 @Component({
-    selector: 'app-directory-selector',
+  selector: 'app-directory-selector',
   imports: [
     NgIcon,
     FormsModule,
     Dialog,
     Button
   ],
-    templateUrl: './directory-selector.component.html',
-    styleUrl: './directory-selector.component.css'
+  templateUrl: './directory-selector.component.html',
+  styleUrl: './directory-selector.component.css'
 })
 export class DirectorySelectorComponent implements OnInit {
 

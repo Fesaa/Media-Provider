@@ -22,21 +22,21 @@ import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
 import {MessageService} from "../_services/message.service";
 
 @Component({
-    selector: 'app-page',
-    imports: [
-        ReactiveFormsModule,
-        DropdownModifierComponent,
-        MultiModifierComponent,
-        SearchResultComponent,
-        PaginatorComponent,
-        NgIcon,
-        FormInputComponent
-    ],
-    templateUrl: './page.component.html',
-    styleUrl: './page.component.css',
-    animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
+  selector: 'app-page',
+  imports: [
+    ReactiveFormsModule,
+    DropdownModifierComponent,
+    MultiModifierComponent,
+    SearchResultComponent,
+    PaginatorComponent,
+    NgIcon,
+    FormInputComponent
+  ],
+  templateUrl: './page.component.html',
+  styleUrl: './page.component.css',
+  animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
 })
-export class PageComponent implements OnInit{
+export class PageComponent implements OnInit {
 
   searchForm: FormGroup | undefined;
   page: Page | undefined = undefined;
@@ -49,6 +49,8 @@ export class PageComponent implements OnInit{
   currentPage: number = 1;
   showSearchForm: boolean = true;
   hideSearchForm: boolean = false;
+  protected readonly ModifierType = ModifierType;
+  protected readonly Math = Math;
 
   constructor(private navService: NavService,
               private pageService: PageService,
@@ -85,23 +87,6 @@ export class PageComponent implements OnInit{
     this.subscriptionService.providers().subscribe(providers => {
       this.providers = providers;
     })
-  }
-
-  private loadMetadata() {
-    if (!this.page) {
-      return;
-    }
-
-    for (const provider of this.page.providers) {
-      this.pageService.metadata(provider).subscribe({
-        next: metadata => {
-          this.metadata.set(provider, metadata);
-        },
-        error: error => {
-          this.msgService.error(`Failed to load download metadata for: ${this.providerNamePipe.transform(provider)}`, error.error.message)
-        }
-      })
-    }
   }
 
   getDownloadMetadata(provider: Provider) {
@@ -201,6 +186,20 @@ export class PageComponent implements OnInit{
     this.cdRef.detectChanges();
   }
 
-  protected readonly ModifierType = ModifierType;
-  protected readonly Math = Math;
+  private loadMetadata() {
+    if (!this.page) {
+      return;
+    }
+
+    for (const provider of this.page.providers) {
+      this.pageService.metadata(provider).subscribe({
+        next: metadata => {
+          this.metadata.set(provider, metadata);
+        },
+        error: error => {
+          this.msgService.error(`Failed to load download metadata for: ${this.providerNamePipe.transform(provider)}`, error.error.message)
+        }
+      })
+    }
+  }
 }
