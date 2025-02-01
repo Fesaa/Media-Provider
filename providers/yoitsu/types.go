@@ -17,7 +17,7 @@ type Torrent interface {
 	GetTorrent() *torrent.Torrent
 	LoadInfo()
 	StartDownload()
-	Cancel() error
+	Cancel()
 	IsDone() bool
 	Cleanup(root string)
 }

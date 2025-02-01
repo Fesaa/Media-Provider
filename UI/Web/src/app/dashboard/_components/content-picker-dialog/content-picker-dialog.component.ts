@@ -7,13 +7,17 @@ import {Tree} from "primeng/tree";
 import {Button} from "primeng/button";
 import {MessageService} from "../../../_services/message.service";
 import {Dialog} from "primeng/dialog";
+import {Skeleton} from "primeng/skeleton";
+import {NgForOf} from "@angular/common";
 
 @Component({
   selector: 'app-content-picker-dialog',
   imports: [
     Tree,
     Button,
-    Dialog
+    Dialog,
+    Skeleton,
+    NgForOf
   ],
   templateUrl: './content-picker-dialog.component.html',
   styleUrl: './content-picker-dialog.component.css'
@@ -26,7 +30,7 @@ export class ContentPickerDialogComponent {
 
   content: ListContentData[] = [];
   selection: ListContentData[] = [];
-  loading: boolean = false;
+  loading: boolean = true;
 
 
   constructor(

@@ -63,7 +63,6 @@ export class PageComponent implements OnInit {
               private providerNamePipe: ProviderNamePipe,
   ) {
     this.navService.setNavVisibility(true);
-    this.downloadService.loadStats(false);
   }
 
   ngOnInit(): void {

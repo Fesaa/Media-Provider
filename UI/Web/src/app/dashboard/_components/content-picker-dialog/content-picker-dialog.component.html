@@ -11,18 +11,24 @@
       <p-button (click)="selectAll()" icon="pi pi-check" severity="primary"/>
     </div>
 
-    <div class="max-h-80 overflow-auto">
-      <p-tree [(selection)]="selection"
-              [value]="content"
-              selectionMode="checkbox"
-              styleClass="w-full"
-      />
-    </div>
-
+    @if (!loading) {
+      <div class="max-h-80 overflow-auto">
+        <p-tree [(selection)]="selection"
+                [value]="content"
+                selectionMode="checkbox"
+                styleClass="w-full"
+        />
+      </div>
+    } @else {
+      <div class="max-h-80 overflow-auto flex flex-col space-y-5 px-5 mt-5">
+        <p-skeleton width="66%" height="25px" *ngFor="let _ of [].constructor(10)" />
+      </div>
+    }
 
     <div class="flex w-full flex-grow justify-end gap-4 mt-10">
       <p-button (click)="close()" label="Cancel" severity="secondary"/>
       <p-button (click)="submit()" label="Set filter"/>
     </div>
   </div>
+
 </p-dialog>

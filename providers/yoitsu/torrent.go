@@ -3,7 +3,6 @@ package yoitsu
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -24,6 +23,8 @@ type torrentImpl struct {
 	log    zerolog.Logger
 	client Yoitsu
 
+	signalR services.SignalRService
+
 	req       payload.DownloadRequest
 	key       string
 	baseDir   string
@@ -36,14 +37,18 @@ type torrentImpl struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
+	progressLoop context.CancelFunc
+
 	lastTime time.Time
 	lastRead int64
 }
 
-func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Logger, client Yoitsu) Torrent {
+func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Logger, client Yoitsu,
+	signalR services.SignalRService) Torrent {
 	tor := &torrentImpl{
 		t:         t,
 		client:    client,
+		signalR:   signalR,
 		key:       t.InfoHash().HexString(),
 		req:       req,
 		baseDir:   req.BaseDir,
@@ -75,6 +80,11 @@ func (t *torrentImpl) Provider() models.Provider {
 
 func (t *torrentImpl) State() payload.ContentState {
 	return t.state
+}
+
+func (t *torrentImpl) SetState(state payload.ContentState) {
+	t.state = state
+	t.signalR.StateUpdate(t.Id(), t.state)
 }
 
 func (t *torrentImpl) Message(msg payload.Message) (payload.Message, error) {
@@ -112,7 +122,7 @@ func (t *torrentImpl) MarkReady() error {
 		return nil
 	}
 
-	t.state = payload.ContentStateReady
+	t.SetState(payload.ContentStateReady)
 	return nil
 }
 
@@ -128,6 +138,7 @@ func (t *torrentImpl) SetUserFiltered(data json.RawMessage) error {
 	}
 
 	t.userFilter = filter
+	t.signalR.SizeUpdate(t.Id(), utils.BytesToSize(float64(t.size())))
 	return nil
 }
 
@@ -178,7 +189,8 @@ func (t *torrentImpl) buildTree(paths [][]string, depths ...int) []payload.ListC
 		})
 	}
 
-	if len(tree) == 1 {
+	// First, and only start, node is a directory
+	if len(tree) == 1 && tree[0].SubContentId == "" {
 		return tree[0].Children
 	}
 
@@ -195,7 +207,7 @@ func (t *torrentImpl) LoadInfo() {
 		return
 	}
 
-	t.state = payload.ContentStateLoading
+	t.SetState(payload.ContentStateLoading)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.ctx = ctx
 	t.cancel = cancel
@@ -209,9 +221,35 @@ func (t *torrentImpl) LoadInfo() {
 
 	t.log.Info().Msg("torrent has downloaded all info")
 
-	t.state = utils.Ternary(t.req.DownloadMetadata.StartImmediately,
+	t.SetState(utils.Ternary(t.req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
-		payload.ContentStateWaiting)
+		payload.ContentStateWaiting))
+	t.signalR.SizeUpdate(t.Id(), utils.BytesToSize(float64(t.size())))
+}
+
+func (t *torrentImpl) startProgressLoop() {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.progressLoop = cancel
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				progress, estimated, speed := t.Progress()
+				t.signalR.ProgressUpdate(payload.ContentProgressUpdate{
+					ContentId: t.Id(),
+					Progress:  progress,
+					Estimated: estimated,
+					SpeedType: payload.BYTES,
+					Speed:     speed,
+				})
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }
 
 func (t *torrentImpl) StartDownload() {
@@ -219,7 +257,8 @@ func (t *torrentImpl) StartDownload() {
 		Str("into", t.GetDownloadDir()).
 		Str("title", t.Title()).
 		Msg("downloading torrent")
-	t.state = payload.ContentStateDownloading
+	t.SetState(payload.ContentStateDownloading)
+	t.startProgressLoop()
 
 	if len(t.userFilter) == 0 {
 		t.t.DownloadAll()
@@ -235,13 +274,16 @@ func (t *torrentImpl) StartDownload() {
 	}
 }
 
-func (t *torrentImpl) Cancel() error {
+func (t *torrentImpl) Cancel() {
 	t.log.Trace().Msg("cancelling torrent")
 	if t.cancel == nil {
-		return fmt.Errorf("torrent is not downloading")
+		return
 	}
 	t.cancel()
-	return nil
+
+	if t.progressLoop != nil {
+		t.progressLoop()
+	}
 }
 
 func (t *torrentImpl) GetDownloadDir() string {
@@ -249,6 +291,23 @@ func (t *torrentImpl) GetDownloadDir() string {
 }
 
 func (t *torrentImpl) GetInfo() payload.InfoStat {
+	progress, estimated, speed := t.Progress()
+	return payload.InfoStat{
+		Provider:     t.provider,
+		Id:           t.key,
+		ContentState: t.state,
+		Name:         t.Title(),
+		Size:         utils.BytesToSize(float64(t.size())),
+		Downloading:  t.state == payload.ContentStateDownloading,
+		Progress:     progress,
+		Estimated:    estimated,
+		SpeedType:    payload.BYTES,
+		Speed:        speed,
+		DownloadDir:  t.GetDownloadDir(),
+	}
+}
+
+func (t *torrentImpl) Progress() (int64, *int64, int64) {
 	c := t.t.Stats().BytesReadData
 	bytesRead := c.Int64()
 	bytesDiff := bytesRead - t.lastRead
@@ -258,25 +317,15 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 	t.lastTime = time.Now()
 
 	size := t.size()
-	return payload.InfoStat{
-		Provider:     t.provider,
-		Id:           t.key,
-		ContentState: t.state,
-		Name:         t.Title(),
-		Size:         utils.BytesToSize(float64(size)),
-		Downloading:  t.state == payload.ContentStateDownloading,
-		Progress:     utils.Percent(t.t.BytesCompleted(), size),
-		Estimated: func() *int64 {
-			if speed == 0 {
-				return nil
-			}
-			es := (size - bytesRead) / speed
-			return &es
-		}(),
-		SpeedType:   payload.BYTES,
-		Speed:       speed,
-		DownloadDir: t.GetDownloadDir(),
-	}
+	estimated := func() *int64 {
+		if speed == 0 {
+			return nil
+		}
+		es := (size - bytesRead) / speed
+		return &es
+	}()
+
+	return utils.Percent(t.t.BytesCompleted(), size), estimated, speed
 }
 
 // Cleanup is needed in case of user filtered content. While the pieces priority is set to none,

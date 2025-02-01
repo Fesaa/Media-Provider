@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {ContentService} from "../_services/content.service";
@@ -14,7 +14,6 @@ import {TimePipe} from "../_pipes/time.pipe";
 import {StopRequest} from "../_models/search";
 import {DialogService} from "../_services/dialog.service";
 import {ContentStatePipe} from "../_pipes/content-state.pipe";
-import {Dialog} from "primeng/dialog";
 import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
 import {MessageService} from "../_services/message.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
@@ -33,7 +32,6 @@ import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteCont
     SpeedTypePipe,
     TimePipe,
     ContentStatePipe,
-    Dialog,
     ContentPickerDialogComponent
   ],
   templateUrl: './dashboard.component.html',
@@ -43,7 +41,6 @@ export class DashboardComponent implements OnInit {
 
   loading = true;
   info: InfoStat[] = [];
-  infoString: string = '';
 
   displayContentPicker: { [key: string]: boolean } = {};
   protected readonly ContentState = ContentState;

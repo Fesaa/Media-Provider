@@ -81,7 +81,7 @@ func (s *signalrService) DeleteContent(id string) {
 
 func (s *signalrService) setup(app *fiber.App) error {
 	server, err := signalr.NewServer(context.TODO(), signalr.UseHub(s),
-		signalr.Logger(&kitLoggerAdapter{log: s.log}, true))
+		signalr.Logger(&kitLoggerAdapter{log: s.log}, false))
 	if err != nil {
 		return err
 	}
