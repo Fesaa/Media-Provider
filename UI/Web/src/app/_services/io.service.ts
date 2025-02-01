@@ -10,7 +10,8 @@ export class IoService {
 
   baseUrl = environment.apiUrl
 
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient) {
+  }
 
   ls(dir: string, showFiles: boolean = false) {
     const req: ListDirRequest = {dir, files: showFiles};

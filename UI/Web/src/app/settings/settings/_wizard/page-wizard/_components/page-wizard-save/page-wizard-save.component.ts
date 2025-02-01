@@ -1,7 +1,6 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {Page} from "../../../../../../_models/page";
 import {PageService} from "../../../../../../_services/page.service";
-import {ToastrService} from "ngx-toastr";
 import {Card} from "primeng/card";
 import {Fieldset} from "primeng/fieldset";
 import {FormControl, FormGroup, FormsModule} from "@angular/forms";
@@ -9,6 +8,7 @@ import {NgForOf} from "@angular/common";
 import {Router} from "@angular/router";
 import {DialogService} from "../../../../../../_services/dialog.service";
 import {ProviderNamePipe} from "../../../../../../_pipes/provider-name.pipe";
+import {MessageService} from "../../../../../../_services/message.service";
 
 @Component({
   selector: 'app-page-wizard-save',
@@ -35,7 +35,7 @@ export class PageWizardSaveComponent {
 
   constructor(
     private pageService: PageService,
-    private toastr: ToastrService,
+    private msgService: MessageService,
     private router: Router,
     private dialogService: DialogService,
   ) {
@@ -55,7 +55,7 @@ export class PageWizardSaveComponent {
       return;
     }
 
-    if (! await this.dialogService.openDialog("Are you sure you want save? ")) {
+    if (!await this.dialogService.openDialog("Are you sure you want save? ")) {
       return;
     }
 
@@ -69,7 +69,7 @@ export class PageWizardSaveComponent {
 
     obs.subscribe({
       next: (page) => {
-        this.toastr.success("Success!")
+        this.msgService.success("Success!")
         this.router.navigate(["/page"], {
           queryParams: {
             index: page.ID,
@@ -77,7 +77,7 @@ export class PageWizardSaveComponent {
         })
       },
       error: (error) => {
-        this.toastr.error(`An error occurred:\n${error.error.message}`, "Error!")
+        this.msgService.error("Error!", `An error occurred:\n${error.error.message}`)
       }
     })
 
@@ -85,7 +85,7 @@ export class PageWizardSaveComponent {
 
   dirsCheck(): boolean {
     if (this.page.dirs.length == 0) {
-      this.toastr.error("You must provide at least one download directory");
+      this.msgService.error("You must provide at least one download directory");
       return false;
     }
 
@@ -94,12 +94,12 @@ export class PageWizardSaveComponent {
 
   generalCheck(): boolean {
     if (this.page.title === '') {
-      this.toastr.error("You most provide a title")
+      this.msgService.error("You most provide a title")
       return false;
     }
 
     if (this.page.providers.length == 0) {
-      this.toastr.error("You most provide at least one provider")
+      this.msgService.error("You most provide at least one provider")
       return false;
     }
 
@@ -110,13 +110,13 @@ export class PageWizardSaveComponent {
     for (const mod of this.page.modifiers) {
       if (mod.key === '' || mod.title === '') {
         const title = mod.title === '' ? mod.key : mod.title;
-        this.toastr.error("Ensure all modifiers have their key and title set", `Invalid modifier ${title}`);
+        this.msgService.error(`Invalid modifier ${title}`, "Ensure all modifiers have their key and title set");
         return false;
       }
 
       for (const val of mod.values) {
         if (val.key === '' || val.value === '') {
-          this.toastr.error("Ensure all modifier values have their key and value set", `Invalid modifier ${mod.title}`)
+          this.msgService.error(`Invalid modifier ${mod.title}`, "Ensure all modifier values have their key and value set")
           return false;
         }
       }

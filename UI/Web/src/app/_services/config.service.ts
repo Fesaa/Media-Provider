@@ -13,7 +13,8 @@ export class ConfigService {
   syncId: number = -1;
   config: Config | undefined;
 
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient) {
+  }
 
 
   getConfig() {

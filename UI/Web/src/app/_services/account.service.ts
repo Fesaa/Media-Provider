@@ -1,6 +1,6 @@
 import {DestroyRef, inject, Injectable} from '@angular/core';
 import {environment} from "../../environments/environment";
-import {Observable, ReplaySubject, take, tap} from "rxjs";
+import {Observable, ReplaySubject, tap} from "rxjs";
 import {User, UserDto} from "../_models/user";
 import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
@@ -12,14 +12,12 @@ import {PasswordReset} from "../_models/password_reset";
 })
 export class AccountService {
 
-  private readonly destroyRef = inject(DestroyRef);
-
   baseUrl = environment.apiUrl;
   userKey = 'mp-user';
-
+  private readonly destroyRef = inject(DestroyRef);
   private currentUserSource = new ReplaySubject<User | undefined>(1);
-  private currentUser: User | undefined;
   public currentUser$ = this.currentUserSource.asObservable();
+  private currentUser: User | undefined;
 
   constructor(private httpClient: HttpClient, private router: Router) {
     const user = localStorage.getItem(this.userKey);
@@ -32,7 +30,7 @@ export class AccountService {
     }
   }
 
-  login(model: {username: string, password: string, remember: boolean}): Observable<User> {
+  login(model: { username: string, password: string, remember: boolean }): Observable<User> {
     return this.httpClient.post<User>(this.baseUrl + 'login', model).pipe(
       tap((user: User) => {
         if (user) {
@@ -43,7 +41,7 @@ export class AccountService {
     );
   }
 
-  register(model: {username: string, password: string, remember: boolean}): Observable<User> {
+  register(model: { username: string, password: string, remember: boolean }): Observable<User> {
     return this.httpClient.post<User>(this.baseUrl + 'register', model).pipe(
       tap((user: User) => {
         if (user) {
@@ -105,12 +103,12 @@ export class AccountService {
     return this.httpClient.post<PasswordReset>(this.baseUrl + 'user/reset/' + id, {})
   }
 
-  resetPassword(model: {key: string, password: string}) {
+  resetPassword(model: { key: string, password: string }) {
     return this.httpClient.post(this.baseUrl + 'reset-password', model)
   }
 
   refreshApiKey() {
-    return this.httpClient.get<{ApiKey: string}>(this.baseUrl + 'user/refresh-api-key').pipe(tap(res => {
+    return this.httpClient.get<{ ApiKey: string }>(this.baseUrl + 'user/refresh-api-key').pipe(tap(res => {
       this.currentUser!.apiKey = res.ApiKey
       this.setCurrentUser(this.currentUser)
     }));

@@ -2,22 +2,17 @@ import {ChangeDetectorRef, Component, Input} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {FormGroup} from "@angular/forms";
 import {DownloadMetadata, Page, Provider} from "../../../_models/page";
-import {ContentService} from "../../../_services/content.service";
-import {DownloadRequest} from "../../../_models/search";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
 import {NgIcon} from "@ng-icons/core";
 import {dropAnimation} from "../../../_animations/drop-animation";
-import {ToastrService} from "ngx-toastr";
 import {ImageService} from "../../../_services/image.service";
-import {SubscriptionService} from "../../../_services/subscription.service";
-import {RefreshFrequency} from "../../../_models/subscription";
 import {Tooltip} from "primeng/tooltip";
 import {Dialog} from "primeng/dialog";
 import {DownloadDialogComponent} from "../download-dialog/download-dialog.component";
 import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-dialog.component";
 
 @Component({
-    selector: 'app-search-result',
+  selector: 'app-search-result',
   imports: [
     NgIcon,
     Tooltip,
@@ -25,9 +20,9 @@ import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-d
     DownloadDialogComponent,
     SubscriptionDialogComponent
   ],
-    templateUrl: './search-result.component.html',
-    styleUrl: './search-result.component.css',
-    animations: [bounceIn200ms, dropAnimation]
+  templateUrl: './search-result.component.html',
+  styleUrl: './search-result.component.css',
+  animations: [bounceIn200ms, dropAnimation]
 })
 export class SearchResultComponent {
 

@@ -1,4 +1,3 @@
-
 export interface PasswordReset {
   ID: number,
   Key: string,

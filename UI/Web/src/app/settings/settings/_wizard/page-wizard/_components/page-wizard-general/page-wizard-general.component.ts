@@ -6,9 +6,9 @@ import {InputText} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {TitleCasePipe} from "@angular/common";
 import {Fieldset} from "primeng/fieldset";
-import {ToastrService} from "ngx-toastr";
 import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
+import {MessageService} from "../../../../../../_services/message.service";
 
 @Component({
   selector: 'app-page-wizard-general',
@@ -27,20 +27,22 @@ import {InputIcon} from "primeng/inputicon";
 })
 export class PageWizardGeneralComponent {
 
-  @Input({required:true}) page!: Page;
+  @Input({required: true}) page!: Page;
   @Output() next: EventEmitter<void> = new EventEmitter();
+  protected readonly providerValues = providerValues;
+  protected readonly providerNames = providerNames;
 
-  constructor(private toastr: ToastrService) {
+  constructor(private msgService: MessageService,) {
   }
 
   nextCallback() {
     if (this.page.title === '') {
-      this.toastr.error("You most provide a title")
+      this.msgService.error("You most provide a title")
       return;
     }
 
     if (this.page.providers.length == 0) {
-      this.toastr.error("You most provide at least one provider")
+      this.msgService.error("You most provide at least one provider")
       return;
     }
 
@@ -58,7 +60,4 @@ export class PageWizardGeneralComponent {
       this.page.providers = [...this.page.providers, provider];
     }
   }
-
-  protected readonly providerValues = providerValues;
-  protected readonly providerNames = providerNames;
 }

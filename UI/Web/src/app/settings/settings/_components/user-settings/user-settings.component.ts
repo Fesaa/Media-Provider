@@ -1,21 +1,20 @@
 import {Component} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
 import {hasPermission, Perm, permissionNames, permissionValues, roles, User, UserDto} from "../../../../_models/user";
-import {ToastrService} from "ngx-toastr";
 import {TableModule} from "primeng/table";
 import {Button} from "primeng/button";
 import {DialogService} from "../../../../_services/dialog.service";
 import {Tooltip} from "primeng/tooltip";
 import {Clipboard} from "@angular/cdk/clipboard";
-import {TitleCasePipe} from "@angular/common";
 import {Dialog} from "primeng/dialog";
 import {InputText} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {MultiSelect} from "primeng/multiselect";
 import {FloatLabel} from "primeng/floatlabel";
+import {MessageService} from '../../../../_services/message.service';
 
 @Component({
-    selector: 'app-user-settings',
+  selector: 'app-user-settings',
   imports: [
     TableModule,
     Button,
@@ -26,8 +25,8 @@ import {FloatLabel} from "primeng/floatlabel";
     MultiSelect,
     FloatLabel
   ],
-    templateUrl: './user-settings.component.html',
-    styleUrl: './user-settings.component.css'
+  templateUrl: './user-settings.component.html',
+  styleUrl: './user-settings.component.css'
 })
 export class UserSettingsComponent {
 
@@ -39,19 +38,24 @@ export class UserSettingsComponent {
   editingUser: UserDto | null = null;
   editPermissions: Perm[] = [];
 
-  possiblePermissions: {label: string, value: Perm}[] = [
+  possiblePermissions: { label: string, value: Perm }[] = [
     {value: Perm.WriteUser, label: 'Write User'},
     {value: Perm.DeleteUser, label: 'Delete User'},
     {value: Perm.WritePage, label: 'Write Page'},
     {value: Perm.DeletePage, label: 'Delete User'},
     {value: Perm.WriteConfig, label: 'Write Config'},
   ];
+  protected readonly hasPermission = hasPermission;
+  protected readonly Perm = Perm;
+  protected readonly roles = roles;
+  protected readonly permissionValues = permissionValues;
+  protected readonly permissionNames = permissionNames;
 
   constructor(private accountService: AccountService,
-              private toastR: ToastrService,
+              private msgService: MessageService,
               private dialogService: DialogService,
               private clipBoard: Clipboard,
-              ) {
+  ) {
     this.accountService.currentUser$.subscribe(user => {
       if (user) {
         this.authUser = user;
@@ -64,7 +68,7 @@ export class UserSettingsComponent {
         this.loading = false;
       },
       error: err => {
-        this.toastR.error(err.error.message, "Unable to load all users")
+        this.msgService.error("Unable to load all users", err.error.message)
       }
     })
   }
@@ -88,10 +92,10 @@ export class UserSettingsComponent {
       next: dto => {
         this.users = this.users.filter(user => user.id !== dto.id)
         this.users.push(dto)
-        this.toastR.info("Update User");
+        this.msgService.info("Update User");
       },
       error: err => {
-        this.toastR.error(err.error.message, "Unable to update User");
+        this.msgService.error(err.error.message, "Unable to update User");
       }
     })
   }
@@ -116,50 +120,49 @@ export class UserSettingsComponent {
   }
 
   async resetApiKey() {
-    if (! await this.dialogService.openDialog(`Reset your ApiKey`)) {
+    if (!await this.dialogService.openDialog(`Reset your ApiKey`)) {
       return;
     }
 
     this.accountService.refreshApiKey().subscribe({
       next: res => {
         this.clipBoard.copy(res.ApiKey)
-        this.toastR.success("Key has been copied to clipboard", "Reset your ApiKey")
+        this.msgService.success("Reset your ApiKey", "Key has been copied to clipboard")
       },
       error: err => {
-        this.toastR.error(err.error.message, "Unable to refresh api key")
+        this.msgService.error("Unable to refresh api key", err.error.message)
       }
     })
   }
 
   async resetPassword(user: UserDto) {
-    if (! await this.dialogService.openDialog(`Reset password ${user.name}`)) {
+    if (!await this.dialogService.openDialog(`Reset password ${user.name}`)) {
       return;
     }
 
     this.accountService.generateReset(user.id).subscribe({
       next: reset => {
         this.clipBoard.copy(`/login/reset?key=${reset.Key}`)
-        this.toastR.success("The reset link has been copied to your clipboard. A copy may be found in your server logs"
-          ,"Reset generated")
+        this.msgService.success("Reset generated", "The reset link has been copied to your clipboard. A copy may be found in your server logs")
       },
       error: err => {
-        this.toastR.error(err.error.message, "Failed to generate reset link");
+        this.msgService.error("Failed to generate reset link", err.error.message);
       }
     })
   }
 
   async deleteUser(user: UserDto) {
-    if (! await this.dialogService.openDialog(`Delete ${user.name}`)) {
+    if (!await this.dialogService.openDialog(`Delete ${user.name}`)) {
       return;
     }
 
     this.accountService.delete(user.id).subscribe({
       next: _ => {
         this.users = this.users.filter(dto => dto.id !== user.id)
-        this.toastR.success(`${user.name} has been deleted`)
+        this.msgService.success(`${user.name} has been deleted`)
       },
       error: err => {
-        this.toastR.error(err.error.message, "Unable to delete user")
+        this.msgService.error("Unable to delete user", err.error.message)
       }
     })
   }
@@ -167,10 +170,4 @@ export class UserSettingsComponent {
   emptyUserPresent() {
     return this.users.find(user => user.id === 0) !== undefined;
   }
-
-  protected readonly hasPermission = hasPermission;
-  protected readonly Perm = Perm;
-  protected readonly roles = roles;
-  protected readonly permissionValues = permissionValues;
-  protected readonly permissionNames = permissionNames;
 }

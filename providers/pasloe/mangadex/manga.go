@@ -34,6 +34,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
 		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
+		signalR services.SignalRService,
 	) {
 		block = &manga{
 			id:              req.Id,
@@ -44,7 +45,8 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
-		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client, log.With().Str("handler", "mangadex").Logger())
+		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client,
+			log.With().Str("handler", "mangadex").Logger(), signalR)
 		block.DownloadBase = d
 	}))
 
@@ -77,6 +79,10 @@ type manga struct {
 
 func (m *manga) Title() string {
 	if m.info == nil {
+		if m.TempTitle != "" {
+			return m.TempTitle
+		}
+
 		return m.id
 	}
 

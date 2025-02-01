@@ -26,7 +26,7 @@ export enum Perm {
 }
 
 export function hasPermission(user: User | UserDto, perm: Perm): boolean {
-  return (user.permissions&perm)===perm
+  return (user.permissions & perm) === perm
 }
 
 export function roles(user: User | UserDto): Perm[] {

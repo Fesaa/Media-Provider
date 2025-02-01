@@ -1,17 +1,17 @@
-
 <p-card header="Directories">
 
-  <p-fieldset legend="Modifiers" [toggleable]="true">
+  <p-fieldset [toggleable]="true" legend="Modifiers">
     <p class="py-2 px-2 md:px-5">
       Modifiers are an import part of the search experience, you can configure them to help you narrow down results,
-      apart from name. Each provider has different modifiers it can use to narrow down your search. See the <a href="https://fesaa.github.io/Media-Provider/" target="_blank" class="hover:underline text-blue-400">wiki</a>
+      apart from name. Each provider has different modifiers it can use to narrow down your search. See the <a
+      class="hover:underline text-blue-400" href="https://fesaa.github.io/Media-Provider/" target="_blank">wiki</a>
       for more information. Read the wiki carefully to ensure you use the correct keys for the modifiers.
       <br> <br>
 
       Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search,
       while the value is what will be shown on your screen.
 
-      <p-fieldset legend="Kinds" [toggleable]="true" [collapsed]="true">
+      <p-fieldset [collapsed]="true" [toggleable]="true" legend="Kinds">
         <p-fieldset legend="Dropdown">
           The dropdown modifier always you to select just one value from the list, by default no item is selected.
         </p-fieldset>
@@ -25,76 +25,80 @@
   </p-fieldset>
 
   <div class="md:p-5 flex flex-col">
-      <p-button styleClass="mt-2" severity="secondary" (onClick)="addNewModifier()">
-        Add new
-      </p-button>
+    <p-button (onClick)="addNewModifier()" severity="secondary" styleClass="mt-2">
+      Add new
+    </p-button>
 
-      <div class="w-full flex flex-col space-y-5">
-        <p-fieldset *ngFor="let mod of page.modifiers" [legend]="mod.title" [toggleable]="true" [collapsed]="mod.title !== ''">
+    <div class="w-full flex flex-col space-y-5">
+      <p-fieldset *ngFor="let mod of page.modifiers" [collapsed]="mod.title !== ''" [legend]="mod.title"
+                  [toggleable]="true">
 
-          <div class="w-full flex flex-col md:flex-row items-center justify-between space-y-5 md:space-y-0 my-3">
-            <div class="flex items-center">
-              <p-floatlabel variant="on">
-                <label [for]="'title_' + mod.id" class="font-semibold w-24">Title</label>
-                <input pInputText [(ngModel)]="mod.title" [id]="'title_' + mod.id" class="flex-auto" autocomplete="off" />
-              </p-floatlabel>
-            </div>
-
-            <div class="flex items-center">
-              <p-floatlabel variant="on">
-                <label pTooltip="Check wiki!" [for]="'key_' + mod.id" class="font-semibold w-24">Key</label>
-                <input pInputText [(ngModel)]="mod.key" [id]="'key_' + mod.id" class="flex-auto" autocomplete="off" />
-              </p-floatlabel>
-            </div>
-
-            <div class="flex items-center">
-              <p-select [options]="typeOptions" [(ngModel)]="mod.type" class="w-full md:w-56" />
-            </div>
-
-            <span class="pi pi-trash hover:cursor-pointer" (click)="delete(mod)"></span>
+        <div class="w-full flex flex-col md:flex-row items-center justify-between space-y-5 md:space-y-0 my-3">
+          <div class="flex items-center">
+            <p-floatlabel variant="on">
+              <label [for]="'title_' + mod.id" class="font-semibold w-24">Title</label>
+              <input [(ngModel)]="mod.title" [id]="'title_' + mod.id" autocomplete="off" class="flex-auto" pInputText/>
+            </p-floatlabel>
           </div>
 
-          <div class="flex flex-col md:grid md:grid-cols-2 md:gap-4 md:gap-y-10 md:mt-10 md:space-y-0">
-            <div *ngFor="let modV of mod.values" class="flex flex-col md:flex-row mb-7 md:mb-0 md:mt-0 justify-between items-center">
-              <p-floatlabel>
-                <label [for]="mod.id + '_key_' + modV.key">Key</label>
-
-                <p-iconfield>
-                  <p-inputicon styleClass="pi pi-trash hover:cursor-pointer" (click)="deleteModifierValue(mod, modV.key)"></p-inputicon>
-                  <input pInputText [(ngModel)]="modV.key" [id]="mod.id + '_key_' + modV.key" autocomplete="off">
-                </p-iconfield>
-
-              </p-floatlabel>
-
-              <span class="pi pi-arrow-right hidden md:flex my-3 md:my-0"></span>
-              <span class="pi pi-arrow-down flex md:hidden my-3 md:my-0"></span>
-
-              <p-floatlabel>
-                <label [for]="mod.id + '_val_' + modV.key">Value</label>
-                <input pInputText [(ngModel)]="modV.value" [id]="mod.id + '_val_' + modV.key" autocomplete="off">
-              </p-floatlabel>
-
-            </div>
+          <div class="flex items-center">
+            <p-floatlabel variant="on">
+              <label [for]="'key_' + mod.id" class="font-semibold w-24" pTooltip="Check wiki!">Key</label>
+              <input [(ngModel)]="mod.key" [id]="'key_' + mod.id" autocomplete="off" class="flex-auto" pInputText/>
+            </p-floatlabel>
           </div>
 
-          <div class="flex flex-row items-center justify-end mt-5">
-            <p-button severity="secondary" (onClick)="addNewModifierValue(mod)">
-              Add new
-            </p-button>
+          <div class="flex items-center">
+            <p-select [(ngModel)]="mod.type" [options]="typeOptions" class="w-full md:w-56"/>
           </div>
 
-        </p-fieldset>
-      </div>
+          <span (click)="delete(mod)" class="pi pi-trash hover:cursor-pointer"></span>
+        </div>
+
+        <div class="flex flex-col md:grid md:grid-cols-2 md:gap-4 md:gap-y-10 md:mt-10 md:space-y-0">
+          <div *ngFor="let modV of mod.values"
+               class="flex flex-col md:flex-row mb-7 md:mb-0 md:mt-0 justify-between items-center">
+            <p-floatlabel>
+              <label [for]="mod.id + '_key_' + modV.key">Key</label>
+
+              <p-iconfield>
+                <p-inputicon (click)="deleteModifierValue(mod, modV.key)"
+                             styleClass="pi pi-trash hover:cursor-pointer"></p-inputicon>
+                <input [(ngModel)]="modV.key" [id]="mod.id + '_key_' + modV.key" autocomplete="off" pInputText>
+              </p-iconfield>
+
+            </p-floatlabel>
+
+            <span class="pi pi-arrow-right hidden md:flex my-3 md:my-0"></span>
+            <span class="pi pi-arrow-down flex md:hidden my-3 md:my-0"></span>
+
+            <p-floatlabel>
+              <label [for]="mod.id + '_val_' + modV.key">Value</label>
+              <input [(ngModel)]="modV.value" [id]="mod.id + '_val_' + modV.key" autocomplete="off" pInputText>
+            </p-floatlabel>
+
+          </div>
+        </div>
+
+        <div class="flex flex-row items-center justify-end mt-5">
+          <p-button (onClick)="addNewModifierValue(mod)" severity="secondary">
+            Add new
+          </p-button>
+        </div>
+
+      </p-fieldset>
+    </div>
   </div>
 
 
-
   <div class="flex flex-row w-full justify-between items-center my-5">
-    <div (click)="back.emit()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
+    <div (click)="back.emit()"
+         class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
       Back
     </div>
 
-    <div (click)="nextCallback()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
+    <div (click)="nextCallback()"
+         class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
       Next
     </div>
   </div>

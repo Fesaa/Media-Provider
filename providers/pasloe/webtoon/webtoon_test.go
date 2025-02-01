@@ -9,6 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/philippseith/signalr"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"io"
@@ -64,6 +65,28 @@ func (m mockClient) CanStart(models.Provider) bool {
 	return true
 }
 
+type mockSignalR struct {
+	signalr.Hub
+}
+
+func (m *mockSignalR) Broadcast(eventType payload.EventType, data interface{}) {
+}
+
+func (m *mockSignalR) SizeUpdate(id string, size string) {
+}
+
+func (m *mockSignalR) ProgressUpdate(data payload.ContentProgressUpdate) {
+}
+
+func (m *mockSignalR) StateUpdate(id string, state payload.ContentState) {
+}
+
+func (m *mockSignalR) AddContent(data payload.InfoStat) {
+}
+
+func (m *mockSignalR) DeleteContent(id string) {
+}
+
 func req() payload.DownloadRequest {
 	return payload.DownloadRequest{
 		Provider:  models.WEBTOON,
@@ -116,6 +139,7 @@ func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
 	must(scope.Provide(utils.Identity(req())))
 	must(scope.Provide(NewRepository))
 	must(scope.Provide(services.MarkdownServiceProvider))
+	must(scope.Provide(func() services.SignalRService { return &mockSignalR{} }))
 
 	web := NewWebToon(scope)
 	return web.(*webtoon)

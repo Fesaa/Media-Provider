@@ -1,15 +1,15 @@
 <p-dialog
   [(visible)]="visible"
-  [header]="header"
-  [resizable]="false"
-  [draggable]="false"
+  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
   [dismissableMask]="true"
-  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }"
+  [draggable]="false"
+  [header]="header"
+  [resizable]="false" [style]="{ width: '50vw' }"
 >
   <h1 class="text-xl text-black dark:text-white mb-5">{{ text }}</h1>
 
   <div class="flex justify-end gap-2">
-    <p-button label="Cancel" severity="secondary" (click)="closeDialog()" />
-    <p-button label="Confirm" severity="primary" (click)="confirm()" />
+    <p-button (click)="closeDialog()" label="Cancel" severity="secondary"/>
+    <p-button (click)="confirm()" label="Confirm" severity="primary"/>
   </div>
 </p-dialog>

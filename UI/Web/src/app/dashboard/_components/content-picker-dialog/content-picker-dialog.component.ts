@@ -1,22 +1,28 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {InfoStat} from "../../../_models/stats";
 import {ContentService} from "../../../_services/content.service";
-import {ToastrService} from "ngx-toastr";
 import {ListContentData} from "../../../_models/messages";
 import {TreeNode} from "primeng/api";
 import {Tree} from "primeng/tree";
 import {Button} from "primeng/button";
+import {MessageService} from "../../../_services/message.service";
+import {Dialog} from "primeng/dialog";
+import {Skeleton} from "primeng/skeleton";
+import {NgForOf} from "@angular/common";
 
 @Component({
   selector: 'app-content-picker-dialog',
   imports: [
     Tree,
-    Button
+    Button,
+    Dialog,
+    Skeleton,
+    NgForOf
   ],
   templateUrl: './content-picker-dialog.component.html',
   styleUrl: './content-picker-dialog.component.css'
 })
-export class ContentPickerDialogComponent implements OnInit {
+export class ContentPickerDialogComponent {
 
   @Input({required: true}) visible!: boolean;
   @Output() visibleChange: EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -24,18 +30,21 @@ export class ContentPickerDialogComponent implements OnInit {
 
   content: ListContentData[] = [];
   selection: ListContentData[] = [];
+  loading: boolean = true;
 
 
   constructor(
     private contentService: ContentService,
-    private toastr: ToastrService,
+    private msgService: MessageService,
   ) {
   }
 
-  ngOnInit(): void {
+  loadContent() {
+    this.loading = true;
     this.contentService.listContent(this.info.provider, this.info.id).subscribe(contents => {
       this.content = contents;
       this.selection = this.flatten(contents);
+      this.loading = false;
     })
   }
 
@@ -59,16 +68,16 @@ export class ContentPickerDialogComponent implements OnInit {
     const ids = this.getAllSubContentIds(this.selection);
 
     if (ids.length == 0) {
-      this.toastr.warning("Remove the content if you wish nothing to be downloaded", "Not saving")
+      this.msgService.warning("Not saving", "Remove the content if you wish nothing to be downloaded")
       return;
     }
 
     this.contentService.setFilter(this.info.provider, this.info.id, ids).subscribe({
       next: () => {
-        this.toastr.success(`Set filter to ${ids.length} items`, "Success");
+        this.msgService.success("Succes", `Set filter to ${ids.length} items`);
       },
       error: (err) => {
-        this.toastr.error(`Failed:\n ${err.error.message}`, "Error");
+        this.msgService.error("Error", `Failed:\n ${err.error.message}`);
       }
     }).add(() => (
       this.close()

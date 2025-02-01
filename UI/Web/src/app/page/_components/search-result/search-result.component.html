@@ -25,12 +25,15 @@
     </div>
 
     <div class="flex flex-row space-x-2">
-      <button class="btn btn-primary" (click)="download()">
-        <ng-icon name="heroArrowDownTray" class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer"></ng-icon>
+      <button (click)="download()" class="btn btn-primary">
+        <ng-icon class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer" name="heroArrowDownTray"></ng-icon>
       </button>
 
-      <p-dialog resizable="false" [(visible)]="showDownloadDialog" header="Download" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }" [contentStyle]="{ 'overflow-y': 'visible' }" >
-        <app-download-dialog [downloadDir]="downloadDir()" [metadata]="metadata" [searchResult]="searchResult" [(visible)]="showDownloadDialog" />
+      <p-dialog [(visible)]="showDownloadDialog" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [contentStyle]="{ 'overflow-y': 'visible' }"
+                [style]="{ width: '50vw' }" header="Download"
+                resizable="false">
+        <app-download-dialog [(visible)]="showDownloadDialog" [downloadDir]="downloadDir()" [metadata]="metadata"
+                             [searchResult]="searchResult"/>
       </p-dialog>
 
       @if (providers.length > 0 && providers.includes(searchResult.Provider)) {
@@ -41,8 +44,11 @@
           <ng-icon name="heroFolderArrowDown" class="h-6 md:h-32 w-6 md:w-32 hover:cursor-pointer"></ng-icon>
         </button>
 
-        <p-dialog resizable="false" [(visible)]="showSubscriptionDialog" header="Subscribe" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '30vw' }" [contentStyle]="{ 'overflow': 'visible' }">
-          <app-subscription-dialog [(visible)]="showSubscriptionDialog" [downloadDir]="downloadDir()" [searchResult]="searchResult" />
+        <p-dialog resizable="false" [(visible)]="showSubscriptionDialog" header="Subscribe"
+                  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '30vw' }"
+                  [contentStyle]="{ 'overflow': 'visible' }">
+          <app-subscription-dialog [(visible)]="showSubscriptionDialog" [downloadDir]="downloadDir()"
+                                   [searchResult]="searchResult"/>
         </p-dialog>
       }
 
@@ -60,7 +66,7 @@
         <div class="flex flex-row space-x-2 p-1">
           @for (tag of searchResult.Tags; track $index) {
             <div class="shadow rounded p-1 space-x-2 flex flex-row text-sm {{getColour($index)}} dropdown-item">
-              <span class="whitespace-nowrap">{{tag.Name}}</span>
+              <span class="whitespace-nowrap">{{ tag.Name }}</span>
               <span class="whitespace-nowrap">{{ tag.Value }}</span>
             </div>
           }

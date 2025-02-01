@@ -1,14 +1,14 @@
-<div >
-  <div class="flex items-center justify-between hover:cursor-pointer" (click)="toggleDropdown()">
-  <h2 class="text-lg font-semibold text-black dark:text-white">{{modifier.title}} ({{size()}}) </h2>
-  <div class="px-4 py-2 rounded">
-    @if (isDropdownOpen) {
-      <ng-icon name="heroChevronUp" class="-mr-1 h-5 w-5 text-gray-400"></ng-icon>
-    } @else {
-      <ng-icon name="heroChevronDown" class="-mr-1 h-5 w-5 text-gray-400"></ng-icon>
-    }
+<div>
+  <div (click)="toggleDropdown()" class="flex items-center justify-between hover:cursor-pointer">
+    <h2 class="text-lg font-semibold text-black dark:text-white">{{ modifier.title }} ({{ size() }}) </h2>
+    <div class="px-4 py-2 rounded">
+      @if (isDropdownOpen) {
+        <ng-icon name="heroChevronUp" class="-mr-1 h-5 w-5 text-gray-400"></ng-icon>
+      } @else {
+        <ng-icon name="heroChevronDown" class="-mr-1 h-5 w-5 text-gray-400"></ng-icon>
+      }
+    </div>
   </div>
-</div>
 
   @if (isDropdownOpen) {
     <div class="flex flex-col space-y-2 " [@dropDown]>
@@ -23,7 +23,7 @@
 
         @for (option of modifier.values; track option.key) {
           @if (normalize(option.key).includes(query)) {
-            <div class="flex items-center hover:cursor-pointer pb-2 {{$index < 20 ? 'dropdown-item' : ''}}" >
+            <div class="flex items-center hover:cursor-pointer pb-2 {{$index < 20 ? 'dropdown-item' : ''}}">
               <input
                 type="checkbox"
                 id="{{option.key}}"
@@ -33,7 +33,7 @@
                 class="rounded border-gray-300 text-primary-600 focus:ring-primary-600 focus:border-primary-600 shadow-sm focus:ring focus:ring-opacity-50 h-4 w-4 mr-2"
               />
               <label [for]="option.key" class="text-xs hover:cursor-pointer select-none text-black dark:text-white">
-                {{option.value}}
+                {{ option.value }}
               </label>
             </div>
           }

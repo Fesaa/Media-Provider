@@ -4,22 +4,22 @@ import {NgIcon} from "@ng-icons/core";
 import {DirEntry} from "../../../_models/io";
 import {Stack} from "../../data-structures/stack";
 import {IoService} from "../../../_services/io.service";
-import {ToastrService} from "ngx-toastr";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {FormsModule} from "@angular/forms";
 import {Dialog} from "primeng/dialog";
 import {Button} from "primeng/button";
+import {MessageService} from "../../../_services/message.service";
 
 @Component({
-    selector: 'app-directory-selector',
+  selector: 'app-directory-selector',
   imports: [
     NgIcon,
     FormsModule,
     Dialog,
     Button
   ],
-    templateUrl: './directory-selector.component.html',
-    styleUrl: './directory-selector.component.css'
+  templateUrl: './directory-selector.component.html',
+  styleUrl: './directory-selector.component.css'
 })
 export class DirectorySelectorComponent implements OnInit {
 
@@ -42,7 +42,7 @@ export class DirectorySelectorComponent implements OnInit {
   private result = new ReplaySubject<string | undefined>(1)
 
   constructor(private ioService: IoService,
-              private toastR: ToastrService,
+              private msgService: MessageService,
               private clipboard: Clipboard,
   ) {
   }
@@ -99,12 +99,12 @@ export class DirectorySelectorComponent implements OnInit {
   createNew() {
     this.ioService.create(this.routeStack.items.join('/'), this.newDirName).subscribe({
       next: () => {
-        this.toastR.success(`Directory ${this.newDirName} created successfully`, 'Success');
+        this.msgService.success('Success', `Directory ${this.newDirName} created successfully`);
         this.newDirName = '';
         this.loadChildren(this.routeStack.items.join('/'));
       },
       error: (err) => {
-        this.toastR.error(`Failed to create directory ${this.newDirName}\n${err.error.message}`, 'Error');
+        this.msgService.error('Error', `Failed to create directory ${this.newDirName}\n${err.error.message}`);
         console.error(err);
       }
     });
@@ -150,8 +150,7 @@ export class DirectorySelectorComponent implements OnInit {
       },
       error: (err) => {
         this.routeStack.pop();
-        console.error(err);
-        this.toastR.error(err.error.message, "Failed to load children")
+        this.msgService.error("Failed to load children", err.error.message)
       }
     })
   }

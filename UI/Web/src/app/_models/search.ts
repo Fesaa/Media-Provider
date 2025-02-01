@@ -3,7 +3,7 @@ import {Provider} from "./page";
 export type SearchRequest = {
   provider: Provider[];
   query: string;
-  modifiers?: {[key: string]: string[]};
+  modifiers?: { [key: string]: string[] };
 }
 
 export type DownloadRequest = {
@@ -16,7 +16,7 @@ export type DownloadRequest = {
 
 export type DownloadRequestMetadata = {
   startImmediately: boolean;
-  extra: {[key: string]: string[]};
+  extra: { [key: string]: string[] };
 }
 
 export type StopRequest = {

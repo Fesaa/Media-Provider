@@ -3,7 +3,7 @@
     [for]="key"
     class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
   >
-    {{modifier.title}}
+    {{ modifier.title }}
   </label>
   <select
     [id]="key"
@@ -11,7 +11,7 @@
   >
     @for (option of modifier.values; track option.key) {
       <option [value]="option.key">
-        {{option.value}}
+        {{ option.value }}
       </option>
     }
   </select>

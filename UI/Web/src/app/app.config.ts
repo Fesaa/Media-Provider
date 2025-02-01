@@ -23,6 +23,7 @@ import {
   heroEye,
   heroEyeSlash,
   heroFolder,
+  heroFolderArrowDown,
   heroMinus,
   heroPencil,
   heroPlus,
@@ -33,34 +34,24 @@ import {
   heroUser,
   heroXCircle,
   heroXMark,
-  heroFolderArrowDown,
 } from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
-import {provideToastr} from "ngx-toastr";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {providePrimeNG} from "primeng/config";
 import Aura from '@primeng/themes/aura';
 import {ProviderNamePipe} from "./_pipes/provider-name.pipe";
+import {MessageService} from "primeng/api";
 
 export const appConfig: ApplicationConfig = {
   providers: [
     CommonModule,
-    provideToastr({
-      countDuplicates: true,
-      preventDuplicates: true,
-      maxOpened: 5,
-      resetTimeoutOnDuplicate: true,
-      includeTitleDuplicates: true,
-      progressBar: true,
-      positionClass: 'toast-bottom-right',
-    }),
     ContentTitlePipe,
     ProviderNamePipe,
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideZoneChangeDetection({eventCoalescing: true}),
     provideRouter(routes),
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
-    { provide: HTTP_INTERCEPTORS, useClass: AuthRedirectInterceptor, multi: true },
+    {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true},
+    {provide: HTTP_INTERCEPTORS, useClass: AuthRedirectInterceptor, multi: true},
     provideHttpClient(withInterceptorsFromDi()),
     importProvidersFrom(BrowserAnimationsModule, NgIconsModule.withIcons({
       heroChevronDoubleRight,
@@ -94,6 +85,7 @@ export const appConfig: ApplicationConfig = {
       theme: {
         preset: Aura
       }
-    })
+    }),
+    MessageService,
   ]
 };

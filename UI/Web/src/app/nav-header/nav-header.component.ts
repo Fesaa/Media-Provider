@@ -1,24 +1,23 @@
-import {ChangeDetectorRef, Component, HostListener, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {PageService} from "../_services/page.service";
 import {Page} from "../_models/page";
-import {ActivatedRoute, RouterLink} from "@angular/router";
-import {AsyncPipe, NgClass} from "@angular/common";
+import {ActivatedRoute} from "@angular/router";
+import {AsyncPipe} from "@angular/common";
 import {AccountService} from "../_services/account.service";
 import {NavService} from "../_services/nav.service";
 import {dropAnimation} from "../_animations/drop-animation";
 import {MenuItem} from "primeng/api";
 import {Menubar} from "primeng/menubar";
-import {Toast} from "primeng/toast";
 
 @Component({
-    selector: 'app-nav-header',
+  selector: 'app-nav-header',
   imports: [
     AsyncPipe,
     Menubar
   ],
-    templateUrl: './nav-header.component.html',
-    styleUrl: './nav-header.component.css',
-    animations: [dropAnimation]
+  templateUrl: './nav-header.component.html',
+  styleUrl: './nav-header.component.css',
+  animations: [dropAnimation]
 })
 export class NavHeaderComponent implements OnInit {
 
@@ -44,7 +43,7 @@ export class NavHeaderComponent implements OnInit {
         return {
           label: page.title,
           routerLink: 'page',
-          queryParams: { index: page.ID },
+          queryParams: {index: page.ID},
           icon: page.icon === '' ? undefined : 'pi ' + page.icon,
         }
       })

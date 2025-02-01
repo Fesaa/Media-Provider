@@ -2,13 +2,13 @@ import {Component, Input} from '@angular/core';
 import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 @Component({
-    selector: 'app-form-select',
-    imports: [
-        FormsModule,
-        ReactiveFormsModule
-    ],
-    templateUrl: './form-select.component.html',
-    styleUrl: './form-select.component.css'
+  selector: 'app-form-select',
+  imports: [
+    FormsModule,
+    ReactiveFormsModule
+  ],
+  templateUrl: './form-select.component.html',
+  styleUrl: './form-select.component.css'
 })
 export class FormSelectComponent {
 

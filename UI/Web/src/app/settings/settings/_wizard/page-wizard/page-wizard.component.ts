@@ -1,17 +1,16 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {PageService} from "../../../../_services/page.service";
 import {NavService} from "../../../../_services/nav.service";
 import {Page} from "../../../../_models/page";
 import {Steps} from "primeng/steps";
-import {MenuItem} from "primeng/api";
 import {PageWizardGeneralComponent} from "./_components/page-wizard-general/page-wizard-general.component";
 import {PageWizardDirsComponent} from "./_components/page-wizard-dirs/page-wizard-dirs.component";
 import {PageWizardModifiersComponent} from "./_components/page-wizard-modifiers/page-wizard-modifiers.component";
 import {ActivatedRoute, NavigationExtras, Router} from "@angular/router";
 import {Skeleton} from "primeng/skeleton";
 import {Card} from "primeng/card";
-import {ToastrService} from "ngx-toastr";
 import {PageWizardSaveComponent} from "./_components/page-wizard-save/page-wizard-save.component";
+import {MessageService} from "../../../../_services/message.service";
 
 export enum PageWizardID {
   General = 'General',
@@ -36,21 +35,9 @@ export enum PageWizardID {
 })
 export class PageWizardComponent {
 
-  private readonly defaultPage: Page = {
-    ID: 0,
-    title: "",
-    custom_root_dir: "",
-    icon: "",
-    dirs: [],
-    providers: [],
-    modifiers: [],
-    sortValue: PageService.DEFAULT_PAGE_SORT,
-  };
-
   page: Page | undefined;
-
   index: number = 0;
-  sections: {id: PageWizardID, label: string}[] = [
+  sections: { id: PageWizardID, label: string }[] = [
     {
       id: PageWizardID.General,
       label: "General"
@@ -68,11 +55,22 @@ export class PageWizardComponent {
       label: "Save"
     }
   ];
+  protected readonly PageWizardID = PageWizardID;
+  private readonly defaultPage: Page = {
+    ID: 0,
+    title: "",
+    custom_root_dir: "",
+    icon: "",
+    dirs: [],
+    providers: [],
+    modifiers: [],
+    sortValue: PageService.DEFAULT_PAGE_SORT,
+  };
 
   constructor(private pageService: PageService,
               private navService: NavService,
               private route: ActivatedRoute,
-              private toastr: ToastrService,
+              private msgService: MessageService,
               private router: Router,
   ) {
     this.navService.setNavVisibility(true)
@@ -93,12 +91,12 @@ export class PageWizardComponent {
           },
           error: error => {
             if (error.status === 404) {
-              this.toastr.error("Page not found");
+              this.msgService.error("Page not found");
               this.router.navigateByUrl("/home");
               return;
             }
 
-            this.toastr.error("Failed to retrieve page\n" + error.error.message, "Error");
+            this.msgService.error("Error", "Failed to retrieve page\n" + error.error.message);
           }
         })
 
@@ -134,7 +132,4 @@ export class PageWizardComponent {
 
     this.router.navigate([], extras)
   }
-
-
-  protected readonly PageWizardID = PageWizardID;
 }

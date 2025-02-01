@@ -15,43 +15,7 @@ export class ContentService {
 
   baseUrl = environment.apiUrl + "content/";
 
-  private statsSource = new ReplaySubject<StatsResponse>(1);
-  public stats$ = this.statsSource.asObservable();
-
-  private loadStatsSource = new ReplaySubject<Boolean>(1);
-  public loadStats$ = this.loadStatsSource.asObservable();
-
-  private sub: Subscription | undefined;
-  longSub = false;
-
   constructor(private httpClient: HttpClient) {
-    this.loadStatsSource.next(false)
-
-    this.loadStats$.subscribe(load => {
-      this.sub?.unsubscribe();
-      if (load) {
-        this.sub = interval(1000).subscribe(() => {
-          this.refreshStats();
-        });
-      }
-    })
-
-
-    this.stats$.subscribe(s => {
-      if (s.running.length == 0) {
-        this.longSub = true;
-        this.sub?.unsubscribe();
-        this.sub = interval(10000).subscribe(() => {
-          this.refreshStats();
-        });
-      } else if (this.longSub) {
-        this.longSub = false;
-        this.sub?.unsubscribe();
-        this.sub = interval(1000).subscribe(() => {
-          this.refreshStats();
-        });
-      }
-    })
   }
 
   startDownload(provider: Provider, contentId: string) {
@@ -79,12 +43,8 @@ export class ContentService {
     }).pipe(map(list => list || []));
   }
 
-  private sendMessage<T, R>(msg: Message<T>): Observable<R | undefined> {
-    return this.httpClient.post<Message<R>>(this.baseUrl + "message", msg).pipe(map(msg => msg.data))
-  }
-
   search(req: SearchRequest): Observable<SearchInfo[]> {
-    return this.httpClient.post<SearchInfo[]>(this.baseUrl+ 'search', req)
+    return this.httpClient.post<SearchInfo[]>(this.baseUrl + 'search', req)
   }
 
   download(req: DownloadRequest) {
@@ -95,13 +55,11 @@ export class ContentService {
     return this.httpClient.post(this.baseUrl + 'stop', req)
   }
 
-  private refreshStats() {
-    this.httpClient.get<StatsResponse>(this.baseUrl + 'stats').subscribe(stats => {
-      this.statsSource.next(stats);
-    })
+  infoStats() {
+    return this.httpClient.get<StatsResponse>(this.baseUrl + 'stats')
   }
 
-  loadStats(load = true) {
-    this.loadStatsSource.next(load);
+  private sendMessage<T, R>(msg: Message<T>): Observable<R | undefined> {
+    return this.httpClient.post<Message<R>>(this.baseUrl + "message", msg).pipe(map(msg => msg.data))
   }
 }

@@ -23,7 +23,13 @@ type IDAble interface {
 	ID() string
 }
 
-func NewDownloadableFromBlock[T IDAble](req payload.DownloadRequest, block DownloadInfoProvider[T], client Client, log zerolog.Logger) *DownloadBase[T] {
+func NewDownloadableFromBlock[T IDAble](
+	req payload.DownloadRequest,
+	block DownloadInfoProvider[T],
+	client Client,
+	log zerolog.Logger,
+	signalR services.SignalRService,
+) *DownloadBase[T] {
 	return &DownloadBase[T]{
 		infoProvider: block,
 		Client:       client,
@@ -34,7 +40,8 @@ func NewDownloadableFromBlock[T IDAble](req payload.DownloadRequest, block Downl
 		maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 4),
 		Req:          req,
 		LastTime:     time.Now(),
-		ContentState: payload.ContentStateQueued,
+		contentState: payload.ContentStateQueued,
+		SignalR:      signalR,
 	}
 }
 
@@ -48,7 +55,8 @@ type DownloadBase[T IDAble] struct {
 
 	Client       Client
 	Log          zerolog.Logger
-	ContentState payload.ContentState
+	contentState payload.ContentState
+	SignalR      services.SignalRService
 
 	id        string
 	baseDir   string
@@ -100,7 +108,7 @@ func (d *DownloadBase[T]) Message(msg payload.Message) (payload.Message, error) 
 }
 
 func (d *DownloadBase[T]) MarkReady() error {
-	if d.ContentState != payload.ContentStateWaiting {
+	if d.contentState != payload.ContentStateWaiting {
 		return services.ErrWrongState
 	}
 
@@ -109,13 +117,13 @@ func (d *DownloadBase[T]) MarkReady() error {
 		return nil
 	}
 
-	d.ContentState = payload.ContentStateReady
+	d.SetState(payload.ContentStateReady)
 	return nil
 }
 
 func (d *DownloadBase[T]) SetUserFiltered(msg json.RawMessage) error {
-	if d.ContentState != payload.ContentStateWaiting &&
-		d.ContentState != payload.ContentStateReady {
+	if d.contentState != payload.ContentStateWaiting &&
+		d.contentState != payload.ContentStateReady {
 		return services.ErrWrongState
 	}
 
@@ -125,7 +133,13 @@ func (d *DownloadBase[T]) SetUserFiltered(msg json.RawMessage) error {
 		return err
 	}
 	d.ToDownloadUserSelected = filter
+	d.SignalR.SizeUpdate(d.Id(), strconv.Itoa(d.Size())+" Chapters")
 	return nil
+}
+
+func (d *DownloadBase[T]) SetState(state payload.ContentState) {
+	d.contentState = state
+	d.SignalR.StateUpdate(d.id, d.contentState)
 }
 
 func (d *DownloadBase[T]) Id() string {
@@ -177,38 +191,17 @@ func (d *DownloadBase[T]) GetNewContent() []string {
 }
 
 func (d *DownloadBase[T]) GetInfo() payload.InfoStat {
-	speed := func() int64 {
-		if d.ContentState != payload.ContentStateDownloading {
-			return 0
-		}
-
-		diff := d.ImagesDownloaded - d.LastRead
-		timeDiff := max(time.Since(d.LastTime).Seconds(), 1)
-		return max(int64(float64(diff)/timeDiff), 1)
-	}()
-
-	size := func() int {
-		if len(d.ToDownloadUserSelected) == 0 {
-			return len(d.ToDownload)
-		}
-
-		return len(d.ToDownloadUserSelected)
-	}()
-
-	d.LastRead = d.ImagesDownloaded
-	d.LastTime = time.Now()
-
 	return payload.InfoStat{
 		Provider:     models.DYNASTY,
 		Id:           d.Id(),
-		ContentState: d.ContentState,
+		ContentState: d.contentState,
 		Name:         d.infoProvider.Title(),
 		RefUrl:       d.infoProvider.RefUrl(),
-		Size:         strconv.Itoa(size) + " Chapters",
+		Size:         strconv.Itoa(d.Size()) + " Chapters",
 		Downloading:  d.Wg != nil,
-		Progress:     utils.Percent(int64(d.ContentDownloaded), int64(size)),
+		Progress:     utils.Percent(int64(d.ContentDownloaded), int64(d.Size())),
 		SpeedType:    payload.IMAGES,
-		Speed:        speed,
+		Speed:        d.Speed(),
 		DownloadDir:  d.GetDownloadDir(),
 	}
 }
@@ -231,7 +224,7 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return
 	}
 
-	d.ContentState = payload.ContentStateLoading
+	d.SetState(payload.ContentStateLoading)
 	d.ctx, d.cancel = context.WithCancel(context.Background())
 	d.Log.Debug().Msg("loading content info")
 	select {
@@ -242,9 +235,9 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 
 	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
 	d.checkContentOnDisk()
-	d.ContentState = utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
+	d.SetState(utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
-		payload.ContentStateWaiting)
+		payload.ContentStateWaiting))
 
 	d.Log.Debug().Msg("Content has downloaded all information")
 
@@ -259,17 +252,19 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return download
 	})
 
+	d.SignalR.SizeUpdate(d.Id(), strconv.Itoa(d.Size())+" Chapters")
+
 	d.Log.Debug().Int("all", len(data)).Int("filtered", len(d.ToDownload)).
 		Msg("downloaded content filtered")
 }
 
 func (d *DownloadBase[T]) StartDownload() {
-	d.ContentState = payload.ContentStateDownloading
+	d.SetState(payload.ContentStateDownloading)
 	go d.startDownload()
 }
 
 func (d *DownloadBase[T]) State() payload.ContentState {
-	return d.ContentState
+	return d.contentState
 }
 
 func (d *DownloadBase[T]) checkContentOnDisk() {
@@ -327,6 +322,36 @@ func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]Content, error) {
 	return out, nil
 }
 
+// Speed returns the speed at which this content is downloading images
+func (d *DownloadBase[T]) Speed() int64 {
+	if d.contentState != payload.ContentStateDownloading {
+		return 0
+	}
+	diff := d.ImagesDownloaded - d.LastRead
+	timeDiff := max(time.Since(d.LastTime).Seconds(), 1)
+
+	d.LastRead = d.ImagesDownloaded
+	d.LastTime = time.Now()
+	return max(int64(float64(diff)/timeDiff), 1)
+}
+
+func (d *DownloadBase[T]) Size() int {
+	if len(d.ToDownloadUserSelected) == 0 {
+		return len(d.ToDownload)
+	}
+
+	return len(d.ToDownloadUserSelected)
+}
+
+func (d *DownloadBase[T]) UpdateProgress() {
+	d.SignalR.ProgressUpdate(payload.ContentProgressUpdate{
+		ContentId: d.id,
+		Progress:  utils.Percent(int64(d.ContentDownloaded), int64(d.Size())),
+		SpeedType: payload.IMAGES,
+		Speed:     d.Speed(),
+	})
+}
+
 func (d *DownloadBase[T]) startDownload() {
 	data := d.infoProvider.All()
 	d.Log.Trace().Int("size", len(data)).Msg("downloading content")
@@ -369,6 +394,7 @@ func (d *DownloadBase[T]) startDownload() {
 				return
 			}
 		}
+		d.UpdateProgress()
 	}
 
 	d.Wg.Wait()
@@ -452,6 +478,7 @@ func (d *DownloadBase[T]) downloadContent(t T) error {
 				wg.Wait()
 				return fmt.Errorf("chapter download was cancelled from within")
 			}
+			d.UpdateProgress() // TODO: Decide if this is too frequent or not. Should be around 1Hz
 		}
 
 		select {

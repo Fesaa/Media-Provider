@@ -17,5 +17,5 @@ export type ListContentData = {
 export enum MessageType {
   MessageListContent = 0,
   SetToDownload = 1,
-  StartDownload= 2,
+  StartDownload = 2,
 }

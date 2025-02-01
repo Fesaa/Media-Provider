@@ -5,13 +5,13 @@ import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/BoundNumberValidator";
-import {ToastrService} from "ngx-toastr";
 import {NgIcon} from "@ng-icons/core";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Tooltip} from "primeng/tooltip";
+import {MessageService} from "../../../../_services/message.service";
 
 @Component({
-    selector: 'app-server-settings',
+  selector: 'app-server-settings',
   imports: [
     ReactiveFormsModule,
     FormInputComponent,
@@ -19,9 +19,9 @@ import {Tooltip} from "primeng/tooltip";
     NgIcon,
     Tooltip
   ],
-    templateUrl: './server-settings.component.html',
-    styleUrl: './server-settings.component.css',
-    changeDetection: ChangeDetectionStrategy.OnPush
+  templateUrl: './server-settings.component.html',
+  styleUrl: './server-settings.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServerSettingsComponent implements OnInit {
 
@@ -29,11 +29,15 @@ export class ServerSettingsComponent implements OnInit {
   settingsForm: FormGroup | undefined;
 
   showKey = false;
+  protected readonly LogHandler = LogHandler;
+  protected readonly Object = Object;
+  protected readonly LogLevel = LogLevel;
+  protected readonly CacheType = CacheType;
 
   constructor(private configService: ConfigService,
               private fb: FormBuilder,
               private cdRef: ChangeDetectorRef,
-              private toastr: ToastrService,
+              private msgService: MessageService,
               private clipBoardService: Clipboard
   ) {
   }
@@ -67,6 +71,40 @@ export class ServerSettingsComponent implements OnInit {
     })
   }
 
+  save() {
+    if (!this.settingsForm) {
+      return;
+    }
+
+    const errors = this.errors();
+    if (errors > 0) {
+      this.msgService.error('Cannot submit', `Found ${errors} errors in the form`);
+      return;
+    }
+
+    if (!this.settingsForm.dirty) {
+      this.msgService.warning('Not saving', 'No changes detected');
+      return;
+    }
+
+    if (this.settingsForm.value.cache.type != CacheType.REDIS) {
+      this.settingsForm.value.cache.redis = ""
+    }
+
+    this.configService.updateConfig(this.settingsForm.value).subscribe({
+      next: () => {
+        this.configService.getConfig().subscribe(config => {
+          this.config = config;
+          this.buildForm();
+          this.msgService.success('Success', 'Settings saved');
+        });
+      },
+      error: (error) => {
+        this.msgService.error('Failed to save settings', error.error.message);
+      }
+    });
+  }
+
   private buildForm() {
     if (!this.config) {
       return;
@@ -94,40 +132,6 @@ export class ServerSettingsComponent implements OnInit {
     this.cdRef.detectChanges();
   }
 
-  save() {
-    if (!this.settingsForm) {
-      return;
-    }
-
-    const errors = this.errors();
-    if (errors > 0) {
-      this.toastr.error(`Found ${errors} errors in the form`, 'Cannot submit');
-      return;
-    }
-
-    if (!this.settingsForm.dirty) {
-      this.toastr.warning('No changes detected', 'Not saving');
-      return;
-    }
-
-    if (this.settingsForm.value.cache.type != CacheType.REDIS) {
-      this.settingsForm.value.cache.redis = ""
-    }
-
-    this.configService.updateConfig(this.settingsForm.value).subscribe({
-      next: () => {
-        this.configService.getConfig().subscribe(config => {
-          this.config = config;
-          this.buildForm();
-          this.toastr.success('Settings saved', 'Success');
-        });
-      },
-      error: (error) => {
-        this.toastr.error(error.error.message, 'Failed to save settings');
-      }
-    });
-  }
-
   private errors() {
     let count = 0;
     Object.keys(this.settingsForm!.controls).forEach(key => {
@@ -140,10 +144,4 @@ export class ServerSettingsComponent implements OnInit {
 
     return count
   }
-
-
-  protected readonly LogHandler = LogHandler;
-  protected readonly Object = Object;
-  protected readonly LogLevel = LogLevel;
-  protected readonly CacheType = CacheType;
 }

@@ -4,13 +4,13 @@ import {Dialog} from "primeng/dialog";
 import {Button} from "primeng/button";
 
 @Component({
-    selector: 'app-dialog',
+  selector: 'app-dialog',
   imports: [
     Dialog,
     Button
   ],
-    templateUrl: './dialog.component.html',
-    styleUrl: './dialog.component.css'
+  templateUrl: './dialog.component.html',
+  styleUrl: './dialog.component.css'
 })
 export class DialogComponent implements OnInit {
 
@@ -20,7 +20,6 @@ export class DialogComponent implements OnInit {
 
   visible: boolean = true;
   private result = new ReplaySubject<boolean>(1)
-
 
 
   @HostListener('window:resize', ['$event'])

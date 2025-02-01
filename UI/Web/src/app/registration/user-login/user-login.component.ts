@@ -5,17 +5,17 @@ import {Router} from "@angular/router";
 import {Observable, take} from "rxjs";
 import {AuthGuard} from "../../_guards/auth.guard";
 import {NavService} from "../../_services/nav.service";
-import {ToastrService} from "ngx-toastr";
 import {PageService} from "../../_services/page.service";
 import {User} from "../../_models/user";
+import {MessageService} from "../../_services/message.service";
 
 @Component({
-    selector: 'app-login',
-    imports: [
-        ReactiveFormsModule
-    ],
-    templateUrl: './user-login.component.html',
-    styleUrl: './user-login.component.css'
+  selector: 'app-login',
+  imports: [
+    ReactiveFormsModule
+  ],
+  templateUrl: './user-login.component.html',
+  styleUrl: './user-login.component.css'
 })
 export class UserLoginComponent implements OnInit {
 
@@ -34,7 +34,7 @@ export class UserLoginComponent implements OnInit {
               private router: Router,
               private readonly cdRef: ChangeDetectorRef,
               private navService: NavService,
-              private toastR: ToastrService,
+              private msgService: MessageService,
               private pageService: PageService,
   ) {
   }
@@ -83,7 +83,7 @@ export class UserLoginComponent implements OnInit {
         this.isSubmitting = false;
         this.cdRef.markForCheck()
       }, error: (_) => {
-        this.toastR.error("Unable to log in, check your credentials", 'Error');
+        this.msgService.error('Error', "Unable to log in, check your credentials");
         this.isSubmitting = false;
         this.cdRef.markForCheck()
       }

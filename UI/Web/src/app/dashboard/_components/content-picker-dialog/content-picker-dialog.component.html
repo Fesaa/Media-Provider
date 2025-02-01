@@ -1,25 +1,34 @@
+<p-dialog resizable="false" header="Content picker" [(visible)]="visible"
+          [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }"
+          [contentStyle]="{ 'overflow-y': 'visible' }" (onShow)="loadContent()">
+  <div class="flex flex-col mb-2">
 
-<div class="flex flex-col mb-2">
+    <h1>{{ info.name }}</h1>
 
-  <h1>{{info.name}}</h1>
+    <div class="flex w-full flex-grow justify-start gap-4">
+      <p-button (click)="reverse()" icon="pi pi-arrows-v" severity="secondary"/>
+      <p-button (click)="unselectAll()" icon="pi pi-times" severity="secondary"/>
+      <p-button (click)="selectAll()" icon="pi pi-check" severity="primary"/>
+    </div>
 
-  <div class="flex w-full flex-grow justify-start gap-4">
-    <p-button icon="pi pi-arrows-v" (click)="reverse()" severity="secondary" />
-    <p-button icon="pi pi-times" severity="secondary" (click)="unselectAll()" />
-    <p-button icon="pi pi-check" severity="primary" (click)="selectAll()" />
+    @if (!loading) {
+      <div class="max-h-80 overflow-auto">
+        <p-tree [(selection)]="selection"
+                [value]="content"
+                selectionMode="checkbox"
+                styleClass="w-full"
+        />
+      </div>
+    } @else {
+      <div class="max-h-80 overflow-auto flex flex-col space-y-5 px-5 mt-5">
+        <p-skeleton width="66%" height="25px" *ngFor="let _ of [].constructor(10)" />
+      </div>
+    }
+
+    <div class="flex w-full flex-grow justify-end gap-4 mt-10">
+      <p-button (click)="close()" label="Cancel" severity="secondary"/>
+      <p-button (click)="submit()" label="Set filter"/>
+    </div>
   </div>
 
-  <div class="max-h-80 overflow-auto">
-    <p-tree [value]="content"
-            selectionMode="checkbox"
-            styleClass="w-full"
-            [(selection)]="selection"
-    />
-  </div>
-
-
-  <div class="flex w-full flex-grow justify-end gap-4 mt-10">
-    <p-button label="Cancel" severity="secondary" (click)="close()" />
-    <p-button label="Set filter" (click)="submit()" />
-  </div>
-</div>
+</p-dialog>

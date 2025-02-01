@@ -8,14 +8,14 @@ import {dropAnimation} from "../_animations/drop-animation";
 import {PaginatorComponent} from "../paginator/paginator.component";
 
 @Component({
-    selector: 'app-subscription-manager',
+  selector: 'app-subscription-manager',
   imports: [
     SubscriptionComponent,
     PaginatorComponent,
   ],
-    templateUrl: './subscription-manager.component.html',
-    styleUrl: './subscription-manager.component.css',
-    animations: [dropAnimation]
+  templateUrl: './subscription-manager.component.html',
+  styleUrl: './subscription-manager.component.css',
+  animations: [dropAnimation]
 })
 export class SubscriptionManagerComponent implements OnInit {
 
@@ -26,11 +26,12 @@ export class SubscriptionManagerComponent implements OnInit {
 
   currentPage: number = 1;
   pageSize: number = 5;
+  protected readonly Math = Math;
 
   constructor(private navService: NavService,
               private subscriptionService: SubscriptionService,
               private cdRef: ChangeDetectorRef,
-              ) {
+  ) {
   }
 
   ngOnInit(): void {
@@ -73,7 +74,6 @@ export class SubscriptionManagerComponent implements OnInit {
     this.show = !this.show;
   }
 
-
   addNew() {
     this.newSubscription = {
       ID: 0,
@@ -88,6 +88,4 @@ export class SubscriptionManagerComponent implements OnInit {
       refreshFrequency: RefreshFrequency.Week,
     }
   }
-
-  protected readonly Math = Math;
 }

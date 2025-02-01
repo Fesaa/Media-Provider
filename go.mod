@@ -10,6 +10,7 @@ require (
 	github.com/anacrolix/torrent v1.58.0
 	github.com/ansrivas/fiberprometheus/v2 v2.7.1-0.20241120084230-7b0adcaf663f
 	github.com/deckarep/golang-set/v2 v2.7.0
+	github.com/fasthttp/websocket v1.5.12
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-co-op/gocron/v2 v2.15.0
 	github.com/go-playground/validator/v10 v10.24.0
@@ -21,8 +22,10 @@ require (
 	github.com/irevenko/go-nyaa v0.0.0-20210412095257-194e1b4cce55
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
+	github.com/philippseith/signalr v0.6.3
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/rs/zerolog v1.33.0
+	github.com/valyala/fasthttp v1.58.0
 	go.uber.org/dig v1.18.0
 	golang.org/x/crypto v0.32.0
 	gorm.io/gorm v1.25.12
@@ -58,6 +61,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -66,8 +70,10 @@ require (
 	github.com/edsrzf/mmap-go v1.2.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
+	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-llsqlite/adapter v0.1.0 // indirect
 	github.com/go-llsqlite/crawshaw v0.5.5 // indirect
+	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -130,13 +136,16 @@ require (
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rs/dnscache v0.0.0-20230804202142-fc85eb664529 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
+	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/teivah/onecontext v1.3.0 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
 	github.com/tinylib/msgp v1.2.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.58.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
 	go.etcd.io/bbolt v1.3.11 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
@@ -156,5 +165,6 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.2 // indirect
 	modernc.org/sqlite v1.34.5 // indirect
+	nhooyr.io/websocket v1.8.17 // indirect
 	zombiezen.com/go/sqlite v1.4.0 // indirect
 )

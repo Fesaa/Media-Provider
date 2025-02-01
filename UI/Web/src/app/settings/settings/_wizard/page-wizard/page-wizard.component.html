@@ -1,15 +1,14 @@
-
 <div class="flex flex-grow flex-col justify-between">
 
   <div class="mt-5">
-    <p-steps [model]="sections" [activeIndex]="index" />
+    <p-steps [activeIndex]="index" [model]="sections"/>
   </div>
 
   @if (page !== undefined) {
     <div class="min-h-[75vh] p-5 md:px-20 mb-20 md:mb-0">
       @defer (when sections[index].id == PageWizardID.General; prefetch on idle) {
         @if (sections[index].id === PageWizardID.General) {
-          <app-page-wizard-general [page]="page" (next)="navigateToPage(1)" />
+          <app-page-wizard-general [page]="page" (next)="navigateToPage(1)"/>
         }
       }
 
@@ -27,7 +26,7 @@
 
       @defer (when sections[index].id == PageWizardID.Save; prefetch on idle) {
         @if (sections[index].id === PageWizardID.Save) {
-           <app-page-wizard-save [page]="page" (back)="navigateToPage(2)" />
+          <app-page-wizard-save [page]="page" (back)="navigateToPage(2)"/>
         }
       }
 
@@ -35,8 +34,8 @@
   } @else {
     <div class="min-h-[75vh] p-5 md:px-20 mb-20 md:mb-0">
       <p-card>
-        <p-skeleton width="20rem" height="4rem" />
-        <p-skeleton height="5rem" styleClass="mt-2" />
+        <p-skeleton width="20rem" height="4rem"/>
+        <p-skeleton height="5rem" styleClass="mt-2"/>
       </p-card>
     </div>
   }

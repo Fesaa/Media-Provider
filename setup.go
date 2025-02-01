@@ -52,7 +52,8 @@ func ApplicationProvider(params appParams) *fiber.App {
 			EnableStackTrace: true,
 		})).
 		Use(cors.New(cors.Config{
-			AllowOrigins: "http://localhost:4200",
+			AllowOrigins:     "http://localhost:4200",
+			AllowCredentials: true,
 		})).
 		Use(compress.New())
 
@@ -64,7 +65,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 	prometheus.RegisterAt(app, "/api/metrics", params.Auth.Middleware)
 	app.Use(prometheus.Middleware)
 
-	dontLog := []string{"/api/content/stats", "/", "/api/metrics"}
+	dontLog := []string{"/", "/api/metrics"}
 	dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2"}
 	httpLogger := params.Log.With().Str("handler", "http").Logger()
 	app.Use(fiberzerolog.New(fiberzerolog.Config{

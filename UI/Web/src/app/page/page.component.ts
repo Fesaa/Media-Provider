@@ -12,7 +12,6 @@ import {SearchResultComponent} from "./_components/search-result/search-result.c
 import {PaginatorComponent} from "../paginator/paginator.component";
 import {dropAnimation} from "../_animations/drop-animation";
 import {bounceIn500ms} from "../_animations/bounce-in";
-import {ToastrService} from "ngx-toastr";
 import {flyInOutAnimation} from "../_animations/fly-animation";
 import {NgIcon} from "@ng-icons/core";
 import {FormInputComponent} from "../shared/form/form-input/form-input.component";
@@ -20,23 +19,24 @@ import {DialogService} from "../_services/dialog.service";
 import {fadeOut} from "../_animations/fade-out";
 import {SubscriptionService} from "../_services/subscription.service";
 import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
+import {MessageService} from "../_services/message.service";
 
 @Component({
-    selector: 'app-page',
-    imports: [
-        ReactiveFormsModule,
-        DropdownModifierComponent,
-        MultiModifierComponent,
-        SearchResultComponent,
-        PaginatorComponent,
-        NgIcon,
-        FormInputComponent
-    ],
-    templateUrl: './page.component.html',
-    styleUrl: './page.component.css',
-    animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
+  selector: 'app-page',
+  imports: [
+    ReactiveFormsModule,
+    DropdownModifierComponent,
+    MultiModifierComponent,
+    SearchResultComponent,
+    PaginatorComponent,
+    NgIcon,
+    FormInputComponent
+  ],
+  templateUrl: './page.component.html',
+  styleUrl: './page.component.css',
+  animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
 })
-export class PageComponent implements OnInit{
+export class PageComponent implements OnInit {
 
   searchForm: FormGroup | undefined;
   page: Page | undefined = undefined;
@@ -49,19 +49,20 @@ export class PageComponent implements OnInit{
   currentPage: number = 1;
   showSearchForm: boolean = true;
   hideSearchForm: boolean = false;
+  protected readonly ModifierType = ModifierType;
+  protected readonly Math = Math;
 
   constructor(private navService: NavService,
               private pageService: PageService,
               private downloadService: ContentService,
               private cdRef: ChangeDetectorRef,
               private fb: FormBuilder,
-              private toastr: ToastrService,
+              private msgService: MessageService,
               private dialogService: DialogService,
               private subscriptionService: SubscriptionService,
               private providerNamePipe: ProviderNamePipe,
   ) {
     this.navService.setNavVisibility(true);
-    this.downloadService.loadStats(false);
   }
 
   ngOnInit(): void {
@@ -85,24 +86,6 @@ export class PageComponent implements OnInit{
     this.subscriptionService.providers().subscribe(providers => {
       this.providers = providers;
     })
-  }
-
-  private loadMetadata() {
-    if (!this.page) {
-      return;
-    }
-
-    for (const provider of this.page.providers) {
-      this.pageService.metadata(provider).subscribe({
-        next: metadata => {
-          this.metadata.set(provider, metadata);
-        },
-        error: error => {
-          this.toastr.error(error.error.message,
-            `Failed to load download metadata for: ${this.providerNamePipe.transform(provider)}`)
-        }
-      })
-    }
   }
 
   getDownloadMetadata(provider: Provider) {
@@ -139,7 +122,7 @@ export class PageComponent implements OnInit{
 
   search() {
     if (!this.searchForm || !this.searchForm.valid || !this.page) {
-      this.toastr.error(`Cannot search`, "Error");
+      this.msgService.error("Error", `Cannot search`);
       return;
     }
     const modifiers: { [key: string]: string[] } = {};
@@ -156,15 +139,20 @@ export class PageComponent implements OnInit{
       modifiers: modifiers,
     };
 
-    this.downloadService.search(req).subscribe(info => {
-      if (!info || info.length == 0) {
-        this.toastr.error("No results found")
-      } else {
-        this.toastr.success(`Found ${info.length} items`,"Search completed")
+    this.downloadService.search(req).subscribe({
+      next: info => {
+        if (!info || info.length == 0) {
+          this.msgService.error("No results found")
+        } else {
+          this.msgService.success("Search completed", `Found ${info.length} items`)
+        }
+        this.searchResult = info || [];
+        this.currentPage = 1;
+        this.showSearchForm = false;
+      },
+      error: error => {
+        this.msgService.error("Search failed", error.error.message);
       }
-      this.searchResult = info || [];
-      this.currentPage = 1;
-      this.showSearchForm = false;
     })
   }
 
@@ -197,6 +185,20 @@ export class PageComponent implements OnInit{
     this.cdRef.detectChanges();
   }
 
-  protected readonly ModifierType = ModifierType;
-  protected readonly Math = Math;
+  private loadMetadata() {
+    if (!this.page) {
+      return;
+    }
+
+    for (const provider of this.page.providers) {
+      this.pageService.metadata(provider).subscribe({
+        next: metadata => {
+          this.metadata.set(provider, metadata);
+        },
+        error: error => {
+          this.msgService.error(`Failed to load download metadata for: ${this.providerNamePipe.transform(provider)}`, error.error.message)
+        }
+      })
+    }
+  }
 }

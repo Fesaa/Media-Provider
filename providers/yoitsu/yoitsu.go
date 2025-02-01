@@ -26,9 +26,11 @@ type yoitsu struct {
 	baseDirs utils.SafeMap[string, string]
 
 	log zerolog.Logger
+
+	signalR services.SignalRService
 }
 
-func New(c *config.Config, log zerolog.Logger) (Yoitsu, error) {
+func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService) (Yoitsu, error) {
 	dir := config.OrDefault(c.GetRootDir(), "temp")
 
 	impl := &yoitsu{
@@ -38,7 +40,8 @@ func New(c *config.Config, log zerolog.Logger) (Yoitsu, error) {
 		torrents: utils.NewSafeMap[string, Torrent](),
 		baseDirs: utils.NewSafeMap[string, string](),
 
-		log: log.With().Str("handler", "yoitsu").Logger(),
+		log:     log.With().Str("handler", "yoitsu").Logger(),
+		signalR: signalR,
 	}
 
 	opts := storage.NewFileClientOpts{
@@ -76,14 +79,12 @@ func (y *yoitsu) GetBaseDir() string {
 	return y.dir
 }
 
-func (y *yoitsu) downloading() int {
-	return y.torrents.Count(func(k string, v Torrent) bool {
-		return v.State() == payload.ContentStateDownloading
-	})
-}
-
 func (y *yoitsu) CanStartNext() bool {
-	return y.downloading() < y.maxTorrents
+	inUse := y.torrents.Count(func(k string, v Torrent) bool {
+		return v.State() == payload.ContentStateDownloading || v.State() == payload.ContentStateLoading
+	})
+
+	return inUse < y.maxTorrents
 }
 
 func (y *yoitsu) Download(req payload.DownloadRequest) error {
@@ -92,13 +93,13 @@ func (y *yoitsu) Download(req payload.DownloadRequest) error {
 		return services.ErrContentAlreadyExists
 	}
 
-	torrentWrapper := newTorrent(torrentInfo, req, y.log, y)
+	torrentWrapper := newTorrent(torrentInfo, req, y.log, y, y.signalR)
 	y.torrents.Set(torrentInfo.InfoHash().String(), torrentWrapper)
 	y.baseDirs.Set(torrentInfo.InfoHash().String(), req.BaseDir)
+	y.signalR.AddContent(torrentWrapper.GetInfo())
 
 	if !y.CanStartNext() {
-		y.log.Debug().Int("downloading", y.downloading()).
-			Msg("cannot start torrent, too many downloading")
+		y.log.Debug().Msg("cannot start torrent, too many downloading")
 		return nil
 	}
 
@@ -128,10 +129,7 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 	// We may assume that it is present as long as the torrent is present
 	baseDir, _ := y.baseDirs.Get(infoHashString)
 
-	err := tor.Cancel()
-	if err != nil {
-		y.log.Error().Err(err).Str("infoHash", infoHashString).Msg("torrent failed to cancel")
-	}
+	tor.Cancel()
 	backingTorrent := tor.GetTorrent()
 	y.log.Info().
 		Str("name", backingTorrent.Name()).
@@ -144,16 +142,34 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 
 	y.torrents.Delete(infoHashString)
 	y.baseDirs.Delete(infoHashString)
+	y.signalR.DeleteContent(tor.Id())
+
 	if req.DeleteFiles {
 		go y.deleteTorrentFiles(backingTorrent, baseDir)
 	} else {
 		go y.cleanup(tor, baseDir)
 	}
-	y.startNext()
+	go y.startNext()
 	return nil
 }
 
+func (y *yoitsu) loadNext() {
+	for y.CanStartNext() {
+		inext, ok := y.torrents.Find(func(k string, v Torrent) bool {
+			return v.State() == payload.ContentStateQueued
+		})
+		if !ok {
+			return
+		}
+
+		next := *inext
+		next.LoadInfo()
+	}
+}
+
 func (y *yoitsu) startNext() {
+	y.loadNext()
+
 	inext, ok := y.torrents.Find(func(k string, v Torrent) bool {
 		return v.State() == payload.ContentStateReady
 	})
@@ -164,6 +180,10 @@ func (y *yoitsu) startNext() {
 
 	next := *inext
 	next.StartDownload()
+
+	if y.CanStartNext() {
+		y.startNext()
+	}
 }
 
 func (y *yoitsu) cleanup(t Torrent, baseDir string) {
