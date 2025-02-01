@@ -52,7 +52,8 @@ func ApplicationProvider(params appParams) *fiber.App {
 			EnableStackTrace: true,
 		})).
 		Use(cors.New(cors.Config{
-			AllowOrigins: "http://localhost:4200",
+			AllowOrigins:     "http://localhost:4200",
+			AllowCredentials: true,
 		})).
 		Use(compress.New())
 

@@ -55,7 +55,8 @@ func (a apiKeyAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	return user.ApiKey == apiKey, nil
+	ctx.Locals("user", user)
+	return true, nil
 }
 
 func (a apiKeyAuth) Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
