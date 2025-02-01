@@ -6,17 +6,19 @@ import {TreeNode} from "primeng/api";
 import {Tree} from "primeng/tree";
 import {Button} from "primeng/button";
 import {MessageService} from "../../../_services/message.service";
+import {Dialog} from "primeng/dialog";
 
 @Component({
   selector: 'app-content-picker-dialog',
   imports: [
     Tree,
-    Button
+    Button,
+    Dialog
   ],
   templateUrl: './content-picker-dialog.component.html',
   styleUrl: './content-picker-dialog.component.css'
 })
-export class ContentPickerDialogComponent implements OnInit {
+export class ContentPickerDialogComponent {
 
   @Input({required: true}) visible!: boolean;
   @Output() visibleChange: EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -24,6 +26,7 @@ export class ContentPickerDialogComponent implements OnInit {
 
   content: ListContentData[] = [];
   selection: ListContentData[] = [];
+  loading: boolean = false;
 
 
   constructor(
@@ -32,10 +35,12 @@ export class ContentPickerDialogComponent implements OnInit {
   ) {
   }
 
-  ngOnInit(): void {
+  loadContent() {
+    this.loading = true;
     this.contentService.listContent(this.info.provider, this.info.id).subscribe(contents => {
       this.content = contents;
       this.selection = this.flatten(contents);
+      this.loading = false;
     })
   }
 

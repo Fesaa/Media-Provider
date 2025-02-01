@@ -17,6 +17,8 @@ import {ContentStatePipe} from "../_pipes/content-state.pipe";
 import {Dialog} from "primeng/dialog";
 import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
 import {MessageService} from "../_services/message.service";
+import {EventType, SignalRService} from "../_services/signal-r.service";
+import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteContent} from "../_models/signalr";
 
 @Component({
   selector: 'app-dashboard',
@@ -37,10 +39,10 @@ import {MessageService} from "../_services/message.service";
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnInit {
 
   loading = true;
-  info: InfoStat[] | [] = [];
+  info: InfoStat[] = [];
   infoString: string = '';
 
   displayContentPicker: { [key: string]: boolean } = {};
@@ -52,33 +54,83 @@ export class DashboardComponent implements OnInit, OnDestroy {
               private msgService: MessageService,
               private contentTitle: ContentTitlePipe,
               private dialogService: DialogService,
+              private signalR: SignalRService,
   ) {
     this.navService.setNavVisibility(true);
   }
 
-  ngOnDestroy(): void {
-    this.contentService.loadStats(false);
-  }
-
   ngOnInit(): void {
-    this.contentService.loadStats();
-
-    this.contentService.stats$.subscribe(stats => {
+    this.contentService.infoStats().subscribe(info => {
       this.loading = false;
+      this.info = info.running || [];
+      this.sortInfo()
+    })
 
-      const newInfo = (stats.running || []).sort((a, b) => {
-        if (a.contentState == b.contentState) {
-          return a.id.localeCompare(b.id)
-        }
-
-        return a.contentState - b.contentState;
-      });
-
-      if (this.infoString !== JSON.stringify(newInfo)) {
-        this.info = newInfo;
-        this.infoString = JSON.stringify(this.info)
+    this.signalR.events$.subscribe(event => {
+      switch (event.type) {
+        case EventType.ContentStateUpdate:
+          this.updateState(event.data as ContentStateUpdate);
+          break;
+        case EventType.ContentSizeUpdate:
+          this.updateSize(event.data as ContentSizeUpdate);
+          break;
+        case EventType.DeleteContent:
+          this.info = this.info.filter(item => item.id !== (event.data as DeleteContent).contentId);
+          break;
+        case EventType.ContentProgressUpdate:
+          this.updateProgress(event.data as ContentProgressUpdate);
+          break;
+        case EventType.AddContent:
+          this.addContent(event.data as InfoStat);
+          break;
       }
     })
+  }
+
+  private addContent(event: InfoStat) {
+    if (this.info.find(is => is.id == event.id)) {
+      return;
+    }
+
+    this.info.push(event);
+    this.sortInfo()
+  }
+
+  private updateSize(event: ContentSizeUpdate) {
+    const content = this.info.find(is => is.id == event.contentId)
+    if (!content) {
+      return;
+    }
+    content.size = event.size;
+  }
+
+  private updateProgress(event: ContentProgressUpdate) {
+    const content = this.info.find(is => is.id == event.contentId)
+    if (!content) {
+      return;
+    }
+    content.progress = event.progress;
+    content.estimated = event.estimated;
+    content.speed = event.speed;
+    content.speed_type = event.speed_type;
+  }
+
+  private updateState(event: ContentStateUpdate) {
+    const content = this.info.find(is => is.id == event.contentId)
+    if (!content) {
+      return;
+    }
+    content.contentState = event.contentState;
+  }
+
+  private sortInfo() {
+    this.info = this.info.sort((a, b) => {
+      if (a.contentState == b.contentState) {
+        return a.id.localeCompare(b.id)
+      }
+
+      return a.contentState - b.contentState;
+    });
   }
 
   async stop(info: InfoStat) {

@@ -2,6 +2,20 @@ import {Injectable} from '@angular/core';
 import {HubConnection, HubConnectionBuilder} from "@microsoft/signalr";
 import {environment} from "../../environments/environment";
 import {User} from "../_models/user";
+import {ReplaySubject} from "rxjs";
+
+export enum EventType {
+  ContentSizeUpdate = "ContentSizeUpdate",
+  ContentProgressUpdate = "ContentProgressUpdate",
+  ContentStateUpdate = "ContentStateUpdate",
+  AddContent = "AddContent",
+  DeleteContent = "DeleteContent",
+}
+
+export interface Event<T> {
+  type: EventType;
+  data: T;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +23,10 @@ import {User} from "../_models/user";
 export class SignalRService {
   baseUrl = environment.apiUrl;
   private hubConnection!: HubConnection;
+
+  private eventsSource = new ReplaySubject<Event<any>>(1);
+
+  public events$ = this.eventsSource.asObservable();
 
   constructor() {
 
@@ -27,5 +45,40 @@ export class SignalRService {
       .catch((error) => {
         console.error('Error connecting to SignalR hub:', error);
       });
+
+    this.hubConnection.on(EventType.ContentSizeUpdate, (message) => {
+      this.eventsSource.next({
+        type: EventType.ContentSizeUpdate,
+        data: message
+      })
+    })
+
+    this.hubConnection.on(EventType.ContentProgressUpdate, (message) => {
+      this.eventsSource.next({
+        type: EventType.ContentProgressUpdate,
+        data: message,
+      });
+    })
+
+    this.hubConnection.on(EventType.AddContent, (message) => {
+      this.eventsSource.next({
+        type: EventType.AddContent,
+        data: message
+      })
+    })
+
+    this.hubConnection.on(EventType.DeleteContent, (message) => {
+      this.eventsSource.next({
+        type: EventType.DeleteContent,
+        data: message
+      })
+    })
+
+    this.hubConnection.on(EventType.ContentStateUpdate, (message) => {
+      this.eventsSource.next({
+        type: EventType.ContentStateUpdate,
+        data: message
+      })
+    })
   }
 }

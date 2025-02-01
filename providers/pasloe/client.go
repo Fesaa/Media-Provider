@@ -16,12 +16,13 @@ import (
 )
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
-	ioService services.IOService) api.Client {
+	ioService services.IOService, signalR services.SignalRService) api.Client {
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
 		log:      log.With().Str("handler", "pasloe").Logger(),
 		io:       ioService,
+		signalR:  signalR,
 
 		content: utils.NewSafeMap[string, api.Downloadable](),
 	}
@@ -32,6 +33,7 @@ type client struct {
 	registry *registry
 	log      zerolog.Logger
 	io       services.IOService
+	signalR  services.SignalRService
 
 	content utils.SafeMap[string, api.Downloadable]
 }
@@ -55,6 +57,8 @@ func (c *client) Download(req payload.DownloadRequest) error {
 	}
 
 	c.content.Set(content.Id(), content)
+	c.signalR.AddContent(content.GetInfo())
+
 	if !c.CanStart(content.Provider()) {
 		return nil
 	}
@@ -90,6 +94,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 	}
 
 	c.content.Delete(req.Id)
+	c.signalR.DeleteContent(content.Id())
 	if content.State() != payload.ContentStateDownloading {
 		// The removed content has not written anything to disk yet. Nothing to clean up,
 		// and no need to start the next content.
