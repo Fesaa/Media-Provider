@@ -3,15 +3,35 @@ import {NavService} from "../_services/nav.service";
 import {SubscriptionService} from '../_services/subscription.service';
 import {RefreshFrequency, Subscription} from "../_models/subscription";
 import {Provider} from "../_models/page";
-import {SubscriptionComponent} from "./components/subscription/subscription.component";
 import {dropAnimation} from "../_animations/drop-animation";
-import {PaginatorComponent} from "../paginator/paginator.component";
+import {TableModule} from "primeng/table";
+import {SubscriptionExternalUrlPipe} from "../_pipes/subscription-external-url.pipe";
+import {DatePipe, NgClass} from "@angular/common";
+import {NgIcon} from "@ng-icons/core";
+import {Tooltip} from "primeng/tooltip";
+import {RefreshFrequencyPipe} from "../_pipes/refresh-frequency.pipe";
+import {Button} from "primeng/button";
+import { DialogService } from '../_services/dialog.service';
+import {MessageService} from "../_services/message.service";
+import {ContentStatePipe} from "../_pipes/content-state.pipe";
+import {Tag} from "primeng/tag";
+import {
+  SubscriptionEditDialogComponent
+} from "./components/subscription-edit-dialog/subscription-edit-dialog.component";
 
 @Component({
   selector: 'app-subscription-manager',
   imports: [
-    SubscriptionComponent,
-    PaginatorComponent,
+    TableModule,
+    SubscriptionExternalUrlPipe,
+    DatePipe,
+    NgIcon,
+    Tooltip,
+    NgClass,
+    RefreshFrequencyPipe,
+    Button,
+    Tag,
+    SubscriptionEditDialogComponent,
   ],
   templateUrl: './subscription-manager.component.html',
   styleUrl: './subscription-manager.component.css',
@@ -21,16 +41,15 @@ export class SubscriptionManagerComponent implements OnInit {
 
   allowedProviders: Provider[] = [];
   subscriptions: Subscription[] = [];
-  newSubscription: Subscription | null = null;
-  show: boolean = true;
+  displayEditSubscription: { [key: string]: boolean } = {};
 
-  currentPage: number = 1;
-  pageSize: number = 5;
-  protected readonly Math = Math;
+  size = 10
 
   constructor(private navService: NavService,
               private subscriptionService: SubscriptionService,
               private cdRef: ChangeDetectorRef,
+              private dialogService: DialogService,
+              private msgService: MessageService,
   ) {
   }
 
@@ -42,50 +61,57 @@ export class SubscriptionManagerComponent implements OnInit {
     })
     this.subscriptionService.providers().subscribe(providers => {
       this.allowedProviders = providers;
+      this.cdRef.detectChanges();
     })
   }
 
-  onPageChange(page: number) {
-    this.currentPage = page;
+  edit(sub: Subscription) {
+    this.displayEditSubscription = {} // Close others
+    this.displayEditSubscription[sub.ID] = true;
   }
 
-  remove(id: number) {
-    if (id === 0) {
-      this.newSubscription = null;
+  runOnce(sub: Subscription) {
+    if (sub.ID == 0) {
+      return
     }
 
-    this.subscriptions = this.subscriptions.filter(s => s.ID !== id);
-  }
-
-  reload() {
-    this.subscriptionService.all().subscribe(s => {
-      this.subscriptions = s ?? [];
-    })
-  }
-
-  toDisplay() {
-    if (!this.show) {
-      return []
-    }
-    return this.subscriptions.slice((this.currentPage - 1) * this.pageSize, this.currentPage * this.pageSize)
-  }
-
-  toggle() {
-    this.show = !this.show;
-  }
-
-  addNew() {
-    this.newSubscription = {
-      ID: 0,
-      info: {
-        title: "",
-        baseDir: "",
-        lastCheck: new Date(),
-        lastCheckSuccess: true,
+    this.subscriptionService.runOnce(sub.ID).subscribe({
+      next: () => {
+        this.msgService.success("Success", `${sub.info.title} has been added to the download queue`)
       },
-      contentId: "",
-      provider: Provider.MANGADEX,
-      refreshFrequency: RefreshFrequency.Week,
-    }
+      error: (err) => {
+        this.msgService.error("Failed to run once", err.error.message)
+      }
+    })
   }
+
+  async delete(sub: Subscription) {
+    if (!await this.dialogService.openDialog(`Are you sure you want to remove your subscription on ${sub.info.title}`)) {
+      return;
+    }
+
+
+    this.subscriptionService.delete(sub.ID).subscribe({
+      next: () => {
+        this.subscriptions = this.subscriptions.filter(s => s.ID !== sub.ID)
+        this.msgService.success('Deleted', `Subscription ${sub.info.title} removed.`);
+      },
+      error: err => {
+        this.msgService.error("Failed to delete the subscription", err.error.message);
+      }
+    })
+  }
+
+  getSeverity(sub: Subscription): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
+    switch (sub.refreshFrequency) {
+      case RefreshFrequency.Day:
+        return "secondary"
+      case RefreshFrequency.Week:
+        return "warn"
+      case RefreshFrequency.Month:
+        return "warn"
+    }
+    return "danger"
+  }
+
 }

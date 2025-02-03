@@ -1,0 +1,44 @@
+<p-dialog resizable="false" header="Edit subscription" [(visible)]="visible"
+          [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }"
+          [contentStyle]="{ 'overflow-y': 'visible' }" (onShow)="refresh()">
+
+  <div class="flex flex-col mb-2 space-y-5">
+
+    <p-floatlabel variant="in">
+      <input class="w-full overflow-clip" pInputText id="title" [(ngModel)]="copy.info.title">
+      <label for="title">Title</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="in">
+      <p-iconfield>
+        <p-inputicon class="pi pi-external-link hover:cursor-pointer" (click)="openExternal()">
+        </p-inputicon>
+        <input class="w-full overflow-clip" pInputText id="content-id" [(ngModel)]="copy.contentId">
+      </p-iconfield>
+      <label for="content-id">Content Id</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="in">
+      <p-iconfield>
+        <p-inputicon class="pi pi-folder hover:cursor-pointer" (click)="dirBrowser = true">
+        </p-inputicon>
+        <input class="w-full overflow-clip" pInputText id="content-dir" [(ngModel)]="copy.info.baseDir">
+      </p-iconfield>
+      <label for="content-dir">Content Dir</label>
+    </p-floatlabel>
+
+    <app-directory-selector [(visible)]="dirBrowser" [root]="''" (resultDir)="updateDir($event)"  />
+
+    <div class="flex flex-row space-x-2">
+      <p-select [style]="{ width: '100%' }" [options]="RefreshFrequencies" [(ngModel)]="copy.refreshFrequency" />
+      <p-select [style]="{ width: '100%' }" [options]="filteredProviders" [(ngModel)]="copy.provider" />
+    </div>
+
+    <div class="flex w-full flex-grow justify-end gap-4 mt-10">
+      <p-button (click)="close()" label="Cancel" severity="secondary"/>
+      <p-button (click)="edit()" label="Save"/>
+    </div>
+
+  </div>
+
+</p-dialog>

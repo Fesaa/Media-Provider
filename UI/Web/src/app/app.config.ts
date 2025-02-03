@@ -42,12 +42,14 @@ import {providePrimeNG} from "primeng/config";
 import Aura from '@primeng/themes/aura';
 import {ProviderNamePipe} from "./_pipes/provider-name.pipe";
 import {MessageService} from "primeng/api";
+import {SubscriptionExternalUrlPipe} from "./_pipes/subscription-external-url.pipe";
 
 export const appConfig: ApplicationConfig = {
   providers: [
     CommonModule,
     ContentTitlePipe,
     ProviderNamePipe,
+    SubscriptionExternalUrlPipe,
     provideZoneChangeDetection({eventCoalescing: true}),
     provideRouter(routes),
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true},

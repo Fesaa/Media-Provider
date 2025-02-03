@@ -1,4 +1,4 @@
-import {Component, HostListener, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, HostListener, Input, OnInit, Output} from '@angular/core';
 import {ReplaySubject} from "rxjs";
 import {NgIcon} from "@ng-icons/core";
 import {DirEntry} from "../../../_models/io";
@@ -32,13 +32,17 @@ export class DirectorySelectorComponent implements OnInit {
   @Input() create: boolean = false;
   @Input() customWidth: string = '50vw';
 
+  @Input() visible: boolean = true;
+  @Output() visibleChange: EventEmitter<boolean> = new EventEmitter<boolean>();
+
+  @Output() resultDir = new EventEmitter<string | undefined>();
+
   currentRoot = '';
   entries: DirEntry[] = [];
   routeStack: Stack<string> = new Stack<string>();
 
   query: string = '';
   newDirName: string = '';
-  visible: boolean = true;
   private result = new ReplaySubject<string | undefined>(1)
 
   constructor(private ioService: IoService,
@@ -129,8 +133,9 @@ export class DirectorySelectorComponent implements OnInit {
 
   closeDialog() {
     this.result.next(undefined);
+    this.resultDir.emit(undefined);
     this.result.complete();
-    this.visible = false;
+    this.visibleChange.emit(false);
   }
 
   confirm() {
@@ -139,8 +144,9 @@ export class DirectorySelectorComponent implements OnInit {
       path = path.substring(1);
     }
     this.result.next(path);
+    this.resultDir.emit(path);
     this.result.complete();
-    this.visible = false;
+    this.visibleChange.emit(false);
   }
 
   private loadChildren(dir: string) {
