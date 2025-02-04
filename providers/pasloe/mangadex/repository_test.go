@@ -1,6 +1,7 @@
 package mangadex
 
 import (
+	"context"
 	"github.com/rs/zerolog"
 	"io"
 	"net/http"
@@ -25,7 +26,7 @@ func tempRepo(t *testing.T, w io.Writer) Repository {
 func TestRepository_GetManga(t *testing.T) {
 	r := tempRepo(t, io.Discard)
 
-	res, err := r.GetManga(RainbowsAfterStormsID)
+	res, err := r.GetManga(context.Background(), RainbowsAfterStormsID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,43 +38,43 @@ func TestRepository_GetManga(t *testing.T) {
 
 func TestRepository_SearchManga(t *testing.T) {
 	r := tempRepo(t, io.Discard)
-	_, err := r.SearchManga(SearchOptions{SkipNotFoundTags: true})
+	_, err := r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(time.Second)
-	_, err = r.SearchManga(SearchOptions{SkipNotFoundTags: false, IncludedTags: []string{"Romance"}})
+	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: false, IncludedTags: []string{"Romance"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(time.Second)
-	_, err = r.SearchManga(SearchOptions{SkipNotFoundTags: false, IncludedTags: []string{"FRYTGUHIJO"}})
+	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: false, IncludedTags: []string{"FRYTGUHIJO"}})
 	if err == nil {
 		t.Fatal("expected error")
 	}
 
 	time.Sleep(time.Second)
-	_, err = r.SearchManga(SearchOptions{SkipNotFoundTags: true, IncludedTags: []string{"FRYTGUHIJO"}})
+	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: true, IncludedTags: []string{"FRYTGUHIJO"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(time.Second)
-	_, err = r.SearchManga(SearchOptions{SkipNotFoundTags: false, ExcludedTags: []string{"Romance"}})
+	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: false, ExcludedTags: []string{"Romance"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(time.Second)
-	_, err = r.SearchManga(SearchOptions{SkipNotFoundTags: false, ExcludedTags: []string{"FRYTGUHIJO"}})
+	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: false, ExcludedTags: []string{"FRYTGUHIJO"}})
 	if err == nil {
 		t.Fatal("expected error")
 	}
 
 	time.Sleep(time.Second)
-	_, err = r.SearchManga(SearchOptions{SkipNotFoundTags: true, ExcludedTags: []string{"FRYTGUHIJO"}})
+	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: true, ExcludedTags: []string{"FRYTGUHIJO"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +82,7 @@ func TestRepository_SearchManga(t *testing.T) {
 
 func TestRepository_GetChapters(t *testing.T) {
 	r := tempRepo(t, io.Discard)
-	res, err := r.GetChapters(RainbowsAfterStormsID)
+	res, err := r.GetChapters(context.Background(), RainbowsAfterStormsID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +95,7 @@ func TestRepository_GetChapters(t *testing.T) {
 func TestRepository_GetCoverImages(t *testing.T) {
 	r := tempRepo(t, io.Discard)
 
-	res, err := r.GetCoverImages(RainbowsAfterStormsID)
+	res, err := r.GetCoverImages(context.Background(), RainbowsAfterStormsID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +107,7 @@ func TestRepository_GetCoverImages(t *testing.T) {
 
 func TestRepository_GetCoverImagesOffSet(t *testing.T) {
 	r := tempRepo(t, io.Discard)
-	res, err := r.GetCoverImages(RainbowsAfterStormsID, 13)
+	res, err := r.GetCoverImages(context.Background(), RainbowsAfterStormsID, 13)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +119,7 @@ func TestRepository_GetCoverImagesOffSet(t *testing.T) {
 
 func TestRepository_GetChapterImages(t *testing.T) {
 	r := tempRepo(t, io.Discard)
-	res, err := r.GetChapterImages(RainbowsAfterStormsLastChapterID)
+	res, err := r.GetChapterImages(context.Background(), RainbowsAfterStormsLastChapterID)
 	if err != nil {
 		t.Fatal(err)
 	}

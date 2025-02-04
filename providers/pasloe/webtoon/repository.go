@@ -1,6 +1,7 @@
 package webtoon
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,9 +31,9 @@ var (
 )
 
 type Repository interface {
-	Search(options SearchOptions) ([]SearchData, error)
-	LoadImages(chapter Chapter) ([]string, error)
-	SeriesInfo(id string) (*Series, error)
+	Search(ctx context.Context, options SearchOptions) ([]SearchData, error)
+	LoadImages(ctx context.Context, chapter Chapter) ([]string, error)
+	SeriesInfo(ctx context.Context, id string) (*Series, error)
 }
 
 type repository struct {
@@ -47,8 +48,12 @@ func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
 	}
 }
 
-func (r *repository) Search(options SearchOptions) ([]SearchData, error) {
-	resp, err := r.httpClient.Get(searchUrl(options.Query))
+func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchData, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, searchUrl(options.Query), nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := r.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +75,8 @@ func (r *repository) Search(options SearchOptions) ([]SearchData, error) {
 	}), nil
 }
 
-func (r *repository) LoadImages(chapter Chapter) ([]string, error) {
-	doc, err := r.wrapInDoc(chapter.Url)
+func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string, error) {
+	doc, err := r.wrapInDoc(ctx, chapter.Url)
 	if err != nil {
 		return nil, err
 	}
@@ -91,9 +96,9 @@ func (r *repository) LoadImages(chapter Chapter) ([]string, error) {
 	return filteredUrls, nil
 }
 
-func (r *repository) SeriesInfo(id string) (*Series, error) {
+func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
 	seriesStartUrl := fmt.Sprintf(EpisodeList, id)
-	doc, err := r.wrapInDoc(seriesStartUrl)
+	doc, err := r.wrapInDoc(ctx, seriesStartUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +116,7 @@ func (r *repository) SeriesInfo(id string) (*Series, error) {
 
 	pages := utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
 	for index := 1; len(pages) > index; index++ {
-		doc, err = r.wrapInDoc(Domain + pages[index])
+		doc, err = r.wrapInDoc(ctx, Domain+pages[index])
 		if err != nil {
 			return nil, err
 		}
@@ -174,8 +179,12 @@ func href(_ int, selection *goquery.Selection) string {
 	return selection.AttrOr("href", "")
 }
 
-func (r *repository) wrapInDoc(url string) (*goquery.Document, error) {
-	res, err := r.httpClient.Get(url)
+func (r *repository) wrapInDoc(ctx context.Context, url string) (*goquery.Document, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	res, err := r.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,8 @@
 package dynasty
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -79,12 +81,14 @@ func (m *manga) RefUrl() string {
 	return m.seriesInfo.RefUrl()
 }
 
-func (m *manga) LoadInfo() chan struct{} {
+func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 	out := make(chan struct{})
 	go func() {
-		info, err := m.repository.SeriesInfo(m.id)
+		info, err := m.repository.SeriesInfo(ctx, m.id)
 		if err != nil {
-			m.Log.Error().Err(err).Msg("error while loading series info")
+			if !errors.Is(err, context.Canceled) {
+				m.Log.Error().Err(err).Msg("error while loading series info")
+			}
 			m.Cancel()
 			close(out)
 			return
@@ -189,8 +193,8 @@ func (m *manga) ContentLogger(chapter Chapter) zerolog.Logger {
 	return builder.Logger()
 }
 
-func (m *manga) ContentUrls(chapter Chapter) ([]string, error) {
-	return m.repository.ChapterImages(chapter.Id)
+func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
+	return m.repository.ChapterImages(ctx, chapter.Id)
 }
 
 func (m *manga) WriteContentMetaData(chapter Chapter) error {

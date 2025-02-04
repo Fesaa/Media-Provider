@@ -1,6 +1,8 @@
 package webtoon
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -83,12 +85,14 @@ func (w *webtoon) RefUrl() string {
 	return ""
 }
 
-func (w *webtoon) LoadInfo() chan struct{} {
+func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 	out := make(chan struct{})
 	go func() {
-		info, err := w.repository.SeriesInfo(w.id)
+		info, err := w.repository.SeriesInfo(ctx, w.id)
 		if err != nil {
-			w.Log.Error().Err(err).Msg("error while loading webtoon info")
+			if !errors.Is(err, context.Canceled) {
+				w.Log.Error().Err(err).Msg("error while loading webtoon info")
+			}
 			w.Cancel()
 			close(out)
 			return
@@ -98,7 +102,7 @@ func (w *webtoon) LoadInfo() chan struct{} {
 
 		// TempTitle is the title we previously got from the search, just should ensure we get the correct stuff
 		// WebToons search is surprisingly bad at correcting for spaces, special characters, etc...
-		search, err := w.repository.Search(SearchOptions{Query: w.Req.TempTitle})
+		search, err := w.repository.Search(ctx, SearchOptions{Query: w.Req.TempTitle})
 		if err != nil {
 			w.Log.Error().Err(err).Msg("error while loading webtoon info")
 			w.Cancel()
@@ -152,8 +156,8 @@ func (w *webtoon) ContentLogger(chapter Chapter) zerolog.Logger {
 	return w.Log.With().Str("number", chapter.Number).Str("title", chapter.Title).Logger()
 }
 
-func (w *webtoon) ContentUrls(chapter Chapter) ([]string, error) {
-	return w.repository.LoadImages(chapter)
+func (w *webtoon) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
+	return w.repository.LoadImages(ctx, chapter)
 }
 
 func (w *webtoon) WriteContentMetaData(chapter Chapter) error {

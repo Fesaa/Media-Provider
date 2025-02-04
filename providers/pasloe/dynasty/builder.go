@@ -1,6 +1,7 @@
 package dynasty
 
 import (
+	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -53,7 +54,7 @@ func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
 }
 
 func (b *Builder) Search(s SearchOptions) ([]SearchData, error) {
-	return b.repository.SearchSeries(s)
+	return b.repository.SearchSeries(context.TODO(), s)
 }
 
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {

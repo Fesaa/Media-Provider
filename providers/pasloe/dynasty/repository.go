@@ -1,6 +1,7 @@
 package dynasty
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -32,9 +33,9 @@ var (
 )
 
 type Repository interface {
-	SearchSeries(SearchOptions) ([]SearchData, error)
-	SeriesInfo(id string) (*Series, error)
-	ChapterImages(id string) ([]string, error)
+	SearchSeries(ctx context.Context, options SearchOptions) ([]SearchData, error)
+	SeriesInfo(ctx context.Context, id string) (*Series, error)
+	ChapterImages(ctx context.Context, id string) ([]string, error)
 }
 
 type repository struct {
@@ -49,8 +50,8 @@ func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
 	}
 }
 
-func (r *repository) ChapterImages(id string) ([]string, error) {
-	doc, err := r.wrapInDoc(chapterURL(id))
+func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, error) {
+	doc, err := r.wrapInDoc(ctx, chapterURL(id))
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +116,8 @@ func chapterURL(id string) string {
 	return fmt.Sprintf(CHAPTER, id)
 }
 
-func (r *repository) SeriesInfo(id string) (*Series, error) {
-	doc, err := r.wrapInDoc(seriesURL(id))
+func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
+	doc, err := r.wrapInDoc(ctx, seriesURL(id))
 	if err != nil {
 		return nil, err
 	}
@@ -190,8 +191,8 @@ func seriesURL(id string) string {
 	return fmt.Sprintf(SERIES, id)
 }
 
-func (r *repository) SearchSeries(opt SearchOptions) ([]SearchData, error) {
-	doc, err := r.wrapInDoc(searchURL(opt.Query))
+func (r *repository) SearchSeries(ctx context.Context, opt SearchOptions) ([]SearchData, error) {
+	doc, err := r.wrapInDoc(ctx, searchURL(opt.Query))
 	if err != nil {
 		return nil, err
 	}
@@ -238,8 +239,13 @@ func toTag(_ int, s *goquery.Selection) Tag {
 	}
 }
 
-func (r *repository) wrapInDoc(url string) (*goquery.Document, error) {
-	res, err := r.httpClient.Get(url)
+func (r *repository) wrapInDoc(ctx context.Context, url string) (*goquery.Document, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := r.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

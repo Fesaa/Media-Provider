@@ -102,6 +102,12 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 			Str("id", req.Id).
 			Str("title", content.Title()).
 			Msg("content won't be downloaded")
+
+		// Cancelling loading information
+		if content.State() == payload.ContentStateLoading {
+			go content.Cancel()
+		}
+
 		return nil
 	}
 

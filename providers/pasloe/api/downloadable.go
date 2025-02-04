@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -26,7 +27,7 @@ type DownloadInfoProvider[T any] interface {
 	Title() string
 	RefUrl() string
 	Provider() models.Provider
-	LoadInfo() chan struct{}
+	LoadInfo(ctx context.Context) chan struct{}
 	GetInfo() payload.InfoStat
 	All() []T
 	ContentList() []payload.ListContentData
@@ -36,7 +37,7 @@ type DownloadInfoProvider[T any] interface {
 	ContentKey(t T) string
 	ContentLogger(t T) zerolog.Logger
 
-	ContentUrls(t T) ([]string, error)
+	ContentUrls(ctx context.Context, t T) ([]string, error)
 	WriteContentMetaData(t T) error
 	DownloadContent(idx int, t T, url string) error
 

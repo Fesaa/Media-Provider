@@ -2,6 +2,7 @@ package dynasty
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -178,7 +179,7 @@ func TestManga_Title(t *testing.T) {
 	}
 
 	select {
-	case <-m.LoadInfo():
+	case <-m.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -197,7 +198,7 @@ func TestManga_TitleInvalid(t *testing.T) {
 	m := tempManga(t, r, &buffer)
 
 	select {
-	case <-m.LoadInfo():
+	case <-m.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -252,7 +253,7 @@ func TestManga_GetInfoAfterLoad(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	select {
-	case <-m.LoadInfo():
+	case <-m.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -276,7 +277,7 @@ func TestManga_All(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	select {
-	case <-m.LoadInfo():
+	case <-m.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -353,7 +354,7 @@ func TestManga_ContentUrls(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer)
 
-	urls, err := m.ContentUrls(chapter())
+	urls, err := m.ContentUrls(context.Background(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -369,7 +370,7 @@ func TestManga_WriteContentMetaData(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	select {
-	case <-m.LoadInfo():
+	case <-m.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -411,7 +412,7 @@ func TestManga_DownloadContent(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer)
 
-	urls, err := m.ContentUrls(chapter())
+	urls, err := m.ContentUrls(context.Background(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -465,7 +466,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 	}
 
 	select {
-	case <-m.LoadInfo():
+	case <-m.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
