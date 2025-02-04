@@ -6,14 +6,12 @@ import {Provider} from "../_models/page";
 import {dropAnimation} from "../_animations/drop-animation";
 import {TableModule} from "primeng/table";
 import {SubscriptionExternalUrlPipe} from "../_pipes/subscription-external-url.pipe";
-import {DatePipe, NgClass} from "@angular/common";
-import {NgIcon} from "@ng-icons/core";
+import {DatePipe} from "@angular/common";
 import {Tooltip} from "primeng/tooltip";
 import {RefreshFrequencyPipe} from "../_pipes/refresh-frequency.pipe";
 import {Button} from "primeng/button";
 import { DialogService } from '../_services/dialog.service';
 import {MessageService} from "../_services/message.service";
-import {ContentStatePipe} from "../_pipes/content-state.pipe";
 import {Tag} from "primeng/tag";
 import {
   SubscriptionEditDialogComponent
@@ -25,9 +23,7 @@ import {
     TableModule,
     SubscriptionExternalUrlPipe,
     DatePipe,
-    NgIcon,
     Tooltip,
-    NgClass,
     RefreshFrequencyPipe,
     Button,
     Tag,
