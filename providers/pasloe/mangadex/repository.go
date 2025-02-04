@@ -1,6 +1,7 @@
 package mangadex
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -10,11 +11,11 @@ import (
 )
 
 type Repository interface {
-	GetManga(id string) (*GetMangaResponse, error)
-	SearchManga(options SearchOptions) (*MangaSearchResponse, error)
-	GetChapters(id string, offset ...int) (*ChapterSearchResponse, error)
-	GetChapterImages(id string) (*ChapterImageSearchResponse, error)
-	GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error)
+	GetManga(ctx context.Context, id string) (*GetMangaResponse, error)
+	SearchManga(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error)
+	GetChapters(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error)
+	GetChapterImages(ctx context.Context, id string) (*ChapterImageSearchResponse, error)
+	GetCoverImages(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error)
 }
 
 type repository struct {
@@ -26,7 +27,7 @@ type repository struct {
 func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
 	r := &repository{
 		httpClient: httpClient,
-		log:        log,
+		log:        log.With().Str("handler", "mangadex-repository").Logger(),
 		tags:       utils.NewSafeMap[string, string](),
 	}
 	if err := r.loadTags(); err != nil {
@@ -86,42 +87,42 @@ func (r *repository) mapTags(in []string, skip bool) ([]string, error) {
 	return mappedTags, nil
 }
 
-func (r *repository) GetManga(id string) (*GetMangaResponse, error) {
+func (r *repository) GetManga(ctx context.Context, id string) (*GetMangaResponse, error) {
 	url := getMangaURL(id)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetManga")
 	var getMangaResponse GetMangaResponse
-	err := do(r.httpClient, url, &getMangaResponse)
+	err := do(ctx, r.httpClient, url, &getMangaResponse)
 	if err != nil {
 		return nil, err
 	}
 	return &getMangaResponse, nil
 }
 
-func (r *repository) SearchManga(options SearchOptions) (*MangaSearchResponse, error) {
+func (r *repository) SearchManga(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error) {
 	url, err := r.searchMangaURL(options)
 	if err != nil {
 		return nil, err
 	}
 
 	var searchResponse MangaSearchResponse
-	err = do(r.httpClient, url, &searchResponse)
+	err = do(ctx, r.httpClient, url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
 	return &searchResponse, nil
 }
 
-func (r *repository) GetChapters(id string, offset ...int) (*ChapterSearchResponse, error) {
+func (r *repository) GetChapters(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
 	url := chapterURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapters")
 	var searchResponse ChapterSearchResponse
-	err := do(r.httpClient, url, &searchResponse)
+	err := do(ctx, r.httpClient, url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
 
 	if searchResponse.Total > searchResponse.Limit+searchResponse.Offset {
-		extra, err := r.GetChapters(id, searchResponse.Limit+searchResponse.Offset)
+		extra, err := r.GetChapters(ctx, id, searchResponse.Limit+searchResponse.Offset)
 		if err != nil {
 			return nil, err
 		}
@@ -132,28 +133,28 @@ func (r *repository) GetChapters(id string, offset ...int) (*ChapterSearchRespon
 	return &searchResponse, nil
 }
 
-func (r *repository) GetChapterImages(id string) (*ChapterImageSearchResponse, error) {
+func (r *repository) GetChapterImages(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
 	url := chapterImageUrl(id)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapterImages")
 	var searchResponse ChapterImageSearchResponse
-	err := do(r.httpClient, url, &searchResponse)
+	err := do(ctx, r.httpClient, url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
 	return &searchResponse, nil
 }
 
-func (r *repository) GetCoverImages(id string, offset ...int) (*MangaCoverResponse, error) {
+func (r *repository) GetCoverImages(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error) {
 	url := getCoverURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Str("offset", fmt.Sprintf("%#v", offset)).Msg("GetCoverImages")
 	var searchResponse MangaCoverResponse
-	err := do(r.httpClient, url, &searchResponse)
+	err := do(ctx, r.httpClient, url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
 
 	if searchResponse.Total > searchResponse.Limit+searchResponse.Offset {
-		extra, err := r.GetCoverImages(id, searchResponse.Limit+searchResponse.Offset)
+		extra, err := r.GetCoverImages(ctx, id, searchResponse.Limit+searchResponse.Offset)
 		if err != nil {
 			return nil, err
 		}
@@ -164,8 +165,12 @@ func (r *repository) GetCoverImages(id string, offset ...int) (*MangaCoverRespon
 	return &searchResponse, nil
 }
 
-func do[T any](httpClient *http.Client, url string, out *T) error {
-	resp, err := httpClient.Get(url)
+func do[T any](ctx context.Context, httpClient *http.Client, url string, out *T) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}

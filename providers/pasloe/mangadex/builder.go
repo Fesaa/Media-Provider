@@ -1,6 +1,7 @@
 package mangadex
 
 import (
+	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -99,7 +100,7 @@ func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
 }
 
 func (b *Builder) Search(s SearchOptions) (*MangaSearchResponse, error) {
-	return b.repository.SearchManga(s)
+	return b.repository.SearchManga(context.TODO(), s)
 }
 
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {

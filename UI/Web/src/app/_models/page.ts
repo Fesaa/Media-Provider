@@ -10,7 +10,7 @@ export type Page = {
 }
 
 export type Modifier = {
-  id: number;
+  ID: number;
   title: string;
   key: string;
   type: ModifierType;
@@ -31,6 +31,38 @@ export enum Provider {
   WEBTOON,
   DYNASTY,
 }
+
+export const Providers = [
+  {
+    label: "Nyaa",
+    value: Provider.NYAA
+  },
+  {
+    label: "YTS",
+    value: Provider.YTS
+  },
+  {
+    label: "LimeTorrents",
+    value: Provider.LIMETORRENTS
+  },
+  {
+    label: "SubsPlease",
+    value: Provider.SUBSPLEASE
+  },
+  {
+    label: "MangaDex",
+    value: Provider.MANGADEX
+  },
+  {
+    label: "Webtoon",
+    value: Provider.WEBTOON
+  },
+  {
+    label: "Dynasty",
+    value: Provider.DYNASTY
+  }
+];
+
 
 export const providerNames = Object.keys(Provider).filter(key => isNaN(Number(key))) as string[];
 export const providerValues = Object.values(Provider).filter(value => typeof value === 'number') as number[];

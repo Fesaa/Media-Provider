@@ -3,7 +3,6 @@ import {SearchInfo} from "../../../_models/Info";
 import {FormGroup} from "@angular/forms";
 import {DownloadMetadata, Page, Provider} from "../../../_models/page";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
-import {NgIcon} from "@ng-icons/core";
 import {dropAnimation} from "../../../_animations/drop-animation";
 import {ImageService} from "../../../_services/image.service";
 import {Tooltip} from "primeng/tooltip";
@@ -14,11 +13,10 @@ import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-d
 @Component({
   selector: 'app-search-result',
   imports: [
-    NgIcon,
     Tooltip,
     Dialog,
     DownloadDialogComponent,
-    SubscriptionDialogComponent
+    SubscriptionDialogComponent,
   ],
   templateUrl: './search-result.component.html',
   styleUrl: './search-result.component.css',
@@ -27,8 +25,8 @@ import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-d
 export class SearchResultComponent {
 
   @Input({required: true}) page!: Page;
-  @Input({required: true}) form!: FormGroup;
   @Input({required: true}) searchResult!: SearchInfo;
+  @Input({required: true}) dir!: string;
   @Input({required: true}) providers!: Provider[];
   @Input({required: true}) metadata!: DownloadMetadata | undefined;
 
@@ -71,11 +69,6 @@ export class SearchResultComponent {
     } else {
       this.imageSource = this.searchResult.ImageUrl;
     }
-  }
-
-  downloadDir() {
-    const customDir = this.form.value["customDir"];
-    return customDir ? customDir : this.form.value["dir"];
   }
 
   download() {

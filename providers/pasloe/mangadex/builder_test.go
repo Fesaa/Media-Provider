@@ -1,6 +1,7 @@
 package mangadex
 
 import (
+	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/rs/zerolog"
@@ -136,7 +137,7 @@ func TestBuilder_Normalize(t *testing.T) {
 
 	repo := NewRepository(http.DefaultClient, zerolog.New(io.Discard))
 
-	res, err := repo.SearchManga(SearchOptions{Query: RainbowsAfterStorms})
+	res, err := repo.SearchManga(context.Background(), SearchOptions{Query: RainbowsAfterStorms})
 	if err != nil {
 		t.Fatal(err)
 	}

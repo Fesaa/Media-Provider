@@ -1,37 +1,59 @@
-<div class="w-full mb-10">
+<div class="pt-1 md:pt-5 mx-16">
+  <p-table
+    [value]="subscriptions"
+    [(rows)]="size"
+    [paginator]="subscriptions.length > size || size != 10"
+    stripedRows
+    [rowsPerPageOptions]="[5, 10, 20]"
+  >
+    <ng-template #header>
+      <tr>
+        <th>Title</th>
+        <th style="width:10%">Last ran</th>
+        <th style="width:10%">Frequency</th>
+        <th style="width:15%">Action</th>
+      </tr>
+    </ng-template>
 
-  <div class="flex flex-col p-2">
+    <ng-template #body let-sub>
+      <tr>
+        <th>
+          <a
+            class="hover:text-blue-800 hover:underline text-lg font-semibold"
+            href="{{sub.contentId | subscriptionExternalUrl:sub.provider}}"
+            target="_blank"
+          >
+            {{ sub.info.title }}
+          </a>
+        </th>
+        <th>
 
-    <div class="md:w-2/3 mx-auto flex flex-col md:flex-row space-y-2 md:space-y-0 md:justify-between mt-4">
-      <div (click)="toggle()"
-           class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg shadow-md hover:from-pink-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 hover:cursor-pointer">
-        {{ show ? "Hide" : "Show" }}
-      </div>
+          <p-tag [value]="sub.info.lastCheckSuccess ? 'Success' : 'Failing'"
+                 [pTooltip]="(sub.info.lastCheck | date:'yyyy-MM-dd HH:mm:ss') ?? 'Unknown'"
+                 tooltipPosition="top"
+                 [severity]="sub.info.lastCheckSuccess ? 'success' : 'danger'"
+          />
+        </th>
+        <th>
+          <p-tag [value]="sub.refreshFrequency | refreshFrequency" [severity]="getSeverity(sub)"/>
+        </th>
+        <th>
+          <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
 
-      <div (click)="addNew()"
-           class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg shadow-md hover:from-pink-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 hover:cursor-pointer">
-        + Add Subscription
-      </div>
-    </div>
+            <app-subscription-edit-dialog [sub]="sub" [providers]="allowedProviders" [(visible)]="displayEditSubscription[sub.ID]" />
 
-    @if (newSubscription !== null) {
-      <app-subscription class=".dropdown-item" [subscription]="newSubscription" [providers]="allowedProviders"
-                        (onDelete)="remove($event)" (onSave)="reload()"></app-subscription>
-    }
+            <p-button (click)="edit(sub)" [rounded]="true" [text]="true"
+                      pTooltip="Edit" tooltipPosition="bottom" icon="pi pi-pencil" severity="info"/>
 
-    @if (subscriptions.length > 0) {
-      <div [@dropDown]>
-        @for (sub of toDisplay(); track sub.ID) {
-          <app-subscription class=".dropdown-item" [subscription]="sub" [providers]="allowedProviders"
-                            (onDelete)="remove($event)" (onSave)="reload()"></app-subscription>
-        }
-      </div>
+            <p-button (click)="runOnce(sub)" [rounded]="true" [text]="true"
+                      pTooltip="Run Once" tooltipPosition="bottom" icon="pi pi-download" severity="success"/>
 
-      @if (show) {
-        <app-paginator [totalPages]="Math.ceil(subscriptions.length/pageSize)" [currentPage]="currentPage"
-                       (pageChange)="onPageChange($event)"></app-paginator>
-      }
-    }
-  </div>
+            <p-button (click)="delete(sub)" [rounded]="true" [text]="true"
+                      pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
+          </div>
+        </th>
+      </tr>
+    </ng-template>
 
+  </p-table>
 </div>

@@ -107,7 +107,9 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 	var sub models.Subscription
 	if err := ctx.BodyParser(&sub); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to parse subscription")
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	if err := sr.validatorSubscription(sub); err != nil {
@@ -124,7 +126,7 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	return ctx.Status(fiber.StatusOK).JSON(sub)
 }
 
 func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {

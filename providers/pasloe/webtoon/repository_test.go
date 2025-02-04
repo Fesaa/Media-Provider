@@ -1,6 +1,7 @@
 package webtoon
 
 import (
+	"context"
 	"github.com/rs/zerolog"
 	"io"
 	"net/http"
@@ -16,7 +17,7 @@ func tempRepository(w io.Writer) Repository {
 func TestRepository_Search(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	got, err := repo.Search(SearchOptions{Query: WebToonName})
+	got, err := repo.Search(context.Background(), SearchOptions{Query: WebToonName})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +41,7 @@ func TestRepository_LoadImages(t *testing.T) {
 		Date:     "Sep 21, 2022",
 	}
 
-	got, err := repo.LoadImages(chpt)
+	got, err := repo.LoadImages(context.Background(), chpt)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +55,7 @@ func TestRepository_LoadImages(t *testing.T) {
 func TestRepository_SeriesInfoShort(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	got, err := repo.SeriesInfo("4747")
+	got, err := repo.SeriesInfo(context.Background(), "4747")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +93,7 @@ func TestRepository_SeriesInfoShort(t *testing.T) {
 func TestRepository_SeriesInfoHrefAuthor(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	got, err := repo.SeriesInfo("6202")
+	got, err := repo.SeriesInfo(context.Background(), "6202")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +114,7 @@ func TestRepository_SeriesInfoHrefAuthor(t *testing.T) {
 func TestRepository_SeriesInfoSuperLong(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	got, err := repo.SeriesInfo("4464")
+	got, err := repo.SeriesInfo(context.Background(), "4464")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -5,7 +5,6 @@ import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/BoundNumberValidator";
-import {NgIcon} from "@ng-icons/core";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Tooltip} from "primeng/tooltip";
 import {MessageService} from "../../../../_services/message.service";
@@ -16,7 +15,6 @@ import {MessageService} from "../../../../_services/message.service";
     ReactiveFormsModule,
     FormInputComponent,
     FormSelectComponent,
-    NgIcon,
     Tooltip
   ],
   templateUrl: './server-settings.component.html',
@@ -51,24 +49,6 @@ export class ServerSettingsComponent implements OnInit {
 
   hidden() {
     return "X".repeat(this.config!.api_key.length);
-  }
-
-  toggle() {
-    this.showKey = !this.showKey;
-  }
-
-  copyApiKey() {
-    if (!this.config) {
-      return;
-    }
-    this.clipBoardService.copy(this.config.api_key)
-  }
-
-  refreshApiKey() {
-    this.configService.refreshApiKey().subscribe(apiKey => {
-      this.config!.api_key = apiKey;
-      this.cdRef.detectChanges();
-    })
   }
 
   save() {

@@ -1,6 +1,5 @@
 import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {NavService} from "../../_services/nav.service";
-import {NgIcon} from "@ng-icons/core";
 import {ServerSettingsComponent} from "./_components/server-settings/server-settings.component";
 import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
 import {dropAnimation} from "../../_animations/drop-animation";
@@ -23,7 +22,6 @@ export enum SettingsID {
 @Component({
   selector: 'app-settings',
   imports: [
-    NgIcon,
     ServerSettingsComponent,
     PagesSettingsComponent,
     UserSettingsComponent,
@@ -43,25 +41,25 @@ export class SettingsComponent implements OnInit {
     {
       id: SettingsID.Server,
       title: 'Server',
-      icon: 'pi-server',
+      icon: 'pi pi-server',
       perm: Perm.WriteConfig
     },
     {
       id: SettingsID.Preferences,
       title: "Preferences",
-      icon: 'pi-ethereum',
+      icon: 'pi pi-ethereum',
       perm: Perm.WriteConfig,
     },
     {
       id: SettingsID.Pages,
       title: 'Pages',
-      icon: 'pi-thumbtack',
+      icon: 'pi pi-thumbtack',
       perm: Perm.All,
     },
     {
       id: SettingsID.User,
       title: 'Users',
-      icon: 'pi-users',
+      icon: 'pi pi-users',
       perm: Perm.WriteUser,
     },
   ]

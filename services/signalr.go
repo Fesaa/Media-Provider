@@ -50,6 +50,12 @@ func RegisterSignalREndPoint(service SignalRService, app *fiber.App) error {
 }
 
 func (s *signalrService) Broadcast(eventType payload.EventType, data interface{}) {
+	defer func() {
+		// s.Clients() may panic bc of an NPE, because of the way our adaptor works [read. skips some logic]
+		if r := recover(); r != nil {
+			s.log.Debug().Any("recover", r).Msg("recovered from a panic in SignalRService.Broadcast")
+		}
+	}()
 	s.Clients().All().Send(string(eventType), data)
 }
 

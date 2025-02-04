@@ -23,7 +23,7 @@
         <div
           class="flex items-center space-x-2 p-2 rounded-lg border bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 dropdown-item"
         >
-          <ng-icon name="heroFolder" size="16"></ng-icon>
+          <span class="pi pi-folder"></span>
           <span
             class="w-full text-left hover:underline hover:cursor-pointer"
             (click)="goBack()"
@@ -37,20 +37,14 @@
             <div
               class="flex items-center space-x-2 p-2 rounded-lg border bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 dropdown-item"
             >
-              <ng-icon name="{{ entry.dir ? 'heroFolder' : 'heroDocument' }}" size="16"></ng-icon>
+              <span [class]="entry.dir ? 'pi pi-folder' : 'pi pi-file'"></span>
               <span
                 class="w-full font-bold text-left {{ entry.dir ? 'hover:underline hover:cursor-pointer' : '' }}"
                 (click)="selectNode(entry)"
               >{{ entry.name }}</span>
 
-              <!-- Copy Path Icon (if copy is enabled) -->
               @if (copy) {
-                <ng-icon
-                  name="heroClipboard"
-                  size="16"
-                  class="hover:cursor-pointer"
-                  (click)="copyPath(entry)"
-                ></ng-icon>
+                <span class="pi pi-clipboard hover:cursor-pointer" (click)="copyPath(entry)"></span>
               }
             </div>
           }
@@ -67,12 +61,7 @@
           [(ngModel)]="newDirName"
           (input)="onNewDirNameChange($event)"
         />
-        <ng-icon
-          class="text-black dark:text-white hover:cursor-pointer"
-          name="heroPlus"
-          size="16"
-          (click)="createNew()"
-        ></ng-icon>
+        <span class="pi pi-plus hover:cursor-pointer" (click)="createNew()"></span>
       </div>
     }
   </div>

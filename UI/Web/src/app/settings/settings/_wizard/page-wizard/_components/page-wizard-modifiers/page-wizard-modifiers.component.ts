@@ -99,7 +99,7 @@ export class PageWizardModifiersComponent {
   addNewModifier(): void {
     this.page.modifiers = [{
       key: '',
-      id: 0,
+      ID: 0,
       title: '',
       type: ModifierType.DROPDOWN,
       values: []

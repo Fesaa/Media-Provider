@@ -1,6 +1,8 @@
 package mangadex
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -101,21 +103,25 @@ func (m *manga) RefUrl() string {
 	return m.info.RefURL()
 }
 
-func (m *manga) LoadInfo() chan struct{} {
+func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 	out := make(chan struct{})
 	go func() {
-		mangaInfo, err := m.repository.GetManga(m.id)
+		mangaInfo, err := m.repository.GetManga(ctx, m.id)
 		if err != nil {
-			m.Log.Error().Err(err).Msg("error while loading manga info")
+			if !errors.Is(err, context.Canceled) {
+				m.Log.Error().Err(err).Msg("error while loading manga info")
+			}
 			m.Cancel()
 			close(out)
 			return
 		}
 		m.info = &mangaInfo.Data
 
-		chapters, err := m.repository.GetChapters(m.id)
+		chapters, err := m.repository.GetChapters(ctx, m.id)
 		if err != nil || chapters == nil {
-			m.Log.Error().Err(err).Msg("error while loading chapter info")
+			if !errors.Is(err, context.Canceled) {
+				m.Log.Error().Err(err).Msg("error while loading chapter info")
+			}
 			m.Cancel()
 			close(out)
 			return
@@ -124,7 +130,7 @@ func (m *manga) LoadInfo() chan struct{} {
 		m.chapters = m.FilterChapters(chapters)
 		m.SetSeriesStatus()
 
-		covers, err := m.repository.GetCoverImages(m.id)
+		covers, err := m.repository.GetCoverImages(ctx, m.id)
 		if err != nil || covers == nil {
 			m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
 			m.coverFactory = func(_ string) (string, bool) {
@@ -334,8 +340,8 @@ func (m *manga) ContentLogger(chapter ChapterSearchData) zerolog.Logger {
 	return builder.Logger()
 }
 
-func (m *manga) ContentUrls(chapter ChapterSearchData) ([]string, error) {
-	imageInfo, err := m.repository.GetChapterImages(chapter.Id)
+func (m *manga) ContentUrls(ctx context.Context, chapter ChapterSearchData) ([]string, error) {
+	imageInfo, err := m.repository.GetChapterImages(ctx, chapter.Id)
 	if err != nil {
 		return nil, err
 	}

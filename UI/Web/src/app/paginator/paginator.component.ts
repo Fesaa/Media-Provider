@@ -1,11 +1,9 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {NgIcon} from "@ng-icons/core";
 
 @Component({
   selector: 'app-paginator',
   templateUrl: './paginator.component.html',
   imports: [
-    NgIcon,
   ]
 })
 export class PaginatorComponent implements OnInit {

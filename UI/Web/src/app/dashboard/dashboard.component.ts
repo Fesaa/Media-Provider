@@ -167,6 +167,7 @@ export class DashboardComponent implements OnInit {
   }
 
   pickContent(info: InfoStat) {
+    this.displayContentPicker = {} // Close others
     this.displayContentPicker[info.id] = true;
   }
 

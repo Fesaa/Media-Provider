@@ -9,7 +9,7 @@
 
     @for (page of pages; track $index) {
       <li class="flex flex-row items-center justify-center text-center space-x-2">
-        <ng-icon name="heroChevronDoubleRight" class="w-4 h-4 dark:text-white"></ng-icon>
+        <span class="pi pi-angle-double-right w-4 h-4"></span>
         <a
           [routerLink]="['/page']"
           [queryParams]="{ index: page.ID }"

@@ -76,7 +76,6 @@ type DownloadBase[T IDAble] struct {
 	LastTime          time.Time
 	LastRead          int
 
-	ctx    context.Context
 	cancel context.CancelFunc
 	Wg     *sync.WaitGroup
 }
@@ -198,7 +197,7 @@ func (d *DownloadBase[T]) GetInfo() payload.InfoStat {
 		Name:         d.infoProvider.Title(),
 		RefUrl:       d.infoProvider.RefUrl(),
 		Size:         strconv.Itoa(d.Size()) + " Chapters",
-		Downloading:  d.Wg != nil,
+		Downloading:  d.State() == payload.ContentStateDownloading,
 		Progress:     utils.Percent(int64(d.ContentDownloaded), int64(d.Size())),
 		SpeedType:    payload.IMAGES,
 		Speed:        d.Speed(),
@@ -212,6 +211,7 @@ func (d *DownloadBase[T]) Cancel() {
 		return
 	}
 	d.cancel()
+	// TODO: Is this needed?
 	if d.Wg == nil {
 		return
 	}
@@ -225,12 +225,13 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	}
 
 	d.SetState(payload.ContentStateLoading)
-	d.ctx, d.cancel = context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	d.cancel = cancel
 	d.Log.Debug().Msg("loading content info")
 	select {
-	case <-d.ctx.Done():
+	case <-ctx.Done():
 		return
-	case <-d.infoProvider.LoadInfo():
+	case <-d.infoProvider.LoadInfo(ctx):
 	}
 
 	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
@@ -259,6 +260,10 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 }
 
 func (d *DownloadBase[T]) StartDownload() {
+	if d.State() != payload.ContentStateReady && d.State() != payload.ContentStateWaiting {
+		d.Log.Warn().Any("state", d.State()).Msg("cannot start download, content not ready")
+		return
+	}
 	d.SetState(payload.ContentStateDownloading)
 	go d.startDownload()
 }
@@ -353,6 +358,10 @@ func (d *DownloadBase[T]) UpdateProgress() {
 }
 
 func (d *DownloadBase[T]) startDownload() {
+	// Overwrite cancel, as we're doing something else
+	ctx, cancel := context.WithCancel(context.Background())
+	d.cancel = cancel
+
 	data := d.infoProvider.All()
 	d.Log.Trace().Int("size", len(data)).Msg("downloading content")
 	d.Wg = &sync.WaitGroup{}
@@ -363,7 +372,7 @@ func (d *DownloadBase[T]) startDownload() {
 			return slices.Contains(d.ToDownloadUserSelected, t.ID())
 		})
 		d.Log.Debug().Int("size", currentSize).Int("newSize", len(d.ToDownload)).
-			Msg("content further filtered after user has made a selecting in the UI")
+			Msg("content further filtered after user has made a selection in the UI")
 	}
 
 	d.Log.Info().
@@ -373,12 +382,12 @@ func (d *DownloadBase[T]) startDownload() {
 		Msg("downloading content")
 	for _, content := range d.ToDownload {
 		select {
-		case <-d.ctx.Done():
+		case <-ctx.Done():
 			d.Wg.Wait()
 			return
 		default:
 			d.Wg.Add(1)
-			err := d.downloadContent(content)
+			err := d.downloadContent(ctx, content)
 			d.Wg.Done()
 			if err != nil {
 				d.Log.Error().Err(err).Msg("error while downloading content; cleaning up")
@@ -409,7 +418,7 @@ func (d *DownloadBase[T]) startDownload() {
 }
 
 //nolint:funlen,gocognit
-func (d *DownloadBase[T]) downloadContent(t T) error {
+func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 	l := d.infoProvider.ContentLogger(t)
 
 	l.Trace().Msg("downloading content")
@@ -420,7 +429,7 @@ func (d *DownloadBase[T]) downloadContent(t T) error {
 	}
 	d.HasDownloaded = append(d.HasDownloaded, contentPath)
 
-	urls, err := d.infoProvider.ContentUrls(t)
+	urls, err := d.infoProvider.ContentUrls(ctx, t)
 	if err != nil {
 		return err
 	}
@@ -438,14 +447,14 @@ func (d *DownloadBase[T]) downloadContent(t T) error {
 	wg := &sync.WaitGroup{}
 	errCh := make(chan error, 1)
 	sem := make(chan struct{}, d.maxImages)
-	ctx, cancel := context.WithCancel(context.Background())
+	innerCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	for i, url := range urls {
 		select {
-		case <-d.ctx.Done():
-			return nil
 		case <-ctx.Done():
+			return nil
+		case <-innerCtx.Done():
 			wg.Wait()
 			return errors.New("content download was cancelled from within")
 		default:

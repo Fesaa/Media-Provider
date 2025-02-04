@@ -2,6 +2,7 @@ package webtoon
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -154,21 +155,21 @@ type mockRepository struct {
 	infoErr   error
 }
 
-func (m *mockRepository) Search(options SearchOptions) ([]SearchData, error) {
+func (m *mockRepository) Search(ctx context.Context, options SearchOptions) ([]SearchData, error) {
 	if m.searchErr != nil {
 		return nil, m.searchErr
 	}
 	return m.searchRes, nil
 }
 
-func (m *mockRepository) LoadImages(chapter Chapter) ([]string, error) {
+func (m *mockRepository) LoadImages(ctx context.Context, chapter Chapter) ([]string, error) {
 	if m.imageErr != nil {
 		return nil, m.imageErr
 	}
 	return m.imageRes, nil
 }
 
-func (m *mockRepository) SeriesInfo(id string) (*Series, error) {
+func (m *mockRepository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
 	if m.infoErr != nil {
 		return nil, m.infoErr
 	}
@@ -185,7 +186,7 @@ func TestWebtoon_Title(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo():
+	case <-wt.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -233,7 +234,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	repo.infoErr = fmt.Errorf("error")
 
 	select {
-	case <-wt.LoadInfo():
+	case <-wt.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -249,7 +250,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	repo.infoErr = nil
 	repo.searchErr = fmt.Errorf("error")
 	select {
-	case <-wt.LoadInfo():
+	case <-wt.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -270,7 +271,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo():
+	case <-wt.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -303,7 +304,7 @@ func TestWebtoon_All(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo():
+	case <-wt.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -368,7 +369,7 @@ func TestWebtoon_ContentUrls(t *testing.T) {
 	mock.imageRes = []string{"image1", "image2"}
 
 	want := 2
-	got, err := wt.ContentUrls(chapter())
+	got, err := wt.ContentUrls(context.Background(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -378,7 +379,7 @@ func TestWebtoon_ContentUrls(t *testing.T) {
 	}
 
 	mock.imageErr = fmt.Errorf("error")
-	got, err = wt.ContentUrls(chapter())
+	got, err = wt.ContentUrls(context.Background(), chapter())
 	if err == nil {
 		t.Errorf("got %v, want error", got)
 	}
@@ -427,7 +428,7 @@ func TestWebtoon_DownloadContent(t *testing.T) {
 	var buffer bytes.Buffer
 	w := tempWebtoon(t, &buffer)
 
-	urls, err := w.ContentUrls(chapter())
+	urls, err := w.ContentUrls(context.Background(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
