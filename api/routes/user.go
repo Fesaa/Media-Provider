@@ -282,6 +282,7 @@ func (ur *userRoutes) GenerateResetPassword(ctx *fiber.Ctx) error {
 
 	reset, err := ur.DB.Users.GetResetByUserId(userId)
 	if err == nil && reset != nil {
+		fmt.Printf("A reset link has been found for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.\n", reset.UserId, reset.Key, reset.Key)
 		return ctx.Status(fiber.StatusOK).JSON(reset)
 	} else if err != nil {
 		ur.Log.Warn().Err(err).Msg("failed to check for existing reset key")

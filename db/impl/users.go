@@ -146,7 +146,7 @@ func (u *userImpl) GetResetByUserId(userId uint) (*models.PasswordReset, error) 
 }
 
 func (u *userImpl) DeleteReset(key string) error {
-	return u.db.Delete(&models.PasswordReset{Key: key}).Error
+	return u.db.Delete(&models.PasswordReset{}, "key = ?", key).Error
 }
 
 func (u *userImpl) Delete(id uint) error {
