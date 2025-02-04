@@ -1,6 +1,5 @@
 import {Component, EventEmitter, HostListener, Input, OnInit, Output} from '@angular/core';
 import {ReplaySubject} from "rxjs";
-import {NgIcon} from "@ng-icons/core";
 import {DirEntry} from "../../../_models/io";
 import {Stack} from "../../data-structures/stack";
 import {IoService} from "../../../_services/io.service";
@@ -13,7 +12,6 @@ import {MessageService} from "../../../_services/message.service";
 @Component({
   selector: 'app-directory-selector',
   imports: [
-    NgIcon,
     FormsModule,
     Dialog,
     Button

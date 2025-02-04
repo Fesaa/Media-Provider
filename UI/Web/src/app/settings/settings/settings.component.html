@@ -6,8 +6,7 @@
       <div class="text-xl md:text-4xl">
         Settings
       </div>
-      <div class="block md:hidden hover:cursor-pointer">
-        <ng-icon (click)="toggleMobile()" name="heroAdjustmentsHorizontal" size="32"></ng-icon>
+      <div class="block md:hidden hover:cursor-pointer pi pi-sliders-h" style="font-size: 1.5rem" (click)="toggleMobile()">
       </div>
     </div>
 
@@ -35,7 +34,7 @@
               @if (canSee(setting.id)) {
                 <div (click)="setSettings(setting.id)"
                      class="dropdown-item flex flex-row space-x-2 items-center rounded-xl hover:cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-950 p-2 {{selected === setting.id ? 'bg-gray-200 dark:bg-gray-950': '' }}">
-                  <ng-icon name="{{setting.icon}}" size="16"></ng-icon>
+                  <span [class]="setting.icon"></span>
                   <span class="hover:cursor-pointer">{{ setting.title }}</span>
                 </div>
               }

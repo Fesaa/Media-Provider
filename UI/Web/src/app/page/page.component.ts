@@ -1,36 +1,41 @@
 import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {PageService} from "../_services/page.service";
-import {ContentService} from "../_services/content.service";
 import {DownloadMetadata, Modifier, ModifierType, Page, Provider} from "../_models/page";
-import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {SearchRequest} from "../_models/search";
-import {DropdownModifierComponent} from "./_components/dropdown-modifier/dropdown-modifier.component";
-import {MultiModifierComponent} from "./_components/multi-modifier/multi-modifier.component";
 import {SearchInfo} from "../_models/Info";
 import {SearchResultComponent} from "./_components/search-result/search-result.component";
 import {PaginatorComponent} from "../paginator/paginator.component";
 import {dropAnimation} from "../_animations/drop-animation";
 import {bounceIn500ms} from "../_animations/bounce-in";
 import {flyInOutAnimation} from "../_animations/fly-animation";
-import {NgIcon} from "@ng-icons/core";
-import {FormInputComponent} from "../shared/form/form-input/form-input.component";
 import {DialogService} from "../_services/dialog.service";
 import {fadeOut} from "../_animations/fade-out";
 import {SubscriptionService} from "../_services/subscription.service";
 import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
 import {MessageService} from "../_services/message.service";
+import {IconField} from "primeng/iconfield";
+import {InputText} from "primeng/inputtext";
+import {InputIcon} from "primeng/inputicon";
+import {Select} from "primeng/select";
+import {MultiSelect} from "primeng/multiselect";
+import {FloatLabel} from "primeng/floatlabel";
+import {ContentService} from "../_services/content.service";
 
 @Component({
   selector: 'app-page',
   imports: [
     ReactiveFormsModule,
-    DropdownModifierComponent,
-    MultiModifierComponent,
     SearchResultComponent,
     PaginatorComponent,
-    NgIcon,
-    FormInputComponent
+    IconField,
+    InputText,
+    InputIcon,
+    Select,
+    FormsModule,
+    MultiSelect,
+    FloatLabel
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.css',
@@ -38,12 +43,13 @@ import {MessageService} from "../_services/message.service";
 })
 export class PageComponent implements OnInit {
 
-  searchForm: FormGroup | undefined;
   page: Page | undefined = undefined;
-
-  modifiers: Modifier[] = [];
   providers: Provider[] = [];
   metadata: Map<Provider, DownloadMetadata> = new Map();
+  searchRequest!: SearchRequest;
+  dirs: {dir: string, custom: string} = {dir: '', custom: ''};
+
+  loading = false;
 
   searchResult: SearchInfo[] = [];
   currentPage: number = 1;
@@ -54,9 +60,8 @@ export class PageComponent implements OnInit {
 
   constructor(private navService: NavService,
               private pageService: PageService,
-              private downloadService: ContentService,
+              private contentService: ContentService,
               private cdRef: ChangeDetectorRef,
-              private fb: FormBuilder,
               private msgService: MessageService,
               private dialogService: DialogService,
               private subscriptionService: SubscriptionService,
@@ -70,12 +75,11 @@ export class PageComponent implements OnInit {
       this.pageService.getPage(index).subscribe(page => {
         this.hideSearchForm = true;
         this.cdRef.detectChanges();
-        this.searchResult = [];
+        this.setup(page);
+
 
         setTimeout(() => {
           this.page = page;
-          this.modifiers = this.page.modifiers;
-          this.buildForm(page);
           this.hideSearchForm = false;
           this.loadMetadata()
           this.cdRef.detectChanges()
@@ -88,58 +92,48 @@ export class PageComponent implements OnInit {
     })
   }
 
+  setup(page: Page) {
+    this.searchResult = [];
+
+    this.searchRequest = {
+      query: '',
+      provider: page.providers,
+    }
+
+    if (page.modifiers.length > 0) {
+      this.searchRequest.modifiers = {}
+      for (const mod of page.modifiers) {
+        if (mod.values.length > 0) {
+          switch (mod.type) {
+            case ModifierType.DROPDOWN:
+              this.searchRequest.modifiers[mod.key] = [mod.values[0].key]
+              break;
+            case ModifierType.MULTI:
+              this.searchRequest.modifiers[mod.key] = []
+              break;
+          }
+        }
+      }
+    }
+
+    this.dirs.dir = page.dirs[0]
+  }
+
+  updateDropdownModifier(mod: Modifier, value: string) {
+    this.searchRequest.modifiers![mod.key] = [value];
+  }
+
   getDownloadMetadata(provider: Provider) {
     return this.metadata.get(provider)
   }
 
-  buildForm(page: Page) {
-    this.searchForm = this.fb.group({
-      query: [''],
-      customDir: [null],
-    });
-
-    if (page.dirs.length > 0) {
-      this.searchForm.addControl('dir', this.fb.control(page.dirs[0]));
-    }
-
-    if (page.custom_root_dir) {
-      this.searchForm.addControl('customDir', this.fb.control(null));
-    }
-
-    for (const modifier of page.modifiers) {
-      switch (modifier.type) {
-        case ModifierType.DROPDOWN:
-          if (modifier.values.length > 0) {
-            this.searchForm.addControl(modifier.key, this.fb.control(modifier.values[0].key));
-          }
-          break;
-        case ModifierType.MULTI:
-          this.searchForm.addControl(modifier.key, this.fb.control([]));
-          break;
-      }
-    }
-  }
-
   search() {
-    if (!this.searchForm || !this.searchForm.valid || !this.page) {
-      this.msgService.error("Error", `Cannot search`);
+    if (this.loading) {
       return;
     }
-    const modifiers: { [key: string]: string[] } = {};
-    for (const modifier of this.page.modifiers) {
-      const val = this.searchForm.value[modifier.key];
-      if (val) {
-        modifiers[modifier.key] = Array.isArray(val) ? val : [val];
-      }
-    }
 
-    const req: SearchRequest = {
-      query: this.searchForm.value.query,
-      provider: this.page?.providers,
-      modifiers: modifiers,
-    };
-
-    this.downloadService.search(req).subscribe({
+    this.loading = true;
+    this.contentService.search(this.searchRequest).subscribe({
       next: info => {
         if (!info || info.length == 0) {
           this.msgService.error("No results found")
@@ -153,7 +147,7 @@ export class PageComponent implements OnInit {
       error: error => {
         this.msgService.error("Search failed", error.error.message);
       }
-    })
+    }).add(() => this.loading = false)
   }
 
   toggleSearchForm() {
@@ -168,12 +162,19 @@ export class PageComponent implements OnInit {
 
     const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir, {create: true,});
     if (dir) {
-      this.searchForm?.get('customDir')?.setValue(dir);
+      this.dirs.custom = dir;
     }
   }
 
   clearCustomDir() {
-    this.searchForm?.get('customDir')?.setValue(null);
+    this.dirs.custom = '';
+  }
+
+  getDir() {
+    if (this.dirs.custom && this.dirs.custom !== '') {
+      return this.dirs.custom;
+    }
+    return this.dirs.dir;
   }
 
   toShowResults(): SearchInfo[] {

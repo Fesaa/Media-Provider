@@ -36,15 +36,15 @@
         <div class="w-full flex flex-col md:flex-row items-center justify-between space-y-5 md:space-y-0 my-3">
           <div class="flex items-center">
             <p-floatlabel variant="on">
-              <label [for]="'title_' + mod.id" class="font-semibold w-24">Title</label>
-              <input [(ngModel)]="mod.title" [id]="'title_' + mod.id" autocomplete="off" class="flex-auto" pInputText/>
+              <label [for]="'title_' + mod.ID" class="font-semibold w-24">Title</label>
+              <input [(ngModel)]="mod.title" [id]="'title_' + mod.ID" autocomplete="off" class="flex-auto" pInputText/>
             </p-floatlabel>
           </div>
 
           <div class="flex items-center">
             <p-floatlabel variant="on">
-              <label [for]="'key_' + mod.id" class="font-semibold w-24" pTooltip="Check wiki!">Key</label>
-              <input [(ngModel)]="mod.key" [id]="'key_' + mod.id" autocomplete="off" class="flex-auto" pInputText/>
+              <label [for]="'key_' + mod.ID" class="font-semibold w-24" pTooltip="Check wiki!">Key</label>
+              <input [(ngModel)]="mod.key" [id]="'key_' + mod.ID" autocomplete="off" class="flex-auto" pInputText/>
             </p-floatlabel>
           </div>
 
@@ -59,12 +59,12 @@
           <div *ngFor="let modV of mod.values"
                class="flex flex-col md:flex-row mb-7 md:mb-0 md:mt-0 justify-between items-center">
             <p-floatlabel>
-              <label [for]="mod.id + '_key_' + modV.key">Key</label>
+              <label [for]="mod.ID + '_key_' + modV.key">Key</label>
 
               <p-iconfield>
                 <p-inputicon (click)="deleteModifierValue(mod, modV.key)"
                              styleClass="pi pi-trash hover:cursor-pointer"></p-inputicon>
-                <input [(ngModel)]="modV.key" [id]="mod.id + '_key_' + modV.key" autocomplete="off" pInputText>
+                <input [(ngModel)]="modV.key" [id]="mod.ID + '_key_' + modV.key" autocomplete="off" pInputText>
               </p-iconfield>
 
             </p-floatlabel>
@@ -73,8 +73,8 @@
             <span class="pi pi-arrow-down flex md:hidden my-3 md:my-0"></span>
 
             <p-floatlabel>
-              <label [for]="mod.id + '_val_' + modV.key">Value</label>
-              <input [(ngModel)]="modV.value" [id]="mod.id + '_val_' + modV.key" autocomplete="off" pInputText>
+              <label [for]="mod.ID + '_val_' + modV.key">Value</label>
+              <input [(ngModel)]="modV.value" [id]="mod.ID + '_val_' + modV.key" autocomplete="off" pInputText>
             </p-floatlabel>
 
           </div>

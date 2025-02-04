@@ -1,8 +1,7 @@
 @if (totalPages > 1) {
   <div class="flex items-center justify-center space-x-2">
     <button>
-      <ng-icon class="text-center hover:cursor-pointer" name="heroChevronLeft" size="16"
-               (click)="previousPage()"></ng-icon>
+      <span class="pi pi-chevron-left text-center hover:cursor-pointer" (click)="previousPage()"></span>
     </button>
 
     <div class="flex items-center space-x-1">
@@ -17,8 +16,7 @@
     </div>
 
     <button>
-      <ng-icon class="text-center hover:cursor-pointer" name="heroChevronRight" size="16"
-               (click)="nextPage()"></ng-icon>
+      <span class="pi pi-chevron-right text-center hover:cursor-pointer" (click)="nextPage()"></span>
     </button>
   </div>
 }

@@ -1,7 +1,6 @@
 import {Component} from '@angular/core';
 import {PageService} from "../../../_services/page.service";
 import {RouterLink} from "@angular/router";
-import {NgIcon} from "@ng-icons/core";
 import {dropAnimation} from "../../../_animations/drop-animation";
 import {Page} from "../../../_models/page";
 import {MessageService} from "../../../_services/message.service";
@@ -10,7 +9,6 @@ import {MessageService} from "../../../_services/message.service";
   selector: 'app-suggestion-dashboard',
   imports: [
     RouterLink,
-    NgIcon
   ],
   templateUrl: './suggestion-dashboard.component.html',
   styleUrl: './suggestion-dashboard.component.css',

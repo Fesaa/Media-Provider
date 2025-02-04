@@ -6,35 +6,6 @@ import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi} from "@ang
 import {AuthInterceptor} from "./_interceptors/auth-headers.interceptor";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {AuthRedirectInterceptor} from "./_interceptors/auth-redirect.interceptor";
-import {NgIconsModule} from "@ng-icons/core";
-import {
-  heroAdjustmentsHorizontal,
-  heroArrowDownTray,
-  heroArrowPath,
-  heroArrowUp,
-  heroCheckCircle,
-  heroChevronDoubleRight,
-  heroChevronDown,
-  heroChevronLeft,
-  heroChevronRight,
-  heroChevronUp,
-  heroClipboard,
-  heroDocument,
-  heroEye,
-  heroEyeSlash,
-  heroFolder,
-  heroFolderArrowDown,
-  heroMinus,
-  heroPencil,
-  heroPlus,
-  heroPlusCircle,
-  heroServerStack,
-  heroSquare3Stack3d,
-  heroTrash,
-  heroUser,
-  heroXCircle,
-  heroXMark,
-} from '@ng-icons/heroicons/outline';
 import {CommonModule} from "@angular/common";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
@@ -55,34 +26,7 @@ export const appConfig: ApplicationConfig = {
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true},
     {provide: HTTP_INTERCEPTORS, useClass: AuthRedirectInterceptor, multi: true},
     provideHttpClient(withInterceptorsFromDi()),
-    importProvidersFrom(BrowserAnimationsModule, NgIconsModule.withIcons({
-      heroChevronDoubleRight,
-      heroChevronUp,
-      heroChevronDown,
-      heroArrowDownTray,
-      heroTrash,
-      heroArrowUp,
-      heroFolder,
-      heroDocument,
-      heroSquare3Stack3d,
-      heroClipboard,
-      heroPlus,
-      heroAdjustmentsHorizontal,
-      heroServerStack,
-      heroPlusCircle,
-      heroMinus,
-      heroXMark,
-      heroChevronLeft,
-      heroArrowPath,
-      heroEye,
-      heroEyeSlash,
-      heroChevronRight,
-      heroUser,
-      heroCheckCircle,
-      heroXCircle,
-      heroPencil,
-      heroFolderArrowDown,
-    })), provideAnimationsAsync(),
+    importProvidersFrom(BrowserAnimationsModule), provideAnimationsAsync(),
     providePrimeNG({
       theme: {
         preset: Aura
