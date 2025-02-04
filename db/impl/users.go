@@ -150,5 +150,5 @@ func (u *userImpl) DeleteReset(key string) error {
 }
 
 func (u *userImpl) Delete(id uint) error {
-	return u.db.Delete(&models.User{}, "id = ?", id).Error
+	return u.db.Unscoped().Delete(&models.User{}, "id = ?", id).Error
 }
