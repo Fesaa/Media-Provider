@@ -1,7 +1,6 @@
 package impl
 
 import (
-	"database/sql"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"gorm.io/gorm"
 	"time"
@@ -58,7 +57,7 @@ func (n notifications) MarkRead(u uint) error {
 			ID: u,
 		},
 	}
-	return n.db.Model(&model).Updates(&models.Notification{Read: true, ReadAt: sql.NullTime{Time: time.Now()}}).Error
+	return n.db.Model(&model).Updates(&models.Notification{Read: true}).Error
 }
 
 func (n notifications) MarkUnread(u uint) error {
@@ -67,14 +66,16 @@ func (n notifications) MarkUnread(u uint) error {
 			ID: u,
 		},
 	}
-	return n.db.Model(&model).Updates(&models.Notification{Read: false, ReadAt: sql.NullTime{}}).Error
+	return n.db.Model(&model).Updates(&models.Notification{Read: false}).Error
 }
 
 func (n notifications) Unread() (int64, error) {
 	var count int64
-	err := n.db.Model(&models.Notification{Read: false}).
-		Where(&models.Notification{Group: models.GroupSecurity}).
-		Or(&models.Notification{Group: models.GroupGeneral}).
+	err := n.db.Model(&models.Notification{}).
+		Where(map[string]any{"read": false}).
+		Where(n.db.Where(&models.Notification{Group: models.GroupSecurity}).
+			Or(&models.Notification{Group: models.GroupGeneral}).
+			Or(&models.Notification{Group: models.GroupError})).
 		Count(&count).Error
 	return count, err
 }

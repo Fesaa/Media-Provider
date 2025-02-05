@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"gorm.io/gorm"
 )
 
@@ -14,8 +13,7 @@ type Notification struct {
 	Colour  NotificationColour `json:"colour"`
 	Group   NotificationGroup  `json:"group" gorm:"index"`
 
-	Read   bool         `json:"read"`
-	ReadAt sql.NullTime `json:"readAt"`
+	Read bool `json:"read"`
 }
 
 type NotificationColour string
@@ -38,4 +36,5 @@ const (
 	GroupContent  NotificationGroup = "content"
 	GroupSecurity NotificationGroup = "security"
 	GroupGeneral  NotificationGroup = "general"
+	GroupError    NotificationGroup = "error"
 )

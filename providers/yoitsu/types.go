@@ -20,6 +20,7 @@ type Torrent interface {
 	Cancel()
 	IsDone() bool
 	Cleanup(root string)
+	Files() int
 }
 
 // Yoitsu wrapper around the torrent.Client struct

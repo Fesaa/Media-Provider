@@ -60,7 +60,7 @@ func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	err = sr.ContentService.DownloadSubscription(sub)
+	err = sr.ContentService.DownloadSubscription(sub, false) // This was manually triggered
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to download subscription")
 		return fiber.ErrInternalServerError

@@ -1,1 +1,38 @@
-<p>notifications works!</p>
+
+<div>
+
+  <p-table [value]="groupedNotifications()">
+    <ng-template #body let-notification>
+      <tr>
+        <td style="{width: 10%}"><p-tag [value]="notification.group" [severity]="groupSeverity(notification.group)" /></td>
+        <td style="{width: 20%}">{{notification.title}}</td>
+        <td style="{width: 50%}">{{notification.summary}}</td>
+        <td style="{width: 20%}">
+          <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
+
+            @if (notification.read) {
+              <p-button icon="pi pi-check-circle" size="small" pTooltip="mark unread" (click)="markUnRead(notification)" />
+            } @else {
+              <p-button icon="pi pi-circle" size="small" severity="warn" pTooltip="mark read" (click)="markRead(notification)" />
+            }
+
+            <p-button icon="pi pi-info-circle" size="small" severity="info" (click)="show(notification.ID)" />
+
+            <p-button icon="pi pi-trash" size="small" severity="danger" (click)="delete(notification)" />
+
+            <p-dialog [(visible)]="infoVisibility[notification.ID]" [header]="notification.title">
+              {{notification.body}}
+            </p-dialog>
+
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <p-card>
+        Nothing to report
+      </p-card>
+    </ng-template>
+  </p-table>
+
+</div>

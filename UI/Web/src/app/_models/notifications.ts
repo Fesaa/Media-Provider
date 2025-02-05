@@ -1,5 +1,5 @@
 export interface Notification {
-  id: number;
+  ID: number;
   title: string;
   summary: string;
   body: string;
@@ -7,6 +7,7 @@ export interface Notification {
   group: NotificationGroup;
   read: boolean;
   readAt?: Date;
+  CreatedAt: Date;
 }
 
 export enum NotificationColour {
@@ -17,11 +18,12 @@ export enum NotificationColour {
   Warn = "warn",
   Help = "help",
   Danger = "danger",
-  Contrast = "contrast"
+  Contrast = "contrast",
 }
 
 export enum NotificationGroup {
   Content = "content",
   Security = "security",
-  General = "general"
+  General = "general",
+  Error = "error",
 }

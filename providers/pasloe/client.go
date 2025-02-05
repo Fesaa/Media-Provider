@@ -121,15 +121,22 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 	go func() {
 		content.Cancel()
 
-		c.notify.NotifyContentQ("Download finished",
-			fmt.Sprintf("%s finished downloading %d item(s)", content.Title(), len(content.GetNewContent())),
-			models.Green)
-
 		if req.DeleteFiles {
 			go c.deleteFiles(content)
-		} else {
-			go c.cleanup(content)
+			c.startNext(content.Provider())
+			return
 		}
+
+		text := fmt.Sprintf("%s finished downloading %d item(s)", content.Title(), len(content.GetNewContent()))
+		c.notifier(content.Request()).Notify(models.Notification{
+			Title:   "Download finished",
+			Summary: utils.Shorten(text, services.SummarySize),
+			Body:    text,
+			Colour:  models.Green,
+			Group:   models.GroupContent,
+		})
+
+		go c.cleanup(content)
 		c.startNext(content.Provider())
 	}()
 	return nil
@@ -155,6 +162,13 @@ func (c *client) CanStart(provider models.Provider) bool {
 	})
 
 	return !providerBusy
+}
+
+func (c *client) notifier(req payload.DownloadRequest) services.Notifier {
+	if req.IsSubscription {
+		return c.notify
+	}
+	return c.signalR
 }
 
 func (c *client) loadAllInfo(provider models.Provider) {

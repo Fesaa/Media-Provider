@@ -36,7 +36,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
 		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
-		signalR services.SignalRService,
+		signalR services.SignalRService, notification services.NotificationService,
 	) {
 		block = &manga{
 			id:              req.Id,
@@ -48,7 +48,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
 		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client,
-			log.With().Str("handler", "mangadex").Logger(), signalR)
+			log.With().Str("handler", "mangadex").Logger(), signalR, notification)
 		block.DownloadBase = d
 	}))
 

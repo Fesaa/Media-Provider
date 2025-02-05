@@ -24,15 +24,15 @@ export class NotificationService {
     return this.http.get<number>(`${this.baseUrl}/amount`);
   }
 
-  markAsRead(id: string) {
+  markAsRead(id: number) {
     return this.http.post<any>(`${this.baseUrl}/${id}/read`, {});
   }
 
-  markAsUnread(id: string) {
+  markAsUnread(id: number) {
     return this.http.post<any>(`${this.baseUrl}/${id}/unread`, {});
   }
 
-  deleteNotification(id: string) {
+  deleteNotification(id: number) {
     return this.http.delete<any>(`${this.baseUrl}/${id}`);
   }
 }

@@ -1,7 +1,6 @@
 package services
 
 import (
-	"database/sql"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -14,22 +13,26 @@ const (
 	SummarySize = 100
 )
 
-type NotificationService interface {
-	NotifyStruct(models.Notification)
-	// Notify constructs the struct, and calls NotifyStruct
-	Notify(title, summary, body string, colour models.NotificationColour, group models.NotificationGroup)
+type Notifier interface {
+	Notify(models.Notification)
+}
 
-	// NotifyContent calls Notify with GroupContent, default colour is blue(info)
+type NotificationService interface {
+	Notify(models.Notification)
+	// NotifyHelper constructs the struct, and calls Notify
+	NotifyHelper(title, summary, body string, colour models.NotificationColour, group models.NotificationGroup)
+
+	// NotifyContent calls NotifyHelper with GroupContent, default colour is blue(info)
 	NotifyContent(title, summary, body string, colours ...models.NotificationColour)
 	// NotifyContentQ calls NotifyContent with summary being the first 40 characters of body
 	NotifyContentQ(title, body string, colours ...models.NotificationColour)
 
-	// NotifySecurity calls Notify with GroupSecurity, default colour is orange(warn)
+	// NotifySecurity calls NotifyHelper with GroupSecurity, default colour is orange(warn)
 	NotifySecurity(title, summary, body string, colours ...models.NotificationColour)
 	// NotifySecurityQ calls NotifySecurity with summary being the first 40 characters of body
 	NotifySecurityQ(title, body string, colours ...models.NotificationColour)
 
-	// NotifyGeneral calls Notify with GroupGeneral, default colour is white(secondary)
+	// NotifyGeneral calls NotifyHelper with GroupGeneral, default colour is white(secondary)
 	NotifyGeneral(title, summary, body string, colours ...models.NotificationColour)
 	// NotifyGeneralQ calls NotifyGeneral with summary being the first 40 characters of body
 	NotifyGeneralQ(title, body string, colours ...models.NotificationColour)
@@ -54,7 +57,7 @@ type notificationService struct {
 	signalR SignalRService
 }
 
-func (n *notificationService) NotifyStruct(notification models.Notification) {
+func (n *notificationService) Notify(notification models.Notification) {
 	n.log.Debug().Any("notification", notification).Msg("adding notification")
 	n.signalR.Notify(notification)
 	if err := n.db.Notifications.New(notification); err != nil {
@@ -62,21 +65,20 @@ func (n *notificationService) NotifyStruct(notification models.Notification) {
 	}
 }
 
-func (n *notificationService) Notify(title, summary, body string, colour models.NotificationColour, group models.NotificationGroup) {
-	n.NotifyStruct(models.Notification{
+func (n *notificationService) NotifyHelper(title, summary, body string, colour models.NotificationColour, group models.NotificationGroup) {
+	n.Notify(models.Notification{
 		Title:   title,
 		Summary: summary,
 		Body:    body,
 		Colour:  colour,
 		Group:   group,
 		Read:    false,
-		ReadAt:  sql.NullTime{},
 	})
 }
 
 func (n *notificationService) NotifyContent(title, summary, body string, colours ...models.NotificationColour) {
 	colour := utils.OrDefault(colours, models.Blue)
-	n.Notify(title, summary, body, colour, models.GroupContent)
+	n.NotifyHelper(title, summary, body, colour, models.GroupContent)
 }
 
 func (n *notificationService) NotifyContentQ(title, body string, colours ...models.NotificationColour) {
@@ -85,7 +87,7 @@ func (n *notificationService) NotifyContentQ(title, body string, colours ...mode
 
 func (n *notificationService) NotifySecurity(title, summary, body string, colours ...models.NotificationColour) {
 	colour := utils.OrDefault(colours, models.Orange)
-	n.Notify(title, summary, body, colour, models.GroupSecurity)
+	n.NotifyHelper(title, summary, body, colour, models.GroupSecurity)
 }
 
 func (n *notificationService) NotifySecurityQ(title, body string, colours ...models.NotificationColour) {
@@ -94,7 +96,7 @@ func (n *notificationService) NotifySecurityQ(title, body string, colours ...mod
 
 func (n *notificationService) NotifyGeneral(title, summary, body string, colours ...models.NotificationColour) {
 	colour := utils.OrDefault(colours, models.White)
-	n.Notify(title, summary, body, colour, models.GroupGeneral)
+	n.NotifyHelper(title, summary, body, colour, models.GroupGeneral)
 }
 
 func (n *notificationService) NotifyGeneralQ(title, body string, colours ...models.NotificationColour) {
@@ -111,14 +113,5 @@ func (n *notificationService) MarkRead(id uint) error {
 }
 
 func (n *notificationService) MarkUnRead(id uint) error {
-	notification, err := n.db.Notifications.Get(id)
-	if err != nil {
-		return err
-	}
-	if err = n.db.Notifications.MarkUnread(id); err != nil {
-		return err
-	}
-
-	n.signalR.Notify(notification)
-	return nil
+	return n.db.Notifications.MarkUnread(id)
 }
