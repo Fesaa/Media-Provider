@@ -132,12 +132,12 @@ func (s *subscriptionService) Update(sub models.Subscription) error {
 		return fmt.Errorf("failed to normalize subscription: %w", err)
 	}
 
-	err = s.db.Subscriptions.Update(sub)
+	existing, err = s.db.Subscriptions.GetByContentId(sub.ContentId)
 	if err != nil {
 		return err
 	}
 
-	existing, err = s.db.Subscriptions.GetByContentId(sub.ContentId)
+	err = s.db.Subscriptions.Update(sub)
 	if err != nil {
 		return err
 	}
