@@ -35,6 +35,7 @@ export class SubscriptionEditDialogComponent {
   @Input({required: true}) visible!: boolean;
   @Output() visibleChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Input({required: true}) sub!: Subscription;
+  @Output() update: EventEmitter<Subscription> = new EventEmitter<Subscription>();
   @Input({required: true}) providers!: Provider[];
 
   copy: Subscription = {
@@ -95,6 +96,7 @@ export class SubscriptionEditDialogComponent {
       next: () => {
         this.msgService.success("Updated", `${this.copy.info.title} has been updated`)
         this.sub = this.copy
+        this.update.emit(this.copy)
       },
       error: err => {
         this.msgService.error("Failed", `An error occurred while trying to update ${this.copy.info.title}:\n ${err.error.message}`)

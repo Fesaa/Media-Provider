@@ -66,6 +66,16 @@ export class SubscriptionManagerComponent implements OnInit {
     this.displayEditSubscription[sub.ID] = true;
   }
 
+  update(sub: Subscription) {
+    this.subscriptions = this.subscriptions.map(s => {
+      if (s.ID !== sub.ID) {
+        return s;
+      }
+
+      return sub;
+    })
+  }
+
   runOnce(sub: Subscription) {
     if (sub.ID == 0) {
       return
@@ -101,13 +111,12 @@ export class SubscriptionManagerComponent implements OnInit {
   getSeverity(sub: Subscription): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
     switch (sub.refreshFrequency) {
       case RefreshFrequency.Day:
-        return "secondary"
+        return "info"
       case RefreshFrequency.Week:
         return "warn"
       case RefreshFrequency.Month:
-        return "warn"
+        return "danger"
     }
-    return "danger"
   }
 
 }

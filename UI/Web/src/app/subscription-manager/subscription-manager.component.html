@@ -40,7 +40,7 @@
         <th>
           <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
 
-            <app-subscription-edit-dialog [sub]="sub" [providers]="allowedProviders" [(visible)]="displayEditSubscription[sub.ID]" />
+            <app-subscription-edit-dialog (update)="update($event)" [sub]="sub" [providers]="allowedProviders" [(visible)]="displayEditSubscription[sub.ID]" />
 
             <p-button (click)="edit(sub)" [rounded]="true" [text]="true"
                       pTooltip="Edit" tooltipPosition="bottom" icon="pi pi-pencil" severity="info"/>
