@@ -66,6 +66,16 @@ export class SubscriptionManagerComponent implements OnInit {
     this.displayEditSubscription[sub.ID] = true;
   }
 
+  update(sub: Subscription) {
+    this.subscriptions = this.subscriptions.map(s => {
+      if (s.ID !== sub.ID) {
+        return s;
+      }
+
+      return sub;
+    })
+  }
+
   runOnce(sub: Subscription) {
     if (sub.ID == 0) {
       return
