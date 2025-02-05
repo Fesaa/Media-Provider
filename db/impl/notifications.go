@@ -72,6 +72,9 @@ func (n notifications) MarkUnread(u uint) error {
 
 func (n notifications) Unread() (int64, error) {
 	var count int64
-	err := n.db.Model(&models.Notification{Read: false}).Count(&count).Error
+	err := n.db.Model(&models.Notification{Read: false}).
+		Where(&models.Notification{Group: models.GroupSecurity}).
+		Or(&models.Notification{Group: models.GroupGeneral}).
+		Count(&count).Error
 	return count, err
 }
