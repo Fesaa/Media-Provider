@@ -2,6 +2,7 @@
   [(visible)]="visible"
   [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
   [style]="{ width: customWidth }" header="Directory picker"
+  (onShow)="initialLoad()"
 >
 
   <div class="flex flex-col py-5">

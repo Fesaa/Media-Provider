@@ -19,7 +19,7 @@ import {MessageService} from "../../../_services/message.service";
   templateUrl: './directory-selector.component.html',
   styleUrl: './directory-selector.component.css'
 })
-export class DirectorySelectorComponent implements OnInit {
+export class DirectorySelectorComponent {
 
   @Input() isMobile = false;
 
@@ -49,7 +49,7 @@ export class DirectorySelectorComponent implements OnInit {
   ) {
   }
 
-  ngOnInit(): void {
+  initialLoad(): void {
     this.currentRoot = this.root;
     this.routeStack.push(this.root);
     this.loadChildren(this.root);
