@@ -111,13 +111,12 @@ export class SubscriptionManagerComponent implements OnInit {
   getSeverity(sub: Subscription): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
     switch (sub.refreshFrequency) {
       case RefreshFrequency.Day:
-        return "secondary"
+        return "info"
       case RefreshFrequency.Week:
         return "warn"
       case RefreshFrequency.Month:
-        return "warn"
+        return "danger"
     }
-    return "danger"
   }
 
 }
