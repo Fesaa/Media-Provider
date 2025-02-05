@@ -29,6 +29,11 @@ func (n kitLoggerAdapter) Log(keyvals ...interface{}) error {
 		if !ok {
 			key = "(INVALID KEY)"
 		}
+
+		if key == zerolog.LevelFieldName {
+			continue
+		}
+
 		value := keyvals[i+1]
 		event.Any(key, value)
 	}
