@@ -1,7 +1,27 @@
 
 <div>
 
-  <p-table [value]="groupedNotifications()">
+  <div class="flex flex-row space-x-5 justify-end">
+
+    <p-select (onChange)="refresh()" [options]="timeAgoOptions" [(ngModel)]="timeAgo" />
+
+    <!--
+    <p-button severity="warn">Read all</p-button>
+    <p-button severity="danger">Delete all</p-button>
+    -->
+
+  </div>
+
+  <p-table [value]="notifications.items()">
+    <ng-template #header>
+      <tr>
+        <th>Group</th>
+        <th>Title</th>
+        <th>Summary</th>
+        <th>Actions</th>
+      </tr>
+
+    </ng-template>
     <ng-template #body let-notification>
       <tr>
         <td style="{width: 10%}"><p-tag [value]="notification.group" [severity]="groupSeverity(notification.group)" /></td>

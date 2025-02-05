@@ -27,3 +27,16 @@ export enum NotificationGroup {
   General = "general",
   Error = "error",
 }
+
+export function GroupWeight(group: NotificationGroup): number {
+  switch (group) {
+    case NotificationGroup.Security:
+      return 10;
+    case NotificationGroup.Error:
+      return 5;
+    case NotificationGroup.General:
+      return 2;
+    case NotificationGroup.Content:
+      return 0;
+  }
+}

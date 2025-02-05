@@ -1,8 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {TableModule} from "primeng/table";
 import {NotificationService} from "../../../../_services/notification.service";
-import {EventType, SignalRService} from "../../../../_services/signal-r.service";
-import {Notification, NotificationGroup} from "../../../../_models/notifications";
+import {GroupWeight, Notification, NotificationGroup} from "../../../../_models/notifications";
 import {Tag} from "primeng/tag";
 import {Button} from "primeng/button";
 import {Tooltip} from "primeng/tooltip";
@@ -10,6 +9,9 @@ import {MessageService} from "../../../../_services/message.service";
 import {Dialog} from "primeng/dialog";
 import {Card} from "primeng/card";
 import {DialogService} from "../../../../_services/dialog.service";
+import { SortedList } from '../../../../shared/data-structures/sorted-list';
+import {Select} from "primeng/select";
+import {FormsModule} from "@angular/forms";
 
 @Component({
   selector: 'app-notifications',
@@ -20,32 +22,59 @@ import {DialogService} from "../../../../_services/dialog.service";
     Tooltip,
     Dialog,
     Card,
+    Select,
+    FormsModule,
   ],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.css'
 })
 export class NotificationsComponent implements OnInit {
 
-  // Make into sorted list
-  notifications: {[key: string]: Notification[]} = {};
+  notifications: SortedList<Notification> = new SortedList<Notification>(
+    (n1: Notification, n2: Notification) => {
+      if (n1.group === n2.group) {
+        return new Date(n2.CreatedAt).getTime() - new Date(n1.CreatedAt).getTime()
+      }
+
+      return GroupWeight(n2.group) - GroupWeight(n1.group);
+    }
+  );
   infoVisibility: {[key: number]: boolean} = {};
+
+  timeAgoOptions = [{
+    label: 'Last 24 hours',
+    value: 1
+  }, {
+    label: "Last 7 days",
+    value: 7
+  }, {
+    label: "Last 30 days",
+    value: 30
+  }, {
+    label: "All",
+    value: -1
+  }]
+  timeAgo: number = 7;
 
   constructor(
     private notificationService: NotificationService,
     private messageService: MessageService,
     private dialogService: DialogService,
   ) {
-    this.notifications[NotificationGroup.Content] = [];
-    this.notifications[NotificationGroup.General] = [];
-    this.notifications[NotificationGroup.Security] = [];
-    this.notifications[NotificationGroup.Error] = [];
   }
 
   ngOnInit(): void {
-    this.notificationService.all().subscribe((notifications) => {
-      for (const notification of notifications) {
-        this.notifications[notification.group].push(notification)
-      }
+    this.refresh()
+  }
+
+  refresh() {
+    let date: Date | undefined = undefined;
+    if (this.timeAgo !== -1) {
+      date = new Date();
+      date.setDate(date.getDate() - this.timeAgo);
+    }
+    this.notificationService.all(date).subscribe((notifications) => {
+      this.notifications.set(notifications)
     })
   }
 
@@ -66,28 +95,12 @@ export class NotificationsComponent implements OnInit {
     }
   }
 
-  groupedNotifications(): Notification[] {
-    const notifications: Notification[] = [];
-    for (const group of [NotificationGroup.Error, NotificationGroup.Content, NotificationGroup.Security, NotificationGroup.General]) {
-      const copy = this.notifications[group]
-      copy.sort((a, b) => new Date(a.CreatedAt).getTime() - new Date(b.CreatedAt).getTime())
-      for (const notification of copy) {
-        notifications.push(notification)
-      }
-    }
-    return notifications;
-  }
-
   markRead(notification: Notification) {
     this.notificationService.markAsRead(notification.ID).subscribe({
       next: () => {
-        this.notifications[notification.group] = this.notifications[notification.group].map(n => {
-          if (n.ID !== notification.ID) {
-            return n
-          }
-          n.read = true
-          return n;
-        })
+        this.notifications.removeFunc((n: Notification) => n.ID == notification.ID);
+        notification.read = true;
+        this.notifications.add(notification);
       },
       error: err => {
         this.messageService.error("Failed to read notifications", err.error.message);
@@ -98,13 +111,9 @@ export class NotificationsComponent implements OnInit {
   markUnRead(notification: Notification) {
     this.notificationService.markAsUnread(notification.ID).subscribe({
       next: () => {
-        this.notifications[notification.group] = this.notifications[notification.group].map(n => {
-          if (n.ID !== notification.ID) {
-            return n
-          }
-          n.read = false
-          return n;
-        })
+        this.notifications.removeFunc((n: Notification) => n.ID == notification.ID);
+        notification.read = false;
+        this.notifications.add(notification);
       },
       error: err => {
         this.messageService.error("Failed to unread notifications", err.error.message);
@@ -119,7 +128,7 @@ export class NotificationsComponent implements OnInit {
 
     this.notificationService.deleteNotification(notification.ID).subscribe({
       next: () => {
-        this.notifications[notification.group] = this.notifications[notification.group].filter(n => n.ID !== notification.ID)
+        this.notifications.removeFunc((n: Notification) => n.ID == notification.ID);
       },
       error: err => {
         this.messageService.error("Failed to delete notifications", err.error.message);
