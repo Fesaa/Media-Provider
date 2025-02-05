@@ -37,7 +37,8 @@ func (nr *notificationRoutes) All(ctx *fiber.Ctx) error {
 
 	timeS := ctx.Query("after", "")
 	if timeS != "" {
-		t, err := time.Parse(time.RFC3339, timeS)
+		var t time.Time
+		t, err = time.Parse(time.RFC3339, timeS)
 		if err != nil {
 			nr.Log.Error().Err(err).Str("after", timeS).Msg("failed to parse passed time")
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
