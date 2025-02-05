@@ -127,3 +127,10 @@ func SortFloats(a, b string) int {
 	fb, _ := strconv.ParseFloat(b, 64)
 	return (int)(fb - fa)
 }
+
+func Shorten(s string, length int) string {
+	if len(s) < length {
+		return s
+	}
+	return s[:length-3] + "..."
+}

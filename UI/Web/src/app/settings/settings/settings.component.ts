@@ -9,11 +9,15 @@ import {AccountService} from "../../_services/account.service";
 import {UserSettingsComponent} from "./_components/user-settings/user-settings.component";
 import {PreferenceSettingsComponent} from "./_components/preference-settings/preference-settings.component";
 import {Button} from "primeng/button";
+import {NotificationsComponent} from "./_components/notifications/notifications.component";
+import {NotificationService} from "../../_services/notification.service";
+import {EventType, SignalRService} from "../../_services/signal-r.service";
 
 export enum SettingsID {
 
   Server = "server",
   Preferences = "preferences",
+  Notifications = "notifications",
   Pages = "pages",
   User = "user"
 
@@ -26,7 +30,8 @@ export enum SettingsID {
     PagesSettingsComponent,
     UserSettingsComponent,
     PreferenceSettingsComponent,
-    Button
+    Button,
+    NotificationsComponent
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
@@ -37,7 +42,7 @@ export class SettingsComponent implements OnInit {
 
   user: User | null = null;
   selected: SettingsID = SettingsID.Server;
-  settings: { id: SettingsID, title: string, icon: string, perm: Perm }[] = [
+  settings: { id: SettingsID, title: string, icon: string, perm: Perm, badge?: number }[] = [
     {
       id: SettingsID.Server,
       title: 'Server',
@@ -49,6 +54,12 @@ export class SettingsComponent implements OnInit {
       title: "Preferences",
       icon: 'pi pi-ethereum',
       perm: Perm.WriteConfig,
+    },
+    {
+      id: SettingsID.Notifications,
+      title: "Notifications",
+      icon: "pi pi-inbox",
+      perm: Perm.All,
     },
     {
       id: SettingsID.Pages,
@@ -70,6 +81,8 @@ export class SettingsComponent implements OnInit {
               private activatedRoute: ActivatedRoute,
               private router: Router,
               private accountService: AccountService,
+              private notificationService: NotificationService,
+              private signalR: SignalRService,
   ) {
     this.accountService.currentUser$.subscribe(user => {
       if (user) {
@@ -89,6 +102,38 @@ export class SettingsComponent implements OnInit {
         if (Object.values(SettingsID).find(id => id === fragment)) {
           this.selected = fragment as SettingsID;
         }
+      }
+    })
+
+    this.notificationService.amount().subscribe(amount => {
+      this.settings = this.settings.map(s => {
+        if (s.id !== SettingsID.Notifications) {
+          return s;
+        }
+        s.badge = amount
+        return s;
+      })
+    })
+
+    this.signalR.events$.subscribe(event => {
+      if (event.type === EventType.Notification) {
+        this.settings = this.settings.map(s => {
+          if (s.id !== SettingsID.Notifications) {
+            return s;
+          }
+          s.badge = (s.badge || 0) + 1;
+          return s;
+        })
+      }
+
+      if (event.type === EventType.NotificationRead) {
+        this.settings = this.settings.map(s => {
+          if (s.id !== SettingsID.Notifications) {
+            return s;
+          }
+          s.badge = (s.badge || 1) - 1;
+          return s;
+        })
       }
     })
   }
@@ -120,4 +165,6 @@ export class SettingsComponent implements OnInit {
 
     return hasPermission(this.user, setting.perm);
   }
+
+  protected readonly String = String;
 }

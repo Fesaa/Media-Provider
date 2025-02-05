@@ -1,7 +1,9 @@
 package yoitsu
 
 import (
+	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -28,6 +30,7 @@ type yoitsu struct {
 	log zerolog.Logger
 
 	signalR services.SignalRService
+	notify  services.NotificationService
 }
 
 func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService) (Yoitsu, error) {
@@ -146,11 +149,30 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 
 	if req.DeleteFiles {
 		go y.deleteTorrentFiles(backingTorrent, baseDir)
-	} else {
-		go y.cleanup(tor, baseDir)
+		go y.startNext()
+		return nil
 	}
+
+	text := fmt.Sprintf("%s finished downloading %d files(s)", tor.Title(), tor.Files())
+	y.notifier(tor.Request()).Notify(models.Notification{
+		Title:   "Download finished",
+		Summary: utils.Shorten(text, services.SummarySize),
+		Body:    text,
+		Colour:  models.Green,
+		Group:   models.GroupContent,
+	})
+
+	go y.cleanup(tor, baseDir)
 	go y.startNext()
 	return nil
+}
+
+func (y *yoitsu) notifier(req payload.DownloadRequest) services.Notifier {
+	if req.IsSubscription {
+		return y.notify
+	}
+
+	return y.signalR
 }
 
 func (y *yoitsu) loadNext() {

@@ -8,12 +8,16 @@ import {NavService} from "../_services/nav.service";
 import {dropAnimation} from "../_animations/drop-animation";
 import {MenuItem} from "primeng/api";
 import {Menubar} from "primeng/menubar";
+import {NotificationService} from "../_services/notification.service";
+import {EventType, SignalRService} from "../_services/signal-r.service";
+import {BadgeDirective} from "primeng/badge";
 
 @Component({
   selector: 'app-nav-header',
   imports: [
     AsyncPipe,
-    Menubar
+    Menubar,
+    BadgeDirective
   ],
   templateUrl: './nav-header.component.html',
   styleUrl: './nav-header.component.css',
@@ -29,11 +33,15 @@ export class NavHeaderComponent implements OnInit {
   accountItems: MenuItem[] | undefined;
   pageItems: MenuItem[] | undefined;
 
+  notifications: number = 0;
+
   constructor(private pageService: PageService,
               private route: ActivatedRoute,
               private cdRef: ChangeDetectorRef,
               protected accountService: AccountService,
-              protected navService: NavService
+              protected navService: NavService,
+              private notificationService: NotificationService,
+              private signalR: SignalRService,
   ) {
 
     this.pageService.pages$.subscribe(pages => {
@@ -84,6 +92,12 @@ export class NavHeaderComponent implements OnInit {
               icon: "pi pi-wave-pulse"
             },
             {
+              label: "Notifications",
+              routerLink: "settings",
+              fragment: "notifications",
+              icon: "pi pi-inbox"
+            },
+            {
               label: "Settings",
               routerLink: "settings",
               icon: "pi pi-cog",
@@ -103,15 +117,32 @@ export class NavHeaderComponent implements OnInit {
         this.accountItems = this.accountItems[0].items;
       }
     })
+
+    this.notificationService.amount().subscribe(amount => {
+      this.notifications = amount;
+    })
+
+    this.signalR.events$.subscribe(event => {
+      if (event.type == EventType.NotificationAdd) {
+        this.notifications++;
+      }
+      if (event.type === EventType.NotificationRead) {
+        this.notifications--;
+      }
+    })
+
   }
 
-  clickMenu() {
-    this.isMenuOpen = !this.isMenuOpen;
-    this.cdRef.detectChanges();
-  }
+  severity(): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
+    if (this.notifications < 4) {
+      return "info"
+    }
 
-  mobileMenuState() {
-    return this.isMenuOpen ? 'open' : 'closed';
+    if (this.notifications < 10) {
+      return "warn"
+    }
+
+    return "danger"
   }
 
 }

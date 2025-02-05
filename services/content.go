@@ -21,7 +21,7 @@ var (
 type ContentService interface {
 	Search(payload.SearchRequest) ([]payload.Info, error)
 	Download(payload.DownloadRequest) error
-	DownloadSubscription(*models.Subscription) error
+	DownloadSubscription(*models.Subscription, ...bool) error
 	Stop(payload.StopRequest) error
 	RegisterProvider(models.Provider, ProviderAdapter)
 	DownloadMetadata(models.Provider) (payload.DownloadMetadata, error)
@@ -42,6 +42,8 @@ type Content interface {
 	// Message passes any payload.Message to the Content, and returns its response
 	// The logic of what happens with the message may depend on the underlying Content
 	Message(payload.Message) (payload.Message, error)
+	// Request returns the original request made to start this content
+	Request() payload.DownloadRequest
 }
 
 type Client interface {
@@ -147,7 +149,7 @@ func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, erro
 	return results, nil
 }
 
-func (s *contentService) DownloadSubscription(sub *models.Subscription) error {
+func (s *contentService) DownloadSubscription(sub *models.Subscription, isSub ...bool) error {
 	return s.Download(payload.DownloadRequest{
 		Provider:  sub.Provider,
 		Id:        sub.ContentId,
@@ -156,6 +158,8 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription) error {
 		DownloadMetadata: payload.DownloadRequestMetadata{
 			StartImmediately: true,
 		},
+
+		IsSubscription: utils.OrDefault(isSub, true),
 	})
 }
 

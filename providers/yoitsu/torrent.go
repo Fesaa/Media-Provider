@@ -31,6 +31,7 @@ type torrentImpl struct {
 	tempTitle string
 	provider  models.Provider
 	state     payload.ContentState
+	files     int
 
 	userFilter []string
 
@@ -61,6 +62,14 @@ func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Log
 
 	tor.log = log.With().Str("infoHash", tor.key).Logger()
 	return tor
+}
+
+func (t *torrentImpl) Files() int {
+	return t.files
+}
+
+func (t *torrentImpl) Request() payload.DownloadRequest {
+	return t.req
 }
 
 func (t *torrentImpl) Id() string {
@@ -262,12 +271,14 @@ func (t *torrentImpl) StartDownload() {
 
 	if len(t.userFilter) == 0 {
 		t.t.DownloadAll()
+		t.files = len(t.t.Files())
 		return
 	}
 
 	for _, file := range t.t.Files() {
 		if slices.Contains(t.userFilter, file.Path()) {
 			file.SetPriority(torrent.PiecePriorityNormal)
+			t.files++
 		} else {
 			file.SetPriority(torrent.PiecePriorityNone)
 		}

@@ -89,6 +89,43 @@ func (m *mockSignalR) AddContent(data payload.InfoStat) {
 func (m *mockSignalR) DeleteContent(id string) {
 }
 
+func (m *mockSignalR) Notify(models.Notification) {}
+
+type mockNotifications struct {
+}
+
+func (m mockNotifications) Notify(notification models.Notification) {
+}
+
+func (m mockNotifications) NotifyHelper(title, summary, body string, colour models.NotificationColour, group models.NotificationGroup) {
+}
+
+func (m mockNotifications) NotifyContent(title, summary, body string, colours ...models.NotificationColour) {
+}
+
+func (m mockNotifications) NotifyContentQ(title, body string, colours ...models.NotificationColour) {
+}
+
+func (m mockNotifications) NotifySecurity(title, summary, body string, colours ...models.NotificationColour) {
+}
+
+func (m mockNotifications) NotifySecurityQ(title, body string, colours ...models.NotificationColour) {
+}
+
+func (m mockNotifications) NotifyGeneral(title, summary, body string, colours ...models.NotificationColour) {
+}
+
+func (m mockNotifications) NotifyGeneralQ(title, body string, colours ...models.NotificationColour) {
+}
+
+func (m mockNotifications) MarkRead(id uint) error {
+	return nil
+}
+
+func (m mockNotifications) MarkUnRead(id uint) error {
+	return nil
+}
+
 type mockRepo struct {
 	t           *testing.T
 	manga       GetMangaResponse
@@ -147,6 +184,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 	must(scope.Provide(utils.Identity(req)))
 	must(scope.Provide(services.MarkdownServiceProvider))
 	must(scope.Provide(func() services.SignalRService { return &mockSignalR{} }))
+	must(scope.Provide(func() services.NotificationService { return &mockNotifications{} }))
 
 	return NewManga(scope).(*manga)
 }

@@ -16,6 +16,7 @@ type Database struct {
 	Pages         models.Pages
 	Subscriptions models.Subscriptions
 	Preferences   models.Preferences
+	Notifications models.Notifications
 }
 
 func (db *Database) DB() *gorm.DB {
@@ -45,5 +46,6 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 		Pages:         impl.Pages(db),
 		Subscriptions: impl.Subscriptions(db),
 		Preferences:   impl.Preferences(db),
+		Notifications: impl.Notifications(db),
 	}, nil
 }

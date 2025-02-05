@@ -16,13 +16,14 @@ import (
 )
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
-	ioService services.IOService, signalR services.SignalRService) api.Client {
+	ioService services.IOService, signalR services.SignalRService, notify services.NotificationService) api.Client {
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
 		log:      log.With().Str("handler", "pasloe").Logger(),
 		io:       ioService,
 		signalR:  signalR,
+		notify:   notify,
 
 		content: utils.NewSafeMap[string, api.Downloadable](),
 	}
@@ -34,6 +35,7 @@ type client struct {
 	log      zerolog.Logger
 	io       services.IOService
 	signalR  services.SignalRService
+	notify   services.NotificationService
 
 	content utils.SafeMap[string, api.Downloadable]
 }
@@ -121,9 +123,20 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 
 		if req.DeleteFiles {
 			go c.deleteFiles(content)
-		} else {
-			go c.cleanup(content)
+			c.startNext(content.Provider())
+			return
 		}
+
+		text := fmt.Sprintf("%s finished downloading %d item(s)", content.Title(), len(content.GetNewContent()))
+		c.notifier(content.Request()).Notify(models.Notification{
+			Title:   "Download finished",
+			Summary: utils.Shorten(text, services.SummarySize),
+			Body:    text,
+			Colour:  models.Green,
+			Group:   models.GroupContent,
+		})
+
+		go c.cleanup(content)
 		c.startNext(content.Provider())
 	}()
 	return nil
@@ -149,6 +162,13 @@ func (c *client) CanStart(provider models.Provider) bool {
 	})
 
 	return !providerBusy
+}
+
+func (c *client) notifier(req payload.DownloadRequest) services.Notifier {
+	if req.IsSubscription {
+		return c.notify
+	}
+	return c.signalR
 }
 
 func (c *client) loadAllInfo(provider models.Provider) {
@@ -182,6 +202,12 @@ func (c *client) startNext(provider models.Provider) {
 		Str("into", next.GetBaseDir()).
 		Str("title", next.Title()).
 		Msg("downloading content")
+	c.signalR.Notify(models.Notification{
+		Title:   "Now starting",
+		Summary: next.Title(),
+		Colour:  models.Blue,
+		Group:   models.GroupContent,
+	})
 	next.StartDownload()
 }
 

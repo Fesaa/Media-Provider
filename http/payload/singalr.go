@@ -8,6 +8,9 @@ const (
 	EventTypeAddContent            EventType = "AddContent"
 	EventTypeDeleteContent         EventType = "DeleteContent"
 	EventTypeContentStateUpdate    EventType = "ContentStateUpdate"
+	EventTypeNotification          EventType = "Notification"
+	EvenTypeNotificationRead       EventType = "NotificationRead"
+	EvenTypeNotificationAdd        EventType = "NotificationAdd"
 )
 
 type ContentSizeUpdate struct {

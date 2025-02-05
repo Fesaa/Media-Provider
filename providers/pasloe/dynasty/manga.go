@@ -29,7 +29,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
 		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
-		signalR services.SignalRService,
+		signalR services.SignalRService, notification services.NotificationService,
 	) {
 		m = &manga{
 			id:              req.Id,
@@ -39,7 +39,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 		}
 
 		d := api.NewDownloadableFromBlock[Chapter](req, m, client,
-			log.With().Str("handler", "dynasty-manga").Logger(), signalR)
+			log.With().Str("handler", "dynasty-manga").Logger(), signalR, notification)
 		m.DownloadBase = d
 	}))
 

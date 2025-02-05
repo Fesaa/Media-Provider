@@ -18,6 +18,9 @@ type DownloadRequest struct {
 	BaseDir          string                  `json:"dir" validate:"required"`
 	TempTitle        string                  `json:"title" validate:"required"`
 	DownloadMetadata DownloadRequestMetadata `json:"downloadMetadata,omitempty"`
+
+	// Internal communication
+	IsSubscription bool
 }
 
 type DownloadRequestMetadata struct {

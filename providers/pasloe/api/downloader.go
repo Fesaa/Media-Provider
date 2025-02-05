@@ -29,6 +29,7 @@ func NewDownloadableFromBlock[T IDAble](
 	client Client,
 	log zerolog.Logger,
 	signalR services.SignalRService,
+	notification services.NotificationService,
 ) *DownloadBase[T] {
 	return &DownloadBase[T]{
 		infoProvider: block,
@@ -42,6 +43,7 @@ func NewDownloadableFromBlock[T IDAble](
 		LastTime:     time.Now(),
 		contentState: payload.ContentStateQueued,
 		SignalR:      signalR,
+		notifier:     notification,
 	}
 }
 
@@ -57,6 +59,7 @@ type DownloadBase[T IDAble] struct {
 	Log          zerolog.Logger
 	contentState payload.ContentState
 	SignalR      services.SignalRService
+	notifier     services.NotificationService
 
 	id        string
 	baseDir   string
@@ -78,6 +81,10 @@ type DownloadBase[T IDAble] struct {
 
 	cancel context.CancelFunc
 	Wg     *sync.WaitGroup
+}
+
+func (d *DownloadBase[T]) Request() payload.DownloadRequest {
+	return d.Req
 }
 
 func (d *DownloadBase[T]) Message(msg payload.Message) (payload.Message, error) {
@@ -357,6 +364,29 @@ func (d *DownloadBase[T]) UpdateProgress() {
 	})
 }
 
+func (d *DownloadBase[T]) abortDownload(reason error) {
+	if errors.Is(reason, context.Canceled) {
+		return
+	}
+
+	d.Log.Error().Err(reason).Msg("error while downloading content; cleaning up")
+	req := payload.StopRequest{
+		Provider:    d.Req.Provider,
+		Id:          d.Id(),
+		DeleteFiles: true,
+	}
+	if err := d.Client.RemoveDownload(req); err != nil {
+		d.Log.Error().Err(err).Msg("error while cleaning up")
+	}
+	d.notifier.Notify(models.Notification{
+		Title:   "Failed download",
+		Summary: fmt.Sprintf("%s failed to download", d.infoProvider.Title()),
+		Body:    fmt.Sprintf("Download failed for %s, because %v", d.infoProvider.Title(), reason),
+		Colour:  models.Red,
+		Group:   models.GroupError,
+	})
+}
+
 func (d *DownloadBase[T]) startDownload() {
 	// Overwrite cancel, as we're doing something else
 	ctx, cancel := context.WithCancel(context.Background())
@@ -390,15 +420,7 @@ func (d *DownloadBase[T]) startDownload() {
 			err := d.downloadContent(ctx, content)
 			d.Wg.Done()
 			if err != nil {
-				d.Log.Error().Err(err).Msg("error while downloading content; cleaning up")
-				req := payload.StopRequest{
-					Provider:    d.Req.Provider,
-					Id:          d.Id(),
-					DeleteFiles: true,
-				}
-				if err = d.Client.RemoveDownload(req); err != nil {
-					d.Log.Error().Err(err).Msg("error while cleaning up")
-				}
+				d.abortDownload(err)
 				d.Wg.Wait()
 				return
 			}
@@ -474,7 +496,7 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 			}(i, url)
 		}
 
-		if (i+1)%d.maxImages == 0 && i > 0 {
+		if i%d.maxImages == 0 && i > 0 {
 			select {
 			case <-time.After(1 * time.Second):
 			case err := <-errCh:
@@ -485,7 +507,7 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 				return fmt.Errorf("encountered an error while downloading images: %w", err)
 			case <-ctx.Done():
 				wg.Wait()
-				return fmt.Errorf("chapter download was cancelled from within")
+				return ctx.Err()
 			}
 			d.UpdateProgress() // TODO: Decide if this is too frequent or not. Should be around 1Hz
 		}
