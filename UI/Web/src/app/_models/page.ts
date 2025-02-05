@@ -78,6 +78,7 @@ export type DownloadMetadata = {
 
 export type DownloadMetadataDefinition = {
   title: string;
+  tooltip: string;
   key: string;
   formType: DownloadMetadataFormType;
   defaultOption: string;

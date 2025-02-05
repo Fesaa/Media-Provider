@@ -19,6 +19,10 @@ import (
 	"time"
 )
 
+const (
+	KeyNoSubDir string = "no-sub-dir"
+)
+
 type yoitsu struct {
 	dir         string
 	maxTorrents int
@@ -29,11 +33,13 @@ type yoitsu struct {
 
 	log zerolog.Logger
 
-	signalR services.SignalRService
-	notify  services.NotificationService
+	signalR   services.SignalRService
+	notify    services.NotificationService
+	ioService services.IOService
 }
 
-func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService) (Yoitsu, error) {
+func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
+	ioService services.IOService, notify services.NotificationService) (Yoitsu, error) {
 	dir := config.OrDefault(c.GetRootDir(), "temp")
 
 	impl := &yoitsu{
@@ -43,8 +49,10 @@ func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService) 
 		torrents: utils.NewSafeMap[string, Torrent](),
 		baseDirs: utils.NewSafeMap[string, string](),
 
-		log:     log.With().Str("handler", "yoitsu").Logger(),
-		signalR: signalR,
+		log:       log.With().Str("handler", "yoitsu").Logger(),
+		signalR:   signalR,
+		notify:    notify,
+		ioService: ioService,
 	}
 
 	opts := storage.NewFileClientOpts{
@@ -230,33 +238,42 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 		return
 	}
 
+	// Calling cleanup beforehand, as it removed unwanted files. And the path might be incorrect after moving stuff
+	t.Cleanup(hashDir)
+
+	var src, dest string
+	noSubDir := t.Request().GetBool(KeyNoSubDir, false)
+
 	firstDirEntry := info[0]
 	if len(info) == 1 && firstDirEntry.IsDir() {
-		y.log.Debug().Str("infoHash", infoHash).Msg("torrent only has one directory, moving everything up")
-		src := path.Join(hashDir, firstDirEntry.Name())
-		dest := path.Join(y.dir, baseDir, firstDirEntry.Name())
+		src = path.Join(hashDir, firstDirEntry.Name())
+		dest = utils.Ternary(noSubDir, path.Join(y.dir, baseDir), path.Join(y.dir, baseDir, firstDirEntry.Name()))
+		y.log.Debug().Str("infoHash", infoHash).Str("src", src).Str("dest", dest).
+			Msg("torrent only has one directory, moving everything up")
+	} else {
+		src = hashDir
+		dest = utils.Ternary(noSubDir, path.Join(y.dir, baseDir), path.Join(y.dir, baseDir, tor.Name()))
+		y.log.Debug().Str("infoHash", infoHash).Str("src", src).Str("dest", dest).
+			Msg("torrent downloaded more than one dirEntry, or a file; renaming directory")
+	}
+
+	if noSubDir {
+		if err = y.ioService.MoveDirectoryContent(src, dest); err != nil {
+			y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error moving directory contents")
+			return
+		}
+	} else {
 		if err = os.Rename(src, dest); err != nil {
 			y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error while renaming directory")
 			return
 		}
+	}
 
+	if len(info) == 1 && firstDirEntry.IsDir() {
 		if err = os.RemoveAll(hashDir); err != nil {
 			y.log.Error().Err(err).Str("dir", hashDir).Msg("error removing torrent dir")
 		}
-
-		t.Cleanup(path.Join(y.dir, baseDir))
-		return
 	}
-
-	y.log.Debug().Str("infoHash", infoHash).Msg("torrent downloaded more than one dirEntry, or a file; renaming directory")
-	src := hashDir
-	dest := path.Join(y.dir, baseDir, tor.Name())
-	if err = os.Rename(src, dest); err != nil {
-		y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error while renaming directory")
-		return
-	}
-
-	t.Cleanup(path.Join(y.dir, baseDir))
 }
 
 func (y *yoitsu) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {

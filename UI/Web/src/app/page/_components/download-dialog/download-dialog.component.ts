@@ -11,6 +11,7 @@ import {Select} from "primeng/select";
 import {ToggleSwitch} from "primeng/toggleswitch";
 import {MultiSelect} from "primeng/multiselect";
 import {MessageService} from "../../../_services/message.service";
+import {Tooltip} from "primeng/tooltip";
 
 @Component({
   selector: 'app-download-dialog',
@@ -22,7 +23,8 @@ import {MessageService} from "../../../_services/message.service";
     FormsModule,
     Select,
     ToggleSwitch,
-    MultiSelect
+    MultiSelect,
+    Tooltip
   ],
   templateUrl: './download-dialog.component.html',
   styleUrl: './download-dialog.component.css'
