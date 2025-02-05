@@ -60,6 +60,7 @@ type notificationService struct {
 func (n *notificationService) Notify(notification models.Notification) {
 	n.log.Debug().Any("notification", notification).Msg("adding notification")
 	n.signalR.Notify(notification)
+	n.signalR.Broadcast(payload.EvenTypeNotificationAdd, fiber.Map{})
 	if err := n.db.Notifications.New(notification); err != nil {
 		n.log.Error().Err(err).Msg("unable to add notification")
 	}
@@ -104,11 +105,19 @@ func (n *notificationService) NotifyGeneralQ(title, body string, colours ...mode
 }
 
 func (n *notificationService) MarkRead(id uint) error {
-	if err := n.db.Notifications.MarkRead(id); err != nil {
+	notification, err := n.db.Notifications.Get(id)
+	if err != nil {
 		return err
 	}
 
-	n.signalR.Broadcast(payload.EvenTypeNotificationRead, fiber.Map{})
+	if err = n.db.Notifications.MarkRead(id); err != nil {
+		return err
+	}
+
+	if notification.Group != models.GroupContent {
+		n.signalR.Broadcast(payload.EvenTypeNotificationRead, fiber.Map{})
+	}
+
 	return nil
 }
 

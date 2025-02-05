@@ -12,6 +12,7 @@ export enum EventType {
   DeleteContent = "DeleteContent",
   Notification = "Notification",
   NotificationRead= "NotificationRead",
+  NotificationAdd= "NotificationAdd",
 }
 
 export interface Event<T> {

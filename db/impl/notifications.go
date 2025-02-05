@@ -73,9 +73,7 @@ func (n notifications) Unread() (int64, error) {
 	var count int64
 	err := n.db.Model(&models.Notification{}).
 		Where(map[string]any{"read": false}).
-		Where(n.db.Where(&models.Notification{Group: models.GroupSecurity}).
-			Or(&models.Notification{Group: models.GroupGeneral}).
-			Or(&models.Notification{Group: models.GroupError})).
+		Where("group != ", models.GroupContent).
 		Count(&count).Error
 	return count, err
 }

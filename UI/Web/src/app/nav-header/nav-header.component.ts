@@ -123,7 +123,7 @@ export class NavHeaderComponent implements OnInit {
     })
 
     this.signalR.events$.subscribe(event => {
-      if (event.type == EventType.Notification) {
+      if (event.type == EventType.NotificationAdd) {
         this.notifications++;
       }
       if (event.type === EventType.NotificationRead) {
