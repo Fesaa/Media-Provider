@@ -12,6 +12,6 @@
     </div>
 
 
-    <p-menubar class="min-w-48 md:min-w-0" [model]="accountItems"/>
+    <p-menubar pBadge [value]="notifications" [severity]="severity()" class="min-w-48 md:min-w-0" [model]="accountItems"/>
   </div>
 }

@@ -23,7 +23,8 @@ type userRoutes struct {
 	DB     *db.Database
 	Log    zerolog.Logger
 
-	Val services.ValidationService
+	Val    services.ValidationService
+	Notify services.NotificationService
 }
 
 func RegisterUserRoutes(ur userRoutes) {
@@ -280,6 +281,21 @@ func (ur *userRoutes) GenerateResetPassword(ctx *fiber.Ctx) error {
 		})
 	}
 
+	resetUser, err := ur.DB.Users.GetById(userId)
+	if err != nil {
+		ur.Log.Error().Uint("id", userId).Err(err).Msg("failed to check if user exists")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	if resetUser == nil {
+		ur.Log.Error().Str("user", user.Name).Uint("id", userId).Err(err).Msg("user does not exist")
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "User does not exist",
+		})
+	}
+
 	reset, err := ur.DB.Users.GetResetByUserId(userId)
 	if err == nil && reset != nil {
 		fmt.Printf("A reset link has been found for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.\n", reset.UserId, reset.Key, reset.Key)
@@ -296,6 +312,7 @@ func (ur *userRoutes) GenerateResetPassword(ctx *fiber.Ctx) error {
 		})
 	}
 	fmt.Printf("A reset link has been generated for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.\n", reset.UserId, reset.Key, reset.Key)
+	ur.Notify.NotifySecurityQ("Reset link generated", fmt.Sprintf("%s has generated a reset link for %s", user.Name, resetUser.Name))
 	return ctx.Status(fiber.StatusOK).JSON(reset)
 }
 

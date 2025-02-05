@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Pages interface {
 	All() ([]Page, error)
 	Get(id uint) (*Page, error)
@@ -8,6 +10,19 @@ type Pages interface {
 	Update(page *Page) error
 
 	Delete(id uint) error
+}
+
+type Notifications interface {
+	Get(id uint) (Notification, error)
+	All() ([]Notification, error)
+	AllAfter(time.Time) ([]Notification, error)
+
+	New(Notification) error
+	Delete(uint) error
+
+	MarkRead(uint) error
+	MarkUnread(uint) error
+	Unread() (int64, error)
 }
 
 type Preferences interface {

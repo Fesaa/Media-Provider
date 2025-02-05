@@ -16,13 +16,14 @@ import (
 )
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
-	ioService services.IOService, signalR services.SignalRService) api.Client {
+	ioService services.IOService, signalR services.SignalRService, notify services.NotificationService) api.Client {
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
 		log:      log.With().Str("handler", "pasloe").Logger(),
 		io:       ioService,
 		signalR:  signalR,
+		notify:   notify,
 
 		content: utils.NewSafeMap[string, api.Downloadable](),
 	}
@@ -34,6 +35,7 @@ type client struct {
 	log      zerolog.Logger
 	io       services.IOService
 	signalR  services.SignalRService
+	notify   services.NotificationService
 
 	content utils.SafeMap[string, api.Downloadable]
 }
@@ -119,6 +121,10 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 	go func() {
 		content.Cancel()
 
+		c.notify.NotifyContentQ("Download finished",
+			fmt.Sprintf("%s finished downloading %d item(s)", content.Title(), len(content.GetNewContent())),
+			models.Green)
+
 		if req.DeleteFiles {
 			go c.deleteFiles(content)
 		} else {
@@ -182,6 +188,12 @@ func (c *client) startNext(provider models.Provider) {
 		Str("into", next.GetBaseDir()).
 		Str("title", next.Title()).
 		Msg("downloading content")
+	c.signalR.Notify(models.Notification{
+		Title:   "Now starting",
+		Summary: next.Title(),
+		Colour:  models.Blue,
+		Group:   models.GroupContent,
+	})
 	next.StartDownload()
 }
 

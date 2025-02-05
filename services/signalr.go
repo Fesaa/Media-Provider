@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/gofiber/fiber/v2"
 	"github.com/philippseith/signalr"
@@ -21,6 +22,10 @@ type SignalRService interface {
 
 	AddContent(data payload.InfoStat)
 	DeleteContent(id string)
+
+	// Notify may be used directly by anyone to send a quick toast to the frontend.
+	// Use NotificationService for notification that must persist
+	Notify(notification models.Notification)
 }
 
 type SignalRParams struct {
@@ -83,6 +88,10 @@ func (s *signalrService) AddContent(data payload.InfoStat) {
 
 func (s *signalrService) DeleteContent(id string) {
 	s.Broadcast(payload.EventTypeDeleteContent, payload.DeleteContent{ContentId: id})
+}
+
+func (s *signalrService) Notify(notification models.Notification) {
+	s.Broadcast(payload.EventTypeNotification, notification)
 }
 
 func (s *signalrService) setup(app *fiber.App) error {

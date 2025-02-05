@@ -10,4 +10,5 @@ var MODELS = []any{
 	&ModifierValue{},
 	&ManualMigration{},
 	&Preference{},
+	&Notification{},
 }

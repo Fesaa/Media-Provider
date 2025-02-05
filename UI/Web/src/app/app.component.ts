@@ -4,9 +4,10 @@ import {AccountService} from "./_services/account.service";
 import {NavHeaderComponent} from "./nav-header/nav-header.component";
 import {Title} from "@angular/platform-browser";
 import {DialogService} from "./_services/dialog.service";
-import {SignalRService} from "./_services/signal-r.service";
+import {EventType, SignalRService} from "./_services/signal-r.service";
 import {Toast} from "primeng/toast";
 import {MessageService} from "primeng/api";
+import {Notification} from "./_models/notifications";
 
 @Component({
   selector: 'app-root',
@@ -36,6 +37,17 @@ export class AppComponent implements OnInit {
       }
 
       this.signalR.startConnection(user);
+      this.signalR.events$.subscribe(event => {
+        switch (event.type) {
+          case EventType.Notification:
+            const notification = event.data as Notification;
+            this.messageService.add({
+              severity: notification.colour,
+              summary: notification.title,
+              detail: notification.summary, // I know they're switched here
+            });
+        }
+      })
     })
   }
 }

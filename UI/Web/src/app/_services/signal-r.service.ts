@@ -10,6 +10,8 @@ export enum EventType {
   ContentStateUpdate = "ContentStateUpdate",
   AddContent = "AddContent",
   DeleteContent = "DeleteContent",
+  Notification = "Notification",
+  NotificationRead= "NotificationRead",
 }
 
 export interface Event<T> {
@@ -77,6 +79,20 @@ export class SignalRService {
     this.hubConnection.on(EventType.ContentStateUpdate, (message) => {
       this.eventsSource.next({
         type: EventType.ContentStateUpdate,
+        data: message
+      })
+    })
+
+    this.hubConnection.on(EventType.Notification, (message) => {
+      this.eventsSource.next({
+        type: EventType.Notification,
+        data: message
+      })
+    })
+
+    this.hubConnection.on(EventType.NotificationRead, (message) => {
+      this.eventsSource.next({
+        type: EventType.NotificationRead,
         data: message
       })
     })

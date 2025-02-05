@@ -56,4 +56,5 @@ func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, lo
 	utils2.Must(scope.Invoke(routes.RegisterPageRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterSubscriptionRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterPreferencesRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterNotificationRoutes))
 }
