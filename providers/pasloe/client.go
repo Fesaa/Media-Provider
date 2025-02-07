@@ -127,14 +127,17 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 			return
 		}
 
-		text := fmt.Sprintf("%s finished downloading %d item(s)", content.Title(), len(content.GetNewContent()))
-		c.notifier(content.Request()).Notify(models.Notification{
-			Title:   "Download finished",
-			Summary: utils.Shorten(text, services.SummarySize),
-			Body:    text,
-			Colour:  models.Green,
-			Group:   models.GroupContent,
-		})
+		// TODO: Change into user setting
+		if len(content.GetNewContent()) > 0 {
+			text := fmt.Sprintf("%s finished downloading %d item(s)", content.Title(), len(content.GetNewContent()))
+			c.notifier(content.Request()).Notify(models.Notification{
+				Title:   "Download finished",
+				Summary: utils.Shorten(text, services.SummarySize),
+				Body:    text,
+				Colour:  models.Green,
+				Group:   models.GroupContent,
+			})
+		}
 
 		go c.cleanup(content)
 		c.startNext(content.Provider())
