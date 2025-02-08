@@ -57,6 +57,16 @@ func (ur *userRoutes) AnyUserExists(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) RegisterUser(ctx *fiber.Ctx) error {
+	ok, err := ur.DB.Users.ExistsAny()
+	if err != nil {
+		ur.Log.Error().Err(err).Msg("failed to check if user exists")
+		return fiber.ErrInternalServerError
+	}
+
+	if !ok {
+		return fiber.ErrBadRequest
+	}
+
 	var register payload.LoginRequest
 	if err := ur.Val.ValidateCtx(ctx, &register); err != nil {
 		ur.Log.Error().Err(err).Msg("failed to parse body")
