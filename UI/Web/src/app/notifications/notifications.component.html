@@ -1,14 +1,12 @@
 
-<div>
+<div class="pt-1 md:pt-5 mx-16">
 
   <div class="flex flex-row space-x-5 justify-end">
 
     <p-select (onChange)="refresh()" [options]="timeAgoOptions" [(ngModel)]="timeAgo" />
 
-    <!--
-    <p-button severity="warn">Read all</p-button>
-    <p-button severity="danger">Delete all</p-button>
-    -->
+    <p-button severity="warn" (click)="readSelected()" >Read selected</p-button>
+    <p-button severity="danger" (click)="deleteSelected()">Delete selected</p-button>
 
   </div>
 
@@ -39,6 +37,8 @@
             <p-button icon="pi pi-info-circle" size="small" severity="info" (click)="show(notification.ID)" />
 
             <p-button icon="pi pi-trash" size="small" severity="danger" (click)="delete(notification)" />
+
+            <p-checkbox [(ngModel)]="selectedNotifications" [value]="notification.ID" />
 
             <p-dialog [(visible)]="infoVisibility[notification.ID]" [header]="notification.title">
               {{notification.body}}

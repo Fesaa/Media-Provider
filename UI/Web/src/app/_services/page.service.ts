@@ -2,7 +2,7 @@ import {DestroyRef, inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {DownloadMetadata, Page, Provider} from "../_models/page";
-import {Observable, of, ReplaySubject} from "rxjs";
+import {Observable, of, ReplaySubject, tap} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +15,8 @@ export class PageService {
   private pages: Page[] | undefined = undefined;
   private pagesSource = new ReplaySubject<Page[]>(1);
   public pages$ = this.pagesSource.asObservable();
+
+  private metadataCache: { [key: number]: DownloadMetadata } = {};
 
   constructor(private httpClient: HttpClient,) {
     this.refreshPages();
@@ -61,7 +63,15 @@ export class PageService {
   }
 
   metadata(provider: Provider) {
+    const metadata = this.metadataCache[provider];
+    if (metadata) {
+      return of(metadata);
+    }
+
     return this.httpClient.get<DownloadMetadata>(this.baseUrl + `download-metadata?provider=${provider}`)
+      .pipe(tap(metadata => {
+        this.metadataCache[provider] = metadata;
+      }))
   }
 
 }

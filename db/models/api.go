@@ -19,8 +19,10 @@ type Notifications interface {
 
 	New(Notification) error
 	Delete(uint) error
+	DeleteMany([]uint) error
 
 	MarkRead(uint) error
+	MarkReadMany([]uint) error
 	MarkUnread(uint) error
 	Unread() (int64, error)
 }

@@ -4,8 +4,10 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/impl"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/glebarez/sqlite"
 	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"gorm.io/gorm"
 	"path"
 )
@@ -48,4 +50,12 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 		Preferences:   impl.Preferences(db),
 		Notifications: impl.Notifications(db),
 	}, nil
+}
+
+func ModelsProvider(db *Database, c *dig.Container) {
+	utils.Must(c.Provide(utils.Identity(db.Users)))
+	utils.Must(c.Provide(utils.Identity(db.Pages)))
+	utils.Must(c.Provide(utils.Identity(db.Subscriptions)))
+	utils.Must(c.Provide(utils.Identity(db.Preferences)))
+	utils.Must(c.Provide(utils.Identity(db.Notifications)))
 }

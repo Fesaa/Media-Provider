@@ -31,7 +31,7 @@ export class MessageService {
     this.msgService.add({
       summary: title,
       detail: message,
-      severity: 'warning',
+      severity: 'warn',
       ...opts
     })
   }

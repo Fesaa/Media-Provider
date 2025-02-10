@@ -9,6 +9,25 @@ import (
 	"strconv"
 )
 
+// TryCatch will return the consumed value if the error returned by the producer was nil. Other returns the fallback
+// value and calls the first errorHandler if present
+func TryCatch[T, U any](
+	producer func() (T, error),
+	mapper func(T) U,
+	fallback U,
+	errorHandlers ...func(error),
+) U {
+	t, err := producer()
+	if err != nil {
+		if len(errorHandlers) > 0 {
+			errorHandlers[0](err)
+		}
+		return fallback
+	}
+
+	return mapper(t)
+}
+
 func GenerateSecret(length int) (string, error) {
 	secret := make([]byte, length)
 	_, err := rand.Read(secret)

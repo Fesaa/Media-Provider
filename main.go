@@ -25,6 +25,8 @@ func main() {
 	utils.Must(c.Invoke(validateConfig))
 
 	utils.Must(c.Provide(db.DatabaseProvider))
+	utils.Must(c.Invoke(db.ModelsProvider))
+
 	utils.Must(c.Provide(auth.NewJwtAuth, dig.Name("jwt-auth")))
 	utils.Must(c.Provide(auth.NewApiKeyAuth, dig.Name("api-key-auth")))
 

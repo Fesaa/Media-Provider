@@ -60,14 +60,6 @@
           }
         }
 
-        @defer (when selected == SettingsID.Notifications; prefetch on idle) {
-          @if (selected === SettingsID.Notifications && canSee(SettingsID.Notifications)) {
-            <div class="mt-5 md:ml-5">
-              <app-notifications></app-notifications>
-            </div>
-          }
-        }
-
         @defer (when selected == SettingsID.Pages; prefetch on idle) {
           @if (selected === SettingsID.Pages && canSee(SettingsID.Pages)) {
             <div class="md:ml-5">
