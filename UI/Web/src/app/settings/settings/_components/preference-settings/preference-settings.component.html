@@ -1,26 +1,30 @@
 <div class="flex w-full flex-grow">
 
-  @if (preferencesForm !== undefined && preferences !== undefined) {
-    <form [formGroup]="preferencesForm" class="w-full px-2" (ngSubmit)="save()">
+  @if (preferences !== undefined) {
 
+    <div class="flex flex-col flex-grow gap-4">
 
-      <app-form-input
-        pTooltip="The hour at which subscriptions will run, restart to take effect"
-        tooltipPosition="top"
-        type="number"
-        [formGroup]="preferencesForm" label="Subscription Refresh Hour" controlName="subscriptionRefreshHour"
-      ></app-form-input>
-
-      <div class="flex w-full flex-grow flex-row justify-center md:justify-end mt-4 md:mt-2">
-        <button
-          type="submit"
-          class="w-full md:w-1/6 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
-        >
-          Save
-        </button>
+      <div class="flex items-center justify-between">
+        <label for="subscriptionRefreshHour" pTooltip="This is the hour" tooltipPosition="right">Download subscriptions at</label>
+        <p-inputNumber suffix=" h"
+                       id="subscriptionRefreshHour"
+                       [(ngModel)]="preferences.subscriptionRefreshHour"
+                       showButtons="true"
+                       min="0"
+                       max="23"
+        />
       </div>
 
-    </form>
+      <div class="flex items-center justify-between">
+        <label class="flex-grow" for="logEmptyDownloads">Notification when a subscription downloads 0 items</label>
+        <p-toggle-switch id="logEmptyDownloads" [(ngModel)]="preferences.logEmptyDownloads" />
+      </div>
+
+      <div class="flex justify-end mt-10">
+        <p-button severity="info" (onClick)="save()" >Save</p-button>
+      </div>
+
+    </div>
   }
 
 </div>

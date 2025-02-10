@@ -16,7 +16,9 @@ import (
 )
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
-	ioService services.IOService, signalR services.SignalRService, notify services.NotificationService) api.Client {
+	ioService services.IOService, signalR services.SignalRService, notify services.NotificationService,
+	preferences models.Preferences,
+) api.Client {
 	return &client{
 		config:   c,
 		registry: newRegistry(httpClient, container),
@@ -24,6 +26,7 @@ func New(c *config.Config, httpClient *http.Client, container *dig.Container, lo
 		io:       ioService,
 		signalR:  signalR,
 		notify:   notify,
+		pref:     preferences,
 
 		content: utils.NewSafeMap[string, api.Downloadable](),
 	}
@@ -36,6 +39,7 @@ type client struct {
 	io       services.IOService
 	signalR  services.SignalRService
 	notify   services.NotificationService
+	pref     models.Preferences
 
 	content utils.SafeMap[string, api.Downloadable]
 }
@@ -127,8 +131,13 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 			return
 		}
 
-		// TODO: Change into user setting
-		if len(content.GetNewContent()) > 0 {
+		alwaysLog := utils.TryCatch(c.pref.Get, func(p *models.Preference) bool {
+			return p.LogEmptyDownloads
+		}, false, func(err error) {
+			c.log.Error().Err(err).Msg("failed to retrieve preferences, falling back to default behaviour")
+		})
+
+		if len(content.GetNewContent()) > 0 || alwaysLog {
 			text := fmt.Sprintf("%s finished downloading %d item(s)", content.Title(), len(content.GetNewContent()))
 			c.notifier(content.Request()).Notify(models.Notification{
 				Title:   "Download finished",
