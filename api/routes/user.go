@@ -56,6 +56,9 @@ func (ur *userRoutes) AnyUserExists(ctx *fiber.Ctx) error {
 	return ctx.SendString("false")
 }
 
+// Until we add a user service
+//
+//nolint:funlen
 func (ur *userRoutes) RegisterUser(ctx *fiber.Ctx) error {
 	ok, err := ur.DB.Users.ExistsAny()
 	if err != nil {
