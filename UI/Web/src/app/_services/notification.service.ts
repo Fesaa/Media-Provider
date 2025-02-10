@@ -35,4 +35,12 @@ export class NotificationService {
   deleteNotification(id: number) {
     return this.http.delete<any>(`${this.baseUrl}/${id}`);
   }
+
+  readMany(ids: number[]) {
+    return this.http.post(`${this.baseUrl}/many`, ids);
+  }
+
+  deleteMany(ids: number[]) {
+    return this.http.post(`${this.baseUrl}/many/delete`, ids);
+  }
 }

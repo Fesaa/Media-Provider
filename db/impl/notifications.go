@@ -2,6 +2,7 @@ package impl
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
 	"time"
 )
@@ -14,6 +15,24 @@ func Notifications(db *gorm.DB) models.Notifications {
 
 type notifications struct {
 	db *gorm.DB
+}
+
+func (n notifications) DeleteMany(ids []uint) error {
+	notifs := utils.Map(ids, func(id uint) models.Notification {
+		return models.Notification{
+			Model: gorm.Model{
+				ID: id,
+			},
+		}
+	})
+	return n.db.Delete(notifs).Error
+}
+
+func (n notifications) MarkReadMany(ids []uint) error {
+	return n.db.Model(&models.Notification{}).
+		Where("id IN (?)", ids).
+		Updates(&models.Notification{Read: true}).
+		Error
 }
 
 func (n notifications) Get(id uint) (models.Notification, error) {
@@ -66,7 +85,7 @@ func (n notifications) MarkUnread(u uint) error {
 			ID: u,
 		},
 	}
-	return n.db.Model(&model).Updates(&models.Notification{Read: false}).Error
+	return n.db.Model(&model).Updates(map[string]any{"read": false}).Error
 }
 
 func (n notifications) Unread() (int64, error) {

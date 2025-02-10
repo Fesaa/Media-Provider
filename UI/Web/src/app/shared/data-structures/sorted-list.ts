@@ -41,6 +41,11 @@ export class SortedList<T> {
     return this.list[idx];
   }
 
+  getFunc(f: (t: T) => boolean) {
+    const item = this.list.find(x => f(x));
+    return item
+  }
+
   length(): number {
     return this.list.length;
   }

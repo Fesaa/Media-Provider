@@ -29,6 +29,8 @@ func RegisterNotificationRoutes(nr notificationRoutes) {
 	notificationGroup.Post("/:id/read", nr.Read)
 	notificationGroup.Post("/:id/unread", nr.Unread)
 	notificationGroup.Delete("/:id", nr.Delete)
+	notificationGroup.Post("/many", nr.ReadMany)
+	notificationGroup.Post("/many/delete", nr.DeleteMany)
 }
 
 func (nr *notificationRoutes) All(ctx *fiber.Ctx) error {
@@ -90,6 +92,23 @@ func (nr *notificationRoutes) Read(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
+func (nr *notificationRoutes) ReadMany(ctx *fiber.Ctx) error {
+	var ids []uint
+	if err := ctx.BodyParser(&ids); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	if err := nr.DB.Notifications.MarkReadMany(ids); err != nil {
+		nr.Log.Error().Err(err).Msg("failed to mark notifications read")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+}
+
 func (nr *notificationRoutes) Unread(ctx *fiber.Ctx) error {
 	id, err := ParamsUInt(ctx, "id")
 	if err != nil {
@@ -105,6 +124,24 @@ func (nr *notificationRoutes) Unread(ctx *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+}
+
+func (nr *notificationRoutes) DeleteMany(ctx *fiber.Ctx) error {
+	var ids []uint
+	if err := ctx.BodyParser(&ids); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	if err := nr.DB.Notifications.DeleteMany(ids); err != nil {
+		nr.Log.Error().Err(err).Msg("failed to delete notifications")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 

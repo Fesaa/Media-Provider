@@ -21,8 +21,8 @@ export const routes: Routes = [
       },
       {path: '', pathMatch: 'full', redirectTo: 'home'},
       {
-        path: 'subscriptions',
-        loadChildren: () => import('./_routes/subscriptions.routes').then(m => m.routes)
+        path: '',
+        loadChildren: () => import('./_routes/extra.routes').then(m => m.routes)
       }
     ]
   },

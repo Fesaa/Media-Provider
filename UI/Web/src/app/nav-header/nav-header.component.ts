@@ -93,8 +93,7 @@ export class NavHeaderComponent implements OnInit {
             },
             {
               label: "Notifications",
-              routerLink: "settings",
-              fragment: "notifications",
+              routerLink: "notifications",
               icon: "pi pi-inbox"
             },
             {
