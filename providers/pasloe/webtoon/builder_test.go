@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	WebToonID   = 4747
+	WebToonID   = "4747"
 	WebToonName = "Night Owls & Summer Skies"
 )
 
@@ -30,7 +30,7 @@ func TestBuilder_Normalize(t *testing.T) {
 		{
 			Id:              WebToonID,
 			Name:            WebToonName,
-			ReadCount:       0,
+			ReadCount:       "",
 			ThumbnailMobile: "",
 			AuthorNameList:  []string{"TIKKLIL", "Rebecca Sullivan"},
 			Genre:           "Romance",
@@ -56,8 +56,8 @@ func TestBuilder_Normalize(t *testing.T) {
 		t.Errorf("got %q, need to include genre tag", first.Tags)
 	}
 
-	if first.InfoHash != utils.Stringify(WebToonID) {
-		t.Errorf("got %q, want %q", first.InfoHash, utils.Stringify(WebToonID))
+	if first.InfoHash != WebToonID {
+		t.Errorf("got %q, want %q", first.InfoHash, WebToonID)
 	}
 }
 

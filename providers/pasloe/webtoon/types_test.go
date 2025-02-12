@@ -9,7 +9,7 @@ func TestSearchData_Url(t *testing.T) {
 	d := SearchData{
 		Id:              WebToonID,
 		Name:            WebToonName,
-		ReadCount:       0,
+		ReadCount:       "0",
 		ThumbnailMobile: "",
 		AuthorNameList:  []string{"TIKKLIL", "Rebecca Sullivan"},
 		Genre:           "romance",

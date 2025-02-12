@@ -128,7 +128,7 @@ func (m mockNotifications) MarkUnRead(id uint) error {
 func req() payload.DownloadRequest {
 	return payload.DownloadRequest{
 		Provider:  models.WEBTOON,
-		Id:        utils.Stringify(WebToonID),
+		Id:        WebToonID,
 		BaseDir:   "Manga",
 		TempTitle: WebToonName,
 	}
@@ -303,7 +303,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	repo.searchErr = nil
 	repo.searchRes = []SearchData{
 		{
-			Id:   0,
+			Id:   "0",
 			Name: "An other series",
 		},
 	}

@@ -32,7 +32,7 @@ func (b *Builder) Normalize(webtoons []SearchData) []payload.Info {
 				payload.Of("Genre", w.Genre),
 				payload.Of("Readers", w.ReadCount),
 			},
-			InfoHash: utils.Stringify(w.Id),
+			InfoHash: w.Id,
 			ImageUrl: w.ProxiedImage(),
 			RefUrl:   w.Url(),
 			Provider: models.WEBTOON,

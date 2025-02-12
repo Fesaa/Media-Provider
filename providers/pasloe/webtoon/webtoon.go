@@ -111,7 +111,7 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 		}
 
 		w.searchInfo = utils.Find(search, func(data SearchData) bool {
-			return fmt.Sprintf("%d", data.Id) == w.id
+			return data.Id == w.id
 		})
 		if w.searchInfo == nil {
 			w.Log.Warn().Msg("was unable to load searchInfo, some meta-data may be off")

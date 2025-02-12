@@ -11,23 +11,10 @@ type SearchOptions struct {
 	Query string
 }
 
-type Response struct {
-	Result  SearchResult `json:"result"`
-	Success bool         `json:"success"`
-}
-
-type SearchResult struct {
-	Query        string       `json:"query"`
-	Start        int          `json:"start"`
-	Display      int          `json:"display"`
-	Total        int          `json:"total"`
-	SearchedList []SearchData `json:"searchedList"`
-}
-
 type SearchData struct {
-	Id              int      `json:"titleNo"`
+	Id              string   `json:"titleNo"`
 	Name            string   `json:"title"`
-	ReadCount       int      `json:"readCount"`
+	ReadCount       string   `json:"readCount"`
 	ThumbnailMobile string   `json:"thumbnailMobile"`
 	AuthorNameList  []string `json:"authorNameList"`
 	Genre           string   `json:"representGenre"`
@@ -35,7 +22,7 @@ type SearchData struct {
 }
 
 func (s *SearchData) Url() string {
-	return fmt.Sprintf(BaseUrl+"%s/%s/list?title_no=%d", s.Genre, url.PathEscape(s.Name), s.Id)
+	return fmt.Sprintf(BaseUrl+"%s/%s/list?title_no=%s", s.Genre, url.PathEscape(s.Name), s.Id)
 }
 
 func (s *SearchData) ProxiedImage() string {

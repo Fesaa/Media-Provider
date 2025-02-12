@@ -22,8 +22,8 @@ func TestRepository_Search(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(got) != 1 {
-		t.Fatalf("got %d results, want 1", len(got))
+	if len(got) < 1 {
+		t.Fatalf("got %d results, wanted at least one 1", len(got))
 	}
 
 	if got[0].Name != WebToonName {
@@ -55,7 +55,7 @@ func TestRepository_LoadImages(t *testing.T) {
 func TestRepository_SeriesInfoShort(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	got, err := repo.SeriesInfo(context.Background(), "4747")
+	got, err := repo.SeriesInfo(context.Background(), WebToonID)
 	if err != nil {
 		t.Fatal(err)
 	}
