@@ -11,7 +11,6 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"io"
@@ -146,8 +145,8 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 }
 
 func (m *manga) SetSeriesStatus() {
-	volumes := mapset.NewSet[string]()
-	chapterSet := mapset.NewSet[string]()
+	var maxVolume int64 = -1
+	var maxChapter int64 = -1
 
 	// If there is a last chapter present, but no last volume is given. We assume that the series does not use volumes
 	m.foundLastVolume = m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter != ""
@@ -159,22 +158,23 @@ func (m *manga) SetSeriesStatus() {
 			m.foundLastChapter = true
 		}
 
-		if _, err := strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
-			volumes.Add(ch.Attributes.Volume)
+		if val, err := strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
+			maxVolume = max(maxVolume, val)
 		} else {
 			m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
 				Msg("not adding chapter, as Volume string isn't an int")
 		}
 
-		if _, err := strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
-			chapterSet.Add(ch.Attributes.Chapter)
+		if val, err := strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
+			maxChapter = max(maxChapter, val)
 		} else {
 			m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
 				Msg("not adding chapter, as Chapter string isn't an int")
 		}
 	}
-	m.totalVolumes = volumes.Cardinality()
-	m.totalChapters = chapterSet.Cardinality()
+	// We can set these safely as they're only written when found
+	m.totalVolumes = int(maxVolume)
+	m.totalChapters = int(maxChapter)
 }
 
 func (m *manga) FilterChapters(c *ChapterSearchResponse) ChapterSearchResponse {

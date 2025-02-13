@@ -9,7 +9,6 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.1
 	github.com/anacrolix/torrent v1.58.0
 	github.com/ansrivas/fiberprometheus/v2 v2.8.0
-	github.com/deckarep/golang-set/v2 v2.7.0
 	github.com/fasthttp/websocket v1.5.12
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-co-op/gocron/v2 v2.15.0
