@@ -16,10 +16,8 @@ import {Button} from "primeng/button";
   imports: [
     FormsModule,
     ReactiveFormsModule,
-    FormInputComponent,
     Tooltip,
     ToggleSwitch,
-    InputText,
     InputNumber,
     Button
   ],
