@@ -54,7 +54,7 @@ func (r *repository) Search(ctx context.Context, options SearchOptions) ([]Searc
 
 	var results []SearchData
 	results = append(results, goquery.Map(doc.Find(".card_lst li"), r.extractSeries)...)
-	//results = append(results, goquery.Map(doc.Find(".challenge_lst ul li"), r.extractSeries)...) // Canvas
+	// results = append(results, goquery.Map(doc.Find(".challenge_lst ul li"), r.extractSeries)...) // Canvas
 	return results, nil
 }
 

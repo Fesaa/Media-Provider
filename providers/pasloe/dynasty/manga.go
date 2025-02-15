@@ -231,7 +231,14 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci.Writer = strings.Join(utils.Map(m.seriesInfo.Authors, func(t Author) string {
 		return t.DisplayName
 	}), ",")
+	ci.Web = m.seriesInfo.RefUrl()
 
+	m.WriteGenreAndTags(chapter, ci)
+
+	return ci
+}
+
+func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
 	tags := utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags)
 
 	var genres, blackList []string
@@ -279,10 +286,6 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	} else {
 		m.Log.Trace().Msg("not including unmatched tags in comicinfo.xml")
 	}
-
-	ci.Web = m.seriesInfo.RefUrl()
-
-	return ci
 }
 
 func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
