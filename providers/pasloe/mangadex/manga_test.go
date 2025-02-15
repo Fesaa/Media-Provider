@@ -142,6 +142,25 @@ func mangaResp() *MangaSearchData {
 						Group: genreTag,
 					},
 				},
+				{
+					Attributes: TagAttributes{
+						Name:  map[string]string{"en": "Blacklisted Genre"},
+						Group: genreTag,
+					},
+				},
+				{
+					Attributes: TagAttributes{
+						Name:  map[string]string{"en": "Blacklisted Tag"},
+						Group: "tag",
+					},
+				},
+				{
+					Id: "ABC",
+					Attributes: TagAttributes{
+						Name:  map[string]string{"en": "Something random"},
+						Group: genreTag,
+					},
+				},
 			},
 		},
 	}
@@ -887,6 +906,40 @@ func TestChapterSearchResponse_FilterOneEnChapterSkipOfficial(t *testing.T) {
 	filtered := m.FilterChapters(&c)
 	if len(filtered.Data) != 0 {
 		t.Errorf("Expected 0 chapters, got %d", len(filtered.Data))
+	}
+
+}
+
+func TestTagsBlackList(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	m.language = "en"
+
+	chpt := chapter()
+	_ = m.preferences.Update(models.Preference{
+		BlackListedTags: []string{
+			"Blacklisted Genre",
+			"Blacklisted Tag",
+			"ABC", // ID
+		},
+	})
+
+	m.info = mangaResp()
+
+	ci := m.comicInfo(chpt)
+	genres := strings.Split(ci.Genre, ",")
+	tags := strings.Split(ci.Tags, ",")
+
+	got := len(genres)
+	want := 1
+
+	if want != got {
+		t.Errorf("want %d genres, got %d: %+v", want, got, genres)
+	}
+
+	got = len(tags)
+	want = 1
+	if want != got {
+		t.Errorf("want %d tags, got %d: %+v", want, got, tags)
 	}
 
 }

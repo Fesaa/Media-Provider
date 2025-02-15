@@ -281,6 +281,9 @@ func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
 			if !tagAllowed(t) {
 				return "", false
 			}
+			if tagContains(genres, t) {
+				return "", false
+			}
 			return t.DisplayName, true
 		}), ",")
 	} else {

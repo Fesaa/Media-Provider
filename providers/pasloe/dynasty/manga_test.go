@@ -420,3 +420,63 @@ func TestManga_ShouldDownload(t *testing.T) {
 		t.Errorf("m.ShouldDownload() = %t, want true", got)
 	}
 }
+
+func TestTagToGenre(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+
+	m.seriesInfo = &Series{
+		Id:          "",
+		Title:       "",
+		AltTitle:    "",
+		Description: "",
+		Status:      "",
+		CoverUrl:    "",
+	}
+
+	m.preferences.Update(models.Preference{
+		DynastyGenreTags: []string{"yuri"},
+	})
+
+	ci := m.comicInfo(chapter())
+
+	genres := strings.Split(ci.Genre, ",")
+	tags := strings.Split(ci.Tags, ",")
+
+	got := len(genres)
+	want := 1 // Yuri
+	if got != want {
+		t.Errorf("len(genres) = %d, want %d: %+v", got, want, genres)
+	}
+
+	got = len(tags)
+	want = 1 // The way split works is that it ends the string in the slice if no delim
+	if got != want || tags[0] != ci.Tags {
+		t.Errorf("len(tags) = %d, want %d: %+v", got, want, tags)
+	}
+
+	m.Req.DownloadMetadata.Extra = make(map[string][]string, 1)
+	m.Req.DownloadMetadata.Extra[IncludeNotMatchedTagsKey] = []string{"true"}
+
+	ci = m.comicInfo(chapter())
+	tags = strings.Split(ci.Tags, ",")
+
+	got = len(tags)
+	want = 4
+	if got != want {
+		t.Errorf("len(tags) = %d, want %d: %+v", got, want, tags)
+	}
+
+	m.preferences.Update(models.Preference{
+		DynastyGenreTags: []string{"yuri"},
+		BlackListedTags:  []string{"chika_x_you"},
+	})
+
+	ci = m.comicInfo(chapter())
+	tags = strings.Split(ci.Tags, ",")
+
+	got = len(tags)
+	want = 3
+	if got != want {
+		t.Errorf("len(tags) = %d, want %d: %+v", got, want, tags)
+	}
+}
