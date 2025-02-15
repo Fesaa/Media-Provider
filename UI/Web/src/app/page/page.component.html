@@ -10,7 +10,7 @@
             </h1>
 
             <p-floatlabel variant="on">
-              <input class="w-full" id="query" pInputText type="text" [(ngModel)]="searchRequest.query">
+              <input class="w-full" id="query" pInputText type="text" [(ngModel)]="searchRequest.query" (keydown.enter)="search()">
               <label for="query">Query</label>
             </p-floatlabel>
 
