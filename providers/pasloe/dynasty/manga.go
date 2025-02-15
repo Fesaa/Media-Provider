@@ -241,8 +241,8 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
 	tags := utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags)
 
-	var genres, blackList []string
-	p, err := m.preferences.Get()
+	var genres, blackList models.Tags
+	p, err := m.preferences.GetWithTags()
 	if err != nil {
 		m.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
 		if !m.hasWarnedBlacklist {
@@ -257,10 +257,8 @@ func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
 		blackList = p.BlackListedTags
 	}
 
-	genres = utils.Map(genres, strings.ToLower)
-
-	tagContains := func(slice []string, tag Tag) bool {
-		return slices.Contains(slice, tag.Id) || slices.Contains(slice, strings.ToLower(tag.DisplayName))
+	tagContains := func(slice models.Tags, tag Tag) bool {
+		return slice.Contains(tag.Id) || slice.Contains(tag.DisplayName)
 	}
 
 	tagAllowed := func(tag Tag) bool {

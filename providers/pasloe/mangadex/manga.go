@@ -558,8 +558,8 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		m.Log.Trace().Err(err).Str("volume", chapter.Attributes.Volume).Msg("unable to parse volume number")
 	}
 
-	var blackList []string
-	p, err := m.preferences.Get()
+	var blackList models.Tags
+	p, err := m.preferences.GetWithTags()
 	if err != nil {
 		m.Log.Error().Err(err).Msg("No genres or tags will be set, blacklist couldn't be loaded")
 
@@ -579,11 +579,11 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 			return false
 		}
 
-		if slices.Contains(blackList, name) {
+		if blackList.Contains(name) {
 			return false
 		}
 
-		if slices.Contains(blackList, tag.Id) {
+		if blackList.Contains(tag.Id) {
 			return false
 		}
 		return true

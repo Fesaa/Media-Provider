@@ -25,12 +25,8 @@ var manualMigrations = []migration{
 		f:    manual.InsertDefaultPreferences,
 	},
 	{
-		name: "20250215_InsertEmptyArray",
-		f:    manual.InsertEmptyArray,
-	},
-	{
-		name: "20250215_InsertEmptyBlackList",
-		f:    manual.InsertEmptyBlackList,
+		name: "20250215_MigrateTags",
+		f:    manual.MigrateTags,
 	},
 }
 

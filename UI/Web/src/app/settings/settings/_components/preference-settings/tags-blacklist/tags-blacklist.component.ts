@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {Preferences} from "../../../../../_models/preferences";
+import {normalize, Preferences, Tag} from "../../../../../_models/preferences";
 import {Dialog} from "primeng/dialog";
 import {FloatLabel} from "primeng/floatlabel";
 import {IconField} from "primeng/iconfield";
@@ -7,6 +7,7 @@ import {InputText} from "primeng/inputtext";
 import {InputIcon} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
 import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
+import {MessageService} from "../../../../../_services/message.service";
 
 @Component({
   selector: 'app-tags-blacklist',
@@ -34,7 +35,12 @@ export class TagsBlacklistComponent {
 
   newTag: string = '';
   filter: string = '';
-  toDisplay: string[] = [];
+  toDisplay: Tag[] = [];
+
+  constructor(
+    private msgService: MessageService,
+  ) {
+  }
 
   hide() {
     this.showDialog = false;
@@ -43,11 +49,12 @@ export class TagsBlacklistComponent {
     this.showDialogChange.emit(false);
   }
 
-  removeTag(tag: string) {
+  removeTag(tag: Tag) {
     if (!this.preferences) {
       return;
     }
-    this.preferences.blackListedTags = this.preferences.blackListedTags.filter(g => g !== tag);
+    this.preferences.blackListedTags = this.preferences.blackListedTags
+      .filter(g => g.normalizedName !== tag.normalizedName);
     this.filterToDisplay();
   }
 
@@ -58,11 +65,15 @@ export class TagsBlacklistComponent {
     if (this.newTag.length === 0) {
       return;
     }
-    if (this.preferences.blackListedTags.find(g => g === this.newTag)) {
+    if (this.preferences.blackListedTags.find(g => g.normalizedName === normalize(this.newTag))) {
       this.newTag = ''
+      this.msgService.warning("Tag already present", "Tags are normalized, may not find the exact tag in the list")
       return;
     }
-    this.preferences.blackListedTags = [...this.preferences.blackListedTags, this.newTag];
+    this.preferences.blackListedTags = [...this.preferences.blackListedTags, {
+      name: this.newTag,
+      normalizedName: normalize(this.newTag),
+    }];
     this.filterToDisplay();
     this.newTag = ''
   }
@@ -72,7 +83,7 @@ export class TagsBlacklistComponent {
       return;
     }
     this.toDisplay = this.preferences.blackListedTags
-      .filter(g => g.toLowerCase().includes(this.filter.toLowerCase()));
+      .filter(g => g.normalizedName.includes(normalize(this.filter)));
   }
 
 }

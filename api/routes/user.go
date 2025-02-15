@@ -66,7 +66,7 @@ func (ur *userRoutes) RegisterUser(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	if !ok {
+	if ok {
 		return fiber.ErrBadRequest
 	}
 

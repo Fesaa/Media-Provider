@@ -916,10 +916,19 @@ func TestTagsBlackList(t *testing.T) {
 
 	chpt := chapter()
 	_ = m.preferences.Update(models.Preference{
-		BlackListedTags: []string{
-			"Blacklisted Genre",
-			"Blacklisted Tag",
-			"ABC", // ID
+		BlackListedTags: []models.Tag{
+			{
+				Name:           "Blacklisted Genre",
+				NormalizedName: "blacklistedgenre",
+			},
+			{
+				Name:           "Blacklisted Tag",
+				NormalizedName: "blacklistedtag",
+			},
+			{
+				Name:           "ABC",
+				NormalizedName: "abc",
+			},
 		},
 	})
 

@@ -2,9 +2,16 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+var re = regexp.MustCompile(`[^a-zA-Z0-9]`)
+
+func Normalize(s string) string {
+	return strings.ToLower(re.ReplaceAllString(s, ""))
+}
 
 // PadInt returns the i as a string s, with 0's added to the left until len(s) >= n
 func PadInt(i int, n int) string {

@@ -18,6 +18,7 @@ type preferencesRoute struct {
 	DB     *db.Database
 	Log    zerolog.Logger
 	Val    services.ValidationService
+	Pref   services.PreferencesService
 }
 
 func RegisterPreferencesRoutes(pr preferencesRoute) {
@@ -28,7 +29,7 @@ func RegisterPreferencesRoutes(pr preferencesRoute) {
 }
 
 func (pr *preferencesRoute) Get(ctx *fiber.Ctx) error {
-	pref, err := pr.DB.Preferences.Get()
+	pref, err := pr.DB.Preferences.GetWithTags()
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to get preferences")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -47,7 +48,7 @@ func (pr *preferencesRoute) Update(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err := pr.DB.Preferences.Update(pref); err != nil {
+	if err := pr.Pref.Update(pref); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to update preferences")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),

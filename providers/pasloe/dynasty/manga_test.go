@@ -435,7 +435,12 @@ func TestTagToGenre(t *testing.T) {
 	}
 
 	err := m.preferences.Update(models.Preference{
-		DynastyGenreTags: []string{"yuri"},
+		DynastyGenreTags: []models.Tag{
+			{
+				Name:           "Yuri",
+				NormalizedName: "yuri",
+			},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -471,8 +476,18 @@ func TestTagToGenre(t *testing.T) {
 	}
 
 	err = m.preferences.Update(models.Preference{
-		DynastyGenreTags: []string{"yuri"},
-		BlackListedTags:  []string{"chika_x_you"},
+		DynastyGenreTags: []models.Tag{
+			{
+				Name:           "Yuri",
+				NormalizedName: "yuri",
+			},
+		},
+		BlackListedTags: []models.Tag{
+			{
+				Name:           "chika_x_you",
+				NormalizedName: "chikaxyou",
+			},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -111,6 +111,10 @@ func (b *brokenPreferences) Get() (*models.Preference, error) {
 	return nil, errors.New("broken preferences")
 }
 
+func (b *brokenPreferences) GetWithTags() (*models.Preference, error) {
+	return b.Get()
+}
+
 func (b *brokenPreferences) Update(pref models.Preference) error {
 	return errors.New("broken preferences")
 }

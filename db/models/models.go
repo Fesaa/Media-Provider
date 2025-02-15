@@ -11,4 +11,5 @@ var MODELS = []any{
 	&ManualMigration{},
 	&Preference{},
 	&Notification{},
+	&Tag{},
 }

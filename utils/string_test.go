@@ -2,6 +2,39 @@ package utils
 
 import "testing"
 
+func TestNormalize(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "no-op",
+			input:    "abdsfiqkl",
+			expected: "abdsfiqkl",
+		},
+		{
+			name:     "Complex",
+			input:    "5ç!%%ab",
+			expected: "5ab",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := Normalize(test.input)
+			if actual != test.expected {
+				t.Errorf("expected: %s, actual: %s", test.expected, actual)
+			}
+		})
+	}
+}
+
 func TestPadFloat(t *testing.T) {
 	type args struct {
 		f float64
