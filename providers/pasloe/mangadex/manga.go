@@ -71,8 +71,8 @@ type manga struct {
 	coverFactory   CoverFactory
 	volumeMetadata []string
 
-	totalChapters    int
-	totalVolumes     int
+	lastFoundChapter int
+	lastFoundVolume  int
 	foundLastVolume  bool
 	foundLastChapter bool
 
@@ -177,8 +177,8 @@ func (m *manga) SetSeriesStatus() {
 		}
 	}
 	// We can set these safely as they're only written when found
-	m.totalVolumes = int(maxVolume)
-	m.totalChapters = int(maxChapter)
+	m.lastFoundVolume = int(maxVolume)
+	m.lastFoundChapter = int(maxChapter)
 }
 
 func (m *manga) FilterChapters(c *ChapterSearchResponse) ChapterSearchResponse {
@@ -432,7 +432,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 		}
 	})
 
-	if m.totalVolumes == 0 {
+	if m.lastFoundVolume == 0 {
 		mi.Stories = metroninfo.Stories{{Value: chapter.Attributes.Title}}
 
 		if chapter.Attributes.PublishedAt != "" {
@@ -449,10 +449,10 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 
 	if m.info.Attributes.Status == StatusCompleted {
 		switch {
-		case m.totalVolumes == 0 && m.foundLastChapter:
-			mi.Series.VolumeCount = m.totalChapters
+		case m.lastFoundVolume == 0 && m.foundLastChapter:
+			mi.Series.VolumeCount = m.lastFoundChapter
 		case m.foundLastChapter && m.foundLastVolume:
-			mi.Series.VolumeCount = m.totalVolumes
+			mi.Series.VolumeCount = m.lastFoundVolume
 		case !m.hasWarned:
 			m.hasWarned = true
 			m.Log.Warn().
@@ -637,10 +637,10 @@ func (m *manga) writeCIStatus(ci *comicinfo.ComicInfo) {
 		return
 	}
 	switch {
-	case m.totalVolumes == 0 && m.foundLastChapter:
-		ci.Count = m.totalChapters
+	case m.lastFoundVolume == 0 && m.foundLastChapter:
+		ci.Count = m.lastFoundChapter
 	case m.foundLastChapter && m.foundLastVolume:
-		ci.Count = m.totalVolumes
+		ci.Count = m.lastFoundVolume
 	case !m.hasWarned:
 		m.hasWarned = true
 		m.Log.Warn().
