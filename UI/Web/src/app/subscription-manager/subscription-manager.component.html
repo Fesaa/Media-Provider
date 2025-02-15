@@ -1,5 +1,6 @@
 <div class="pt-1 md:pt-5 mx-16">
   <p-table
+    #subTable
     [value]="subscriptions"
     [(rows)]="size"
     [paginator]="subscriptions.length > size || size != 10"
@@ -8,10 +9,24 @@
   >
     <ng-template #header>
       <tr>
-        <th>Title</th>
-        <th style="width:10%">Last ran</th>
+        <th pSortableColumn="info.title">Title <p-sortIcon field="info.title"/> </th>
+        <th pSortableColumn="info.lastCheck" style="width:10%">Last ran <p-sortIcon field="info.lastCheck"/></th>
         <th style="width:10%">Frequency</th>
         <th style="width:15%">Action</th>
+      </tr>
+      <tr>
+        <th>
+          <p-columnFilter
+            type="text"
+            field="info.title"
+            placeholder="Search by title"
+            showMenu="false"
+            matchMode="contains"
+          />
+        </th>
+        <th></th>
+        <th></th>
+        <th></th>
       </tr>
     </ng-template>
 

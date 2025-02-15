@@ -43,7 +43,7 @@ func NewDownloadableFromBlock[T IDAble](
 		LastTime:     time.Now(),
 		contentState: payload.ContentStateQueued,
 		SignalR:      signalR,
-		notifier:     notification,
+		Notifier:     notification,
 	}
 }
 
@@ -59,7 +59,7 @@ type DownloadBase[T IDAble] struct {
 	Log          zerolog.Logger
 	contentState payload.ContentState
 	SignalR      services.SignalRService
-	notifier     services.NotificationService
+	Notifier     services.NotificationService
 
 	id        string
 	baseDir   string
@@ -378,7 +378,7 @@ func (d *DownloadBase[T]) abortDownload(reason error) {
 	if err := d.Client.RemoveDownload(req); err != nil {
 		d.Log.Error().Err(err).Msg("error while cleaning up")
 	}
-	d.notifier.Notify(models.Notification{
+	d.Notifier.Notify(models.Notification{
 		Title:   "Failed download",
 		Summary: fmt.Sprintf("%s failed to download", d.infoProvider.Title()),
 		Body:    fmt.Sprintf("Download failed for %s, because %v", d.infoProvider.Title(), reason),

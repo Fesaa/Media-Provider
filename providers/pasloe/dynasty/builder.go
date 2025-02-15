@@ -65,6 +65,12 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Key:      DownloadOneShotKey,
 				FormType: payload.SWITCH,
 			},
+			{
+				Title:    "Add not matched tags to comicinfo",
+				ToolTip:  "Tags not configured to be a genre, will be added as tags instead",
+				Key:      IncludeNotMatchedTagsKey,
+				FormType: payload.SWITCH,
+			},
 		},
 	}
 }

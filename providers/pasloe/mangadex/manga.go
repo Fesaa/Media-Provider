@@ -11,7 +11,6 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"io"
@@ -37,6 +36,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
 		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
 		signalR services.SignalRService, notification services.NotificationService,
+		preferences models.Preferences,
 	) {
 		block = &manga{
 			id:              req.Id,
@@ -44,6 +44,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			repository:      repository,
 			markdownService: markdownService,
 			volumeMetadata:  make([]string, 0),
+			preferences:     preferences,
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
@@ -62,6 +63,7 @@ type manga struct {
 	httpClient      *http.Client
 	repository      Repository
 	markdownService services.MarkdownService
+	preferences     models.Preferences
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
@@ -69,12 +71,13 @@ type manga struct {
 	coverFactory   CoverFactory
 	volumeMetadata []string
 
-	totalChapters    int
-	totalVolumes     int
+	lastFoundChapter int
+	lastFoundVolume  int
 	foundLastVolume  bool
 	foundLastChapter bool
 
-	hasWarned bool
+	hasWarned          bool
+	hasWarnedBlacklist bool
 
 	language string
 }
@@ -146,8 +149,8 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 }
 
 func (m *manga) SetSeriesStatus() {
-	volumes := mapset.NewSet[string]()
-	chapterSet := mapset.NewSet[string]()
+	var maxVolume int64 = -1
+	var maxChapter int64 = -1
 
 	// If there is a last chapter present, but no last volume is given. We assume that the series does not use volumes
 	m.foundLastVolume = m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter != ""
@@ -159,22 +162,23 @@ func (m *manga) SetSeriesStatus() {
 			m.foundLastChapter = true
 		}
 
-		if _, err := strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
-			volumes.Add(ch.Attributes.Volume)
+		if val, err := strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
+			maxVolume = max(maxVolume, val)
 		} else {
 			m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
 				Msg("not adding chapter, as Volume string isn't an int")
 		}
 
-		if _, err := strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
-			chapterSet.Add(ch.Attributes.Chapter)
+		if val, err := strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
+			maxChapter = max(maxChapter, val)
 		} else {
 			m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
 				Msg("not adding chapter, as Chapter string isn't an int")
 		}
 	}
-	m.totalVolumes = volumes.Cardinality()
-	m.totalChapters = chapterSet.Cardinality()
+	// We can set these safely as they're only written when found
+	m.lastFoundVolume = int(maxVolume)
+	m.lastFoundChapter = int(maxChapter)
 }
 
 func (m *manga) FilterChapters(c *ChapterSearchResponse) ChapterSearchResponse {
@@ -428,7 +432,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 		}
 	})
 
-	if m.totalVolumes == 0 {
+	if m.lastFoundVolume == 0 {
 		mi.Stories = metroninfo.Stories{{Value: chapter.Attributes.Title}}
 
 		if chapter.Attributes.PublishedAt != "" {
@@ -445,10 +449,10 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 
 	if m.info.Attributes.Status == StatusCompleted {
 		switch {
-		case m.totalVolumes == 0 && m.foundLastChapter:
-			mi.Series.VolumeCount = m.totalChapters
+		case m.lastFoundVolume == 0 && m.foundLastChapter:
+			mi.Series.VolumeCount = m.lastFoundChapter
 		case m.foundLastChapter && m.foundLastVolume:
-			mi.Series.VolumeCount = m.totalVolumes
+			mi.Series.VolumeCount = m.lastFoundVolume
 		case !m.hasWarned:
 			m.hasWarned = true
 			m.Log.Warn().
@@ -554,6 +558,37 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		m.Log.Trace().Err(err).Str("volume", chapter.Attributes.Volume).Msg("unable to parse volume number")
 	}
 
+	var blackList []string
+	p, err := m.preferences.Get()
+	if err != nil {
+		m.Log.Error().Err(err).Msg("No genres or tags will be set, blacklist couldn't be loaded")
+
+		if !m.hasWarnedBlacklist {
+			m.hasWarnedBlacklist = true
+			m.Notifier.NotifyContentQ(m.Title()+": Blacklist failed to load",
+				fmt.Sprintf("Blacklist failed to load while writing ComicInfo, no tags or genres will be included."+
+					" Check logs for full list of failed chapters"),
+				models.Orange)
+		}
+	} else {
+		blackList = p.BlackListedTags
+	}
+
+	tagAllowed := func(tag TagData, name string) bool {
+		if err != nil {
+			return false
+		}
+
+		if slices.Contains(blackList, name) {
+			return false
+		}
+
+		if slices.Contains(blackList, tag.Id) {
+			return false
+		}
+		return true
+	}
+
 	ci.Genre = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
 		n, ok := t.Attributes.Name[m.language]
 		if !ok {
@@ -561,6 +596,10 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		}
 
 		if t.Attributes.Group != genreTag {
+			return "", false
+		}
+
+		if !tagAllowed(t, n) {
 			return "", false
 		}
 
@@ -574,6 +613,10 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		}
 
 		if t.Attributes.Group == genreTag {
+			return "", false
+		}
+
+		if !tagAllowed(t, n) {
 			return "", false
 		}
 
@@ -594,10 +637,10 @@ func (m *manga) writeCIStatus(ci *comicinfo.ComicInfo) {
 		return
 	}
 	switch {
-	case m.totalVolumes == 0 && m.foundLastChapter:
-		ci.Count = m.totalChapters
+	case m.lastFoundVolume == 0 && m.foundLastChapter:
+		ci.Count = m.lastFoundChapter
 	case m.foundLastChapter && m.foundLastVolume:
-		ci.Count = m.totalVolumes
+		ci.Count = m.lastFoundVolume
 	case !m.hasWarned:
 		m.hasWarned = true
 		m.Log.Warn().

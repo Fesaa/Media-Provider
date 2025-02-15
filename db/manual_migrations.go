@@ -24,6 +24,14 @@ var manualMigrations = []migration{
 		name: "20250112_InsertDefaultPreferences",
 		f:    manual.InsertDefaultPreferences,
 	},
+	{
+		name: "20250215_InsertEmptyArray",
+		f:    manual.InsertEmptyArray,
+	},
+	{
+		name: "20250215_InsertEmptyBlackList",
+		f:    manual.InsertEmptyBlackList,
+	},
 }
 
 func manualMigration(db *gorm.DB, log zerolog.Logger) error {

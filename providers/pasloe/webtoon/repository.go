@@ -2,13 +2,11 @@ package webtoon
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog"
-	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -19,7 +17,7 @@ import (
 const (
 	Domain      = "https://www.webtoons.com"
 	BaseUrl     = "https://www.webtoons.com/en/"
-	SearchUrl   = BaseUrl + "search/immediate?keyword=%s"
+	SearchUrl   = BaseUrl + "search?keyword=%s"
 	ImagePrefix = "https://webtoon-phinf.pstatic.net/"
 	EpisodeList = Domain + "/episodeList?titleNo=%s"
 )
@@ -49,30 +47,30 @@ func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
 }
 
 func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchData, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, searchUrl(options.Query), nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := r.httpClient.Do(req)
+	doc, err := r.wrapInDoc(ctx, searchUrl(options.Query))
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	var results []SearchData
+	results = append(results, goquery.Map(doc.Find(".card_lst li"), r.extractSeries)...)
+	// results = append(results, goquery.Map(doc.Find(".challenge_lst ul li"), r.extractSeries)...) // Canvas
+	return results, nil
+}
 
-	var response Response
-	err = json.Unmarshal(data, &response)
-	if err != nil {
-		return nil, err
-	}
+func (r *repository) extractSeries(_ int, s *goquery.Selection) SearchData {
+	id := s.Find("a").First().AttrOr("data-title-no", "")
+	rating := s.Find("a").First().AttrOr("data-title-unsuitable-for-children", "false")
 
-	return utils.Map(response.Result.SearchedList, func(s SearchData) SearchData {
-		s.Genre = strings.ToLower(s.Genre)
-		return s
-	}), nil
+	return SearchData{
+		Id:              id,
+		Name:            s.Find(".subj").Text(),
+		ReadCount:       s.Find("em.grade_num").Text(),
+		ThumbnailMobile: s.Find("img").AttrOr("src", ""),
+		AuthorNameList:  utils.Map(strings.Split(s.Find(".author").Text(), "/"), strings.TrimSpace),
+		Genre:           s.Find(".genre").Text(),
+		Rating:          rating != "false",
+	}
 }
 
 func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string, error) {

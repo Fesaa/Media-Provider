@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -24,6 +25,9 @@ func TestBuilder_Search(t *testing.T) {
 		Page:     1,
 	})
 	if err != nil {
+		if strings.Contains(err.Error(), "403") {
+			t.Skipf("Skipping test, cannot reach")
+		}
 		t.Fatal(err)
 	}
 

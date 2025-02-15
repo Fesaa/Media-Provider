@@ -11,7 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/philippseith/signalr"
+	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"io"
@@ -22,109 +22,6 @@ import (
 	"testing"
 	"time"
 )
-
-type mockClient struct {
-	baseDir string
-}
-
-func (m mockClient) GetRootDir() string {
-	return m.baseDir
-}
-
-func (m mockClient) GetMaxConcurrentImages() int {
-	return 5
-}
-
-func (m mockClient) Download(request payload.DownloadRequest) error {
-	return nil
-}
-
-func (m mockClient) RemoveDownload(request payload.StopRequest) error {
-	return nil
-}
-
-func (m mockClient) GetBaseDir() string {
-	return m.baseDir
-}
-
-func (m mockClient) GetCurrentDownloads() []api.Downloadable {
-	return []api.Downloadable{}
-}
-
-func (m mockClient) GetQueuedDownloads() []payload.InfoStat {
-	return []payload.InfoStat{}
-}
-
-func (m mockClient) GetConfig() api.Config {
-	return m
-}
-
-func (m mockClient) Content(id string) services.Content {
-	return nil
-}
-
-func (m mockClient) CanStart(models.Provider) bool {
-	return true
-}
-
-type mockSignalR struct {
-	signalr.Hub
-}
-
-func (m *mockSignalR) Broadcast(eventType payload.EventType, data interface{}) {
-}
-
-func (m *mockSignalR) SizeUpdate(id string, size string) {
-}
-
-func (m *mockSignalR) ProgressUpdate(data payload.ContentProgressUpdate) {
-}
-
-func (m *mockSignalR) StateUpdate(id string, state payload.ContentState) {
-}
-
-func (m *mockSignalR) AddContent(data payload.InfoStat) {
-}
-
-func (m *mockSignalR) DeleteContent(id string) {
-}
-
-func (m *mockSignalR) Notify(models.Notification) {}
-
-type mockNotifications struct {
-}
-
-func (m mockNotifications) Notify(notification models.Notification) {
-}
-
-func (m mockNotifications) NotifyHelper(title, summary, body string, colour models.NotificationColour, group models.NotificationGroup) {
-}
-
-func (m mockNotifications) NotifyContent(title, summary, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifyContentQ(title, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifySecurity(title, summary, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifySecurityQ(title, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifyGeneral(title, summary, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifyGeneralQ(title, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) MarkRead(id uint) error {
-	return nil
-}
-
-func (m mockNotifications) MarkUnRead(id uint) error {
-	return nil
-}
 
 type mockRepo struct {
 	t           *testing.T
@@ -172,7 +69,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 	scope := c.Scope("testScope")
 
 	tempDir := utils.OrDefault(td, t.TempDir())
-	client := mockClient{baseDir: tempDir}
+	client := mock.PasloeClient{BaseDir: tempDir}
 	repo := tempRepo(t, w)
 
 	must(scope.Provide(func() api.Client {
@@ -183,8 +80,9 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 	must(scope.Provide(utils.Identity(repo)))
 	must(scope.Provide(utils.Identity(req)))
 	must(scope.Provide(services.MarkdownServiceProvider))
-	must(scope.Provide(func() services.SignalRService { return &mockSignalR{} }))
-	must(scope.Provide(func() services.NotificationService { return &mockNotifications{} }))
+	must(scope.Provide(func() services.SignalRService { return &mock.SignalR{} }))
+	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
+	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 
 	return NewManga(scope).(*manga)
 }
@@ -241,6 +139,25 @@ func mangaResp() *MangaSearchData {
 				{
 					Attributes: TagAttributes{
 						Name:  map[string]string{"cn": "Non English"},
+						Group: genreTag,
+					},
+				},
+				{
+					Attributes: TagAttributes{
+						Name:  map[string]string{"en": "Blacklisted Genre"},
+						Group: genreTag,
+					},
+				},
+				{
+					Attributes: TagAttributes{
+						Name:  map[string]string{"en": "Blacklisted Tag"},
+						Group: "tag",
+					},
+				},
+				{
+					Id: "ABC",
+					Attributes: TagAttributes{
+						Name:  map[string]string{"en": "Something random"},
 						Group: genreTag,
 					},
 				},
@@ -303,8 +220,8 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 		t.Error("timed out waiting for manga title")
 	}
 
-	mock := mockRepo{t: t}
-	mock.manga = GetMangaResponse{
+	mr := mockRepo{t: t}
+	mr.manga = GetMangaResponse{
 		Data: MangaSearchData{
 			Attributes: MangaAttributes{
 				LastChapter: "8",
@@ -312,7 +229,7 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 			},
 		},
 	}
-	mock.chapters = ChapterSearchResponse{
+	mr.chapters = ChapterSearchResponse{
 		Data: []ChapterSearchData{
 			{
 				Attributes: ChapterAttributes{
@@ -331,7 +248,7 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 		},
 	}
 
-	m.repository = mock
+	m.repository = mr
 
 	select {
 	case <-m.LoadInfo(context.Background()):
@@ -348,17 +265,27 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 		t.Error("expected manga to have last chapter")
 	}
 
-	got := m.totalVolumes
+	got := m.lastFoundVolume
 	want := 2
 
 	if got != want {
-		t.Errorf("totalVolumes got %d, want %d", got, want)
+		t.Errorf("lastFoundVolume got %d, want %d", got, want)
 	}
 
-	got = m.totalChapters
+	got = m.lastFoundChapter
+	want = 8
+	if got != want {
+		t.Errorf("lastFoundChapter got %d, want %d", got, want)
+	}
+
+	m.info = mangaResp()
+	m.info.Attributes.Status = StatusCompleted
+
+	ci := m.comicInfo(mr.chapters.Data[0])
+	got = ci.Count
 	want = 2
 	if got != want {
-		t.Errorf("totalChapters got %d, want %d", got, want)
+		t.Errorf("ComicInfo#Count got %d, want %d", got, want)
 	}
 
 }
@@ -680,8 +607,8 @@ func TestManga_writeCIStatusOnlyChapters(t *testing.T) {
 
 	m.info = mangaResp()
 	m.info.Attributes.Status = StatusCompleted
-	m.totalVolumes = 0
-	m.totalChapters = 10
+	m.lastFoundVolume = 0
+	m.lastFoundChapter = 10
 	m.foundLastChapter = true
 
 	m.writeCIStatus(ci)
@@ -699,7 +626,7 @@ func TestManga_writeCIStatusVolumes(t *testing.T) {
 	m.info.Attributes.Status = StatusCompleted
 	m.foundLastChapter = true
 	m.foundLastVolume = true
-	m.totalVolumes = 12
+	m.lastFoundVolume = 12
 
 	m.writeCIStatus(ci)
 	if ci.Count != 12 {
@@ -979,6 +906,40 @@ func TestChapterSearchResponse_FilterOneEnChapterSkipOfficial(t *testing.T) {
 	filtered := m.FilterChapters(&c)
 	if len(filtered.Data) != 0 {
 		t.Errorf("Expected 0 chapters, got %d", len(filtered.Data))
+	}
+
+}
+
+func TestTagsBlackList(t *testing.T) {
+	m := tempManga(t, req(), io.Discard)
+	m.language = "en"
+
+	chpt := chapter()
+	_ = m.preferences.Update(models.Preference{
+		BlackListedTags: []string{
+			"Blacklisted Genre",
+			"Blacklisted Tag",
+			"ABC", // ID
+		},
+	})
+
+	m.info = mangaResp()
+
+	ci := m.comicInfo(chpt)
+	genres := strings.Split(ci.Genre, ",")
+	tags := strings.Split(ci.Tags, ",")
+
+	got := len(genres)
+	want := 1
+
+	if want != got {
+		t.Errorf("want %d genres, got %d: %+v", want, got, genres)
+	}
+
+	got = len(tags)
+	want = 1
+	if want != got {
+		t.Errorf("want %d tags, got %d: %+v", want, got, tags)
 	}
 
 }

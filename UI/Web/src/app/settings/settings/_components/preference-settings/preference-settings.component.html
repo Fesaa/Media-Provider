@@ -20,6 +20,22 @@
         <p-toggle-switch id="logEmptyDownloads" [(ngModel)]="preferences.logEmptyDownloads" />
       </div>
 
+      <div class="flex items-center justify-between">
+        <label class="flex-grow">Dynasty tags to save as genre</label>
+        <p-button severity="help" (onClick)="displayDynastyGenresDialog=true">Configure</p-button>
+
+        <app-dynasty-genres [(showDialog)]="displayDynastyGenresDialog" [(preferences)]="preferences" />
+
+      </div>
+
+      <div class="flex items-center justify-between">
+        <label class="flex-grow">Tags blacklist</label>
+        <p-button severity="help" (onClick)="displayBlackListTagDialog=true">Configure</p-button>
+
+        <app-tags-blacklist [(showDialog)]="displayBlackListTagDialog" [(preferences)]="preferences" />
+
+      </div>
+
       <div class="flex justify-end mt-10">
         <p-button severity="info" (onClick)="save()" >Save</p-button>
       </div>

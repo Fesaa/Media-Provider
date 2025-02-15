@@ -30,12 +30,14 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
 		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
 		signalR services.SignalRService, notification services.NotificationService,
+		preferences models.Preferences,
 	) {
 		m = &manga{
 			id:              req.Id,
 			httpClient:      httpClient,
 			repository:      repository,
 			markdownService: markdownService,
+			preferences:     preferences,
 		}
 
 		d := api.NewDownloadableFromBlock[Chapter](req, m, client,
@@ -52,9 +54,12 @@ type manga struct {
 	httpClient      *http.Client
 	repository      Repository
 	markdownService services.MarkdownService
+	preferences     models.Preferences
 
 	id         string
 	seriesInfo *Series
+
+	hasWarnedBlacklist bool
 }
 
 func (m *manga) Title() string {
@@ -226,14 +231,64 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci.Writer = strings.Join(utils.Map(m.seriesInfo.Authors, func(t Author) string {
 		return t.DisplayName
 	}), ",")
-
-	ci.Tags = strings.Join(utils.Map(utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags), func(t Tag) string {
-		return t.DisplayName
-	}), ",")
-
 	ci.Web = m.seriesInfo.RefUrl()
 
+	m.WriteGenreAndTags(chapter, ci)
+
 	return ci
+}
+
+func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
+	tags := utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags)
+
+	var genres, blackList []string
+	p, err := m.preferences.Get()
+	if err != nil {
+		m.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
+		if !m.hasWarnedBlacklist {
+			m.hasWarnedBlacklist = true
+			m.Notifier.NotifyContentQ(m.Title()+": Blacklist failed to load",
+				fmt.Sprintf("Blacklist failed to load while writing ComicInfo, no tags or genres will be included."+
+					" Check logs for full list of failed chapters"),
+				models.Orange)
+		}
+	} else {
+		genres = p.DynastyGenreTags
+		blackList = p.BlackListedTags
+	}
+
+	genres = utils.Map(genres, strings.ToLower)
+
+	tagContains := func(slice []string, tag Tag) bool {
+		return slices.Contains(slice, tag.Id) || slices.Contains(slice, strings.ToLower(tag.DisplayName))
+	}
+
+	tagAllowed := func(tag Tag) bool {
+		return err == nil && !tagContains(blackList, tag)
+	}
+
+	ci.Genre = strings.Join(utils.MaybeMap(tags, func(t Tag) (string, bool) {
+		if tagContains(genres, t) && tagAllowed(t) {
+			return t.DisplayName, true
+		}
+		m.Log.Trace().Str("tag", t.DisplayName).
+			Msg("ignoring tag as genre, not configured in preferences or blacklisted")
+		return "", false
+	}), ",")
+
+	if m.Req.GetBool(IncludeNotMatchedTagsKey, false) {
+		ci.Tags = strings.Join(utils.MaybeMap(tags, func(t Tag) (string, bool) {
+			if !tagAllowed(t) {
+				return "", false
+			}
+			if tagContains(genres, t) {
+				return "", false
+			}
+			return t.DisplayName, true
+		}), ",")
+	} else {
+		m.Log.Trace().Msg("not including unmatched tags in comicinfo.xml")
+	}
 }
 
 func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {

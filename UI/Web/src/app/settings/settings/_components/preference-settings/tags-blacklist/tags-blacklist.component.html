@@ -1,0 +1,43 @@
+<p-dialog [(visible)]="showDialog" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+          [style]="{ width: '50vw' }" header="Dynasty Tags to Genre mapper"
+          (onShow)="filterToDisplay()" (onHide)="hide()"
+>
+
+  <p class="mb-5">
+    Any tags configured here will <strong>NOT</strong> be used as either a Genre or Tag. Check documentation for how
+    matching happens.
+  </p>
+
+  <div class="mb-5 flex flex-row justify-between">
+    <p-floatlabel variant="on">
+      <p-iconfield>
+        <input id="newGenre" type="text" pInputText [(ngModel)]="newTag"
+               (keydown.enter)="addTag()">
+        <p-inputicon class="pi pi-plus hover:cursor-pointer" (click)="addTag()" />
+      </p-iconfield>
+      <label for="newGenre">Add new tag</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <input id="filter" type="text" pInputText [(ngModel)]="filter"
+             (ngModelChange)="filterToDisplay()"
+      >
+      <label for="filter">Filter</label>
+    </p-floatlabel>
+
+  </div>
+
+  @if (preferences.dynastyGenreTags.length === 0) {
+    <span>No tags have been configured yet.</span>
+  } @else {
+    <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px">
+      <div *cdkVirtualFor="let tag of toDisplay">
+        <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3" style="height: 50px;">
+          <span>{{tag}}</span>
+          <span class="pi pi-trash hover:cursor-pointer" (click)="removeTag(tag)"></span>
+        </div>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+
+</p-dialog>
