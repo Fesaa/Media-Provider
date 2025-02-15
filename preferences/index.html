@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Dashboard - Media Provider Documentation</title>
+    <title>Preferences - Media Provider Documentation</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Dashboard";
-        var mkdocs_page_input_path = "dashboard.md";
+        var mkdocs_page_name = "Preferences";
+        var mkdocs_page_input_path = "preferences.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -47,17 +47,21 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Dashboard</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#content-state">Content State</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#actions">Actions</a>
-    </li>
-    </ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../dashboard/">Dashboard</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../setup/">Setup</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../preferences/">Preferences</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Preferences</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#subscription-download-time">Subscription download time</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#empty-subscription-download-notifications">Empty subscription download notifications</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dynasty-tag-genre">Dynasty Tag =&gt; Genre</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#blacklist-tags">Blacklist tags</a>
+    </li>
+    </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../downloading/">Downloading</a>
                   </li>
@@ -98,7 +102,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Usage</li>
-      <li class="breadcrumb-item active">Dashboard</li>
+      <li class="breadcrumb-item active">Preferences</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -107,73 +111,40 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="dashboard">Dashboard</h1>
-<p>The dashboard will display all content Media-Provider is currently processing. From here you can:</p>
-<ul>
-<li>Stop or cancel content</li>
-<li>View downloading content's progress</li>
-<li>Expected remaining time (not all providers support this)</li>
-<li>View directory structure of the download</li>
-<li>Choose which files should be downloaded*</li>
-</ul>
-<p>The remaining time is simply the remaining ratio of the remaining size and current speed.</p>
-<p>*Files can only be filtered if you choose not to start the download imminently after searching</p>
-<p><img alt="Preview" src="../assets/dashboard.png" /></p>
-<h3 id="content-state">Content State</h3>
+                <h1 id="preferences">Preferences</h1>
+<p>Media-Provider allows you to set a few preferences, these can be done via the Preferences tab in settings.
+Currently, the following are available.</p>
+<h3 id="subscription-download-time">Subscription download time</h3>
+<p>At which hour to start downloading subscriptions, this may be UTC time, depending on your environment.</p>
+<h3 id="empty-subscription-download-notifications">Empty subscription download notifications</h3>
+<p>Subscriptions add a notification when finished, so you can view what has been download during the night
+(or day depending on the previous setting). By default, Media-Provider will not add one if nothing was downlaoded
+if this has been enabled; a notification will always be added</p>
+<h3 id="dynasty-tag-genre">Dynasty Tag =&gt; Genre</h3>
+<p>Dynasty has no distinction between Tags and Genres, you may configure some tags (by id or displayed name) to be used as
+a genre in the generated ComicInfo.xml. These tags will not be used elsewhere. Does not overwrite the blacklist</p>
+<h3 id="blacklist-tags">Blacklist tags</h3>
+<p>Tags configured in this list will not be added as Genre or Tag.
+Check the table below for which values you can provide</p>
 <table>
 <thead>
 <tr>
-<th>State</th>
-<th>Description</th>
+<th>Provider</th>
+<th>Mapping</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Downloading</td>
-<td>The content is currently being downloaded</td>
+<td>Mangadex</td>
+<td>Checks ID and the used language</td>
 </tr>
 <tr>
-<td>Ready</td>
-<td>The content is ready to start downloading, but the client doesn't allow it to start yet. This will be because of max amount of downloads at once</td>
+<td>Dynasty</td>
+<td>Checks ID and displayed name</td>
 </tr>
 <tr>
-<td>Waiting</td>
-<td>The info needed to start downloading has been loaded, but content wasn't allowed to start by the user. You may adjust to download files in this state</td>
-</tr>
-<tr>
-<td>Loading</td>
-<td>The content is loading the needed information to start downloading</td>
-</tr>
-<tr>
-<td>Queued</td>
-<td>The download client has blocked the content from loading information. It will start when a spot is freed</td>
-</tr>
-</tbody>
-</table>
-<h3 id="actions">Actions</h3>
-<table>
-<thead>
-<tr>
-<th>Action</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Browse directory</td>
-<td>Open a directory browser with the download directory as root, for simple viewing</td>
-</tr>
-<tr>
-<td>Set content</td>
-<td>Lists all files/content to be downloaded, you may filter some out. Keep in mind that non-torrent providers will automatically filter on previously downloaded content</td>
-</tr>
-<tr>
-<td>Mark ready</td>
-<td>Marks content in the waiting state as ready to download. Will start downloading when a spot frees up</td>
-</tr>
-<tr>
-<td>Downloading</td>
-<td>The content is being downloaded</td>
+<td>WebToon</td>
+<td>Does not respect the blacklist at this moment</td>
 </tr>
 </tbody>
 </table>
@@ -181,8 +152,8 @@
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../installation/" class="btn btn-neutral float-left" title="Installation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../setup/" class="btn btn-neutral float-right" title="Setup">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../setup/" class="btn btn-neutral float-left" title="Setup"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../downloading/" class="btn btn-neutral float-right" title="Downloading">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -205,10 +176,10 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../installation/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../setup/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../setup/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../downloading/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
