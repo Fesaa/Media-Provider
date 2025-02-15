@@ -421,6 +421,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func TestTagToGenre(t *testing.T) {
 	m := tempManga(t, req(), io.Discard)
 
@@ -433,9 +434,12 @@ func TestTagToGenre(t *testing.T) {
 		CoverUrl:    "",
 	}
 
-	m.preferences.Update(models.Preference{
+	err := m.preferences.Update(models.Preference{
 		DynastyGenreTags: []string{"yuri"},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ci := m.comicInfo(chapter())
 
@@ -466,10 +470,13 @@ func TestTagToGenre(t *testing.T) {
 		t.Errorf("len(tags) = %d, want %d: %+v", got, want, tags)
 	}
 
-	m.preferences.Update(models.Preference{
+	err = m.preferences.Update(models.Preference{
 		DynastyGenreTags: []string{"yuri"},
 		BlackListedTags:  []string{"chika_x_you"},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ci = m.comicInfo(chapter())
 	tags = strings.Split(ci.Tags, ",")

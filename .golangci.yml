@@ -99,7 +99,6 @@ linters:
     - spancheck
     - sqlclosecheck
     - staticcheck
-    - tenv
     - testableexamples
     - testifylint
     - thelper
