@@ -1,0 +1,42 @@
+<p-dialog [(visible)]="showDialog" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+          [style]="{ width: '50vw' }" header="Dynasty Tags to Genre mapper"
+          (onShow)="dynastyGenresFiltered()" (onHide)="hide()"
+>
+
+  <p class="mb-5">
+    The following tags will be added as a genre when downloading from Dynasty, add or remove as wanted.
+  </p>
+
+  <div class="mb-5 flex flex-row justify-between">
+    <p-floatlabel variant="on">
+      <p-iconfield>
+        <input id="newGenre" type="text" pInputText [(ngModel)]="dynastyGenresNew"
+               (keydown.enter)="addGenre()">
+        <p-inputicon class="pi pi-plus hover:cursor-pointer" (click)="addGenre()" />
+      </p-iconfield>
+      <label for="newGenre">Add new genre</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <input id="filter" type="text" pInputText [(ngModel)]="dynastyFilter"
+             (ngModelChange)="dynastyGenresFiltered()"
+      >
+      <label for="filter">Filter</label>
+    </p-floatlabel>
+
+  </div>
+
+  @if (preferences.dynastyGenreTags.length === 0) {
+    <span>No genres have been configured yet.</span>
+  } @else {
+    <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px">
+      <div *cdkVirtualFor="let genre of dynastyToDisplayGenres">
+        <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3" style="height: 50px;">
+          <span>{{genre}}</span>
+          <span class="pi pi-trash hover:cursor-pointer" (click)="removeGenre(genre)"></span>
+        </div>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+
+</p-dialog>

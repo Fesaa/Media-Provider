@@ -11,3 +11,14 @@ func InsertDefaultPreferences(db *gorm.DB) error {
 	}
 	return db.Save(&pref).Error
 }
+
+func InsertEmptyArray(db *gorm.DB) error {
+	var cur models.Preference
+	res := db.First(&cur)
+	if res.Error != nil {
+		return res.Error
+	}
+
+	cur.DynastyGenreTags = []string{}
+	return db.Save(&cur).Error
+}

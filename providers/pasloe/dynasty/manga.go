@@ -30,12 +30,14 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
 		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
 		signalR services.SignalRService, notification services.NotificationService,
+		preferences models.Preferences,
 	) {
 		m = &manga{
 			id:              req.Id,
 			httpClient:      httpClient,
 			repository:      repository,
 			markdownService: markdownService,
+			preferences:     preferences,
 		}
 
 		d := api.NewDownloadableFromBlock[Chapter](req, m, client,
@@ -52,6 +54,7 @@ type manga struct {
 	httpClient      *http.Client
 	repository      Repository
 	markdownService services.MarkdownService
+	preferences     models.Preferences
 
 	id         string
 	seriesInfo *Series
@@ -227,9 +230,40 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		return t.DisplayName
 	}), ",")
 
-	ci.Tags = strings.Join(utils.Map(utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags), func(t Tag) string {
-		return t.DisplayName
+	tags := utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags)
+	genres := utils.TryCatch(m.preferences.Get,
+		func(p *models.Preference) []string {
+			return p.DynastyGenreTags
+		},
+		[]string{},
+		func(err error) {
+			m.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
+		})
+
+	genres = utils.Map(genres, strings.ToLower)
+
+	tagEqual := func(tag Tag) bool {
+		return slices.Contains(genres, tag.Id) || slices.Contains(genres, strings.ToLower(tag.DisplayName))
+	}
+
+	ci.Genre = strings.Join(utils.MaybeMap(tags, func(t Tag) (string, bool) {
+		if tagEqual(t) {
+			return t.DisplayName, true
+		}
+		m.Log.Trace().Str("tag", t.DisplayName).Msg("ignoring tag as genre, not configured in preferences")
+		return "", false
 	}), ",")
+
+	if m.Req.GetBool(IncludeNotMatchedTagsKey, false) {
+		ci.Tags = strings.Join(utils.MaybeMap(tags, func(t Tag) (string, bool) {
+			if tagEqual(t) {
+				return "", false
+			}
+			return t.DisplayName, true
+		}), ",")
+	} else {
+		m.Log.Trace().Msg("not including unmatched tags in comicinfo.xml")
+	}
 
 	ci.Web = m.seriesInfo.RefUrl()
 

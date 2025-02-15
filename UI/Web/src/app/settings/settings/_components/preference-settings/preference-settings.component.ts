@@ -1,14 +1,13 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {PreferencesService} from '../../../../_services/preferences.service';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Preferences} from "../../../../_models/preferences";
-import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {Tooltip} from "primeng/tooltip";
 import {MessageService} from '../../../../_services/message.service';
 import {ToggleSwitch} from "primeng/toggleswitch";
-import {InputText} from "primeng/inputtext";
 import {InputNumber} from "primeng/inputnumber";
 import {Button} from "primeng/button";
+import {DynastyGenresComponent} from "./dynasty-genres/dynasty-genres.component";
 
 @Component({
   selector: 'app-preference-settings',
@@ -19,7 +18,8 @@ import {Button} from "primeng/button";
     Tooltip,
     ToggleSwitch,
     InputNumber,
-    Button
+    Button,
+    DynastyGenresComponent,
   ],
   templateUrl: './preference-settings.component.html',
   styleUrl: './preference-settings.component.css'
@@ -27,10 +27,17 @@ import {Button} from "primeng/button";
 export class PreferenceSettingsComponent implements OnInit {
 
   preferences: Preferences | undefined;
+  displayDynastyGenresDialog: boolean = false;
 
   constructor(private preferencesService: PreferencesService,
               private msgService: MessageService,
   ) {
+  }
+
+  showDynastyDialog() {
+    console.log(this.displayDynastyGenresDialog);
+    this.displayDynastyGenresDialog = true;
+    console.log("hi")
   }
 
   ngOnInit(): void {
