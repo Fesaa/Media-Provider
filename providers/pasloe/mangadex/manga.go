@@ -36,6 +36,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
 		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
 		signalR services.SignalRService, notification services.NotificationService,
+		preferences models.Preferences,
 	) {
 		block = &manga{
 			id:              req.Id,
@@ -43,6 +44,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			repository:      repository,
 			markdownService: markdownService,
 			volumeMetadata:  make([]string, 0),
+			preferences:     preferences,
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
@@ -61,6 +63,7 @@ type manga struct {
 	httpClient      *http.Client
 	repository      Repository
 	markdownService services.MarkdownService
+	preferences     models.Preferences
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
@@ -73,7 +76,8 @@ type manga struct {
 	foundLastVolume  bool
 	foundLastChapter bool
 
-	hasWarned bool
+	hasWarned          bool
+	hasWarnedBlacklist bool
 
 	language string
 }
@@ -554,6 +558,37 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		m.Log.Trace().Err(err).Str("volume", chapter.Attributes.Volume).Msg("unable to parse volume number")
 	}
 
+	var blackList []string
+	p, err := m.preferences.Get()
+	if err != nil {
+		m.Log.Error().Err(err).Msg("No genres or tags will be set, blacklist couldn't be loaded")
+
+		if !m.hasWarnedBlacklist {
+			m.hasWarnedBlacklist = true
+			m.Notifier.NotifyContentQ(m.Title()+": Blacklist failed to load",
+				fmt.Sprintf("Blacklist failed to load while writing ComicInfo, no tags or genres will be included."+
+					" Check logs for full list of failed chapters"),
+				models.Orange)
+		}
+	} else {
+		blackList = p.BlackListedTags
+	}
+
+	tagAllowed := func(tag TagData, name string) bool {
+		if err != nil {
+			return false
+		}
+
+		if slices.Contains(blackList, name) {
+			return false
+		}
+
+		if slices.Contains(blackList, tag.Id) {
+			return false
+		}
+		return true
+	}
+
 	ci.Genre = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
 		n, ok := t.Attributes.Name[m.language]
 		if !ok {
@@ -561,6 +596,10 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		}
 
 		if t.Attributes.Group != genreTag {
+			return "", false
+		}
+
+		if !tagAllowed(t, n) {
 			return "", false
 		}
 
@@ -574,6 +613,10 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		}
 
 		if t.Attributes.Group == genreTag {
+			return "", false
+		}
+
+		if !tagAllowed(t, n) {
 			return "", false
 		}
 

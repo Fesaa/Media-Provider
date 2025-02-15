@@ -22,3 +22,13 @@ func InsertEmptyArray(db *gorm.DB) error {
 	cur.DynastyGenreTags = []string{}
 	return db.Save(&cur).Error
 }
+
+func InsertEmptyBlackList(db *gorm.DB) error {
+	var cur models.Preference
+	res := db.First(&cur)
+	if res.Error != nil {
+		return res.Error
+	}
+	cur.BlackListedTags = []string{}
+	return db.Save(&cur).Error
+}

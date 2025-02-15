@@ -11,4 +11,5 @@ type Preference struct {
 	SubscriptionRefreshHour int            `json:"subscriptionRefreshHour" validate:"min=0,max=23"`
 	LogEmptyDownloads       bool           `json:"logEmptyDownloads" validate:"boolean"`
 	DynastyGenreTags        pq.StringArray `gorm:"type:string[]" json:"dynastyGenreTags"`
+	BlackListedTags         pq.StringArray `gorm:"type:string[]" json:"blackListedTags"`
 }

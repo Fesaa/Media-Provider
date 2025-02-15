@@ -8,6 +8,7 @@ import {ToggleSwitch} from "primeng/toggleswitch";
 import {InputNumber} from "primeng/inputnumber";
 import {Button} from "primeng/button";
 import {DynastyGenresComponent} from "./dynasty-genres/dynasty-genres.component";
+import {TagsBlacklistComponent} from "./tags-blacklist/tags-blacklist.component";
 
 @Component({
   selector: 'app-preference-settings',
@@ -20,6 +21,7 @@ import {DynastyGenresComponent} from "./dynasty-genres/dynasty-genres.component"
     InputNumber,
     Button,
     DynastyGenresComponent,
+    TagsBlacklistComponent,
   ],
   templateUrl: './preference-settings.component.html',
   styleUrl: './preference-settings.component.css'
@@ -28,16 +30,11 @@ export class PreferenceSettingsComponent implements OnInit {
 
   preferences: Preferences | undefined;
   displayDynastyGenresDialog: boolean = false;
+  displayBlackListTagDialog: boolean = false;
 
   constructor(private preferencesService: PreferencesService,
               private msgService: MessageService,
   ) {
-  }
-
-  showDynastyDialog() {
-    console.log(this.displayDynastyGenresDialog);
-    this.displayDynastyGenresDialog = true;
-    console.log("hi")
   }
 
   ngOnInit(): void {
