@@ -29,7 +29,7 @@ func (m *MangaCoverResponse) GetCoverFactory(mangaId string) CoverFactory {
 	covers := make(map[string]string)
 
 	coverUrl := func(fileName string) string {
-		return fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s", mangaId, fileName)
+		return fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", mangaId, fileName)
 	}
 
 	var defaultCover string
