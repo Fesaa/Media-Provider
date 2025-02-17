@@ -38,7 +38,7 @@ func (s *Subscription) Normalize(p Preferences) error {
 }
 
 func (s *Subscription) normalize(t time.Time, hour int) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), hour, 0, 0, 0, time.UTC)
+	return time.Date(t.Year(), t.Month(), t.Day(), hour, 0, 0, 0, time.Local)
 }
 
 func (s *Subscription) NextExecution(p Preferences) (time.Time, error) {
