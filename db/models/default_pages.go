@@ -263,7 +263,7 @@ var DefaultPages = []Page{
 	{
 		Title:     "Movies",
 		SortValue: 4,
-		Providers: pq.Int64Array{int64(NYAA)},
+		Providers: pq.Int64Array{int64(YTS)},
 		Modifiers: []Modifier{
 			{
 				Title: "Sort By",
