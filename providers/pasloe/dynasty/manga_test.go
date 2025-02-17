@@ -58,6 +58,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
 	must(scope.Provide(func() services.SignalRService { return &mock.SignalR{} }))
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
+	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 
 	return NewManga(scope).(*manga)
 }

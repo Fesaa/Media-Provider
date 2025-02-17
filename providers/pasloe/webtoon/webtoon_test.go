@@ -10,7 +10,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/philippseith/signalr"
+	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"io"
@@ -21,109 +21,6 @@ import (
 	"testing"
 	"time"
 )
-
-type mockClient struct {
-	baseDir string
-}
-
-func (m mockClient) GetRootDir() string {
-	return m.baseDir
-}
-
-func (m mockClient) GetMaxConcurrentImages() int {
-	return 5
-}
-
-func (m mockClient) Download(request payload.DownloadRequest) error {
-	return nil
-}
-
-func (m mockClient) RemoveDownload(request payload.StopRequest) error {
-	return nil
-}
-
-func (m mockClient) GetBaseDir() string {
-	return m.baseDir
-}
-
-func (m mockClient) GetCurrentDownloads() []api.Downloadable {
-	return []api.Downloadable{}
-}
-
-func (m mockClient) GetQueuedDownloads() []payload.InfoStat {
-	return []payload.InfoStat{}
-}
-
-func (m mockClient) GetConfig() api.Config {
-	return m
-}
-
-func (m mockClient) Content(id string) services.Content {
-	return nil
-}
-
-func (m mockClient) CanStart(models.Provider) bool {
-	return true
-}
-
-type mockSignalR struct {
-	signalr.Hub
-}
-
-func (m *mockSignalR) Broadcast(eventType payload.EventType, data interface{}) {
-}
-
-func (m *mockSignalR) SizeUpdate(id string, size string) {
-}
-
-func (m *mockSignalR) ProgressUpdate(data payload.ContentProgressUpdate) {
-}
-
-func (m *mockSignalR) StateUpdate(id string, state payload.ContentState) {
-}
-
-func (m *mockSignalR) AddContent(data payload.InfoStat) {
-}
-
-func (m *mockSignalR) DeleteContent(id string) {
-}
-
-func (m *mockSignalR) Notify(models.Notification) {}
-
-type mockNotifications struct {
-}
-
-func (m mockNotifications) Notify(notification models.Notification) {
-}
-
-func (m mockNotifications) NotifyHelper(title, summary, body string, colour models.NotificationColour, group models.NotificationGroup) {
-}
-
-func (m mockNotifications) NotifyContent(title, summary, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifyContentQ(title, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifySecurity(title, summary, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifySecurityQ(title, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifyGeneral(title, summary, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) NotifyGeneralQ(title, body string, colours ...models.NotificationColour) {
-}
-
-func (m mockNotifications) MarkRead(id uint) error {
-	return nil
-}
-
-func (m mockNotifications) MarkUnRead(id uint) error {
-	return nil
-}
 
 func req() payload.DownloadRequest {
 	return payload.DownloadRequest{
@@ -164,21 +61,23 @@ func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
 		}
 	}
 
-	mock := mockClient{baseDir: utils.OrDefault(dirs, t.TempDir())}
+	client := mock.PasloeClient{BaseDir: t.TempDir()}
 
 	cont := dig.New()
 	scope := cont.Scope("tempWebtoon")
 
 	must(scope.Provide(func() api.Client {
-		return mock
+		return client
 	}))
 	must(scope.Provide(utils.Identity(http.DefaultClient)))
 	must(scope.Provide(utils.Identity(zerolog.New(w))))
 	must(scope.Provide(utils.Identity(req())))
 	must(scope.Provide(NewRepository))
 	must(scope.Provide(services.MarkdownServiceProvider))
-	must(scope.Provide(func() services.SignalRService { return &mockSignalR{} }))
-	must(scope.Provide(func() services.NotificationService { return &mockNotifications{} }))
+	must(scope.Provide(func() services.SignalRService { return &mock.SignalR{} }))
+	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
+	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
+	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 
 	web := NewWebToon(scope)
 	return web.(*webtoon)
