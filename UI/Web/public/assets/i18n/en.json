@@ -149,7 +149,27 @@
       "directory": "Download directory",
       "start-now": "Start download immediately",
       "extra-metadata": {
-        "title": "Extra metadata"
+        "title": "Extra metadata",
+        "tl-lang": {
+          "title": "Language",
+          "tooltip": ""
+        },
+        "scanlation_group": {
+          "title": "Scanlation group",
+          "tooltip": ""
+        },
+        "download_one_shot": {
+          "title": "Download one shots",
+          "tooltip": ""
+        },
+        "include_not_matched_tags": {
+          "title": "Add not matched tags to comicinfo",
+          "tooltip": "Tags not configured to be a genre, will be added as tags instead"
+        },
+        "no-sub-dir": {
+          "title": "Download into parent",
+          "tooltip": "Content will be copied in your selected dir, instead of creating child directory first"
+        }
       },
       "cancel": "{{shared.cancel}}",
       "download": "{{shared.download}}",

@@ -24,7 +24,7 @@
       <div class="flex flex-col space-y-4 w-full">
         @for (meta of metadata.definitions; track meta.key) {
           <div class="flex flex-col md:flex-row flex-grow w-full items-start md:items-center">
-            <label [for]="meta.key" [pTooltip]="meta.tooltip" tooltipPosition="bottom" class="w-full md:w-1/2 text-start md:text-center">{{ meta.title }}</label>
+            <label [for]="meta.key" [pTooltip]="t('extra-metadata.' + meta.key+'.tooltip')" tooltipPosition="bottom" class="w-full md:w-1/2 text-start md:text-center">{{ t('extra-metadata.' + meta.key+'.title') }}</label>
 
             <div class="flex flex-row w-full md:w-1/2 justify-center">
               @switch (meta.formType) {
@@ -37,7 +37,7 @@
                   <p-select styleClass="w-full"
                             size="small"
                             variant="filled"
-                            [placeholder]="meta.title"
+                            [placeholder]="t('extra-metadata.' + meta.key+'.title')"
                             [ngModel]="meta.defaultOption"
                             optionLabel="value"
                             optionValue="key"
@@ -52,7 +52,7 @@
                                  variant="filled"
                                  [showToggleAll]="false"
                                  styleClass="w-full"
-                                 [placeholder]="meta.title"
+                                 [placeholder]="t('extra-metadata.' + meta.key+'.title')"
                                  [ngModel]="meta.defaultOption"
                                  optionLabel="value"
                                  optionValue="key"

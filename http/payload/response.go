@@ -16,8 +16,6 @@ type DownloadMetadata struct {
 }
 
 type DownloadMetadataDefinition struct {
-	Title         string                   `json:"title"`
-	ToolTip       string                   `json:"tooltip"`
 	Key           string                   `json:"key"`
 	FormType      DownloadMetadataFormType `json:"formType"`
 	DefaultOption string                   `json:"defaultOption"`
