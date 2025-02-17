@@ -61,7 +61,7 @@ func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
 		}
 	}
 
-	client := mock.PasloeClient{BaseDir: t.TempDir()}
+	client := mock.PasloeClient{BaseDir: utils.OrDefault(dirs, t.TempDir())}
 
 	cont := dig.New()
 	scope := cont.Scope("tempWebtoon")
