@@ -1,11 +1,13 @@
-<div class="flex w-full flex-grow">
+<div class="flex w-full flex-grow" *transloco="let t;prefix:'settings.preferences'">
 
   @if (preferences !== undefined) {
 
     <div class="flex flex-col flex-grow gap-4">
 
       <div class="flex items-center justify-between">
-        <label for="subscriptionRefreshHour" pTooltip="This is the hour" tooltipPosition="right">Download subscriptions at</label>
+        <label for="subscriptionRefreshHour" [pTooltip]="t('sub-refresh.tooltip')" tooltipPosition="right">
+          {{t('sub-refresh.label')}}
+        </label>
         <p-inputNumber suffix=" h"
                        id="subscriptionRefreshHour"
                        [(ngModel)]="preferences.subscriptionRefreshHour"
@@ -16,28 +18,28 @@
       </div>
 
       <div class="flex items-center justify-between">
-        <label class="flex-grow" for="logEmptyDownloads">Notification when a subscription downloads 0 items</label>
+        <label class="flex-grow" for="logEmptyDownloads">{{ t('empty-download-notification') }}</label>
         <p-toggle-switch id="logEmptyDownloads" [(ngModel)]="preferences.logEmptyDownloads" />
       </div>
 
       <div class="flex items-center justify-between">
-        <label class="flex-grow">Dynasty tags to save as genre</label>
-        <p-button severity="help" (onClick)="displayDynastyGenresDialog=true">Configure</p-button>
+        <label class="flex-grow">{{ t('dynasty-genres.label') }}</label>
+        <p-button severity="help" (onClick)="displayDynastyGenresDialog=true">{{ t('configure') }}</p-button>
 
         <app-dynasty-genres [(showDialog)]="displayDynastyGenresDialog" [(preferences)]="preferences" />
 
       </div>
 
       <div class="flex items-center justify-between">
-        <label class="flex-grow">Tags blacklist</label>
-        <p-button severity="help" (onClick)="displayBlackListTagDialog=true">Configure</p-button>
+        <label class="flex-grow">{{ t('tags-blacklist.label') }}</label>
+        <p-button severity="help" (onClick)="displayBlackListTagDialog=true">{{ t('configure') }}</p-button>
 
         <app-tags-blacklist [(showDialog)]="displayBlackListTagDialog" [(preferences)]="preferences" />
 
       </div>
 
       <div class="flex justify-end mt-10">
-        <p-button severity="info" (onClick)="save()" >Save</p-button>
+        <p-button severity="info" (onClick)="save()" >{{ t('save') }}</p-button>
       </div>
 
     </div>

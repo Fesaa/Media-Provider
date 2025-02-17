@@ -10,8 +10,10 @@ import {InputText} from "primeng/inputtext";
 import {Select} from "primeng/select";
 import {ToggleSwitch} from "primeng/toggleswitch";
 import {MultiSelect} from "primeng/multiselect";
-import {MessageService} from "../../../_services/message.service";
+import {ToastService} from "../../../_services/toast.service";
 import {Tooltip} from "primeng/tooltip";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-download-dialog',
@@ -24,7 +26,9 @@ import {Tooltip} from "primeng/tooltip";
     Select,
     ToggleSwitch,
     MultiSelect,
-    Tooltip
+    Tooltip,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './download-dialog.component.html',
   styleUrl: './download-dialog.component.css'
@@ -47,7 +51,7 @@ export class DownloadDialogComponent implements OnInit {
 
   constructor(
     private downloadService: ContentService,
-    private msgService: MessageService,
+    private toastService: ToastService,
   ) {
   }
 
@@ -82,10 +86,10 @@ export class DownloadDialogComponent implements OnInit {
 
     this.downloadService.download(req).subscribe({
       next: () => {
-        this.msgService.success("Success", `Downloaded started for ${this.searchResult.Name}`)
+        this.toastService.successLoco("page.download-dialog.toasts.download-success", {}, {name: this.searchResult.Name});
       },
       error: (err) => {
-        this.msgService.error("Error", `Download failed ${err.error.message}`)
+        this.toastService.genericError(err.error.message);
       }
     }).add(() => {
       this.close()

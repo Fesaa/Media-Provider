@@ -5,7 +5,7 @@ import {GroupWeight, Notification, NotificationGroup} from "../_models/notificat
 import {Tag} from "primeng/tag";
 import {Button} from "primeng/button";
 import {Tooltip} from "primeng/tooltip";
-import {MessageService} from "../_services/message.service";
+import {ToastService} from "../_services/toast.service";
 import {Dialog} from "primeng/dialog";
 import {Card} from "primeng/card";
 import {DialogService} from "../_services/dialog.service";
@@ -14,6 +14,7 @@ import {Select} from "primeng/select";
 import {FormsModule} from "@angular/forms";
 import {NavService} from "../_services/nav.service";
 import {Checkbox} from "primeng/checkbox";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-notifications',
@@ -27,6 +28,7 @@ import {Checkbox} from "primeng/checkbox";
     Select,
     FormsModule,
     Checkbox,
+    TranslocoDirective,
   ],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.css'
@@ -69,7 +71,7 @@ export class NotificationsComponent implements OnInit {
 
   constructor(
     private notificationService: NotificationService,
-    private messageService: MessageService,
+    private toastService: ToastService,
     private dialogService: DialogService,
     private navService: NavService,
   ) {
@@ -116,7 +118,7 @@ export class NotificationsComponent implements OnInit {
         this.notifications.add(notification);
       },
       error: err => {
-        this.messageService.error("Failed to read notifications", err.error.message);
+        this.toastService.genericError(err.error.message);
       }
     })
   }
@@ -129,7 +131,7 @@ export class NotificationsComponent implements OnInit {
         this.notifications.add(notification);
       },
       error: err => {
-        this.messageService.error("Failed to unread notifications", err.error.message);
+        this.toastService.genericError(err.error.message);
       }
     })
   }
@@ -142,18 +144,18 @@ export class NotificationsComponent implements OnInit {
     })
 
     if (this.selectedNotifications.length === 0) {
-      this.messageService.warning("No notifications selected");
+      this.toastService.warningLoco("notifications.toasts.no-selected");
       return;
     }
 
-    if (!await this.dialogService.openDialog(
-      `Are you sure you want to mark ${this.selectedNotifications.length} notification(s) as read?`)) {
+    if (!await this.dialogService.openDialog("notifications.confirm-read-many",
+      {amount: this.selectedNotifications.length})) {
       return;
     }
 
     this.notificationService.readMany(this.selectedNotifications).subscribe({
       next: () => {
-        this.messageService.success(`Marked ${this.selectedNotifications.length} notification(s) as read`);
+        this.toastService.successLoco("notifications.toasts.read-many-success", {amount: this.selectedNotifications.length})
         this.notifications.set(this.notifications.items().map(n => {
           if (this.selectedNotifications.includes(n.ID)) {
             n.read = true;
@@ -163,37 +165,37 @@ export class NotificationsComponent implements OnInit {
         this.selectedNotifications = [];
       },
       error: err => {
-        this.messageService.error("Failed to read notifications", err.error.message);
+        this.toastService.genericError(err.error.message);
       }
     })
   }
 
   async deleteSelected() {
     if (this.selectedNotifications.length === 0) {
-      this.messageService.warning("No notifications selected");
+      this.toastService.warningLoco("notifications.toasts.no-selected");
       return;
     }
 
-    if (!await this.dialogService.openDialog(
-      `Are you sure you want to delete ${this.selectedNotifications.length} notification(s)?`)) {
+    if (!await this.dialogService.openDialog("notifications.confirm-delete-many",
+      {amount: this.selectedNotifications.length})) {
       return;
     }
 
     this.notificationService.deleteMany(this.selectedNotifications).subscribe({
       next: () => {
-        this.messageService.success(`Deleted ${this.selectedNotifications.length} notification(s)`);
+        this.toastService.successLoco("notifications.toasts.delete-success", {amount: this.selectedNotifications.length})
         this.notifications.set(this.notifications.items().
         filter(n => !this.selectedNotifications.includes(n.ID)))
         this.selectedNotifications = [];
       },
       error: err => {
-        this.messageService.error("Failed to delete notifications", err.error.message);
+        this.toastService.genericError(err.error.message);
       }
     })
   }
 
   async delete(notification: Notification) {
-    if (!await this.dialogService.openDialog(`Are you sure you want to delete ${notification.title} (${notification.ID})`)) {
+    if (!await this.dialogService.openDialog("notifications.confirm-delete", {title: notification.title})) {
       return;
     }
 
@@ -202,7 +204,7 @@ export class NotificationsComponent implements OnInit {
         this.notifications.removeFunc((n: Notification) => n.ID == notification.ID);
       },
       error: err => {
-        this.messageService.error("Failed to delete notifications", err.error.message);
+        this.toastService.genericError(err.error.message);
       }
     })
   }

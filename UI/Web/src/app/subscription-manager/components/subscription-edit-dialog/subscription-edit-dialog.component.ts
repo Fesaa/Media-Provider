@@ -10,9 +10,11 @@ import {InputIcon} from "primeng/inputicon";
 import {SubscriptionExternalUrlPipe} from "../../../_pipes/subscription-external-url.pipe";
 import {Select} from "primeng/select";
 import {Provider, Providers} from "../../../_models/page";
-import {MessageService} from "../../../_services/message.service";
+import {ToastService} from "../../../_services/toast.service";
 import {Button} from "primeng/button";
 import {DirectorySelectorComponent} from "../../../shared/_component/directory-selector/directory-selector.component";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-subscription-edit-dialog',
@@ -26,6 +28,8 @@ import {DirectorySelectorComponent} from "../../../shared/_component/directory-s
     Select,
     Button,
     DirectorySelectorComponent,
+    TranslocoDirective,
+    TitleCasePipe,
   ],
   templateUrl: './subscription-edit-dialog.component.html',
   styleUrl: './subscription-edit-dialog.component.css'
@@ -58,7 +62,7 @@ export class SubscriptionEditDialogComponent {
   constructor(
     private subscriptionService: SubscriptionService,
     private externalUrlPipe: SubscriptionExternalUrlPipe,
-    private msgService: MessageService,
+    private toastService: ToastService,
   ) {
   }
 
@@ -94,12 +98,12 @@ export class SubscriptionEditDialogComponent {
   edit() {
     this.subscriptionService.update(this.copy).subscribe({
       next: () => {
-        this.msgService.success("Updated", `${this.copy.info.title} has been updated`)
+        this.toastService.successLoco("subscriptions.toasts.update.success", {name: this.copy.info.title});
         this.sub = this.copy
         this.update.emit(this.copy)
       },
       error: err => {
-        this.msgService.error("Failed", `An error occurred while trying to update ${this.copy.info.title}:\n ${err.error.message}`)
+        this.toastService.errorLoco("subscriptions.toasts.update.error", {name: this.copy.info.title}, {msg: err.error.message});
       }
     }).add(() => this.close())
   }

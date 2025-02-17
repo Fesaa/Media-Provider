@@ -1,5 +1,5 @@
 @if (page !== undefined) {
-  <div class="justify-items-center">
+  <div class="justify-items-center" *transloco="let t;prefix:'page'">
     @if ((searchResult.length == 0 || showSearchForm) && !hideSearchForm) {
       <div class="flex flex-row justify-center px-6 py-8 lg:py-0" [@dropDown]>
         <div
@@ -11,7 +11,7 @@
 
             <p-floatlabel variant="on">
               <input class="w-full" id="query" pInputText type="text" [(ngModel)]="searchRequest.query" (keydown.enter)="search()">
-              <label for="query">Query</label>
+              <label for="query">{{ t('query') }}</label>
             </p-floatlabel>
 
             @for (mod of page.modifiers; track mod.ID) {
@@ -38,7 +38,7 @@
             @if (page.dirs.length > 1) {
               <p-floatlabel variant="on">
                 <p-select class="w-full" id="dirs" [options]="page.dirs" [(ngModel)]="dirs.dir" />
-                <label for="dirs">Directory</label>
+                <label for="dirs">{{ t('directory') }}</label>
               </p-floatlabel>
             }
 
@@ -52,7 +52,7 @@
               (click)="search()"
               class="focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
             >
-              Search
+              {{ t('search') }}
             </button>
           </div>
         </div>
@@ -63,7 +63,7 @@
           class="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 mt-5"
           (click)="toggleSearchForm()"
         >
-          Search
+          {{ t('search') }}
         </button>
       </div>
 

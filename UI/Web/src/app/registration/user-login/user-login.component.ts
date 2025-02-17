@@ -7,12 +7,16 @@ import {AuthGuard} from "../../_guards/auth.guard";
 import {NavService} from "../../_services/nav.service";
 import {PageService} from "../../_services/page.service";
 import {User} from "../../_models/user";
-import {MessageService} from "../../_services/message.service";
+import {ToastService} from "../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-login',
   imports: [
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './user-login.component.html',
   styleUrl: './user-login.component.css'
@@ -34,7 +38,7 @@ export class UserLoginComponent implements OnInit {
               private router: Router,
               private readonly cdRef: ChangeDetectorRef,
               private navService: NavService,
-              private msgService: MessageService,
+              private toastService: ToastService,
               private pageService: PageService,
   ) {
   }
@@ -83,7 +87,7 @@ export class UserLoginComponent implements OnInit {
         this.isSubmitting = false;
         this.cdRef.markForCheck()
       }, error: (_) => {
-        this.msgService.error('Error', "Unable to log in, check your credentials");
+        this.toastService.errorLoco("login.toasts.login-failed");
         this.isSubmitting = false;
         this.cdRef.markForCheck()
       }

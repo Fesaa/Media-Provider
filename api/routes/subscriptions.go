@@ -28,6 +28,7 @@ type subscriptionRoutes struct {
 	Val                 services.ValidationService
 	SubscriptionService services.SubscriptionService
 	ContentService      services.ContentService
+	Transloco           services.TranslocoService
 }
 
 func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
@@ -57,13 +58,17 @@ func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscription")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	err = sr.ContentService.DownloadSubscription(sub, false) // This was manually triggered
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to download subscription")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": sr.Transloco.GetTranslation("failed-to-run-once", err),
+		})
 	}
 
 	return ctx.Status(fiber.StatusAccepted).JSON(fiber.Map{})
@@ -73,7 +78,9 @@ func (sr *subscriptionRoutes) All(ctx *fiber.Ctx) error {
 	subs, err := sr.SubscriptionService.All()
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscriptions")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	return ctx.JSON(subs)
@@ -91,7 +98,9 @@ func (sr *subscriptionRoutes) Get(ctx *fiber.Ctx) error {
 	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscription")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	return ctx.JSON(sub)
@@ -101,7 +110,7 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteConfig) {
 		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to edit subscriptions")
-		return fiber.ErrUnauthorized
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
 
 	var sub models.Subscription
@@ -133,13 +142,15 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteConfig) {
 		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to create subscriptions")
-		return fiber.ErrUnauthorized
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
 
 	var sub models.Subscription
 	if err := ctx.BodyParser(&sub); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to parse subscription")
-		return fiber.ErrBadRequest
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	sub.Info.BaseDir = path.Clean(sub.Info.BaseDir)
@@ -154,7 +165,9 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 	subscription, err := sr.SubscriptionService.Add(sub)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to add subscription")
-		return fiber.ErrInternalServerError
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	go func() {
@@ -182,7 +195,7 @@ func (sr *subscriptionRoutes) Delete(ctx *fiber.Ctx) error {
 	user := ctx.Locals("user").(models.User)
 	if !user.HasPermission(models.PermWriteConfig) {
 		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to delete subscriptions")
-		return fiber.ErrUnauthorized
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
 
 	id, err := ParamsUInt(ctx, "id")

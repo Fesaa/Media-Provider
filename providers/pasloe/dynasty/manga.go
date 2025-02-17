@@ -27,9 +27,8 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 	var m *manga
 
 	utils.Must(scope.Invoke(func(
-		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
-		signalR services.SignalRService, notification services.NotificationService,
+		req payload.DownloadRequest, httpClient *http.Client,
+		repository Repository, markdownService services.MarkdownService,
 		preferences models.Preferences,
 	) {
 		m = &manga{
@@ -40,9 +39,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			preferences:     preferences,
 		}
 
-		d := api.NewDownloadableFromBlock[Chapter](req, m, client,
-			log.With().Str("handler", "dynasty-manga").Logger(), signalR, notification)
-		m.DownloadBase = d
+		m.DownloadBase = api.NewDownloadableFromBlock[Chapter](scope, "dynasty-manga", m)
 	}))
 
 	return m
@@ -55,6 +52,7 @@ type manga struct {
 	repository      Repository
 	markdownService services.MarkdownService
 	preferences     models.Preferences
+	transLoco       services.TranslocoService
 
 	id         string
 	seriesInfo *Series
@@ -247,9 +245,9 @@ func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
 		m.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
 		if !m.hasWarnedBlacklist {
 			m.hasWarnedBlacklist = true
-			m.Notifier.NotifyContentQ(m.Title()+": Blacklist failed to load",
-				fmt.Sprintf("Blacklist failed to load while writing ComicInfo, no tags or genres will be included."+
-					" Check logs for full list of failed chapters"),
+			m.Notifier.NotifyContentQ(
+				m.TransLoco.GetTranslation("blacklist-failed-to-load-title", m.Title()),
+				m.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
 				models.Orange)
 		}
 	} else {

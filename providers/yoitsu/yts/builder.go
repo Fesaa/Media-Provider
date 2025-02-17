@@ -73,8 +73,6 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{
 		Definitions: []payload.DownloadMetadataDefinition{
 			{
-				Title:         "Download into parent",
-				ToolTip:       "Content will be copied in your selected dir, instead of creating child directory first",
 				Key:           "no-sub-dir",
 				FormType:      payload.SWITCH,
 				DefaultOption: "",

@@ -1,0 +1,18 @@
+{
+  "blacklist-failed-to-load-title": "%s: Blacklist failed to load",
+  "blacklist-failed-to-load-summary": "Blacklist failed to load while writing ComicInfo, no tags or genres will be included. Check logs for full list of failed chapters",
+  "generate-reset-link-title": "Reset link generated",
+  "generate-reset-link-summary": "%s has generated a reset link for %s",
+
+  "failed-to-find-reset-key": "Failed to find reset key",
+  "failed-to-find-user": "Failed to find user",
+  "user-doesnt-exist": "User doesn't exist",
+  "user-not-found": "User %d not found",
+  "cant-delete-first-user": "The first user cannot be deleted",
+  "base-dir-not-empty": "Base directory cannot be empty",
+  "invalid-path": "Invalid path",
+  "invalid-time-format": "Invalid time format: %v",
+  "no-provider": "No provider specified",
+  "request-failed": "Request to 3rd party website failed",
+  "failed-to-run-once": "Failed to download subscription: %v"
+}

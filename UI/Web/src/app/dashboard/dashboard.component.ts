@@ -15,9 +15,11 @@ import {StopRequest} from "../_models/search";
 import {DialogService} from "../_services/dialog.service";
 import {ContentStatePipe} from "../_pipes/content-state.pipe";
 import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
-import {MessageService} from "../_services/message.service";
+import {ToastService} from "../_services/toast.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
 import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteContent} from "../_models/signalr";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-dashboard',
@@ -32,7 +34,9 @@ import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteCont
     SpeedTypePipe,
     TimePipe,
     ContentStatePipe,
-    ContentPickerDialogComponent
+    ContentPickerDialogComponent,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
@@ -48,7 +52,7 @@ export class DashboardComponent implements OnInit {
   constructor(private navService: NavService,
               private contentService: ContentService,
               private cdRef: ChangeDetectorRef,
-              private msgService: MessageService,
+              private toastService: ToastService,
               private contentTitle: ContentTitlePipe,
               private dialogService: DialogService,
               private signalR: SignalRService,
@@ -131,7 +135,7 @@ export class DashboardComponent implements OnInit {
   }
 
   async stop(info: InfoStat) {
-    if (!await this.dialogService.openDialog(`Are you sure you want to stop ${this.contentTitle.transform(info.name)}`)) {
+    if (!await this.dialogService.openDialog("dashboard.confirm-stop", {name: this.contentTitle.transform(info.name)})) {
       return;
     }
 
@@ -143,10 +147,10 @@ export class DashboardComponent implements OnInit {
 
     this.contentService.stop(req).subscribe({
       next: () => {
-        this.msgService.success("Success", `Download stopped ${this.contentTitle.transform(info.name)}`)
+        this.toastService.successLoco("dashboard.toasts.stopped-success", {}, {title: this.contentTitle.transform(info.name)});
       },
       error: (err) => {
-        this.msgService.error("Error", `Failed to stop download: ${err.error.message}`)
+        this.toastService.genericError(err.error.message);
       }
     })
   }
@@ -158,10 +162,10 @@ export class DashboardComponent implements OnInit {
   markReady(info: InfoStat) {
     this.contentService.startDownload(info.provider, info.id).subscribe({
       next: () => {
-        this.msgService.success("Success", "Content marked as ready for download, will begin as soon as possible")
+        this.toastService.successLoco("dashboard.toasts.mark-ready.success")
       },
       error: (err) => {
-        this.msgService.error("Error", `Failed to mark as ready:\n ${err.error.message}`)
+        this.toastService.genericError(err.error.message);
       }
     })
   }

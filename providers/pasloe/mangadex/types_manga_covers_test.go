@@ -29,7 +29,7 @@ func TestMangaCoverResponse_GetCoverFactory(t *testing.T) {
 	if !ok {
 		t.Error("expected cover to exist")
 	}
-	want := "https://uploads.mangadex.org/covers/myId/SecondVolumeCover"
+	want := "https://uploads.mangadex.org/covers/myId/SecondVolumeCover.512.jpg"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
@@ -39,7 +39,7 @@ func TestMangaCoverResponse_GetCoverFactory(t *testing.T) {
 		t.Error("expected cover not to exist")
 	}
 
-	want = "https://uploads.mangadex.org/covers/myId/UseAsDefault"
+	want = "https://uploads.mangadex.org/covers/myId/UseAsDefault.512.jpg"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}

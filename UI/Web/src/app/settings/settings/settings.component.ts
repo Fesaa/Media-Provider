@@ -9,6 +9,7 @@ import {AccountService} from "../../_services/account.service";
 import {UserSettingsComponent} from "./_components/user-settings/user-settings.component";
 import {PreferenceSettingsComponent} from "./_components/preference-settings/preference-settings.component";
 import {Button} from "primeng/button";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 export enum SettingsID {
 
@@ -26,7 +27,8 @@ export enum SettingsID {
     PagesSettingsComponent,
     UserSettingsComponent,
     PreferenceSettingsComponent,
-    Button
+    Button,
+    TranslocoDirective
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',

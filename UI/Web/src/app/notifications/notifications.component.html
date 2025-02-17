@@ -1,22 +1,22 @@
 
-<div class="pt-1 md:pt-5 mx-16">
+<div class="pt-1 md:pt-5 mx-16" *transloco="let t;prefix:'notifications'">
 
   <div class="flex flex-row space-x-5 justify-end">
 
     <p-select (onChange)="refresh()" [options]="timeAgoOptions" [(ngModel)]="timeAgo" />
 
-    <p-button severity="warn" (click)="readSelected()" >Read selected</p-button>
-    <p-button severity="danger" (click)="deleteSelected()">Delete selected</p-button>
+    <p-button severity="warn" (click)="readSelected()" >{{ t('actions.read-selected') }}</p-button>
+    <p-button severity="danger" (click)="deleteSelected()">{{ t('actions.delete-selected') }}</p-button>
 
   </div>
 
-  <p-table [value]="notifications.items()">
+  <p-table [value]="notifications.items()" *transloco="let t;prefix:'notifications.table'">
     <ng-template #header>
       <tr>
-        <th>Group</th>
-        <th>Title</th>
-        <th>Summary</th>
-        <th>Actions</th>
+        <th>{{ t('group') }}</th>
+        <th>{{ t('title') }}</th>
+        <th>{{ t('summary') }}</th>
+        <th>{{ t('actions.label') }}</th>
       </tr>
 
     </ng-template>
@@ -29,9 +29,9 @@
           <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
 
             @if (notification.read) {
-              <p-button icon="pi pi-check-circle" size="small" pTooltip="mark unread" (click)="markUnRead(notification)" />
+              <p-button icon="pi pi-check-circle" size="small" tooltipPosition="bottom" [pTooltip]="t('actions.mark-unread')" (click)="markUnRead(notification)" />
             } @else {
-              <p-button icon="pi pi-circle" size="small" severity="warn" pTooltip="mark read" (click)="markRead(notification)" />
+              <p-button icon="pi pi-circle" size="small" severity="warn" tooltipPosition="bottom" [pTooltip]="t('actions.mark-read')" (click)="markRead(notification)" />
             }
 
             <p-button icon="pi pi-info-circle" size="small" severity="info" (click)="show(notification.ID)" />
@@ -50,7 +50,7 @@
     </ng-template>
     <ng-template #emptymessage>
       <p-card>
-        Nothing to report
+        {{ t('empty') }}
       </p-card>
     </ng-template>
   </p-table>

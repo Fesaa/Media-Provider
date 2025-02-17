@@ -107,19 +107,16 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{
 		Definitions: []payload.DownloadMetadataDefinition{
 			{
-				Title:         "Language",
 				Key:           LanguageKey,
 				FormType:      payload.DROPDOWN,
 				DefaultOption: "en",
 				Options:       languages,
 			},
 			{
-				Title:    "Scanlation group",
 				Key:      ScanlationGroupKey,
 				FormType: payload.TEXT,
 			},
 			{
-				Title:    "Download OneShots",
 				Key:      DownloadOneShotKey,
 				FormType: payload.SWITCH,
 			},

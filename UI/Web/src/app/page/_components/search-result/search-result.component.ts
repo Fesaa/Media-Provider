@@ -9,6 +9,7 @@ import {Tooltip} from "primeng/tooltip";
 import {Dialog} from "primeng/dialog";
 import {DownloadDialogComponent} from "../download-dialog/download-dialog.component";
 import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-dialog.component";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-search-result',
@@ -17,6 +18,7 @@ import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-d
     Dialog,
     DownloadDialogComponent,
     SubscriptionDialogComponent,
+    TranslocoDirective,
   ],
   templateUrl: './search-result.component.html',
   styleUrl: './search-result.component.css',

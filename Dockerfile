@@ -36,8 +36,9 @@ WORKDIR /app
 
 COPY --from=go-stage /media-provider /app/media-provider
 COPY --from=npm-stage /app/dist/web/browser /app/public
+COPY ./I18N /app/I18N
 
-RUN apk add --no-cache ca-certificates curl
+RUN apk add --no-cache ca-certificates curl tzdata
 
 ENV CONFIG_DIR="/mp/"
 ENV DOCKER="true"

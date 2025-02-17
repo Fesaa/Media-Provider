@@ -3,18 +3,19 @@
   [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
   [style]="{ width: customWidth }" header="Directory picker"
   (onShow)="initialLoad()"
+  *transloco="let t;prefix:'directory-selector'"
 >
 
   <div class="flex flex-col py-5">
     <h1 class="text-xl text-black dark:text-white mb-2">
-      Selected: <span class="font-mono">{{ routeStack.items.join('/') }}</span>
+      {{ t('selected') }} <span class="font-mono">{{ routeStack.items.join('/') }}</span>
     </h1>
 
     @if (filter) {
       <input
         class="mb-2 w-full p-1 rounded-lg border focus:ring-primary-600 focus:border-primary-600 bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm"
         type="text"
-        placeholder="Filter..."
+        [placeholder]="t('filter')"
         (input)="onFilterChange($event)"
       />
     }
@@ -28,7 +29,7 @@
           <span
             class="w-full text-left hover:underline hover:cursor-pointer"
             (click)="goBack()"
-          >...</span>
+          >{{ t('dots') }}</span>
         </div>
       }
 
@@ -58,7 +59,7 @@
         <input
           class="w-full p-1 rounded-lg border focus:ring-primary-600 focus:border-primary-600 bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500 sm:text-sm"
           type="text"
-          placeholder="Create"
+          [placeholder]="t('create')"
           [(ngModel)]="newDirName"
           (input)="onNewDirNameChange($event)"
         />
@@ -68,8 +69,8 @@
   </div>
 
   <div class="flex justify-end gap-2">
-    <p-button (click)="closeDialog()" label="Cancel" severity="secondary"/>
-    <p-button (click)="confirm()" label="Confirm" severity="primary"/>
+    <p-button (click)="closeDialog()" [label]="t('cancel') | titlecase" severity="secondary"/>
+    <p-button (click)="confirm()" [label]="t('confirm') | titlecase" severity="primary"/>
   </div>
 
 </p-dialog>

@@ -30,15 +30,14 @@ const timeLayout = "2006-01-02T15:04:05Z07:00"
 const genreTag = "genre"
 
 func NewManga(scope *dig.Scope) api.Downloadable {
-	var block *manga
+	var m *manga
 
 	utils.Must(scope.Invoke(func(
-		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
-		signalR services.SignalRService, notification services.NotificationService,
+		req payload.DownloadRequest, httpClient *http.Client,
+		repository Repository, markdownService services.MarkdownService,
 		preferences models.Preferences,
 	) {
-		block = &manga{
+		m = &manga{
 			id:              req.Id,
 			httpClient:      httpClient,
 			repository:      repository,
@@ -48,12 +47,10 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
-		d := api.NewDownloadableFromBlock[ChapterSearchData](req, block, client,
-			log.With().Str("handler", "mangadex").Logger(), signalR, notification)
-		block.DownloadBase = d
+		m.DownloadBase = api.NewDownloadableFromBlock[ChapterSearchData](scope, "mangadex", m)
 	}))
 
-	return block
+	return m
 }
 
 type manga struct {
@@ -565,9 +562,9 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 		if !m.hasWarnedBlacklist {
 			m.hasWarnedBlacklist = true
-			m.Notifier.NotifyContentQ(m.Title()+": Blacklist failed to load",
-				fmt.Sprintf("Blacklist failed to load while writing ComicInfo, no tags or genres will be included."+
-					" Check logs for full list of failed chapters"),
+			m.Notifier.NotifyContentQ(
+				m.TransLoco.GetTranslation("blacklist-failed-to-load-title", m.Title()),
+				m.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
 				models.Orange)
 		}
 	} else {

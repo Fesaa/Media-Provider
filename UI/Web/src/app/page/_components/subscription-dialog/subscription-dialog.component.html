@@ -1,10 +1,10 @@
-<div class="flex flex-col space-y-5 mt-5 mb-2">
+<div class="flex flex-col space-y-5 mt-5 mb-2" *transloco="let t;prefix:'page.subscription-dialog'">
 
   <div class="card flex">
     <p-floatlabel [style]="{width: '100%'}" variant="on">
       <input [(ngModel)]="this.subscription.info.title" autocomplete="off" class="w-full p-2"
              id="title" pInputText type="text"/>
-      <label for="title">Title</label>
+      <label for="title">{{ t('title') }}</label>
     </p-floatlabel>
   </div>
 
@@ -12,7 +12,7 @@
     <p-floatlabel [style]="{width: '100%'}" variant="on">
       <input [(ngModel)]="this.subscription.info.baseDir" autocomplete="off" class="w-full flex-grow p-2"
              id="download_dir" pInputText type="text"/>
-      <label for="download_dir">Download directory</label>
+      <label for="download_dir">{{ t('directory') }}</label>
     </p-floatlabel>
   </div>
 
@@ -22,13 +22,13 @@
                 [options]="RefreshFrequencies"
                 id="refresh_frequency"
                 styleClass="w-full"/>
-      <label for="refresh_frequency">Refresh Frequency</label>
+      <label for="refresh_frequency">{{ t('refresh-frequency') }}</label>
     </p-floatlabel>
   </div>
 
 
   <div class="flex w-full flex-grow justify-end gap-4 mt-10">
-    <p-button (click)="close()" label="Cancel" severity="secondary"/>
-    <p-button (click)="subscribe()" label="Subscribe"/>
+    <p-button (click)="close()" [label]="t('cancel') | titlecase" severity="secondary"/>
+    <p-button (click)="subscribe()" [label]="t('subscribe')" />
   </div>
 </div>

@@ -6,20 +6,21 @@
     [paginator]="subscriptions.length > size || size != 10"
     stripedRows
     [rowsPerPageOptions]="[5, 10, 20]"
+    *transloco="let t;prefix:'subscriptions'"
   >
     <ng-template #header>
       <tr>
-        <th pSortableColumn="info.title">Title <p-sortIcon field="info.title"/> </th>
-        <th pSortableColumn="info.lastCheck" style="width:10%">Last ran <p-sortIcon field="info.lastCheck"/></th>
-        <th style="width:10%">Frequency</th>
-        <th style="width:15%">Action</th>
+        <th pSortableColumn="info.title">{{ t('title') }}<p-sortIcon field="info.title"/> </th>
+        <th pSortableColumn="info.lastCheck" style="width:10%">{{ t('last') }}<p-sortIcon field="info.lastCheck"/></th>
+        <th style="width:10%">{{ t('frequency') }}</th>
+        <th style="width:15%">{{ t('actions.label') }}</th>
       </tr>
       <tr>
         <th>
           <p-columnFilter
             type="text"
             field="info.title"
-            placeholder="Search by title"
+            [placeholder]="t('search')"
             showMenu="false"
             matchMode="contains"
           />
@@ -43,8 +44,8 @@
         </th>
         <th>
 
-          <p-tag [value]="sub.info.lastCheckSuccess ? 'Success' : 'Failing'"
-                 [pTooltip]="(sub.info.lastCheck | date:'yyyy-MM-dd HH:mm:ss') ?? 'Unknown'"
+          <p-tag [value]="sub.info.lastCheckSuccess ? t('success') : t('failing')"
+                 [pTooltip]="(sub.info.lastCheck | date:'yyyy-MM-dd HH:mm:ss') ?? t('unknown')"
                  tooltipPosition="top"
                  [severity]="sub.info.lastCheckSuccess ? 'success' : 'danger'"
           />
@@ -58,13 +59,13 @@
             <app-subscription-edit-dialog (update)="update($event)" [sub]="sub" [providers]="allowedProviders" [(visible)]="displayEditSubscription[sub.ID]" />
 
             <p-button (click)="edit(sub)" [rounded]="true" [text]="true"
-                      pTooltip="Edit" tooltipPosition="bottom" icon="pi pi-pencil" severity="info"/>
+                      [pTooltip]="t('actions.edit')" tooltipPosition="bottom" icon="pi pi-pencil" severity="info"/>
 
             <p-button (click)="runOnce(sub)" [rounded]="true" [text]="true"
-                      pTooltip="Run Once" tooltipPosition="bottom" icon="pi pi-download" severity="success"/>
+                      [pTooltip]="t('actions.run-once')" tooltipPosition="bottom" icon="pi pi-download" severity="success"/>
 
             <p-button (click)="delete(sub)" [rounded]="true" [text]="true"
-                      pTooltip="Delete" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
+                      [pTooltip]="t('actions.delete')" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
           </div>
         </th>
       </tr>

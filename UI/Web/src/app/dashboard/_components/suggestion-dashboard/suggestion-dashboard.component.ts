@@ -3,12 +3,14 @@ import {PageService} from "../../../_services/page.service";
 import {RouterLink} from "@angular/router";
 import {dropAnimation} from "../../../_animations/drop-animation";
 import {Page} from "../../../_models/page";
-import {MessageService} from "../../../_services/message.service";
+import {ToastService} from "../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-suggestion-dashboard',
   imports: [
     RouterLink,
+    TranslocoDirective,
   ],
   templateUrl: './suggestion-dashboard.component.html',
   styleUrl: './suggestion-dashboard.component.css',
@@ -19,7 +21,7 @@ export class SuggestionDashboardComponent {
   pages: Page[] = []
 
   constructor(protected pageService: PageService,
-              private msgService: MessageService,
+              private toastService: ToastService,
   ) {
     this.pageService.pages$.subscribe(pages => {
       this.pages = pages;
@@ -32,7 +34,7 @@ export class SuggestionDashboardComponent {
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.msgService.error('Error', err.error.message);
+        this.toastService.genericError(err.error.message);
       }
     })
   }
