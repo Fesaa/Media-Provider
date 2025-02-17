@@ -5,9 +5,6 @@ on:
       - "master"
 
 jobs:
-  tests:
-    uses: './.github/workflows/tests.yml'
-
   push_to_registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
