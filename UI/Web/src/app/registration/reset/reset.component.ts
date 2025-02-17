@@ -3,13 +3,15 @@ import {FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/
 import {ActivatedRoute, Router} from "@angular/router";
 import {AccountService} from "../../_services/account.service";
 import {NavService} from "../../_services/nav.service";
-import {MessageService} from "../../_services/message.service";
+import {ToastService} from "../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-reset',
-  imports: [
-    ReactiveFormsModule
-  ],
+    imports: [
+        ReactiveFormsModule,
+        TranslocoDirective
+    ],
   templateUrl: './reset.component.html',
   styleUrl: './reset.component.css'
 })
@@ -26,7 +28,7 @@ export class ResetComponent implements OnInit {
               private navService: NavService,
               private router: Router,
               private readonly cdRef: ChangeDetectorRef,
-              private msgService: MessageService,
+              private toastService: ToastService,
   ) {
   }
 
@@ -57,7 +59,7 @@ export class ResetComponent implements OnInit {
         this.router.navigateByUrl('/login');
       },
       error: err => {
-        this.msgService.error("Error", `Failed to reset password: ${err.error.message}`);
+        this.toastService.genericError(err.error.message);
       }
     });
   }

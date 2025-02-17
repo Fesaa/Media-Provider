@@ -1,5 +1,6 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 
+/** Deprecated **/
 @Component({
   selector: 'app-paginator',
   templateUrl: './paginator.component.html',

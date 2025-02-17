@@ -5,11 +5,12 @@
   [draggable]="false"
   [header]="header"
   [resizable]="false" [style]="{ width: '50vw' }"
+  *transloco="let t;"
 >
   <h1 class="text-xl text-black dark:text-white mb-5">{{ text }}</h1>
 
   <div class="flex justify-end gap-2">
-    <p-button (click)="closeDialog()" label="Cancel" severity="secondary"/>
-    <p-button (click)="confirm()" label="Confirm" severity="primary"/>
+    <p-button (click)="closeDialog()" [label]="t('shared.cancel') | titlecase" severity="secondary"/>
+    <p-button (click)="confirm()" [label]="t('shared.confirm') | titlecase" severity="primary"/>
   </div>
 </p-dialog>

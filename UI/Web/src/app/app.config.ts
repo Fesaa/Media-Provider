@@ -1,4 +1,4 @@
-import {ApplicationConfig, importProvidersFrom, provideZoneChangeDetection} from '@angular/core';
+import {ApplicationConfig, importProvidersFrom, isDevMode, provideZoneChangeDetection} from '@angular/core';
 import {provideRouter} from '@angular/router';
 
 import {routes} from './app.routes';
@@ -14,6 +14,8 @@ import Aura from '@primeng/themes/aura';
 import {ProviderNamePipe} from "./_pipes/provider-name.pipe";
 import {MessageService} from "primeng/api";
 import {SubscriptionExternalUrlPipe} from "./_pipes/subscription-external-url.pipe";
+import {provideTransloco} from "@jsverse/transloco";
+import {TranslocoLoaderImpl} from "./_services/transloco-loader";
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -33,5 +35,18 @@ export const appConfig: ApplicationConfig = {
       }
     }),
     MessageService,
+    provideTransloco({
+      config: {
+        availableLangs: ['en', 'es'],
+        defaultLang: 'en',
+        missingHandler: {
+          useFallbackTranslation: true,
+          allowEmpty: true,
+        },
+        reRenderOnLangChange: true,
+        prodMode: !isDevMode(),
+      },
+      loader: TranslocoLoaderImpl,
+    })
   ]
 };

@@ -6,12 +6,13 @@ import {FloatLabel} from "primeng/floatlabel";
 import {InputText} from "primeng/inputtext";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {DialogService} from "../../../../../../_services/dialog.service";
-import {NgForOf} from "@angular/common";
+import {NgForOf, TitleCasePipe} from "@angular/common";
 import {Button} from "primeng/button";
 import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
 import {Fieldset} from "primeng/fieldset";
-import {MessageService} from "../../../../../../_services/message.service";
+import {ToastService} from "../../../../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-page-wizard-dirs',
@@ -26,7 +27,9 @@ import {MessageService} from "../../../../../../_services/message.service";
     Button,
     IconField,
     InputIcon,
-    Fieldset
+    Fieldset,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './page-wizard-dirs.component.html',
   styleUrl: './page-wizard-dirs.component.css'
@@ -38,13 +41,13 @@ export class PageWizardDirsComponent {
   @Output() back: EventEmitter<void> = new EventEmitter();
 
   constructor(private dialogService: DialogService,
-              private msgService: MessageService,
+              private toastService: ToastService,
   ) {
   }
 
   nextCallback(): void {
     if (this.page.dirs.length == 0) {
-      this.msgService.error("You must provide at least one download directory");
+      this.toastService.errorLoco("settings.pages.toasts.dir-required");
       return;
     }
 
@@ -62,12 +65,12 @@ export class PageWizardDirsComponent {
     }
 
     if (newDir === "") {
-      this.msgService.warning("Cannot add empty directory.");
+      this.toastService.warningLoco("settings.pages.toasts.no-empty");
       return;
     }
 
     if (this.page.dirs.includes(newDir)) {
-      this.msgService.warning("Not adding duplicate directory.");
+      this.toastService.warningLoco("settings.pages.toasts.no-duplicate");
       return;
     }
 

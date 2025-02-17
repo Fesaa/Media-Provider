@@ -11,11 +11,12 @@ import {Tooltip} from "primeng/tooltip";
 import {RefreshFrequencyPipe} from "../_pipes/refresh-frequency.pipe";
 import {Button} from "primeng/button";
 import { DialogService } from '../_services/dialog.service';
-import {MessageService} from "../_services/message.service";
+import {ToastService} from "../_services/toast.service";
 import {Tag} from "primeng/tag";
 import {
   SubscriptionEditDialogComponent
 } from "./components/subscription-edit-dialog/subscription-edit-dialog.component";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-subscription-manager',
@@ -28,6 +29,7 @@ import {
     Button,
     Tag,
     SubscriptionEditDialogComponent,
+    TranslocoDirective,
   ],
   templateUrl: './subscription-manager.component.html',
   styleUrl: './subscription-manager.component.css',
@@ -45,7 +47,7 @@ export class SubscriptionManagerComponent implements OnInit {
               private subscriptionService: SubscriptionService,
               private cdRef: ChangeDetectorRef,
               private dialogService: DialogService,
-              private msgService: MessageService,
+              private toastService: ToastService,
   ) {
   }
 
@@ -83,16 +85,16 @@ export class SubscriptionManagerComponent implements OnInit {
 
     this.subscriptionService.runOnce(sub.ID).subscribe({
       next: () => {
-        this.msgService.success("Success", `${sub.info.title} has been added to the download queue`)
+        this.toastService.successLoco("subscriptions.toasts.run-once.success", {}, {name: sub.info.title});
       },
       error: (err) => {
-        this.msgService.error("Failed to run once", err.error.message)
+        this.toastService.errorLoco("subscriptions.toasts.run-once.error", {name: sub.info.title}, {msg: err.error.message});
       }
     })
   }
 
   async delete(sub: Subscription) {
-    if (!await this.dialogService.openDialog(`Are you sure you want to remove your subscription on ${sub.info.title}`)) {
+    if (!await this.dialogService.openDialog("subscriptions.confirm-delete", {title: sub.info.title})) {
       return;
     }
 
@@ -100,10 +102,10 @@ export class SubscriptionManagerComponent implements OnInit {
     this.subscriptionService.delete(sub.ID).subscribe({
       next: () => {
         this.subscriptions = this.subscriptions.filter(s => s.ID !== sub.ID)
-        this.msgService.success('Deleted', `Subscription ${sub.info.title} removed.`);
+        this.toastService.successLoco("subscriptions.toasts.delete.success", {name: sub.info.title});
       },
       error: err => {
-        this.msgService.error("Failed to delete the subscription", err.error.message);
+        this.toastService.errorLoco("subscriptions.toasts.delete.error", {name: sub.info.title}, {msg: err.error.message});
       }
     })
   }

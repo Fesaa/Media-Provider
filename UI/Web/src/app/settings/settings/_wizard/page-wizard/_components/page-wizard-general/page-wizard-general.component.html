@@ -1,17 +1,13 @@
-<p-card header="General">
+<p-card [header]="t('header')" *transloco="let t;prefix:'settings.pages.wizard.general'">
 
-  <p-fieldset [toggleable]="true" legend="Information">
+  <p-fieldset [toggleable]="true" [legend]="t('explanation.legend')">
     <p class="py-2 px-2 md:px-5">
-      Pages form the central way to search and download content with Media-Provider, each page will be a tab in the
-      navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which
-      things
-      you can filter while downloading. For more information see the
-      <a class="hover:underline text-blue-400" href="https://fesaa.github.io/Media-Provider/" target="_blank">wiki</a>.
+      {{ t('explanation.p1') }}
+      <a class="hover:underline text-blue-400" href="https://fesaa.github.io/Media-Provider/" target="_blank">{{ t('explanation.link') }}</a>.
       <br> <br>
 
-      A page must have a title, at least one provider, and may have an icon. The list of names for the icons can be
-      found
-      <a class="hover:underline text-blue-400" href="https://primeng.org/icons#list" target="_blank"> here</a>
+      {{ t('explanation.p2') }}
+      <a class="hover:underline text-blue-400" href="https://primeng.org/icons#list" target="_blank">{{ t('explanation.link-here') }}</a>
     </p>
   </p-fieldset>
 
@@ -19,7 +15,7 @@
     <div class="flex flex-col md:flex-row justify-between space-y-5 md:space-y-0 md:space-x-5">
       <p-floatlabel variant="in">
         <input [(ngModel)]="page.title" id="title" pInputText/>
-        <label for="title">Title</label>
+        <label for="title">{{ t('title') }}</label>
       </p-floatlabel>
 
       <p-floatlabel variant="in">
@@ -29,7 +25,7 @@
           <p-inputicon [styleClass]="'pi ' + page.icon"/>
         </p-iconfield>
 
-        <label for="icon">Icon</label>
+        <label for="icon">{{ t('icon') }}</label>
       </p-floatlabel>
     </div>
 
@@ -38,7 +34,7 @@
         [for]="'providers'"
         class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
       >
-        Providers
+        {{ t('providers') }}
       </label>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
         @for (provider of providerValues; track provider) {
@@ -64,7 +60,7 @@
     <div (click)="nextCallback()"
          class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer"
     >
-      Next
+      {{ t('next') | titlecase }}
     </div>
   </div>
 

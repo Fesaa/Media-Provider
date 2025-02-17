@@ -6,13 +6,14 @@
     [rows]="10"
     [paginator]="true"
     [loading]="loading"
+    *transloco="let t;prefix:'settings.users'"
   >
 
     <ng-template #header>
       <tr>
         <th style="width:10%"></th>
-        <th style="width:45%">Name</th>
-        <th style="width:45%">Actions</th>
+        <th style="width:45%">{{ t('name') }}</th>
+        <th style="width:45%">{{ t('actions.label') }}</th>
       </tr>
     </ng-template>
 
@@ -25,22 +26,22 @@
         <td class="flex flex-row space-x-5">
           @if (user.id == authUser.id) {
             <p-button (click)="resetApiKey()"
-                      pTooltip="Regenerate ApiKey" tooltipPosition="bottom" icon="pi pi-key" severity="info"/>
+                      [pTooltip]="t('actions.api-key.regen')" tooltipPosition="bottom" icon="pi pi-key" severity="info"/>
             <p-button (click)="copyApiKey()"
-                      pTooltip="Copy ApiKey" tooltipPosition="bottom" icon="pi pi-copy" severity="secondary"/>
+                      [pTooltip]="t('actions.api-key.copy')" tooltipPosition="bottom" icon="pi pi-copy" severity="secondary"/>
           }
 
           <p-button (click)="editUser(user)"
-                    pTooltip="Edit user" tooltipPosition="bottom" icon="pi pi-user-edit"/>
+                    [pTooltip]="t('actions.edit')" tooltipPosition="bottom" icon="pi pi-user-edit"/>
 
           @if (user.canDelete) {
             <p-button (click)="deleteUser(user)"
-                      pTooltip="Delete user" tooltipPosition="bottom" icon="pi pi-user-minus" severity="danger"/>
+                      [pTooltip]="t('actions.delete')" tooltipPosition="bottom" icon="pi pi-user-minus" severity="danger"/>
           }
 
           @if (hasPermission(authUser, Perm.WriteUser)) {
             <p-button (click)="resetPassword(user)"
-                      pTooltip="Reset password" tooltipPosition="bottom" icon="pi pi-refresh" severity="warn"/>
+                      [pTooltip]="t('actions.reset-password')" tooltipPosition="bottom" icon="pi pi-refresh" severity="warn"/>
           }
 
         </td>
@@ -51,7 +52,7 @@
       @if (hasPermission(authUser, Perm.WriteUser) && !emptyUserPresent()) {
         <div class="flex flex-grow justify-end">
           <p-button (click)="newUser()"
-                    label="New User" icon="pi pi-user-plus"/>
+                    [pTooltip]="t('actions.new')" icon="pi pi-user-plus"/>
         </div>
       }
     </ng-template>
@@ -59,29 +60,29 @@
 
   <p-dialog [(visible)]="showEditUserModal" [style]="{ width: '25rem'}">
 
-    <ng-template #headless>
+    <ng-template #headless *transloco="let t;prefix:'settings.users'">
       <div class="p-5">
 
-        <h1 class="mb-5">Edit user</h1>
+        <h1 class="mb-5">{{ t('actions.edit') }}</h1>
 
         @if (editingUser !== null) {
           <div class="flex items-center mb-6">
             <p-floatlabel variant="on">
-              <label for="username" class="font-semibold">Username</label>
+              <label for="username" class="font-semibold">{{ t('username') | titlecase }}</label>
               <input pInputText [(ngModel)]="editingUser.name" id="username" class="flex-auto" autocomplete="off"/>
             </p-floatlabel>
           </div>
 
           <p-floatlabel>
-            <label for="permissions" class="font-semibold">Permissions</label>
+            <label for="permissions" class="font-semibold">{{ t('permissions') }}</label>
             <p-multiSelect id="permissions" [(ngModel)]="editPermissions" [options]="possiblePermissions"
                            styleClass="w-full md:w-80"/>
           </p-floatlabel>
         }
 
         <div class="my-5 flex flex-row justify-end space-x-5">
-          <p-button label="Cancel" [text]="true" severity="secondary" (click)="showEditUserModal = false"/>
-          <p-button label="Save" [outlined]="true" severity="secondary" (click)="saveEdit()"/>
+          <p-button [label]="t('cancel') | titlecase" [text]="true" severity="secondary" (click)="showEditUserModal = false"/>
+          <p-button [label]="t('save')" [outlined]="true" severity="secondary" (click)="saveEdit()"/>
         </div>
 
       </div>

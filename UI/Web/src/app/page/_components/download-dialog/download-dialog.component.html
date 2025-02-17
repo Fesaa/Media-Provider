@@ -1,15 +1,15 @@
-<div class="flex flex-col space-y-5 mt-5 mb-2">
+<div class="flex flex-col space-y-5 mt-5 mb-2" *transloco="let t;prefix:'page.download-dialog'">
 
   <div class="card flex w-full">
     <p-floatlabel variant="on">
       <input [(ngModel)]="downloadDir" autocomplete="off" class="w-full p-2"
              id="download_dir" pInputText type="text"/>
-      <label for="download_dir">Download directory</label>
+      <label for="download_dir">{{ t('directory') }}</label>
     </p-floatlabel>
   </div>
 
   <div class="flex flex-row flex-grow w-full items-center">
-    <label class="w-1/2" for="startImmediately">Start download immediately</label>
+    <label class="w-1/2" for="startImmediately">{{ t('start-now') }}</label>
     <div class="flex flex-row w-1/2 justify-center">
       <p-toggle-switch [(ngModel)]="requestMetadata.startImmediately" id="startImmediately"/>
     </div>
@@ -19,7 +19,7 @@
 
     <div class="flex flex-col items-start">
 
-      <h1 class="text-start m-2 font-bold w-2/3 border-b-4 border-gray-200 rounded">Extra metadata</h1>
+      <h1 class="text-start m-2 font-bold w-2/3 border-b-4 border-gray-200 rounded">{{ t('extra-metadata.title') }}</h1>
 
       <div class="flex flex-col space-y-4 w-full">
         @for (meta of metadata.definitions; track meta.key) {
@@ -72,7 +72,7 @@
   }
 
   <div class="flex w-full flex-grow justify-end gap-4 mt-10">
-    <p-button (click)="close()" label="Cancel" severity="secondary"/>
-    <p-button (click)="download()" label="Download"/>
+    <p-button (click)="close()" [label]="t('cancel') | titlecase" severity="secondary"/>
+    <p-button (click)="download()" [label]="t('download')" />
   </div>
 </div>

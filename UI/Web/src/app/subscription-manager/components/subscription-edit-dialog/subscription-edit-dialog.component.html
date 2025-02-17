@@ -1,12 +1,14 @@
-<p-dialog resizable="false" header="Edit subscription" [(visible)]="visible"
+<p-dialog resizable="false" [header]="t('header')" [(visible)]="visible"
           [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }"
-          [contentStyle]="{ 'overflow-y': 'visible' }" (onShow)="refresh()">
+          [contentStyle]="{ 'overflow-y': 'visible' }" (onShow)="refresh()"
+          *transloco="let t;prefix:'subscriptions.dialog'"
+>
 
   <div class="flex flex-col mb-2 space-y-5">
 
     <p-floatlabel variant="in">
       <input class="w-full overflow-clip" pInputText id="title" [(ngModel)]="copy.info.title">
-      <label for="title">Title</label>
+      <label for="title">{{ t('title') }}</label>
     </p-floatlabel>
 
     <p-floatlabel variant="in">
@@ -15,7 +17,7 @@
         </p-inputicon>
         <input class="w-full overflow-clip" pInputText id="content-id" [(ngModel)]="copy.contentId">
       </p-iconfield>
-      <label for="content-id">Content Id</label>
+      <label for="content-id">{{ t('content-id') }}</label>
     </p-floatlabel>
 
     <p-floatlabel variant="in">
@@ -24,7 +26,7 @@
         </p-inputicon>
         <input class="w-full overflow-clip" pInputText id="content-dir" [(ngModel)]="copy.info.baseDir">
       </p-iconfield>
-      <label for="content-dir">Content Dir</label>
+      <label for="content-dir">{{ t('content-dir') }}</label>
     </p-floatlabel>
 
     <app-directory-selector [(visible)]="dirBrowser" [copy]="false" [root]="''" (resultDir)="updateDir($event)"  />
@@ -35,8 +37,8 @@
     </div>
 
     <div class="flex w-full flex-grow justify-end gap-4 mt-10">
-      <p-button (click)="close()" label="Cancel" severity="secondary"/>
-      <p-button (click)="edit()" label="Save"/>
+      <p-button (click)="close()" [label]="t('cancel') | titlecase" severity="secondary"/>
+      <p-button (click)="edit()" [label]="t('save') | titlecase"/>
     </div>
 
   </div>

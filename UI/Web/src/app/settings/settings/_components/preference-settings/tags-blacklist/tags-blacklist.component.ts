@@ -7,7 +7,9 @@ import {InputText} from "primeng/inputtext";
 import {InputIcon} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
 import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
-import {MessageService} from "../../../../../_services/message.service";
+import {ToastService} from "../../../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-tags-blacklist',
@@ -20,7 +22,9 @@ import {MessageService} from "../../../../../_services/message.service";
     FormsModule,
     CdkVirtualScrollViewport,
     CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf
+    CdkVirtualForOf,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './tags-blacklist.component.html',
   styleUrl: './tags-blacklist.component.css'
@@ -38,7 +42,7 @@ export class TagsBlacklistComponent {
   toDisplay: Tag[] = [];
 
   constructor(
-    private msgService: MessageService,
+    private toastService: ToastService,
   ) {
   }
 
@@ -67,7 +71,7 @@ export class TagsBlacklistComponent {
     }
     if (this.preferences.blackListedTags.find(g => g.normalizedName === normalize(this.newTag))) {
       this.newTag = ''
-      this.msgService.warning("Tag already present", "Tags are normalized, may not find the exact tag in the list")
+      this.toastService.warningLoco("settings.preferences.toasts.blacklist-duplicate");
       return;
     }
     this.preferences.blackListedTags = [...this.preferences.blackListedTags, {

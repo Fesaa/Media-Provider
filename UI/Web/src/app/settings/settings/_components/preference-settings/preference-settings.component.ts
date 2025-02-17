@@ -3,12 +3,13 @@ import {PreferencesService} from '../../../../_services/preferences.service';
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Preferences} from "../../../../_models/preferences";
 import {Tooltip} from "primeng/tooltip";
-import {MessageService} from '../../../../_services/message.service';
+import {ToastService} from '../../../../_services/toast.service';
 import {ToggleSwitch} from "primeng/toggleswitch";
 import {InputNumber} from "primeng/inputnumber";
 import {Button} from "primeng/button";
 import {DynastyGenresComponent} from "./dynasty-genres/dynasty-genres.component";
 import {TagsBlacklistComponent} from "./tags-blacklist/tags-blacklist.component";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-preference-settings',
@@ -22,6 +23,7 @@ import {TagsBlacklistComponent} from "./tags-blacklist/tags-blacklist.component"
     Button,
     DynastyGenresComponent,
     TagsBlacklistComponent,
+    TranslocoDirective,
   ],
   templateUrl: './preference-settings.component.html',
   styleUrl: './preference-settings.component.css'
@@ -33,7 +35,7 @@ export class PreferenceSettingsComponent implements OnInit {
   displayBlackListTagDialog: boolean = false;
 
   constructor(private preferencesService: PreferencesService,
-              private msgService: MessageService,
+              private toastService: ToastService,
   ) {
   }
 
@@ -50,10 +52,10 @@ export class PreferenceSettingsComponent implements OnInit {
 
     this.preferencesService.save(this.preferences).subscribe({
       next: () => {
-        this.msgService.success('Saved', 'Preferences have been updated',);
+        this.toastService.successLoco("settings.preferences.toasts.save.success");
       },
       error: err => {
-        this.msgService.error('Error', err.error.message);
+        this.toastService.genericError(err.error.message);
       }
     })
   }

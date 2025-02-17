@@ -7,7 +7,8 @@ import {FormSelectComponent} from "../../../../shared/form/form-select/form-sele
 import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/BoundNumberValidator";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Tooltip} from "primeng/tooltip";
-import {MessageService} from "../../../../_services/message.service";
+import {ToastService} from "../../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-server-settings',
@@ -15,7 +16,8 @@ import {MessageService} from "../../../../_services/message.service";
     ReactiveFormsModule,
     FormInputComponent,
     FormSelectComponent,
-    Tooltip
+    Tooltip,
+    TranslocoDirective
   ],
   templateUrl: './server-settings.component.html',
   styleUrl: './server-settings.component.css',
@@ -35,7 +37,7 @@ export class ServerSettingsComponent implements OnInit {
   constructor(private configService: ConfigService,
               private fb: FormBuilder,
               private cdRef: ChangeDetectorRef,
-              private msgService: MessageService,
+              private toastService: ToastService,
               private clipBoardService: Clipboard
   ) {
   }
@@ -58,12 +60,12 @@ export class ServerSettingsComponent implements OnInit {
 
     const errors = this.errors();
     if (errors > 0) {
-      this.msgService.error('Cannot submit', `Found ${errors} errors in the form`);
+      this.toastService.errorLoco("settings.server.toasts.cant-submit", {}, {amount: errors});
       return;
     }
 
     if (!this.settingsForm.dirty) {
-      this.msgService.warning('Not saving', 'No changes detected');
+      this.toastService.warningLoco("shared.toasts.no-changes")
       return;
     }
 
@@ -76,11 +78,11 @@ export class ServerSettingsComponent implements OnInit {
         this.configService.getConfig().subscribe(config => {
           this.config = config;
           this.buildForm();
-          this.msgService.success('Success', 'Settings saved');
+          this.toastService.successLoco("settings.server.toasts.save.success");
         });
       },
       error: (error) => {
-        this.msgService.error('Failed to save settings', error.error.message);
+        this.toastService.genericError(error.error.message);
       }
     });
   }

@@ -10,7 +10,7 @@ import {ActivatedRoute, NavigationExtras, Router} from "@angular/router";
 import {Skeleton} from "primeng/skeleton";
 import {Card} from "primeng/card";
 import {PageWizardSaveComponent} from "./_components/page-wizard-save/page-wizard-save.component";
-import {MessageService} from "../../../../_services/message.service";
+import {ToastService} from "../../../../_services/toast.service";
 
 export enum PageWizardID {
   General = 'General',
@@ -56,21 +56,11 @@ export class PageWizardComponent {
     }
   ];
   protected readonly PageWizardID = PageWizardID;
-  private readonly defaultPage: Page = {
-    ID: 0,
-    title: "",
-    custom_root_dir: "",
-    icon: "",
-    dirs: [],
-    providers: [],
-    modifiers: [],
-    sortValue: PageService.DEFAULT_PAGE_SORT,
-  };
 
   constructor(private pageService: PageService,
               private navService: NavService,
               private route: ActivatedRoute,
-              private msgService: MessageService,
+              private toastService: ToastService,
               private router: Router,
   ) {
     this.navService.setNavVisibility(true)
@@ -78,32 +68,33 @@ export class PageWizardComponent {
     this.route.queryParams.subscribe(params => {
       const pageIdParams = params['pageId'];
       if (!pageIdParams) {
-        this.page = this.defaultPage;
+        this.router.navigateByUrl("/home")
         return;
       }
 
+      let pageId;
       try {
-        const pageId = parseInt(pageIdParams);
-
-        this.pageService.getPage(pageId).subscribe({
-          next: page => {
-            this.page = page;
-          },
-          error: error => {
-            if (error.status === 404) {
-              this.msgService.error("Page not found");
-              this.router.navigateByUrl("/home");
-              return;
-            }
-
-            this.msgService.error("Error", "Failed to retrieve page\n" + error.error.message);
-          }
-        })
-
+        pageId = parseInt(pageIdParams);
       } catch (e) {
         console.error(e);
-        this.page = this.defaultPage;
+        this.router.navigateByUrl("/home")
+        return;
       }
+
+      this.pageService.getPage(pageId).subscribe({
+        next: page => {
+          this.page = page;
+        },
+        error: error => {
+          if (error.status === 404) {
+            this.toastService.warningLoco("page.toasts.not-found");
+            this.router.navigateByUrl("/home");
+            return;
+          }
+
+          this.toastService.genericError(error.error.message);
+        }
+      })
     })
     this.route.fragment.subscribe(fragment => {
       const section = this.sections.filter(section => section.id == fragment)

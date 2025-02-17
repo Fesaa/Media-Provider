@@ -7,7 +7,9 @@ import {InputIcon} from "primeng/inputicon";
 import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 import {FormsModule} from "@angular/forms";
 import {InputText} from "primeng/inputtext";
-import {MessageService} from "../../../../../_services/message.service";
+import {ToastService} from "../../../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-dynasty-genres',
@@ -20,7 +22,9 @@ import {MessageService} from "../../../../../_services/message.service";
     CdkVirtualForOf,
     FormsModule,
     CdkFixedSizeVirtualScroll,
-    InputText
+    InputText,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './dynasty-genres.component.html',
   styleUrl: './dynasty-genres.component.css'
@@ -38,7 +42,7 @@ export class DynastyGenresComponent {
   dynastyToDisplayGenres: Tag[] = [];
 
   constructor(
-    private msgService: MessageService,
+    private toastService: ToastService,
   ) {
   }
 
@@ -67,7 +71,7 @@ export class DynastyGenresComponent {
     }
     if (this.preferences.dynastyGenreTags.find(g => g.normalizedName === normalize(this.dynastyGenresNew))) {
       this.dynastyGenresNew = ''
-      this.msgService.warning("Genre already present", "Genres are normalized, may not find the exact genre in the list")
+      this.toastService.warningLoco("settings.preferences.toasts.dynasty-duplicate");
       return;
     }
     this.preferences.dynastyGenreTags = [...this.preferences.dynastyGenreTags, {

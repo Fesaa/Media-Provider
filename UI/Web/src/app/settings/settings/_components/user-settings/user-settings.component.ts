@@ -11,7 +11,9 @@ import {InputText} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {MultiSelect} from "primeng/multiselect";
 import {FloatLabel} from "primeng/floatlabel";
-import {MessageService} from '../../../../_services/message.service';
+import {ToastService} from '../../../../_services/toast.service';
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-user-settings',
@@ -23,7 +25,9 @@ import {MessageService} from '../../../../_services/message.service';
     InputText,
     FormsModule,
     MultiSelect,
-    FloatLabel
+    FloatLabel,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './user-settings.component.html',
   styleUrl: './user-settings.component.css'
@@ -52,7 +56,7 @@ export class UserSettingsComponent {
   protected readonly permissionNames = permissionNames;
 
   constructor(private accountService: AccountService,
-              private msgService: MessageService,
+              private toastService: ToastService,
               private dialogService: DialogService,
               private clipBoard: Clipboard,
   ) {
@@ -68,7 +72,7 @@ export class UserSettingsComponent {
         this.loading = false;
       },
       error: err => {
-        this.msgService.error("Unable to load all users", err.error.message)
+        this.toastService.genericError(err.error.message);
       }
     })
   }
@@ -87,15 +91,21 @@ export class UserSettingsComponent {
       return;
     }
 
+    if (this.editingUser.name.length === 0) {
+      this.toastService.errorLoco("settings.users.toasts.empty-name");
+      return;
+    }
+
     this.editingUser.permissions = this.permissionsToValue()
     this.accountService.updateOrCreate(this.editingUser).subscribe({
       next: dto => {
         this.users = this.users.filter(user => user.id !== dto.id)
         this.users.push(dto)
-        this.msgService.info("Update User");
+        this.toastService.infoLoco("settings.users.toasts.updated.success", {name: dto.name});
       },
       error: err => {
-        this.msgService.error(err.error.message, "Unable to update User");
+        this.toastService.errorLoco("settings.users.toasts.update.error",
+          {name: this.editingUser?.name}, {msg: err.error.message});
       }
     })
   }
@@ -120,49 +130,50 @@ export class UserSettingsComponent {
   }
 
   async resetApiKey() {
-    if (!await this.dialogService.openDialog(`Reset your ApiKey`)) {
+    if (!await this.dialogService.openDialog("settings.users.confirm-reset-api-key")) {
       return;
     }
 
     this.accountService.refreshApiKey().subscribe({
       next: res => {
         this.clipBoard.copy(res.ApiKey)
-        this.msgService.success("Reset your ApiKey", "Key has been copied to clipboard")
+        this.toastService.successLoco("settings.users.toasts.reset-api-key.success");
       },
       error: err => {
-        this.msgService.error("Unable to refresh api key", err.error.message)
+        this.toastService.errorLoco("settings.users.toasts.reset-api-key.error", {}, {msg: err.error.message});
       }
     })
   }
 
   async resetPassword(user: UserDto) {
-    if (!await this.dialogService.openDialog(`Reset password ${user.name}`)) {
+    if (!await this.dialogService.openDialog("settings.users.confirm-reset-password-password", {name: user.name})) {
       return;
     }
 
     this.accountService.generateReset(user.id).subscribe({
       next: reset => {
         this.clipBoard.copy(`/login/reset?key=${reset.Key}`)
-        this.msgService.success("Reset generated", "The reset link has been copied to your clipboard. A copy may be found in your server logs")
+        this.toastService.successLoco("settings.users.toasts.reset-password.success");
       },
       error: err => {
-        this.msgService.error("Failed to generate reset link", err.error.message);
+        this.toastService.errorLoco("settings.users.toasts.reset-password.error", {}, {msg: err.error.message});
       }
     })
   }
 
   async deleteUser(user: UserDto) {
-    if (!await this.dialogService.openDialog(`Delete ${user.name}`)) {
+    if (!await this.dialogService.openDialog("settings.user.confirm-delete", {name: user.name})) {
       return;
     }
 
     this.accountService.delete(user.id).subscribe({
       next: _ => {
         this.users = this.users.filter(dto => dto.id !== user.id)
-        this.msgService.success(`${user.name} has been deleted`)
+        this.toastService.successLoco("settings.users.toasts.delete.success", {name: user.name});
       },
       error: err => {
-        this.msgService.error("Unable to delete user", err.error.message)
+        this.toastService.errorLoco("settings.users.toasts.delete.error",
+          {name: user.name}, {msg: err.error.message});
       }
     })
   }

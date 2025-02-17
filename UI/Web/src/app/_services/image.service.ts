@@ -3,7 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {of, Subject} from "rxjs";
 import {AccountService} from "./account.service";
-import {MessageService} from "./message.service";
+import {ToastService} from "./toast.service";
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,7 @@ export class ImageService {
   baseUrl = environment.apiUrl;
   apiKey: string | null = null;
 
-  constructor(private httpClient: HttpClient, private msgService: MessageService, private accountService: AccountService) {
+  constructor(private httpClient: HttpClient, private toastService: ToastService, private accountService: AccountService) {
     this.accountService.currentUser$.subscribe(user => {
       if (user) {
         this.apiKey = user.apiKey;
@@ -36,7 +36,7 @@ export class ImageService {
         reader.readAsDataURL(blob);
       },
       error: err => {
-        this.msgService.error("Error", "Unable to download image " + imageUrl + ":\n" + err.error.message);
+        this.toastService.errorLoco("services.image.failed", {}, {url: imageUrl, msg: err.error.message});
       }
     })
     return imageSrc.asObservable();

@@ -5,13 +5,13 @@
     [rows]="10"
     [paginator]="true"
     [loading]="loading"
-
+    *transloco="let t;prefix:'settings.pages'"
   >
     <ng-template #header>
       <tr>
-        <th style="width:10%">Icon</th>
-        <th style="width:56%">Name</th>
-        <th style="width:33%">Actions</th>
+        <th style="width:10%">{{ t('icon') }}</th>
+        <th style="width:56%">{{ t('name') }}</th>
+        <th style="width:33%">{{ t('actions.label') }}</th>
       </tr>
     </ng-template>
 
@@ -28,12 +28,12 @@
         <td class="flex flex-row space-x-5">
           @if (hasPermission(user, Perm.WritePage)) {
             <p-button routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}"
-                      pTooltip="Edit page" tooltipPosition="bottom" icon="pi pi-file-edit" severity="info"/>
+                      [pTooltip]="t('actions.edit')" tooltipPosition="bottom" icon="pi pi-file-edit" severity="info"/>
           }
 
           @if (hasPermission(user, Perm.DeletePage)) {
             <p-button (click)="remove(page)"
-                      pTooltip="Delete Page" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
+                      [pTooltip]="t('actions.delete')" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
           }
           <p-button [disabled]="isFirst(page)" (click)="moveUp(page)" icon="pi pi-sort-up-fill" severity="secondary"/>
           <p-button [disabled]="isLast(page)" (click)="moveDown(page)" icon="pi pi-sort-down-fill"
@@ -46,7 +46,7 @@
       @if (hasPermission(user, Perm.WritePage)) {
         <div class="flex flex-grow justify-end">
           <p-button routerLink="/settings/wizard/page"
-                    label="New Page" icon="pi pi-user-plus"/>
+                    [label]="t('actions.new')" icon="pi pi-user-plus"/>
         </div>
       }
     </ng-template>

@@ -2,12 +2,16 @@ import {Component, HostListener, Input, OnInit} from '@angular/core';
 import {ReplaySubject} from "rxjs";
 import {Dialog} from "primeng/dialog";
 import {Button} from "primeng/button";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-dialog',
   imports: [
     Dialog,
-    Button
+    Button,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './dialog.component.html',
   styleUrl: './dialog.component.css'

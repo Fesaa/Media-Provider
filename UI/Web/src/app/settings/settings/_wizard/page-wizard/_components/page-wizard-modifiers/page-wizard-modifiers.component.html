@@ -1,49 +1,47 @@
-<p-card header="Directories">
+<p-card [header]="t('header')" *transloco="let t;prefix:'settings.pages.wizard.modifiers'">
 
-  <p-fieldset [toggleable]="true" legend="Modifiers">
+  <p-fieldset [toggleable]="true" [legend]="t('explanation.legend')">
     <p class="py-2 px-2 md:px-5">
-      Modifiers are an import part of the search experience, you can configure them to help you narrow down results,
-      apart from name. Each provider has different modifiers it can use to narrow down your search. See the <a
-      class="hover:underline text-blue-400" href="https://fesaa.github.io/Media-Provider/" target="_blank">wiki</a>
-      for more information. Read the wiki carefully to ensure you use the correct keys for the modifiers.
+      {{ t('explanation.p1') }}
+      <a class="hover:underline text-blue-400" href="https://fesaa.github.io/Media-Provider/" target="_blank">
+        {{ t('explanation.link') }}
+      </a>
+      {{ t('explanation.p2') }}
       <br> <br>
-
-      Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search,
-      while the value is what will be shown on your screen.
-
-      <p-fieldset [collapsed]="true" [toggleable]="true" legend="Kinds">
-        <p-fieldset legend="Dropdown">
-          The dropdown modifier always you to select just one value from the list, by default no item is selected.
+      {{ t('explanation.p3') }}
+      <p-fieldset [collapsed]="true" [toggleable]="true" [legend]="t('kinds.legend')">
+        <p-fieldset [legend]="t('kinds.dropdown.legend')">
+          {{ t('kinds.dropdown.desc') }}
         </p-fieldset>
 
-        <p-fieldset legend="Multi select">
-          Like the name suggests, the multi select modifier always you to select as many of the values as you want.
+        <p-fieldset [legend]="t('kinds.multi-select.legend')">
+          {{ t('kinds.multi-select.desc') }}
         </p-fieldset>
       </p-fieldset>
 
     </p>
   </p-fieldset>
 
-  <div class="md:p-5 flex flex-col">
+  <div class="md:p-5 mb-2 flex flex-col">
     <p-button (onClick)="addNewModifier()" severity="secondary" styleClass="mt-2">
-      Add new
+      {{ t('add-new') }}
     </p-button>
 
     <div class="w-full flex flex-col space-y-5">
-      <p-fieldset *ngFor="let mod of page.modifiers" [collapsed]="mod.title !== ''" [legend]="mod.title"
+      <p-fieldset *ngFor="let mod of page.modifiers" [legend]="mod.title"
                   [toggleable]="true">
 
         <div class="w-full flex flex-col md:flex-row items-center justify-between space-y-5 md:space-y-0 my-3">
           <div class="flex items-center">
             <p-floatlabel variant="on">
-              <label [for]="'title_' + mod.ID" class="font-semibold w-24">Title</label>
+              <label [for]="'title_' + mod.ID" class="font-semibold w-24">{{ t('title') }}</label>
               <input [(ngModel)]="mod.title" [id]="'title_' + mod.ID" autocomplete="off" class="flex-auto" pInputText/>
             </p-floatlabel>
           </div>
 
           <div class="flex items-center">
-            <p-floatlabel variant="on">
-              <label [for]="'key_' + mod.ID" class="font-semibold w-24" pTooltip="Check wiki!">Key</label>
+            <p-floatlabel variant="on" [pTooltip]="t('check-wiki')">
+              <label [for]="'key_' + mod.ID" class="font-semibold w-24">{{ t('key') }}</label>
               <input [(ngModel)]="mod.key" [id]="'key_' + mod.ID" autocomplete="off" class="flex-auto" pInputText/>
             </p-floatlabel>
           </div>
@@ -59,7 +57,7 @@
           <div *ngFor="let modV of mod.values"
                class="flex flex-col md:flex-row mb-7 md:mb-0 md:mt-0 justify-between items-center">
             <p-floatlabel>
-              <label [for]="mod.ID + '_key_' + modV.key">Key</label>
+              <label [for]="mod.ID + '_key_' + modV.key">{{ t('key') }}</label>
 
               <p-iconfield>
                 <p-inputicon (click)="deleteModifierValue(mod, modV.key)"
@@ -73,7 +71,7 @@
             <span class="pi pi-arrow-down flex md:hidden my-3 md:my-0"></span>
 
             <p-floatlabel>
-              <label [for]="mod.ID + '_val_' + modV.key">Value</label>
+              <label [for]="mod.ID + '_val_' + modV.key">{{ t('value') }}</label>
               <input [(ngModel)]="modV.value" [id]="mod.ID + '_val_' + modV.key" autocomplete="off" pInputText>
             </p-floatlabel>
 
@@ -82,7 +80,7 @@
 
         <div class="flex flex-row items-center justify-end mt-5">
           <p-button (onClick)="addNewModifierValue(mod)" severity="secondary">
-            Add new
+            {{ t('add-new-modifier-value') }}
           </p-button>
         </div>
 
@@ -94,12 +92,12 @@
   <div class="flex flex-row w-full justify-between items-center my-5">
     <div (click)="back.emit()"
          class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
-      Back
+      {{ t('back') | titlecase }}
     </div>
 
     <div (click)="nextCallback()"
          class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 hover:cursor-pointer">
-      Next
+      {{ t('next') | titlecase }}
     </div>
   </div>
 

@@ -1,10 +1,10 @@
-<div class="flex flex-col w-full items-center text-black dark:text-white mb-10">
+<div class="flex flex-col w-full items-center text-black dark:text-white mb-10" *transloco="let t;prefix:'settings'">
   <div class="flex flex-col w-full md:w-11/12 items-center py-1 md:py-5 px-2 md:p-10">
 
     <div
       class="flex flex-row justify-between w-full space-x-2 border-b-2 border-black-100 dark:border-white items-center">
       <div class="text-xl md:text-4xl">
-        Settings
+        {{ t('settings') }}
       </div>
       <div class="block md:hidden hover:cursor-pointer pi pi-sliders-h" style="font-size: 1.5rem" (click)="toggleMobile()">
       </div>

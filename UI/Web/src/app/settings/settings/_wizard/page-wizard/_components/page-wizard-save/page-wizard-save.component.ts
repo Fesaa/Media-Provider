@@ -4,11 +4,12 @@ import {PageService} from "../../../../../../_services/page.service";
 import {Card} from "primeng/card";
 import {Fieldset} from "primeng/fieldset";
 import {FormControl, FormGroup, FormsModule} from "@angular/forms";
-import {NgForOf} from "@angular/common";
+import {NgForOf, TitleCasePipe} from "@angular/common";
 import {Router} from "@angular/router";
 import {DialogService} from "../../../../../../_services/dialog.service";
 import {ProviderNamePipe} from "../../../../../../_pipes/provider-name.pipe";
-import {MessageService} from "../../../../../../_services/message.service";
+import {ToastService} from "../../../../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-page-wizard-save',
@@ -18,6 +19,8 @@ import {MessageService} from "../../../../../../_services/message.service";
     FormsModule,
     NgForOf,
     ProviderNamePipe,
+    TranslocoDirective,
+    TitleCasePipe,
   ],
   templateUrl: './page-wizard-save.component.html',
   styleUrl: './page-wizard-save.component.css'
@@ -35,7 +38,7 @@ export class PageWizardSaveComponent {
 
   constructor(
     private pageService: PageService,
-    private msgService: MessageService,
+    private toastService: ToastService,
     private router: Router,
     private dialogService: DialogService,
   ) {
@@ -55,7 +58,7 @@ export class PageWizardSaveComponent {
       return;
     }
 
-    if (!await this.dialogService.openDialog("Are you sure you want save? ")) {
+    if (!await this.dialogService.openDialog("settings.pages.wizard.confirm-save")) {
       return;
     }
 
@@ -69,7 +72,7 @@ export class PageWizardSaveComponent {
 
     obs.subscribe({
       next: (page) => {
-        this.msgService.success("Success!")
+        this.toastService.successLoco("settings.pages.toasts.save.success");
         this.router.navigate(["/page"], {
           queryParams: {
             index: page.ID,
@@ -77,7 +80,7 @@ export class PageWizardSaveComponent {
         })
       },
       error: (error) => {
-        this.msgService.error("Error!", `An error occurred:\n${error.error.message}`)
+        this.toastService.errorLoco("settings.pages.toasts.save.error", {}, {msg: error.error.message});
       }
     })
 
@@ -85,7 +88,7 @@ export class PageWizardSaveComponent {
 
   dirsCheck(): boolean {
     if (this.page.dirs.length == 0) {
-      this.msgService.error("You must provide at least one download directory");
+      this.toastService.errorLoco("settings.pages.toasts.dir-required");
       return false;
     }
 
@@ -94,12 +97,12 @@ export class PageWizardSaveComponent {
 
   generalCheck(): boolean {
     if (this.page.title === '') {
-      this.msgService.error("You most provide a title")
+      this.toastService.errorLoco("settings.pages.toasts.name-required");
       return false;
     }
 
     if (this.page.providers.length == 0) {
-      this.msgService.error("You most provide at least one provider")
+      this.toastService.errorLoco("settings.pages.toasts.provider-required");
       return false;
     }
 
@@ -110,13 +113,13 @@ export class PageWizardSaveComponent {
     for (const mod of this.page.modifiers) {
       if (mod.key === '' || mod.title === '') {
         const title = mod.title === '' ? mod.key : mod.title;
-        this.msgService.error(`Invalid modifier ${title}`, "Ensure all modifiers have their key and title set");
+        this.toastService.errorLoco("settings.pages.toasts.invalid-modifier", {title: mod.title});
         return false;
       }
 
       for (const val of mod.values) {
         if (val.key === '' || val.value === '') {
-          this.msgService.error(`Invalid modifier ${mod.title}`, "Ensure all modifier values have their key and value set")
+          this.toastService.errorLoco("settings.pages.toasts.invalid-modifier-values", {title: mod.title});
           return false;
         }
       }

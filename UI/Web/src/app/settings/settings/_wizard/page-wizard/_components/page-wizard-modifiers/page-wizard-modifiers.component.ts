@@ -8,11 +8,12 @@ import {InputText} from "primeng/inputtext";
 import {Tooltip} from "primeng/tooltip";
 import {FloatLabel} from "primeng/floatlabel";
 import {Select} from "primeng/select";
-import {NgForOf} from "@angular/common";
+import {NgForOf, TitleCasePipe} from "@angular/common";
 import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
 import {DialogService} from "../../../../../../_services/dialog.service";
-import {MessageService} from "../../../../../../_services/message.service";
+import {ToastService} from "../../../../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-page-wizard-modifiers',
@@ -28,6 +29,8 @@ import {MessageService} from "../../../../../../_services/message.service";
     NgForOf,
     IconField,
     InputIcon,
+    TranslocoDirective,
+    TitleCasePipe,
   ],
   templateUrl: './page-wizard-modifiers.component.html',
   styleUrl: './page-wizard-modifiers.component.css'
@@ -44,7 +47,7 @@ export class PageWizardModifiersComponent {
   @Output() back: EventEmitter<void> = new EventEmitter();
 
   constructor(
-    private msgService: MessageService,
+    private toastService: ToastService,
     private dialogService: DialogService,
   ) {
   }
@@ -53,13 +56,13 @@ export class PageWizardModifiersComponent {
     for (const mod of this.page.modifiers) {
       if (mod.key === '' || mod.title === '') {
         const title = mod.title === '' ? mod.key : mod.title;
-        this.msgService.error(`Invalid modifier ${title}`, "Ensure all modifiers have their key and title set");
+        this.toastService.errorLoco("settings.pages.toasts.invalid-modifier", {title: mod.title});
         return;
       }
 
       for (const val of mod.values) {
         if (val.key === '' || val.value === '') {
-          this.msgService.error(`Invalid modifier ${mod.title}`, "Ensure all modifier values have their key and value set")
+          this.toastService.errorLoco("settings.pages.toasts.invalid-modifier-values", {title: mod.title});
           return;
         }
       }
@@ -70,7 +73,7 @@ export class PageWizardModifiersComponent {
 
   addNewModifierValue(mod: Modifier) {
     if (mod.values.filter(v => v.key == '' || v.value == '').length > 0) {
-      this.msgService.warning("Cannot add modifier value", "All modifiers must be filled in before adding a new one")
+      this.toastService.warningLoco("settings.pages.toasts.already-adding-new");
       return;
     }
 
@@ -81,7 +84,7 @@ export class PageWizardModifiersComponent {
   }
 
   async deleteModifierValue(mod: Modifier, key: string) {
-    if (!await this.dialogService.openDialog(`Certain you want to delete ${mod.title} > ${key}`)) {
+    if (!await this.dialogService.openDialog("settings.pages.wizard.confirm-delete-modifier-value", {name: mod.title, key: key})) {
       return;
     }
 
@@ -89,7 +92,7 @@ export class PageWizardModifiersComponent {
   }
 
   async delete(toDelete: Modifier) {
-    if (!await this.dialogService.openDialog(`Certain you want to delete ${toDelete.title}`)) {
+    if (!await this.dialogService.openDialog("settings.pages.wizard.confirm-delete-modifier", {name: toDelete.title})) {
       return;
     }
 

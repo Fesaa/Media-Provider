@@ -7,7 +7,9 @@ import {InputText} from "primeng/inputtext";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Button} from "primeng/button";
 import {Select} from "primeng/select";
-import {MessageService} from "../../../_services/message.service";
+import {ToastService} from "../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-subscription-dialog',
@@ -17,7 +19,9 @@ import {MessageService} from "../../../_services/message.service";
     ReactiveFormsModule,
     FormsModule,
     Button,
-    Select
+    Select,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './subscription-dialog.component.html',
   styleUrl: './subscription-dialog.component.css'
@@ -35,7 +39,7 @@ export class SubscriptionDialogComponent implements OnInit {
 
   constructor(
     private subscriptionService: SubscriptionService,
-    private msgService: MessageService,
+    private toastService: ToastService,
   ) {
   }
 
@@ -61,10 +65,10 @@ export class SubscriptionDialogComponent implements OnInit {
   subscribe() {
     this.subscriptionService.new(this.subscription).subscribe({
       next: sub => {
-        this.msgService.success("Success", `Added ${sub.info.title} as a subscription`)
+        this.toastService.successLoco("page.subscription-dialog.toasts.success", {}, {name: sub.info.title})
       },
       error: err => {
-        this.msgService.error("Failed", `An error occurred: ${err.error.message}`);
+        this.toastService.genericError(err.error.message);
       }
     }).add(() => {
       this.visibleChange.emit(false);

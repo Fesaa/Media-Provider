@@ -1,0 +1,581 @@
+{
+  "application": {
+    "name": "Media-Provider"
+  },
+
+  "shared": {
+    "username": "username",
+    "password": "password",
+    "loading": "loading...",
+    "cancel": "cancel",
+    "confirm": "confirm",
+    "download": "Download",
+    "filter": "filter",
+    "save": "save",
+    "add": "add",
+    "back": "back",
+    "next": "next",
+    "dots": "...",
+    "toasts": {
+      "generic-error": {
+        "title": "An error occurred",
+        "summary": "{{msg}}"
+      },
+      "no-changes": {
+        "title": "Not submitting",
+        "summary": "No changes were detected"
+      }
+    }
+  },
+
+  "services": {
+    "image": {
+      "failed": {
+        "title": "Error",
+        "summary": "Unable to download image {{url}}:\n{{msg}}"
+      }
+    }
+  },
+
+  "nav-bar": {
+    "home": "Home",
+    "subscriptions": "Subscriptions",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "sign-out": "Log out"
+  },
+
+  "login": {
+    "application-name": "{{application.name}}",
+    "sign-in": "Sign in",
+    "register": "Register",
+    "username": "{{shared.username}}",
+    "password": "{{shared.password}}",
+    "remember-me": "Remember me for 7 days",
+    "reset-password": "Reset {{shared.password}}",
+    "toasts": {
+      "login-failed": {
+        "title": "Error",
+        "summary": "Check your credentials"
+      }
+    }
+  },
+
+  "dashboard": {
+    "no-content": {
+      "title": "No content found",
+      "p": "Add content to get started"
+    },
+    "content-picker": {
+      "header": "Content Picker",
+      "toasts": {
+        "success": {
+          "title": "Success",
+          "summary": "Set filter to {{amount}} items for {{title}}"
+        },
+        "no-changes": {
+          "title": "Not saving changes",
+          "summary": "Remove the content if you wish nothing to be downloaded"
+        }
+      }
+    },
+    "load-default": "Load default pages",
+    "loading": "{{shared.loading}}",
+    "table": {
+      "name": "Name",
+      "size": "Size",
+      "progress": "Progress",
+      "status": "Status",
+      "actions": {
+        "label": "Actions",
+        "browse": "Browse directory",
+        "set-content": "Set content",
+        "mark-ready": "Mark ready",
+        "stop": "Stop download"
+      }
+    },
+    "confirm-stop": "Are you sure you want to stop {{name}}",
+    "toasts": {
+      "stopped-success": {
+        "title": "Success",
+        "summary": "Download stopped {{title}}"
+      },
+      "mark-ready": {
+        "success": {
+          "title": "Success",
+          "summary": "Content marked as ready for download, will begin as soon as possible"
+        }
+      }
+    }
+  },
+
+  "notifications": {
+    "actions": {
+      "read-selected": "Read selected",
+      "delete-selected": "Delete selected"
+    },
+    "table": {
+      "group": "Group",
+      "title": "Title",
+      "summary": "Summary",
+      "actions": {
+        "label": "Actions",
+        "mark-unread": "Mark unread",
+        "mark-read": "Mark read"
+      },
+      "empty": "No notifications to report"
+    },
+    "confirm-delete": "Are you sure you want to delete {{title}}?",
+    "confirm-delete-many": "Are you sure you want to delete {{amount}} notification(s)?",
+    "confirm-read-many": "Are you sure you want to mark {{amount}} notification(s) as read?",
+    "toasts": {
+      "delete-success": {
+        "title": "Delete {{amount}} notification(s)",
+        "summary": ""
+      },
+      "read-many-success": {
+        "title": "Marked {{amount}} notification(s) as read",
+        "summary": ""
+      },
+      "no-selected": {
+        "title": "No notifications selected",
+        "summary": ""
+      }
+    }
+  },
+
+  "page": {
+    "download-dialog": {
+      "directory": "Download directory",
+      "start-now": "Start download immediately",
+      "extra-metadata": {
+        "title": "Extra metadata"
+      },
+      "cancel": "{{shared.cancel}}",
+      "download": "{{shared.download}}",
+      "toasts": {
+        "download-success": {
+          "title": "Success",
+          "summary": "Download started for {{name}}"
+        },
+        "not-found": {
+          "title": "Page not found",
+          "summary": ""
+        }
+      }
+    },
+    "search-result": {
+      "download": "{{shared.download}}",
+      "add-as-sub": "Add as a subscription",
+      "sub-header": "Subscribe"
+    },
+    "subscription-dialog": {
+      "title": "Title",
+      "directory": "{{page.download-dialog.directory}}",
+      "refresh-frequency": "Refresh frequency",
+      "cancel": "{{shared.cancel}}",
+      "subscribe": "Subscribe",
+      "toasts": {
+        "success": {
+          "title": "Success",
+          "summary": "Added {{name} as a subscription"
+        }
+      }
+    },
+
+    "query":"Query",
+    "directory": "Directory",
+    "search": "Search",
+    "toasts": {
+      "search-success": {
+        "title": "Search completed",
+        "summary": "Found {{amount}} items"
+      },
+      "metadata-failed": {
+        "title": "Failed to download metadata: {{provider}}",
+        "summary": "{{msg}}"
+      },
+      "no-results": {
+        "title": "No results found",
+        "summary": ""
+      }
+    }
+  },
+
+  "settings": {
+    "settings": "Settings",
+    "pages": {
+      "icon": "Icon",
+      "name": "Name",
+      "actions": {
+        "label": "Actions",
+        "edit": "Edit page",
+        "delete": "Delete page",
+        "new": "New page"
+      },
+      "wizard": {
+        "directories": {
+          "header": "Directories",
+          "explanation": {
+            "legend": "Information",
+            "p1": "You must provide at least one directory for the page to download into by default, if you provide more than one a dropdown menu with all options will be made available on the page.",
+            "p2": "Each page will also have a directory picker, this will open a browser on the root directory as configured in",
+            "link": "settings",
+            "p3": ", if you wish to use a different root directory to open up in, you may configure so here. ",
+            "p4": "If a directory has been selected with the picker, the content will be download into there instead."
+          },
+          "custom-root-dir": "Custom root directory",
+          "download-dirs": "Download directories",
+          "add": "{{shared.add}}",
+          "next": "{{shared.next}}",
+          "back": "{{shared.back}}"
+        },
+        "general": {
+          "header": "General",
+          "explanation": {
+            "legend": "Information",
+            "p1": "Pages form the central way to search and download content with Media-Provider, each page will be a tab in the navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which things you can filter while downloading. For more information see the",
+            "link": "wiki",
+            "p2": "A page must have a title, at least one provider, and may have an icon. The list of names for the icons can be found",
+            "link-here": "here"
+          },
+          "title": "Title",
+          "icon": "Icon",
+          "providers": "Providers",
+          "next": "{{shared.next}}"
+        },
+        "modifiers": {
+          "header": "Modifiers",
+          "explanation": {
+            "legend": "Information",
+            "p1": "Modifiers are an import part of the search experience, you can configure them to help you narrow down results, apart from name. Each provider has different modifiers it can use to narrow down your search. See the ",
+            "link": "wiki",
+            "p2": "for more information. Read the wiki carefully to ensure you use the correct keys for the modifiers.",
+            "p3": "Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search, while the value is what will be shown on your screen."
+          },
+          "kinds": {
+            "legend": "Kinds",
+            "dropdown": {
+              "legend": "Dropdown",
+              "desc": "The dropdown modifier always you to select just one value from the list, by default no item is selected."
+            },
+            "multi-select": {
+              "legend": "Multi Select",
+              "desc": "Like the name suggests, the multi select modifier always you to select as many of the values as you want."
+            }
+          },
+          "add-new": "Add new Modifier",
+          "add-new-modifier-value": "Add new option",
+          "title": "Title",
+          "key": "Key",
+          "value": "Value",
+          "check-wiki": "Check wiki!",
+          "next": "{{shared.next}}",
+          "back": "{{shared.back}}"
+        },
+        "save": {
+          "header": "Save",
+          "legend": "Page details",
+          "legend-modifiers": "Modifiers",
+          "title": "Title:",
+          "custom-root-dir": "Custom Root Directory",
+          "dirs": "Directories",
+          "providers": "Providers",
+          "key": "Key:",
+          "values": "Number of Values:",
+          "back": "{{shared.back}}",
+          "save": "Save"
+        },
+        "confirm-delete-modifier": "Are you sure you want to delete {{name}}?",
+        "confirm-delete-modifier-value": "Are you sure you want to delete {{name}} > {{key}}?",
+        "confirm-save": "Are you sure you want to save?"
+      },
+      "confirm-delete": "Are you sure you want to remove page > {{title}}?",
+      "toasts": {
+        "delete": {
+          "success": {
+            "title": "Success",
+            "summary": "{{title}} removed"
+          }
+        },
+        "swapped": {
+          "success": {
+            "title": "Success",
+            "summary": "Swapped {{page1}} and {{page2}}"
+          }
+        },
+        "save": {
+          "success": {
+            "title": "Success",
+            "summary": ""
+          },
+          "error": {
+            "title": "Failed to save page",
+            "summary": "{{msg}}"
+          }
+        },
+        "no-empty": {
+          "title": "Not adding empty directory",
+          "summary": ""
+        },
+        "no-duplicate": {
+          "title": "Not adding duplicated directory",
+          "summary": ""
+        },
+        "already-adding-new": {
+          "title": "Cannot add modifier value",
+          "summary": "All modifiers must be filled in before adding a new one"
+        },
+        "dir-required": {
+          "title": "You must provide at least one download directory",
+          "summary": ""
+        },
+        "name-required": {
+          "title": "You must provide a title",
+          "summary": ""
+        },
+        "provider-required": {
+          "title": "You must at least selected one provided",
+          "summary": ""
+        },
+        "invalid-modifier": {
+          "title": "Invalid modifier {{title}}",
+          "summary": "Ensure all modifiers have their key and title set"
+        },
+        "invalid-modifier-values": {
+          "title": "Invalid modifier {{title}}",
+          "summary": "Ensure all modifier values have their key and value set"
+        }
+      }
+    },
+    "preferences": {
+      "dynasty-genres": {
+        "label": "Dynasty tags to save as genre",
+        "header": "Dynasty Tags to Genre mapper",
+        "explanation": "The following tags will be added as a genre when downloading from Dynasty, add or remove as wanted.",
+        "add-new": "Add new genre",
+        "filter": "{{shared.filter}}",
+        "empty": "No genres have been configured yet."
+      },
+      "tags-blacklist": {
+        "label": "Tags blacklist",
+        "header": "Tags blacklist",
+        "explanation": {
+          "p1": "Any tags configured here will ",
+          "not": "NOT",
+          "p2": " be used as either a Genre or Tag. Check documentation for how matching happens."
+        },
+        "new": "Add new tag",
+        "filter": "{{shared.filter}}",
+        "empty": "No tags have been configured yet."
+      },
+      "sub-refresh": {
+        "label": "Download subscriptions at",
+        "tooltip": "This is the hour"
+      },
+      "empty-download-notification": "Notification when a subscription downloads 0 items",
+      "configure": "Configure",
+      "save": "Save",
+      "toasts": {
+        "save": {
+          "success": {
+            "title": "Saved",
+            "summary": "Preferences have been updated"
+          }
+        },
+        "dynasty-duplicate": {
+          "title": "Genre already present",
+          "summary": "Genres are normalized, may not find the exact genre in the list"
+        },
+        "blacklist-duplicate": {
+          "title": "Tag already present",
+          "summary": "Tags are normalized, may not find the exact tag in the list"
+        }
+      }
+    },
+    "server": {
+      "general": "General",
+      "logging-cache": "Logging & Cache",
+      "root-dir": "Root directory",
+      "base-url": "Base Url",
+      "handler": {
+        "label": "Handler",
+        "tooltip": "Requires a restart"
+      },
+      "log-level": "Level",
+      "cache-type": {
+        "label": "Cache type",
+        "tooltip": "Redis allows requests to be cached between restarts"
+      },
+      "redis-address": "Redis address",
+      "downloader": "Downloader",
+      "max-torrents": {
+        "label": "Max torrents",
+        "tooltip": "Global max torrents"
+      },
+      "max-images": {
+        "label": "Max Images",
+        "tooltip": "Amount of images(/chapter) downloaded at once, not shared between providers"
+      },
+      "save": "Save",
+      "toasts": {
+        "save": {
+          "success": {
+            "title": "Success",
+            "summary": "Settings saved"
+          }
+        },
+        "cant-submit": {
+          "title": "Cannot submit",
+          "summary": "Found {{amount}} errors in the form"
+        }
+      }
+    },
+    "users": {
+      "name": "Name",
+      "actions": {
+        "label": "Actions",
+        "api-key": {
+          "regen": "Regenerate ApiKey",
+          "copy": "Copy ApiKey"
+        },
+        "edit": "Edit user",
+        "delete": "Delete user",
+        "reset-password": "Reset password",
+        "new": "New User"
+      },
+      "username": "{{shared.username}}",
+      "permissions": "Permissions",
+      "cancel": "{{shared.cancel}}",
+      "save": "Save",
+      "confirm-delete": "Are you sure you want to delete {{name}}?",
+      "confirm-reset-api-key": "Are you sure you want to reset your ApiKey?",
+      "confirm-reset-password": "Are you sure you want to reset {{name}}'s password?",
+      "toasts": {
+        "updated": {
+          "success": {
+            "title": "Updated user {{name}}",
+            "summary": ""
+          },
+          "error": {
+            "title": "Failed to update {{name}}",
+            "summary": "{{msg}}"
+          }
+        },
+        "reset-api-key": {
+          "success": {
+            "title": "Reset your Api Key",
+            "summary": "Key has been copied to clipboard"
+          },
+          "error": {
+            "title": "Unable to refresh api key",
+            "summary": "{{msg}}"
+          }
+        },
+        "delete": {
+          "success": {
+            "title": "{{name}} has been deleted",
+            "summary": ""
+          },
+          "error": {
+            "title": "Failed to delete {{name}}",
+            "summary": "{{msg}}"
+          }
+        },
+        "password-reset": {
+          "success": {
+            "title": "Reset generated",
+            "summary": "The reset link has been copied to your clipboard. A copy may be found in your server logs"
+          },
+          "error": {
+            "title": "Failed to generate reset link",
+            "summary": "{{msg}}"
+          }
+        },
+        "empty-name": {
+          "title": "Not creating user",
+          "summary": "Name cannot be empty"
+        }
+      }
+    }
+  },
+
+  "directory-selector":{
+    "selected": "Selected: ",
+    "filter": "Filter...",
+    "dots": "{{shared.dots}}",
+    "create": "Create",
+    "cancel": "{{shared.cancel}}",
+    "confirm": "{{shared.confirm}}",
+    "toasts": {
+      "create": {
+        "success": {
+          "title": "Success",
+          "summary": "Created {{name}}"
+        },
+        "error": {
+          "title": "Failed to create directory",
+          "summary": "{{msg}}"
+        }
+      }
+    }
+  },
+
+  "subscriptions": {
+    "dialog": {
+      "header": "Edit subscription",
+      "title": "Title",
+      "content-id": "Content Id",
+      "content-dir": "Content Dir",
+      "cancel": "{{shared.cancel}}",
+      "save": "{{shared.save}}"
+    },
+    "title": "Title",
+    "last": "Last ran",
+    "frequency": "Frequency",
+    "search": "Search by title",
+    "success": "Success",
+    "failing": "Failing",
+    "unknown": "Unknown",
+    "actions": {
+      "label": "Actions",
+      "edit": "Edit",
+      "run-once": "Run Once",
+      "delete": "Delete"
+    },
+    "confirm-delete": "Are you sure you want to remove your subscription on {{title}}?",
+    "toasts": {
+      "run-once": {
+        "success": {
+          "title": "Success",
+          "summary": "{{name}} has been added to the download queue"
+        },
+        "error": {
+          "title": "Failed to run {{name}} once",
+          "summary": "{{msg}}"
+        }
+      },
+      "delete": {
+        "success": {
+          "title": "Deleted {{name}}",
+          "summary": ""
+        },
+        "error": {
+          "title": "Failed to delete {{name}}",
+          "summary": "{{msg}}"
+        }
+      },
+      "update": {
+        "success": {
+          "title": "Updated {{name}}",
+          "summary": ""
+        },
+        "error": {
+          "title": "Failed to update {{name}}",
+          "summary": "{{msg}}"
+        }
+      }
+    }
+  }
+
+}

@@ -1,6 +1,7 @@
 import {ApplicationRef, ComponentRef, Injectable, ViewContainerRef} from '@angular/core';
 import {DialogComponent} from "../shared/_component/dialog/dialog.component";
 import {DirectorySelectorComponent} from "../shared/_component/directory-selector/directory-selector.component";
+import {TranslocoService} from "@jsverse/transloco";
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +12,7 @@ export class DialogService {
 
   constructor(
     private appRef: ApplicationRef,
+    private transLoco: TranslocoService,
   ) {
   }
 
@@ -37,10 +39,10 @@ export class DialogService {
     });
   }
 
-  openDialog(text: string, header: string = "Confirm"): Promise<boolean> {
+  openDialog(text: string, textArgs?: any, header: string = "Confirm", headerArgs?: any): Promise<boolean> {
     const component = this.viewContainerRef!.createComponent(DialogComponent)
-    component.instance.text = text;
-    component.instance.header = header;
+    component.instance.text = this.transLoco.translate(text, textArgs);
+    component.instance.header = this.transLoco.translate(header, headerArgs);
 
     return new Promise<boolean>((resolve, reject) => {
       component.instance.getResult().subscribe(result => {

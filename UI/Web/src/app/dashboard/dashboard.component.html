@@ -1,12 +1,12 @@
 @if (this.loading) {
-  <div class='flex space-x-2 justify-center items-center mt-10'>
-    <span class='sr-only'>Loading...</span>
+  <div class='flex space-x-2 justify-center items-center mt-10' *transloco="let t;prefix:'dashboard'">
+    <span class='sr-only'>{{ t('loading') | titlecase }}</span>
     <div class='h-4 w-4 bg-black rounded-full animate-bounce [animation-delay:-0.3s]'></div>
     <div class='h-4 w-4 bg-black rounded-full animate-bounce [animation-delay:-0.15s]'></div>
     <div class='h-4 w-4 bg-black rounded-full animate-bounce'></div>
   </div>
 } @else {
-  <div class="w-full">
+  <div class="w-full" *transloco="let t;prefix:'dashboard'">
     @if (info.length === 0 && !this.loading) {
       <app-suggestion-dashboard></app-suggestion-dashboard>
     }
@@ -19,14 +19,15 @@
           [paginator]="true"
           stripedRows
           [rowsPerPageOptions]="[5, 10, 20]"
+          *transloco="let t;prefix:'dashboard.table'"
         >
           <ng-template #header>
             <tr>
-              <th style="width:24%">Name</th>
-              <th style="width:5%">Size</th>
-              <th style="width:30%">Progress</th>
-              <th style="width:10%">Status</th>
-              <th style="width:15%">Action</th>
+              <th style="width:24%">{{ t('name') }}</th>
+              <th style="width:5%">{{ t('size') }}</th>
+              <th style="width:30%">{{ t('progress') }}</th>
+              <th style="width:10%">{{ t('status') }}</th>
+              <th style="width:15%">{{ t('actions.label') }}</th>
             </tr>
           </ng-template>
           <ng-template #body let-info>
@@ -69,20 +70,20 @@
 
                   @if (info.contentState == ContentState.Downloading) {
                     <p-button (click)="browse(info)" [rounded]="true" [text]="true"
-                              pTooltip="Browse directory" tooltipPosition="bottom" icon="pi pi-folder" severity="info"/>
+                              [pTooltip]="t('actions.browse')" tooltipPosition="bottom" icon="pi pi-folder" severity="info"/>
                   }
 
                   @if (info.contentState == ContentState.Waiting) {
                     <p-button (click)="pickContent(info)" [rounded]="true" [text]="true"
-                              pTooltip="Set content" tooltipPosition="bottom" icon="pi pi-cart-arrow-down"
+                              [pTooltip]="t('actions.set-content')" tooltipPosition="bottom" icon="pi pi-cart-arrow-down"
                               severity="info"/>
 
                     <p-button (click)="markReady(info)" [rounded]="true" [text]="true"
-                              pTooltip="Mark ready" tooltipPosition="bottom" icon="pi pi-check" severity="success"/>
+                              [pTooltip]="t('actions.mark-ready')" tooltipPosition="bottom" icon="pi pi-check" severity="success"/>
                   }
 
                   <p-button (click)="stop(info)" [rounded]="true" [text]="true"
-                            pTooltip="Stop download" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
+                            [pTooltip]="t('actions.stop')" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
                 </div>
               </th>
             </tr>

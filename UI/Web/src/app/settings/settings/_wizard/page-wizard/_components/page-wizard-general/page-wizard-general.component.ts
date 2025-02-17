@@ -8,7 +8,8 @@ import {TitleCasePipe} from "@angular/common";
 import {Fieldset} from "primeng/fieldset";
 import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
-import {MessageService} from "../../../../../../_services/message.service";
+import {ToastService} from "../../../../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-page-wizard-general',
@@ -20,7 +21,8 @@ import {MessageService} from "../../../../../../_services/message.service";
     TitleCasePipe,
     Fieldset,
     IconField,
-    InputIcon
+    InputIcon,
+    TranslocoDirective
   ],
   templateUrl: './page-wizard-general.component.html',
   styleUrl: './page-wizard-general.component.css'
@@ -32,17 +34,17 @@ export class PageWizardGeneralComponent {
   protected readonly providerValues = providerValues;
   protected readonly providerNames = providerNames;
 
-  constructor(private msgService: MessageService,) {
+  constructor(private toastService: ToastService,) {
   }
 
   nextCallback() {
     if (this.page.title === '') {
-      this.msgService.error("You most provide a title")
+      this.toastService.errorLoco("settings.pages.toasts.name-required");
       return;
     }
 
     if (this.page.providers.length == 0) {
-      this.msgService.error("You most provide at least one provider")
+      this.toastService.errorLoco("settings.pages.toasts.provider-required");
       return;
     }
 

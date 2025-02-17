@@ -5,10 +5,11 @@ import {ListContentData} from "../../../_models/messages";
 import {TreeNode} from "primeng/api";
 import {Tree} from "primeng/tree";
 import {Button} from "primeng/button";
-import {MessageService} from "../../../_services/message.service";
+import {ToastService} from "../../../_services/toast.service";
 import {Dialog} from "primeng/dialog";
 import {Skeleton} from "primeng/skeleton";
 import {NgForOf} from "@angular/common";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-content-picker-dialog',
@@ -17,7 +18,8 @@ import {NgForOf} from "@angular/common";
     Button,
     Dialog,
     Skeleton,
-    NgForOf
+    NgForOf,
+    TranslocoDirective
   ],
   templateUrl: './content-picker-dialog.component.html',
   styleUrl: './content-picker-dialog.component.css'
@@ -35,7 +37,7 @@ export class ContentPickerDialogComponent {
 
   constructor(
     private contentService: ContentService,
-    private msgService: MessageService,
+    private toastService: ToastService,
   ) {
   }
 
@@ -68,16 +70,19 @@ export class ContentPickerDialogComponent {
     const ids = this.getAllSubContentIds(this.selection);
 
     if (ids.length == 0) {
-      this.msgService.warning("Not saving", "Remove the content if you wish nothing to be downloaded")
+      this.toastService.warningLoco("dashboard.content-picker.toasts.no-changes");
       return;
     }
 
     this.contentService.setFilter(this.info.provider, this.info.id, ids).subscribe({
       next: () => {
-        this.msgService.success("Succes", `Set filter to ${ids.length} items`);
+        this.toastService.successLoco("dashboard.content-picker.toasts.success", {}, {
+          amount: ids.length,
+          title: this.info.name,
+        })
       },
       error: (err) => {
-        this.msgService.error("Error", `Failed:\n ${err.error.message}`);
+        this.toastService.genericError(err.error.message);
       }
     }).add(() => (
       this.close()

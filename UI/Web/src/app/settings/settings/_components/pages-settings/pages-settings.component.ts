@@ -10,7 +10,8 @@ import {AccountService} from "../../../../_services/account.service";
 import {Button} from "primeng/button";
 import {TableModule} from "primeng/table";
 import {Tooltip} from "primeng/tooltip";
-import {MessageService} from "../../../../_services/message.service";
+import {ToastService} from "../../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-pages-settings',
@@ -20,6 +21,7 @@ import {MessageService} from "../../../../_services/message.service";
     Button,
     TableModule,
     Tooltip,
+    TranslocoDirective,
   ],
   templateUrl: './pages-settings.component.html',
   styleUrl: './pages-settings.component.css',
@@ -33,7 +35,7 @@ export class PagesSettingsComponent {
   protected readonly hasPermission = hasPermission;
   protected readonly Perm = Perm;
 
-  constructor(private msgService: MessageService,
+  constructor(private toastService: ToastService,
               private pageService: PageService,
               private dialogService: DialogService,
               private accountService: AccountService,
@@ -50,17 +52,17 @@ export class PagesSettingsComponent {
   }
 
   async remove(page: Page) {
-    if (!await this.dialogService.openDialog(`Are you sure you want to remove page > ${page.title}?`)) {
+    if (!await this.dialogService.openDialog("settings.pages.confirm-delete", {title: page.title})) {
       return;
     }
 
     this.pageService.removePage(page.ID).subscribe({
       next: () => {
-        this.msgService.success('Success', `${page.title} removed`);
+        this.toastService.successLoco("settings.pages.toasts.delete.success", {}, {title: page.title});
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.msgService.error('Error', err.error.message);
+        this.toastService.genericError(err.error.message);
       }
     });
   }
@@ -94,11 +96,12 @@ export class PagesSettingsComponent {
   swap(page1: Page, page2: Page) {
     this.pageService.swapPages(page1.ID, page2.ID).subscribe({
       next: () => {
-        this.msgService.success('Success', `Swapped ${page1.title} and ${page2.title}`);
+        this.toastService.successLoco("settings.pages.toasts.swapped.success", {},
+          {page1: page1.title, page2: page2.title});
         this.pageService.refreshPages();
       },
       error: (err) => {
-        this.msgService.error('Error', err.error.messsage);
+        this.toastService.genericError(err.error.message);
       }
     });
   }

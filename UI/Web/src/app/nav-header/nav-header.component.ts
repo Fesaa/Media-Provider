@@ -11,13 +11,16 @@ import {Menubar} from "primeng/menubar";
 import {NotificationService} from "../_services/notification.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
 import {BadgeDirective} from "primeng/badge";
+import {TranslocoService, LoadedEvent, TranslocoDirective} from "@jsverse/transloco";
+import {User} from "../_models/user";
 
 @Component({
   selector: 'app-nav-header',
   imports: [
     AsyncPipe,
     Menubar,
-    BadgeDirective
+    BadgeDirective,
+    TranslocoDirective
   ],
   templateUrl: './nav-header.component.html',
   styleUrl: './nav-header.component.css',
@@ -42,28 +45,8 @@ export class NavHeaderComponent implements OnInit {
               protected navService: NavService,
               private notificationService: NotificationService,
               private signalR: SignalRService,
+              private transLoco: TranslocoService,
   ) {
-
-    this.pageService.pages$.subscribe(pages => {
-      this.pages = pages;
-
-      this.pageItems = this.pages.map(page => {
-        return {
-          label: page.title,
-          routerLink: 'page',
-          queryParams: {index: page.ID},
-          icon: page.icon === '' ? undefined : 'pi ' + page.icon,
-        }
-      })
-      this.pageItems = [{
-        label: 'Home',
-        routerLink: 'home',
-        icon: 'pi pi-home',
-      }, ...this.pageItems]
-
-
-      this.cdRef.detectChanges();
-    });
   }
 
   ngOnInit(): void {
@@ -81,40 +64,14 @@ export class NavHeaderComponent implements OnInit {
         return;
       }
 
-      this.accountItems = [
-        {
-          label: user.name,
-          icon: "pi pi-user",
-          items: [
-            {
-              label: "Subscriptions",
-              routerLink: "subscriptions",
-              icon: "pi pi-wave-pulse"
-            },
-            {
-              label: "Notifications",
-              routerLink: "notifications",
-              icon: "pi pi-inbox"
-            },
-            {
-              label: "Settings",
-              routerLink: "settings",
-              icon: "pi pi-cog",
-            },
-            {
-              label: "Log out",
-              command: () => {
-                this.accountService.logout()
-              },
-              icon: "pi pi-sign-out"
-            }
-          ]
+      this.transLoco.events$.subscribe(event => {
+        if (event.type !== "translationLoadSuccess") {
+          return;
         }
-      ];
 
-      if (window.innerWidth <= 768) {
-        this.accountItems = this.accountItems[0].items;
-      }
+        this.setPageItems()
+        this.setAccountItems(user)
+      })
     })
 
     this.notificationService.amount().subscribe(amount => {
@@ -130,6 +87,66 @@ export class NavHeaderComponent implements OnInit {
       }
     })
 
+  }
+
+  setPageItems() {
+    this.pageService.pages$.subscribe(pages => {
+      this.pages = pages;
+
+      this.pageItems = this.pages.map(page => {
+        return {
+          label: page.title,
+          routerLink: 'page',
+          queryParams: {index: page.ID},
+          icon: page.icon === '' ? undefined : 'pi ' + page.icon,
+        }
+      })
+      this.pageItems = [{
+        label: this.transLoco.translate("nav-bar.home"),
+        routerLink: 'home',
+        icon: 'pi pi-home',
+      }, ...this.pageItems]
+
+
+      this.cdRef.detectChanges();
+    });
+  }
+
+  setAccountItems(user: User) {
+    this.accountItems = [
+      {
+        label: user.name,
+        icon: "pi pi-user",
+        items: [
+          {
+            label: this.transLoco.translate("nav-bar.subscriptions"),
+            routerLink: "subscriptions",
+            icon: "pi pi-wave-pulse"
+          },
+          {
+            label: this.transLoco.translate("nav-bar.notifications"),
+            routerLink: "notifications",
+            icon: "pi pi-inbox"
+          },
+          {
+            label: this.transLoco.translate("nav-bar.settings"),
+            routerLink: "settings",
+            icon: "pi pi-cog",
+          },
+          {
+            label: this.transLoco.translate("nav-bar.sign-out"),
+            command: () => {
+              this.accountService.logout()
+            },
+            icon: "pi pi-sign-out"
+          }
+        ]
+      }
+    ];
+
+    if (window.innerWidth <= 768) {
+      this.accountItems = this.accountItems[0].items;
+    }
   }
 
   severity(): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {

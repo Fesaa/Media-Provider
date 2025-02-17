@@ -7,14 +7,18 @@ import {Clipboard} from "@angular/cdk/clipboard";
 import {FormsModule} from "@angular/forms";
 import {Dialog} from "primeng/dialog";
 import {Button} from "primeng/button";
-import {MessageService} from "../../../_services/message.service";
+import {ToastService} from "../../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
+import {TitleCasePipe} from "@angular/common";
 
 @Component({
   selector: 'app-directory-selector',
   imports: [
     FormsModule,
     Dialog,
-    Button
+    Button,
+    TranslocoDirective,
+    TitleCasePipe
   ],
   templateUrl: './directory-selector.component.html',
   styleUrl: './directory-selector.component.css'
@@ -44,7 +48,7 @@ export class DirectorySelectorComponent {
   private result = new ReplaySubject<string | undefined>(1)
 
   constructor(private ioService: IoService,
-              private msgService: MessageService,
+              private toastService: ToastService,
               private clipboard: Clipboard,
   ) {
   }
@@ -101,13 +105,12 @@ export class DirectorySelectorComponent {
   createNew() {
     this.ioService.create(this.routeStack.items.join('/'), this.newDirName).subscribe({
       next: () => {
-        this.msgService.success('Success', `Directory ${this.newDirName} created successfully`);
+        this.toastService.successLoco("directory-selector.toasts.create.success", {}, {name: this.newDirName})
         this.newDirName = '';
         this.loadChildren(this.routeStack.items.join('/'));
       },
       error: (err) => {
-        this.msgService.error('Error', `Failed to create directory ${this.newDirName}\n${err.error.message}`);
-        console.error(err);
+        this.toastService.errorLoco("directory-selector.toasts.create.error", {}, {msg: err.error.message})
       }
     });
   }
@@ -154,7 +157,7 @@ export class DirectorySelectorComponent {
       },
       error: (err) => {
         this.routeStack.pop();
-        this.msgService.error("Failed to load children", err.error.message)
+        this.toastService.genericError(err.error.message);
       }
     })
   }

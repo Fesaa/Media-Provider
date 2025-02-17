@@ -14,7 +14,7 @@ import {DialogService} from "../_services/dialog.service";
 import {fadeOut} from "../_animations/fade-out";
 import {SubscriptionService} from "../_services/subscription.service";
 import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
-import {MessageService} from "../_services/message.service";
+import {ToastService} from "../_services/toast.service";
 import {IconField} from "primeng/iconfield";
 import {InputText} from "primeng/inputtext";
 import {InputIcon} from "primeng/inputicon";
@@ -22,6 +22,7 @@ import {Select} from "primeng/select";
 import {MultiSelect} from "primeng/multiselect";
 import {FloatLabel} from "primeng/floatlabel";
 import {ContentService} from "../_services/content.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-page',
@@ -35,7 +36,8 @@ import {ContentService} from "../_services/content.service";
     Select,
     FormsModule,
     MultiSelect,
-    FloatLabel
+    FloatLabel,
+    TranslocoDirective
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.css',
@@ -62,7 +64,7 @@ export class PageComponent implements OnInit {
               private pageService: PageService,
               private contentService: ContentService,
               private cdRef: ChangeDetectorRef,
-              private msgService: MessageService,
+              private toastService: ToastService,
               private dialogService: DialogService,
               private subscriptionService: SubscriptionService,
               private providerNamePipe: ProviderNamePipe,
@@ -136,16 +138,16 @@ export class PageComponent implements OnInit {
     this.contentService.search(this.searchRequest).subscribe({
       next: info => {
         if (!info || info.length == 0) {
-          this.msgService.error("No results found")
+          this.toastService.errorLoco("page.toasts.no-results")
         } else {
-          this.msgService.success("Search completed", `Found ${info.length} items`)
+          this.toastService.successLoco("page.toasts.search-success", {}, {amount: info.length});
         }
         this.searchResult = info || [];
         this.currentPage = 1;
         this.showSearchForm = false;
       },
       error: error => {
-        this.msgService.error("Search failed", error.error.message);
+        this.toastService.genericError(error.error.message);
       }
     }).add(() => this.loading = false)
   }
@@ -197,7 +199,8 @@ export class PageComponent implements OnInit {
           this.metadata.set(provider, metadata);
         },
         error: error => {
-          this.msgService.error(`Failed to load download metadata for: ${this.providerNamePipe.transform(provider)}`, error.error.message)
+          this.toastService.errorLoco("page.toasts.metadata-failed",
+            {provider: this.providerNamePipe.transform(provider)}, {msg: error.error.message});
         }
       })
     }
