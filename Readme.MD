@@ -1,5 +1,7 @@
 # Media-Provider
 
+[![Validate - Tests](https://github.com/Fesaa/Media-Provider/actions/workflows/tests.yml/badge.svg)](https://github.com/Fesaa/Media-Provider/actions/workflows/tests.yml) [![Validate - Linter](https://github.com/Fesaa/Media-Provider/actions/workflows/linting.yml/badge.svg)](https://github.com/Fesaa/Media-Provider/actions/workflows/linting.yml)
+
 DOCS: https://fesaa.github.io/Media-Provider/
 
 A web application for downloading content. Written in Go, and Angular. With a simple to navigate interface.
