@@ -24,6 +24,7 @@ type pageRoutes struct {
 	Val            services.ValidationService
 	PageService    services.PageService
 	ContentService services.ContentService
+	Transloco      services.TranslocoService
 }
 
 func RegisterPageRoutes(pr pageRoutes) {
@@ -136,14 +137,14 @@ func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
 	if err := pr.Val.ValidateCtx(ctx, &m); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse swap page")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+			"error": err.Error(),
 		})
 	}
 
 	if err := pr.PageService.SwapPages(m.Id1, m.Id2); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to swap page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to swap page",
+			"error": err.Error(),
 		})
 	}
 
@@ -155,7 +156,7 @@ func (pr *pageRoutes) LoadDefault(ctx *fiber.Ctx) error {
 	if err := pr.PageService.LoadDefaultPages(); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to load default pages")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to load default pages",
+			"error": err.Error(),
 		})
 	}
 
@@ -166,7 +167,7 @@ func (pr *pageRoutes) DownloadMetadata(ctx *fiber.Ctx) error {
 	id := ctx.QueryInt("provider", -1)
 	if id == -1 {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "No provider specified",
+			"message": pr.Transloco.GetTranslation("no-provider"),
 		})
 	}
 

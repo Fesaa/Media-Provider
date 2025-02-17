@@ -20,6 +20,7 @@ type notificationRoutes struct {
 	Log    zerolog.Logger
 
 	NotificationService services.NotificationService
+	Transloco           services.TranslocoService
 }
 
 func RegisterNotificationRoutes(nr notificationRoutes) {
@@ -44,7 +45,7 @@ func (nr *notificationRoutes) All(ctx *fiber.Ctx) error {
 		if err != nil {
 			nr.Log.Error().Err(err).Str("after", timeS).Msg("failed to parse passed time")
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "Invalid time format: " + err.Error(),
+				"message": nr.Transloco.GetTranslation("invalid-time-format", err),
 			})
 		}
 

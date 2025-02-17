@@ -17,11 +17,12 @@ import (
 type ioRoutes struct {
 	dig.In
 
-	Router fiber.Router
-	Cfg    *config.Config
-	Auth   auth.Provider `name:"jwt-auth"`
-	Log    zerolog.Logger
-	Val    services.ValidationService
+	Router    fiber.Router
+	Cfg       *config.Config
+	Auth      auth.Provider `name:"jwt-auth"`
+	Log       zerolog.Logger
+	Val       services.ValidationService
+	Transloco services.TranslocoService
 }
 
 func RegisterIoRoutes(ior ioRoutes) {
@@ -74,7 +75,7 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 
 	if strings.Contains(req.NewDir, "..") || strings.Contains(req.BaseDir, "..") {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid path",
+			"message": ior.Transloco.GetTranslation("invalid-path"),
 		})
 	}
 

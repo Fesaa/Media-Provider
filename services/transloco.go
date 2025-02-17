@@ -15,8 +15,8 @@ import (
 var (
 	DefaultLanguage = config.OrDefault(os.Getenv("LANGUAGE"), "en")
 
-	ErrLanguageNotFound = errors.New("error-lang-not-found")
-	ErrKeyNotFound      = errors.New("error-key-not-found")
+	ErrLanguageNotFound = errors.New("language not found")
+	ErrKeyNotFound      = errors.New("key not found")
 )
 
 type TranslocoService interface {

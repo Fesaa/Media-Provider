@@ -10,6 +10,7 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"os"
 	"path"
 	"slices"
@@ -23,28 +24,35 @@ type IDAble interface {
 	ID() string
 }
 
-func NewDownloadableFromBlock[T IDAble](
-	req payload.DownloadRequest,
-	block DownloadInfoProvider[T],
-	client Client,
-	log zerolog.Logger,
-	signalR services.SignalRService,
-	notification services.NotificationService,
-) *DownloadBase[T] {
-	return &DownloadBase[T]{
-		infoProvider: block,
-		Client:       client,
-		Log:          log.With().Str("id", req.Id).Logger(),
-		id:           req.Id,
-		baseDir:      req.BaseDir,
-		TempTitle:    req.TempTitle,
-		maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 4),
-		Req:          req,
-		LastTime:     time.Now(),
-		contentState: payload.ContentStateQueued,
-		SignalR:      signalR,
-		Notifier:     notification,
-	}
+func NewDownloadableFromBlock[T IDAble](scope *dig.Scope, handler string, block DownloadInfoProvider[T]) *DownloadBase[T] {
+	var base = &DownloadBase[T]{}
+
+	utils.Must(scope.Invoke(func(
+		req payload.DownloadRequest,
+		client Client,
+		log zerolog.Logger,
+		signalR services.SignalRService,
+		notification services.NotificationService,
+		transLoco services.TranslocoService,
+	) {
+		base = &DownloadBase[T]{
+			infoProvider: block,
+			Client:       client,
+			Log:          log.With().Str("handler", handler).Str("id", req.Id).Logger(),
+			id:           req.Id,
+			baseDir:      req.BaseDir,
+			TempTitle:    req.TempTitle,
+			maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 4),
+			Req:          req,
+			LastTime:     time.Now(),
+			contentState: payload.ContentStateQueued,
+			SignalR:      signalR,
+			Notifier:     notification,
+			TransLoco:    transLoco,
+		}
+	}))
+
+	return base
 }
 
 type Content struct {
@@ -60,6 +68,7 @@ type DownloadBase[T IDAble] struct {
 	contentState payload.ContentState
 	SignalR      services.SignalRService
 	Notifier     services.NotificationService
+	TransLoco    services.TranslocoService
 
 	id        string
 	baseDir   string

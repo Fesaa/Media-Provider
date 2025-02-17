@@ -37,7 +37,7 @@ export const appConfig: ApplicationConfig = {
     MessageService,
     provideTransloco({
       config: {
-        availableLangs: ['en', 'es'],
+        availableLangs: ['en'],
         defaultLang: 'en',
         missingHandler: {
           useFallbackTranslation: true,

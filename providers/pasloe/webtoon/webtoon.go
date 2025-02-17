@@ -28,9 +28,8 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 	var wt *webtoon
 
 	utils.Must(scope.Invoke(func(
-		req payload.DownloadRequest, client api.Client, httpClient *http.Client,
-		log zerolog.Logger, repository Repository, markdownService services.MarkdownService,
-		signalR services.SignalRService, notification services.NotificationService,
+		req payload.DownloadRequest, httpClient *http.Client,
+		repository Repository, markdownService services.MarkdownService,
 	) {
 		wt = &webtoon{
 			id:              req.Id,
@@ -39,9 +38,7 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 			markdownService: markdownService,
 		}
 
-		d := api.NewDownloadableFromBlock[Chapter](req, wt, client,
-			log.With().Str("handler", "webtoon").Logger(), signalR, notification)
-		wt.DownloadBase = d
+		wt.DownloadBase = api.NewDownloadableFromBlock[Chapter](scope, "webtoon", wt)
 	}))
 	return wt
 }

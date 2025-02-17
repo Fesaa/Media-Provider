@@ -25,6 +25,7 @@ type contentRoutes struct {
 
 	Val            services.ValidationService
 	ContentService services.ContentService
+	Transloco      services.TranslocoService
 }
 
 func RegisterContentRoutes(cr contentRoutes) {
@@ -107,7 +108,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 	if req.BaseDir == "" {
 		cr.Log.Warn().Msg("trying to download Torrent to empty baseDir, returning error.")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "base dir cannot be null",
+			"message": cr.Transloco.GetTranslation("base-dir-not-empty"),
 		})
 	}
 

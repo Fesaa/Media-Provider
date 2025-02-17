@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -21,6 +22,7 @@ type proxyRoutes struct {
 	Cache      fiber.Handler `name:"cache"`
 	Log        zerolog.Logger
 	HttpClient *http.Client
+	Transloco  services.TranslocoService
 }
 
 func RegisterProxyRoutes(pr proxyRoutes) {
@@ -64,7 +66,9 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 		pr.Log.Error().Err(err).
 			Str("url", url).
 			Msg("Failed to create request")
-		return fiber.ErrInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": pr.Transloco.GetTranslation("request-failed"),
+		})
 	}
 
 	req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
@@ -72,7 +76,9 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 	resp, err := pr.HttpClient.Do(req)
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to send request")
-		return fiber.ErrInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": pr.Transloco.GetTranslation("request-failed"),
+		})
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -84,7 +90,9 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to download cover image from webtoon")
-		return fiber.ErrInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	c.Set("Content-Type", pr.encoding(fileName))
@@ -102,7 +110,9 @@ func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
 	resp, err := pr.HttpClient.Get(pr.mangadexUrl(id, fileName))
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to download cover image from mangadex")
-		return fiber.ErrInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": pr.Transloco.GetTranslation("request-failed"),
+		})
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -114,7 +124,9 @@ func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to download cover image from mangadex")
-		return fiber.ErrInternalServerError
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
 	}
 
 	c.Set("Content-Type", pr.encoding(fileName))
