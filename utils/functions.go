@@ -151,5 +151,10 @@ func Shorten(s string, length int) string {
 	if len(s) < length {
 		return s
 	}
+
+	if len(s) < 4 {
+		return s[:length]
+	}
+
 	return s[:length-3] + "..."
 }

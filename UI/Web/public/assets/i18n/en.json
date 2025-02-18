@@ -198,7 +198,7 @@
       "toasts": {
         "success": {
           "title": "Success",
-          "summary": "Added {{name} as a subscription"
+          "summary": "Added {{name}} as a subscription"
         }
       }
     },

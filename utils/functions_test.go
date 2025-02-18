@@ -2,6 +2,8 @@ package utils
 
 import (
 	"errors"
+	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -256,4 +258,171 @@ func TestGenerateSecretNegative(t *testing.T) {
 		}
 	}()
 	_, _ = GenerateSecret(-1)
+}
+
+func TestSortFloats(t *testing.T) {
+	type args struct {
+		a string
+		b string
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "Equal",
+			args: args{
+				a: "1",
+				b: "1",
+			},
+			want: 0,
+		},
+		{
+			name: "Less",
+			args: args{
+				a: "1",
+				b: "2",
+			},
+			want: 1,
+		},
+		{
+			name: "More",
+			args: args{
+				a: "2",
+				b: "1",
+			},
+			want: -1,
+		},
+		{
+			name: "Empty a",
+			args: args{
+				a: "",
+				b: "1",
+			},
+			want: 1,
+		},
+		{
+			name: "Empty b",
+			args: args{
+				a: "1",
+				b: "",
+			},
+			want: -1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SortFloats(tt.args.a, tt.args.b); got != tt.want {
+				t.Errorf("SortFloats() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestShorten(t *testing.T) {
+	type args struct {
+		s      string
+		length int
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "no-op",
+			args: args{
+				s:      "foo",
+				length: 10,
+			},
+			want: "foo",
+		},
+		{
+			name: "shorten",
+			args: args{
+				s:      "foo",
+				length: 2,
+			},
+			want: "fo",
+		},
+		{
+			name: "equal",
+			args: args{
+				s:      "foo",
+				length: 3,
+			},
+			want: "foo",
+		},
+		{
+			name: "long",
+			args: args{
+				s:      "thisisaverylongsentence",
+				length: 10,
+			},
+			want: "thisisa...",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Shorten(tt.args.s, tt.args.length); got != tt.want {
+				t.Errorf("Shorten() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTryCatch(t *testing.T) {
+	type args[T any, U any] struct {
+		producer      func() (T, error)
+		mapper        func(T) U
+		fallback      U
+		errorHandlers []func(error)
+	}
+	type testCase[T any, U any] struct {
+		name string
+		args args[T, U]
+		want U
+	}
+	tests := []testCase[string, int]{
+		{
+			name: "success",
+			args: args[string, int]{
+				producer: func() (string, error) {
+					return "foo", nil
+				},
+				mapper: func(s string) int {
+					return len(s)
+				},
+				fallback:      2,
+				errorHandlers: nil,
+			},
+			want: 3,
+		},
+		{
+			name: "error",
+			args: args[string, int]{
+				producer: func() (string, error) {
+					return "foo", fmt.Errorf("foo")
+				},
+				mapper: func(s string) int {
+					return len(s)
+				},
+				fallback: 2,
+				errorHandlers: []func(error){
+					func(e error) {
+
+					},
+				},
+			},
+			want: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := TryCatch(tt.args.producer, tt.args.mapper, tt.args.fallback, tt.args.errorHandlers...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TryCatch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

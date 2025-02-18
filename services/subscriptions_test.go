@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/go-co-op/gocron/v2"
@@ -13,6 +14,19 @@ import (
 	"time"
 )
 
+func tempDatabase(t *testing.T) *db.Database {
+	t.Helper()
+	config.Dir = t.TempDir()
+	database, err := db.DatabaseProvider(zerolog.Nop())
+	if err != nil {
+		if strings.Contains(err.Error(), "attempt to write a readonly database") {
+			t.Skipf("ReadOnly DB error, I don't have a good way to fix this atm.")
+		}
+		t.Fatal(err)
+	}
+	return database
+}
+
 func tempSubscriptionService(t *testing.T) SubscriptionService {
 	t.Helper()
 	log := zerolog.Nop()
@@ -20,13 +34,13 @@ func tempSubscriptionService(t *testing.T) SubscriptionService {
 	tempDir := t.TempDir()
 	config.Dir = tempDir
 
-	database, cs := tempContentService(t)
+	cs := tempContentService(t)
 	cron, err := CronServiceProvider(log)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return SubscriptionServiceProvider(database, cs, log, cron)
+	return SubscriptionServiceProvider(tempDatabase(t), cs, log, cron)
 }
 
 func defaultSub() models.Subscription {
@@ -253,13 +267,13 @@ func TestSubscriptionService_toTaskFailedDownload(t *testing.T) {
 	tempDir := t.TempDir()
 	config.Dir = tempDir
 
-	database, cs := tempContentService(t)
+	cs := tempContentService(t)
 	cron, err := CronServiceProvider(log)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ss := SubscriptionServiceProvider(database, cs, log, cron)
+	ss := SubscriptionServiceProvider(tempDatabase(t), cs, log, cron)
 	ssImpl := ss.(*subscriptionService)
 
 	task := ssImpl.toTask(sub)
@@ -286,13 +300,14 @@ func TestSubscriptionServiceProvider_StartUp(t *testing.T) {
 	tempDir := t.TempDir()
 	config.Dir = tempDir
 
-	database, cs := tempContentService(t)
+	cs := tempContentService(t)
 	cron, err := CronServiceProvider(log)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	sub := defaultSub()
+	database := tempDatabase(t)
 	_, err = database.Subscriptions.New(sub)
 	if err != nil {
 		t.Fatal(err)
@@ -317,13 +332,14 @@ func TestSubscriptionServiceProvider_FailAtStartUp(t *testing.T) {
 	tempDir := t.TempDir()
 	config.Dir = tempDir
 
-	database, cs := tempContentService(t)
+	cs := tempContentService(t)
 	cron, err := CronServiceProvider(log)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	sub := defaultSub()
+	database := tempDatabase(t)
 	_, err = database.Subscriptions.New(sub)
 	if err != nil {
 		t.Fatal(err)

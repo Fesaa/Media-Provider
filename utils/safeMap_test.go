@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"slices"
 	"sync"
 	"testing"
 )
@@ -139,5 +140,219 @@ func TestSafeMapConcurrency(t *testing.T) {
 	wg.Wait()
 	if m.Len() != 0 {
 		t.Errorf("Expected length 0 after deletions, got %d", m.Len())
+	}
+}
+
+func Test_safeMap_Keys(t *testing.T) {
+	m := NewSafeMap[int, string]()
+
+	got := len(m.Keys())
+	want := 0
+	if got != want {
+		t.Errorf("Expected length 0, got %d", got)
+	}
+
+	m.Set(1, "one")
+	got = len(m.Keys())
+	want = 1
+	if got != want {
+		t.Errorf("Expected length 1, got %d", got)
+	}
+
+	m.Set(2, "two")
+
+	got2 := m.Keys()
+	want2 := []int{1, 2}
+	for _, key := range want2 {
+		if !slices.Contains(got2, key) {
+			t.Errorf("Expected key %d to exist", key)
+		}
+	}
+}
+
+func Test_safeMap_Values(t *testing.T) {
+	m := NewSafeMap[int, string]()
+
+	got := len(m.Values())
+	want := 0
+	if got != want {
+		t.Errorf("Expected length 0, got %d", got)
+	}
+
+	m.Set(1, "one")
+	got = len(m.Values())
+	want = 1
+	if got != want {
+		t.Errorf("Expected length 1, got %d", got)
+	}
+
+	m.Set(2, "two")
+	got2 := m.Values()
+	want2 := []string{"two", "one"}
+	for _, value := range want2 {
+		if !slices.Contains(got2, value) {
+			t.Errorf("Expected key %s to exist", value)
+		}
+	}
+}
+
+func Test_safeMap_Any(t *testing.T) {
+	type args[K comparable, V any] struct {
+		f func(k K, v V) bool
+	}
+	type testCase[K comparable, V any] struct {
+		name string
+		s    SafeMap[K, V]
+		args args[K, V]
+		want bool
+	}
+
+	s := NewSafeMap[int, string]()
+	s.Set(1, "one")
+	s.Set(2, "two")
+	s.Set(3, "three")
+
+	tests := []testCase[int, string]{
+		{
+			name: "no match",
+			s:    s,
+			args: args[int, string]{
+				f: func(k int, v string) bool {
+					return k == 2 && v == "one"
+				},
+			},
+			want: false,
+		},
+		{
+			name: "match",
+			s:    s,
+			args: args[int, string]{
+				f: func(k int, v string) bool {
+					return k == 2 && v == "two"
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.Any(tt.args.f); got != tt.want {
+				t.Errorf("Any() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_safeMap_Count(t *testing.T) {
+	type args[K comparable, V any] struct {
+		f func(K, V) bool
+	}
+	type testCase[K comparable, V any] struct {
+		name string
+		s    SafeMap[K, V]
+		args args[K, V]
+		want int
+	}
+
+	s := NewSafeMap[int, string]()
+	s.Set(1, "one")
+	s.Set(2, "two")
+	s.Set(3, "three")
+
+	tests := []testCase[int, string]{
+		{
+			name: "no match",
+			s:    s,
+			args: args[int, string]{
+				f: func(k int, v string) bool {
+					return k == 2 && v == "one"
+				},
+			},
+			want: 0,
+		},
+		{
+			name: "match",
+			s:    s,
+			args: args[int, string]{
+				f: func(k int, v string) bool {
+					return k > 1
+				},
+			},
+			want: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.s.Count(tt.args.f); got != tt.want {
+				t.Errorf("Count() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+//nolint:funlen
+func Test_safeMap_Find(t *testing.T) {
+	type args[K comparable, V any] struct {
+		f func(k K, v V) bool
+	}
+	type testCase[K comparable, V any] struct {
+		name  string
+		s     SafeMap[K, V]
+		args  args[K, V]
+		want  *V
+		want1 bool
+	}
+
+	s := NewSafeMap[int, string]()
+	one := "one"
+	s.Set(1, one)
+	s.Set(2, "two")
+	s.Set(3, "three")
+
+	tests := []testCase[int, string]{
+		{
+			name: "no match",
+			s:    s,
+			args: args[int, string]{
+				f: func(k int, v string) bool {
+					return k == 2 && v == "one"
+				},
+			},
+			want:  nil,
+			want1: false,
+		},
+		{
+			name: "match",
+			s:    s,
+			args: args[int, string]{
+				f: func(k int, v string) bool {
+					return k == 1
+				},
+			},
+			want:  &one,
+			want1: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := tt.s.Find(tt.args.f)
+			if got != nil && tt.want != nil {
+				if *got != *tt.want {
+					t.Errorf("Find() got = %v, want %v", got, tt.want)
+				}
+			}
+
+			if got != nil && tt.want == nil {
+				t.Errorf("Find() got = %v, want %v", got, tt.want)
+			}
+
+			if got == nil && tt.want != nil {
+				t.Errorf("Find() got = %v, want %v", got, tt.want)
+			}
+
+			if got1 != tt.want1 {
+				t.Errorf("Find() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
 	}
 }
