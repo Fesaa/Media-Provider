@@ -50,8 +50,18 @@ func (b *Builder) Search(s SearchOptions) ([]SearchData, error) {
 	return b.repository.Search(context.TODO(), s)
 }
 
+const (
+	IncludeCover string = "include_cover"
+)
+
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
-	return payload.DownloadMetadata{}
+	return payload.DownloadMetadata{
+		Definitions: []payload.DownloadMetadataDefinition{{
+			Key:           IncludeCover,
+			FormType:      payload.SWITCH,
+			DefaultOption: "true",
+		}},
+	}
 }
 
 func (b *Builder) Client() services.Client {

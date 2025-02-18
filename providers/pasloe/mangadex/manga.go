@@ -367,16 +367,18 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 		return err
 	}
 
-	coverURL, ok := m.coverFactory(chapter.Attributes.Volume)
-	if !ok {
-		l.Debug().Msg("unable to find cover")
-	} else {
-		l.Trace().Str("url", coverURL).Msg("downloading cover image")
-		// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
-		// first by most readers, and in particular, kavita.
-		filePath := path.Join(metaPath, "!0000 cover.jpg")
-		if err = m.downloadAndWrite(coverURL, filePath); err != nil {
-			return err
+	if m.Req.GetBool(IncludeCover, true) {
+		coverURL, ok := m.coverFactory(chapter.Attributes.Volume)
+		if !ok {
+			l.Debug().Msg("unable to find cover")
+		} else {
+			l.Trace().Str("url", coverURL).Msg("downloading cover image")
+			// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
+			// first by most readers, and in particular, kavita.
+			filePath := path.Join(metaPath, "!0000 cover.jpg")
+			if err = m.downloadAndWrite(coverURL, filePath); err != nil {
+				return err
+			}
 		}
 	}
 

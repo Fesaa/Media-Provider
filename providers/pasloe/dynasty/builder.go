@@ -68,6 +68,11 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Key:      IncludeNotMatchedTagsKey,
 				FormType: payload.SWITCH,
 			},
+			{
+				Key:           IncludeCover,
+				FormType:      payload.SWITCH,
+				DefaultOption: "true",
+			},
 		},
 	}
 }
