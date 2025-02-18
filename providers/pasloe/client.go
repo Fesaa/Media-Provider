@@ -282,7 +282,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 func (c *client) cleanup(content api.Downloadable) {
 	l := c.log.With().Str("contentId", content.Id()).Logger()
 	for _, contentPath := range content.GetNewContent() {
-		l.Debug().Str("path", contentPath).Msg("Zipping file")
+		l.Trace().Str("path", contentPath).Msg("Zipping file")
 		err := c.io.ZipToCbz(contentPath)
 		if err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while zipping dir")
