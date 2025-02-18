@@ -418,6 +418,7 @@ func (m *manga) coverBytes(chapter ChapterSearchData, coverURL string) ([]byte, 
 		return nil, false, err
 	}
 
+	replaced := false
 	if chapter.Attributes.Volume != "" {
 		chapters := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
 			return v.Attributes.Volume
@@ -433,6 +434,7 @@ func (m *manga) coverBytes(chapter ChapterSearchData, coverURL string) ([]byte, 
 				Str("newChapter", chapters[0].Attributes.Chapter).
 				Msg("overwriting chapter to check cover of")
 			chapter = chapters[0]
+			replaced = true
 		}
 	}
 
@@ -452,7 +454,13 @@ func (m *manga) coverBytes(chapter ChapterSearchData, coverURL string) ([]byte, 
 		return nil, false, err
 	}
 
-	return m.imageService.Better(coverBytes, candidateBytes)
+	better, replacedBytes, err := m.imageService.Better(coverBytes, candidateBytes)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// If the chapter was replaced, should still write the cover
+	return better, !replaced && replacedBytes, nil
 }
 
 //nolint:funlen
