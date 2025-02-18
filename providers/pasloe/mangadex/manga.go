@@ -418,6 +418,24 @@ func (m *manga) coverBytes(chapter ChapterSearchData, coverURL string) ([]byte, 
 		return nil, false, err
 	}
 
+	if chapter.Attributes.Volume != "" {
+		chapters := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
+			return v.Attributes.Volume
+		})[chapter.Attributes.Volume]
+
+		slices.SortFunc(chapters, func(a, b ChapterSearchData) int {
+			return (int)(a.Volume() - b.Volume())
+		})
+
+		if chapter.Id != chapters[0].Id {
+			m.Log.Trace().
+				Str("originalChapter", chapter.Attributes.Chapter).
+				Str("newChapter", chapters[0].Attributes.Chapter).
+				Msg("overwriting chapter to check cover of")
+			chapter = chapters[0]
+		}
+	}
+
 	res, err := m.repository.GetChapterImages(context.Background(), chapter.Id)
 	if err != nil {
 		return nil, false, err
