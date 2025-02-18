@@ -59,6 +59,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
+	must(scope.Provide(services.ImageServiceProvider))
 
 	return NewManga(scope).(*manga)
 }
@@ -501,5 +502,71 @@ func TestTagToGenre(t *testing.T) {
 	want = 3
 	if got != want {
 		t.Errorf("len(tags) = %d, want %d: %+v", got, want, tags)
+	}
+}
+
+func TestCoverReplace(t *testing.T) {
+	m := tempManga(t, payload.DownloadRequest{
+		Provider:  models.DYNASTY,
+		Id:        "a_story_about_buying_a_classmate_once_a_week_5000_yen_for_an_excuse_to_spend_time_together",
+		BaseDir:   "Manga",
+		TempTitle: "A Story About Buying a Classmate Once a Week",
+		DownloadMetadata: payload.DownloadRequestMetadata{
+			StartImmediately: true,
+		},
+		IsSubscription: false,
+	}, io.Discard)
+
+	select {
+	case <-m.LoadInfo(context.Background()):
+		break
+	case <-time.After(5 * time.Second):
+		t.Fatal("m.LoadInfo() timeout")
+	}
+
+	if err := m.tryReplaceCover(); err != nil {
+		t.Fatal(err)
+	}
+
+	originalCover, err := m.download(m.seriesInfo.CoverUrl, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(originalCover) == len(m.coverBytes) {
+		t.Error("Cover should have been replaced, but wasn't")
+	}
+}
+
+func TestCoverNoReplace(t *testing.T) {
+	m := tempManga(t, payload.DownloadRequest{
+		Provider:  models.DYNASTY,
+		Id:        "the_blue_star_on_that_day_ano_koro_no_aoi_hoshi",
+		BaseDir:   "Manga",
+		TempTitle: "The Blue Star on That Day",
+		DownloadMetadata: payload.DownloadRequestMetadata{
+			StartImmediately: true,
+		},
+		IsSubscription: false,
+	}, io.Discard)
+
+	select {
+	case <-m.LoadInfo(context.Background()):
+		break
+	case <-time.After(5 * time.Second):
+		t.Fatal("m.LoadInfo() timeout")
+	}
+
+	if err := m.tryReplaceCover(); err != nil {
+		t.Fatal(err)
+	}
+
+	originalCover, err := m.download(m.seriesInfo.CoverUrl, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(originalCover) != len(m.coverBytes) {
+		t.Error("Cover should not have been replaced, but was")
 	}
 }

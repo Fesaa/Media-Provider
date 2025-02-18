@@ -73,8 +73,8 @@ func (i *imageService) MeanSquareError(img1, img2 image.Image) float64 {
 
 	var sumDiff float64
 
-	for y := 0; y < img1.Bounds().Dy(); y++ {
-		for x := 0; x < img1.Bounds().Dx(); x++ {
+	for y := range img1.Bounds().Dy() {
+		for x := range img1.Bounds().Dx() {
 			r1, g1, b1, _ := img1.At(x, y).RGBA()
 			r2, g2, b2, _ := img2.At(x, y).RGBA()
 

@@ -84,6 +84,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
+	must(scope.Provide(services.ImageServiceProvider))
 
 	return NewManga(scope).(*manga)
 }
@@ -950,6 +951,54 @@ func TestTagsBlackList(t *testing.T) {
 	want = 1
 	if want != got {
 		t.Errorf("want %d tags, got %d: %+v", want, got, tags)
+	}
+
+}
+
+func TestReplaceCover(t *testing.T) {
+	m := tempManga(t, payload.DownloadRequest{
+		Provider:  models.MANGADEX,
+		Id:        "bdf0dbce-3795-4ce0-8f46-86aebd018a6c",
+		BaseDir:   "Manga",
+		TempTitle: "Foxes Always Lie",
+		DownloadMetadata: payload.DownloadRequestMetadata{
+			StartImmediately: false,
+		},
+		IsSubscription: false,
+	}, io.Discard)
+
+	select {
+	case <-m.LoadInfo(context.Background()):
+		break
+	case <-time.After(5 * time.Second):
+		t.Fatal("m.LoadInfo() timeout")
+	}
+
+	chapterSeven := utils.Find(m.chapters.Data, func(data ChapterSearchData) bool {
+		return data.Attributes.Chapter == "7"
+	})
+
+	if chapterSeven == nil {
+		t.Fatal("chapterSeven is nil")
+	}
+
+	originalCoverURL, ok := m.coverFactory(chapterSeven.Attributes.Volume)
+	if !ok {
+		t.Fatal("chapterSeven.Attributes.Volume cover not available")
+	}
+
+	originalCover, err := m.download(originalCoverURL, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	coverBytes, _, err := m.coverBytes(*chapterSeven, originalCoverURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(originalCover) == len(coverBytes) {
+		t.Fatal("Cover should have been replaced, but wasn't")
 	}
 
 }
