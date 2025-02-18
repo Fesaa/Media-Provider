@@ -12,7 +12,7 @@ import (
 type ImageService interface {
 	// Better check if candidateImg is similar to defaultImg with MSE. If the similarityThreshold (default 0.7)
 	// is reached, returns the highest resolution one. Otherwise defaultImg
-	Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, error)
+	Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error)
 	Similar(img1, img2 image.Image) float64
 	MeanSquareError(img1, img2 image.Image) float64
 }
@@ -27,32 +27,32 @@ func ImageServiceProvider(log zerolog.Logger) ImageService {
 	}
 }
 
-func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, error) {
+func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error) {
 	similarityThreshold := utils.OrDefault(similarityThresholds, 0.7)
 
 	img1, _, err := image.Decode(bytes.NewReader(defaultImg))
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	img2, _, err := image.Decode(bytes.NewReader(candidateImg))
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	similarity := i.Similar(img1, img2)
 
 	if similarity < similarityThreshold {
-		i.log.Trace().Float64("similarity", similarity).Msg("image similarity threshold not reached, returning default")
-		return defaultImg, nil
+		i.log.Debug().Float64("similarity", similarity).Msg("image similarity threshold not reached, returning default")
+		return defaultImg, false, nil
 	}
 
 	if i.imgResolution(img1) > i.imgResolution(img2) {
-		i.log.Trace().Msg("default image has a higher resolution, returning default")
-		return defaultImg, nil
+		i.log.Debug().Msg("default image has a higher resolution, returning default")
+		return defaultImg, false, nil
 	}
 
-	i.log.Trace().Float64("similarity", similarity).Msg("candidate image is similar enough, and has a better resolution, returning candidate")
-	return candidateImg, nil
+	i.log.Debug().Float64("similarity", similarity).Msg("candidate image is similar enough, and has a better resolution, returning candidate")
+	return candidateImg, true, nil
 }
 
 func (i *imageService) Similar(img1, img2 image.Image) float64 {

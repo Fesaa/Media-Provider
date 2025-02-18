@@ -399,36 +399,39 @@ func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
 	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
-
-	l.Trace().Str("url", coverURL).Msg("downloading cover image")
-	toWrite, err := m.coverBytes(chapter, coverURL)
+	toWrite, isFirstPage, err := m.coverBytes(chapter, coverURL)
 	if err != nil {
 		return err
+	}
+
+	if isFirstPage {
+		l.Debug().Msg("first page is the cover, not writing cover again")
+		return nil
 	}
 
 	return os.WriteFile(filePath, toWrite, 0644)
 }
 
-func (m *manga) coverBytes(chapter ChapterSearchData, coverURL string) ([]byte, error) {
+func (m *manga) coverBytes(chapter ChapterSearchData, coverURL string) ([]byte, bool, error) {
 	coverBytes, err := m.download(coverURL)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	res, err := m.repository.GetChapterImages(context.Background(), chapter.Id)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	images := res.FullImageUrls()
 
 	if len(images) == 0 {
-		return coverBytes, nil
+		return coverBytes, false, nil
 	}
 
 	candidateBytes, err := m.download(images[0])
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	return m.imageService.Better(coverBytes, candidateBytes)

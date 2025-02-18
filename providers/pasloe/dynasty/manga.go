@@ -266,7 +266,9 @@ func (m *manga) tryReplaceCover() error {
 		return err
 	}
 
-	m.coverBytes, err = m.imageService.Better(coverBytes, firstChapterCoverBytes)
+	// Dynasty doesn't have a concept for per chapter/volume covers. So we're using one cover at all times anyway
+	// Should set IncludeCover metadata to false if you want to use chapter covers and add your own later
+	m.coverBytes, _, err = m.imageService.Better(coverBytes, firstChapterCoverBytes)
 	if err != nil {
 		return err
 	}
