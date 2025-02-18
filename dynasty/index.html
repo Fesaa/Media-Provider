@@ -76,6 +76,20 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Dynasty</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#covers">Covers</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tags">Tags</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#config">Config</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#limitations">Limitations</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#might-work">Might work</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#doesnt-work">Doesn't work</a>
+    </li>
+        </ul>
+    </li>
     </ul>
                   </li>
               </ul>
@@ -103,8 +117,32 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="dynasty">Dynasty</h1>
-<p>Not finished yet, do not use</p>
+                <h1 id="dynasty-dynasty">Dynasty (<code>dynasty</code>)</h1>
+<p>Media-Provider supports downloading manga's from dynasty. Due to the more unregulated nature of the website,
+there are currently some limitations, and it is worth checking if the series you're trying to download will work. </p>
+<h2 id="covers">Covers</h2>
+<p>Dynasty doesn't do covers very well. There is only one, and volumes don't have them. So the same cover is used
+for all chapters. However, Media-Provider will check if the first page of the first chapter is that same cover,
+and use it instead if it has a better quality.</p>
+<p>If you wish to no have Media-Provider set covers you can disable the option per series, when downloading.</p>
+<h2 id="tags">Tags</h2>
+<p>Dynasty has a LOT of tags, and most of them are rather weird. By default, dynasty will not embed
+any tags into the chapters ComicInfo.xml; you can choose to map some <a href="./preferences">tags to a genre</a>; and
+mapping all other tags to the tag field when downloading a series. </p>
+<h2 id="config">Config</h2>
+<p>Dynasty has no additional configuration, and only checks the Query field at the moment.</p>
+<h2 id="limitations">Limitations</h2>
+<p>Dynasty doesn't have a nice API, so series are scrapped from the website; due to the unregulated nature
+it's hard to do this correctly for <em>all</em> series. The following limitations are currently known</p>
+<h3 id="might-work">Might work</h3>
+<ul>
+<li>One-shots</li>
+</ul>
+<h3 id="doesnt-work">Doesn't work</h3>
+<ul>
+<li>Extra chapters without a chapter number</li>
+<li>Some specials might overwrite each other</li>
+</ul>
               
             </div>
           </div><footer>

@@ -72,6 +72,8 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Mangadex</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#covers">Covers</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#download-metadata">Download metadata</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#config">Config</a>
@@ -137,6 +139,10 @@ same series at a later point in time; Media-Provider will remove the previously 
     - Spice and Wolf Ch. 5.cbz
 </code></pre>
 <p>Chapter 5 may be redownloaded into <code>Spice and Wolf Vol 3/Spice and Wolf Ch. 5.cbz</code> at later time.</p>
+<h3 id="covers">Covers</h3>
+<p>Media-Provider will add covers to the .cbz file (if you've enabled it while downloading). Before writing a cover
+for a chapter, it'll check if the first page in the chapter is the same image. And if it is, and has a better quality,
+will skip writing the cover.</p>
 <h2 id="download-metadata">Download metadata</h2>
 <p>The mangadex provider allows for a few options to be set alongside which manga to download. You may
 - Choose the language you're downloading in
