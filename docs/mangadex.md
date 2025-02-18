@@ -23,6 +23,12 @@ Example
 ```
 Chapter 5 may be redownloaded into `Spice and Wolf Vol 3/Spice and Wolf Ch. 5.cbz` at later time.
 
+### Covers
+
+Media-Provider will add covers to the .cbz file (if you've enabled it while downloading). Before writing a cover
+for a chapter, it'll check if the first page in the chapter is the same image. And if it is, and has a better quality,
+will skip writing the cover.
+
 ## Download metadata
 The mangadex provider allows for a few options to be set alongside which manga to download. You may
 - Choose the language you're downloading in
