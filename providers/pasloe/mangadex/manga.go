@@ -35,7 +35,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, httpClient *http.Client,
 		repository Repository, markdownService services.MarkdownService,
-		preferences models.Preferences,
+		preferences models.Preferences, imageService services.ImageService,
 	) {
 		m = &manga{
 			id:              req.Id,
@@ -44,6 +44,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			markdownService: markdownService,
 			volumeMetadata:  make([]string, 0),
 			preferences:     preferences,
+			imageService:    imageService,
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
@@ -61,6 +62,7 @@ type manga struct {
 	repository      Repository
 	markdownService services.MarkdownService
 	preferences     models.Preferences
+	imageService    services.ImageService
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
@@ -367,15 +369,8 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 		return err
 	}
 
-	coverURL, ok := m.coverFactory(chapter.Attributes.Volume)
-	if !ok {
-		l.Debug().Msg("unable to find cover")
-	} else {
-		l.Trace().Str("url", coverURL).Msg("downloading cover image")
-		// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
-		// first by most readers, and in particular, kavita.
-		filePath := path.Join(metaPath, "!0000 cover.jpg")
-		if err = m.downloadAndWrite(coverURL, filePath); err != nil {
+	if m.Req.GetBool(IncludeCover, true) {
+		if err = m.writeCover(l, chapter); err != nil {
 			return err
 		}
 	}
@@ -392,6 +387,80 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 
 	m.volumeMetadata = append(m.volumeMetadata, metaKey)
 	return nil
+}
+
+func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
+	coverURL, ok := m.coverFactory(chapter.Attributes.Volume)
+	if !ok {
+		l.Debug().Msg("unable to find cover")
+		return nil
+	}
+
+	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
+	// first by most readers, and in particular, kavita.
+	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
+	toWrite, isFirstPage, err := m.coverBytes(chapter, coverURL)
+	if err != nil {
+		return err
+	}
+
+	if isFirstPage {
+		l.Debug().Msg("first page is the cover, not writing cover again")
+		return nil
+	}
+
+	return os.WriteFile(filePath, toWrite, 0644)
+}
+
+func (m *manga) coverBytes(chapter ChapterSearchData, coverURL string) ([]byte, bool, error) {
+	coverBytes, err := m.download(coverURL)
+	if err != nil {
+		return nil, false, err
+	}
+
+	replaced := false
+	if chapter.Attributes.Volume != "" {
+		chapters := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
+			return v.Attributes.Volume
+		})[chapter.Attributes.Volume]
+
+		slices.SortFunc(chapters, func(a, b ChapterSearchData) int {
+			return (int)(a.Volume() - b.Volume())
+		})
+
+		if chapter.Id != chapters[0].Id {
+			m.Log.Trace().
+				Str("originalChapter", chapter.Attributes.Chapter).
+				Str("newChapter", chapters[0].Attributes.Chapter).
+				Msg("overwriting chapter to check cover of")
+			chapter = chapters[0]
+			replaced = true
+		}
+	}
+
+	res, err := m.repository.GetChapterImages(context.Background(), chapter.Id)
+	if err != nil {
+		return nil, false, err
+	}
+
+	images := res.FullImageUrls()
+
+	if len(images) == 0 {
+		return coverBytes, false, nil
+	}
+
+	candidateBytes, err := m.download(images[0])
+	if err != nil {
+		return nil, false, err
+	}
+
+	better, replacedBytes, err := m.imageService.Better(coverBytes, candidateBytes)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// If the chapter was replaced, should still write the cover
+	return better, !replaced && replacedBytes, nil
 }
 
 //nolint:funlen
@@ -732,10 +801,10 @@ func (m *manga) volumeDir(v string) string {
 	return fmt.Sprintf("%s Vol. %s", m.Title(), v)
 }
 
-func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {
+func (m *manga) download(url string, tryAgain ...bool) ([]byte, error) {
 	resp, err := m.httpClient.Get(url)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
@@ -746,28 +815,24 @@ func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) erro
 	if resp.StatusCode == http.StatusOK {
 		data, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		if err = os.WriteFile(path, data, 0755); err != nil {
-			return err
-		}
-
-		return nil
+		return data, nil
 	}
 
 	if resp.StatusCode != http.StatusTooManyRequests {
-		return fmt.Errorf("bad status: %s", resp.Status)
+		return nil, fmt.Errorf("bad status: %s", resp.Status)
 	}
 
 	if len(tryAgain) > 0 && !tryAgain[0] {
 		m.Log.Error().Msg("Reached rate limit, after sleeping. What is going on?")
-		return fmt.Errorf("bad status: %s", resp.Status)
+		return nil, fmt.Errorf("bad status: %s", resp.Status)
 	}
 
 	retryAfter := resp.Header.Get("X-RateLimit-Retry-After")
 	if retryAfter == "" {
-		return fmt.Errorf("bad status: %s", resp.Status)
+		return nil, fmt.Errorf("bad status: %s", resp.Status)
 	}
 
 	var d time.Duration
@@ -781,5 +846,18 @@ func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) erro
 	m.Log.Warn().Str("retryAfter", retryAfter).Dur("sleeping_for", d).Msg("Hit rate limit, try again after it's over")
 
 	time.Sleep(d)
-	return m.downloadAndWrite(url, path, false)
+	return m.download(url, false)
+}
+
+func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {
+	data, err := m.download(url, tryAgain...)
+	if err != nil {
+		return err
+	}
+
+	if err = os.WriteFile(path, data, 0755); err != nil {
+		return err
+	}
+
+	return nil
 }

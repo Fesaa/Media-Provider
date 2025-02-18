@@ -3,6 +3,14 @@
 Media-Provider supports downloading manga's from dynasty. Due to the more unregulated nature of the website,
 there are currently some limitations, and it is worth checking if the series you're trying to download will work. 
 
+## Covers
+
+Dynasty doesn't do covers very well. There is only one, and volumes don't have them. So the same cover is used
+for all chapters. However, Media-Provider will check if the first page of the first chapter is that same cover,
+and use it instead if it has a better quality.
+
+If you wish to no have Media-Provider set covers you can disable the option per series, when downloading.
+
 ## Tags
 
 Dynasty has a LOT of tags, and most of them are rather weird. By default, dynasty will not embed

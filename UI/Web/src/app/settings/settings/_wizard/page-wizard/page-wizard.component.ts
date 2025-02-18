@@ -56,6 +56,16 @@ export class PageWizardComponent {
     }
   ];
   protected readonly PageWizardID = PageWizardID;
+  private readonly defaultPage: Page = {
+    ID: 0,
+    title: "",
+    custom_root_dir: "",
+    icon: "",
+    dirs: [],
+    providers: [],
+    modifiers: [],
+    sortValue: PageService.DEFAULT_PAGE_SORT,
+  }
 
   constructor(private pageService: PageService,
               private navService: NavService,
@@ -68,7 +78,7 @@ export class PageWizardComponent {
     this.route.queryParams.subscribe(params => {
       const pageIdParams = params['pageId'];
       if (!pageIdParams) {
-        this.router.navigateByUrl("/home")
+        this.page = this.defaultPage;
         return;
       }
 

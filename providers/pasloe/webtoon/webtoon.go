@@ -158,19 +158,22 @@ func (w *webtoon) ContentUrls(ctx context.Context, chapter Chapter) ([]string, e
 }
 
 func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
-	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
-	// first by most readers, and in particular, kavita.
-	filePath := path.Join(w.ContentPath(chapter), "!0000 cover.jpg")
-	imageUrl := func() string {
-		// Kavita uses the image of the first chapter as the cover image in lists
-		// We replace this with the nicer looking image. As this software is still targeting Kavita
-		if w.searchInfo != nil && chapter.Number == "1" {
-			return webToonUrl(w.searchInfo.ThumbnailMobile)
+
+	if w.Req.GetBool(IncludeCover, true) {
+		// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
+		// first by most readers, and in particular, kavita.
+		filePath := path.Join(w.ContentPath(chapter), "!0000 cover.jpg")
+		imageUrl := func() string {
+			// Kavita uses the image of the first chapter as the cover image in lists
+			// We replace this with the nicer looking image. As this software is still targeting Kavita
+			if w.searchInfo != nil && chapter.Number == "1" {
+				return webToonUrl(w.searchInfo.ThumbnailMobile)
+			}
+			return chapter.ImageUrl
+		}()
+		if err := w.downloadAndWrite(imageUrl, filePath); err != nil {
+			return err
 		}
-		return chapter.ImageUrl
-	}()
-	if err := w.downloadAndWrite(imageUrl, filePath); err != nil {
-		return err
 	}
 
 	w.Log.Trace().Str("chapter", chapter.Number).Msg("writing comicinfoxml")

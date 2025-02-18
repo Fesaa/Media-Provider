@@ -14,6 +14,7 @@ import {ToastService} from "../../../_services/toast.service";
 import {Tooltip} from "primeng/tooltip";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
+import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 
 @Component({
   selector: 'app-download-dialog',
@@ -28,7 +29,10 @@ import {TitleCasePipe} from "@angular/common";
     MultiSelect,
     Tooltip,
     TranslocoDirective,
-    TitleCasePipe
+    TitleCasePipe,
+    CdkVirtualScrollViewport,
+    CdkFixedSizeVirtualScroll,
+    CdkVirtualForOf
   ],
   templateUrl: './download-dialog.component.html',
   styleUrl: './download-dialog.component.css'

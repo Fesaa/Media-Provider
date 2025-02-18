@@ -29,7 +29,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, httpClient *http.Client,
 		repository Repository, markdownService services.MarkdownService,
-		preferences models.Preferences,
+		preferences models.Preferences, imageService services.ImageService,
 	) {
 		m = &manga{
 			id:              req.Id,
@@ -37,6 +37,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			repository:      repository,
 			markdownService: markdownService,
 			preferences:     preferences,
+			imageService:    imageService,
 		}
 
 		m.DownloadBase = api.NewDownloadableFromBlock[Chapter](scope, "dynasty-manga", m)
@@ -53,9 +54,12 @@ type manga struct {
 	markdownService services.MarkdownService
 	preferences     models.Preferences
 	transLoco       services.TranslocoService
+	imageService    services.ImageService
 
-	id         string
-	seriesInfo *Series
+	id              string
+	seriesInfo      *Series
+	coverBytes      []byte
+	hasCheckedCover bool
 
 	hasWarnedBlacklist bool
 }
@@ -201,15 +205,75 @@ func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, err
 }
 
 func (m *manga) WriteContentMetaData(chapter Chapter) error {
-	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
-	// first by most readers, and in particular, kavita.
-	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
-	if err := m.downloadAndWrite(m.seriesInfo.CoverUrl, filePath); err != nil {
-		return err
+
+	if m.Req.GetBool(IncludeCover, true) {
+		if err := m.writeCover(chapter); err != nil {
+			return err
+		}
 	}
 
 	m.Log.Trace().Str("chapter", chapter.Chapter).Msg("writing comicinfoxml")
 	return comicinfo.Save(m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
+}
+
+func (m *manga) writeCover(chapter Chapter) error {
+	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
+	// first by most readers, and in particular, kavita.
+	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
+
+	if !m.hasCheckedCover {
+		m.hasCheckedCover = true
+		if err := m.tryReplaceCover(); err != nil {
+			return err
+		}
+	}
+
+	if len(m.coverBytes) == 0 {
+		m.Log.Trace().Str("chapter", chapter.Chapter).Msg("no cover bytes set, downloading from url")
+		return m.downloadAndWrite(m.seriesInfo.CoverUrl, filePath)
+	}
+
+	return os.WriteFile(filePath, m.coverBytes, 0755)
+}
+
+func (m *manga) tryReplaceCover() error {
+	m.Log.Trace().Msg("Checking if first image of first chapter has a higher quality cover")
+	firstChapter := utils.Find(m.seriesInfo.Chapters, func(chapter Chapter) bool {
+		return chapter.Chapter == "1"
+	})
+
+	if firstChapter == nil {
+		return nil
+	}
+
+	// TODO: Pass context
+	images, err := m.repository.ChapterImages(context.Background(), firstChapter.Id)
+	if err != nil {
+		return err
+	}
+
+	if len(images) == 0 {
+		return nil
+	}
+
+	coverBytes, err := m.download(m.seriesInfo.CoverUrl)
+	if err != nil {
+		return err
+	}
+
+	firstChapterCoverBytes, err := m.download(images[0])
+	if err != nil {
+		return err
+	}
+
+	// Dynasty doesn't have a concept for per chapter/volume covers. So we're using one cover at all times anyway
+	// Should set IncludeCover metadata to false if you want to use chapter covers and add your own later
+	m.coverBytes, _, err = m.imageService.Better(coverBytes, firstChapterCoverBytes)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
@@ -220,10 +284,12 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci.Summary = m.markdownService.SanitizeHtml(m.seriesInfo.Description)
 	ci.Manga = comicinfo.MangaYes
 	ci.Title = chapter.Title
-	if vol, err := strconv.Atoi(chapter.Volume); err == nil {
-		ci.Volume = vol
-	} else {
-		m.Log.Trace().Err(err).Str("chapter", chapter.Volume).Msg("could not convert volume to int")
+	if chapter.Volume != "" {
+		if vol, err := strconv.Atoi(chapter.Volume); err == nil {
+			ci.Volume = vol
+		} else {
+			m.Log.Trace().Err(err).Str("chapter", chapter.Volume).Msg("could not convert volume to int")
+		}
 	}
 
 	ci.Writer = strings.Join(utils.Map(m.seriesInfo.Authors, func(t Author) string {
@@ -322,25 +388,25 @@ func (m *manga) ShouldDownload(chapter Chapter) bool {
 	return true
 }
 
-func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {
+func (m *manga) download(url string, tryAgain ...bool) ([]byte, error) {
 	resp, err := m.httpClient.Get(url)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode != http.StatusTooManyRequests {
-			return fmt.Errorf("bad status: %s", resp.Status)
+			return nil, fmt.Errorf("bad status: %s", resp.Status)
 		}
 
 		if len(tryAgain) > 0 && !tryAgain[0] {
-			return fmt.Errorf("hit rate limit too many times")
+			return nil, fmt.Errorf("hit rate limit too many times")
 		}
 
 		d := time.Minute
 		m.Log.Warn().Dur("sleeping_for", d).Msg("Hit rate limit, sleeping for 1 minute")
 		time.Sleep(d)
-		return m.downloadAndWrite(url, path, false)
+		return m.download(url, false)
 
 	}
 
@@ -350,6 +416,14 @@ func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) erro
 		}
 	}(resp.Body)
 	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {
+	data, err := m.download(url, tryAgain...)
 	if err != nil {
 		return err
 	}
