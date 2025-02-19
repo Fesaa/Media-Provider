@@ -17,6 +17,7 @@ func tempRepository(w io.Writer) Repository {
 }
 
 func TestRepository_SearchSeries(t *testing.T) {
+	time.Sleep(1 * time.Second)
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
@@ -45,6 +46,7 @@ func TestRepository_SearchSeries(t *testing.T) {
 }
 
 func TestRepository_SeriesInfo(t *testing.T) {
+	time.Sleep(1 * time.Second)
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
@@ -94,6 +96,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 }
 
 func TestRepository_SeriesInfoWithVolumes(t *testing.T) {
+	time.Sleep(1 * time.Second)
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
@@ -120,6 +123,7 @@ func TestRepository_SeriesInfoWithVolumes(t *testing.T) {
 }
 
 func TestRepository_ChapterImages(t *testing.T) {
+	time.Sleep(1 * time.Second)
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
@@ -138,6 +142,7 @@ func TestRepository_ChapterImages(t *testing.T) {
 }
 
 func TestRepository_SearchSeriesOneShotChapters(t *testing.T) {
+	time.Sleep(1 * time.Second)
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 

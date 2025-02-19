@@ -69,8 +69,8 @@ func getMangaURL(id string) string {
 
 func getCoverURL(id string, offset ...int) string {
 	if len(offset) > 0 {
-		return fmt.Sprintf("%s/cover/?limit=20&manga[]=%s&offset=%d", URL, id, offset[0])
+		return fmt.Sprintf("%s/cover?order[volume]=asc&limit=20&manga[]=%s&offset=%d", URL, id, offset[0])
 	}
 
-	return fmt.Sprintf("%s/cover/?limit=20&manga[]=%s", URL, id)
+	return fmt.Sprintf("%s/cover?order[volume]=asc&limit=20&manga[]=%s", URL, id)
 }

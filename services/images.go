@@ -15,6 +15,7 @@ type ImageService interface {
 	Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error)
 	Similar(img1, img2 image.Image) float64
 	MeanSquareError(img1, img2 image.Image) float64
+	IsCover(data []byte) bool
 }
 
 type imageService struct {
@@ -25,6 +26,20 @@ func ImageServiceProvider(log zerolog.Logger) ImageService {
 	return &imageService{
 		log: log.With().Str("handler", "image-service").Logger(),
 	}
+}
+
+func (i *imageService) IsCover(data []byte) bool {
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		i.log.Debug().Err(err).Msg("can't decode image, assuming it's fine")
+		return true
+	}
+
+	// Reference: https://wiki.kavitareader.com/guides/admin-settings/media/#cover-image-size
+	// The ratio computed from values above ~ 0.74. We lower the threshold to be a little more forgiving
+	width, height := float64(img.Bounds().Dx()), float64(img.Bounds().Dy())
+	ratio := width / max(1, height)
+	return ratio >= 0.6
 }
 
 func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error) {
