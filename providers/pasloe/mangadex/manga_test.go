@@ -23,6 +23,10 @@ import (
 	"time"
 )
 
+const (
+	waitTimeOut = 10 * time.Second
+)
+
 type mockRepo struct {
 	t           *testing.T
 	manga       GetMangaResponse
@@ -180,7 +184,7 @@ func TestManga_Title(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
 	}
 
@@ -199,7 +203,7 @@ func TestManga_LoadInfoBadId(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
 	}
 
@@ -218,7 +222,7 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
 	}
 
@@ -255,7 +259,7 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
 	}
 
@@ -308,7 +312,7 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
 	}
 
@@ -323,7 +327,7 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
 	}
 
@@ -340,7 +344,7 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
 	}
 	log = buf.String()
@@ -363,7 +367,7 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
 	}
 
@@ -397,7 +401,7 @@ func TestManga_All(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Fatal("timed out waiting for manga title")
 	}
 
@@ -968,7 +972,7 @@ func TestReplaceCover(t *testing.T) {
 	select {
 	case <-m.LoadInfo(context.Background()):
 		break
-	case <-time.After(5 * time.Second):
+	case <-time.After(waitTimeOut):
 		t.Fatal("m.LoadInfo() timeout")
 	}
 

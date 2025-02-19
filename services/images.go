@@ -35,8 +35,11 @@ func (i *imageService) IsCover(data []byte) bool {
 		return true
 	}
 
-	// https://wiki.kavitareader.com/guides/admin-settings/media/#cover-image-size
-	return img.Bounds().Dx() >= 320 && img.Bounds().Dy() >= 455
+	// Reference: https://wiki.kavitareader.com/guides/admin-settings/media/#cover-image-size
+	// The ratio computed from values above ~ 0.74. We lower the threshold to be a little more forgiving
+	width, height := float64(img.Bounds().Dx()), float64(img.Bounds().Dy())
+	ratio := width / max(1, height)
+	return ratio >= 0.6
 }
 
 func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error) {
