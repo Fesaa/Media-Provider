@@ -827,9 +827,6 @@ func (m *manga) download(url string, tryAgain ...bool) ([]byte, error) {
 	}
 
 	retryAfter := resp.Header.Get("X-RateLimit-Retry-After")
-	if retryAfter == "" {
-		return nil, fmt.Errorf("bad status: %s", resp.Status)
-	}
 
 	var d time.Duration
 	if unix, err := strconv.ParseInt(retryAfter, 10, 64); err == nil {

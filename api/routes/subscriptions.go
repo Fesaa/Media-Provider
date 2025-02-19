@@ -171,7 +171,7 @@ func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
 	}
 
 	go func() {
-		if err = sr.ContentService.DownloadSubscription(subscription); err != nil {
+		if err = sr.ContentService.DownloadSubscription(subscription, false); err != nil {
 			sr.Log.Warn().Err(err).Msg("failed to download subscription, will run again as scheduled. May have issues?")
 		}
 	}()
