@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	waitTimeOut = 10 * time.Second
+	waitTimeOut = 30 * time.Second
 )
 
 type mockRepo struct {

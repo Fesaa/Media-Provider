@@ -277,6 +277,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
 		}
 	}
+	l.Debug().Msg("finished removing newly downloaded files")
 }
 
 func (c *client) cleanup(content api.Downloadable) {
@@ -294,6 +295,7 @@ func (c *client) cleanup(content api.Downloadable) {
 			return
 		}
 	}
+	l.Debug().Msg("finished zipping newly downloaded content")
 }
 
 func (c *client) wrapError(err error) error {
