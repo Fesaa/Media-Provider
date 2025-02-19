@@ -139,7 +139,7 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 				return "", false
 			}
 		} else {
-			m.coverFactory = covers.GetCoverFactory(m.id)
+			m.coverFactory = covers.GetCoverFactoryLang(m.language, m.id)
 		}
 
 		close(out)

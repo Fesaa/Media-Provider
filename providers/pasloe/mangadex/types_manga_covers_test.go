@@ -23,7 +23,7 @@ func TestMangaCoverResponse_GetCoverFactory(t *testing.T) {
 		},
 	}
 
-	factory := m.GetCoverFactory("myId")
+	factory := m.GetCoverFactoryLang("en", "myId")
 
 	got, ok := factory("2")
 	if !ok {
@@ -49,7 +49,7 @@ func TestMangaCoverResponse_GetCoverFactory(t *testing.T) {
 func TestMangaCoverResponse_GetCoverFactoryNoDefault(t *testing.T) {
 	m := &MangaCoverResponse{Data: []MangaCoverData{}}
 
-	factory := m.GetCoverFactory("myId")
+	factory := m.GetCoverFactoryLang("en", "myId")
 
 	got, ok := factory("1")
 	if ok {

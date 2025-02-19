@@ -2,6 +2,7 @@ package mangadex
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 type MangaCoverResponse Response[[]MangaCoverData]
@@ -25,7 +26,7 @@ type MangaCoverAttributes struct {
 
 type CoverFactory func(volume string) (string, bool)
 
-func (m *MangaCoverResponse) GetCoverFactory(mangaId string) CoverFactory {
+func (m *MangaCoverResponse) GetCoverFactoryLang(lang string, mangaId string) CoverFactory {
 	covers := make(map[string]string)
 
 	coverUrl := func(fileName string) string {
@@ -39,9 +40,22 @@ func (m *MangaCoverResponse) GetCoverFactory(mangaId string) CoverFactory {
 		defaultCover = coverUrl(m.Data[0].Attributes.FileName)
 	}
 
+	coversByLang := utils.GroupBy(m.Data, func(v MangaCoverData) string {
+		return v.Attributes.Locale
+	})
+
+	if wanted, ok := coversByLang[lang]; ok {
+		for _, cover := range wanted {
+			url := coverUrl(cover.Attributes.FileName)
+			covers[cover.Attributes.Volume] = url
+		}
+	}
+
 	for _, cover := range m.Data {
-		url := coverUrl(cover.Attributes.FileName)
-		covers[cover.Attributes.Volume] = url
+		if _, ok := covers[cover.Attributes.Volume]; !ok {
+			url := coverUrl(cover.Attributes.FileName)
+			covers[cover.Attributes.Volume] = url
+		}
 	}
 
 	return func(volume string) (string, bool) {
