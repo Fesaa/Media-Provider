@@ -41,6 +41,8 @@ type signalrService struct {
 	server signalr.Server
 	auth   auth.Provider
 	log    zerolog.Logger
+
+	connectionHappened bool
 }
 
 func SignalRServiceProvider(params SignalRParams) SignalRService {
@@ -54,13 +56,16 @@ func RegisterSignalREndPoint(service SignalRService, app *fiber.App) error {
 	return (service.(*signalrService)).setup(app)
 }
 
+func (s *signalrService) OnConnected(string) {
+	s.connectionHappened = true
+}
+
 func (s *signalrService) Broadcast(eventType payload.EventType, data interface{}) {
-	defer func() {
-		// s.Clients() may panic bc of an NPE, because of the way our adaptor works [read. skips some logic]
-		if r := recover(); r != nil {
-			s.log.Debug().Any("recover", r).Msg("recovered from a panic in SignalRService.Broadcast")
-		}
-	}()
+	if !s.connectionHappened {
+		s.log.Debug().Any("type", eventType).
+			Msg("broadcasted notification won't be send out, as no connections have been made yet")
+		return
+	}
 	s.Clients().All().Send(string(eventType), data)
 }
 
