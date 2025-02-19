@@ -20,7 +20,9 @@ var loadedTags = false
 
 func tempRepo(t *testing.T, w io.Writer) Repository {
 	t.Helper()
-	return NewRepository(http.DefaultClient, zerolog.New(w))
+	return NewRepository(repositoryParams{
+		HttpClient: http.DefaultClient,
+	}, zerolog.New(w))
 }
 
 func TestRepository_GetManga(t *testing.T) {

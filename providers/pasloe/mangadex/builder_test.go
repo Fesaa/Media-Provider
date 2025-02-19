@@ -135,7 +135,9 @@ func TestBuilder_NormalizeNil(t *testing.T) {
 func TestBuilder_Normalize(t *testing.T) {
 	b := &Builder{}
 
-	repo := NewRepository(http.DefaultClient, zerolog.New(io.Discard))
+	repo := NewRepository(repositoryParams{
+		HttpClient: http.DefaultClient,
+	}, zerolog.New(io.Discard))
 
 	res, err := repo.SearchManga(context.Background(), SearchOptions{Query: RainbowsAfterStorms})
 	if err != nil {
