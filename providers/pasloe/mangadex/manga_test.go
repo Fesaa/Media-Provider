@@ -985,7 +985,7 @@ func TestReplaceCover(t *testing.T) {
 		t.Fatal("chapterSeven.Attributes.Volume cover not available")
 	}
 
-	coverBytes, _, err := m.coverBytes(*chapterSeven, originalCover)
+	coverBytes, _, err := m.getBetterChapterCover(*chapterSeven, originalCover)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -15,6 +15,7 @@ type ImageService interface {
 	Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error)
 	Similar(img1, img2 image.Image) float64
 	MeanSquareError(img1, img2 image.Image) float64
+	IsCover(data []byte) bool
 }
 
 type imageService struct {
@@ -25,6 +26,17 @@ func ImageServiceProvider(log zerolog.Logger) ImageService {
 	return &imageService{
 		log: log.With().Str("handler", "image-service").Logger(),
 	}
+}
+
+func (i *imageService) IsCover(data []byte) bool {
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		i.log.Debug().Err(err).Msg("can't decode image, assuming it's fine")
+		return true
+	}
+
+	// https://wiki.kavitareader.com/guides/admin-settings/media/#cover-image-size
+	return img.Bounds().Dx() >= 320 && img.Bounds().Dy() >= 455
 }
 
 func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error) {

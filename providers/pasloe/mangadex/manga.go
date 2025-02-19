@@ -360,7 +360,7 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 		return nil
 	}
 
-	l := m.Log.With().Str("metaKey", metaKey).Logger()
+	l := m.ContentLogger(chapter)
 
 	err := os.MkdirAll(metaPath, 0755)
 	if err != nil {
@@ -388,7 +388,7 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 }
 
 func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
-	coverURL, ok := m.coverFactory(chapter.Attributes.Volume)
+	cover, ok := m.coverFactory(chapter.Attributes.Volume)
 	if !ok {
 		l.Debug().Msg("unable to find cover")
 		return nil
@@ -397,20 +397,23 @@ func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
 	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
-	toWrite, isFirstPage, err := m.coverBytes(chapter, coverURL)
+	toWrite, isFirstPage, err := m.getBetterChapterCover(chapter, cover)
 	if err != nil {
-		return err
+		l.Warn().Err(err).Msg("an error occurred when trying to compare cover with the first page. Falling back")
+		toWrite = cover
 	}
 
-	if isFirstPage {
-		l.Debug().Msg("first page is the cover, not writing cover again")
+	if isFirstPage && err == nil {
+		l.Trace().Msg("first page is the cover, not writing cover again")
 		return nil
 	}
 
 	return os.WriteFile(filePath, toWrite, 0644)
 }
 
-func (m *manga) coverBytes(chapter ChapterSearchData, coverBytes []byte) ([]byte, bool, error) {
+// getBetterChapterCover check if a higher quality cover is used inside chapters. Returns true
+// when the Cover returned if the first page of the chapter passed as an argument
+func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover Cover) (Cover, bool, error) {
 	replaced := false
 	if chapter.Attributes.Volume != "" {
 		chapters := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
@@ -439,7 +442,7 @@ func (m *manga) coverBytes(chapter ChapterSearchData, coverBytes []byte) ([]byte
 	images := res.FullImageUrls()
 
 	if len(images) == 0 {
-		return coverBytes, false, nil
+		return currentCover, false, nil
 	}
 
 	candidateBytes, err := m.download(images[0])
@@ -447,7 +450,7 @@ func (m *manga) coverBytes(chapter ChapterSearchData, coverBytes []byte) ([]byte
 		return nil, false, err
 	}
 
-	better, replacedBytes, err := m.imageService.Better(coverBytes, candidateBytes)
+	better, replacedBytes, err := m.imageService.Better(currentCover, candidateBytes)
 	if err != nil {
 		return nil, false, err
 	}
@@ -767,7 +770,7 @@ func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.
 	}
 
 	if strconv.Itoa(ci.Volume) == chapter.Attributes.Volume {
-		l.Debug().Str("path", fullPath).Msg("Volume on disk matches, not replacing")
+		l.Trace().Str("path", fullPath).Msg("Volume on disk matches, not replacing")
 		return false
 	}
 
