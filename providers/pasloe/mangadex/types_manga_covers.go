@@ -1,8 +1,11 @@
 package mangadex
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/utils"
+	"io"
+	"net/http"
 )
 
 type MangaCoverResponse Response[[]MangaCoverData]
@@ -24,47 +27,87 @@ type MangaCoverAttributes struct {
 	Version     int    `json:"version"`
 }
 
-type CoverFactory func(volume string) (string, bool)
+type CoverFactory func(volume string) ([]byte, bool)
 
-func (m *MangaCoverResponse) GetCoverFactoryLang(lang string, mangaId string) CoverFactory {
-	covers := make(map[string]string)
+var defaultCoverFactory CoverFactory = func(volume string) ([]byte, bool) { return nil, false }
 
-	coverUrl := func(fileName string) string {
-		return fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", mangaId, fileName)
+func (m *manga) getCoverBytes(fileName string) ([]byte, error) {
+	url := fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", m.id, fileName)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
 	}
 
-	var defaultCover string
-	if len(m.Data) > 0 {
-		// Set the first cover as the default cover, this way a manga always has a cover
-		// Even if it's a bit wrong
-		defaultCover = coverUrl(m.Data[0].Attributes.FileName)
+	defer func(Body io.ReadCloser) {
+		if err = Body.Close(); err != nil {
+			m.Log.Warn().Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
 	}
 
-	coversByLang := utils.GroupBy(m.Data, func(v MangaCoverData) string {
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory {
+	if len(coverResp.Data) == 0 {
+		return defaultCoverFactory
+	}
+
+	firstId := coverResp.Data[0].Id
+
+	covers := make(map[string][]byte)
+	var defaultBytes []byte
+
+	processCover := func(cover MangaCoverData) error {
+		coverBytes, err := m.getCoverBytes(cover.Attributes.FileName)
+		if err != nil {
+			m.Log.Err(err).Str("fileName", cover.Attributes.FileName).Msg("Failed to get cover")
+			return err
+		}
+		covers[cover.Attributes.Volume] = coverBytes
+		if cover.Id == firstId {
+			defaultBytes = coverBytes
+		}
+		return nil
+	}
+
+	coversByLang := utils.GroupBy(coverResp.Data, func(v MangaCoverData) string {
 		return v.Attributes.Locale
 	})
 
-	if wanted, ok := coversByLang[lang]; ok {
+	if wanted, ok := coversByLang[m.language]; ok {
 		for _, cover := range wanted {
-			url := coverUrl(cover.Attributes.FileName)
-			covers[cover.Attributes.Volume] = url
+			if err := processCover(cover); err != nil {
+				return defaultCoverFactory
+			}
 		}
 	}
 
-	for _, cover := range m.Data {
+	for _, cover := range coverResp.Data {
+		if cover.Attributes.Locale == m.language {
+			continue // Already gone over
+		}
+
 		if _, ok := covers[cover.Attributes.Volume]; !ok {
-			url := coverUrl(cover.Attributes.FileName)
-			covers[cover.Attributes.Volume] = url
+			if err := processCover(cover); err != nil {
+				return defaultCoverFactory
+			}
 		}
 	}
 
-	return func(volume string) (string, bool) {
+	return func(volume string) ([]byte, bool) {
 		url, ok := covers[volume]
-		if !ok && defaultCover != "" {
-			return defaultCover, true
+		if !ok && len(defaultBytes) != 0 {
+			return defaultBytes, true
 		}
 		if !ok {
-			return "", false
+			return nil, false
 		}
 
 		return url, true

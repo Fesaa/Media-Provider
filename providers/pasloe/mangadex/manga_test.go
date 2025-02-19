@@ -548,9 +548,7 @@ func TestManga_WriteContentMetaData(t *testing.T) {
 	dir := t.TempDir()
 	m := tempManga(t, req(), &buf, dir)
 	m.info = mangaResp()
-	m.coverFactory = func(volume string) (string, bool) {
-		return "", false
-	}
+	m.coverFactory = defaultCoverFactory
 
 	if err := m.WriteContentMetaData(chapter()); err != nil {
 		t.Fatal(err)
@@ -982,17 +980,12 @@ func TestReplaceCover(t *testing.T) {
 		t.Fatal("chapterSeven is nil")
 	}
 
-	originalCoverURL, ok := m.coverFactory(chapterSeven.Attributes.Volume)
+	originalCover, ok := m.coverFactory(chapterSeven.Attributes.Volume)
 	if !ok {
 		t.Fatal("chapterSeven.Attributes.Volume cover not available")
 	}
 
-	originalCover, err := m.download(originalCoverURL, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	coverBytes, _, err := m.coverBytes(*chapterSeven, originalCoverURL)
+	coverBytes, _, err := m.coverBytes(*chapterSeven, originalCover)
 	if err != nil {
 		t.Fatal(err)
 	}

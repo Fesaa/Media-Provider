@@ -135,11 +135,9 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 		covers, err := m.repository.GetCoverImages(ctx, m.id)
 		if err != nil || covers == nil {
 			m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
-			m.coverFactory = func(_ string) (string, bool) {
-				return "", false
-			}
+			m.coverFactory = defaultCoverFactory
 		} else {
-			m.coverFactory = covers.GetCoverFactoryLang(m.language, m.id)
+			m.coverFactory = m.getCoverFactoryLang(covers)
 		}
 
 		close(out)
@@ -412,12 +410,7 @@ func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
 	return os.WriteFile(filePath, toWrite, 0644)
 }
 
-func (m *manga) coverBytes(chapter ChapterSearchData, coverURL string) ([]byte, bool, error) {
-	coverBytes, err := m.download(coverURL)
-	if err != nil {
-		return nil, false, err
-	}
-
+func (m *manga) coverBytes(chapter ChapterSearchData, coverBytes []byte) ([]byte, bool, error) {
 	replaced := false
 	if chapter.Attributes.Volume != "" {
 		chapters := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
