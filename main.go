@@ -31,6 +31,7 @@ func main() {
 	utils.Must(c.Provide(auth.NewApiKeyAuth, dig.Name("api-key-auth")))
 
 	utils.Must(c.Provide(wisewolf.New))
+	utils.Must(c.Provide(wisewolf.NewWithRetry, dig.Name("http-retry")))
 	utils.Must(c.Provide(yoitsu.New))
 	utils.Must(c.Provide(pasloe.New))
 	utils.Must(c.Provide(services.TranslocoServiceProvider))

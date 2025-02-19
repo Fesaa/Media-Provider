@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 	"io"
 	"net/http"
 )
@@ -24,9 +25,15 @@ type repository struct {
 	tags       utils.SafeMap[string, string]
 }
 
-func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
+type repositoryParams struct {
+	dig.In
+
+	HttpClient *http.Client `name:"http-retry"`
+}
+
+func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 	r := &repository{
-		httpClient: httpClient,
+		httpClient: params.HttpClient,
 		log:        log.With().Str("handler", "mangadex-repository").Logger(),
 		tags:       utils.NewSafeMap[string, string](),
 	}

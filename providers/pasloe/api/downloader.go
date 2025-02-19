@@ -539,6 +539,11 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 	default:
 	}
 
+	// Ensure there is always at least some sleeping
+	if len(urls) < 5 {
+		time.Sleep(1 * time.Second)
+	}
+
 	d.ContentDownloaded++
 	return nil
 }
