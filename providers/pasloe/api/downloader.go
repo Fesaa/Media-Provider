@@ -301,7 +301,7 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 		return
 	}
 
-	d.Log.Debug().Str("content", fmt.Sprintf("%v", content)).Msg("found following content on disk")
+	d.Log.Trace().Str("content", fmt.Sprintf("%v", content)).Msg("found following content on disk")
 	d.ExistingContent = content
 }
 

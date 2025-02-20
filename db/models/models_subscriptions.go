@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"gorm.io/gorm"
 	"time"
@@ -13,10 +14,30 @@ var (
 type Subscription struct {
 	gorm.Model
 
-	Provider         Provider         `json:"provider" gorm:"type:int"`
-	ContentId        string           `json:"contentId"`
-	RefreshFrequency RefreshFrequency `json:"refreshFrequency" gorm:"type:int"`
-	Info             SubscriptionInfo `json:"info"`
+	Provider         Provider                `json:"provider" gorm:"type:int"`
+	ContentId        string                  `json:"contentId"`
+	RefreshFrequency RefreshFrequency        `json:"refreshFrequency" gorm:"type:int"`
+	Info             SubscriptionInfo        `json:"info"`
+	Metadata         json.RawMessage         `gorm:"type:jsonb" json:"-"`
+	Payload          DownloadRequestMetadata `json:"metadata" gorm:"-:all"`
+}
+
+type DownloadRequestMetadata struct {
+	StartImmediately bool                `json:"startImmediately"`
+	Extra            map[string][]string `json:"extra,omitempty"`
+}
+
+func (s *Subscription) BeforeSave(tx *gorm.DB) (err error) {
+	s.Metadata, err = json.Marshal(s.Payload.Extra)
+	return
+}
+
+func (s *Subscription) AfterFind(tx *gorm.DB) (err error) {
+	if s.Metadata == nil {
+		return
+	}
+	s.Payload.StartImmediately = true
+	return json.Unmarshal(s.Metadata, &s.Payload.Extra)
 }
 
 func (s *Subscription) ShouldRefresh(old *Subscription) bool {

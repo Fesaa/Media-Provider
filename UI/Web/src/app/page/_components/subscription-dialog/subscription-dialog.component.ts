@@ -10,6 +10,11 @@ import {Select} from "primeng/select";
 import {ToastService} from "../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
+import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType} from "../../../_models/page";
+import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
+import {MultiSelect} from "primeng/multiselect";
+import {ToggleSwitch} from "primeng/toggleswitch";
+import {Tooltip} from "primeng/tooltip";
 
 @Component({
   selector: 'app-subscription-dialog',
@@ -21,7 +26,13 @@ import {TitleCasePipe} from "@angular/common";
     Button,
     Select,
     TranslocoDirective,
-    TitleCasePipe
+    TitleCasePipe,
+    CdkFixedSizeVirtualScroll,
+    CdkVirtualForOf,
+    CdkVirtualScrollViewport,
+    MultiSelect,
+    ToggleSwitch,
+    Tooltip
   ],
   templateUrl: './subscription-dialog.component.html',
   styleUrl: './subscription-dialog.component.css'
@@ -33,6 +44,7 @@ export class SubscriptionDialogComponent implements OnInit {
 
   @Input({required: true}) downloadDir!: string;
   @Input({required: true}) searchResult!: SearchInfo;
+  @Input({required: true}) metadata!: DownloadMetadata | undefined;
 
   subscription!: Subscription;
   protected readonly RefreshFrequencies = RefreshFrequencies;
@@ -54,8 +66,20 @@ export class SubscriptionDialogComponent implements OnInit {
         lastCheckSuccess: true,
         lastCheck: new Date()
       },
-      refreshFrequency: RefreshFrequency.Week
+      refreshFrequency: RefreshFrequency.Week,
+      metadata: {
+        startImmediately: true,
+        extra: {},
+      }
     };
+  }
+
+  changeChoice(meta: DownloadMetadataDefinition, value: string | boolean | string[]) {
+    if (value instanceof Array) {
+      this.subscription.metadata.extra[meta.key] = value;
+    } else {
+      this.subscription.metadata.extra[meta.key] = [String(value)];
+    }
   }
 
   close(): void {
@@ -74,4 +98,7 @@ export class SubscriptionDialogComponent implements OnInit {
       this.visibleChange.emit(false);
     })
   }
+
+  protected readonly DownloadMetadataFormType = DownloadMetadataFormType;
+  protected readonly Boolean = Boolean;
 }

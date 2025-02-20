@@ -963,7 +963,7 @@ func TestReplaceCover(t *testing.T) {
 		Id:        "bdf0dbce-3795-4ce0-8f46-86aebd018a6c",
 		BaseDir:   "Manga",
 		TempTitle: "Foxes Always Lie",
-		DownloadMetadata: payload.DownloadRequestMetadata{
+		DownloadMetadata: models.DownloadRequestMetadata{
 			StartImmediately: false,
 		},
 		IsSubscription: false,

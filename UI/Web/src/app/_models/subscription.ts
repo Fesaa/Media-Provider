@@ -1,11 +1,13 @@
 import {Provider} from "./page";
+import {DownloadRequestMetadata} from "./search";
 
 export type Subscription = {
   ID: number;
   provider: Provider;
   contentId: string;
   refreshFrequency: RefreshFrequency;
-  info: SubscriptionInfo
+  info: SubscriptionInfo;
+  metadata: DownloadRequestMetadata;
 }
 
 export type SubscriptionInfo = {

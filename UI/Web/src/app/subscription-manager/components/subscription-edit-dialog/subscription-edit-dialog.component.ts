@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {RefreshFrequencies, RefreshFrequency, Subscription} from "../../../_models/subscription";
 import {SubscriptionService} from "../../../_services/subscription.service";
 import {Dialog} from "primeng/dialog";
@@ -9,12 +9,24 @@ import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
 import {SubscriptionExternalUrlPipe} from "../../../_pipes/subscription-external-url.pipe";
 import {Select} from "primeng/select";
-import {Provider, Providers} from "../../../_models/page";
+import {
+  DownloadMetadata,
+  DownloadMetadataDefinition,
+  DownloadMetadataFormType,
+  Provider,
+  Providers
+} from "../../../_models/page";
 import {ToastService} from "../../../_services/toast.service";
 import {Button} from "primeng/button";
 import {DirectorySelectorComponent} from "../../../shared/_component/directory-selector/directory-selector.component";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {TitleCasePipe} from "@angular/common";
+import {NgIf, TitleCasePipe} from "@angular/common";
+import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
+import {MultiSelect} from "primeng/multiselect";
+import {ToggleSwitch} from "primeng/toggleswitch";
+import {ContentService} from "../../../_services/content.service";
+import {PageService} from "../../../_services/page.service";
+import {Tooltip} from "primeng/tooltip";
 
 @Component({
   selector: 'app-subscription-edit-dialog',
@@ -30,6 +42,13 @@ import {TitleCasePipe} from "@angular/common";
     DirectorySelectorComponent,
     TranslocoDirective,
     TitleCasePipe,
+    CdkFixedSizeVirtualScroll,
+    CdkVirtualForOf,
+    CdkVirtualScrollViewport,
+    MultiSelect,
+    ToggleSwitch,
+    Tooltip,
+    NgIf,
   ],
   templateUrl: './subscription-edit-dialog.component.html',
   styleUrl: './subscription-edit-dialog.component.css'
@@ -42,6 +61,9 @@ export class SubscriptionEditDialogComponent {
   @Output() update: EventEmitter<Subscription> = new EventEmitter<Subscription>();
   @Input({required: true}) providers!: Provider[];
 
+  metadata!: DownloadMetadata | undefined;
+  hideMetadata: boolean = true;
+
   copy: Subscription = {
     ID: 0,
     contentId: '',
@@ -53,6 +75,10 @@ export class SubscriptionEditDialogComponent {
       lastCheck: new Date(),
       description: '',
       baseDir: ''
+    },
+    metadata: {
+      extra: {},
+      startImmediately: true,
     }
   };
 
@@ -63,10 +89,35 @@ export class SubscriptionEditDialogComponent {
     private subscriptionService: SubscriptionService,
     private externalUrlPipe: SubscriptionExternalUrlPipe,
     private toastService: ToastService,
+    private pageService: PageService,
   ) {
   }
 
+  getValues(def: DownloadMetadataDefinition) {
+    const values = this.copy.metadata.extra[def.key] || [];
+    if (values.length == 0) {
+      return def.defaultOption;
+    }
+
+    switch (def.formType) {
+      case DownloadMetadataFormType.MULTI:
+        return values;
+      case DownloadMetadataFormType.SWITCH:
+        return values[0] == "true";
+      case DownloadMetadataFormType.DROPDOWN:
+      case DownloadMetadataFormType.TEXT:
+        return values[0];
+    }
+  }
+
   refresh() {
+
+    if (!this.metadata) {
+      this.pageService.metadata(this.sub.provider).subscribe(meta => {
+        this.metadata = meta;
+      })
+    }
+
     this.filteredProviders = Providers.filter(p => this.providers.includes(p.value))
     this.copy = {
       ID: this.sub.ID,
@@ -79,7 +130,19 @@ export class SubscriptionEditDialogComponent {
         description: this.sub.info.description,
         lastCheck: this.sub.info.lastCheck,
         lastCheckSuccess: this.sub.info.lastCheckSuccess,
-      }
+      },
+      metadata: {
+        startImmediately: this.sub.metadata.startImmediately,
+        extra: this.sub.metadata.extra || {},
+      },
+    }
+  }
+
+  changeChoice(meta: DownloadMetadataDefinition, value: string | boolean | string[]) {
+    if (value instanceof Array) {
+      this.copy.metadata.extra[meta.key] = value;
+    } else {
+      this.copy.metadata.extra[meta.key] = [String(value)];
     }
   }
 
@@ -113,4 +176,6 @@ export class SubscriptionEditDialogComponent {
   }
 
   protected readonly RefreshFrequencies = RefreshFrequencies;
+  protected readonly DownloadMetadataFormType = DownloadMetadataFormType;
+  protected readonly Boolean = Boolean;
 }

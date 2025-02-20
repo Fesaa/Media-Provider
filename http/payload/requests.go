@@ -13,19 +13,14 @@ type SearchRequest struct {
 }
 
 type DownloadRequest struct {
-	Provider         models.Provider         `json:"provider" validate:"required,provider"`
-	Id               string                  `json:"id" validate:"required"`
-	BaseDir          string                  `json:"dir" validate:"required"`
-	TempTitle        string                  `json:"title" validate:"required"`
-	DownloadMetadata DownloadRequestMetadata `json:"downloadMetadata,omitempty"`
+	Provider         models.Provider                `json:"provider" validate:"required,provider"`
+	Id               string                         `json:"id" validate:"required"`
+	BaseDir          string                         `json:"dir" validate:"required"`
+	TempTitle        string                         `json:"title" validate:"required"`
+	DownloadMetadata models.DownloadRequestMetadata `json:"downloadMetadata,omitempty"`
 
 	// Internal communication
 	IsSubscription bool
-}
-
-type DownloadRequestMetadata struct {
-	StartImmediately bool                `json:"startImmediately"`
-	Extra            map[string][]string `json:"extra,omitempty"`
 }
 
 // IncludesMetadataSlice returns true if the request includes metadata for all passed keys, false otherwise
