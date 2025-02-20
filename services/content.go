@@ -151,13 +151,11 @@ func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, erro
 
 func (s *contentService) DownloadSubscription(sub *models.Subscription, isSub ...bool) error {
 	return s.Download(payload.DownloadRequest{
-		Provider:  sub.Provider,
-		Id:        sub.ContentId,
-		BaseDir:   sub.Info.BaseDir,
-		TempTitle: sub.Info.Title,
-		DownloadMetadata: payload.DownloadRequestMetadata{
-			StartImmediately: true,
-		},
+		Provider:         sub.Provider,
+		Id:               sub.ContentId,
+		BaseDir:          sub.Info.BaseDir,
+		TempTitle:        sub.Info.Title,
+		DownloadMetadata: sub.Payload,
 
 		IsSubscription: utils.OrDefault(isSub, true),
 	})
