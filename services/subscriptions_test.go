@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/zerolog"
 	"strings"
@@ -27,9 +28,9 @@ func tempDatabase(t *testing.T) *db.Database {
 	return database
 }
 
-func tempSubscriptionService(t *testing.T) SubscriptionService {
+func tempSubscriptionService(t *testing.T, tempdb *db.Database, logs ...zerolog.Logger) SubscriptionService {
 	t.Helper()
-	log := zerolog.Nop()
+	log := utils.OrDefault(logs, zerolog.Nop())
 
 	tempDir := t.TempDir()
 	config.Dir = tempDir
@@ -40,7 +41,16 @@ func tempSubscriptionService(t *testing.T) SubscriptionService {
 		t.Fatal(err)
 	}
 
-	return SubscriptionServiceProvider(tempDatabase(t), cs, log, cron)
+	transloco, err := TranslocoServiceProvider(log)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signalR := SignalRServiceProvider(SignalRParams{
+		Log: log,
+	})
+
+	return SubscriptionServiceProvider(tempdb, cs, log, cron, NotificationServiceProvider(log, tempdb, signalR), transloco)
 }
 
 func defaultSub() models.Subscription {
@@ -59,7 +69,7 @@ func defaultSub() models.Subscription {
 
 func TestSubscriptionService_All(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 
 	sub := defaultSub()
 
@@ -80,7 +90,7 @@ func TestSubscriptionService_All(t *testing.T) {
 
 func TestSubscriptionService_Add(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 	sub := defaultSub()
 	s, err := ss.Add(sub)
 	if err != nil {
@@ -95,7 +105,7 @@ func TestSubscriptionService_Add(t *testing.T) {
 
 func TestSubscriptionService_AddDupe(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 
 	sub := defaultSub()
 	_, err := ss.Add(sub)
@@ -135,7 +145,7 @@ func (b *brokenPreferences) Update(pref models.Preference) error {
 
 func TestSubscriptionService_AddBadPreference(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 
 	ssImpl := ss.(*subscriptionService)
 	ssImpl.db.Preferences = &brokenPreferences{
@@ -165,7 +175,7 @@ func TestSubscriptionService_AddBadPreference(t *testing.T) {
 
 func TestSubscriptionService_UpdateNoRefresh(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 
 	ssImpl := ss.(*subscriptionService)
 	var buffer bytes.Buffer
@@ -190,7 +200,7 @@ func TestSubscriptionService_UpdateNoRefresh(t *testing.T) {
 
 func TestSubscriptionService_UpdateBadPreference(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 	ssImpl := ss.(*subscriptionService)
 	sub := defaultSub()
 	_, err := ss.Add(sub)
@@ -207,7 +217,7 @@ func TestSubscriptionService_UpdateBadPreference(t *testing.T) {
 
 func TestSubscriptionService_UpdateRefresh(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 	sub := defaultSub()
 	_, err := ss.Add(sub)
 	if err != nil {
@@ -223,7 +233,7 @@ func TestSubscriptionService_UpdateRefresh(t *testing.T) {
 
 func TestSubscriptionService_toTask(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 	sub := defaultSub()
 
 	ssImpl := ss.(*subscriptionService)
@@ -264,20 +274,11 @@ func TestSubscriptionService_toTaskFailedDownload(t *testing.T) {
 	var buffer bytes.Buffer
 	log := zerolog.New(&buffer)
 
-	tempDir := t.TempDir()
-	config.Dir = tempDir
-
-	cs := tempContentService(t)
-	cron, err := CronServiceProvider(log)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ss := SubscriptionServiceProvider(tempDatabase(t), cs, log, cron)
+	ss := tempSubscriptionService(t, tempDatabase(t), log)
 	ssImpl := ss.(*subscriptionService)
 
 	task := ssImpl.toTask(sub.ID)
-	_, err = ssImpl.cronService.NewJob(
+	_, err := ssImpl.cronService.NewJob(
 		gocron.OneTimeJob(gocron.OneTimeJobStartImmediately()), task)
 	if err != nil {
 		t.Fatal(err)
@@ -287,8 +288,8 @@ func TestSubscriptionService_toTaskFailedDownload(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	Log := buffer.String()
-	if !strings.Contains(Log, "failed to download content") {
-		t.Fatalf("Wanted failed to download content, got %s", Log)
+	if !strings.Contains(Log, "failed to get subscription") {
+		t.Fatalf("Wanted failed to get subscription, got %s", Log)
 	}
 
 }
@@ -297,18 +298,9 @@ func TestSubscriptionServiceProvider_StartUp(t *testing.T) {
 	t.Parallel()
 	log := zerolog.New(zerolog.NewConsoleWriter())
 
-	tempDir := t.TempDir()
-	config.Dir = tempDir
-
-	cs := tempContentService(t)
-	cron, err := CronServiceProvider(log)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	sub := defaultSub()
 	database := tempDatabase(t)
-	_, err = database.Subscriptions.New(sub)
+	_, err := database.Subscriptions.New(sub)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +308,7 @@ func TestSubscriptionServiceProvider_StartUp(t *testing.T) {
 	var buffer bytes.Buffer
 	log = zerolog.New(&buffer)
 
-	_ = SubscriptionServiceProvider(database, cs, log, cron)
+	_ = tempSubscriptionService(t, database, log)
 
 	Log := buffer.String()
 	if !strings.Contains(Log, "scheduled subscriptions") ||
@@ -329,18 +321,9 @@ func TestSubscriptionServiceProvider_FailAtStartUp(t *testing.T) {
 	t.Parallel()
 	log := zerolog.New(zerolog.NewConsoleWriter())
 
-	tempDir := t.TempDir()
-	config.Dir = tempDir
-
-	cs := tempContentService(t)
-	cron, err := CronServiceProvider(log)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	sub := defaultSub()
 	database := tempDatabase(t)
-	_, err = database.Subscriptions.New(sub)
+	_, err := database.Subscriptions.New(sub)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -349,7 +332,7 @@ func TestSubscriptionServiceProvider_FailAtStartUp(t *testing.T) {
 
 	var buffer bytes.Buffer
 	log = zerolog.New(&buffer)
-	_ = SubscriptionServiceProvider(database, cs, log, cron)
+	_ = tempSubscriptionService(t, database, log)
 
 	Log := buffer.String()
 	if !strings.Contains(Log, "Failed to schedule subscription") ||
@@ -360,7 +343,7 @@ func TestSubscriptionServiceProvider_FailAtStartUp(t *testing.T) {
 
 func TestSubscriptionServiceProvider_Delete(t *testing.T) {
 	t.Parallel()
-	ss := tempSubscriptionService(t)
+	ss := tempSubscriptionService(t, tempDatabase(t))
 	sub := defaultSub()
 
 	newSub, err := ss.Add(sub)
