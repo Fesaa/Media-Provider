@@ -296,8 +296,6 @@ func TestSubscriptionService_toTaskFailedDownload(t *testing.T) {
 
 func TestSubscriptionServiceProvider_StartUp(t *testing.T) {
 	t.Parallel()
-	log := zerolog.New(zerolog.NewConsoleWriter())
-
 	sub := defaultSub()
 	database := tempDatabase(t)
 	_, err := database.Subscriptions.New(sub)
@@ -306,7 +304,7 @@ func TestSubscriptionServiceProvider_StartUp(t *testing.T) {
 	}
 
 	var buffer bytes.Buffer
-	log = zerolog.New(&buffer)
+	log := zerolog.New(&buffer)
 
 	_ = tempSubscriptionService(t, database, log)
 
@@ -319,7 +317,6 @@ func TestSubscriptionServiceProvider_StartUp(t *testing.T) {
 
 func TestSubscriptionServiceProvider_FailAtStartUp(t *testing.T) {
 	t.Parallel()
-	log := zerolog.New(zerolog.NewConsoleWriter())
 
 	sub := defaultSub()
 	database := tempDatabase(t)
@@ -331,7 +328,7 @@ func TestSubscriptionServiceProvider_FailAtStartUp(t *testing.T) {
 	database.Preferences = &brokenPreferences{}
 
 	var buffer bytes.Buffer
-	log = zerolog.New(&buffer)
+	log := zerolog.New(&buffer)
 	_ = tempSubscriptionService(t, database, log)
 
 	Log := buffer.String()

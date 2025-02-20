@@ -960,9 +960,9 @@ func TestTagsBlackList(t *testing.T) {
 func TestReplaceCover(t *testing.T) {
 	m := tempManga(t, payload.DownloadRequest{
 		Provider:  models.MANGADEX,
-		Id:        "bdf0dbce-3795-4ce0-8f46-86aebd018a6c",
+		Id:        "9b8e6611-73cd-4a50-883b-79ba99b7e4b3",
 		BaseDir:   "Manga",
-		TempTitle: "Foxes Always Lie",
+		TempTitle: "Finder Goshi no Ano Ko",
 		DownloadMetadata: models.DownloadRequestMetadata{
 			StartImmediately: false,
 		},
