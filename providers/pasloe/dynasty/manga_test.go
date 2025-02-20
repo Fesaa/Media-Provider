@@ -511,7 +511,7 @@ func TestCoverReplace(t *testing.T) {
 		Id:        "a_story_about_buying_a_classmate_once_a_week_5000_yen_for_an_excuse_to_spend_time_together",
 		BaseDir:   "Manga",
 		TempTitle: "A Story About Buying a Classmate Once a Week",
-		DownloadMetadata: payload.DownloadRequestMetadata{
+		DownloadMetadata: models.DownloadRequestMetadata{
 			StartImmediately: true,
 		},
 		IsSubscription: false,
@@ -544,7 +544,7 @@ func TestCoverNoReplace(t *testing.T) {
 		Id:        "the_blue_star_on_that_day_ano_koro_no_aoi_hoshi",
 		BaseDir:   "Manga",
 		TempTitle: "The Blue Star on That Day",
-		DownloadMetadata: payload.DownloadRequestMetadata{
+		DownloadMetadata: models.DownloadRequestMetadata{
 			StartImmediately: true,
 		},
 		IsSubscription: false,

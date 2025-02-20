@@ -132,12 +132,14 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 		m.chapters = m.FilterChapters(chapters)
 		m.SetSeriesStatus()
 
-		covers, err := m.repository.GetCoverImages(ctx, m.id)
-		if err != nil || covers == nil {
-			m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
-			m.coverFactory = defaultCoverFactory
-		} else {
-			m.coverFactory = m.getCoverFactoryLang(covers)
+		if m.Req.GetBool(IncludeCover, true) {
+			covers, err := m.repository.GetCoverImages(ctx, m.id)
+			if err != nil || covers == nil {
+				m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
+				m.coverFactory = defaultCoverFactory
+			} else {
+				m.coverFactory = m.getCoverFactoryLang(covers)
+			}
 		}
 
 		close(out)
