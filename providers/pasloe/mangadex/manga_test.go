@@ -994,7 +994,7 @@ func TestReplaceCover(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(originalCover) == len(coverBytes) {
+	if len(originalCover.Bytes) == len(coverBytes) {
 		t.Fatal("Cover should have been replaced, but wasn't")
 	}
 

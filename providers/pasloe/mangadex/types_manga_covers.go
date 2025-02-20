@@ -26,13 +26,16 @@ type MangaCoverAttributes struct {
 	Version     int    `json:"version"`
 }
 
-type Cover = []byte
+type Cover struct {
+	Bytes []byte
+	Data  MangaCoverData
+}
 
-type CoverFactory func(volume string) (Cover, bool)
+type CoverFactory func(volume string) (*Cover, bool)
 
-var defaultCoverFactory CoverFactory = func(volume string) (Cover, bool) { return nil, false }
+var defaultCoverFactory CoverFactory = func(volume string) (*Cover, bool) { return nil, false }
 
-func (m *manga) getCoverBytes(fileName string) (Cover, error) {
+func (m *manga) getCoverBytes(fileName string) ([]byte, error) {
 	url := fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", m.id, fileName)
 	resp, err := m.httpClient.Get(url)
 	if err != nil {
@@ -60,8 +63,8 @@ func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory 
 		return defaultCoverFactory
 	}
 
-	covers := make(map[string]Cover)
-	var defaultCover, defaultCoverLang Cover
+	covers := make(map[string]*Cover)
+	var defaultCover, defaultCoverLang *Cover
 
 	for _, cover := range coverResp.Data {
 		// Don't download non-matching locale's again if a cover is already present
@@ -82,27 +85,32 @@ func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory 
 			continue
 		}
 
-		if cover.Attributes.Locale == m.language {
-			covers[cover.Attributes.Volume] = coverBytes
-			if len(defaultCoverLang) == 0 {
-				defaultCoverLang = coverBytes
-			}
-		} else if _, ok := covers[cover.Attributes.Volume]; !ok {
-			covers[cover.Attributes.Volume] = coverBytes
+		_cover := &Cover{
+			Bytes: coverBytes,
+			Data:  cover,
 		}
 
-		if len(defaultCover) == 0 {
-			defaultCover = coverBytes
+		if cover.Attributes.Locale == m.language {
+			covers[cover.Attributes.Volume] = _cover
+			if defaultCoverLang == nil {
+				defaultCoverLang = _cover
+			}
+		} else if _, ok := covers[cover.Attributes.Volume]; !ok {
+			covers[cover.Attributes.Volume] = _cover
+		}
+
+		if defaultCover == nil {
+			defaultCover = _cover
 		}
 	}
 
-	if len(defaultCoverLang) > 0 {
+	if defaultCoverLang != nil {
 		defaultCover = defaultCoverLang
 	}
 
-	return func(volume string) (Cover, bool) {
+	return func(volume string) (*Cover, bool) {
 		url, ok := covers[volume]
-		if !ok && len(defaultCover) != 0 {
+		if !ok && len(defaultCover.Bytes) != 0 {
 			return defaultCover, true
 		}
 		if !ok {

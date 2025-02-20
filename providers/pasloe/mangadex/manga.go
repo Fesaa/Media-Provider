@@ -402,7 +402,7 @@ func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
 	toWrite, isFirstPage, err := m.getBetterChapterCover(chapter, cover)
 	if err != nil {
 		l.Warn().Err(err).Msg("an error occurred when trying to compare cover with the first page. Falling back")
-		toWrite = cover
+		toWrite = cover.Bytes
 	}
 
 	if isFirstPage && err == nil {
@@ -415,7 +415,7 @@ func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
 
 // getBetterChapterCover check if a higher quality cover is used inside chapters. Returns true
 // when the Cover returned if the first page of the chapter passed as an argument
-func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover Cover) (Cover, bool, error) {
+func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover *Cover) ([]byte, bool, error) {
 	replaced := false
 	if chapter.Attributes.Volume != "" {
 		chapters := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
@@ -444,7 +444,7 @@ func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover Co
 	images := res.FullImageUrls()
 
 	if len(images) == 0 {
-		return currentCover, false, nil
+		return currentCover.Bytes, false, nil
 	}
 
 	candidateBytes, err := m.download(images[0])
@@ -452,7 +452,7 @@ func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover Co
 		return nil, false, err
 	}
 
-	better, replacedBytes, err := m.imageService.Better(currentCover, candidateBytes)
+	better, replacedBytes, err := m.imageService.Better(currentCover.Bytes, candidateBytes)
 	if err != nil {
 		return nil, false, err
 	}
