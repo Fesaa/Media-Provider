@@ -30,6 +30,8 @@ type SubscriptionService interface {
 type subscriptionService struct {
 	cronService    CronService
 	contentService ContentService
+	notifier       NotificationService
+	transloco      TranslocoService
 
 	db  *db.Database
 	log zerolog.Logger
@@ -39,10 +41,14 @@ type subscriptionService struct {
 }
 
 func SubscriptionServiceProvider(db *db.Database, provider ContentService,
-	log zerolog.Logger, cronService CronService) SubscriptionService {
+	log zerolog.Logger, cronService CronService, notifier NotificationService,
+	transloco TranslocoService,
+) SubscriptionService {
 	service := &subscriptionService{
 		cronService:    cronService,
 		contentService: provider,
+		notifier:       notifier,
+		transloco:      transloco,
 		db:             db,
 		log:            log.With().Str("handler", "subscription-service").Logger(),
 		mapper:         utils.NewSafeMap[uint, uuid.UUID](),
@@ -186,7 +192,7 @@ func (s *subscriptionService) schedule(sub models.Subscription) error {
 		return err
 	}
 
-	job, err := s.cronService.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), s.toTask(sub),
+	job, err := s.cronService.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), s.toTask(sub.ID),
 		gocron.WithStartAt(gocron.WithStartDateTime(nextExecutionTime)))
 	if err != nil {
 		s.log.Error().Err(err).
@@ -207,9 +213,17 @@ func (s *subscriptionService) schedule(sub models.Subscription) error {
 	return nil
 }
 
-func (s *subscriptionService) toTask(sub models.Subscription) gocron.Task {
+func (s *subscriptionService) toTask(id uint) gocron.Task {
 	return gocron.NewTask(func() {
-		err := s.contentService.DownloadSubscription(&sub)
+		sub, err := s.db.Subscriptions.Get(id)
+		if err != nil {
+			s.log.Error().Err(err).Uint("id", id).Msg("failed to get subscription")
+			s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-sub"),
+				s.transloco.GetTranslation("failed-get-sub", id))
+			return
+		}
+
+		err = s.contentService.DownloadSubscription(sub)
 		sub.Info.LastCheck = time.Now()
 		sub.Info.LastCheckSuccess = err == nil
 
@@ -218,9 +232,11 @@ func (s *subscriptionService) toTask(sub models.Subscription) gocron.Task {
 				Uint("id", sub.ID).
 				Str("contentId", sub.ContentId).
 				Msg("failed to download content")
+			s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-sub"),
+				s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err))
 			return
 		}
 
-		s.updator <- sub
+		s.updator <- *sub
 	})
 }

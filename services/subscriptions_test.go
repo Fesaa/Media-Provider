@@ -228,7 +228,7 @@ func TestSubscriptionService_toTask(t *testing.T) {
 
 	ssImpl := ss.(*subscriptionService)
 
-	task := ssImpl.toTask(sub)
+	task := ssImpl.toTask(sub.ID)
 	_, err := ssImpl.cronService.NewJob(
 		gocron.OneTimeJob(gocron.OneTimeJobStartImmediately()), task)
 	if err != nil {
@@ -276,7 +276,7 @@ func TestSubscriptionService_toTaskFailedDownload(t *testing.T) {
 	ss := SubscriptionServiceProvider(tempDatabase(t), cs, log, cron)
 	ssImpl := ss.(*subscriptionService)
 
-	task := ssImpl.toTask(sub)
+	task := ssImpl.toTask(sub.ID)
 	_, err = ssImpl.cronService.NewJob(
 		gocron.OneTimeJob(gocron.OneTimeJobStartImmediately()), task)
 	if err != nil {

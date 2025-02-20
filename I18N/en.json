@@ -14,5 +14,9 @@
   "invalid-time-format": "Invalid time format: %v",
   "no-provider": "No provider specified",
   "request-failed": "Request to 3rd party website failed",
-  "failed-to-run-once": "Failed to download subscription: %v"
+  "failed-to-run-once": "Failed to download subscription: %v",
+
+  "failed-sub": "Subscription failed to run",
+  "failed-get-sub": "Failed to get subscription %d, can't run it",
+  "failed-start-sub-download": "Failed to start subscription %s's download: %v"
 }

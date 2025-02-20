@@ -41,10 +41,7 @@ func (s *Subscription) AfterFind(tx *gorm.DB) (err error) {
 }
 
 func (s *Subscription) ShouldRefresh(old *Subscription) bool {
-	return s.Provider != old.Provider ||
-		s.RefreshFrequency != old.RefreshFrequency ||
-		s.ContentId != old.ContentId ||
-		s.Info.BaseDir != old.Info.BaseDir
+	return s.RefreshFrequency != old.RefreshFrequency
 }
 
 func (s *Subscription) Normalize(p Preferences) error {
