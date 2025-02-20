@@ -10,7 +10,7 @@ import (
 )
 
 type ImageService interface {
-	// Better check if candidateImg is similar to defaultImg with MSE. If the similarityThreshold (default 0.7)
+	// Better check if candidateImg is similar to defaultImg with MSE. If the similarityThreshold (default 0.85)
 	// is reached, returns the highest resolution one. Otherwise defaultImg
 	Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error)
 	Similar(img1, img2 image.Image) float64
@@ -43,7 +43,7 @@ func (i *imageService) IsCover(data []byte) bool {
 }
 
 func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error) {
-	similarityThreshold := utils.OrDefault(similarityThresholds, 0.7)
+	similarityThreshold := utils.OrDefault(similarityThresholds, 0.85)
 
 	img1, _, err := image.Decode(bytes.NewReader(defaultImg))
 	if err != nil {

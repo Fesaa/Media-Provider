@@ -33,10 +33,10 @@ func (s *Subscription) BeforeSave(tx *gorm.DB) (err error) {
 }
 
 func (s *Subscription) AfterFind(tx *gorm.DB) (err error) {
+	s.Payload.StartImmediately = true
 	if s.Metadata == nil {
 		return
 	}
-	s.Payload.StartImmediately = true
 	return json.Unmarshal(s.Metadata, &s.Payload.Extra)
 }
 

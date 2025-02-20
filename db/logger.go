@@ -11,7 +11,7 @@ import (
 )
 
 var defaultConfig = logger.Config{
-	SlowThreshold:             200 * time.Millisecond,
+	SlowThreshold:             1 * time.Second,
 	LogLevel:                  logger.Warn,
 	IgnoreRecordNotFoundError: true,
 	Colorful:                  true,

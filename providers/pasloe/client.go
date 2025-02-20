@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 )
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
@@ -240,6 +241,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 		return
 	}
 
+	start := time.Now()
 	for _, contentPath := range content.GetNewContent() {
 		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
 		if err := os.RemoveAll(contentPath); err != nil {
@@ -277,12 +279,18 @@ func (c *client) deleteFiles(content api.Downloadable) {
 			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
 		}
 	}
-	l.Debug().Msg("finished removing newly downloaded files")
+	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing newly downloaded files")
 }
 
 func (c *client) cleanup(content api.Downloadable) {
 	l := c.log.With().Str("contentId", content.Id()).Logger()
-	for _, contentPath := range content.GetNewContent() {
+	newContent := content.GetNewContent()
+	if len(newContent) == 0 {
+		return
+	}
+
+	start := time.Now()
+	for _, contentPath := range newContent {
 		l.Trace().Str("path", contentPath).Msg("Zipping file")
 		err := c.io.ZipToCbz(contentPath)
 		if err != nil {
@@ -295,7 +303,7 @@ func (c *client) cleanup(content api.Downloadable) {
 			return
 		}
 	}
-	l.Debug().Msg("finished zipping newly downloaded content")
+	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished zipping newly downloaded content")
 }
 
 func (c *client) wrapError(err error) error {
