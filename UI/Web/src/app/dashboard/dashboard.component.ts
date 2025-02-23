@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, DestroyRef, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {ContentService} from "../_services/content.service";
@@ -20,6 +20,7 @@ import {EventType, SignalRService} from "../_services/signal-r.service";
 import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteContent} from "../_models/signalr";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-dashboard',
@@ -56,6 +57,7 @@ export class DashboardComponent implements OnInit {
               private contentTitle: ContentTitlePipe,
               private dialogService: DialogService,
               private signalR: SignalRService,
+              private destroyRef: DestroyRef,
   ) {
     this.navService.setNavVisibility(true);
   }
@@ -67,7 +69,7 @@ export class DashboardComponent implements OnInit {
       this.sortInfo()
     })
 
-    this.signalR.events$.subscribe(event => {
+    this.signalR.events$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
       switch (event.type) {
         case EventType.ContentStateUpdate:
           this.updateState(event.data as ContentStateUpdate);
@@ -84,7 +86,19 @@ export class DashboardComponent implements OnInit {
         case EventType.AddContent:
           this.addContent(event.data as InfoStat);
           break;
+        case EventType.ContentInfoUpdate:
+          this.updateInfo(event.data as InfoStat);
+          break;
       }
+    })
+  }
+
+  private updateInfo(info: InfoStat) {
+    this.info = this.info.map(i => {
+      if (i.id !== info.id) {
+        return i;
+      }
+      return info;
     })
   }
 

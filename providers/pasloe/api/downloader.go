@@ -168,7 +168,7 @@ func (d *DownloadBase[T]) GetBaseDir() string {
 func (d *DownloadBase[T]) GetDownloadDir() string {
 	title := d.infoProvider.Title()
 	if title == "" {
-		return ""
+		return d.baseDir
 	}
 	return path.Join(d.baseDir, title)
 }
@@ -269,7 +269,7 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return download
 	})
 
-	d.SignalR.SizeUpdate(d.Id(), strconv.Itoa(d.Size())+" Chapters")
+	d.SignalR.UpdateContentInfo(d.GetInfo())
 
 	d.Log.Debug().Int("all", len(data)).Int("filtered", len(d.ToDownload)).
 		Msg("downloaded content filtered")
