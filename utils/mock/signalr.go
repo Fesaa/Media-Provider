@@ -10,6 +10,9 @@ type SignalR struct {
 	signalr.Hub
 }
 
+func (m *SignalR) UpdateContentInfo(data payload.InfoStat) {
+}
+
 func (m *SignalR) Broadcast(eventType payload.EventType, data interface{}) {
 }
 
