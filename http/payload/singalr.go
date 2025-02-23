@@ -3,6 +3,7 @@ package payload
 type EventType string
 
 const (
+	EventTypeContentInfoUpdate     EventType = "ContentInfoUpdate"
 	EventTypeContentSizeUpdate     EventType = "ContentSizeUpdate"
 	EventTypeContentProgressUpdate EventType = "ContentProgressUpdate"
 	EventTypeAddContent            EventType = "AddContent"

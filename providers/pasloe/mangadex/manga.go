@@ -99,7 +99,7 @@ func (m *manga) Provider() models.Provider {
 
 func (m *manga) RefUrl() string {
 	if m.info == nil {
-		return ""
+		return fmt.Sprintf("https://mangadex.org/title/%s/", m.Id())
 	}
 
 	return m.info.RefURL()
