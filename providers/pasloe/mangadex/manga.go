@@ -77,6 +77,7 @@ type manga struct {
 
 	hasWarned          bool
 	hasWarnedBlacklist bool
+	hasNotifiedSub     bool
 
 	language string
 }
@@ -461,6 +462,8 @@ func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover *C
 	return better, !replaced && replacedBytes, nil
 }
 
+// metronInfo DO NOT USE: Code is outdated!
+//
 //nolint:funlen
 func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 	mi := metroninfo.NewMetronInfo()
@@ -694,26 +697,65 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	return ci
 }
 
-// writeStatus Add the comicinfo#count field if the manga has completed, so Kavita can add the correct Completed marker
-// We can't add it for others, as mangadex is community sourced, so may lag behind. But this should be correct
+// writeCIStatus updates the ComicInfo.Count field according the Mangadex's information
+// and adds a notification in case a subscription has been exhausted
 func (m *manga) writeCIStatus(ci *comicinfo.ComicInfo) {
 	if m.info.Attributes.Status != StatusCompleted {
+		m.Log.Trace().Msg("Series not completed, no status to write")
 		return
 	}
-	switch {
-	case m.lastFoundVolume == 0 && m.foundLastChapter:
-		ci.Count = m.lastFoundChapter
-	case m.foundLastChapter && m.foundLastVolume:
-		ci.Count = m.lastFoundVolume
-	case !m.hasWarned:
-		m.hasWarned = true
-		m.Log.Warn().
-			Str("lastChapter", m.info.Attributes.LastChapter).
-			Bool("foundLastChapter", m.foundLastChapter).
-			Str("lastVolume", m.info.Attributes.LastVolume).
-			Bool("foundLastVolume", m.foundLastVolume).
-			Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
+
+	if m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter == "" {
+		m.Log.Warn().Msg("Mangadex marked this series as completed, but no last volume or chapter were provided?")
+		return
 	}
+
+	var count, found int
+	var content string
+	if m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter != "" {
+		val, err := strconv.ParseInt(m.info.Attributes.LastChapter, 10, 64)
+		if err != nil {
+			m.Log.Warn().Err(err).Str("chapter", m.info.Attributes.LastChapter).
+				Msg("Series was completed, but we failed to parse the last chapter from mangadex")
+			return
+		}
+		count = int(val)
+		found = m.lastFoundChapter
+		content = "Chapters"
+	} else {
+		val, err := strconv.ParseInt(m.info.Attributes.LastVolume, 10, 64)
+		if err != nil {
+			m.Log.Warn().Err(err).Str("volume", m.info.Attributes.LastVolume).
+				Msg("Series was completed, but we failed to parse the last volume from mangadex")
+			return
+		}
+		count = int(val)
+		found = m.lastFoundVolume
+		content = "Volumes"
+	}
+
+	ci.Count = count
+	if found < count {
+		if !m.hasWarned {
+			m.hasWarned = true
+			m.Log.Warn().
+				Str("lastChapter", m.info.Attributes.LastChapter).
+				Bool("foundLastChapter", m.foundLastChapter).
+				Str("lastVolume", m.info.Attributes.LastVolume).
+				Bool("foundLastVolume", m.foundLastVolume).
+				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
+		}
+		return
+	}
+
+	// Series has completed, and everything has been downloaded
+	if !m.Req.IsSubscription || m.hasNotifiedSub {
+		return
+	}
+
+	m.hasNotifiedSub = true
+	m.Notifier.NotifyContent(m.TransLoco.GetTranslation("sub-downloaded-all-title"),
+		m.Title(), m.TransLoco.GetTranslation("sub-downloaded-all", m.Title(), count, content))
 }
 
 func (m *manga) DownloadContent(page int, chapter ChapterSearchData, url string) error {
