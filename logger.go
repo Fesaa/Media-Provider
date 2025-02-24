@@ -3,7 +3,10 @@ package main
 import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/rs/zerolog"
+	"gopkg.in/natefinch/lumberjack.v2"
+	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -14,16 +17,18 @@ func LogProvider(cfg *config.Config) zerolog.Logger {
 	zerolog.DurationFieldUnit = time.Second
 	zerolog.CallerMarshalFunc = callerMarshal
 
-	ctx := func() zerolog.Logger {
+	writer := func() io.Writer {
 		switch cfg.Logging.Handler {
 		case config.LogHandlerText:
-			return zerolog.New(consoleWriter())
+			return consoleWriter()
 		case config.LogHandlerJSON:
-			return zerolog.New(os.Stdout)
+			return io.MultiWriter(os.Stdout, fileWriter())
 		default:
 			panic("Unknown log handler: " + cfg.Logging.Handler)
 		}
-	}().With()
+	}()
+
+	ctx := zerolog.New(writer).With()
 
 	if cfg.Logging.Source {
 		ctx = ctx.Caller()
@@ -46,6 +51,15 @@ func callerMarshal(pc uintptr, file string, line int) string {
 	return file + ":" + strconv.Itoa(line)
 }
 
+func fileWriter() io.Writer {
+	return &lumberjack.Logger{
+		Filename:  path.Join(config.Dir, "logs", "media-provider.log"),
+		MaxAge:    30,
+		LocalTime: false,
+		Compress:  true,
+	}
+}
+
 func consoleWriter() zerolog.ConsoleWriter {
 	cw := zerolog.NewConsoleWriter()
 	cw.TimeFormat = "2006-01-02 15:04:05"
@@ -59,5 +73,8 @@ func consoleWriter() zerolog.ConsoleWriter {
 	cw.FieldsExclude = []string{
 		"handler",
 	}
+
+	cw.NoColor = true
+	cw.Out = io.MultiWriter(os.Stdout, fileWriter())
 	return cw
 }

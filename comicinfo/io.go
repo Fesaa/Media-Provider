@@ -116,6 +116,7 @@ func Save(ci *ComicInfo, path string) error {
 	if err != nil {
 		return fmt.Errorf("error creating file: %w", err)
 	}
+	defer f.Close()
 
 	err = Write(ci, f)
 	if err != nil {

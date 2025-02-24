@@ -25,6 +25,13 @@ func tempDatabase(t *testing.T) *db.Database {
 		}
 		t.Fatal(err)
 	}
+	t.Cleanup(func() {
+		d, err := database.DB().DB()
+		if err != nil {
+			t.Fatal(err)
+		}
+		d.Close()
+	})
 	return database
 }
 

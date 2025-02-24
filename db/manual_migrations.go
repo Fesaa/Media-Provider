@@ -50,7 +50,7 @@ func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 
 	for _, m := range toDo {
 		err := db.Transaction(func(tx *gorm.DB) error {
-			log.Info().Str("name", m.name).Msg("Running manual migration")
+			log.WithLevel(zerolog.FatalLevel).Str("name", m.name).Msg("Running manual migration. This is not an error")
 			var errorTally []error
 			err := m.f(tx)
 			if err != nil {
@@ -78,7 +78,7 @@ func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 				return errors.Join(errorTally...)
 			}
 
-			log.Info().Str("name", m.name).Msg("Finished running manual migration")
+			log.WithLevel(zerolog.FatalLevel).Str("name", m.name).Msg("Finished running manual migration. This is not an error")
 			return nil
 		})
 

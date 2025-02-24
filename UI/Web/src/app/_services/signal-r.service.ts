@@ -5,6 +5,7 @@ import {User} from "../_models/user";
 import {ReplaySubject} from "rxjs";
 
 export enum EventType {
+  ContentInfoUpdate = "ContentInfoUpdate",
   ContentSizeUpdate = "ContentSizeUpdate",
   ContentProgressUpdate = "ContentProgressUpdate",
   ContentStateUpdate = "ContentStateUpdate",
@@ -94,6 +95,13 @@ export class SignalRService {
     this.hubConnection.on(EventType.NotificationRead, (message) => {
       this.eventsSource.next({
         type: EventType.NotificationRead,
+        data: message
+      })
+    })
+
+    this.hubConnection.on(EventType.ContentInfoUpdate, (message) => {
+      this.eventsSource.next({
+        type: EventType.ContentInfoUpdate,
         data: message
       })
     })

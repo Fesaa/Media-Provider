@@ -21,6 +21,7 @@ type SignalRService interface {
 	StateUpdate(id string, state payload.ContentState)
 
 	AddContent(data payload.InfoStat)
+	UpdateContentInfo(data payload.InfoStat)
 	DeleteContent(id string)
 
 	// Notify may be used directly by anyone to send a quick toast to the frontend.
@@ -89,6 +90,10 @@ func (s *signalrService) StateUpdate(id string, state payload.ContentState) {
 
 func (s *signalrService) AddContent(data payload.InfoStat) {
 	s.Broadcast(payload.EventTypeAddContent, data)
+}
+
+func (s *signalrService) UpdateContentInfo(data payload.InfoStat) {
+	s.Broadcast(payload.EventTypeContentInfoUpdate, data)
 }
 
 func (s *signalrService) DeleteContent(id string) {

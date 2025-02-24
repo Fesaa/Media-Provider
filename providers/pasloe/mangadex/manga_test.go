@@ -286,6 +286,8 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 
 	m.info = mangaResp()
 	m.info.Attributes.Status = StatusCompleted
+	m.info.Attributes.LastVolume = "2"
+	m.info.Attributes.LastChapter = "8"
 
 	ci := m.comicInfo(mr.chapters.Data[0])
 	got = ci.Count
@@ -611,7 +613,9 @@ func TestManga_writeCIStatusOnlyChapters(t *testing.T) {
 
 	m.info = mangaResp()
 	m.info.Attributes.Status = StatusCompleted
+	m.info.Attributes.LastVolume = ""
 	m.lastFoundVolume = 0
+	m.info.Attributes.LastChapter = "10"
 	m.lastFoundChapter = 10
 	m.foundLastChapter = true
 
@@ -630,6 +634,7 @@ func TestManga_writeCIStatusVolumes(t *testing.T) {
 	m.info.Attributes.Status = StatusCompleted
 	m.foundLastChapter = true
 	m.foundLastVolume = true
+	m.info.Attributes.LastVolume = "12"
 	m.lastFoundVolume = 12
 
 	m.writeCIStatus(ci)
@@ -645,6 +650,7 @@ func TestManga_writeCIStatusDontWarnTwice(t *testing.T) {
 	ci := comicinfo.NewComicInfo()
 
 	m.info = mangaResp()
+	m.info.Attributes.LastVolume = "1"
 	m.info.Attributes.Status = StatusCompleted
 
 	m.writeCIStatus(ci)
@@ -656,6 +662,34 @@ func TestManga_writeCIStatusDontWarnTwice(t *testing.T) {
 		t.Errorf("got %d, want 1", count)
 	}
 
+}
+
+func TestManga_writeCIStatusSub(t *testing.T) {
+	r := req()
+	r.IsSubscription = true
+	m := tempManga(t, r, io.Discard)
+	ci := comicinfo.NewComicInfo()
+
+	m.info = mangaResp()
+	m.info.Attributes.LastVolume = "1"
+	m.lastFoundVolume = 1
+	m.info.Attributes.Status = StatusCompleted
+
+	counter := 0
+	m.Notifier = mock.Notifications{
+		NotifyContentFunc: func(s string, s1 string, s2 string, colour ...models.NotificationColour) {
+			counter++
+		},
+	}
+
+	m.writeCIStatus(ci)
+	m.writeCIStatus(ci)
+	m.writeCIStatus(ci)
+
+	want := 1
+	if counter != want {
+		t.Errorf("got %d, want %d", counter, want)
+	}
 }
 
 func TestManga_DownloadContent(t *testing.T) {
