@@ -18,5 +18,8 @@
 
   "failed-sub": "Subscription failed to run",
   "failed-get-sub": "Failed to get subscription %d, can't run it",
-  "failed-start-sub-download": "Failed to start subscription %s's download: %v"
+  "failed-start-sub-download": "Failed to start subscription %s's download: %v",
+
+  "sub-downloaded-all-title": "Subscription exhausted",
+  "sub-downloaded-all": "The subscription on %s has downloaded all possible content; (%d %s), consider removing it."
 }
