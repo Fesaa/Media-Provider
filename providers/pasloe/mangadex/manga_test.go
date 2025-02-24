@@ -677,7 +677,7 @@ func TestManga_writeCIStatusSub(t *testing.T) {
 
 	counter := 0
 	m.Notifier = mock.Notifications{
-		NotifyContentFunc: func(string, s string, s2 string, colour ...models.NotificationColour) {
+		NotifyContentFunc: func(s string, s1 string, s2 string, colour ...models.NotificationColour) {
 			counter++
 		},
 	}

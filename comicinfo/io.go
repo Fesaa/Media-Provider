@@ -113,10 +113,10 @@ func Open(path string) (*ComicInfo, error) {
 // Save writes the ComicInfo spec to the specified path.
 func Save(ci *ComicInfo, path string) error {
 	f, err := os.Create(path)
-	defer f.Close()
 	if err != nil {
 		return fmt.Errorf("error creating file: %w", err)
 	}
+	defer f.Close()
 
 	err = Write(ci, f)
 	if err != nil {
