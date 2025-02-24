@@ -38,7 +38,7 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 		return nil, err
 	}
 
-	if err = manualMigration(db, log); err != nil {
+	if err = manualMigration(db, log.With().Str("handler", "migrations").Logger()); err != nil {
 		return nil, err
 	}
 

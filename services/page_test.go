@@ -20,7 +20,13 @@ func tempPageService(t *testing.T) PageService {
 	if err != nil {
 		t.Fatal(err)
 	}
-
+	t.Cleanup(func() {
+		d, err := database.DB().DB()
+		if err != nil {
+			t.Fatal(err)
+		}
+		d.Close()
+	})
 	return PageServiceProvider(database, log)
 }
 

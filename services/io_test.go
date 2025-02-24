@@ -45,9 +45,9 @@ func TestZipFolder(t *testing.T) {
 	defer r.Close()
 
 	expectedFiles := map[string]string{
-		"file1.txt":        "Hello, World!",
-		"file2.txt":        "Go is awesome!",
-		"subdir/file3.txt": "Inside subdirectory",
+		"file1.txt":                          "Hello, World!",
+		"file2.txt":                          "Go is awesome!",
+		filepath.Join("subdir", "file3.txt"): "Inside subdirectory",
 	}
 
 	for _, f := range r.File {
