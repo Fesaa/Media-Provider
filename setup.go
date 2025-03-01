@@ -37,6 +37,7 @@ type appParams struct {
 func ApplicationProvider(params appParams) *fiber.App {
 	c := params.Container
 	baseUrl := params.Cfg.BaseUrl
+	log := params.Log.With().Str("handler", "core").Logger()
 
 	app := fiber.New(fiber.Config{
 		AppName: "Media-Provider",
@@ -66,7 +67,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 	app.Use(prometheus.Middleware)
 
 	dontLog := []string{"/", "/api/metrics"}
-	dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2"}
+	dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2", ".json"}
 	httpLogger := params.Log.With().Str("handler", "http").Logger()
 	app.Use(fiberzerolog.New(fiberzerolog.Config{
 		Logger: &httpLogger,
@@ -77,6 +78,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 			return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
 		},
 		Fields: []string{
+			fiberzerolog.FieldUserAgent,
 			fiberzerolog.FieldIP,
 			fiberzerolog.FieldLatency,
 			fiberzerolog.FieldStatus,
@@ -97,6 +99,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 		err := c.Next()
 		// This is very much nonsense, definitely have to find a better way later
 		if err != nil && strings.HasPrefix(err.Error(), "Cannot GET") {
+			log.Trace().Str("path", c.Path()).Msg("invalid route, returning index")
 			return c.SendFile("./public/index.html")
 		}
 
@@ -108,6 +111,8 @@ func ApplicationProvider(params appParams) *fiber.App {
 
 func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger) error {
 	baseUrl := cfg.BaseUrl
+	log = log.With().Str("handler", "core").Logger()
+
 	if os.Getenv("DEV") != "" {
 		log.Debug().Msg("Skipping base url update in DEV environment")
 		return nil

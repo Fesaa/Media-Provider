@@ -23,6 +23,6 @@ func CronServiceProvider(log zerolog.Logger) (CronService, error) {
 	s.Start()
 	return cronService{
 		Scheduler: s,
-		log:       log,
+		log:       log.With().Str("handler", "cron-service").Logger(),
 	}, nil
 }

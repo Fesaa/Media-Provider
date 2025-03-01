@@ -11,6 +11,8 @@ import (
 )
 
 func validateConfig(cfg *config.Config, log zerolog.Logger, val *validator.Validate) error {
+	log = log.With().Str("handler", "config-validator").Logger()
+
 	if err := val.Struct(cfg); err != nil {
 		return err
 	}
