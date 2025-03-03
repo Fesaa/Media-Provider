@@ -39,7 +39,6 @@ func LogProvider(cfg *config.Config) zerolog.Logger {
 	zerolog.SetGlobalLevel(cfg.Logging.Level)
 	return ctx.
 		Timestamp().
-		Str("handler", "core").
 		Logger().
 		Level(zerolog.TraceLevel)
 }

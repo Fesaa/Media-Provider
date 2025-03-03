@@ -27,7 +27,7 @@ func ValidatorProvider() *validator.Validate {
 func ValidationServiceProvider(val *validator.Validate, log zerolog.Logger) ValidationService {
 	return &validationService{
 		validator: val,
-		log:       log,
+		log:       log.With().Str("handler", "validation-service").Logger(),
 	}
 }
 
