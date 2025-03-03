@@ -8,3 +8,4 @@ public
 !UI/Web/public
 backup
 logs
+.DS_Store
