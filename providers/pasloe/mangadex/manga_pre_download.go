@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/utils"
-	"os"
 	"path"
 	"regexp"
 	"slices"
@@ -206,16 +205,6 @@ func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.
 
 	l.Debug().Int("onDiskVolume", ci.Volume).Str("path", fullPath).
 		Msg("Loose chapter has been assigned to a volume, replacing")
-
-	// Opted to remove, and redownload the entire chapter if the volume marker changes
-	// One could argue that only the comicinfo.xml should be replaced if this happens.
-	// Making the assumption that new content may be added in a chapter once it's added to a volume.
-	// Especially the first, and last chapter of the volume.
-	if err = os.Remove(fullPath); err != nil {
-		l.Error().Err(err).Str("path", fullPath).Msg("unable to remove old chapter, not downloading new")
-		return false
-	}
-
 	return true
 }
 
@@ -245,21 +234,29 @@ func (m *manga) hasNewCover(chapter ChapterSearchData, content api.Content) bool
 		return false
 	}
 
-	if m.imageService.Equal(betterCover, existingCover) {
+	betterImg, err := m.imageService.ToImg(betterCover)
+	if err != nil {
+		l.Error().Err(err).Msg("failed to convert better cover to image")
+		return false
+	}
+
+	existingImg, err := m.imageService.ToImg(existingCover)
+	if err != nil {
+		l.Error().Err(err).Msg("failed to convert existing cover to image")
+		return false
+	}
+
+	if m.imageService.ImgResolution(existingImg) > m.imageService.ImgResolution(betterImg) {
+		l.Trace().Str("path", fullPath).
+			Msg("Existing image has a better resolution, assuming it was set by the user")
+		return false
+	}
+
+	if m.imageService.Similar(existingImg, betterImg) > 0.85 {
 		l.Trace().Str("path", fullPath).Msg("cover is up to date")
 		return false
 	}
 
 	l.Debug().Str("path", fullPath).Msg("a new cover has been found, re-downloading chapter")
-
-	// Opted to remove, and redownload the entire chapter if the volume marker changes
-	// One could argue that only the cover should be replaced if this happens.
-	// Making the assumption that new content may be added in a chapter once it's added to a volume.
-	// Especially the first, and last chapter of the volume.
-	if err = os.Remove(fullPath); err != nil {
-		l.Error().Err(err).Str("path", fullPath).Msg("unable to remove old chapter, not downloading new")
-		return false
-	}
-
 	return true
 }
