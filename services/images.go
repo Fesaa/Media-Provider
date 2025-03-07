@@ -16,8 +16,8 @@ type ImageService interface {
 	Similar(img1, img2 image.Image) float64
 	MeanSquareError(img1, img2 image.Image) float64
 	IsCover(data []byte) bool
-	ToImg(b []byte) (image.Image, error)
 	ImgResolution(img image.Image) int
+	ToImg(b []byte) (image.Image, error)
 }
 
 type imageService struct {
