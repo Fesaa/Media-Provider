@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"crypto/md5"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/disintegration/imaging"
 	"github.com/rs/zerolog"
@@ -16,6 +17,7 @@ type ImageService interface {
 	Similar(img1, img2 image.Image) float64
 	MeanSquareError(img1, img2 image.Image) float64
 	IsCover(data []byte) bool
+	Equal(img1, img2 []byte) bool
 }
 
 type imageService struct {
@@ -26,6 +28,12 @@ func ImageServiceProvider(log zerolog.Logger) ImageService {
 	return &imageService{
 		log: log.With().Str("handler", "image-service").Logger(),
 	}
+}
+
+func (i *imageService) Equal(img1, img2 []byte) bool {
+	sum1 := md5.Sum(img1)
+	sum2 := md5.Sum(img2)
+	return bytes.Equal(sum1[:], sum2[:])
 }
 
 func (i *imageService) IsCover(data []byte) bool {
