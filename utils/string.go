@@ -13,10 +13,6 @@ func ContainsIgnoreCase(str1, str2 string) bool {
 	return strings.Contains(strings.ToLower(str1), strings.ToLower(str2))
 }
 
-func EqualsIgnoreCase(str1, str2 string) bool {
-	return strings.ToLower(str1) == strings.ToLower(str2)
-}
-
 func Normalize(s string) string {
 	return strings.ToLower(re.ReplaceAllString(s, ""))
 }
