@@ -2,8 +2,7 @@ package services
 
 import (
 	"bytes"
-	//nolint:gosec
-	"crypto/md5"
+	"crypto/sha256"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/disintegration/imaging"
 	"github.com/rs/zerolog"
@@ -31,10 +30,9 @@ func ImageServiceProvider(log zerolog.Logger) ImageService {
 	}
 }
 
-//nolint:gosec
 func (i *imageService) Equal(img1, img2 []byte) bool {
-	sum1 := md5.Sum(img1)
-	sum2 := md5.Sum(img2)
+	sum1 := sha256.Sum256(img1)
+	sum2 := sha256.Sum256(img2)
 	return bytes.Equal(sum1[:], sum2[:])
 }
 

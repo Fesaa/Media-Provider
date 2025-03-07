@@ -39,9 +39,9 @@ func (s *cacheService) constructCache() {
 	}
 	if s.Storage == nil {
 		s.log.Debug().Msg("Falling back to in-memory cache")
-		c := memoryStorage{utils.NewSafeMap[string, *cacheEntry](), s.log}
+		c := &memoryStorage{utils.NewSafeMap[string, *cacheEntry](), s.log}
 		go c.cleaner()
-		s.Storage = &c
+		s.Storage = c
 	}
 }
 
