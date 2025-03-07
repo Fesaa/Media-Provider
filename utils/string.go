@@ -9,6 +9,10 @@ import (
 
 var re = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
+func ContainsIgnoreCase(str1, str2 string) bool {
+	return strings.Contains(strings.ToLower(str1), strings.ToLower(str2))
+}
+
 func Normalize(s string) string {
 	return strings.ToLower(re.ReplaceAllString(s, ""))
 }

@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Repository interface {
@@ -20,22 +22,25 @@ type Repository interface {
 }
 
 type repository struct {
-	httpClient *http.Client
-	log        zerolog.Logger
-	tags       utils.SafeMap[string, string]
+	httpClient   *http.Client
+	log          zerolog.Logger
+	tags         utils.SafeMap[string, string]
+	cacheService services.CacheService
 }
 
 type repositoryParams struct {
 	dig.In
 
-	HttpClient *http.Client `name:"http-retry"`
+	HttpClient   *http.Client `name:"http-retry"`
+	CacheService services.CacheService
 }
 
 func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 	r := &repository{
-		httpClient: params.HttpClient,
-		log:        log.With().Str("handler", "mangadex-repository").Logger(),
-		tags:       utils.NewSafeMap[string, string](),
+		httpClient:   params.HttpClient,
+		log:          log.With().Str("handler", "mangadex-repository").Logger(),
+		tags:         utils.NewSafeMap[string, string](),
+		cacheService: params.CacheService,
 	}
 	if err := r.loadTags(); err != nil {
 		r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
@@ -48,25 +53,9 @@ func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 func (r *repository) loadTags() error {
 	tagURL := URL + "/manga/tag"
 
-	resp, err := r.httpClient.Get(tagURL)
-	if err != nil {
-		return fmt.Errorf("loadTags Get: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("loadTags status: %s", resp.Status)
-	}
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("loadTags readAll: %w", err)
-	}
-
 	var tagResponse TagResponse
-	err = json.Unmarshal(body, &tagResponse)
-	if err != nil {
-		return fmt.Errorf("loadTags unmarshal: %w", err)
+	if err := do(context.Background(), r.cacheService, r.httpClient, tagURL, &tagResponse); err != nil {
+		return fmt.Errorf("loadTags: %w", err)
 	}
 
 	for _, tag := range tagResponse.Data {
@@ -98,7 +87,7 @@ func (r *repository) GetManga(ctx context.Context, id string) (*GetMangaResponse
 	url := getMangaURL(id)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetManga")
 	var getMangaResponse GetMangaResponse
-	err := do(ctx, r.httpClient, url, &getMangaResponse)
+	err := do(ctx, r.cacheService, r.httpClient, url, &getMangaResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +101,7 @@ func (r *repository) SearchManga(ctx context.Context, options SearchOptions) (*M
 	}
 
 	var searchResponse MangaSearchResponse
-	err = do(ctx, r.httpClient, url, &searchResponse)
+	err = do(ctx, r.cacheService, r.httpClient, url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +112,7 @@ func (r *repository) GetChapters(ctx context.Context, id string, offset ...int) 
 	url := chapterURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapters")
 	var searchResponse ChapterSearchResponse
-	err := do(ctx, r.httpClient, url, &searchResponse)
+	err := do(ctx, r.cacheService, r.httpClient, url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +133,7 @@ func (r *repository) GetChapterImages(ctx context.Context, id string) (*ChapterI
 	url := chapterImageUrl(id)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapterImages")
 	var searchResponse ChapterImageSearchResponse
-	err := do(ctx, r.httpClient, url, &searchResponse)
+	err := do(ctx, r.cacheService, r.httpClient, url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +144,7 @@ func (r *repository) GetCoverImages(ctx context.Context, id string, offset ...in
 	url := getCoverURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Str("offset", fmt.Sprintf("%#v", offset)).Msg("GetCoverImages")
 	var searchResponse MangaCoverResponse
-	err := do(ctx, r.httpClient, url, &searchResponse)
+	err := do(ctx, r.cacheService, r.httpClient, url, &searchResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +161,14 @@ func (r *repository) GetCoverImages(ctx context.Context, id string, offset ...in
 	return &searchResponse, nil
 }
 
-func do[T any](ctx context.Context, httpClient *http.Client, url string, out *T) error {
+func do[T any](ctx context.Context, cs services.CacheService, httpClient *http.Client, url string, out *T) error {
+	// Swallow all errors on client side
+	if data, err := cs.Get(url); err == nil && data != nil {
+		if err = json.Unmarshal(data, out); err == nil {
+			return nil
+		}
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -194,6 +190,11 @@ func do[T any](ctx context.Context, httpClient *http.Client, url string, out *T)
 
 	if err = json.Unmarshal(data, out); err != nil {
 		return err
+	}
+
+	//nolint:staticcheck
+	if err = cs.Set(url, data, 5*time.Minute); err != nil {
+		// Swallow error client side
 	}
 	return nil
 }

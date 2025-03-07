@@ -46,6 +46,8 @@ func main() {
 	utils.Must(c.Provide(services.NotificationServiceProvider))
 	utils.Must(c.Provide(services.PreferenceServiceProvider))
 	utils.Must(c.Provide(services.ImageServiceProvider))
+	utils.Must(c.Provide(services.MetadataServiceProvider))
+	utils.Must(c.Provide(services.CacheServiceProvider))
 	utils.Must(c.Provide(ApplicationProvider))
 
 	utils.Must(c.Invoke(services.RegisterSignalREndPoint))
@@ -55,7 +57,7 @@ func main() {
 }
 
 func startApp(app *fiber.App, log zerolog.Logger, cfg *config.Config) {
-	log.Info().Str("baseUrl", cfg.BaseUrl).Msg("Starting Media-Provider")
+	log.Info().Str("handler", "core").Str("baseUrl", cfg.BaseUrl).Msg("Starting Media-Provider")
 
 	e := app.Listen(":8080")
 	if e != nil {

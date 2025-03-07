@@ -88,7 +88,9 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
+	must(scope.Provide(func() services.CacheService { return &mock.Cache{} }))
 	must(scope.Provide(services.ImageServiceProvider))
+	must(scope.Provide(services.MetadataServiceProvider))
 
 	return NewManga(scope).(*manga)
 }
@@ -837,7 +839,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 				}
 			},
 			want:       false,
-			logInclude: "Volume on disk matches, not replacing",
+			logInclude: "Volume on disk matches, checking cover",
 			after:      nil,
 		},
 		{
@@ -879,6 +881,9 @@ func TestManga_ShouldDownload(t *testing.T) {
 			var buffer bytes.Buffer
 			m := tempManga(t, req(), &buffer)
 			m.ExistingContent = tc.contentOnDisk
+			m.coverFactory = func(volume string) (*Cover, bool) {
+				return nil, false
+			}
 			m.info = mangaResp()
 
 			if tc.command != nil {
