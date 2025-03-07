@@ -10,6 +10,7 @@ on:
       - 'go.mod'
       - 'go.sum'
       - 'Dockerfile'
+  workflow_call:
 
 jobs:
   push_to_registry:
