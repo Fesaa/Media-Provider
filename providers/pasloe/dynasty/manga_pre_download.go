@@ -49,7 +49,12 @@ func (m *manga) IsContent(name string) bool {
 
 func (m *manga) ShouldDownload(chapter Chapter) bool {
 	content, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
-	if ok || (chapter.Chapter == "" && !m.Req.GetBool(DownloadOneShotKey)) {
+	if !ok {
+		// Content not on disk, download if not a OneShot, or if we want to download OneShots
+		return chapter.Chapter != "" || m.Req.GetBool(DownloadOneShotKey)
+	}
+
+	if chapter.Chapter == "" && !m.Req.GetBool(DownloadOneShotKey) {
 		return false
 	}
 

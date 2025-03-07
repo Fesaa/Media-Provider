@@ -60,6 +60,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 	must(scope.Provide(services.ImageServiceProvider))
+	must(scope.Provide(services.MetadataServiceProvider))
 
 	return NewManga(scope).(*manga)
 }
@@ -171,7 +172,7 @@ func TestManga_GetInfoBeforeLoad(t *testing.T) {
 		t.Errorf("got.Name = %q, want %q", got.Name, want)
 	}
 
-	want = ""
+	want = "https://dynasty-scans.com/series/sailor_girlfriend"
 	if got.RefUrl != want {
 		t.Errorf("got.RefUrl = %q, want %q", got.RefUrl, want)
 	}
