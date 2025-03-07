@@ -2,7 +2,6 @@ package services
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/disintegration/imaging"
 	"github.com/rs/zerolog"
@@ -17,7 +16,8 @@ type ImageService interface {
 	Similar(img1, img2 image.Image) float64
 	MeanSquareError(img1, img2 image.Image) float64
 	IsCover(data []byte) bool
-	Equal(img1, img2 []byte) bool
+	ToImg(b []byte) (image.Image, error)
+	ImgResolution(img image.Image) int
 }
 
 type imageService struct {
@@ -28,12 +28,6 @@ func ImageServiceProvider(log zerolog.Logger) ImageService {
 	return &imageService{
 		log: log.With().Str("handler", "image-service").Logger(),
 	}
-}
-
-func (i *imageService) Equal(img1, img2 []byte) bool {
-	sum1 := sha256.Sum256(img1)
-	sum2 := sha256.Sum256(img2)
-	return bytes.Equal(sum1[:], sum2[:])
 }
 
 func (i *imageService) IsCover(data []byte) bool {
@@ -65,17 +59,22 @@ func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresho
 	similarity := i.Similar(img1, img2)
 
 	if similarity < similarityThreshold {
-		i.log.Debug().Float64("similarity", similarity).Msg("image similarity threshold not reached, returning default")
+		i.log.Trace().Float64("similarity", similarity).Msg("image similarity threshold not reached, returning default")
 		return defaultImg, false, nil
 	}
 
-	if i.imgResolution(img1) > i.imgResolution(img2) {
-		i.log.Debug().Msg("default image has a higher resolution, returning default")
+	if i.ImgResolution(img1) > i.ImgResolution(img2) {
+		i.log.Trace().Msg("default image has a higher resolution, returning default")
 		return defaultImg, false, nil
 	}
 
-	i.log.Debug().Float64("similarity", similarity).Msg("candidate image is similar enough, and has a better resolution, returning candidate")
+	i.log.Trace().Float64("similarity", similarity).Msg("candidate image is similar enough, and has a better resolution, returning candidate")
 	return candidateImg, true, nil
+}
+
+func (i *imageService) ToImg(b []byte) (image.Image, error) {
+	img, _, err := image.Decode(bytes.NewReader(b))
+	return img, err
 }
 
 func (i *imageService) Similar(img1, img2 image.Image) float64 {
@@ -114,10 +113,10 @@ func (i *imageService) MeanSquareError(img1, img2 image.Image) float64 {
 		}
 	}
 
-	return sumDiff / (float64(i.imgResolution(img1)))
+	return sumDiff / (float64(i.ImgResolution(img1)))
 }
 
 // ImgResolution returns the product of Dx and Dy
-func (i *imageService) imgResolution(img image.Image) int {
+func (i *imageService) ImgResolution(img image.Image) int {
 	return img.Bounds().Dx() * img.Bounds().Dy()
 }

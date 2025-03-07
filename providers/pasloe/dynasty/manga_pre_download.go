@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
-	"os"
 	"path"
 	"regexp"
 	"strconv"
@@ -84,15 +83,5 @@ func (m *manga) replaceAndShouldDownload(chapter Chapter, content api.Content) b
 
 	l.Debug().Int("onDiskVolume", ci.Volume).Str("path", fullPath).
 		Msg("Loose chapter has been assigned to a volume, replacing")
-
-	// Opted to remove, and redownload the entire chapter if the volume marker changes
-	// One could argue that only the comicinfo.xml should be replaced if this happens.
-	// Making the assumption that new content may be added in a chapter once it's added to a volume.
-	// Especially the first, and last chapter of the volume.
-	if err = os.Remove(fullPath); err != nil {
-		l.Error().Err(err).Str("path", fullPath).Msg("unable to remove old chapter, not downloading new")
-		return false
-	}
-
 	return true
 }
