@@ -3,13 +3,6 @@ on:
   push:
     branches:
       - "master"
-    paths:
-      - 'UI/Web/**'
-      - '*.go'
-      - '!(*_test.go)'
-      - 'go.mod'
-      - 'go.sum'
-      - 'Dockerfile'
 
 jobs:
   push_to_registry:
