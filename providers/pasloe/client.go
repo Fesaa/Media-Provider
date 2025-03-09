@@ -303,6 +303,14 @@ func (c *client) cleanup(content api.Downloadable) {
 			return
 		}
 	}
+
+	for _, contentPath := range content.GetToRemoveContent() {
+		l.Trace().Str("name", contentPath).Msg("removing old content")
+		if err := os.Remove(contentPath); err != nil {
+			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
+		}
+	}
+
 	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished zipping newly downloaded content")
 }
 

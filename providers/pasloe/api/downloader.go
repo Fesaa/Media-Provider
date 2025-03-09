@@ -79,6 +79,7 @@ type DownloadBase[T IDAble] struct {
 	ToDownload      []T
 	HasDownloaded   []string
 	ExistingContent []Content
+	ToRemoveContent []string
 
 	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
 	ToDownloadUserSelected []string
@@ -203,6 +204,10 @@ func (d *DownloadBase[T]) GetContentByPath(path string) (Content, bool) {
 
 func (d *DownloadBase[T]) GetNewContent() []string {
 	return d.HasDownloaded
+}
+
+func (d *DownloadBase[T]) GetToRemoveContent() []string {
+	return d.ToRemoveContent
 }
 
 func (d *DownloadBase[T]) GetInfo() payload.InfoStat {

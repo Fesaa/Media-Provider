@@ -18,6 +18,8 @@ type Downloadable interface {
 	// GetNewContent returns the full (relative) path of downloaded content.
 	// This will be a slice of paths produced by DownloadInfoProvider.ContentPath
 	GetNewContent() []string
+	// GetToRemoveContent returns the full (relative) path of old content that has to be removed
+	GetToRemoveContent() []string
 
 	StartLoadInfo()
 	StartDownload()

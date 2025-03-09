@@ -55,7 +55,7 @@ func main() {
 }
 
 func startApp(app *fiber.App, log zerolog.Logger, cfg *config.Config) {
-	log.Info().Str("baseUrl", cfg.BaseUrl).Msg("Starting Media-Provider")
+	log.Info().Str("handler", "core").Str("baseUrl", cfg.BaseUrl).Msg("Starting Media-Provider")
 
 	e := app.Listen(":8080")
 	if e != nil {

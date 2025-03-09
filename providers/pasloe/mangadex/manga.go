@@ -820,6 +820,7 @@ func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.
 
 	l.Debug().Int("onDiskVolume", ci.Volume).Str("path", fullPath).
 		Msg("Loose chapter has been assigned to a volume, replacing")
+	m.ToRemoveContent = append(m.ToRemoveContent, fullPath)
 	return true
 }
 
