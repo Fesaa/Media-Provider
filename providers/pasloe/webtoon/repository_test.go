@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
+	"time"
 )
 
 func tempRepository(w io.Writer) Repository {
@@ -19,6 +21,9 @@ func TestRepository_Search(t *testing.T) {
 
 	got, err := repo.Search(context.Background(), SearchOptions{Query: WebToonName})
 	if err != nil {
+		if strings.Contains(err.Error(), "429") {
+			t.Skipf("skipping due to rate limit")
+		}
 		t.Fatal(err)
 	}
 
@@ -41,8 +46,12 @@ func TestRepository_LoadImages(t *testing.T) {
 		Date:     "Sep 21, 2022",
 	}
 
+	time.Sleep(1 * time.Second)
 	got, err := repo.LoadImages(context.Background(), chpt)
 	if err != nil {
+		if strings.Contains(err.Error(), "429") {
+			t.Skipf("skipping due to rate limit")
+		}
 		t.Fatal(err)
 	}
 
@@ -55,8 +64,12 @@ func TestRepository_LoadImages(t *testing.T) {
 func TestRepository_SeriesInfoShort(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
+	time.Sleep(1 * time.Second)
 	got, err := repo.SeriesInfo(context.Background(), WebToonID)
 	if err != nil {
+		if strings.Contains(err.Error(), "429") {
+			t.Skipf("skipping due to rate limit")
+		}
 		t.Fatal(err)
 	}
 
@@ -93,8 +106,12 @@ func TestRepository_SeriesInfoShort(t *testing.T) {
 func TestRepository_SeriesInfoHrefAuthor(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
+	time.Sleep(1 * time.Second)
 	got, err := repo.SeriesInfo(context.Background(), "6202")
 	if err != nil {
+		if strings.Contains(err.Error(), "429") {
+			t.Skipf("skipping due to rate limit")
+		}
 		t.Fatal(err)
 	}
 
@@ -114,8 +131,12 @@ func TestRepository_SeriesInfoHrefAuthor(t *testing.T) {
 func TestRepository_SeriesInfoSuperLong(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
+	time.Sleep(1 * time.Second)
 	got, err := repo.SeriesInfo(context.Background(), "4464")
 	if err != nil {
+		if strings.Contains(err.Error(), "429") {
+			t.Skipf("skipping due to rate limit")
+		}
 		t.Fatal(err)
 	}
 
