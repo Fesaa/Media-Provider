@@ -296,7 +296,8 @@ func (c *client) cleanup(content api.Downloadable) {
 			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
 		}
 	}
-	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing replaced downloaded content")
+	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(content.GetToRemoveContent())).
+		Msg("finished removing replaced downloaded content")
 
 	start = time.Now()
 	for _, contentPath := range newContent {
@@ -313,7 +314,8 @@ func (c *client) cleanup(content api.Downloadable) {
 		}
 	}
 
-	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished zipping newly downloaded content")
+	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(newContent)).
+		Msg("finished zipping newly downloaded content")
 }
 
 func (c *client) wrapError(err error) error {

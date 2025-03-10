@@ -429,6 +429,16 @@ func (d *DownloadBase[T]) startDownload() {
 		})
 		d.Log.Debug().Int("size", currentSize).Int("newSize", len(d.ToDownload)).
 			Msg("content further filtered after user has made a selection in the UI")
+
+		if len(d.ToRemoveContent) > 0 {
+			paths := utils.Map(d.ToDownload, func(t T) string {
+				return d.infoProvider.ContentPath(t) + ".cbz"
+			})
+			d.ToRemoveContent = utils.Filter(d.ToRemoveContent, func(s string) bool {
+				return slices.Contains(paths, s)
+			})
+		}
+
 	}
 
 	d.Log.Info().
