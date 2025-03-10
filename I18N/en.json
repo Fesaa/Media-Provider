@@ -21,5 +21,8 @@
   "failed-start-sub-download": "Failed to start subscription %s's download: %v",
 
   "sub-downloaded-all-title": "Subscription exhausted",
-  "sub-downloaded-all": "The subscription on %s has downloaded all possible content; (%d %s), consider removing it."
+  "sub-downloaded-all": "The subscription on %s has downloaded all possible content; (%d %s), consider removing it.",
+  "download-finished-title": "Download completed",
+  "download-finished": "%s finished downloading %d item(s)",
+  "re-downloads": "\n %d items were re-downloaded"
 }

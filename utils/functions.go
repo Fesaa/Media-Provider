@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 )
 
 // TryCatch will return the consumed value if the error returned by the producer was nil. Other returns the fallback
@@ -152,6 +153,7 @@ func Shorten(s string, length int) string {
 		return s
 	}
 
+	s = strings.SplitN(s, "\n", 1)[0]
 	if len(s) < 4 {
 		return s[:length]
 	}
