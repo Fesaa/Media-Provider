@@ -18,6 +18,10 @@ var coverReq = payload.DownloadRequest{
 func TestManga_CoverSkipWrongFormatAndFirstAsDefault(t *testing.T) {
 	m := tempManga(t, coverReq, io.Discard)
 
+	m.Preference = &models.Preference{
+		CoverFallbackMethod: models.CoverFallbackFirst,
+	}
+
 	covers, err := m.repository.GetCoverImages(context.Background(), m.id)
 	if err != nil {
 		t.Fatal(err)

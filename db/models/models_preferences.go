@@ -8,11 +8,20 @@ import (
 type Preference struct {
 	gorm.Model
 
-	SubscriptionRefreshHour int   `json:"subscriptionRefreshHour" validate:"min=0,max=23"`
-	LogEmptyDownloads       bool  `json:"logEmptyDownloads" validate:"boolean"`
-	DynastyGenreTags        []Tag `json:"dynastyGenreTags" gorm:"many2many:preference_dynasty_genre_tags"`
-	BlackListedTags         []Tag `json:"blackListedTags" gorm:"many2many:preference_black_list_tags"`
+	SubscriptionRefreshHour int                 `json:"subscriptionRefreshHour" validate:"min=0,max=23"`
+	LogEmptyDownloads       bool                `json:"logEmptyDownloads" validate:"boolean"`
+	CoverFallbackMethod     CoverFallbackMethod `json:"coverFallbackMethod"`
+	DynastyGenreTags        []Tag               `json:"dynastyGenreTags" gorm:"many2many:preference_dynasty_genre_tags"`
+	BlackListedTags         []Tag               `json:"blackListedTags" gorm:"many2many:preference_black_list_tags"`
 }
+
+type CoverFallbackMethod int
+
+const (
+	CoverFallbackFirst CoverFallbackMethod = iota
+	CoverFallbackLast
+	CoverFallbackNone
+)
 
 type Tags []Tag
 

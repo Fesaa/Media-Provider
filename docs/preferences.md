@@ -11,6 +11,9 @@ Subscriptions add a notification when finished, so you can view what has been do
 (or day depending on the previous setting). By default, Media-Provider will not add one if nothing was downlaoded
 if this has been enabled; a notification will always be added
 
+### Cover fallback method
+Which cover to use when no cover for the volume has been uploaded to the providers. First, last or none.
+
 ### Dynasty Tag => Genre
 Dynasty has no distinction between Tags and Genres, you may configure some tags (by id or displayed name) to be used as
 a genre in the generated ComicInfo.xml. These tags will not be used elsewhere. Does not overwrite the blacklist

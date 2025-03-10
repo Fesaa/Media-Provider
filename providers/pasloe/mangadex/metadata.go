@@ -7,6 +7,7 @@ const (
 	ScanlationGroupKey string = "scanlation_group"
 	DownloadOneShotKey string = "download_one_shot"
 	IncludeCover       string = "include_cover"
+	UpdateCover        string = "update_cover"
 )
 
 var languages = []payload.MetadataOption{

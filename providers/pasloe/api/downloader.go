@@ -34,6 +34,7 @@ func NewDownloadableFromBlock[T IDAble](scope *dig.Scope, handler string, block 
 		signalR services.SignalRService,
 		notification services.NotificationService,
 		transLoco services.TranslocoService,
+		preferences models.Preferences,
 	) {
 		base = &DownloadBase[T]{
 			infoProvider: block,
@@ -49,6 +50,7 @@ func NewDownloadableFromBlock[T IDAble](scope *dig.Scope, handler string, block 
 			SignalR:      signalR,
 			Notifier:     notification,
 			TransLoco:    transLoco,
+			preferences:  preferences,
 		}
 	}))
 
@@ -83,6 +85,9 @@ type DownloadBase[T IDAble] struct {
 
 	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
 	ToDownloadUserSelected []string
+
+	preferences models.Preferences
+	Preference  *models.Preference
 
 	ContentDownloaded int
 	ImagesDownloaded  int
@@ -249,6 +254,13 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	ctx, cancel := context.WithCancel(context.Background())
 	d.cancel = cancel
 	d.Log.Debug().Msg("loading content info")
+
+	p, err := d.preferences.GetWithTags()
+	if err != nil {
+		d.Log.Error().Err(err).Msg("unable to get preferences, some features may not work")
+	}
+	d.Preference = p
+
 	select {
 	case <-ctx.Done():
 		return
@@ -417,6 +429,16 @@ func (d *DownloadBase[T]) startDownload() {
 		})
 		d.Log.Debug().Int("size", currentSize).Int("newSize", len(d.ToDownload)).
 			Msg("content further filtered after user has made a selection in the UI")
+
+		if len(d.ToRemoveContent) > 0 {
+			paths := utils.Map(d.ToDownload, func(t T) string {
+				return d.infoProvider.ContentPath(t) + ".cbz"
+			})
+			d.ToRemoveContent = utils.Filter(d.ToRemoveContent, func(s string) bool {
+				return slices.Contains(paths, s)
+			})
+		}
+
 	}
 
 	d.Log.Info().

@@ -1,7 +1,7 @@
 import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {PreferencesService} from '../../../../_services/preferences.service';
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {Preferences} from "../../../../_models/preferences";
+import {CoverFallbackMethods, Preferences} from "../../../../_models/preferences";
 import {Tooltip} from "primeng/tooltip";
 import {ToastService} from '../../../../_services/toast.service';
 import {ToggleSwitch} from "primeng/toggleswitch";
@@ -10,6 +10,7 @@ import {Button} from "primeng/button";
 import {DynastyGenresComponent} from "./dynasty-genres/dynasty-genres.component";
 import {TagsBlacklistComponent} from "./tags-blacklist/tags-blacklist.component";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {Select} from "primeng/select";
 
 @Component({
   selector: 'app-preference-settings',
@@ -24,6 +25,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     DynastyGenresComponent,
     TagsBlacklistComponent,
     TranslocoDirective,
+    Select,
   ],
   templateUrl: './preference-settings.component.html',
   styleUrl: './preference-settings.component.css'
@@ -60,4 +62,5 @@ export class PreferenceSettingsComponent implements OnInit {
     })
   }
 
+  protected readonly CoverFallbackMethods = CoverFallbackMethods;
 }

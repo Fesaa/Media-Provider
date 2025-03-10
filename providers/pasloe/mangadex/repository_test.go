@@ -2,6 +2,7 @@ package mangadex
 
 import (
 	"context"
+	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 	"io"
 	"net/http"
@@ -22,6 +23,7 @@ func tempRepo(t *testing.T, w io.Writer) Repository {
 	t.Helper()
 	return NewRepository(repositoryParams{
 		HttpClient: http.DefaultClient,
+		Cache:      mock.Cache{},
 	}, zerolog.New(w))
 }
 

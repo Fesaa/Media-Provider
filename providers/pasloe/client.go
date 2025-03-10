@@ -18,29 +18,31 @@ import (
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
 	ioService services.IOService, signalR services.SignalRService, notify services.NotificationService,
-	preferences models.Preferences,
+	preferences models.Preferences, transLoco services.TranslocoService,
 ) api.Client {
 	return &client{
-		config:   c,
-		registry: newRegistry(httpClient, container),
-		log:      log.With().Str("handler", "pasloe").Logger(),
-		io:       ioService,
-		signalR:  signalR,
-		notify:   notify,
-		pref:     preferences,
+		config:    c,
+		registry:  newRegistry(httpClient, container),
+		log:       log.With().Str("handler", "pasloe").Logger(),
+		io:        ioService,
+		signalR:   signalR,
+		notify:    notify,
+		pref:      preferences,
+		transLoco: transLoco,
 
 		content: utils.NewSafeMap[string, api.Downloadable](),
 	}
 }
 
 type client struct {
-	config   api.Config
-	registry *registry
-	log      zerolog.Logger
-	io       services.IOService
-	signalR  services.SignalRService
-	notify   services.NotificationService
-	pref     models.Preferences
+	config    api.Config
+	registry  *registry
+	log       zerolog.Logger
+	io        services.IOService
+	signalR   services.SignalRService
+	notify    services.NotificationService
+	transLoco services.TranslocoService
+	pref      models.Preferences
 
 	content utils.SafeMap[string, api.Downloadable]
 }
@@ -139,9 +141,12 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		})
 
 		if len(content.GetNewContent()) > 0 || alwaysLog {
-			text := fmt.Sprintf("%s finished downloading %d item(s)", content.Title(), len(content.GetNewContent()))
+			text := c.transLoco.GetTranslation("download-finished", content.Title(), len(content.GetNewContent()))
+			if len(content.GetToRemoveContent()) > 0 {
+				text += c.transLoco.GetTranslation("re-downloads", len(content.GetToRemoveContent()))
+			}
 			c.notifier(content.Request()).Notify(models.Notification{
-				Title:   "Download finished",
+				Title:   c.transLoco.GetTranslation("download-finished-title"),
 				Summary: utils.Shorten(text, services.SummarySize),
 				Body:    text,
 				Colour:  models.Green,
@@ -290,6 +295,16 @@ func (c *client) cleanup(content api.Downloadable) {
 	}
 
 	start := time.Now()
+	for _, contentPath := range content.GetToRemoveContent() {
+		l.Trace().Str("name", contentPath).Msg("removing old content")
+		if err := os.Remove(contentPath); err != nil {
+			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
+		}
+	}
+	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(content.GetToRemoveContent())).
+		Msg("finished removing replaced downloaded content")
+
+	start = time.Now()
 	for _, contentPath := range newContent {
 		l.Trace().Str("path", contentPath).Msg("Zipping file")
 		err := c.io.ZipToCbz(contentPath)
@@ -304,14 +319,8 @@ func (c *client) cleanup(content api.Downloadable) {
 		}
 	}
 
-	for _, contentPath := range content.GetToRemoveContent() {
-		l.Trace().Str("name", contentPath).Msg("removing old content")
-		if err := os.Remove(contentPath); err != nil {
-			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
-		}
-	}
-
-	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished zipping newly downloaded content")
+	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(newContent)).
+		Msg("finished zipping newly downloaded content")
 }
 
 func (c *client) wrapError(err error) error {

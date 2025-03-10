@@ -58,3 +58,15 @@ func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, lo
 	utils2.Must(scope.Invoke(routes.RegisterPreferencesRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterNotificationRoutes))
 }
+
+func cacheStorage(cfg *config.Config, log zerolog.Logger) fiber.Storage {
+	switch cfg.Cache.Type {
+	case config.REDIS:
+		return utils2.NewRedisCacheStorage(log, "go-fiber-http-cache", cfg.Cache.RedisAddr)
+	case config.MEMORY:
+		return nil
+	default:
+		// the fiber cache config falls back to memory on its own
+		return nil
+	}
+}

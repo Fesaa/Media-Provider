@@ -3,6 +3,7 @@ package mangadex
 import (
 	"errors"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"io"
 	"net/http"
 )
@@ -63,8 +64,13 @@ func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory 
 		return defaultCoverFactory
 	}
 
+	covers, firstCover, lastCover := m.processCovers(coverResp)
+	return m.constructCoverFactory(covers, firstCover, lastCover)
+}
+
+func (m *manga) processCovers(coverResp *MangaCoverResponse) (map[string]*Cover, *Cover, *Cover) {
 	covers := make(map[string]*Cover)
-	var defaultCover, defaultCoverLang *Cover
+	var firstCover, lastCover, firstCoverLang, lastCoverLang *Cover
 
 	for _, cover := range coverResp.Data {
 		// Don't download non-matching locale's again if a cover is already present
@@ -92,26 +98,49 @@ func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory 
 
 		if cover.Attributes.Locale == m.language {
 			covers[cover.Attributes.Volume] = _cover
-			if defaultCoverLang == nil {
-				defaultCoverLang = _cover
+			if firstCoverLang == nil {
+				firstCoverLang = _cover
 			}
+			lastCoverLang = _cover
 		} else if _, ok := covers[cover.Attributes.Volume]; !ok {
 			covers[cover.Attributes.Volume] = _cover
 		}
 
-		if defaultCover == nil {
-			defaultCover = _cover
+		if firstCover == nil {
+			firstCover = _cover
 		}
+		lastCover = _cover
 	}
 
-	if defaultCoverLang != nil {
-		defaultCover = defaultCoverLang
+	if firstCoverLang != nil {
+		firstCover = firstCoverLang
 	}
+	if lastCoverLang != nil {
+		lastCover = lastCoverLang
+	}
+	return covers, firstCover, lastCover
+}
+
+func (m *manga) constructCoverFactory(covers map[string]*Cover, firstCover, lastCover *Cover) CoverFactory {
+	fallbackCover := func() *Cover {
+		if m.Preference == nil {
+			return nil
+		}
+		switch m.Preference.CoverFallbackMethod {
+		case models.CoverFallbackFirst:
+			return firstCover
+		case models.CoverFallbackLast:
+			return lastCover
+		case models.CoverFallbackNone:
+			return nil
+		}
+		return firstCover
+	}()
 
 	return func(volume string) (*Cover, bool) {
 		url, ok := covers[volume]
-		if !ok && len(defaultCover.Bytes) != 0 {
-			return defaultCover, true
+		if !ok && fallbackCover != nil && len(fallbackCover.Bytes) != 0 {
+			return fallbackCover, true
 		}
 		if !ok {
 			return nil, false
