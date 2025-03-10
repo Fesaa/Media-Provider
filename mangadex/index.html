@@ -75,6 +75,10 @@
     <li class="toctree-l2"><a class="reference internal" href="#covers">Covers</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#download-metadata">Download metadata</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cover-updater">Cover updater</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#config">Config</a>
         <ul>
@@ -147,9 +151,20 @@ will skip writing the cover.</p>
 <p>The mangadex provider allows for a few options to be set alongside which manga to download. You may
 - Choose the language you're downloading in
 - Choose to skip, or download one-shots
-- Choose a scanlation group*</p>
+- Choose a scanlation group*
+- Choose to include or exclude covers (WebToons)
+- Choose to update covers if they have changed (Subscriptions)</p>
 <p>*The system is currently not smart enough to provide you with the id/names of which scanlation are an option. 
 You will have to provide these yourself from mangadex's site. Will check for scanlation group OR user</p>
+<h3 id="cover-updater">Cover updater</h3>
+<p>This metadata option is disabled by default, as it can cause a lot of extra downloads.
+Media-Provider will re-download the chapter if the following conditions have been met
+- The wanted cover is within 10% of the resolution of the cover on disk
+- The wanted cover is different from the downloaded cover
+- The wanted cover is not the first page of the chapter</p>
+<p>The last condition is to prevent re-downloading all first page cover chapters. This may be worked around in the future.
+The idea behind this option is to ensure covers which are added to volumes later than the chapters are placed in them
+are used. </p>
 <p><img alt="Preview" src="../assets/mangadex-download-metadata.png" /></p>
 <h2 id="config">Config</h2>
 <p>Mangadex supports a lot of different filtering options, the following are currently support.</p>
