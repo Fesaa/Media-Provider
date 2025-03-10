@@ -233,10 +233,8 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	}
 
 	var blackList models.Tags
-	p, err := m.preferences.GetWithTags()
-	if err != nil {
-		m.Log.Error().Err(err).Msg("No genres or tags will be set, blacklist couldn't be loaded")
-
+	if m.Preference == nil {
+		m.Log.Warn().Msg("No genres or tags will be set, blacklist couldn't be loaded")
 		if !m.hasWarnedBlacklist {
 			m.hasWarnedBlacklist = true
 			m.Notifier.NotifyContentQ(
@@ -245,11 +243,11 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 				models.Orange)
 		}
 	} else {
-		blackList = p.BlackListedTags
+		blackList = m.Preference.BlackListedTags
 	}
 
 	tagAllowed := func(tag TagData, name string) bool {
-		if err != nil {
+		if m.Preference == nil {
 			return false
 		}
 

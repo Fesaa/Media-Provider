@@ -30,7 +30,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, httpClient *http.Client,
 		repository Repository, markdownService services.MarkdownService,
-		preferences models.Preferences, imageService services.ImageService,
+		imageService services.ImageService,
 	) {
 		m = &manga{
 			id:              req.Id,
@@ -38,7 +38,6 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			repository:      repository,
 			markdownService: markdownService,
 			volumeMetadata:  make([]string, 0),
-			preferences:     preferences,
 			imageService:    imageService,
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
@@ -56,7 +55,6 @@ type manga struct {
 	httpClient      *http.Client
 	repository      Repository
 	markdownService services.MarkdownService
-	preferences     models.Preferences
 	imageService    services.ImageService
 
 	info     *MangaSearchData
