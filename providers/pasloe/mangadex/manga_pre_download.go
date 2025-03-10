@@ -3,8 +3,8 @@ package mangadex
 import (
 	"context"
 	"errors"
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"path"
 	"regexp"
@@ -182,31 +182,87 @@ func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {
 		return true
 	}
 
-	// No extra I/O needing, empty volumes will never be replaced
+	reDownload := false
+	// Don't try volume when not needed
 	if chapter.Attributes.Volume == "" {
-		return false
+		reDownload = m.hasOutdatedCover(chapter, content)
+	} else {
+		reDownload = m.hasBeenAssignedVolume(chapter, content)
 	}
 
-	return m.replaceAndShouldDownload(chapter, content)
+	if reDownload {
+		fullPath := path.Join(m.Client.GetBaseDir(), content.Path)
+		m.ToRemoveContent = append(m.ToRemoveContent, fullPath)
+	}
+	return reDownload
 }
 
-func (m *manga) replaceAndShouldDownload(chapter ChapterSearchData, content api.Content) bool {
+func (m *manga) hasBeenAssignedVolume(chapter ChapterSearchData, content api.Content) bool {
 	l := m.ContentLogger(chapter)
 	fullPath := path.Join(m.Client.GetBaseDir(), content.Path)
 
-	ci, err := comicinfo.ReadInZip(fullPath)
+	ci, err := m.archiveService.GetComicInfo(fullPath)
 	if err != nil {
+		// this failed, we're not going to also check covers
 		l.Warn().Err(err).Str("path", fullPath).Msg("unable to read comic info in zip")
 		return false
 	}
 
 	if strconv.Itoa(ci.Volume) == chapter.Attributes.Volume {
 		l.Trace().Str("path", fullPath).Msg("Volume on disk matches, not replacing")
-		return false
+		return m.hasOutdatedCover(chapter, content)
 	}
 
 	l.Debug().Int("onDiskVolume", ci.Volume).Str("path", fullPath).
 		Msg("Loose chapter has been assigned to a volume, replacing")
-	m.ToRemoveContent = append(m.ToRemoveContent, fullPath)
+	return true
+}
+
+func (m *manga) hasOutdatedCover(chapter ChapterSearchData, content api.Content) bool {
+	if !m.Req.GetBool(UpdateCover, false) || !m.Req.GetBool(IncludeCover, true) {
+		return false
+	}
+
+	l := m.ContentLogger(chapter)
+	fullPath := path.Join(m.Client.GetBaseDir(), content.Path)
+
+	wantedCover, firstPage := m.getChapterCover(chapter)
+	if wantedCover == nil {
+		l.Debug().Str("path", fullPath).Msg("no cover found")
+		return false
+	}
+
+	coverOnDisk, err := m.archiveService.GetCover(fullPath)
+	if err != nil {
+		l.Warn().Err(err).Str("path", fullPath).Msg("unable to read cover")
+		// If no cover was found in the archive, and there is a wanted cover. Lets re-download
+		// If the cover is the first page, ArchiveService.GetCover will return ErrNoMatch.
+		return errors.Is(err, services.ErrNoMatch) && !firstPage
+	}
+
+	return m.coverShouldBeReplaced(chapter, wantedCover, coverOnDisk)
+}
+
+func (m *manga) coverShouldBeReplaced(chapter ChapterSearchData, wantedCover, coverOnDisk []byte) bool {
+	l := m.ContentLogger(chapter)
+	wantedImg, err := m.imageService.ToImage(wantedCover)
+	if err != nil {
+		l.Warn().Err(err).Msg("unable to convert wanted cover to image")
+		return false
+	}
+
+	onDiskImg, err := m.imageService.ToImage(coverOnDisk)
+	if err != nil {
+		l.Warn().Err(err).Msg("unable to convert on disk cover to image")
+		return false
+	}
+
+	similar := m.imageService.Similar(onDiskImg, wantedImg)
+	if similar > 0.85 {
+		l.Trace().Float64("similar", similar).Msg("on disk image is similar to wanted image, not re-downloading")
+		return false
+	}
+
+	l.Debug().Msg("on disk image is different from wanted image, re-downloading")
 	return true
 }

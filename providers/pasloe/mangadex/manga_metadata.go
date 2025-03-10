@@ -363,6 +363,8 @@ func (m *manga) writeCIStatus(ci *comicinfo.ComicInfo) {
 		m.Title(), m.TransLoco.GetTranslation("sub-downloaded-all", m.Title(), count, content))
 }
 
+// getChapterCover returns the cover for the chapter, and if it's the first page in the chapter
+// if no cover is found. Returns nil
 func (m *manga) getChapterCover(chapter ChapterSearchData) ([]byte, bool) {
 	l := m.ContentLogger(chapter)
 	cover, ok := m.coverFactory(chapter.Attributes.Volume)

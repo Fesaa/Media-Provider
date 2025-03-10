@@ -16,6 +16,7 @@ type ImageService interface {
 	Similar(img1, img2 image.Image) float64
 	MeanSquareError(img1, img2 image.Image) float64
 	IsCover(data []byte) bool
+	ToImage(data []byte) (image.Image, error)
 }
 
 type imageService struct {
@@ -28,8 +29,16 @@ func ImageServiceProvider(log zerolog.Logger) ImageService {
 	}
 }
 
-func (i *imageService) IsCover(data []byte) bool {
+func (i *imageService) ToImage(data []byte) (image.Image, error) {
 	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	return img, nil
+}
+
+func (i *imageService) IsCover(data []byte) bool {
+	img, err := i.ToImage(data)
 	if err != nil {
 		i.log.Debug().Err(err).Msg("can't decode image, assuming it's fine")
 		return true
@@ -45,11 +54,11 @@ func (i *imageService) IsCover(data []byte) bool {
 func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresholds ...float64) ([]byte, bool, error) {
 	similarityThreshold := utils.OrDefault(similarityThresholds, 0.85)
 
-	img1, _, err := image.Decode(bytes.NewReader(defaultImg))
+	img1, err := i.ToImage(defaultImg)
 	if err != nil {
 		return nil, false, err
 	}
-	img2, _, err := image.Decode(bytes.NewReader(candidateImg))
+	img2, err := i.ToImage(candidateImg)
 	if err != nil {
 		return nil, false, err
 	}

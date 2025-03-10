@@ -2,6 +2,7 @@ package services
 
 import (
 	"archive/zip"
+	"bytes"
 	"errors"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/rs/zerolog"
@@ -31,12 +32,6 @@ func (a *archiveService) GetComicInfo(archive string) (*comicinfo.ComicInfo, err
 	if err != nil {
 		return nil, err
 	}
-	defer func(rc io.ReadCloser) {
-		if err = rc.Close(); err != nil {
-			a.log.Warn().Err(err).Msg("failed to close file reader")
-		}
-	}(rc)
-
 	return comicinfo.Read(rc)
 }
 
@@ -45,16 +40,10 @@ func (a *archiveService) GetCover(archive string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func(rc io.ReadCloser) {
-		if err = rc.Close(); err != nil {
-			a.log.Warn().Err(err).Msg("failed to close file reader")
-		}
-	}(rc)
-
 	return io.ReadAll(rc)
 }
 
-func (a *archiveService) findInArchive(archive string, match string) (io.ReadCloser, error) {
+func (a *archiveService) findInArchive(archive string, match string) (io.Reader, error) {
 	reader, err := zip.OpenReader(archive)
 	if err != nil {
 		return nil, err
@@ -81,5 +70,14 @@ func (a *archiveService) findInArchive(archive string, match string) (io.ReadClo
 	if err != nil {
 		return nil, err
 	}
-	return f, nil
+	defer func(f io.ReadCloser) {
+		if err = f.Close(); err != nil {
+			a.log.Warn().Err(err).Msg("unable to close zip file")
+		}
+	}(f)
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
 }

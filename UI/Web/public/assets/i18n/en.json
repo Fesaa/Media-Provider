@@ -166,6 +166,10 @@
           "title": "Include cover",
           "tooltip": "Adds a cover image, can be nice to turn off for webtoons"
         },
+        "update_cover": {
+          "title": "Update cover",
+          "tooltip": "Checks if the currently downloaded cover is outdated"
+        },
         "include_not_matched_tags": {
           "title": "Add not matched tags to comicinfo",
           "tooltip": "Tags not configured to be a genre, will be added as tags instead"
