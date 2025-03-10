@@ -64,6 +64,11 @@ func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory 
 		return defaultCoverFactory
 	}
 
+	covers, firstCover, lastCover := m.processCovers(coverResp)
+	return m.constructCoverFactory(covers, firstCover, lastCover)
+}
+
+func (m *manga) processCovers(coverResp *MangaCoverResponse) (map[string]*Cover, *Cover, *Cover) {
 	covers := make(map[string]*Cover)
 	var firstCover, lastCover, firstCoverLang, lastCoverLang *Cover
 
@@ -113,7 +118,10 @@ func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory 
 	if lastCoverLang != nil {
 		lastCover = lastCoverLang
 	}
+	return covers, firstCover, lastCover
+}
 
+func (m *manga) constructCoverFactory(covers map[string]*Cover, firstCover, lastCover *Cover) CoverFactory {
 	fallbackCover := func() *Cover {
 		if m.Preference == nil {
 			return nil
@@ -126,7 +134,7 @@ func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory 
 		case models.CoverFallbackNone:
 			return nil
 		}
-		return nil
+		return firstCover
 	}()
 
 	return func(volume string) (*Cover, bool) {

@@ -182,7 +182,7 @@ func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {
 		return true
 	}
 
-	reDownload := false
+	var reDownload bool
 	// Don't try volume when not needed
 	if chapter.Attributes.Volume == "" {
 		reDownload = m.hasOutdatedCover(chapter, content)
