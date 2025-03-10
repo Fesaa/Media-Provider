@@ -66,12 +66,12 @@ func (i *imageService) Better(defaultImg, candidateImg []byte, similarityThresho
 	similarity := i.Similar(img1, img2)
 
 	if similarity < similarityThreshold {
-		i.log.Debug().Float64("similarity", similarity).Msg("image similarity threshold not reached, returning default")
+		i.log.Trace().Float64("similarity", similarity).Msg("image similarity threshold not reached, returning default")
 		return defaultImg, false, nil
 	}
 
 	if i.imgResolution(img1) > i.imgResolution(img2) {
-		i.log.Debug().Msg("default image has a higher resolution, returning default")
+		i.log.Trace().Msg("default image has a higher resolution, returning default")
 		return defaultImg, false, nil
 	}
 

@@ -234,7 +234,8 @@ func (m *manga) hasOutdatedCover(chapter ChapterSearchData, content api.Content)
 
 	coverOnDisk, err := m.archiveService.GetCover(fullPath)
 	if err != nil {
-		l.Warn().Err(err).Str("path", fullPath).Msg("unable to read cover")
+		l.Debug().Err(err).Str("path", fullPath).Bool("firstPage", firstPage).
+			Msg("unable to read cover, may be first page")
 		// If no cover was found in the archive, and there is a wanted cover. Lets re-download
 		// If the cover is the first page, ArchiveService.GetCover will return ErrNoMatch.
 		return errors.Is(err, services.ErrNoMatch) && !firstPage
