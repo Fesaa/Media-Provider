@@ -8,6 +8,7 @@ type SafeMap[K comparable, V any] interface {
 	Set(k K, v V)
 	Len() int
 	Delete(k K)
+	Clear()
 	Keys() []K
 	Values() []V
 	ForEach(f func(k K, v V))
@@ -33,6 +34,12 @@ func NewSafeMap[K comparable, V any](m ...map[K]V) SafeMap[K, V] {
 		m:    startMap,
 		lock: sync.RWMutex{},
 	}
+}
+
+func (s *safeMap[K, V]) Clear() {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.m = make(map[K]V)
 }
 
 func (s *safeMap[K, V]) Count(f func(K, V) bool) int {

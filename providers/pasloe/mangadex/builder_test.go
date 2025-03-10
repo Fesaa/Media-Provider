@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 	"io"
 	"net/http"
@@ -137,6 +138,7 @@ func TestBuilder_Normalize(t *testing.T) {
 
 	repo := NewRepository(repositoryParams{
 		HttpClient: http.DefaultClient,
+		Cache:      mock.Cache{},
 	}, zerolog.New(io.Discard))
 
 	res, err := repo.SearchManga(context.Background(), SearchOptions{Query: RainbowsAfterStorms})

@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Repository interface {
@@ -21,6 +23,7 @@ type Repository interface {
 
 type repository struct {
 	httpClient *http.Client
+	cache      services.CacheService
 	log        zerolog.Logger
 	tags       utils.SafeMap[string, string]
 }
@@ -29,11 +32,13 @@ type repositoryParams struct {
 	dig.In
 
 	HttpClient *http.Client `name:"http-retry"`
+	Cache      services.CacheService
 }
 
 func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 	r := &repository{
 		httpClient: params.HttpClient,
+		cache:      params.Cache,
 		log:        log.With().Str("handler", "mangadex-repository").Logger(),
 		tags:       utils.NewSafeMap[string, string](),
 	}
@@ -98,8 +103,7 @@ func (r *repository) GetManga(ctx context.Context, id string) (*GetMangaResponse
 	url := getMangaURL(id)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetManga")
 	var getMangaResponse GetMangaResponse
-	err := do(ctx, r.httpClient, url, &getMangaResponse)
-	if err != nil {
+	if err := r.do(ctx, url, &getMangaResponse); err != nil {
 		return nil, err
 	}
 	return &getMangaResponse, nil
@@ -112,8 +116,7 @@ func (r *repository) SearchManga(ctx context.Context, options SearchOptions) (*M
 	}
 
 	var searchResponse MangaSearchResponse
-	err = do(ctx, r.httpClient, url, &searchResponse)
-	if err != nil {
+	if err = r.do(ctx, url, &searchResponse); err != nil {
 		return nil, err
 	}
 	return &searchResponse, nil
@@ -123,8 +126,7 @@ func (r *repository) GetChapters(ctx context.Context, id string, offset ...int) 
 	url := chapterURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapters")
 	var searchResponse ChapterSearchResponse
-	err := do(ctx, r.httpClient, url, &searchResponse)
-	if err != nil {
+	if err := r.do(ctx, url, &searchResponse); err != nil {
 		return nil, err
 	}
 
@@ -144,8 +146,7 @@ func (r *repository) GetChapterImages(ctx context.Context, id string) (*ChapterI
 	url := chapterImageUrl(id)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapterImages")
 	var searchResponse ChapterImageSearchResponse
-	err := do(ctx, r.httpClient, url, &searchResponse)
-	if err != nil {
+	if err := r.do(ctx, url, &searchResponse); err != nil {
 		return nil, err
 	}
 	return &searchResponse, nil
@@ -155,8 +156,7 @@ func (r *repository) GetCoverImages(ctx context.Context, id string, offset ...in
 	url := getCoverURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Str("offset", fmt.Sprintf("%#v", offset)).Msg("GetCoverImages")
 	var searchResponse MangaCoverResponse
-	err := do(ctx, r.httpClient, url, &searchResponse)
-	if err != nil {
+	if err := r.do(ctx, url, &searchResponse); err != nil {
 		return nil, err
 	}
 
@@ -172,21 +172,27 @@ func (r *repository) GetCoverImages(ctx context.Context, id string, offset ...in
 	return &searchResponse, nil
 }
 
-func do[T any](ctx context.Context, httpClient *http.Client, url string, out *T) error {
+func (r *repository) do(ctx context.Context, url string, out any) error {
+	if v, err := r.cache.Get(url); err == nil && v != nil {
+		if err = json.Unmarshal(v, out); err == nil {
+			return nil
+		}
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
-	resp, err := httpClient.Do(req)
+	resp, err := r.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("bad status: %s", resp.Status)
 	}
 
-	defer resp.Body.Close()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -195,5 +201,10 @@ func do[T any](ctx context.Context, httpClient *http.Client, url string, out *T)
 	if err = json.Unmarshal(data, out); err != nil {
 		return err
 	}
+
+	if err = r.cache.Set(url, data, time.Minute*5); err != nil {
+		r.log.Debug().Err(err).Str("key", url).Msg("failed to set cache for outgoing mangadex request")
+	}
 	return nil
+
 }
