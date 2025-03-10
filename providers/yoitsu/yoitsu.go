@@ -153,8 +153,8 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 
 	y.torrents.Delete(infoHashString)
 	y.baseDirs.Delete(infoHashString)
-	y.signalR.DeleteContent(tor.Id())
 
+	y.signalR.StateUpdate(tor.Id(), payload.ContentStateCleanup)
 	if req.DeleteFiles {
 		go y.deleteTorrentFiles(backingTorrent, baseDir)
 		go y.startNext()
@@ -217,6 +217,7 @@ func (y *yoitsu) startNext() {
 }
 
 func (y *yoitsu) cleanup(t Torrent, baseDir string) {
+	defer y.signalR.DeleteContent(t.Id())
 	tor := t.GetTorrent()
 	if tor == nil {
 		return
@@ -282,6 +283,8 @@ func (y *yoitsu) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
 	}
 
 	infoHash := tor.InfoHash().HexString()
+	defer y.signalR.DeleteContent(infoHash)
+
 	dir := path.Join(y.dir, baseDir, infoHash)
 	y.log.Debug().Str("infoHash", infoHash).Str("dir", dir).Msg("deleting directory")
 	if err := os.RemoveAll(dir); err != nil {

@@ -102,8 +102,8 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		return c.wrapError(services.ErrContentNotFound)
 	}
 
-	c.content.Delete(req.Id)
-	c.signalR.DeleteContent(content.Id())
+	// Delete early to ensure no follow-up requests can be made to it
+	c.content.Delete(content.Id())
 	if content.State() != payload.ContentStateDownloading {
 		// The removed content has not written anything to disk yet. Nothing to clean up,
 		// and no need to start the next content.
@@ -117,6 +117,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 			go content.Cancel()
 		}
 
+		c.signalR.DeleteContent(content.Id())
 		return nil
 	}
 
@@ -127,6 +128,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		Msg("removing content")
 	go func() {
 		content.Cancel()
+		c.signalR.StateUpdate(content.Id(), payload.ContentStateCleanup)
 
 		if req.DeleteFiles {
 			go c.deleteFiles(content)
@@ -175,8 +177,9 @@ func (c *client) GetConfig() api.Config {
 func (c *client) CanStart(provider models.Provider) bool {
 	providerBusy := c.content.Any(func(k string, d api.Downloadable) bool {
 		return d.Provider() == provider &&
-			d.State() < payload.ContentStateQueued &&
-			d.State() != payload.ContentStateWaiting
+			d.State() > payload.ContentStateQueued &&
+			d.State() != payload.ContentStateWaiting &&
+			d.State() < payload.ContentStateCleanup
 	})
 
 	return !providerBusy
@@ -230,6 +233,8 @@ func (c *client) startNext(provider models.Provider) {
 }
 
 func (c *client) deleteFiles(content api.Downloadable) {
+	defer c.signalR.DeleteContent(content.Id())
+
 	downloadDir := content.GetDownloadDir()
 	if downloadDir == "" {
 		c.log.Error().Msg("download dir is empty, not removing any files")
@@ -288,6 +293,8 @@ func (c *client) deleteFiles(content api.Downloadable) {
 }
 
 func (c *client) cleanup(content api.Downloadable) {
+	defer c.signalR.DeleteContent(content.Id())
+
 	l := c.log.With().Str("contentId", content.Id()).Logger()
 	newContent := content.GetNewContent()
 	if len(newContent) == 0 {

@@ -18,6 +18,8 @@ export class ContentStatePipe implements PipeTransform {
         return "Ready";
       case ContentState.Waiting:
         return "Waiting";
+      case ContentState.Cleanup:
+        return "Cleanup";
       default:
         return "Unknown";
     }
