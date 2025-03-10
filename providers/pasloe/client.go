@@ -290,6 +290,15 @@ func (c *client) cleanup(content api.Downloadable) {
 	}
 
 	start := time.Now()
+	for _, contentPath := range content.GetToRemoveContent() {
+		l.Trace().Str("name", contentPath).Msg("removing old content")
+		if err := os.Remove(contentPath); err != nil {
+			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
+		}
+	}
+	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing replaced downloaded content")
+
+	start = time.Now()
 	for _, contentPath := range newContent {
 		l.Trace().Str("path", contentPath).Msg("Zipping file")
 		err := c.io.ZipToCbz(contentPath)
@@ -301,13 +310,6 @@ func (c *client) cleanup(content api.Downloadable) {
 		if err = os.RemoveAll(contentPath); err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while deleting file")
 			return
-		}
-	}
-
-	for _, contentPath := range content.GetToRemoveContent() {
-		l.Trace().Str("name", contentPath).Msg("removing old content")
-		if err := os.Remove(contentPath); err != nil {
-			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
 		}
 	}
 
