@@ -270,7 +270,6 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
 	d.Log.Debug().Msg("Content has downloaded all information")
 
-	d.Log.Trace().Msg("checking content on disk")
 	d.checkContentOnDisk()
 	data := d.infoProvider.All()
 	d.ToDownload = utils.Filter(data, func(t T) bool {
@@ -282,6 +281,19 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		}
 		return download
 	})
+
+	if len(d.ToDownload) == 0 {
+		d.Log.Debug().Msg("no chapters to download, stopping")
+		req := payload.StopRequest{
+			Provider:    d.Req.Provider,
+			Id:          d.Id(),
+			DeleteFiles: false,
+		}
+		if err = d.Client.RemoveDownload(req); err != nil {
+			d.Log.Error().Err(err).Msg("error while cleaning up")
+		}
+		return
+	}
 
 	d.SetState(utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
