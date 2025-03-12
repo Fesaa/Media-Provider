@@ -268,13 +268,10 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	}
 
 	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
-	d.checkContentOnDisk()
-	d.SetState(utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
-		payload.ContentStateReady,
-		payload.ContentStateWaiting))
-
 	d.Log.Debug().Msg("Content has downloaded all information")
 
+	d.Log.Trace().Msg("checking content on disk")
+	d.checkContentOnDisk()
 	data := d.infoProvider.All()
 	d.ToDownload = utils.Filter(data, func(t T) bool {
 		download := d.infoProvider.ShouldDownload(t)
@@ -286,6 +283,9 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return download
 	})
 
+	d.SetState(utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
+		payload.ContentStateReady,
+		payload.ContentStateWaiting))
 	d.SignalR.UpdateContentInfo(d.GetInfo())
 
 	d.Log.Debug().Int("all", len(data)).Int("filtered", len(d.ToDownload)).
@@ -444,6 +444,7 @@ func (d *DownloadBase[T]) startDownload() {
 	d.Log.Info().
 		Int("all", len(data)).
 		Int("toDownload", len(d.ToDownload)).
+		Int("reDownloads", len(d.ToRemoveContent)).
 		Str("into", d.GetDownloadDir()).
 		Msg("downloading content")
 	for _, content := range d.ToDownload {
@@ -545,7 +546,10 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 				wg.Wait()
 				return ctx.Err()
 			}
-			d.UpdateProgress() // TODO: Decide if this is too frequent or not. Should be around 1Hz
+
+			if i%d.maxImages*2 == 0 {
+				d.UpdateProgress()
+			}
 		}
 
 		select {
