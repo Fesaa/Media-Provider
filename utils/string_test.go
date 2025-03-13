@@ -35,6 +35,7 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
+//nolint:funlen
 func TestPadFloat(t *testing.T) {
 	type args struct {
 		f float64
