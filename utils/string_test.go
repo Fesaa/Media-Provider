@@ -83,7 +83,15 @@ func TestPadFloat(t *testing.T) {
 				f: 123.456,
 				n: 4,
 			},
-			want: "0123.5",
+			want: "0123.46",
+		},
+		{
+			name: "Decimal no first",
+			args: args{
+				f: 123.01,
+				n: 3,
+			},
+			want: "123.01",
 		},
 	}
 	for _, tt := range tests {

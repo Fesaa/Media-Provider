@@ -21,9 +21,9 @@ func PadInt(i int, n int) string {
 // PadFloat returns the float as a string, with pad called on the whole part
 // and the first decimal part added, if present
 func PadFloat(f float64, n int) string {
-	full := fmt.Sprintf("%.1f", f)
+	full := fmt.Sprintf("%.2f", f)
 	parts := strings.Split(full, ".")
-	if len(parts) < 2 || parts[1] == "0" { // No decimal part
+	if len(parts) < 2 || parts[1] == "00" { // No decimal part
 		return pad(parts[0], n)
 	}
 	return pad(parts[0], n) + "." + parts[1]
