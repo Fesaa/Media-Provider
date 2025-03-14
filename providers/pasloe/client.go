@@ -1,6 +1,7 @@
 package pasloe
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -247,21 +248,31 @@ func (c *client) deleteFiles(content api.Downloadable) {
 		l.Info().Msg("no existing content downloaded, removing entire directory")
 		if err := os.RemoveAll(dir); err != nil {
 			l.Error().Err(err).Msg("error while deleting directory")
+			c.notifyCleanUpError(content, err)
 		}
 		return
 	}
+
+	var cleanupErrs []error
+	defer func() {
+		if len(cleanupErrs) > 0 {
+			c.notifyCleanUpError(content, cleanupErrs...)
+		}
+	}()
 
 	start := time.Now()
 	for _, contentPath := range content.GetNewContent() {
 		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
 		if err := os.RemoveAll(contentPath); err != nil {
-			l.Error().Err(err).Str("path", contentPath).Msg("error while new content dir")
+			l.Error().Err(err).Str("path", contentPath).Msg("error while removing new content dir")
+			cleanupErrs = append(cleanupErrs, err)
 		}
 	}
 
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		l.Error().Err(err).Str("dir", dir).Msg("error while reading dir, unable to remove empty dirs")
+		cleanupErrs = append(cleanupErrs, err)
 		return
 	}
 
@@ -274,12 +285,14 @@ func (c *client) deleteFiles(content api.Downloadable) {
 		if err != nil {
 			l.Error().Err(err).Str("dir", dir).Str("name", entry.Name()).
 				Msg("error while reading dir, will not remove")
+			cleanupErrs = append(cleanupErrs, err)
 			continue
 		}
 
 		if len(innerEntries) > 0 {
 			l.Trace().Str("dir", dir).Str("name", entry.Name()).
 				Msg("Dir has content, not removing any files")
+			cleanupErrs = append(cleanupErrs, err)
 			continue
 		}
 
@@ -287,6 +300,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 			Msg("Dir has no content, removing entire directory")
 		if err := os.Remove(path.Join(dir, entry.Name())); err != nil {
 			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
+			cleanupErrs = append(cleanupErrs, err)
 		}
 	}
 	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing newly downloaded files")
@@ -301,11 +315,14 @@ func (c *client) cleanup(content api.Downloadable) {
 		return
 	}
 
+	var cleanupErrs []error
+
 	start := time.Now()
 	for _, contentPath := range content.GetToRemoveContent() {
 		l.Trace().Str("name", contentPath).Msg("removing old content")
 		if err := os.Remove(contentPath); err != nil {
 			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
+			cleanupErrs = append(cleanupErrs, err)
 		}
 	}
 	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(content.GetToRemoveContent())).
@@ -317,17 +334,32 @@ func (c *client) cleanup(content api.Downloadable) {
 		err := c.io.ZipToCbz(contentPath)
 		if err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while zipping dir")
+			cleanupErrs = append(cleanupErrs, err)
 			continue
 		}
 
 		if err = os.RemoveAll(contentPath); err != nil {
-			l.Error().Err(err).Str("path", contentPath).Msg("error while deleting file")
-			return
+			l.Error().Err(err).Str("path", contentPath).Msg("error while deleting new content directory")
+			cleanupErrs = append(cleanupErrs, err)
+			continue
 		}
 	}
 
 	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(newContent)).
 		Msg("finished zipping newly downloaded content")
+
+	if len(cleanupErrs) > 0 {
+		l.Error().Errs("errors", cleanupErrs).Msg("errors encountered during cleanup")
+		c.notifyCleanUpError(content, cleanupErrs...)
+	}
+}
+
+func (c *client) notifyCleanUpError(content api.Downloadable, cleanupErrs ...error) {
+	c.notify.NotifyContent(
+		c.transLoco.GetTranslation("cleanup-errors-title"),
+		c.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
+		errors.Join(cleanupErrs...).Error(),
+		models.Red)
 }
 
 func (c *client) wrapError(err error) error {
