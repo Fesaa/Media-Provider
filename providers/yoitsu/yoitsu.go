@@ -221,6 +221,9 @@ func (y *yoitsu) startNext() {
 	}
 }
 
+// TODO: Rewrite
+//
+//nolint:funlen
 func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 	defer y.signalR.DeleteContent(t.Id())
 	tor := t.GetTorrent()

@@ -172,7 +172,7 @@ func (m *manga) getAgeRating(chapter Chapter) (comicinfo.AgeRating, bool) {
 	}
 
 	var mappings models.AgeRatingMappings = m.Preference.AgeRatingMappings
-	allTags := append(m.seriesInfo.Tags, chapter.Tags...)
+	allTags := append(m.seriesInfo.Tags, chapter.Tags...) //nolint:gocritic
 	weights := utils.MaybeMap(allTags, func(t Tag) (int, bool) {
 		ar, ok := mappings.GetAgeRating(t.DisplayName)
 		if !ok {

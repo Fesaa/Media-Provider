@@ -192,7 +192,6 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 	return mi
 }
 
-//nolint:funlen
 func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
@@ -274,6 +273,7 @@ func (m *manga) getAgeRating() comicinfo.AgeRating {
 
 }
 
+//nolint:funlen
 func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 	if m.Preference == nil {
 		m.Log.Warn().Msg("No genres or tags will be set, blacklist couldn't be loaded")

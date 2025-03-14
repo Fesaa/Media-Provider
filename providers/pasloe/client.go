@@ -233,6 +233,9 @@ func (c *client) startNext(provider models.Provider) {
 	next.StartDownload()
 }
 
+// TODO: Rewrite
+//
+//nolint:funlen
 func (c *client) deleteFiles(content api.Downloadable) {
 	defer c.signalR.DeleteContent(content.Id())
 
@@ -306,6 +309,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing newly downloaded files")
 }
 
+// TODO: Rewrite
 func (c *client) cleanup(content api.Downloadable) {
 	defer c.signalR.DeleteContent(content.Id())
 
