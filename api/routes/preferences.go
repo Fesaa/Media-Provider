@@ -29,7 +29,7 @@ func RegisterPreferencesRoutes(pr preferencesRoute) {
 }
 
 func (pr *preferencesRoute) Get(ctx *fiber.Ctx) error {
-	pref, err := pr.DB.Preferences.GetWithTags()
+	pref, err := pr.DB.Preferences.GetComplete()
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to get preferences")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

@@ -23,7 +23,7 @@ func PreferenceServiceProvider(pref models.Preferences, log zerolog.Logger) Pref
 }
 
 func (p *preferencesService) Update(preference models.Preference) error {
-	cur, err := p.pref.GetWithTags()
+	cur, err := p.pref.GetComplete()
 	if err != nil {
 		return err
 	}

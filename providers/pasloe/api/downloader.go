@@ -255,7 +255,7 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	d.cancel = cancel
 	d.Log.Debug().Msg("loading content info")
 
-	p, err := d.preferences.GetWithTags()
+	p, err := d.preferences.GetComplete()
 	if err != nil {
 		d.Log.Error().Err(err).Msg("unable to get preferences, some features may not work")
 	}

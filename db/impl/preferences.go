@@ -22,11 +22,13 @@ func (p preferences) Get() (*models.Preference, error) {
 	return &pref, nil
 }
 
-func (p preferences) GetWithTags() (*models.Preference, error) {
+func (p preferences) GetComplete() (*models.Preference, error) {
 	var pref models.Preference
 	err := p.db.
 		Preload("DynastyGenreTags").
 		Preload("BlackListedTags").
+		Preload("AgeRatingMappings").
+		Preload("AgeRatingMappings.Tag").
 		First(&pref).Error
 	if err != nil {
 		return nil, err

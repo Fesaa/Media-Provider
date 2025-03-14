@@ -29,7 +29,7 @@ type Notifications interface {
 
 type Preferences interface {
 	Get() (*Preference, error)
-	GetWithTags() (*Preference, error)
+	GetComplete() (*Preference, error)
 	Update(pref Preference) error
 }
 

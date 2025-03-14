@@ -118,21 +118,57 @@ type AgeRating string
 
 var (
 	AgeRatingUnknown          AgeRating = "Unknown"
-	AgeRatingAdultsOnlyPlus18 AgeRating = "Adults Only 18+"
+	AgeRatingPending          AgeRating = "Rating Pending"
 	AgeRatingEarlyChildhood   AgeRating = "Early Childhood"
 	AgeRatingEveryone         AgeRating = "Everyone"
-	AgeRatingEveryone10Plus   AgeRating = "Everyone 10+"
 	AgeRatingG                AgeRating = "G"
+	AgeRatingEveryone10Plus   AgeRating = "Everyone 10+"
+	AgeRatingPG               AgeRating = "PG"
 	AgeRatingKidsToAdults     AgeRating = "Kids to Adults"
-	AgeRatingM                AgeRating = "M"
+	AgeRatingTeen             AgeRating = "Teen"
 	AgeRatingMAPlus15         AgeRating = "MA15+"
 	AgeRatingMaturePlus17     AgeRating = "Mature 17+"
-	AgeRatingPG               AgeRating = "PG"
+	AgeRatingM                AgeRating = "M"
 	AgeRatingRPlus18          AgeRating = "R18+"
-	AgeRatingPending          AgeRating = "Rating Pending"
-	AgeRatingTeen             AgeRating = "Teen"
+	AgeRatingAdultsOnlyPlus18 AgeRating = "Adults Only 18+"
 	AgeRatingXPlus18          AgeRating = "X18+"
 )
+
+var AgeRatingIndex = map[AgeRating]int{
+	AgeRatingUnknown:          0,
+	AgeRatingPending:          1,
+	AgeRatingEarlyChildhood:   2,
+	AgeRatingEveryone:         3,
+	AgeRatingG:                4,
+	AgeRatingEveryone10Plus:   5,
+	AgeRatingPG:               6,
+	AgeRatingKidsToAdults:     7,
+	AgeRatingTeen:             8,
+	AgeRatingMAPlus15:         9,
+	AgeRatingMaturePlus17:     10,
+	AgeRatingM:                11,
+	AgeRatingRPlus18:          12,
+	AgeRatingAdultsOnlyPlus18: 13,
+	AgeRatingXPlus18:          14,
+}
+
+var IndexToAgeRating = []AgeRating{
+	AgeRatingUnknown,
+	AgeRatingPending,
+	AgeRatingEarlyChildhood,
+	AgeRatingEveryone,
+	AgeRatingG,
+	AgeRatingEveryone10Plus,
+	AgeRatingPG,
+	AgeRatingKidsToAdults,
+	AgeRatingTeen,
+	AgeRatingMAPlus15,
+	AgeRatingMaturePlus17,
+	AgeRatingM,
+	AgeRatingRPlus18,
+	AgeRatingAdultsOnlyPlus18,
+	AgeRatingXPlus18,
+}
 
 // Pages defines the Pages type (slice of ComicPageInfo for proper XML marshalling)
 type Pages struct {
