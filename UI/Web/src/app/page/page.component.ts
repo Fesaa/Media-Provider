@@ -6,7 +6,6 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {SearchRequest} from "../_models/search";
 import {SearchInfo} from "../_models/Info";
 import {SearchResultComponent} from "./_components/search-result/search-result.component";
-import {PaginatorComponent} from "../paginator/paginator.component";
 import {dropAnimation} from "../_animations/drop-animation";
 import {bounceIn500ms} from "../_animations/bounce-in";
 import {flyInOutAnimation} from "../_animations/fly-animation";
@@ -23,13 +22,13 @@ import {MultiSelect} from "primeng/multiselect";
 import {FloatLabel} from "primeng/floatlabel";
 import {ContentService} from "../_services/content.service";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {Paginator} from "primeng/paginator";
 
 @Component({
   selector: 'app-page',
   imports: [
     ReactiveFormsModule,
     SearchResultComponent,
-    PaginatorComponent,
     IconField,
     InputText,
     InputIcon,
@@ -37,7 +36,8 @@ import {TranslocoDirective} from "@jsverse/transloco";
     FormsModule,
     MultiSelect,
     FloatLabel,
-    TranslocoDirective
+    TranslocoDirective,
+    Paginator
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.css',
@@ -54,7 +54,7 @@ export class PageComponent implements OnInit {
   loading = false;
 
   searchResult: SearchInfo[] = [];
-  currentPage: number = 1;
+  currentPage: number = 0;
   showSearchForm: boolean = true;
   hideSearchForm: boolean = false;
   protected readonly ModifierType = ModifierType;
@@ -143,7 +143,7 @@ export class PageComponent implements OnInit {
           this.toastService.successLoco("page.toasts.search-success", {}, {amount: info.length});
         }
         this.searchResult = info || [];
-        this.currentPage = 1;
+        this.currentPage = 0;
         this.showSearchForm = false;
       },
       error: error => {
@@ -180,7 +180,7 @@ export class PageComponent implements OnInit {
   }
 
   toShowResults(): SearchInfo[] {
-    return this.searchResult.slice((this.currentPage - 1) * 10, this.currentPage * 10);
+    return this.searchResult.slice((this.currentPage) * 10, (this.currentPage+1) * 10);
   }
 
   onPageChange(page: number) {
