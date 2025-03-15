@@ -292,6 +292,7 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 			Provider:    d.Req.Provider,
 			Id:          d.Id(),
 			DeleteFiles: false,
+			StartNext:   true,
 		}
 		if err = d.Client.RemoveDownload(req); err != nil {
 			d.Log.Error().Err(err).Msg("error while cleaning up")

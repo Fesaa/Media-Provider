@@ -96,6 +96,8 @@ type StopRequest struct {
 	Provider    models.Provider `json:"provider" validate:"required,provider"`
 	Id          string          `json:"id" validate:"required"`
 	DeleteFiles bool            `json:"delete" validate:"required"`
+	// Force a next start
+	StartNext bool `json:"-"`
 }
 
 type ListDirsRequest struct {

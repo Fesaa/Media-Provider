@@ -119,6 +119,11 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		}
 
 		c.signalR.DeleteContent(content.Id())
+
+		if req.StartNext {
+			c.startNext(req.Provider)
+		}
+
 		return nil
 	}
 
