@@ -40,6 +40,7 @@ linters:
     - dupl
     - gosmopolitan
     - goconst
+    - funlen
 
   enable:
     - asasalint
@@ -57,7 +58,6 @@ linters:
     - errorlint
     - exhaustive
     - fatcontext
-    - funlen
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
