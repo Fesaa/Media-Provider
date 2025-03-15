@@ -10,6 +10,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/zerolog"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +19,7 @@ import (
 func tempDatabase(t *testing.T) *db.Database {
 	t.Helper()
 	config.Dir = t.TempDir()
+	_ = os.Setenv("DATABASE_DSN", "file::memory:")
 	database, err := db.DatabaseProvider(zerolog.Nop())
 	if err != nil {
 		if strings.Contains(err.Error(), "attempt to write a readonly database") {
