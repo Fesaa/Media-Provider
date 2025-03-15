@@ -222,7 +222,9 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 	// OneShots do not have status
 	if chapter.Attributes.Chapter != "" {
-		m.writeCIStatus(ci)
+		if count, ok := m.getCiStatus(); ok {
+			ci.Count = count
+		}
 	}
 
 	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {
@@ -231,7 +233,6 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		m.Log.Trace().Err(err).Str("volume", chapter.Attributes.Volume).Msg("unable to parse volume number")
 	}
 
-	m.writeCIStatus(ci)
 	m.writeTagsAndGenres(ci)
 
 	ci.Writer = strings.Join(m.info.Authors(), ",")
@@ -339,65 +340,76 @@ func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 	}), ",")
 }
 
-// writeCIStatus updates the ComicInfo.Count field according the Mangadex's information
+// getCiStatus updates the ComicInfo.Count field according the Mangadex's information
 // and adds a notification in case a subscription has been exhausted
-func (m *manga) writeCIStatus(ci *comicinfo.ComicInfo) {
+func (m *manga) getCiStatus() (int, bool) {
 	if m.info.Attributes.Status != StatusCompleted {
 		m.Log.Trace().Msg("Series not completed, no status to write")
-		return
+		return 0, false
 	}
 
 	if m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter == "" {
 		m.Log.Warn().Msg("Mangadex marked this series as completed, but no last volume or chapter were provided?")
-		return
+		return 0, false
+	}
+
+	var lastWantedChapter, lastWantedVolume int
+	if m.info.Attributes.LastChapter != "" {
+		val, err := strconv.ParseInt(m.info.Attributes.LastChapter, 10, 64)
+		if err != nil {
+			m.Log.Warn().Err(err).Str("chapter", m.info.Attributes.LastChapter).
+				Msg("Series was completed, but we failed to parse the last chapter from mangadex")
+			return 0, false
+		}
+		lastWantedChapter = int(val)
+	}
+	if m.info.Attributes.LastVolume != "" {
+		val, err := strconv.ParseInt(m.info.Attributes.LastVolume, 10, 64)
+		if err != nil {
+			m.Log.Warn().Err(err).Str("volume", m.info.Attributes.LastVolume).
+				Msg("Series was completed, but we failed to parse the last volume from mangadex")
+			return 0, false
+		}
+		lastWantedVolume = int(val)
 	}
 
 	var count, found int
 	var content string
 	if m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter != "" {
-		val, err := strconv.ParseInt(m.info.Attributes.LastChapter, 10, 64)
-		if err != nil {
-			m.Log.Warn().Err(err).Str("chapter", m.info.Attributes.LastChapter).
-				Msg("Series was completed, but we failed to parse the last chapter from mangadex")
-			return
-		}
-		count = int(val)
+		count = lastWantedChapter
 		found = m.lastFoundChapter
 		content = "Chapters"
 	} else {
-		val, err := strconv.ParseInt(m.info.Attributes.LastVolume, 10, 64)
-		if err != nil {
-			m.Log.Warn().Err(err).Str("volume", m.info.Attributes.LastVolume).
-				Msg("Series was completed, but we failed to parse the last volume from mangadex")
-			return
-		}
-		count = int(val)
+		count = lastWantedVolume
 		found = m.lastFoundVolume
 		content = "Volumes"
 	}
 
-	ci.Count = count
-	if found < count {
+	lastVolumeReachedChaptersMissing := m.info.Attributes.LastVolume != "" && m.info.Attributes.LastChapter != "" &&
+		m.lastFoundChapter < lastWantedChapter
+	if found < count || lastVolumeReachedChaptersMissing {
 		if !m.hasWarned {
 			m.hasWarned = true
 			m.Log.Warn().
 				Str("lastChapter", m.info.Attributes.LastChapter).
-				Bool("foundLastChapter", m.foundLastChapter).
+				Int("lastFoundChapter", m.lastFoundChapter).
 				Str("lastVolume", m.info.Attributes.LastVolume).
-				Bool("foundLastVolume", m.foundLastVolume).
+				Int("lastFoundVolume", m.lastFoundVolume).
 				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
 		}
-		return
+		return count, true
 	}
 
 	// Series has completed, and everything has been downloaded
 	if !m.Req.IsSubscription || m.hasNotifiedSub {
-		return
+		return count, true
 	}
 
 	m.hasNotifiedSub = true
+	m.Log.Debug().Msg("Subscription was completed, consider cancelling it")
 	m.Notifier.NotifyContent(m.TransLoco.GetTranslation("sub-downloaded-all-title"),
 		m.Title(), m.TransLoco.GetTranslation("sub-downloaded-all", m.Title(), count, content))
+	return count, true
 }
 
 // getChapterCover returns the cover for the chapter, and if it's the first page in the chapter
