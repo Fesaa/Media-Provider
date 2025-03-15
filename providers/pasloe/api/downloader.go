@@ -237,12 +237,14 @@ func (d *DownloadBase[T]) Cancel() {
 	if d.cancel != nil {
 		d.cancel()
 	}
-	if err := d.Client.RemoveDownload(payload.StopRequest{
-		Provider:    d.infoProvider.Provider(),
-		Id:          d.id,
-		DeleteFiles: true,
-	}); err != nil {
-		d.Log.Warn().Err(err).Msg("failed to cancel download")
+	if d.Client.Content(d.id) != nil {
+		if err := d.Client.RemoveDownload(payload.StopRequest{
+			Provider:    d.infoProvider.Provider(),
+			Id:          d.id,
+			DeleteFiles: true,
+		}); err != nil {
+			d.Log.Warn().Err(err).Msg("failed to cancel download")
+		}
 	}
 }
 
