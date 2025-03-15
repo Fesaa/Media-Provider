@@ -42,7 +42,23 @@ func (p *pagesImpl) New(page *models.Page) error {
 }
 
 func (p *pagesImpl) Update(page *models.Page) error {
-	return p.db.Save(page).Error
+	return p.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(page).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(&page).Association("Modifiers").Replace(page.Modifiers); err != nil {
+			return err
+		}
+
+		for _, modifier := range page.Modifiers {
+			if err := tx.Model(&modifier).Association("Values").Replace(modifier.Values); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (p *pagesImpl) Delete(id uint) error {
