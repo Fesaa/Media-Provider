@@ -14,7 +14,7 @@ import (
 )
 
 func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, log zerolog.Logger) {
-	log.Debug().Msg("registering api routes")
+	log.Debug().Str("handler", "http-routing").Msg("registering api routes")
 
 	cacheHandler := cache.New(cache.Config{
 		Storage:      cacheStorage(cfg, log),

@@ -21,6 +21,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 )
 
 type appParams struct {
@@ -93,8 +94,15 @@ func ApplicationProvider(params appParams) *fiber.App {
 		Compress: true,
 		MaxAge:   60 * 60,
 	})
-	app.Get("*", func(c *fiber.Ctx) error {
-		return c.SendFile("./public/index.html")
+	app.Use(func(c *fiber.Ctx) error {
+		err := c.Next()
+		// This is very much nonsense, definitely have to find a better way later
+		if err != nil && strings.HasPrefix(err.Error(), "Cannot GET") {
+			//log.Trace().Str("path", c.Path()).Msg("invalid route, returning index")
+			return c.SendFile("./public/index.html")
+		}
+
+		return err
 	})
 
 	return app
