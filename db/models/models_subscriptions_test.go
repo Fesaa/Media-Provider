@@ -53,13 +53,16 @@ func TestSubscription_AfterFind(t *testing.T) {
 		"key1": {"value1", "value2"},
 		"key2": {"value3"},
 	}
-	metadataBytes, _ := json.Marshal(metadata)
+	metadataBytes, err := json.Marshal(metadata)
+	if err != nil {
+		t.Errorf("Marshal failed: %v", err)
+	}
 
 	sub := Subscription{
 		Metadata: metadataBytes,
 	}
 
-	err := sub.AfterFind(nil)
+	err = sub.AfterFind(nil)
 	if err != nil {
 		t.Errorf("AfterFind failed: %v", err)
 	}
@@ -204,7 +207,7 @@ func TestSubscription_NextExecution(t *testing.T) {
 			if next != tt.ExpectedTime {
 				t.Errorf("NextExecution time mismatch: expected %v, got %v", tt.ExpectedTime, next)
 			}
-			if err != tt.ExpectedError {
+			if !errors.Is(err, tt.ExpectedError) {
 				t.Errorf("NextExecution error mismatch: expected %v, got %v", tt.ExpectedError, err)
 			}
 		})

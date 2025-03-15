@@ -11,7 +11,7 @@ func TestSubscriptions_All(t *testing.T) {
 	db := databaseHelper(t)
 	s := Subscriptions(db)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		sub := models.Subscription{
 			ContentId: "contentID" + string(rune(i)),
 			Info: models.SubscriptionInfo{

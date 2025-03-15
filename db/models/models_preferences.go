@@ -90,5 +90,5 @@ type AgeRatingMap struct {
 	PreferenceID       uint
 	Tag                Tag                 `json:"tag"`
 	ComicInfoAgeRating comicinfo.AgeRating `json:"comicInfoAgeRating"`
-	//MetronAgeRating    metroninfo.AgeRating `json:"metronAgeRating"`
+	// MetronAgeRating    metroninfo.AgeRating `json:"metronAgeRating"`
 }

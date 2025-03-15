@@ -12,7 +12,7 @@ import (
 func TestNotifications_All(t *testing.T) {
 	n := Notifications(databaseHelper(t))
 
-	for _ = range 10 {
+	for range 10 {
 		if err := n.New(models.Notification{}); err != nil {
 			t.Fatal(err)
 		}
@@ -47,7 +47,7 @@ func TestNotifications_All(t *testing.T) {
 func TestNotifications_AllAfter(t *testing.T) {
 	n := Notifications(databaseHelper(t))
 
-	for _ = range 5 {
+	for range 5 {
 		if err := n.New(models.Notification{
 			Model: gorm.Model{
 				CreatedAt: time.Now().Add(time.Hour * -24),
@@ -57,7 +57,7 @@ func TestNotifications_AllAfter(t *testing.T) {
 		}
 	}
 
-	for _ = range 5 {
+	for range 5 {
 		if err := n.New(models.Notification{
 			Model: gorm.Model{
 				CreatedAt: time.Now().Add(time.Hour),
@@ -99,7 +99,7 @@ func TestNotifications_Delete(t *testing.T) {
 func TestNotifications_DeleteMany(t *testing.T) {
 	n := Notifications(databaseHelper(t))
 
-	for _ = range 10 {
+	for range 10 {
 		if err := n.New(models.Notification{}); err != nil {
 			t.Fatal(err)
 		}
@@ -168,7 +168,7 @@ func TestNotifications_MarkRead(t *testing.T) {
 func TestNotifications_MarkReadMany(t *testing.T) {
 	n := Notifications(databaseHelper(t))
 
-	for _ = range 10 {
+	for range 10 {
 		if err := n.New(models.Notification{}); err != nil {
 			t.Fatal(err)
 		}
@@ -230,13 +230,13 @@ func TestNotifications_New(t *testing.T) {
 func TestNotifications_Unread(t *testing.T) {
 	n := Notifications(databaseHelper(t))
 
-	for _ = range 5 {
+	for range 5 {
 		if err := n.New(models.Notification{}); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	for _ = range 5 {
+	for range 5 {
 		if err := n.New(models.Notification{
 			Read: true,
 		}); err != nil {

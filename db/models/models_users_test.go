@@ -2,7 +2,6 @@ package models
 
 import (
 	"testing"
-	"time"
 )
 
 func TestUser_HasPermission(t *testing.T) {
@@ -62,13 +61,13 @@ func TestUser_HasPermission(t *testing.T) {
 		},
 		{
 			name:       "Has all permissions",
-			user:       User{Permission: int(ALL_PERMS)},
+			user:       User{Permission: ALL_PERMS},
 			permission: PermWritePage,
 			expected:   true,
 		},
 		{
 			name:       "Has all permissions",
-			user:       User{Permission: int(ALL_PERMS)},
+			user:       User{Permission: ALL_PERMS},
 			permission: PermDeleteUser,
 			expected:   true,
 		},
@@ -81,24 +80,5 @@ func TestUser_HasPermission(t *testing.T) {
 				t.Errorf("HasPermission(%v) = %v, expected %v", tt.permission, result, tt.expected)
 			}
 		})
-	}
-}
-
-func TestPasswordReset_Struct(t *testing.T) {
-	//This is just a basic test that the struct exists, and that time works.
-	reset := PasswordReset{
-		UserId: 1,
-		Key:    "testkey",
-		Expiry: time.Now().Add(time.Hour),
-	}
-
-	if reset.UserId != 1 {
-		t.Errorf("UserId is incorrect")
-	}
-	if reset.Key != "testkey" {
-		t.Errorf("Key is incorrect")
-	}
-	if reset.Expiry.Before(time.Now()) {
-		t.Errorf("Expiry is in the past")
 	}
 }

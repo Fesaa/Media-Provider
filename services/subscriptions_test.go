@@ -19,6 +19,7 @@ import (
 func tempDatabase(t *testing.T) *db.Database {
 	t.Helper()
 	config.Dir = t.TempDir()
+	//nolint:usetesting
 	_ = os.Setenv("DATABASE_DSN", "file::memory:")
 	database, err := db.DatabaseProvider(zerolog.Nop())
 	if err != nil {
