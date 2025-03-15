@@ -1,18 +1,20 @@
 <p-dialog [(visible)]="showDialog" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
           [style]="{ width: '50vw' }" [header]="t('header')"
           (onShow)="filterToDisplay()" (onHide)="hide()"
-          *transloco="let t;prefix:'settings.preferences.tags-blacklist'"
+          *transloco="let t;prefix:'settings.preferences.age-rating-mappings'"
 >
 
   <p class="mb-5">
-    {{ t('explanation.p1') }}<strong>{{ t('explanation.not') }}</strong>{{ t('explanation.p2') }}
+    {{ t('explanation.p1') }}
+    <br>
+    {{ t('explanation.p2') }}
   </p>
 
   <div class="mb-5 flex flex-col md:flex-row justify-between space-y-2 md:space-y-0">
     <p-floatlabel variant="on">
       <p-iconfield>
-        <p-inputicon class="pi pi-plus hover:cursor-pointer" (click)="addTag()" />
-        <input id="newGenre" type="text" pInputText [(ngModel)]="newTag" (keydown.enter)="addTag()">
+        <p-inputicon class="pi pi-plus hover:cursor-pointer" (click)="addAgeRatingMap()" />
+        <input id="newGenre" type="text" pInputText [(ngModel)]="newAgeRating" (keydown.enter)="addAgeRatingMap()">
       </p-iconfield>
       <label for="newGenre">{{ t('new') }}</label>
     </p-floatlabel>
@@ -30,10 +32,11 @@
     <span>{{ t('empty') }}</span>
   } @else {
     <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px">
-      <div *cdkVirtualFor="let tag of toDisplay">
-        <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3" style="height: 50px;">
-          <span>{{tag.name}}</span>
-          <span class="pi pi-trash hover:cursor-pointer" (click)="removeTag(tag)"></span>
+      <div *cdkVirtualFor="let arm of toDisplay">
+        <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3 overflow-clip" style="height: 50px;">
+          <span>{{arm.tag.name}}</span>
+          <p-select [options]="ComicInfoAgeRatings" [(ngModel)]="arm.comicInfoAgeRating" appendTo="body"  />
+          <span class="pi pi-trash hover:cursor-pointer" (click)="removeAgeRatingMap(arm)"></span>
         </div>
       </div>
     </cdk-virtual-scroll-viewport>
