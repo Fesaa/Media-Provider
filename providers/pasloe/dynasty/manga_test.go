@@ -232,7 +232,7 @@ func TestManga_ContentDir(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	got := m.ContentDir(chapter())
-	want := SailorGirlFriend + " Ch. 0004.50"
+	want := SailorGirlFriend + " Ch. 0004.5"
 
 	if got != want {
 		t.Errorf("m.ContentDir() = %q, want %q", got, want)
@@ -245,7 +245,7 @@ func TestManga_ContentPath(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	got := m.ContentPath(chapter())
-	want := path.Join(m.Client.GetBaseDir(), fmt.Sprintf("%s/%s Ch. 0004.50", SailorGirlFriend, SailorGirlFriend))
+	want := path.Join(m.Client.GetBaseDir(), fmt.Sprintf("%s/%s Ch. 0004.5", SailorGirlFriend, SailorGirlFriend))
 	if got != want {
 		t.Errorf("m.ContentPath() = %q, want %q", got, want)
 	}
@@ -506,6 +506,7 @@ func TestTagToGenre(t *testing.T) {
 }
 
 func TestCoverReplace(t *testing.T) {
+	time.Sleep(1 * time.Second)
 	m := tempManga(t, payload.DownloadRequest{
 		Provider:  models.DYNASTY,
 		Id:        "a_story_about_buying_a_classmate_once_a_week_5000_yen_for_an_excuse_to_spend_time_together",
@@ -539,6 +540,7 @@ func TestCoverReplace(t *testing.T) {
 }
 
 func TestCoverNoReplace(t *testing.T) {
+	time.Sleep(1 * time.Second)
 	m := tempManga(t, payload.DownloadRequest{
 		Provider:  models.DYNASTY,
 		Id:        "the_blue_star_on_that_day_ano_koro_no_aoi_hoshi",
