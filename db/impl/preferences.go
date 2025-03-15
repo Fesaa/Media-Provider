@@ -37,5 +37,21 @@ func (p preferences) GetComplete() (*models.Preference, error) {
 }
 
 func (p preferences) Update(pref models.Preference) error {
-	return p.db.Save(&pref).Error
+	if err := p.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&pref).Error; err != nil {
+		return err
+	}
+
+	if err := p.db.Model(&pref).Association("DynastyGenreTags").Replace(pref.DynastyGenreTags); err != nil {
+		return err
+	}
+
+	if err := p.db.Model(&pref).Association("BlackListedTags").Replace(pref.BlackListedTags); err != nil {
+		return err
+	}
+
+	if err := p.db.Model(&pref).Association("AgeRatingMappings").Replace(pref.AgeRatingMappings); err != nil {
+		return err
+	}
+
+	return nil
 }

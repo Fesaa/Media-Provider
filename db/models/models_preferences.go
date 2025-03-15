@@ -3,7 +3,6 @@ package models
 import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/Fesaa/go-metroninfo"
 	"gorm.io/gorm"
 )
 
@@ -89,7 +88,7 @@ type AgeRatingMap struct {
 	gorm.Model
 
 	PreferenceID       uint
-	Tag                Tag                  `json:"tag"`
-	ComicInfoAgeRating comicinfo.AgeRating  `json:"comicInfoAgeRating"`
-	MetronAgeRating    metroninfo.AgeRating `json:"metronAgeRating"`
+	Tag                Tag                 `json:"tag"`
+	ComicInfoAgeRating comicinfo.AgeRating `json:"comicInfoAgeRating"`
+	//MetronAgeRating    metroninfo.AgeRating `json:"metronAgeRating"`
 }

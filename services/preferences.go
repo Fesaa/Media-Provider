@@ -28,15 +28,39 @@ func (p *preferencesService) Update(preference models.Preference) error {
 		return err
 	}
 
-	newDynastyTags := utils.Filter(preference.DynastyGenreTags, func(tag models.Tag) bool {
-		return !models.Tags(cur.DynastyGenreTags).ContainsTag(tag)
-	})
-	newBlackLists := utils.Filter(preference.BlackListedTags, func(tag models.Tag) bool {
-		return !models.Tags(cur.BlackListedTags).ContainsTag(tag)
-	})
-
-	preference.BlackListedTags = utils.FlatMapMany(cur.BlackListedTags, newBlackLists)
-	preference.DynastyGenreTags = utils.FlatMapMany(cur.DynastyGenreTags, newDynastyTags)
-
+	preference.BlackListedTags = mergeTags(cur.BlackListedTags, preference.BlackListedTags)
+	preference.DynastyGenreTags = mergeTags(cur.DynastyGenreTags, preference.DynastyGenreTags)
 	return p.pref.Update(preference)
+}
+
+func mergeTags(currentTags, newTags []models.Tag) []models.Tag {
+	normalizedNames := make(map[string]string)
+	newTagMap := make(map[string]struct{})
+	for _, tag := range newTags {
+		nt := utils.Normalize(tag.Name)
+		newTagMap[nt] = struct{}{}
+		normalizedNames[tag.Name] = nt
+	}
+
+	mergedTags := make([]models.Tag, 0)
+
+	// Remove deleted tags
+	added := map[string]bool{}
+	for _, currentTag := range currentTags {
+		if _, exists := newTagMap[currentTag.NormalizedName]; exists {
+			mergedTags = append(mergedTags, currentTag)
+			added[currentTag.NormalizedName] = true
+		}
+	}
+
+	// Add new tags
+	for _, newTag := range newTags {
+		_, alreadyExists := added[normalizedNames[newTag.Name]]
+		if !alreadyExists {
+			mergedTags = append(mergedTags, newTag)
+			added[normalizedNames[newTag.Name]] = true
+		}
+	}
+
+	return mergedTags
 }
