@@ -89,18 +89,17 @@ func (m *manga) RefUrl() string {
 func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 	out := make(chan struct{})
 	go func() {
+		defer close(out)
 		info, err := m.repository.SeriesInfo(ctx, m.id)
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				m.Log.Error().Err(err).Msg("error while loading series info")
 			}
 			m.Cancel()
-			close(out)
 			return
 		}
 
 		m.seriesInfo = info
-		close(out)
 	}()
 
 	return out

@@ -15,13 +15,13 @@ import (
 func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 	out := make(chan struct{})
 	go func() {
+		defer close(out)
 		mangaInfo, err := m.repository.GetManga(ctx, m.id)
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				m.Log.Error().Err(err).Msg("error while loading manga info")
 			}
 			m.Cancel()
-			close(out)
 			return
 		}
 		m.info = &mangaInfo.Data
@@ -32,7 +32,6 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 				m.Log.Error().Err(err).Msg("error while loading chapter info")
 			}
 			m.Cancel()
-			close(out)
 			return
 		}
 
@@ -48,8 +47,6 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 				m.coverFactory = m.getCoverFactoryLang(covers)
 			}
 		}
-
-		close(out)
 	}()
 	return out
 }

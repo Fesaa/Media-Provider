@@ -85,13 +85,13 @@ func (w *webtoon) RefUrl() string {
 func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 	out := make(chan struct{})
 	go func() {
+		defer close(out)
 		info, err := w.repository.SeriesInfo(ctx, w.id)
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				w.Log.Error().Err(err).Msg("error while loading webtoon info")
 			}
 			w.Cancel()
-			close(out)
 			return
 		}
 
@@ -103,7 +103,6 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 		if err != nil {
 			w.Log.Error().Err(err).Msg("error while loading webtoon info")
 			w.Cancel()
-			close(out)
 			return
 		}
 
@@ -113,8 +112,6 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 		if w.searchInfo == nil {
 			w.Log.Warn().Msg("was unable to load searchInfo, some meta-data may be off")
 		}
-
-		close(out)
 	}()
 	return out
 }

@@ -231,17 +231,19 @@ func (d *DownloadBase[T]) GetInfo() payload.InfoStat {
 	}
 }
 
+// Cancel calls d.cancel and send a StopRequest with DeleteFiles=true to the Client
 func (d *DownloadBase[T]) Cancel() {
 	d.Log.Trace().Msg("calling cancel on content")
-	if d.cancel == nil {
-		return
+	if d.cancel != nil {
+		d.cancel()
 	}
-	d.cancel()
-	// TODO: Is this needed?
-	if d.Wg == nil {
-		return
+	if err := d.Client.RemoveDownload(payload.StopRequest{
+		Provider:    d.infoProvider.Provider(),
+		Id:          d.id,
+		DeleteFiles: true,
+	}); err != nil {
+		d.Log.Warn().Err(err).Msg("failed to cancel download")
 	}
-	d.Wg.Wait()
 }
 
 func (d *DownloadBase[T]) StartLoadInfo() {
