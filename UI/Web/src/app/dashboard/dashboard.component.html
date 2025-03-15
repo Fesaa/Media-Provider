@@ -82,8 +82,11 @@
                               [pTooltip]="t('actions.mark-ready')" tooltipPosition="bottom" icon="pi pi-check" severity="success"/>
                   }
 
-                  <p-button (click)="stop(info)" [rounded]="true" [text]="true"
-                            [pTooltip]="t('actions.stop')" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
+                  @if (info.contentState !== ContentState.Cleanup) {
+                    <p-button (click)="stop(info)" [rounded]="true" [text]="true"
+                              [pTooltip]="t('actions.stop')" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
+                  }
+
                 </div>
               </th>
             </tr>

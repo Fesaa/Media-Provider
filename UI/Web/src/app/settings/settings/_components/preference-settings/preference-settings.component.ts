@@ -11,6 +11,7 @@ import {DynastyGenresComponent} from "./dynasty-genres/dynasty-genres.component"
 import {TagsBlacklistComponent} from "./tags-blacklist/tags-blacklist.component";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {Select} from "primeng/select";
+import {AgeRatingMappingsComponent} from "./age-rating-mappings/age-rating-mappings.component";
 
 @Component({
   selector: 'app-preference-settings',
@@ -26,6 +27,7 @@ import {Select} from "primeng/select";
     TagsBlacklistComponent,
     TranslocoDirective,
     Select,
+    AgeRatingMappingsComponent,
   ],
   templateUrl: './preference-settings.component.html',
   styleUrl: './preference-settings.component.css'
@@ -35,6 +37,7 @@ export class PreferenceSettingsComponent implements OnInit {
   preferences: Preferences | undefined;
   displayDynastyGenresDialog: boolean = false;
   displayBlackListTagDialog: boolean = false;
+  displayAgeRatingMappingDialog: boolean = false;
 
   constructor(private preferencesService: PreferencesService,
               private toastService: ToastService,

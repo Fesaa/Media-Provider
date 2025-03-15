@@ -23,6 +23,7 @@ The remaining time is simply the remaining ratio of the remaining size and curre
 | Waiting     | The info needed to start downloading has been loaded, but content wasn't allowed to start by the user. You may adjust to download files in this state |
 | Loading     | The content is loading the needed information to start downloading                                                                                    |
 | Queued      | The download client has blocked the content from loading information. It will start when a spot is freed                                              |
+| Cleanup     | The content has finished downloaded (or was canceled) and is now cleaning up. I.e. Removing, moving, or zipping files                                 |
 
 ### Actions
 

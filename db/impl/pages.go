@@ -6,15 +6,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type pagesImpl struct {
+type pages struct {
 	db *gorm.DB
 }
 
 func Pages(db *gorm.DB) models.Pages {
-	return &pagesImpl{db}
+	return &pages{db}
 }
 
-func (p *pagesImpl) All() ([]models.Page, error) {
+func (p *pages) All() ([]models.Page, error) {
 	var pages []models.Page
 	result := p.db.Preload("Modifiers").Preload("Modifiers.Values").Find(&pages)
 	if result.Error != nil {
@@ -24,7 +24,7 @@ func (p *pagesImpl) All() ([]models.Page, error) {
 	return pages, nil
 }
 
-func (p *pagesImpl) Get(id uint) (*models.Page, error) {
+func (p *pages) Get(id uint) (*models.Page, error) {
 	var page models.Page
 	result := p.db.Preload("Modifiers").Preload("Modifiers.Values").First(&page, id)
 	if result.Error != nil {
@@ -37,14 +37,30 @@ func (p *pagesImpl) Get(id uint) (*models.Page, error) {
 	return &page, nil
 }
 
-func (p *pagesImpl) New(page *models.Page) error {
+func (p *pages) New(page *models.Page) error {
 	return p.db.Create(page).Error
 }
 
-func (p *pagesImpl) Update(page *models.Page) error {
-	return p.db.Save(page).Error
+func (p *pages) Update(page *models.Page) error {
+	return p.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(page).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(&page).Association("Modifiers").Replace(page.Modifiers); err != nil {
+			return err
+		}
+
+		for _, modifier := range page.Modifiers {
+			if err := tx.Model(&modifier).Association("Values").Replace(modifier.Values); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
-func (p *pagesImpl) Delete(id uint) error {
+func (p *pages) Delete(id uint) error {
 	return p.db.Delete(&models.Page{}, id).Error
 }

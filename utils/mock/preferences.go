@@ -12,7 +12,7 @@ func (p *Preferences) Get() (*models.Preference, error) {
 	return &p.model, nil
 }
 
-func (p *Preferences) GetWithTags() (*models.Preference, error) {
+func (p *Preferences) GetComplete() (*models.Preference, error) {
 	return &p.model, nil
 }
 

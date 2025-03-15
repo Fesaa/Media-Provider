@@ -10,6 +10,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/zerolog"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +19,8 @@ import (
 func tempDatabase(t *testing.T) *db.Database {
 	t.Helper()
 	config.Dir = t.TempDir()
+	//nolint:usetesting
+	_ = os.Setenv("DATABASE_DSN", "file::memory:")
 	database, err := db.DatabaseProvider(zerolog.Nop())
 	if err != nil {
 		if strings.Contains(err.Error(), "attempt to write a readonly database") {
@@ -142,7 +145,7 @@ func (b *brokenPreferences) Get() (*models.Preference, error) {
 	return nil, errors.New("broken preferences")
 }
 
-func (b *brokenPreferences) GetWithTags() (*models.Preference, error) {
+func (b *brokenPreferences) GetComplete() (*models.Preference, error) {
 	return b.Get()
 }
 

@@ -24,5 +24,7 @@
   "sub-downloaded-all": "The subscription on %s has downloaded all possible content; (%d %s), consider removing it.",
   "download-finished-title": "Download completed",
   "download-finished": "%s finished downloading %d item(s)",
-  "re-downloads": "\n %d items were re-downloaded"
+  "re-downloads": "\n %d items were re-downloaded",
+  "cleanup-errors-title": "Errors during cleanup!",
+  "cleanup-errors-summary": "Errors occurred during cleanup for %s"
 }

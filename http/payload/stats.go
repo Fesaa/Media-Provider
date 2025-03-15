@@ -29,17 +29,19 @@ type InfoStat struct {
 type ContentState int
 
 const (
-	// ContentStateDownloading indicates the content is currently being downloaded
-	ContentStateDownloading ContentState = iota
-	// ContentStateReady indicates the content has been marked for download, but cannot start downloading yet
-	ContentStateReady
+	// ContentStateQueued indicates the content cannot start retrieving information yet
+	ContentStateQueued ContentState = iota
+	// ContentStateLoading indicates the content is still retrieving the information needed to start downloading
+	ContentStateLoading
 	// ContentStateWaiting indicates the content was prevented from downloaded imitatively, and has loaded all information
 	// to start downloading
 	ContentStateWaiting
-	// ContentStateLoading indicates the content is still retrieving the information needed to start downloading
-	ContentStateLoading
-	// ContentStateQueued indicates the content cannot start retrieving information yet
-	ContentStateQueued
+	// ContentStateReady indicates the content has been marked for download, but cannot start downloading yet
+	ContentStateReady
+	// ContentStateDownloading indicates the content is currently being downloaded
+	ContentStateDownloading
+	// ContentStateCleanup indicates the content is being zipped
+	ContentStateCleanup
 )
 
 type SpeedType int

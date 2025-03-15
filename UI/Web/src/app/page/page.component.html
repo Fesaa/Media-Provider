@@ -75,8 +75,8 @@
           <app-search-result [dir]="getDir()" [metadata]="getDownloadMetadata(res.Provider)" [page]="page"
                              [searchResult]="res" [providers]="providers" [@fadeAnimation]></app-search-result>
         }
-        <app-paginator [totalPages]="Math.ceil(searchResult.length/10)" [currentPage]="currentPage"
-                       (pageChange)="onPageChange($event)"></app-paginator>
+        <p-paginator (onPageChange)="onPageChange($event.page!)" [rows]="10"
+                     [totalRecords]="searchResult.length" [showFirstLastIcon]="false" [showPageLinks]="true" />
       } @else {
 
       }

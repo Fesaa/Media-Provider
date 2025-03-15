@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
+	"os"
 	"path"
 )
 
@@ -26,7 +27,8 @@ func (db *Database) DB() *gorm.DB {
 }
 
 func DatabaseProvider(log zerolog.Logger) (*Database, error) {
-	db, err := gorm.Open(sqlite.Open(path.Join(config.Dir, "media-provider.db")), &gorm.Config{
+	dsn := config.OrDefault(os.Getenv("DATABASE_DSN"), path.Join(config.Dir, "media-provider.db"))
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger:               gormLogger(log),
 		FullSaveAssociations: true,
 	})

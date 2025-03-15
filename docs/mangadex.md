@@ -31,6 +31,7 @@ will skip writing the cover.
 
 ## Download metadata
 The mangadex provider allows for a few options to be set alongside which manga to download. You may
+
 - Choose the language you're downloading in
 - Choose to skip, or download one-shots
 - Choose a scanlation group*
@@ -43,7 +44,7 @@ You will have to provide these yourself from mangadex's site. Will check for sca
 ### Cover updater
 This metadata option is disabled by default, as it can cause a lot of extra downloads.
 Media-Provider will re-download the chapter if the following conditions have been met
-- The wanted cover is within 10% of the resolution of the cover on disk
+
 - The wanted cover is different from the downloaded cover
 - The wanted cover is not the first page of the chapter
 

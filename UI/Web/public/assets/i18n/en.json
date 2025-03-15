@@ -397,6 +397,16 @@
         "filter": "{{shared.filter}}",
         "empty": "No tags have been configured yet."
       },
+      "age-rating-mappings": {
+        "label": "Age ratings mappings",
+        "header": "Age rating mappings",
+        "explanation": {
+          "p1": "Configure which tags and/or genre's will be used to determine the downloaded content's AgeRating.",
+          "p2": "If several are present, the highest will be used."
+        },
+        "new": "Add new",
+        "filter": "{{shared.filter}}"
+      },
       "sub-refresh": {
         "label": "Download subscriptions at",
         "tooltip": "This is the hour"

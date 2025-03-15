@@ -232,7 +232,7 @@ func TestManga_ContentDir(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	got := m.ContentDir(chapter())
-	want := SailorGirlFriend + " Ch. 0004.5"
+	want := SailorGirlFriend + " Ch. 0004.50"
 
 	if got != want {
 		t.Errorf("m.ContentDir() = %q, want %q", got, want)
@@ -245,7 +245,7 @@ func TestManga_ContentPath(t *testing.T) {
 	m := tempManga(t, req(), &buffer)
 
 	got := m.ContentPath(chapter())
-	want := path.Join(m.Client.GetBaseDir(), fmt.Sprintf("%s/%s Ch. 0004.5", SailorGirlFriend, SailorGirlFriend))
+	want := path.Join(m.Client.GetBaseDir(), fmt.Sprintf("%s/%s Ch. 0004.50", SailorGirlFriend, SailorGirlFriend))
 	if got != want {
 		t.Errorf("m.ContentPath() = %q, want %q", got, want)
 	}
@@ -558,6 +558,9 @@ func TestCoverNoReplace(t *testing.T) {
 	}
 
 	if err := m.tryReplaceCover(); err != nil {
+		if strings.Contains(err.Error(), "503") {
+			t.Skipf("Skipping due to 503 error: %v", err)
+		}
 		t.Fatal(err)
 	}
 

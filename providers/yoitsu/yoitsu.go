@@ -1,6 +1,7 @@
 package yoitsu
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -36,10 +37,13 @@ type yoitsu struct {
 	signalR   services.SignalRService
 	notify    services.NotificationService
 	ioService services.IOService
+	transLoco services.TranslocoService
 }
 
 func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
-	ioService services.IOService, notify services.NotificationService) (Yoitsu, error) {
+	ioService services.IOService, notify services.NotificationService,
+	transLoco services.TranslocoService,
+) (Yoitsu, error) {
 	dir := config.OrDefault(c.GetRootDir(), "temp")
 
 	impl := &yoitsu{
@@ -53,6 +57,7 @@ func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 		signalR:   signalR,
 		notify:    notify,
 		ioService: ioService,
+		transLoco: transLoco,
 	}
 
 	opts := storage.NewFileClientOpts{
@@ -153,10 +158,10 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 
 	y.torrents.Delete(infoHashString)
 	y.baseDirs.Delete(infoHashString)
-	y.signalR.DeleteContent(tor.Id())
 
+	y.signalR.StateUpdate(tor.Id(), payload.ContentStateCleanup)
 	if req.DeleteFiles {
-		go y.deleteTorrentFiles(backingTorrent, baseDir)
+		go y.deleteTorrentFiles(tor, baseDir)
 		go y.startNext()
 		return nil
 	}
@@ -216,17 +221,29 @@ func (y *yoitsu) startNext() {
 	}
 }
 
+// TODO: Rewrite
+//
+//nolint:funlen
 func (y *yoitsu) cleanup(t Torrent, baseDir string) {
+	defer y.signalR.DeleteContent(t.Id())
 	tor := t.GetTorrent()
 	if tor == nil {
 		return
 	}
+
+	var cleanupErrs []error
+	defer func() {
+		if len(cleanupErrs) > 0 {
+			y.notifyCleanUpError(t, cleanupErrs...)
+		}
+	}()
 
 	infoHash := tor.InfoHash().HexString()
 	hashDir := path.Join(y.dir, baseDir, infoHash)
 	info, err := os.ReadDir(hashDir)
 	if err != nil {
 		y.log.Error().Err(err).Str("infoHash", infoHash).Str("dir", hashDir).Msg("error reading torrent dir")
+		cleanupErrs = append(cleanupErrs, err)
 		return
 	}
 
@@ -234,6 +251,7 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 		y.log.Warn().Msg("downloaded torrent was empty, removing directory")
 		if err = os.Remove(hashDir); err != nil {
 			y.log.Error().Err(err).Str("dir", hashDir).Msg("error removing torrent dir")
+			cleanupErrs = append(cleanupErrs, err)
 		}
 		return
 	}
@@ -260,11 +278,13 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 	if noSubDir {
 		if err = y.ioService.MoveDirectoryContent(src, dest); err != nil {
 			y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error moving directory contents")
+			cleanupErrs = append(cleanupErrs, err)
 			return
 		}
 	} else {
 		if err = os.Rename(src, dest); err != nil {
 			y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error while renaming directory")
+			cleanupErrs = append(cleanupErrs, err)
 			return
 		}
 	}
@@ -272,20 +292,24 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 	if len(info) == 1 && firstDirEntry.IsDir() {
 		if err = os.RemoveAll(hashDir); err != nil {
 			y.log.Error().Err(err).Str("dir", hashDir).Msg("error removing torrent dir")
+			cleanupErrs = append(cleanupErrs, err)
 		}
 	}
 }
 
-func (y *yoitsu) deleteTorrentFiles(tor *torrent.Torrent, baseDir string) {
+func (y *yoitsu) deleteTorrentFiles(tor Torrent, baseDir string) {
 	if tor == nil {
 		return
 	}
 
-	infoHash := tor.InfoHash().HexString()
+	infoHash := tor.GetTorrent().InfoHash().HexString()
+	defer y.signalR.DeleteContent(infoHash)
+
 	dir := path.Join(y.dir, baseDir, infoHash)
 	y.log.Debug().Str("infoHash", infoHash).Str("dir", dir).Msg("deleting directory")
 	if err := os.RemoveAll(dir); err != nil {
 		y.log.Error().Err(err).Str("infoHash", infoHash).Str("dir", dir).Msg("error removing torrent dir")
+		y.notifyCleanUpError(tor, err)
 	}
 }
 
@@ -302,6 +326,14 @@ func (y *yoitsu) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMaker {
 		}
 		return path.Join(baseDir, d, infoHash.HexString())
 	}
+}
+
+func (y *yoitsu) notifyCleanUpError(content Torrent, cleanupErrs ...error) {
+	y.notify.NotifyContent(
+		y.transLoco.GetTranslation("cleanup-errors-title"),
+		y.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
+		errors.Join(cleanupErrs...).Error(),
+		models.Red)
 }
 
 func (y *yoitsu) cleaner() {

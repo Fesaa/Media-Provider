@@ -37,7 +37,6 @@ type appParams struct {
 func ApplicationProvider(params appParams) *fiber.App {
 	c := params.Container
 	baseUrl := params.Cfg.BaseUrl
-	log := params.Log.With().Str("handler", "core").Logger()
 
 	app := fiber.New(fiber.Config{
 		AppName: "Media-Provider",
@@ -99,7 +98,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 		err := c.Next()
 		// This is very much nonsense, definitely have to find a better way later
 		if err != nil && strings.HasPrefix(err.Error(), "Cannot GET") {
-			log.Trace().Str("path", c.Path()).Msg("invalid route, returning index")
+			// log.Trace().Str("path", c.Path()).Msg("invalid route, returning index")
 			return c.SendFile("./public/index.html")
 		}
 

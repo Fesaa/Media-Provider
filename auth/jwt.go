@@ -38,7 +38,7 @@ func NewJwtAuth(db *db.Database, cfg *config.Config, log zerolog.Logger) Provide
 func (jwtAuth *jwtAuth) Middleware(ctx *fiber.Ctx) error {
 	isAuthenticated, err := jwtAuth.IsAuthenticated(ctx)
 	if err != nil {
-		jwtAuth.log.Error().Err(err).Msg("error while checking authentication status")
+		jwtAuth.log.Debug().Err(err).Msg("error while checking authentication status")
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	}
 	if !isAuthenticated {

@@ -22,11 +22,13 @@ func (p preferences) Get() (*models.Preference, error) {
 	return &pref, nil
 }
 
-func (p preferences) GetWithTags() (*models.Preference, error) {
+func (p preferences) GetComplete() (*models.Preference, error) {
 	var pref models.Preference
 	err := p.db.
 		Preload("DynastyGenreTags").
 		Preload("BlackListedTags").
+		Preload("AgeRatingMappings").
+		Preload("AgeRatingMappings.Tag").
 		First(&pref).Error
 	if err != nil {
 		return nil, err
@@ -35,5 +37,23 @@ func (p preferences) GetWithTags() (*models.Preference, error) {
 }
 
 func (p preferences) Update(pref models.Preference) error {
-	return p.db.Save(&pref).Error
+	return p.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Select("*").Updates(&pref).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(&pref).Association("DynastyGenreTags").Replace(pref.DynastyGenreTags); err != nil {
+			return err
+		}
+
+		if err := tx.Model(&pref).Association("BlackListedTags").Replace(pref.BlackListedTags); err != nil {
+			return err
+		}
+
+		if err := tx.Model(&pref).Association("AgeRatingMappings").Replace(pref.AgeRatingMappings); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

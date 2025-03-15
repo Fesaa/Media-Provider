@@ -40,6 +40,7 @@ linters:
     - dupl
     - gosmopolitan
     - goconst
+    - funlen
 
   enable:
     - asasalint
@@ -57,7 +58,6 @@ linters:
     - errorlint
     - exhaustive
     - fatcontext
-    - funlen
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
@@ -143,6 +143,13 @@ linters-settings:
   gosec:
     excludes:
       - G306
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - funlen
+        - nolintlint
 
 run:
   timeout: 5m

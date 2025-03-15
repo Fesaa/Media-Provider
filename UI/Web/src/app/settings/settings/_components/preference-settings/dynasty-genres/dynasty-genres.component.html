@@ -8,12 +8,11 @@
     {{ t('explanation') }}
   </p>
 
-  <div class="mb-5 flex flex-row justify-between">
+  <div class="mb-5 flex flex-col md:flex-row justify-between space-y-2 md:space-y-0">
     <p-floatlabel variant="on">
       <p-iconfield>
-        <input id="newGenre" type="text" pInputText [(ngModel)]="dynastyGenresNew"
-               (keydown.enter)="addGenre()">
         <p-inputicon class="pi pi-plus hover:cursor-pointer" (click)="addGenre()" />
+        <input id="newGenre" type="text" pInputText [(ngModel)]="dynastyGenresNew" (keydown.enter)="addGenre()">
       </p-iconfield>
       <label for="newGenre">{{ t('add-new') }}</label>
     </p-floatlabel>

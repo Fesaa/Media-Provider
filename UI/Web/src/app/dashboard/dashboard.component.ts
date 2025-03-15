@@ -191,6 +191,7 @@ export class DashboardComponent implements OnInit {
 
   getSeverity(info: InfoStat): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
     switch (info.contentState) {
+      case ContentState.Cleanup:
       case ContentState.Downloading:
         return "success";
       case ContentState.Ready:

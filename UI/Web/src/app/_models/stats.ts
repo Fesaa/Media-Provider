@@ -16,11 +16,12 @@ export type InfoStat = {
 }
 
 export enum ContentState {
-  Downloading = 0,
-  Ready = 1,
+  Queued = 0,
+  Loading = 1,
   Waiting = 2,
-  Loading = 3,
-  Queued = 4,
+  Ready = 3,
+  Downloading = 4,
+  Cleanup = 5,
 }
 
 export enum SpeedType {
