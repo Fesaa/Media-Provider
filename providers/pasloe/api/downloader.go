@@ -286,7 +286,7 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return download
 	})
 
-	if len(d.ToDownload) == 0 {
+	/*if len(d.ToDownload) == 0 {
 		d.Log.Debug().Msg("no chapters to download, stopping")
 		req := payload.StopRequest{
 			Provider:    d.Req.Provider,
@@ -298,7 +298,7 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 			d.Log.Error().Err(err).Msg("error while cleaning up")
 		}
 		return
-	}
+	}*/
 
 	d.SetState(utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
