@@ -38,7 +38,7 @@ func (p preferences) GetComplete() (*models.Preference, error) {
 
 func (p preferences) Update(pref models.Preference) error {
 	return p.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&pref).Error; err != nil {
+		if err := tx.Select("*").Updates(&pref).Error; err != nil {
 			return err
 		}
 

@@ -558,6 +558,9 @@ func TestCoverNoReplace(t *testing.T) {
 	}
 
 	if err := m.tryReplaceCover(); err != nil {
+		if strings.Contains(err.Error(), "503") {
+			t.Skipf("Skipping due to 503 error: %v", err)
+		}
 		t.Fatal(err)
 	}
 

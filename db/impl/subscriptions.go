@@ -60,11 +60,7 @@ func (s subscriptionImpl) New(subscription models.Subscription) (*models.Subscri
 }
 
 func (s subscriptionImpl) Update(subscription models.Subscription) error {
-	res := s.db.Save(&subscription)
-	if res.Error != nil {
-		return res.Error
-	}
-	return nil
+	return s.db.Session(&gorm.Session{FullSaveAssociations: true}).Save(&subscription).Error
 }
 
 func (s subscriptionImpl) Delete(i uint) error {
