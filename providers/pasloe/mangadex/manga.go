@@ -159,8 +159,9 @@ func (m *manga) ContentDir(chapter ChapterSearchData) string {
 		return fmt.Sprintf("%s OneShot %s", m.Title(), chapter.Attributes.Title)
 	}
 
-	if chpt, err := strconv.ParseFloat(chapter.Attributes.Chapter, 32); err == nil {
-		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
+	if _, err := strconv.ParseFloat(chapter.Attributes.Chapter, 32); err == nil {
+		padded := utils.PadFloatFromString(chapter.Attributes.Chapter, 4)
+		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), padded)
 		return chDir
 	} else if chapter.Attributes.Chapter != "" { // Don't warm for empty chpt. They're expected to fail
 		m.Log.Warn().Err(err).Str("chapter", chapter.Attributes.Chapter).Msg("unable to parse chpt number, not padding")

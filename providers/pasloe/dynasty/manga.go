@@ -163,8 +163,9 @@ func (m *manga) ContentDir(chapter Chapter) string {
 		return fmt.Sprintf("%s OneShot %s", m.Title(), chapter.Title)
 	}
 
-	if chpt, err := strconv.ParseFloat(chapter.Chapter, 32); err == nil {
-		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), utils.PadFloat(chpt, 4))
+	if _, err := strconv.ParseFloat(chapter.Chapter, 32); err == nil {
+		padded := utils.PadFloatFromString(chapter.Chapter, 4)
+		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), padded)
 		return chDir
 	} else if chapter.Chapter != "" {
 		m.Log.Warn().Err(err).Str("chapter", chapter.Chapter).Msg("unable to parse chapter number, not padding")
