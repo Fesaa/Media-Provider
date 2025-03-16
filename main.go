@@ -51,6 +51,7 @@ func main() {
 	utils.Must(c.Provide(ApplicationProvider))
 
 	utils.Must(c.Invoke(services.RegisterSignalREndPoint))
+	utils.Must(c.Invoke(RegisterCallback))
 	utils.Must(c.Invoke(providers.RegisterProviders))
 	utils.Must(c.Invoke(UpdateBaseUrlInIndex))
 	utils.Must(c.Invoke(startApp))
