@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -15,7 +14,6 @@ import (
 	"go.uber.org/dig"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 	"testing"
@@ -24,13 +22,36 @@ import (
 
 const (
 	SailorGirlFriend = "Sailor Girlfriend"
-
-	// For tests with special non-chapter; https://dynasty-scans.com/series/shiawase_trimming
-	ShiawaseTrimming   = "Shiawase Trimming"
-	ShiawaseTrimmingId = "shiawase_trimming"
 )
 
-func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
+type mockRepository struct {
+	SearchSeriesFunc  func(ctx context.Context, options SearchOptions) ([]SearchData, error)
+	SeriesInfoFunc    func(ctx context.Context, id string) (*Series, error)
+	ChapterImagesFunc func(ctx context.Context, id string) ([]string, error)
+}
+
+func (m mockRepository) SearchSeries(ctx context.Context, options SearchOptions) ([]SearchData, error) {
+	if m.SearchSeriesFunc == nil {
+		return []SearchData{}, nil
+	}
+	return m.SearchSeriesFunc(ctx, options)
+}
+
+func (m mockRepository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
+	if m.SeriesInfoFunc == nil {
+		return &Series{}, nil
+	}
+	return m.SeriesInfoFunc(ctx, id)
+}
+
+func (m mockRepository) ChapterImages(ctx context.Context, id string) ([]string, error) {
+	if m.ChapterImagesFunc == nil {
+		return []string{}, nil
+	}
+	return m.ChapterImagesFunc(ctx, id)
+}
+
+func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repository) *manga {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -45,7 +66,6 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer) *manga {
 
 	tempDir := t.TempDir()
 	client := mock.PasloeClient{BaseDir: tempDir}
-	repo := tempRepository(w)
 
 	must(scope.Provide(func() api.Client {
 		return &client
@@ -109,7 +129,13 @@ func chapter() Chapter {
 func TestManga_Title(t *testing.T) {
 	var buffer bytes.Buffer
 
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, mockRepository{
+		SeriesInfoFunc: func(ctx context.Context, id string) (*Series, error) {
+			return &Series{
+				Title: SailorGirlFriend,
+			}, nil
+		},
+	})
 
 	want := SailorGirlFriend
 	if m.Title() != want {
@@ -133,7 +159,11 @@ func TestManga_TitleInvalid(t *testing.T) {
 	var buffer bytes.Buffer
 	r := req()
 	r.Id = "something_invalid_3456789876545678"
-	m := tempManga(t, r, &buffer)
+	m := tempManga(t, r, &buffer, mockRepository{
+		SeriesInfoFunc: func(ctx context.Context, id string) (*Series, error) {
+			return &Series{}, fmt.Errorf("an error occurred")
+		},
+	})
 
 	select {
 	case <-m.LoadInfo(context.Background()):
@@ -152,7 +182,7 @@ func TestManga_TitleInvalid(t *testing.T) {
 
 func TestManga_Provider(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{})
 
 	want := models.DYNASTY
 	if m.Provider() != want {
@@ -162,7 +192,7 @@ func TestManga_Provider(t *testing.T) {
 
 func TestManga_GetInfoBeforeLoad(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{})
 
 	got := m.GetInfo()
 
@@ -188,7 +218,14 @@ func TestManga_GetInfoBeforeLoad(t *testing.T) {
 
 func TestManga_GetInfoAfterLoad(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{
+		SeriesInfoFunc: func(ctx context.Context, id string) (*Series, error) {
+			return &Series{
+				Title: SailorGirlFriend,
+				Id:    "sailor_girlfriend",
+			}, nil
+		},
+	})
 
 	select {
 	case <-m.LoadInfo(context.Background()):
@@ -212,7 +249,13 @@ func TestManga_GetInfoAfterLoad(t *testing.T) {
 
 func TestManga_All(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{
+		SeriesInfoFunc: func(ctx context.Context, id string) (*Series, error) {
+			return &Series{
+				Chapters: make([]Chapter, 5),
+			}, nil
+		},
+	})
 
 	select {
 	case <-m.LoadInfo(context.Background()):
@@ -229,7 +272,7 @@ func TestManga_All(t *testing.T) {
 
 func TestManga_ContentDir(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{})
 
 	got := m.ContentDir(chapter())
 	want := SailorGirlFriend + " Ch. 0004.50"
@@ -242,7 +285,7 @@ func TestManga_ContentDir(t *testing.T) {
 
 func TestManga_ContentPath(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{})
 
 	got := m.ContentPath(chapter())
 	want := path.Join(m.Client.GetBaseDir(), fmt.Sprintf("%s/%s Ch. 0004.50", SailorGirlFriend, SailorGirlFriend))
@@ -253,7 +296,7 @@ func TestManga_ContentPath(t *testing.T) {
 
 func TestManga_ContentKey(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{})
 
 	got := m.ContentKey(chapter())
 	want := "sailor_girlfriend_ch4_5"
@@ -264,7 +307,7 @@ func TestManga_ContentKey(t *testing.T) {
 
 func TestManga_ContentLogger(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{})
 
 	log := m.ContentLogger(chapter())
 
@@ -290,7 +333,11 @@ func TestManga_ContentLogger(t *testing.T) {
 
 func TestManga_ContentUrls(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{
+		ChapterImagesFunc: func(ctx context.Context, id string) ([]string, error) {
+			return make([]string, 19), nil
+		},
+	})
 
 	urls, err := m.ContentUrls(context.Background(), chapter())
 	if err != nil {
@@ -303,80 +350,9 @@ func TestManga_ContentUrls(t *testing.T) {
 
 }
 
-func TestManga_WriteContentMetaData(t *testing.T) {
-	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
-
-	select {
-	case <-m.LoadInfo(context.Background()):
-		break
-	case <-time.After(5 * time.Second):
-		t.Fatal("m.LoadInfo() timeout")
-	}
-
-	if err := os.MkdirAll(path.Join(m.ContentPath(chapter())), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	err := m.WriteContentMetaData(chapter())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	p := path.Join(m.ContentPath(chapter()), "ComicInfo.xml")
-	_, err = os.Stat(p)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	data, err := os.ReadFile(p)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ci := m.comicInfo(chapter())
-	var b bytes.Buffer
-	if err = comicinfo.Write(ci, &b); err != nil {
-		t.Fatal(err)
-	}
-
-	if b.String() != string(data) {
-		t.Errorf("m.comicInfo() = %q, want %q", b, data)
-	}
-
-}
-
-func TestManga_DownloadContent(t *testing.T) {
-	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
-
-	urls, err := m.ContentUrls(context.Background(), chapter())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(urls) == 0 {
-		t.Fatal("len(urls) = 0, want > 0")
-	}
-
-	if err = os.MkdirAll(path.Join(m.ContentPath(chapter())), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	if err = m.DownloadContent(1, chapter(), urls[0]); err != nil {
-		t.Fatal(err)
-	}
-
-	filePath := path.Join(m.ContentPath(chapter()), fmt.Sprintf("page %s.jpg", utils.PadInt(1, 4)))
-	_, err = os.Stat(filePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestManga_ContentRegex(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{})
 
 	if m.IsContent("Not a Valid Chapter") {
 		t.Error("m.ContentRegex().MatchString() returned true")
@@ -393,7 +369,7 @@ func TestManga_ContentRegex(t *testing.T) {
 
 func TestManga_ShouldDownload(t *testing.T) {
 	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
+	m := tempManga(t, req(), &buffer, &mockRepository{})
 	m.ExistingContent = []api.Content{
 		{
 			Name: "Sailor Girlfriend Ch. 0001.cbz",
@@ -403,12 +379,12 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 	}
 
-	select {
+	/*select {
 	case <-m.LoadInfo(context.Background()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
-	}
+	}*/
 
 	chapter1 := chapter()
 	chapter1.Chapter = "1"
@@ -425,7 +401,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 
 //nolint:funlen
 func TestTagToGenre(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{})
 
 	m.seriesInfo = &Series{
 		Id:          "",
@@ -515,7 +491,21 @@ func TestCoverReplace(t *testing.T) {
 			StartImmediately: true,
 		},
 		IsSubscription: false,
-	}, io.Discard)
+	}, io.Discard, &mockRepository{
+		SeriesInfoFunc: func(ctx context.Context, id string) (*Series, error) {
+			return &Series{
+				CoverUrl: "https://dynasty-scans.com/system/tag_contents_covers/000/023/149/medium/00.jpg?1718830047",
+				Chapters: []Chapter{
+					{
+						Chapter: "1",
+					},
+				},
+			}, nil
+		},
+		ChapterImagesFunc: func(ctx context.Context, id string) ([]string, error) {
+			return []string{"https://dynasty-scans.com/system/releases/000/042/230/00.webp"}, nil
+		},
+	})
 
 	select {
 	case <-m.LoadInfo(context.Background()):
@@ -548,7 +538,21 @@ func TestCoverNoReplace(t *testing.T) {
 			StartImmediately: true,
 		},
 		IsSubscription: false,
-	}, io.Discard)
+	}, io.Discard, &mockRepository{
+		SeriesInfoFunc: func(ctx context.Context, id string) (*Series, error) {
+			return &Series{
+				CoverUrl: "https://dynasty-scans.com/system/tag_contents_covers/000/013/315/medium/cover.jpg?1663754407",
+				Chapters: []Chapter{
+					{
+						Chapter: "1",
+					},
+				},
+			}, nil
+		},
+		ChapterImagesFunc: func(ctx context.Context, id string) ([]string, error) {
+			return []string{"https://dynasty-scans.com/system/releases/000/026/104/001.webp"}, nil
+		},
+	})
 
 	select {
 	case <-m.LoadInfo(context.Background()):

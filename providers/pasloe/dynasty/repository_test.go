@@ -12,6 +12,12 @@ import (
 	"time"
 )
 
+const (
+	// For tests with special non-chapter; https://dynasty-scans.com/series/shiawase_trimming
+	ShiawaseTrimming   = "Shiawase Trimming"
+	ShiawaseTrimmingId = "shiawase_trimming"
+)
+
 func tempRepository(w io.Writer) Repository {
 	return NewRepository(http.DefaultClient, zerolog.New(w))
 }
@@ -146,7 +152,7 @@ func TestRepository_SearchSeriesOneShotChapters(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	res, err := repo.SeriesInfo(context.Background(), "shiawase_trimming")
+	res, err := repo.SeriesInfo(context.Background(), ShiawaseTrimmingId)
 	if err != nil {
 		if strings.Contains(err.Error(), "status code error: 503") {
 			t.Skipf("Skipping test as 3rd party server error")
