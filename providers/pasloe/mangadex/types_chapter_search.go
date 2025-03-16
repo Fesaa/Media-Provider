@@ -33,7 +33,7 @@ func (chapter ChapterSearchData) Volume() float64 {
 	if chapter.Attributes.Volume == "" {
 		return -1
 	}
-	if vol, err := strconv.ParseFloat(chapter.Attributes.Chapter, 64); err == nil {
+	if vol, err := strconv.ParseFloat(chapter.Attributes.Volume, 64); err == nil {
 		return vol
 	}
 	return -1

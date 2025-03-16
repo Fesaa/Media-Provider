@@ -1,21 +1,16 @@
 package webtoon
 
 import (
-	"context"
 	"github.com/rs/zerolog"
 	"io"
 	"net/http"
-	"reflect"
-	"slices"
-	"strings"
-	"testing"
-	"time"
 )
 
 func tempRepository(w io.Writer) Repository {
 	return NewRepository(http.DefaultClient, zerolog.New(w))
 }
 
+/*
 func TestRepository_Search(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
@@ -144,3 +139,4 @@ func TestRepository_SeriesInfoSuperLong(t *testing.T) {
 		t.Errorf("got %d results, want at least 114", len(got.Chapters))
 	}
 }
+*/

@@ -141,7 +141,7 @@ func (a *MangaAttributes) LangTitle(language string) string {
 	// as the Japanese title is in the latin alphabet. We'll just have to be fine with it, as the alternative titles
 	// are just plain weird from time to time
 	enTitle, ok := a.Title[language]
-	if ok {
+	if ok && enTitle != "" {
 		return enTitle
 	}
 
@@ -150,7 +150,7 @@ func (a *MangaAttributes) LangTitle(language string) string {
 titleArrayLoop:
 	for _, altTitle := range a.AltTitles {
 		for key, value := range altTitle {
-			if key == language {
+			if key == language && value != "" {
 				enAltTitle = value
 				break titleArrayLoop
 			}
@@ -163,7 +163,9 @@ titleArrayLoop:
 
 	// fallback to first title, any language
 	for _, value := range a.Title {
-		return value
+		if value != "" {
+			return value
+		}
 	}
 
 	// Last resort fallback title, this should never happen- mangadex should have at least one title
