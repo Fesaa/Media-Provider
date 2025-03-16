@@ -9,7 +9,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/anacrolix/torrent"
 	"github.com/rs/zerolog"
-	"os"
+	"github.com/spf13/afero"
 	"path"
 	"slices"
 	"strings"
@@ -24,6 +24,7 @@ type torrentImpl struct {
 	client Yoitsu
 
 	signalR services.SignalRService
+	fs      afero.Afero
 
 	req       payload.DownloadRequest
 	key       string
@@ -45,11 +46,12 @@ type torrentImpl struct {
 }
 
 func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Logger, client Yoitsu,
-	signalR services.SignalRService) Torrent {
+	signalR services.SignalRService, fs afero.Afero) Torrent {
 	tor := &torrentImpl{
 		t:         t,
 		client:    client,
 		signalR:   signalR,
+		fs:        fs,
 		key:       t.InfoHash().HexString(),
 		req:       req,
 		baseDir:   req.BaseDir,
@@ -353,7 +355,7 @@ func (t *torrentImpl) Cleanup(root string) {
 
 		filePath := path.Join(root, file.Path())
 		t.log.Debug().Str("path", filePath).Msg("removing file, as it wasn't wanted")
-		if err := os.Remove(filePath); err != nil {
+		if err := t.fs.Remove(filePath); err != nil {
 			t.log.Error().Str("path", filePath).Err(err).Msg("failed to remove file")
 		}
 	}

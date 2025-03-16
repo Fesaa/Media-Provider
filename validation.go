@@ -6,18 +6,18 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
-	"os"
+	"github.com/spf13/afero"
 	"strings"
 )
 
-func validateConfig(cfg *config.Config, log zerolog.Logger, val *validator.Validate) error {
+func validateConfig(cfg *config.Config, log zerolog.Logger, val *validator.Validate, fs afero.Afero) error {
 	log = log.With().Str("handler", "config-validator").Logger()
 
 	if err := val.Struct(cfg); err != nil {
 		return err
 	}
 
-	if err := validateRootConfig(cfg, log); err != nil {
+	if err := validateRootConfig(cfg, log, fs); err != nil {
 		return err
 	}
 
@@ -33,12 +33,12 @@ func validateConfig(cfg *config.Config, log zerolog.Logger, val *validator.Valid
 	return nil
 }
 
-func validateRootConfig(c *config.Config, log zerolog.Logger) error {
+func validateRootConfig(c *config.Config, log zerolog.Logger, fs afero.Afero) error {
 	log.Debug().Msg("Validating root config")
 	if strings.HasSuffix(c.GetRootDir(), "/") {
 		return fmt.Errorf("invalid root url, must not end with /: %s", c.GetRootDir())
 	}
-	ok, err := dirExists(c.GetRootDir())
+	ok, err := fs.DirExists(c.GetRootDir())
 	if err != nil {
 		return err
 	}
@@ -74,15 +74,4 @@ func validateRootConfig(c *config.Config, log zerolog.Logger) error {
 	}
 
 	return nil
-}
-
-func dirExists(path string) (bool, error) {
-	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	return info.IsDir(), nil
 }

@@ -12,10 +12,10 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"regexp"
 	"slices"
@@ -30,12 +30,14 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, httpClient *http.Client,
 		repository Repository, markdownService services.MarkdownService,
+		fs afero.Afero,
 	) {
 		wt = &webtoon{
 			id:              req.Id,
 			httpClient:      httpClient,
 			repository:      repository,
 			markdownService: markdownService,
+			fs:              fs,
 		}
 
 		wt.DownloadBase = api.NewDownloadableFromBlock[Chapter](scope, "webtoon", wt)
@@ -47,6 +49,7 @@ type webtoon struct {
 	httpClient      *http.Client
 	repository      Repository
 	markdownService services.MarkdownService
+	fs              afero.Afero
 
 	*api.DownloadBase[Chapter]
 	id string
@@ -243,7 +246,7 @@ func (w *webtoon) downloadAndWrite(url string, path string, tryAgain ...bool) er
 			return err
 		}
 
-		if err = os.WriteFile(path, data, 0755); err != nil {
+		if err = w.fs.WriteFile(path, data, 0755); err != nil {
 			return err
 		}
 

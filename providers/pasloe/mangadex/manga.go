@@ -9,10 +9,10 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"slices"
 	"strconv"
@@ -31,6 +31,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 		req payload.DownloadRequest, httpClient *http.Client,
 		repository Repository, markdownService services.MarkdownService,
 		imageService services.ImageService, archiveService services.ArchiveService,
+		fs afero.Afero,
 	) {
 		m = &manga{
 			id:              req.Id,
@@ -40,6 +41,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			volumeMetadata:  make([]string, 0),
 			imageService:    imageService,
 			archiveService:  archiveService,
+			fs:              fs,
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
@@ -58,6 +60,7 @@ type manga struct {
 	markdownService services.MarkdownService
 	imageService    services.ImageService
 	archiveService  services.ArchiveService
+	fs              afero.Afero
 
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
@@ -273,7 +276,7 @@ func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) erro
 		return err
 	}
 
-	if err = os.WriteFile(path, data, 0755); err != nil {
+	if err = m.fs.WriteFile(path, data, 0755); err != nil {
 		return err
 	}
 

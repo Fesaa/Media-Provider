@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,12 +35,14 @@ type TranslocoService interface {
 type translocoService struct {
 	languages map[string]map[string]string
 	log       zerolog.Logger
+	fs        afero.Afero
 }
 
-func TranslocoServiceProvider(log zerolog.Logger) (TranslocoService, error) {
+func TranslocoServiceProvider(log zerolog.Logger, fs afero.Afero) (TranslocoService, error) {
 	transloco := &translocoService{
 		languages: make(map[string]map[string]string),
 		log:       log.With().Str("handler", "transloco-service").Logger(),
+		fs:        fs,
 	}
 	if err := transloco.loadLanguages(); err != nil {
 		return nil, err
@@ -57,7 +60,7 @@ func (t *translocoService) loadLanguages() error {
 	for _, file := range files {
 		language := strings.TrimSuffix(filepath.Base(file), filepath.Ext(file))
 
-		fileContent, err := os.ReadFile(file)
+		fileContent, err := t.fs.ReadFile(file)
 		if err != nil {
 			return err
 		}

@@ -15,7 +15,6 @@ import (
 	"go.uber.org/dig"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 	"testing"
@@ -329,7 +328,7 @@ func TestWebtoon_WriteContentMetaData(t *testing.T) {
 	w := tempWebtoon(t, &buf, dir)
 	w.info = series()
 
-	if err := os.MkdirAll(w.ContentPath(chapter()), 0755); err != nil {
+	if err := w.fs.MkdirAll(w.ContentPath(chapter()), 0755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -338,12 +337,12 @@ func TestWebtoon_WriteContentMetaData(t *testing.T) {
 	}
 
 	ciPath := path.Join(w.ContentPath(chapter()), "ComicInfo.xml")
-	_, err := os.Stat(ciPath)
+	_, err := w.fs.Stat(ciPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(ciPath)
+	data, err := w.fs.ReadFile(ciPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +373,7 @@ func TestWebtoon_DownloadContent(t *testing.T) {
 		t.Fatal("len(urls) = 0, want > 0")
 	}
 
-	if err = os.MkdirAll(path.Join(w.ContentPath(chapter())), 0755); err != nil {
+	if err = w.fs.MkdirAll(path.Join(w.ContentPath(chapter())), 0755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -383,7 +382,7 @@ func TestWebtoon_DownloadContent(t *testing.T) {
 	}
 
 	filePath := path.Join(w.ContentPath(chapter()), fmt.Sprintf("page %s.jpg", utils.PadInt(1, 4)))
-	_, err = os.Stat(filePath)
+	_, err = w.fs.Stat(filePath)
 	if err != nil {
 		t.Fatal(err)
 	}

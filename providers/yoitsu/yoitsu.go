@@ -13,8 +13,8 @@ import (
 	"github.com/anacrolix/torrent/storage"
 	"github.com/anacrolix/torrent/types/infohash"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"math/rand"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -34,15 +34,16 @@ type yoitsu struct {
 
 	log zerolog.Logger
 
-	signalR   services.SignalRService
-	notify    services.NotificationService
-	ioService services.IOService
-	transLoco services.TranslocoService
+	signalR    services.SignalRService
+	notify     services.NotificationService
+	dirService services.DirectoryService
+	transLoco  services.TranslocoService
+	fs         afero.Afero
 }
 
 func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
-	ioService services.IOService, notify services.NotificationService,
-	transLoco services.TranslocoService,
+	dirService services.DirectoryService, notify services.NotificationService,
+	transLoco services.TranslocoService, fs afero.Afero,
 ) (Yoitsu, error) {
 	dir := config.OrDefault(c.GetRootDir(), "temp")
 
@@ -53,11 +54,12 @@ func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 		torrents: utils.NewSafeMap[string, Torrent](),
 		baseDirs: utils.NewSafeMap[string, string](),
 
-		log:       log.With().Str("handler", "yoitsu").Logger(),
-		signalR:   signalR,
-		notify:    notify,
-		ioService: ioService,
-		transLoco: transLoco,
+		log:        log.With().Str("handler", "yoitsu").Logger(),
+		signalR:    signalR,
+		notify:     notify,
+		dirService: dirService,
+		transLoco:  transLoco,
+		fs:         fs,
 	}
 
 	opts := storage.NewFileClientOpts{
@@ -109,7 +111,7 @@ func (y *yoitsu) Download(req payload.DownloadRequest) error {
 		return services.ErrContentAlreadyExists
 	}
 
-	torrentWrapper := newTorrent(torrentInfo, req, y.log, y, y.signalR)
+	torrentWrapper := newTorrent(torrentInfo, req, y.log, y, y.signalR, y.fs)
 	y.torrents.Set(torrentInfo.InfoHash().String(), torrentWrapper)
 	y.baseDirs.Set(torrentInfo.InfoHash().String(), req.BaseDir)
 	y.signalR.AddContent(torrentWrapper.GetInfo())
@@ -240,7 +242,7 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 
 	infoHash := tor.InfoHash().HexString()
 	hashDir := path.Join(y.dir, baseDir, infoHash)
-	info, err := os.ReadDir(hashDir)
+	info, err := y.fs.ReadDir(hashDir)
 	if err != nil {
 		y.log.Error().Err(err).Str("infoHash", infoHash).Str("dir", hashDir).Msg("error reading torrent dir")
 		cleanupErrs = append(cleanupErrs, err)
@@ -249,7 +251,7 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 
 	if len(info) == 0 {
 		y.log.Warn().Msg("downloaded torrent was empty, removing directory")
-		if err = os.Remove(hashDir); err != nil {
+		if err = y.fs.Remove(hashDir); err != nil {
 			y.log.Error().Err(err).Str("dir", hashDir).Msg("error removing torrent dir")
 			cleanupErrs = append(cleanupErrs, err)
 		}
@@ -276,13 +278,13 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 	}
 
 	if noSubDir {
-		if err = y.ioService.MoveDirectoryContent(src, dest); err != nil {
+		if err = y.dirService.MoveDirectoryContent(src, dest); err != nil {
 			y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error moving directory contents")
 			cleanupErrs = append(cleanupErrs, err)
 			return
 		}
 	} else {
-		if err = os.Rename(src, dest); err != nil {
+		if err = y.fs.Rename(src, dest); err != nil {
 			y.log.Error().Err(err).Str("src", src).Str("dest", dest).Msg("error while renaming directory")
 			cleanupErrs = append(cleanupErrs, err)
 			return
@@ -290,7 +292,7 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 	}
 
 	if len(info) == 1 && firstDirEntry.IsDir() {
-		if err = os.RemoveAll(hashDir); err != nil {
+		if err = y.fs.RemoveAll(hashDir); err != nil {
 			y.log.Error().Err(err).Str("dir", hashDir).Msg("error removing torrent dir")
 			cleanupErrs = append(cleanupErrs, err)
 		}
@@ -307,7 +309,7 @@ func (y *yoitsu) deleteTorrentFiles(tor Torrent, baseDir string) {
 
 	dir := path.Join(y.dir, baseDir, infoHash)
 	y.log.Debug().Str("infoHash", infoHash).Str("dir", dir).Msg("deleting directory")
-	if err := os.RemoveAll(dir); err != nil {
+	if err := y.fs.RemoveAll(dir); err != nil {
 		y.log.Error().Err(err).Str("infoHash", infoHash).Str("dir", dir).Msg("error removing torrent dir")
 		y.notifyCleanUpError(tor, err)
 	}

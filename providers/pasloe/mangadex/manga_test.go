@@ -574,12 +574,12 @@ func TestManga_WriteContentMetaData(t *testing.T) {
 	}
 
 	ciPath := path.Join(m.ContentPath(chapter()), "comicinfo.xml")
-	_, err := os.Stat(ciPath)
+	_, err := m.fs.Stat(ciPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(ciPath)
+	data, err := m.fs.ReadFile(ciPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -711,7 +711,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162")
 				ci := comicinfo.NewComicInfo()
 				ci.Volume = 13
-				if err := os.MkdirAll(fullpath, 0755); err != nil {
+				if err := m.fs.MkdirAll(fullpath, 0755); err != nil {
 					t.Fatal(err)
 				}
 				if err := comicinfo.Save(ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
@@ -736,7 +736,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 				t.Helper()
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162")
 				ci := comicinfo.NewComicInfo()
-				if err := os.MkdirAll(fullpath, 0755); err != nil {
+				if err := m.fs.MkdirAll(fullpath, 0755); err != nil {
 					t.Fatal(err)
 				}
 				if err := comicinfo.Save(ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
@@ -752,7 +752,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 			after: func(t *testing.T, m *manga) {
 				t.Helper()
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 162.cbz")
-				_, err := os.Stat(fullpath)
+				_, err := m.fs.Stat(fullpath)
 				if !errors.Is(err, os.ErrNotExist) {
 					t.Fatalf("expected %s to not exist", fullpath)
 				}

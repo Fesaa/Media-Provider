@@ -6,8 +6,8 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"os"
 	"path"
 	"strings"
 
@@ -23,6 +23,7 @@ type ioRoutes struct {
 	Log       zerolog.Logger
 	Val       services.ValidationService
 	Transloco services.TranslocoService
+	Fs        afero.Afero
 }
 
 func RegisterIoRoutes(ior ioRoutes) {
@@ -40,7 +41,7 @@ func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
 		})
 	}
 
-	entries, err := os.ReadDir(path.Join(ior.Cfg.GetRootDir(), path.Clean(req.Dir)))
+	entries, err := ior.Fs.ReadDir(path.Join(ior.Cfg.GetRootDir(), path.Clean(req.Dir)))
 	if err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to read dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -80,8 +81,8 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 	}
 
 	root := ior.Cfg.GetRootDir()
-	p := path.Join(root, req.BaseDir, req.NewDir)
-	err := os.Mkdir(p, 0755)
+	p := path.Join(root, req.BaseDir, path.Clean(req.NewDir))
+	err := ior.Fs.Mkdir(p, 0755)
 	if err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to create dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

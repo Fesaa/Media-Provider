@@ -10,40 +10,42 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"net/http"
-	"os"
 	"path"
 	"time"
 )
 
 func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
-	ioService services.IOService, signalR services.SignalRService, notify services.NotificationService,
-	preferences models.Preferences, transLoco services.TranslocoService,
+	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
+	preferences models.Preferences, transLoco services.TranslocoService, fs afero.Afero,
 ) api.Client {
 	return &client{
-		config:    c,
-		registry:  newRegistry(httpClient, container),
-		log:       log.With().Str("handler", "pasloe").Logger(),
-		io:        ioService,
-		signalR:   signalR,
-		notify:    notify,
-		pref:      preferences,
-		transLoco: transLoco,
+		config:     c,
+		registry:   newRegistry(httpClient, container),
+		log:        log.With().Str("handler", "pasloe").Logger(),
+		dirService: dirService,
+		signalR:    signalR,
+		notify:     notify,
+		pref:       preferences,
+		transLoco:  transLoco,
+		fs:         fs,
 
 		content: utils.NewSafeMap[string, api.Downloadable](),
 	}
 }
 
 type client struct {
-	config    api.Config
-	registry  *registry
-	log       zerolog.Logger
-	io        services.IOService
-	signalR   services.SignalRService
-	notify    services.NotificationService
-	transLoco services.TranslocoService
-	pref      models.Preferences
+	config     api.Config
+	registry   *registry
+	log        zerolog.Logger
+	dirService services.DirectoryService
+	signalR    services.SignalRService
+	notify     services.NotificationService
+	transLoco  services.TranslocoService
+	pref       models.Preferences
+	fs         afero.Afero
 
 	content utils.SafeMap[string, api.Downloadable]
 }
@@ -249,7 +251,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 
 	if len(content.GetOnDiskContent()) == 0 {
 		l.Info().Msg("no existing content downloaded, removing entire directory")
-		if err := os.RemoveAll(dir); err != nil {
+		if err := c.fs.RemoveAll(dir); err != nil {
 			l.Error().Err(err).Msg("error while deleting directory")
 			c.notifyCleanUpError(content, err)
 		}
@@ -266,13 +268,13 @@ func (c *client) deleteFiles(content api.Downloadable) {
 	start := time.Now()
 	for _, contentPath := range content.GetNewContent() {
 		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
-		if err := os.RemoveAll(contentPath); err != nil {
+		if err := c.fs.RemoveAll(contentPath); err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while removing new content dir")
 			cleanupErrs = append(cleanupErrs, err)
 		}
 	}
 
-	entries, err := os.ReadDir(dir)
+	entries, err := c.fs.ReadDir(dir)
 	if err != nil {
 		l.Error().Err(err).Str("dir", dir).Msg("error while reading dir, unable to remove empty dirs")
 		cleanupErrs = append(cleanupErrs, err)
@@ -284,7 +286,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 			continue
 		}
 
-		innerEntries, err := os.ReadDir(path.Join(dir, entry.Name()))
+		innerEntries, err := c.fs.ReadDir(path.Join(dir, entry.Name()))
 		if err != nil {
 			l.Error().Err(err).Str("dir", dir).Str("name", entry.Name()).
 				Msg("error while reading dir, will not remove")
@@ -301,7 +303,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 
 		l.Trace().Str("dir", dir).Str("name", entry.Name()).
 			Msg("Dir has no content, removing entire directory")
-		if err := os.Remove(path.Join(dir, entry.Name())); err != nil {
+		if err := c.fs.Remove(path.Join(dir, entry.Name())); err != nil {
 			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
 			cleanupErrs = append(cleanupErrs, err)
 		}
@@ -324,7 +326,7 @@ func (c *client) cleanup(content api.Downloadable) {
 	start := time.Now()
 	for _, contentPath := range content.GetToRemoveContent() {
 		l.Trace().Str("name", contentPath).Msg("removing old content")
-		if err := os.Remove(contentPath); err != nil {
+		if err := c.fs.Remove(contentPath); err != nil {
 			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
 			cleanupErrs = append(cleanupErrs, err)
 		}
@@ -335,14 +337,14 @@ func (c *client) cleanup(content api.Downloadable) {
 	start = time.Now()
 	for _, contentPath := range newContent {
 		l.Trace().Str("path", contentPath).Msg("Zipping file")
-		err := c.io.ZipToCbz(contentPath)
+		err := c.dirService.ZipToCbz(contentPath)
 		if err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while zipping dir")
 			cleanupErrs = append(cleanupErrs, err)
 			continue
 		}
 
-		if err = os.RemoveAll(contentPath); err != nil {
+		if err = c.fs.RemoveAll(contentPath); err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while deleting new content directory")
 			cleanupErrs = append(cleanupErrs, err)
 			continue

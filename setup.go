@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"os"
 	"path"
@@ -103,7 +104,7 @@ func RegisterCallback(app *fiber.App) {
 	})
 }
 
-func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger) error {
+func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero) error {
 	baseUrl := cfg.BaseUrl
 	log = log.With().Str("handler", "core").Logger()
 
@@ -117,11 +118,11 @@ func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger) error {
 	}
 	indexHtmlPath := filepath.Join(cwd, "public", "index.html")
 
-	file, err := os.Open(indexHtmlPath)
+	file, err := fs.Open(indexHtmlPath)
 	if err != nil {
 		return err
 	}
-	defer func(file *os.File) {
+	defer func(file afero.File) {
 		if err = file.Close(); err != nil {
 			log.Warn().Err(err).Msg("Failed to close index.html")
 		}
@@ -141,7 +142,7 @@ func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger) error {
 		return fmt.Errorf("error converting document to HTML: %w", err)
 	}
 
-	err = os.WriteFile(indexHtmlPath, []byte(html), 0644)
+	err = fs.WriteFile(indexHtmlPath, []byte(html), 0644)
 	if err != nil {
 		// Ignore errors when running as non-root in docker
 		if os.Getenv("DOCKER") != "true" || !errors.Is(err, os.ErrPermission) {
