@@ -241,12 +241,14 @@ func (d *DownloadBase[T]) Cancel() {
 	if d.cancel != nil {
 		d.cancel()
 	}
-	if err := d.Client.RemoveDownload(payload.StopRequest{
-		Provider:    d.infoProvider.Provider(),
-		Id:          d.id,
-		DeleteFiles: true,
-	}); err != nil {
-		d.Log.Warn().Err(err).Msg("failed to cancel download")
+	if d.Client.Content(d.id) != nil {
+		if err := d.Client.RemoveDownload(payload.StopRequest{
+			Provider:    d.infoProvider.Provider(),
+			Id:          d.id,
+			DeleteFiles: true,
+		}); err != nil {
+			d.Log.Warn().Err(err).Msg("failed to cancel download")
+		}
 	}
 }
 
@@ -288,18 +290,19 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return download
 	})
 
-	if len(d.ToDownload) == 0 {
+	/*if len(d.ToDownload) == 0 {
 		d.Log.Debug().Msg("no chapters to download, stopping")
 		req := payload.StopRequest{
 			Provider:    d.Req.Provider,
 			Id:          d.Id(),
 			DeleteFiles: false,
+			StartNext:   true,
 		}
 		if err = d.Client.RemoveDownload(req); err != nil {
 			d.Log.Error().Err(err).Msg("error while cleaning up")
 		}
 		return
-	}
+	}*/
 
 	d.SetState(utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,

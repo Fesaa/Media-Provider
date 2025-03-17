@@ -121,6 +121,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		}
 
 		c.signalR.DeleteContent(content.Id())
+
 		return nil
 	}
 
@@ -297,7 +298,6 @@ func (c *client) deleteFiles(content api.Downloadable) {
 		if len(innerEntries) > 0 {
 			l.Trace().Str("dir", dir).Str("name", entry.Name()).
 				Msg("Dir has content, not removing any files")
-			cleanupErrs = append(cleanupErrs, err)
 			continue
 		}
 
@@ -361,10 +361,14 @@ func (c *client) cleanup(content api.Downloadable) {
 }
 
 func (c *client) notifyCleanUpError(content api.Downloadable, cleanupErrs ...error) {
+	joinedErr := errors.Join(cleanupErrs...)
+	if joinedErr == nil {
+		return
+	}
 	c.notify.NotifyContent(
 		c.transLoco.GetTranslation("cleanup-errors-title"),
 		c.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
-		errors.Join(cleanupErrs...).Error(),
+		joinedErr.Error(),
 		models.Red)
 }
 

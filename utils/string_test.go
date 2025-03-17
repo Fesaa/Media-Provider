@@ -35,75 +35,6 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
-//nolint:funlen
-func TestPadFloat(t *testing.T) {
-	type args struct {
-		f float64
-		n int
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "0 pad",
-			args: args{
-				f: 0,
-				n: 3,
-			},
-			want: "000",
-		},
-		{
-			name: "Correct length",
-			args: args{
-				f: 123,
-				n: 3,
-			},
-			want: "123",
-		},
-		{
-			name: "Too long",
-			args: args{
-				f: 1234,
-				n: 3,
-			},
-			want: "1234",
-		},
-		{
-			name: "Too short",
-			args: args{
-				f: 12,
-				n: 3,
-			},
-			want: "012",
-		},
-		{
-			name: "Decimal",
-			args: args{
-				f: 123.456,
-				n: 4,
-			},
-			want: "0123.46",
-		},
-		{
-			name: "Decimal no first",
-			args: args{
-				f: 123.01,
-				n: 3,
-			},
-			want: "123.01",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := PadFloat(tt.args.f, tt.args.n); got != tt.want {
-				t.Errorf("PadFloat() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestPadInt(t *testing.T) {
 	type args struct {
 		i int
@@ -197,5 +128,61 @@ func Test_pad(t *testing.T) {
 				t.Errorf("pad() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestPadFloatFromString(t *testing.T) {
+	testCases := []struct {
+		input    string
+		length   int
+		expected string
+	}{
+		{
+			input:    "1.2",
+			length:   4,
+			expected: "0001.2",
+		},
+		{
+			input:    "1.20",
+			length:   4,
+			expected: "0001.20",
+		},
+		{
+			input:    "123",
+			length:   6,
+			expected: "000123",
+		},
+		{
+			input:    "1.00",
+			length:   3,
+			expected: "001.00",
+		},
+		{
+			input:    "12345.6789",
+			length:   7,
+			expected: "0012345.6789",
+		},
+		{
+			input:    "0.1",
+			length:   3,
+			expected: "000.1",
+		},
+		{
+			input:    "10",
+			length:   4,
+			expected: "0010",
+		},
+		{
+			input:    "1.02",
+			length:   4,
+			expected: "0001.02",
+		},
+	}
+
+	for _, tc := range testCases {
+		actual := PadFloatFromString(tc.input, tc.length)
+		if actual != tc.expected {
+			t.Errorf("PadFloatFromString(%q, %d) = %q, expected %q", tc.input, tc.length, actual, tc.expected)
+		}
 	}
 }
