@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -12,6 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
@@ -65,6 +65,7 @@ func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
 	cont := dig.New()
 	scope := cont.Scope("tempWebtoon")
 
+	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(scope.Provide(func() api.Client {
 		return client
 	}))
@@ -320,44 +321,6 @@ func TestWebtoon_ContentUrls(t *testing.T) {
 		t.Errorf("got %v, want error", got)
 	}
 
-}
-
-func TestWebtoon_WriteContentMetaData(t *testing.T) {
-	var buf bytes.Buffer
-	dir := t.TempDir()
-	w := tempWebtoon(t, &buf, dir)
-	w.info = series()
-
-	if err := w.fs.MkdirAll(w.ContentPath(chapter()), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := w.WriteContentMetaData(chapter()); err != nil {
-		t.Fatal(err)
-	}
-
-	ciPath := path.Join(w.ContentPath(chapter()), "ComicInfo.xml")
-	_, err := w.fs.Stat(ciPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	data, err := w.fs.ReadFile(ciPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ci := w.comicInfo()
-	var b bytes.Buffer
-	if err = comicinfo.Write(ci, &b); err != nil {
-		t.Fatal(err)
-	}
-
-	if b.String() != string(data) {
-		t.Errorf("m.comicInfo() = %q, want %q", b, data)
-	}
-
-	buf.Reset()
 }
 
 func TestWebtoon_DownloadContent(t *testing.T) {

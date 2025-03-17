@@ -10,6 +10,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"os"
 	"strings"
 	"testing"
@@ -51,7 +52,7 @@ func tempSubscriptionService(t *testing.T, tempdb *db.Database, logs ...zerolog.
 		t.Fatal(err)
 	}
 
-	transloco, err := TranslocoServiceProvider(log)
+	transloco, err := TranslocoServiceProvider(log, afero.Afero{Fs: afero.NewMemMapFs()})
 	if err != nil {
 		t.Fatal(err)
 	}

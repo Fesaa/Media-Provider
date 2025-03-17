@@ -11,6 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
@@ -67,6 +68,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	tempDir := t.TempDir()
 	client := mock.PasloeClient{BaseDir: tempDir}
 
+	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(scope.Provide(func() api.Client {
 		return &client
 	}))

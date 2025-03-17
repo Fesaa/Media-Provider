@@ -177,7 +177,7 @@ func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
 	}
 
 	w.Log.Trace().Str("chapter", chapter.Number).Msg("writing comicinfoxml")
-	return comicinfo.Save(w.comicInfo(), path.Join(w.ContentPath(chapter), "ComicInfo.xml"))
+	return comicinfo.Save(w.fs, w.comicInfo(), path.Join(w.ContentPath(chapter), "ComicInfo.xml"))
 }
 
 func (w *webtoon) comicInfo() *comicinfo.ComicInfo {

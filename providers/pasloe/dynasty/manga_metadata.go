@@ -20,7 +20,7 @@ func (m *manga) WriteContentMetaData(chapter Chapter) error {
 	}
 
 	m.Log.Trace().Str("chapter", chapter.Chapter).Msg("writing comicinfoxml")
-	return comicinfo.Save(m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
+	return comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
 }
 
 func (m *manga) writeCover(chapter Chapter) error {

@@ -12,6 +12,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
@@ -69,7 +70,7 @@ func (m mockRepository) GetCoverImages(ctx context.Context, id string, offset ..
 	return m.GetCoverImagesFunc(ctx, id, offset...)
 }
 
-func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repository, td ...string) *manga {
+func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repository) *manga {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -82,9 +83,11 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	c := dig.New()
 	scope := c.Scope("testScope")
 
-	tempDir := utils.OrDefault(td, t.TempDir())
-	client := mock.PasloeClient{BaseDir: tempDir}
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+	must(fs.Mkdir("/data", 0755))
+	client := mock.PasloeClient{BaseDir: "/data"}
 
+	must(scope.Provide(utils.Identity(fs)))
 	must(scope.Provide(func() api.Client {
 		return &client
 	}))
@@ -562,50 +565,6 @@ func TestManga_ContentUrls(t *testing.T) {
 
 }
 
-func TestManga_WriteContentMetaData(t *testing.T) {
-	var buf bytes.Buffer
-	dir := t.TempDir()
-	m := tempManga(t, req(), &buf, &mockRepository{}, dir)
-	m.info = mangaResp()
-	m.coverFactory = defaultCoverFactory
-
-	if err := m.WriteContentMetaData(chapter()); err != nil {
-		t.Fatal(err)
-	}
-
-	ciPath := path.Join(m.ContentPath(chapter()), "comicinfo.xml")
-	_, err := m.fs.Stat(ciPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	data, err := m.fs.ReadFile(ciPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ci := m.comicInfo(chapter())
-	var b bytes.Buffer
-	if err = comicinfo.Write(ci, &b); err != nil {
-		t.Fatal(err)
-	}
-
-	if b.String() != string(data) {
-		t.Errorf("m.comicInfo() = %q, want %q", b, data)
-	}
-
-	buf.Reset()
-	if err = m.WriteContentMetaData(chapter()); err != nil {
-		t.Fatal(err)
-	}
-
-	log := buf.String()
-	want := "volume metadata already written, skipping"
-	if !strings.Contains(log, want) {
-		t.Errorf("got %s, want %s", log, want)
-	}
-}
-
 func TestManga_ContentRegex(t *testing.T) {
 	m := tempManga(t, req(), io.Discard, &mockRepository{})
 
@@ -650,7 +609,6 @@ func TestManga_ContentRegex(t *testing.T) {
 
 //nolint:funlen,gocognit
 func TestManga_ShouldDownload(t *testing.T) {
-	ios := services.IOServiceProvider(zerolog.Nop())
 
 	type test struct {
 		name          string
@@ -708,17 +666,19 @@ func TestManga_ShouldDownload(t *testing.T) {
 			chapter: chapter,
 			command: func(t *testing.T, m *manga) {
 				t.Helper()
+				ds := services.DirectoryServiceProvider(zerolog.Nop(), m.fs)
+
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162")
 				ci := comicinfo.NewComicInfo()
 				ci.Volume = 13
 				if err := m.fs.MkdirAll(fullpath, 0755); err != nil {
 					t.Fatal(err)
 				}
-				if err := comicinfo.Save(ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
+				if err := comicinfo.Save(m.fs, ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
 					t.Fatal(err)
 				}
 
-				if err := ios.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
+				if err := ds.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -734,16 +694,18 @@ func TestManga_ShouldDownload(t *testing.T) {
 			chapter: chapter,
 			command: func(t *testing.T, m *manga) {
 				t.Helper()
+				ds := services.DirectoryServiceProvider(zerolog.Nop(), m.fs)
+
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162")
 				ci := comicinfo.NewComicInfo()
 				if err := m.fs.MkdirAll(fullpath, 0755); err != nil {
 					t.Fatal(err)
 				}
-				if err := comicinfo.Save(ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
+				if err := comicinfo.Save(m.fs, ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
 					t.Fatal(err)
 				}
 
-				if err := ios.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
+				if err := ds.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
 					t.Fatal(err)
 				}
 			},

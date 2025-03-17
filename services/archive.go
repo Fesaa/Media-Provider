@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"io"
 	"strings"
 )
@@ -19,11 +20,13 @@ type ArchiveService interface {
 
 type archiveService struct {
 	log zerolog.Logger
+	fs  afero.Afero
 }
 
-func ArchiveServiceProvider(log zerolog.Logger) ArchiveService {
+func ArchiveServiceProvider(log zerolog.Logger, fs afero.Afero) ArchiveService {
 	return &archiveService{
 		log: log.With().Str("handler", "archive-service").Logger(),
+		fs:  fs,
 	}
 }
 
@@ -44,15 +47,27 @@ func (a *archiveService) GetCover(archive string) ([]byte, error) {
 }
 
 func (a *archiveService) findInArchive(archive string, match string) (io.Reader, error) {
-	reader, err := zip.OpenReader(archive)
+	f, err := a.fs.Open(archive)
 	if err != nil {
 		return nil, err
 	}
-	defer func(reader *zip.ReadCloser) {
-		if err = reader.Close(); err != nil {
-			a.log.Warn().Err(err).Msg("unable to close zip reader")
+
+	fi, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+
+	defer func(file afero.File) {
+		if err = file.Close(); err != nil {
+			a.log.Warn().Err(err).Msg("failed to close file")
 		}
-	}(reader)
+	}(f)
+
+	reader, err := zip.NewReader(f, fi.Size())
+	if err != nil {
+		return nil, err
+	}
 
 	var ciFile *zip.File
 	for _, file := range reader.File {
@@ -66,16 +81,16 @@ func (a *archiveService) findInArchive(archive string, match string) (io.Reader,
 		return nil, ErrNoMatch
 	}
 
-	f, err := ciFile.Open()
+	zipFile, err := ciFile.Open()
 	if err != nil {
 		return nil, err
 	}
-	defer func(f io.ReadCloser) {
-		if err = f.Close(); err != nil {
+	defer func(zipFile io.ReadCloser) {
+		if err = zipFile.Close(); err != nil {
 			a.log.Warn().Err(err).Msg("unable to close zip file")
 		}
-	}(f)
-	b, err := io.ReadAll(f)
+	}(zipFile)
+	b, err := io.ReadAll(zipFile)
 	if err != nil {
 		return nil, err
 	}

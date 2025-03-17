@@ -33,8 +33,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/spf13/afero"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -94,25 +94,9 @@ func Write(ci *ComicInfo, w io.Writer) error {
 	return nil
 }
 
-// Open reads the ComicInfo spec from the specified path.
-func Open(path string) (*ComicInfo, error) {
-	f, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("error reading file: %w", err)
-	}
-
-	var ci ComicInfo
-	err = xml.Unmarshal(f, &ci)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling ComicInfo: %w", err)
-	}
-
-	return &ci, nil
-}
-
 // Save writes the ComicInfo spec to the specified path.
-func Save(ci *ComicInfo, path string) error {
-	f, err := os.Create(path)
+func Save(fs afero.Afero, ci *ComicInfo, path string) error {
+	f, err := fs.Create(path)
 	if err != nil {
 		return fmt.Errorf("error creating file: %w", err)
 	}

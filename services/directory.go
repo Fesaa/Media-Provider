@@ -35,7 +35,10 @@ func (ds *directoryService) ZipToCbz(folderPath string) error {
 
 func (ds *directoryService) ZipFolder(folderPath string, zipFileName string) error {
 	ok, err := ds.fs.DirExists(folderPath)
-	if !ok || err != nil {
+	if !ok {
+		return os.ErrNotExist
+	}
+	if err != nil {
 		return err
 	}
 

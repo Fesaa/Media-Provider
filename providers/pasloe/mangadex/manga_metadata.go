@@ -39,7 +39,7 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 	}
 
 	l.Trace().Msg("writing comicinfoxml")
-	if err = comicinfo.Save(m.comicInfo(chapter), path.Join(metaPath, "comicinfo.xml")); err != nil {
+	if err = comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(metaPath, "comicinfo.xml")); err != nil {
 		return err
 	}
 
