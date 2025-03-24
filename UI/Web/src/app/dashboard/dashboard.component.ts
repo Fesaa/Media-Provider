@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, DestroyRef, OnInit} from '@angular/core';
+import {Component, DestroyRef, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {ContentService} from "../_services/content.service";
@@ -21,6 +21,7 @@ import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteCont
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {SortedList} from "../shared/data-structures/sorted-list";
 
 @Component({
   selector: 'app-dashboard',
@@ -45,14 +46,20 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 export class DashboardComponent implements OnInit {
 
   loading = true;
-  info: InfoStat[] = [];
+  dashboardItems: SortedList<InfoStat> = new SortedList((a, b) => {
+    if (a.contentState == b.contentState) {
+      return a.id.localeCompare(b.id)
+    }
+
+    // Bigger first
+    return b.contentState - a.contentState;
+  });
 
   displayContentPicker: { [key: string]: boolean } = {};
   protected readonly ContentState = ContentState;
 
   constructor(private navService: NavService,
               private contentService: ContentService,
-              private cdRef: ChangeDetectorRef,
               private toastService: ToastService,
               private contentTitle: ContentTitlePipe,
               private dialogService: DialogService,
@@ -65,8 +72,7 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.contentService.infoStats().subscribe(info => {
       this.loading = false;
-      this.info = info.running || [];
-      this.sortInfo()
+      this.dashboardItems.set(info.running || []);
     })
 
     this.signalR.events$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
@@ -78,7 +84,7 @@ export class DashboardComponent implements OnInit {
           this.updateSize(event.data as ContentSizeUpdate);
           break;
         case EventType.DeleteContent:
-          this.info = this.info.filter(item => item.id !== (event.data as DeleteContent).contentId);
+          this.dashboardItems.removeFunc(item => item.id !== (event.data as DeleteContent).contentId);
           break;
         case EventType.ContentProgressUpdate:
           this.updateProgress(event.data as ContentProgressUpdate);
@@ -94,25 +100,24 @@ export class DashboardComponent implements OnInit {
   }
 
   private updateInfo(info: InfoStat) {
-    this.info = this.info.map(i => {
+    this.dashboardItems.setFunc(i => {
       if (i.id !== info.id) {
         return i;
       }
       return info;
-    })
+    });
   }
 
   private addContent(event: InfoStat) {
-    if (this.info.find(is => is.id == event.id)) {
+    if (this.dashboardItems.getFunc(is => is.id == event.id)) {
       return;
     }
 
-    this.info.push(event);
-    this.sortInfo()
+    this.dashboardItems.add(event);
   }
 
   private updateSize(event: ContentSizeUpdate) {
-    const content = this.info.find(is => is.id == event.contentId)
+    const content = this.dashboardItems.getFunc(is => is.id == event.contentId)
     if (!content) {
       return;
     }
@@ -120,7 +125,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private updateProgress(event: ContentProgressUpdate) {
-    const content = this.info.find(is => is.id == event.contentId)
+    const content = this.dashboardItems.getFunc(is => is.id == event.contentId)
     if (!content) {
       return;
     }
@@ -131,21 +136,11 @@ export class DashboardComponent implements OnInit {
   }
 
   private updateState(event: ContentStateUpdate) {
-    const content = this.info.find(is => is.id == event.contentId)
+    const content = this.dashboardItems.getFunc(is => is.id == event.contentId)
     if (!content) {
       return;
     }
     content.contentState = event.contentState;
-  }
-
-  private sortInfo() {
-    this.info = this.info.sort((a, b) => {
-      if (a.contentState == b.contentState) {
-        return a.id.localeCompare(b.id)
-      }
-
-      return a.contentState - b.contentState;
-    });
   }
 
   async stop(info: InfoStat) {
@@ -169,8 +164,8 @@ export class DashboardComponent implements OnInit {
     })
   }
 
-  browse(info: InfoStat) {
-    this.dialogService.openDirBrowser(info.download_dir, {showFiles: true, width: '40rem',})
+  async browse(info: InfoStat) {
+    await this.dialogService.openDirBrowser(info.download_dir, {showFiles: true, width: '40rem',})
   }
 
   markReady(info: InfoStat) {

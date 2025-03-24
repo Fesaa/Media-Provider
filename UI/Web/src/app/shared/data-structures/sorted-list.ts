@@ -22,6 +22,11 @@ export class SortedList<T> {
     this.list.sort(this.comparator)
   }
 
+  setFunc(f: (t: T) => T) {
+    this.list = this.list.map(f)
+    this.list.sort(this.comparator)
+  }
+
   includes(t: T): boolean {
     return this.list.includes(t)
   }
