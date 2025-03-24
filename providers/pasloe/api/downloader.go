@@ -258,6 +258,8 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return
 	}
 
+	loadInfoStart := time.Now()
+
 	d.SetState(payload.ContentStateLoading)
 	ctx, cancel := context.WithCancel(context.Background())
 	d.cancel = cancel
@@ -269,15 +271,19 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	}
 	d.Preference = p
 
+	start := time.Now()
 	select {
 	case <-ctx.Done():
 		return
 	case <-d.infoProvider.LoadInfo(ctx):
 	}
 
-	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
-	d.Log.Debug().Msg("Content has downloaded all information")
+	elapsed := time.Since(start)
 
+	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
+	d.Log.Debug().Dur("elapsed", elapsed).Msg("Content has downloaded all information")
+
+	start = time.Now()
 	d.checkContentOnDisk()
 	data := d.infoProvider.All()
 	d.ToDownload = utils.Filter(data, func(t T) bool {
@@ -289,6 +295,19 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		}
 		return download
 	})
+
+	elapsed = time.Since(start)
+	if elapsed > time.Second*5 {
+		d.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
+
+		if d.Req.IsSubscription {
+			d.Notifier.NotifyContent(
+				d.TransLoco.GetTranslation("warn"),
+				d.TransLoco.GetTranslation("long-on-disk-check", d.infoProvider.Title()),
+				d.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
+				models.Orange)
+		}
+	}
 
 	/*if len(d.ToDownload) == 0 {
 		d.Log.Debug().Msg("no chapters to download, stopping")
@@ -310,7 +329,7 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	d.SignalR.UpdateContentInfo(d.GetInfo())
 
 	d.Log.Debug().Int("all", len(data)).Int("filtered", len(d.ToDownload)).
-		Msg("downloaded content filtered")
+		Dur("StartLoadInfo#duration", time.Since(loadInfoStart)).Msg("downloaded content filtered")
 }
 
 func (d *DownloadBase[T]) StartDownload() {
