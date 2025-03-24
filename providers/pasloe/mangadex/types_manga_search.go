@@ -140,25 +140,21 @@ func (a *MangaAttributes) LangTitle(language string) string {
 	// Note: for some reason the en title may still be in Japanese, don't really have a way of checking if it is
 	// as the Japanese title is in the latin alphabet. We'll just have to be fine with it, as the alternative titles
 	// are just plain weird from time to time
-	enTitle, ok := a.Title[language]
-	if ok && enTitle != "" {
-		return enTitle
+	langTitle, ok := a.Title[language]
+	if ok && langTitle != "" {
+		return langTitle
 	}
 
-	var enAltTitle string
+	var langAltTitle string
 
-titleArrayLoop:
 	for _, altTitle := range a.AltTitles {
-		for key, value := range altTitle {
-			if key == language && value != "" {
-				enAltTitle = value
-				break titleArrayLoop
-			}
+		if langAltTitle, ok = altTitle[language]; ok {
+			break
 		}
 	}
 
-	if enAltTitle != "" {
-		return enAltTitle
+	if langAltTitle != "" {
+		return langAltTitle
 	}
 
 	// fallback to first title, any language

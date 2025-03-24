@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"go.uber.org/dig"
 	"math"
 	"strconv"
 	"strings"
@@ -81,6 +82,26 @@ func BytesToSize(bytes float64) string {
 	}
 	i := math.Floor(math.Log(bytes) / math.Log(1024))
 	return fmt.Sprintf("%.2f %s", bytes/math.Pow(1024, i), sizes[int(i)])
+}
+
+// MustInvoke tries construction T with the given scope
+// Ensure the needed method has been Provider to the scope
+func MustInvoke[T any](c *dig.Scope) T {
+	var t T
+	Must(c.Invoke(func(myT T) {
+		t = myT
+	}))
+	return t
+}
+
+// MustInvokeCont tries construction T with the given Container
+// Ensure the needed method has been Provider to the Container
+func MustInvokeCont[T any](c *dig.Container) T {
+	var t T
+	Must(c.Invoke(func(myT T) {
+		t = myT
+	}))
+	return t
 }
 
 func Must(err error) {

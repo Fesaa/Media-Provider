@@ -38,7 +38,7 @@ func New(c *config.Config, httpClient *http.Client, container *dig.Container, lo
 
 type client struct {
 	config     api.Config
-	registry   *registry
+	registry   Registry
 	log        zerolog.Logger
 	dirService services.DirectoryService
 	signalR    services.SignalRService

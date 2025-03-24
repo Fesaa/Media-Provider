@@ -1,0 +1,159 @@
+package pasloe
+
+import (
+	"context"
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
+)
+
+type mockRegistry struct {
+}
+
+func (m mockRegistry) Create(c api.Client, req payload.DownloadRequest) (api.Downloadable, error) {
+	return &MockContent{
+		mockId: req.Id,
+		DownloadBase: &api.DownloadBase[ID]{
+			Req: req,
+		},
+	}, nil
+}
+
+type ID string
+
+func (I ID) ID() string {
+	return string(I)
+}
+
+type MockContent struct {
+	*api.DownloadBase[ID]
+	mockTitle               string
+	mockRefUrl              string
+	mockProvider            models.Provider
+	mockInfo                payload.InfoStat
+	mockState               payload.ContentState
+	mockId                  string
+	mockAll                 []ID
+	mockContentList         []payload.ListContentData
+	mockContentDirFunc      func(t ID) string
+	mockContentPathFunc     func(t ID) string
+	mockContentKeyFunc      func(t ID) string
+	mockContentLoggerFunc   func(t ID) zerolog.Logger
+	mockContentUrlsFunc     func(ctx context.Context, t ID) ([]string, error)
+	mockWriteMetaDataFunc   func(t ID) error
+	mockDownloadContentFunc func(idx int, t ID, url string) error
+	mockIsContentFunc       func(s string) bool
+	mockShouldDownloadFunc  func(t ID) bool
+	loadInfoChan            chan struct{}
+}
+
+func NewMockContent(scope *dig.Scope) *MockContent {
+	mc := &MockContent{
+		loadInfoChan: make(chan struct{}),
+	}
+	base := api.NewDownloadableFromBlock[ID](scope, "mock-content", mc)
+	mc.DownloadBase = base
+	return mc
+}
+
+func (m *MockContent) Id() string {
+	return m.mockId
+}
+
+func (m *MockContent) State() payload.ContentState {
+	return m.mockState
+}
+
+func (m *MockContent) Title() string {
+	return m.mockTitle
+}
+
+func (m *MockContent) RefUrl() string {
+	return m.mockRefUrl
+}
+
+func (m *MockContent) Provider() models.Provider {
+	return m.mockProvider
+}
+
+func (m *MockContent) LoadInfo(ctx context.Context) chan struct{} {
+	close(m.loadInfoChan)
+	return m.loadInfoChan
+}
+
+func (m *MockContent) GetInfo() payload.InfoStat {
+	return m.mockInfo
+}
+
+func (m *MockContent) All() []ID {
+	return m.mockAll
+}
+
+func (m *MockContent) ContentList() []payload.ListContentData {
+	return m.mockContentList
+}
+
+func (m *MockContent) ContentDir(t ID) string {
+	if m.mockContentDirFunc != nil {
+		return m.mockContentDirFunc(t)
+	}
+	return t.ID()
+}
+
+func (m *MockContent) ContentPath(t ID) string {
+	if m.mockContentPathFunc != nil {
+		return m.mockContentPathFunc(t)
+	}
+	return t.ID()
+}
+
+func (m *MockContent) ContentKey(t ID) string {
+	if m.mockContentKeyFunc != nil {
+		return m.mockContentKeyFunc(t)
+	}
+	return t.ID()
+}
+
+func (m *MockContent) ContentLogger(t ID) zerolog.Logger {
+	if m.mockContentLoggerFunc != nil {
+		return m.mockContentLoggerFunc(t)
+	}
+	return zerolog.Nop()
+}
+
+func (m *MockContent) ContentUrls(ctx context.Context, t ID) ([]string, error) {
+	if m.mockContentUrlsFunc != nil {
+		return m.mockContentUrlsFunc(ctx, t)
+	}
+	return nil, nil
+}
+
+func (m *MockContent) WriteContentMetaData(t ID) error {
+	if m.mockWriteMetaDataFunc != nil {
+		return m.mockWriteMetaDataFunc(t)
+	}
+	return nil
+}
+
+func (m *MockContent) DownloadContent(idx int, t ID, url string) error {
+	if m.mockDownloadContentFunc != nil {
+		return m.mockDownloadContentFunc(idx, t, url)
+	}
+	return nil
+}
+
+func (m *MockContent) IsContent(s string) bool {
+	if m.mockIsContentFunc != nil {
+		return m.mockIsContentFunc(s)
+	}
+	return true
+}
+
+func (m *MockContent) ShouldDownload(t ID) bool {
+	if m.mockShouldDownloadFunc != nil {
+		return m.mockShouldDownloadFunc(t)
+	}
+	return true
+}
