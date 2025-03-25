@@ -280,7 +280,7 @@ func TestClient_QueueProgressing(t *testing.T) {
 		Provider: models.MANGADEX,
 		Id:       "Otherside Picnic",
 		DownloadMetadata: models.DownloadRequestMetadata{
-			StartImmediately: true,
+			StartImmediately: false,
 		},
 	}); err != nil {
 		t.Fatal(err)
@@ -329,13 +329,22 @@ func TestClient_QueueProgressing(t *testing.T) {
 	}
 
 	got = othersidePicnic.State()
-	if got != payload.ContentStateReady {
-		t.Fatalf("got %v, want %v", got, payload.ContentStateReady)
+	if got != payload.ContentStateWaiting {
+		t.Fatalf("got %v, want %v", got, payload.ContentStateWaiting)
 	}
 
 	if err := c.RemoveDownload(payload.StopRequest{
 		Provider: models.MANGADEX,
 		Id:       theExecutionerAndHerWayOfLife.Id(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(time.Millisecond * 10)
+
+	if _, err := othersidePicnic.Message(payload.Message{
+		ContentId:   othersidePicnic.Id(),
+		MessageType: payload.StartDownload,
 	}); err != nil {
 		t.Fatal(err)
 	}
