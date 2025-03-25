@@ -2,7 +2,6 @@ package dynasty
 
 import (
 	"bytes"
-	"context"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"io"
@@ -27,7 +26,7 @@ func TestRepository_SearchSeries(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	series, err := repo.SearchSeries(context.Background(), SearchOptions{Query: "Sailor Girlfriend"})
+	series, err := repo.SearchSeries(t.Context(), SearchOptions{Query: "Sailor Girlfriend"})
 	if err != nil {
 		t.Fatalf("SearchSeries: %v", err)
 	}
@@ -56,7 +55,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	info, err := repo.SeriesInfo(context.Background(), "sailor_girlfriend")
+	info, err := repo.SeriesInfo(t.Context(), "sailor_girlfriend")
 	if err != nil {
 		t.Fatalf("SeriesInfo: %v", err)
 	}
@@ -106,7 +105,7 @@ func TestRepository_SeriesInfoWithVolumes(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	info, err := repo.SeriesInfo(context.Background(), "canaries_dream_of_shining_stars")
+	info, err := repo.SeriesInfo(t.Context(), "canaries_dream_of_shining_stars")
 	if err != nil {
 		t.Fatalf("SeriesInfo: %v", err)
 	}
@@ -133,7 +132,7 @@ func TestRepository_ChapterImages(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	images, err := repo.ChapterImages(context.Background(), "canaries_dream_of_shining_stars_ch01")
+	images, err := repo.ChapterImages(t.Context(), "canaries_dream_of_shining_stars_ch01")
 	if err != nil {
 		if strings.Contains(err.Error(), "status code error: 503") {
 			t.Skipf("Skipping test as 3rd party server error")
@@ -152,7 +151,7 @@ func TestRepository_SearchSeriesOneShotChapters(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	res, err := repo.SeriesInfo(context.Background(), ShiawaseTrimmingId)
+	res, err := repo.SeriesInfo(t.Context(), ShiawaseTrimmingId)
 	if err != nil {
 		if strings.Contains(err.Error(), "status code error: 503") {
 			t.Skipf("Skipping test as 3rd party server error")

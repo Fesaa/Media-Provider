@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {environment} from "../../environments/environment";
 import {HttpClient} from "@angular/common/http";
-import {interval, map, Observable, ReplaySubject, Subscription} from "rxjs";
+import {map, Observable} from "rxjs";
 import {StatsResponse} from "../_models/stats";
 import {DownloadRequest, SearchRequest, StopRequest} from "../_models/search";
 import {SearchInfo} from "../_models/Info";

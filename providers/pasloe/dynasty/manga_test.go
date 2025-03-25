@@ -145,7 +145,7 @@ func TestManga_Title(t *testing.T) {
 	}
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -168,7 +168,7 @@ func TestManga_TitleInvalid(t *testing.T) {
 	})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -230,7 +230,7 @@ func TestManga_GetInfoAfterLoad(t *testing.T) {
 	})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -260,7 +260,7 @@ func TestManga_All(t *testing.T) {
 	})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -341,7 +341,7 @@ func TestManga_ContentUrls(t *testing.T) {
 		},
 	})
 
-	urls, err := m.ContentUrls(context.Background(), chapter())
+	urls, err := m.ContentUrls(t.Context(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -382,7 +382,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 	}
 
 	/*select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -511,7 +511,7 @@ func TestCoverReplace(t *testing.T) {
 	})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")
@@ -559,7 +559,7 @@ func TestCoverNoReplace(t *testing.T) {
 	})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("m.LoadInfo() timeout")

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {InfoStat} from "../../../_models/stats";
 import {ContentService} from "../../../_services/content.service";
 import {ListContentData} from "../../../_models/messages";

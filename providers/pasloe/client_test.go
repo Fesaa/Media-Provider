@@ -21,6 +21,7 @@ import (
 )
 
 func must(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +75,7 @@ func (si stateInfo) ToContent(id string) api.Downloadable {
 	}
 }
 
-func setupQueue(t *testing.T, pasloe *client, infos ...stateInfo) (content []api.Downloadable) {
+func setupQueue(t *testing.T, pasloe *client, infos ...stateInfo) {
 	t.Helper()
 
 	for i, info := range infos {
@@ -87,9 +88,7 @@ func setupQueue(t *testing.T, pasloe *client, infos ...stateInfo) (content []api
 		c.SetState(info.state)
 
 		pasloe.content.Set(id, c)
-		content = append(content, c)
 	}
-	return
 }
 
 func TestClient_CanStart(t *testing.T) {

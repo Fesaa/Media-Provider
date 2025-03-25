@@ -45,8 +45,8 @@ func (m mockRegistry) Create(c api.Client, req payload.DownloadRequest) (api.Dow
 
 type ID string
 
-func (I ID) ID() string {
-	return string(I)
+func (i ID) ID() string {
+	return string(i)
 }
 
 type MockContent struct {

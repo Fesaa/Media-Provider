@@ -10,7 +10,7 @@ import {DatePipe} from "@angular/common";
 import {Tooltip} from "primeng/tooltip";
 import {RefreshFrequencyPipe} from "../_pipes/refresh-frequency.pipe";
 import {Button} from "primeng/button";
-import { DialogService } from '../_services/dialog.service';
+import {DialogService} from '../_services/dialog.service';
 import {ToastService} from "../_services/toast.service";
 import {Tag} from "primeng/tag";
 import {

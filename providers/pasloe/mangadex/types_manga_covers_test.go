@@ -26,7 +26,7 @@ func TestManga_CoverSkipWrongFormatAndFirstAsDefault(t *testing.T) {
 		CoverFallbackMethod: models.CoverFallbackFirst,
 	}
 
-	covers, err := m.repository.GetCoverImages(context.Background(), m.id)
+	covers, err := m.repository.GetCoverImages(t.Context(), m.id)
 	if err != nil {
 		t.Fatal(err)
 	}

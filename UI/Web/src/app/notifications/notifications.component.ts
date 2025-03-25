@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {TableModule} from "primeng/table";
 import {NotificationService} from "../_services/notification.service";
 import {GroupWeight, Notification, NotificationGroup} from "../_models/notifications";
@@ -9,7 +9,7 @@ import {ToastService} from "../_services/toast.service";
 import {Dialog} from "primeng/dialog";
 import {Card} from "primeng/card";
 import {DialogService} from "../_services/dialog.service";
-import { SortedList } from '../shared/data-structures/sorted-list';
+import {SortedList} from '../shared/data-structures/sorted-list';
 import {Select} from "primeng/select";
 import {FormsModule} from "@angular/forms";
 import {NavService} from "../_services/nav.service";

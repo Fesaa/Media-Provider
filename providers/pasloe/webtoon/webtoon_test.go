@@ -52,7 +52,7 @@ func series() *Series {
 	}
 }
 
-func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
+func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -60,7 +60,7 @@ func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
 		}
 	}
 
-	client := mock.PasloeClient{BaseDir: utils.OrDefault(dirs, t.TempDir())}
+	client := mock.PasloeClient{BaseDir: t.TempDir()}
 
 	cont := dig.New()
 	scope := cont.Scope("tempWebtoon")
@@ -123,7 +123,7 @@ func TestWebtoon_Title(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -171,7 +171,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	repo.infoErr = fmt.Errorf("error")
 
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -187,7 +187,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	repo.infoErr = nil
 	repo.searchErr = fmt.Errorf("error")
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -208,7 +208,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -241,7 +241,7 @@ func TestWebtoon_All(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -306,7 +306,7 @@ func TestWebtoon_ContentUrls(t *testing.T) {
 	mock.imageRes = []string{"image1", "image2"}
 
 	want := 2
-	got, err := wt.ContentUrls(context.Background(), chapter())
+	got, err := wt.ContentUrls(t.Context(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +316,7 @@ func TestWebtoon_ContentUrls(t *testing.T) {
 	}
 
 	mock.imageErr = fmt.Errorf("error")
-	got, err = wt.ContentUrls(context.Background(), chapter())
+	got, err = wt.ContentUrls(t.Context(), chapter())
 	if err == nil {
 		t.Errorf("got %v, want error", got)
 	}
@@ -327,7 +327,7 @@ func TestWebtoon_DownloadContent(t *testing.T) {
 	var buffer bytes.Buffer
 	w := tempWebtoon(t, &buffer)
 
-	urls, err := w.ContentUrls(context.Background(), chapter())
+	urls, err := w.ContentUrls(t.Context(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}

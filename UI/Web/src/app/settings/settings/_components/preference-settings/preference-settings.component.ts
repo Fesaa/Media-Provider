@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {PreferencesService} from '../../../../_services/preferences.service';
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {CoverFallbackMethods, Preferences} from "../../../../_models/preferences";

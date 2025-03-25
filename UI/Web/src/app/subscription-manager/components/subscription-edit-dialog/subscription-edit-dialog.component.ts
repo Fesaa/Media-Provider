@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {RefreshFrequencies, RefreshFrequency, Subscription} from "../../../_models/subscription";
 import {SubscriptionService} from "../../../_services/subscription.service";
 import {Dialog} from "primeng/dialog";
@@ -24,7 +24,6 @@ import {NgIf, TitleCasePipe} from "@angular/common";
 import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 import {MultiSelect} from "primeng/multiselect";
 import {ToggleSwitch} from "primeng/toggleswitch";
-import {ContentService} from "../../../_services/content.service";
 import {PageService} from "../../../_services/page.service";
 import {Tooltip} from "primeng/tooltip";
 

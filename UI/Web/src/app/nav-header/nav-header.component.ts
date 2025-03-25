@@ -11,7 +11,7 @@ import {Menubar} from "primeng/menubar";
 import {NotificationService} from "../_services/notification.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
 import {BadgeDirective} from "primeng/badge";
-import {TranslocoService, LoadedEvent, TranslocoDirective} from "@jsverse/transloco";
+import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
 import {User} from "../_models/user";
 
 @Component({
