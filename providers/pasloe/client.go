@@ -238,9 +238,6 @@ func (c *client) startNext(provider models.Provider) {
 	next.StartDownload()
 }
 
-// TODO: Rewrite
-//
-//nolint:funlen
 func (c *client) deleteFiles(content api.Downloadable) {
 	defer c.signalR.DeleteContent(content.Id())
 
@@ -251,24 +248,19 @@ func (c *client) deleteFiles(content api.Downloadable) {
 	}
 	dir := path.Join(c.GetBaseDir(), downloadDir)
 	l := c.log.With().Str("dir", dir).Str("contentId", content.Id()).Logger()
+	start := time.Now()
 
-	if len(content.GetOnDiskContent()) == 0 {
-		l.Info().Msg("no existing content downloaded, removing entire directory")
-		if err := c.fs.RemoveAll(dir); err != nil {
-			l.Error().Err(err).Msg("error while deleting directory")
-			c.notifyCleanUpError(content, err)
-		}
-		return
+	cleanupErrs := c.deleteNewContent(content, l)
+	cleanupErrs = append(cleanupErrs, c.deleteEmptyDirectories(dir, l)...)
+
+	if len(cleanupErrs) > 0 {
+		c.notifyCleanUpError(content, cleanupErrs...)
 	}
 
-	var cleanupErrs []error
-	defer func() {
-		if len(cleanupErrs) > 0 {
-			c.notifyCleanUpError(content, cleanupErrs...)
-		}
-	}()
+	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing newly downloaded files")
+}
 
-	start := time.Now()
+func (c *client) deleteNewContent(content api.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
 	for _, contentPath := range content.GetNewContent() {
 		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
 		if err := c.fs.RemoveAll(contentPath); err != nil {
@@ -276,12 +268,14 @@ func (c *client) deleteFiles(content api.Downloadable) {
 			cleanupErrs = append(cleanupErrs, err)
 		}
 	}
+	return cleanupErrs
+}
 
+func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupErrs []error) {
 	entries, err := c.fs.ReadDir(dir)
 	if err != nil {
 		l.Error().Err(err).Str("dir", dir).Msg("error while reading dir, unable to remove empty dirs")
-		cleanupErrs = append(cleanupErrs, err)
-		return
+		return append(cleanupErrs, err)
 	}
 
 	for _, entry := range entries {
@@ -310,10 +304,9 @@ func (c *client) deleteFiles(content api.Downloadable) {
 			cleanupErrs = append(cleanupErrs, err)
 		}
 	}
-	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing newly downloaded files")
+	return cleanupErrs
 }
 
-// TODO: Rewrite
 func (c *client) cleanup(content api.Downloadable) {
 	defer c.signalR.DeleteContent(content.Id())
 
@@ -323,8 +316,20 @@ func (c *client) cleanup(content api.Downloadable) {
 		return
 	}
 
-	var cleanupErrs []error
+	start := time.Now()
 
+	cleanupErrs := c.removeOldContent(content, l)
+	cleanupErrs = append(cleanupErrs, c.zipAndRemoveNewContent(newContent, l)...)
+
+	if len(cleanupErrs) > 0 {
+		l.Error().Errs("errors", cleanupErrs).Msg("errors encountered during cleanup")
+		c.notifyCleanUpError(content, cleanupErrs...)
+	}
+
+	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished cleanup")
+}
+
+func (c *client) removeOldContent(content api.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
 	start := time.Now()
 	for _, contentPath := range content.GetToRemoveContent() {
 		l.Trace().Str("name", contentPath).Msg("removing old content")
@@ -335,8 +340,11 @@ func (c *client) cleanup(content api.Downloadable) {
 	}
 	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(content.GetToRemoveContent())).
 		Msg("finished removing replaced downloaded content")
+	return cleanupErrs
+}
 
-	start = time.Now()
+func (c *client) zipAndRemoveNewContent(newContent []string, l zerolog.Logger) (cleanupErrs []error) {
+	start := time.Now()
 	for _, contentPath := range newContent {
 		l.Trace().Str("path", contentPath).Msg("Zipping file")
 		err := c.dirService.ZipToCbz(contentPath)
@@ -355,11 +363,7 @@ func (c *client) cleanup(content api.Downloadable) {
 
 	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(newContent)).
 		Msg("finished zipping newly downloaded content")
-
-	if len(cleanupErrs) > 0 {
-		l.Error().Errs("errors", cleanupErrs).Msg("errors encountered during cleanup")
-		c.notifyCleanUpError(content, cleanupErrs...)
-	}
+	return cleanupErrs
 }
 
 func (c *client) notifyCleanUpError(content api.Downloadable, cleanupErrs ...error) {
