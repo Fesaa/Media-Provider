@@ -5,20 +5,42 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
+	"time"
 )
 
 type mockRegistry struct {
+	cont          *dig.Container
+	finishContent bool
 }
 
 func (m mockRegistry) Create(c api.Client, req payload.DownloadRequest) (api.Downloadable, error) {
-	return &MockContent{
-		mockId: req.Id,
-		DownloadBase: &api.DownloadBase[ID]{
-			Req: req,
-		},
-	}, nil
+	scope := m.cont.Scope("pasloe::registry::create")
+
+	utils.Must(scope.Provide(utils.Identity(c)))
+	utils.Must(scope.Provide(utils.Identity(req)))
+
+	block := &MockContent{
+		mockId:       req.Id,
+		mockProvider: req.Provider,
+	}
+
+	if !m.finishContent {
+		block.mockDownloadContentFunc = func(idx int, t ID, url string) error {
+			time.Sleep(time.Millisecond * 100)
+			return nil
+		}
+		block.mockContentUrlsFunc = func(ctx context.Context, t ID) ([]string, error) {
+			return []string{"a", "b", "c", "d", "e"}, nil
+		}
+		block.mockAll = []ID{"a", "b"}
+	}
+
+	base := api.NewDownloadableFromBlock(scope, "", block)
+	block.DownloadBase = base
+	return block, nil
 }
 
 type ID string
@@ -33,7 +55,6 @@ type MockContent struct {
 	mockRefUrl              string
 	mockProvider            models.Provider
 	mockInfo                payload.InfoStat
-	mockState               payload.ContentState
 	mockId                  string
 	mockAll                 []ID
 	mockContentList         []payload.ListContentData
@@ -46,13 +67,12 @@ type MockContent struct {
 	mockDownloadContentFunc func(idx int, t ID, url string) error
 	mockIsContentFunc       func(s string) bool
 	mockShouldDownloadFunc  func(t ID) bool
+	loadInfoFunc            func()
 	loadInfoChan            chan struct{}
 }
 
 func NewMockContent(scope *dig.Scope) *MockContent {
-	mc := &MockContent{
-		loadInfoChan: make(chan struct{}),
-	}
+	mc := &MockContent{}
 	base := api.NewDownloadableFromBlock[ID](scope, "mock-content", mc)
 	mc.DownloadBase = base
 	return mc
@@ -60,10 +80,6 @@ func NewMockContent(scope *dig.Scope) *MockContent {
 
 func (m *MockContent) Id() string {
 	return m.mockId
-}
-
-func (m *MockContent) State() payload.ContentState {
-	return m.mockState
 }
 
 func (m *MockContent) Title() string {
@@ -79,7 +95,15 @@ func (m *MockContent) Provider() models.Provider {
 }
 
 func (m *MockContent) LoadInfo(ctx context.Context) chan struct{} {
-	close(m.loadInfoChan)
+	m.loadInfoChan = make(chan struct{})
+	go func() {
+		if m.loadInfoFunc != nil {
+			m.loadInfoFunc()
+		} else {
+			close(m.loadInfoChan)
+		}
+	}()
+
 	return m.loadInfoChan
 }
 

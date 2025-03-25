@@ -39,6 +39,8 @@ type Content interface {
 	GetInfo() payload.InfoStat
 	// State returns the payload.ContentState this Content currently is in
 	State() payload.ContentState
+	// SetState updates the state, and propagates to SignalR
+	SetState(state payload.ContentState)
 	// Message passes any payload.Message to the Content, and returns its response
 	// The logic of what happens with the message may depend on the underlying Content
 	Message(payload.Message) (payload.Message, error)

@@ -218,6 +218,8 @@ func (c *client) startNext(provider models.Provider) {
 		return d.Provider() == provider && d.State() == payload.ContentStateReady
 	})
 	if !ok {
+		c.log.Debug().Any("provider", provider).
+			Msg("no new content to start. Unexpected? Report this with a full log!")
 		return
 	}
 

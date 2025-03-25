@@ -17,6 +17,7 @@ import (
 	"go.uber.org/dig"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func must(t *testing.T, err error) {
@@ -25,7 +26,7 @@ func must(t *testing.T, err error) {
 	}
 }
 
-func testClient(t *testing.T) api.Client {
+func testClient(t *testing.T, options ...utils.Option[*client]) api.Client {
 	t.Helper()
 
 	cont := dig.New()
@@ -49,7 +50,13 @@ func testClient(t *testing.T) api.Client {
 	must(t, cont.Provide(New))
 	c := utils.MustInvokeCont[api.Client](cont).(*client)
 
-	c.registry = &mockRegistry{}
+	c.registry = &mockRegistry{
+		cont: cont,
+	}
+
+	for _, option := range options {
+		option(c)
+	}
 
 	return c
 }
@@ -63,7 +70,6 @@ type stateInfo struct {
 func (si stateInfo) ToContent(id string) api.Downloadable {
 	return &MockContent{
 		mockProvider: si.provider,
-		mockState:    si.state,
 		mockId:       id,
 	}
 }
@@ -73,7 +79,13 @@ func setupQueue(t *testing.T, pasloe *client, infos ...stateInfo) (content []api
 
 	for i, info := range infos {
 		id := fmt.Sprintf("%d", i)
-		c := info.ToContent(id)
+
+		c, _ := pasloe.registry.Create(pasloe, payload.DownloadRequest{
+			Provider: info.provider,
+			Id:       id,
+		})
+		c.SetState(info.state)
+
 		pasloe.content.Set(id, c)
 		content = append(content, c)
 	}
@@ -185,14 +197,38 @@ func TestClient_QueueTests(t *testing.T) {
 				Id:        "MyID",
 				BaseDir:   "Manga",
 				TempTitle: "Spice and Wolf",
+				DownloadMetadata: models.DownloadRequestMetadata{
+					StartImmediately: true,
+				},
 			},
 			want: payload.ContentStateDownloading,
+		},
+		{
+			name: "Busy",
+			current: []stateInfo{
+				{
+					state:    payload.ContentStateLoading,
+					provider: models.MANGADEX,
+				},
+			},
+			enqueue: payload.DownloadRequest{
+				Provider:  models.MANGADEX,
+				Id:        "MyID",
+				BaseDir:   "Manga",
+				TempTitle: "Spice and Wolf",
+				DownloadMetadata: models.DownloadRequestMetadata{
+					StartImmediately: true,
+				},
+			},
+			want: payload.ContentStateQueued,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := testClient(t)
+			c := testClient(t, func(c *client) {
+				c.registry.(*mockRegistry).finishContent = false
+			})
 
 			if len(tt.current) > 0 {
 				setupQueue(t, c.(*client), tt.current...)
@@ -201,6 +237,8 @@ func TestClient_QueueTests(t *testing.T) {
 			if err := c.Download(tt.enqueue); err != nil {
 				t.Fatal(err)
 			}
+
+			time.Sleep(time.Millisecond * 10)
 
 			content := c.Content(tt.enqueue.Id)
 			if content == nil {
@@ -213,4 +251,101 @@ func TestClient_QueueTests(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestClient_QueueProgressing(t *testing.T) {
+	c := testClient(t, func(c *client) {
+		c.registry.(*mockRegistry).finishContent = false
+	}).(*client)
+
+	spiceAndWolf, _ := c.registry.Create(c, payload.DownloadRequest{
+		Provider: models.MANGADEX,
+		Id:       "Spice and Wolf",
+	})
+
+	theExecutionerAndHerWayOfLife, _ := c.registry.Create(c, payload.DownloadRequest{
+		Provider: models.MANGADEX,
+		Id:       "The Executioner and Her Way of Life",
+	})
+
+	// Setup state and some items to download
+	spiceAndWolf.SetState(payload.ContentStateDownloading)
+	spiceAndWolf.(*MockContent).DownloadBase.ToDownload = []ID{"a", "b"}
+	theExecutionerAndHerWayOfLife.SetState(payload.ContentStateReady)
+	theExecutionerAndHerWayOfLife.(*MockContent).DownloadBase.ToDownload = []ID{"a", "b"}
+	c.content.Set(spiceAndWolf.Id(), spiceAndWolf)
+	c.content.Set(theExecutionerAndHerWayOfLife.Id(), theExecutionerAndHerWayOfLife)
+
+	// Add a new piece of content naturally
+	if err := c.Download(payload.DownloadRequest{
+		Provider: models.MANGADEX,
+		Id:       "Otherside Picnic",
+		DownloadMetadata: models.DownloadRequestMetadata{
+			StartImmediately: true,
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	othersidePicnic, _ := c.content.Get("Otherside Picnic")
+
+	othersidePicnic.(*MockContent).loadInfoFunc = func() {
+		// Don't close channel
+	}
+
+	// Queued as Spice and Wolf is downloaded
+	got := othersidePicnic.State()
+	if got != payload.ContentStateQueued {
+		t.Fatalf("got %v, want %v", got, payload.ContentStateQueued)
+	}
+
+	if err := c.RemoveDownload(payload.StopRequest{
+		Provider: models.MANGADEX,
+		Id:       spiceAndWolf.Id(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(time.Millisecond * 10)
+
+	got = othersidePicnic.State()
+	if got != payload.ContentStateLoading {
+		t.Fatalf("got %v, want %v", got, payload.ContentStateLoading)
+	}
+
+	// Otherside Picnic is loading, cannot start yet
+	got = theExecutionerAndHerWayOfLife.State()
+	if got != payload.ContentStateReady {
+		t.Fatalf("got %v, want %v", got, payload.ContentStateReady)
+	}
+
+	// Stop Otherside Picnic loading info
+	close(othersidePicnic.(*MockContent).loadInfoChan)
+
+	time.Sleep(time.Millisecond * 10)
+
+	got = theExecutionerAndHerWayOfLife.State()
+	if got != payload.ContentStateDownloading {
+		t.Fatalf("got %v, want %v", got, payload.ContentStateDownloading)
+	}
+
+	got = othersidePicnic.State()
+	if got != payload.ContentStateReady {
+		t.Fatalf("got %v, want %v", got, payload.ContentStateReady)
+	}
+
+	if err := c.RemoveDownload(payload.StopRequest{
+		Provider: models.MANGADEX,
+		Id:       theExecutionerAndHerWayOfLife.Id(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(time.Millisecond * 10)
+
+	got = othersidePicnic.State()
+	if got != payload.ContentStateDownloading {
+		t.Fatalf("got %v, want %v", got, payload.ContentStateDownloading)
+	}
+
 }
