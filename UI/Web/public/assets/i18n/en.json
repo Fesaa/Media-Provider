@@ -115,6 +115,7 @@
       "delete-selected": "Delete selected"
     },
     "table": {
+      "time": "Time",
       "group": "Group",
       "title": "Title",
       "summary": "Summary",
@@ -123,7 +124,10 @@
         "mark-unread": "Mark unread",
         "mark-read": "Mark read"
       },
-      "empty": "No notifications to report"
+      "select-all": "Select All",
+      "select-none": "Select None",
+      "empty": "No notifications to report",
+      "extra-info": "More information"
     },
     "confirm-delete": "Are you sure you want to delete {{title}}?",
     "confirm-delete-many": "Are you sure you want to delete {{amount}} notification(s)?",

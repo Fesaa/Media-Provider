@@ -13,36 +13,51 @@
   <p-table [value]="notifications.items()" *transloco="let t;prefix:'notifications.table'">
     <ng-template #header>
       <tr>
+        <th>{{t('time')}}</th>
         <th>{{ t('group') }}</th>
         <th>{{ t('title') }}</th>
         <th>{{ t('summary') }}</th>
-        <th>{{ t('actions.label') }}</th>
+        <th class="flex flex-row justify-between">
+          <span>{{ t('actions.label') }}</span>
+          <p-checkbox [(ngModel)]="allCheck" [binary]="true" (onChange)="toggleAll()"
+                      [pTooltip]="allCheck ? t('select-none') : t('select-all')"
+                      tooltipPosition="bottom"
+          />
+        </th>
       </tr>
 
     </ng-template>
     <ng-template #body let-notification>
       <tr>
+        <td style="{width: 10%}"
+            [pTooltip]="notification.CreatedAt | utcToLocalTime:'short'" tooltipPosition="top">
+          {{notification.CreatedAt | utcToLocalTime:'shortDate'}}
+        </td>
         <td style="{width: 10%}"><p-tag [value]="notification.group" [severity]="groupSeverity(notification.group)" /></td>
         <td style="{width: 20%}">{{notification.title}}</td>
-        <td style="{width: 50%}">{{notification.summary}}</td>
+        <td style="{width: 40%}">{{notification.summary}}</td>
         <td style="{width: 20%}">
-          <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
+          <div class="flex flex-col md:flex-row justify-between items-center">
 
-            @if (notification.read) {
-              <p-button icon="pi pi-check-circle" size="small" tooltipPosition="bottom" [pTooltip]="t('actions.mark-unread')" (click)="markUnRead(notification)" />
-            } @else {
-              <p-button icon="pi pi-circle" size="small" severity="warn" tooltipPosition="bottom" [pTooltip]="t('actions.mark-read')" (click)="markRead(notification)" />
-            }
+            <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
+              @if (notification.read) {
+                <p-button icon="pi pi-check-circle" size="small" tooltipPosition="bottom" [pTooltip]="t('actions.mark-unread')" (click)="markUnRead(notification)" />
+              } @else {
+                <p-button icon="pi pi-circle" size="small" severity="warn" tooltipPosition="bottom" [pTooltip]="t('actions.mark-read')" (click)="markRead(notification)" />
+              }
 
-            <p-button icon="pi pi-info-circle" size="small" severity="info" (click)="show(notification.ID)" />
+              <p-button icon="pi pi-info-circle" size="small" severity="info" (click)="show(notification.ID)"
+                        [pTooltip]="t('extra-info')" tooltipPosition="bottom"
+              />
 
-            <p-button icon="pi pi-trash" size="small" severity="danger" (click)="delete(notification)" />
+              <p-button icon="pi pi-trash" size="small" severity="danger" (click)="delete(notification)" />
+
+              <p-dialog [(visible)]="infoVisibility[notification.ID]" [header]="notification.title">
+                {{notification.body}}
+              </p-dialog>
+            </div>
 
             <p-checkbox [(ngModel)]="selectedNotifications" [value]="notification.ID" />
-
-            <p-dialog [(visible)]="infoVisibility[notification.ID]" [header]="notification.title">
-              {{notification.body}}
-            </p-dialog>
 
           </div>
         </td>
