@@ -44,15 +44,8 @@ func (s *Subscription) ShouldRefresh(old *Subscription) bool {
 	return s.RefreshFrequency != old.RefreshFrequency
 }
 
-func (s *Subscription) Normalize(p Preferences) error {
-	pref, err := p.Get()
-	if err != nil {
-		return ErrFailedToLoadPreferences
-	}
-
-	s.Info.LastCheck = s.normalize(s.Info.LastCheck, pref.SubscriptionRefreshHour)
-
-	return nil
+func (s *Subscription) Normalize(hour int) {
+	s.Info.LastCheck = s.normalize(s.Info.LastCheck, hour)
 }
 
 func (s *Subscription) normalize(t time.Time, hour int) time.Time {

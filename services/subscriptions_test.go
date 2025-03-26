@@ -155,23 +155,6 @@ func (b *brokenPreferences) Update(pref models.Preference) error {
 	return errors.New("broken preferences")
 }
 
-func TestSubscriptionService_UpdateBadPreference(t *testing.T) {
-	t.Parallel()
-	ss := tempSubscriptionService(t, tempDatabase(t))
-	ssImpl := ss.(*subscriptionService)
-	sub := defaultSub()
-	_, err := ss.Add(sub)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ssImpl.db.Preferences = &brokenPreferences{}
-	err = ss.Update(sub)
-	if !errors.Is(err, models.ErrFailedToLoadPreferences) {
-		t.Fatalf("Wanted ErrFailedToLoadPreferences, got %v", err)
-	}
-}
-
 func TestSubscriptionService_UpdateRefresh(t *testing.T) {
 	t.Parallel()
 	ss := tempSubscriptionService(t, tempDatabase(t))

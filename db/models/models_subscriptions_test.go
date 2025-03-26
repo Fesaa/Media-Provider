@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"testing"
 	"time"
 )
@@ -141,20 +140,11 @@ func TestSubscription_Normalize(t *testing.T) {
 		},
 	}
 
-	err := sub.Normalize(&mockPreferences)
-	if err != nil {
-		t.Errorf("Normalize failed: %v", err)
-	}
+	sub.Normalize(mockPreferences.preferences.SubscriptionRefreshHour)
 
 	expected := time.Date(2023, 10, 27, 10, 0, 0, 0, time.Local)
 	if sub.Info.LastCheck != expected {
 		t.Errorf("Normalize time mismatch: expected %v, got %v", expected, sub.Info.LastCheck)
-	}
-
-	mockPreferences.err = errors.New("test error")
-	err = sub.Normalize(&mockPreferences)
-	if err == nil {
-		t.Errorf("Expected error, got nil")
 	}
 }
 

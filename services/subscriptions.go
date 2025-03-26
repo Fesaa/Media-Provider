@@ -143,10 +143,12 @@ func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription
 		return nil, errors.New("subscription already exists")
 	}
 
-	err = sub.Normalize(s.db.Preferences)
+	pref, err := s.db.Preferences.Get()
 	if err != nil {
-		return nil, fmt.Errorf("failed to normalize subscription: %w", err)
+		return nil, err
 	}
+	sub.Normalize(pref.SubscriptionRefreshHour)
+	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
 
 	newSub, err := s.db.Subscriptions.New(sub)
 	if err != nil {
@@ -175,10 +177,7 @@ func (s *subscriptionService) Update(sub models.Subscription) error {
 	sub.Info.ID = cur.Info.ID
 	sub.Info.SubscriptionId = cur.Info.SubscriptionId
 
-	if err = sub.Normalize(s.db.Preferences); err != nil {
-		return fmt.Errorf("failed to normalize subscription: %w", err)
-	}
-
+	sub.Normalize(pref.SubscriptionRefreshHour)
 	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
 	s.log.Debug().Time("nextExecution", sub.Info.NextExecution).
 		Msg("subscription will run next on")
