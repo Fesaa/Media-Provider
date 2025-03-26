@@ -5,7 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"os"
@@ -36,9 +35,9 @@ func tempDatabase(t *testing.T) *db.Database {
 	return database
 }
 
-func tempSubscriptionService(t *testing.T, tempdb *db.Database, logs ...zerolog.Logger) SubscriptionService {
+func tempSubscriptionService(t *testing.T, tempdb *db.Database) SubscriptionService {
 	t.Helper()
-	log := utils.OrDefault(logs, zerolog.Nop())
+	log := zerolog.Nop()
 
 	tempDir := t.TempDir()
 	config.Dir = tempDir
