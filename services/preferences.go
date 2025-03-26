@@ -11,14 +11,16 @@ type PreferencesService interface {
 }
 
 type preferencesService struct {
-	pref models.Preferences
-	log  zerolog.Logger
+	subscriptionService SubscriptionService
+	pref                models.Preferences
+	log                 zerolog.Logger
 }
 
-func PreferenceServiceProvider(pref models.Preferences, log zerolog.Logger) PreferencesService {
+func PreferenceServiceProvider(subscriptionService SubscriptionService, pref models.Preferences, log zerolog.Logger) PreferencesService {
 	return &preferencesService{
-		pref: pref,
-		log:  log.With().Str("handler", "preference-service").Logger(),
+		pref:                pref,
+		subscriptionService: subscriptionService,
+		log:                 log.With().Str("handler", "preference-service").Logger(),
 	}
 }
 
@@ -26,6 +28,12 @@ func (p *preferencesService) Update(preference models.Preference) error {
 	cur, err := p.pref.GetComplete()
 	if err != nil {
 		return err
+	}
+
+	if cur.SubscriptionRefreshHour != preference.SubscriptionRefreshHour {
+		if err = p.subscriptionService.UpdateTask(preference.SubscriptionRefreshHour); err != nil {
+			return err
+		}
 	}
 
 	preference.BlackListedTags = mergeTags(cur.BlackListedTags, preference.BlackListedTags)

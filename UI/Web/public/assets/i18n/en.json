@@ -575,6 +575,7 @@
     },
     "title": "Title",
     "last": "Last ran",
+    "next-exec": "Next run",
     "frequency": "Frequency",
     "search": "Search by title",
     "success": "Success",

@@ -9,6 +9,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // TryCatch will return the consumed value if the error returned by the producer was nil. Other returns the fallback
@@ -180,4 +181,11 @@ func Shorten(s string, length int) string {
 	}
 
 	return s[:length-3] + "..."
+}
+
+func IsSameDay(t1, t2 time.Time) bool {
+	d1, m1, y1 := t1.Date()
+	d2, m2, y2 := t2.Date()
+
+	return d1 == d2 && m1 == m2 && y1 == y2
 }

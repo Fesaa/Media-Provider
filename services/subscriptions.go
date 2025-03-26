@@ -7,7 +7,6 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"time"
 )
@@ -20,11 +19,13 @@ type SubscriptionService interface {
 	// Add a new subscription, saved to DB and starts the cron job
 	// Subscription is normalized in the process
 	Add(models.Subscription) (*models.Subscription, error)
-	// Update an existing subscription, updates DB, and restarts cron job
-	// Subscription is normalized in the process
+	// Update an existing subscription, updates DB. Subscription is normalized in the process
 	Update(models.Subscription) error
 	// Delete the subscription with ID
 	Delete(uint) error
+
+	// UpdateTask recreates the underlying cronjob. Generally only called when the hour to run susbcriptions changes
+	UpdateTask(hour ...int) error
 }
 
 type subscriptionService struct {
@@ -36,14 +37,13 @@ type subscriptionService struct {
 	db  *db.Database
 	log zerolog.Logger
 
-	mapper  utils.SafeMap[uint, uuid.UUID]
-	updator chan models.Subscription
+	job gocron.Job
 }
 
 func SubscriptionServiceProvider(db *db.Database, provider ContentService,
 	log zerolog.Logger, cronService CronService, notifier NotificationService,
 	transloco TranslocoService,
-) SubscriptionService {
+) (SubscriptionService, error) {
 	service := &subscriptionService{
 		cronService:    cronService,
 		contentService: provider,
@@ -51,46 +51,53 @@ func SubscriptionServiceProvider(db *db.Database, provider ContentService,
 		transloco:      transloco,
 		db:             db,
 		log:            log.With().Str("handler", "subscription-service").Logger(),
-		mapper:         utils.NewSafeMap[uint, uuid.UUID](),
-		updator:        make(chan models.Subscription),
 	}
 
-	service.onStartUp()
-	return service
+	if err := service.UpdateTask(); err != nil {
+		return nil, err
+	}
+
+	return service, nil
 }
 
-func (s *subscriptionService) onStartUp() {
-	go s.updateProcessor()
+func (s *subscriptionService) orFromPreferences(hours ...int) (int, error) {
+	if len(hours) > 0 {
+		return hours[0], nil
+	}
 
-	subs, err := s.All()
+	pref, err := s.db.Preferences.Get()
 	if err != nil {
-		s.log.Error().Err(err).Msg("Failed to get all subscriptions, cannot start jobs")
-		return
+		return 0, err
 	}
 
-	failed := 0
-	for _, sub := range subs {
-		if err = s.schedule(sub); err != nil {
-			failed++
-			s.log.Error().Err(err).
-				Uint("ID", sub.ID).
-				Str("title", sub.Info.Title).
-				Msg("Failed to schedule subscription")
-		}
-	}
-
-	s.log.Info().Int("count", len(subs)-failed).Msg("scheduled subscriptions")
+	return pref.SubscriptionRefreshHour, nil
 }
 
-func (s *subscriptionService) updateProcessor() {
-	for sub := range s.updator {
-		err := s.db.Subscriptions.Update(sub)
-		if err != nil {
-			s.log.Warn().Err(err).Uint("id", sub.ID).Msg("failed to update subscription")
-		} else {
-			s.log.Debug().Uint("id", sub.ID).Msg("updated subscription")
+func (s *subscriptionService) UpdateTask(hours ...int) error {
+	hour, err := s.orFromPreferences(hours...)
+	if err != nil {
+		return err
+	}
+
+	if s.job != nil {
+		if err = s.cronService.RemoveJob(s.job.ID()); err != nil {
+			return err
 		}
 	}
+
+	cronString := fmt.Sprintf("0 %d * * *", hour)
+	s.log.Debug().Str("cronString", cronString).Msg("scheduling subscription job with cron string")
+
+	job, err := s.cronService.NewJob(
+		gocron.CronJob(cronString, false),
+		s.subscriptionTask(hour))
+
+	if err != nil {
+		return err
+	}
+
+	s.job = job
+	return nil
 }
 
 func (s *subscriptionService) All() ([]models.Subscription, error) {
@@ -121,122 +128,75 @@ func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription
 		return nil, err
 	}
 
-	err = s.schedule(*newSub)
-	if err != nil {
-		return nil, err
-	}
-
 	return newSub, nil
 }
 
 func (s *subscriptionService) Update(sub models.Subscription) error {
-	var existing *models.Subscription
-	var err error
-
-	err = sub.Normalize(s.db.Preferences)
+	pref, err := s.db.Preferences.Get()
 	if err != nil {
+		return err
+	}
+
+	if err = sub.Normalize(s.db.Preferences); err != nil {
 		return fmt.Errorf("failed to normalize subscription: %w", err)
 	}
 
-	existing, err = s.db.Subscriptions.GetByContentId(sub.ContentId)
-	if err != nil {
-		return err
-	}
+	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
 
-	err = s.db.Subscriptions.Update(sub)
-	if err != nil {
-		return err
-	}
-
-	if existing != nil && !sub.ShouldRefresh(existing) {
-		s.log.Debug().Uint("id", sub.ID).Msg("not refreshing subscription job")
-		return nil
-	}
-
-	if ud, ok := s.mapper.Get(sub.ID); ok {
-		if err = s.cronService.RemoveJob(ud); err != nil {
-			s.log.Error().Err(err).Uint("id", sub.ID).Msg("failed to remove job")
-			return err
-		}
-	} else {
-		s.log.Trace().Err(err).Uint("id", sub.ID).Msg("updating subscription with no running job?")
-	}
-
-	err = s.schedule(sub)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.db.Subscriptions.Update(sub)
 }
 
 func (s *subscriptionService) Delete(id uint) error {
-	if ud, ok := s.mapper.Get(id); ok {
-		if err := s.cronService.RemoveJob(ud); err != nil {
-			s.log.Error().Err(err).Uint("id", id).Msg("failed to remove job")
-			return err
-		}
-
-		s.mapper.Delete(id)
-	}
-
 	return s.db.Subscriptions.Delete(id)
 }
 
-// schedule the job for the passed subscription, optionally starting immediately
-// Adds the job UUID to the mapper, does not save to DB.
-func (s *subscriptionService) schedule(sub models.Subscription) error {
-	nextExecutionTime, err := sub.NextExecution(s.db.Preferences)
-	if err != nil {
-		s.log.Error().Err(err).Uint("id", sub.ID).Msg("failed to get next execution")
-		return err
-	}
+func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
+	s.log.Debug().Int("hour", hour).Msg("creating subscription task")
+	return gocron.NewTask(func() {
+		subs, err := s.All()
+		if err != nil {
+			s.log.Error().Err(err).Msg("failed to get subscriptions")
+			s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-to-run-subscriptions"),
+				s.transloco.GetTranslation("failed-to-run-subscriptions-body", err), models.Red)
+			return
+		}
 
-	job, err := s.cronService.NewJob(gocron.DurationJob(sub.RefreshFrequency.AsDuration()), s.toTask(sub.ID),
-		gocron.WithStartAt(gocron.WithStartDateTime(nextExecutionTime)))
+		counter := 0
+		now := time.Now()
+		for _, sub := range subs {
+			nextExec := sub.NextExecution(hour)
+			if !utils.IsSameDay(now, nextExec) {
+				// Subscription only run once a day, if these don't match. It's for another day.
+				continue
+			}
+
+			s.handleSub(sub, hour)
+			counter++
+		}
+
+		s.log.Debug().Int("counter", counter).Msg("ran subscriptions")
+	})
+}
+
+func (s *subscriptionService) handleSub(sub models.Subscription, hour int) {
+	err := s.contentService.DownloadSubscription(&sub)
+	sub.Info.LastCheck = time.Now()
+	sub.Info.LastCheckSuccess = err == nil
+	sub.Info.NextExecution = sub.NextExecution(hour)
+
 	if err != nil {
 		s.log.Error().Err(err).
 			Uint("id", sub.ID).
-			Time("nextExecution", nextExecutionTime).
-			Msg("failed to create job")
-		return fmt.Errorf("failed to start subscription job: %w", err)
+			Str("contentId", sub.ContentId).
+			Msg("failed to download content")
+		s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-sub"),
+			s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err))
+		return
 	}
 
-	s.mapper.Set(sub.ID, job.ID())
-	s.log.Debug().
-		Uint("id", sub.ID).
-		Str("contentId", sub.ContentId).
-		Str("title", sub.Info.Title).
-		Time("nextExecution", nextExecutionTime).
-		Dur("duration", sub.RefreshFrequency.AsDuration()).
-		Msg("added subscription")
-	return nil
-}
-
-func (s *subscriptionService) toTask(id uint) gocron.Task {
-	return gocron.NewTask(func() {
-		sub, err := s.db.Subscriptions.Get(id)
-		if err != nil {
-			s.log.Error().Err(err).Uint("id", id).Msg("failed to get subscription")
-			s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-sub"),
-				s.transloco.GetTranslation("failed-get-sub", id))
-			return
-		}
-
-		err = s.contentService.DownloadSubscription(sub)
-		sub.Info.LastCheck = time.Now()
-		sub.Info.LastCheckSuccess = err == nil
-
-		if err != nil {
-			s.log.Error().Err(err).
-				Uint("id", sub.ID).
-				Str("contentId", sub.ContentId).
-				Msg("failed to download content")
-			s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-sub"),
-				s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err))
-			return
-		}
-
-		s.updator <- *sub
-	})
+	if err = s.db.Subscriptions.Update(sub); err != nil {
+		s.log.Warn().Err(err).Uint("id", sub.ID).Msg("failed to update subscription")
+	} else {
+		s.log.Debug().Uint("id", sub.ID).Msg("updated subscription")
+	}
 }

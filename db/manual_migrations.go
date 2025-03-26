@@ -28,6 +28,10 @@ var manualMigrations = []migration{
 		name: "20250215_MigrateTags",
 		f:    manual.MigrateTags,
 	},
+	{
+		name: "20250326_SubscriptionNextExec",
+		f:    manual.SubscriptionNextExec,
+	},
 }
 
 func manualMigration(db *gorm.DB, log zerolog.Logger) error {

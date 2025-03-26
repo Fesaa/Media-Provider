@@ -72,6 +72,7 @@ export class SubscriptionEditDialogComponent {
       title: '',
       lastCheckSuccess: true,
       lastCheck: new Date(),
+      nextExecution: new Date(),
       description: '',
       baseDir: ''
     },
@@ -129,6 +130,7 @@ export class SubscriptionEditDialogComponent {
         description: this.sub.info.description,
         lastCheck: this.sub.info.lastCheck,
         lastCheckSuccess: this.sub.info.lastCheckSuccess,
+        nextExecution: this.sub.info.nextExecution,
       },
       metadata: {
         startImmediately: this.sub.metadata.startImmediately,

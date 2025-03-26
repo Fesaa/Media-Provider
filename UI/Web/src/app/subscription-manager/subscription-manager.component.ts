@@ -17,6 +17,7 @@ import {
   SubscriptionEditDialogComponent
 } from "./components/subscription-edit-dialog/subscription-edit-dialog.component";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
 
 @Component({
   selector: 'app-subscription-manager',
@@ -30,6 +31,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     Tag,
     SubscriptionEditDialogComponent,
     TranslocoDirective,
+    UtcToLocalTimePipe,
   ],
   templateUrl: './subscription-manager.component.html',
   styleUrl: './subscription-manager.component.css',
