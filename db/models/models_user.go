@@ -1,7 +1,6 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
 )
 
@@ -27,7 +26,7 @@ var (
 )
 
 type User struct {
-	gorm.Model
+	Model
 	Name         string `gorm:"unique"`
 	PasswordHash string
 	ApiKey       string
@@ -41,7 +40,7 @@ func (u *User) HasPermission(permission UserPermission) bool {
 }
 
 type PasswordReset struct {
-	gorm.Model
+	Model
 
 	UserId uint
 	Key    string

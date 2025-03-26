@@ -10,7 +10,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rs/zerolog"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +23,7 @@ func TestMiddleware_Success(t *testing.T) {
 	mockDB := &db.Database{
 		Users: mockUsers{
 			user: &models.User{
-				Model: gorm.Model{
+				Model: models.Model{
 					ID: 1,
 				},
 				Name:   "testuser",
@@ -94,7 +93,7 @@ func TestLogin_Success(t *testing.T) {
 	mockDB := &db.Database{
 		Users: mockUsers{
 			user: &models.User{
-				Model: gorm.Model{
+				Model: models.Model{
 					ID: 1,
 				},
 				Name:         "testuser",
@@ -102,7 +101,7 @@ func TestLogin_Success(t *testing.T) {
 			},
 			getByName: func(name string) (*models.User, error) {
 				return &models.User{
-					Model: gorm.Model{
+					Model: models.Model{
 						ID: 1,
 					},
 					Name:         "testuser",
@@ -140,7 +139,7 @@ func TestLogin_InvalidPassword(t *testing.T) {
 		Users: mockUsers{
 			getByName: func(name string) (*models.User, error) {
 				return &models.User{
-					Model: gorm.Model{
+					Model: models.Model{
 						ID: 1,
 					},
 					Name:         "testuser",

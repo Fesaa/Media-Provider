@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/lib/pq"
-	"gorm.io/gorm"
 )
 
 type Provider int
@@ -40,7 +39,7 @@ func (p Provider) String() string {
 }
 
 type Page struct {
-	gorm.Model
+	Model
 
 	Title         string         `json:"title"`
 	Icon          string         `json:"icon"`
@@ -59,7 +58,7 @@ const (
 )
 
 type Modifier struct {
-	gorm.Model
+	Model
 
 	PageID uint
 
@@ -70,7 +69,7 @@ type Modifier struct {
 }
 
 type ModifierValue struct {
-	gorm.Model
+	Model
 
 	ModifierID uint
 	Key        string `json:"key"`

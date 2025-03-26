@@ -1,9 +1,7 @@
 package models
 
-import "gorm.io/gorm"
-
 type ManualMigration struct {
-	gorm.Model
+	Model
 
 	Success bool
 	Name    string

@@ -12,7 +12,7 @@ var (
 )
 
 type Subscription struct {
-	gorm.Model
+	Model
 
 	Provider         Provider                `json:"provider" gorm:"type:int"`
 	ContentId        string                  `json:"contentId"`
@@ -77,7 +77,7 @@ func (s *Subscription) NextExecution(hour int) time.Time {
 }
 
 type SubscriptionInfo struct {
-	gorm.Model
+	Model
 
 	SubscriptionId int
 

@@ -65,6 +65,6 @@ func (s subscriptionImpl) Update(subscription models.Subscription) error {
 
 func (s subscriptionImpl) Delete(i uint) error {
 	return s.db.Select("Info").Delete(&models.Subscription{
-		Model: gorm.Model{ID: i},
+		Model: models.Model{ID: i},
 	}).Error
 }

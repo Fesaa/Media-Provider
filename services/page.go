@@ -39,7 +39,7 @@ func PageServiceProvider(db *db.Database, log zerolog.Logger) PageService {
 func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 	var other models.Page
 	err := ps.db.DB().
-		Not(models.Page{Model: gorm.Model{ID: page.ID}}).
+		Not(models.Page{Model: models.Model{ID: page.ID}}).
 		Where(map[string]interface{}{"sort_value": 0}). // https://gorm.io/docs/query.html#Struct-amp-Map-Conditions
 		First(&other).
 		Error
