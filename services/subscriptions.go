@@ -53,11 +53,36 @@ func SubscriptionServiceProvider(db *db.Database, provider ContentService,
 		log:            log.With().Str("handler", "subscription-service").Logger(),
 	}
 
+	if err := service.OnStartUp(); err != nil {
+		return nil, err
+	}
+
 	if err := service.UpdateTask(); err != nil {
 		return nil, err
 	}
 
 	return service, nil
+}
+
+func (s *subscriptionService) OnStartUp() error {
+	subs, err := s.db.Subscriptions.All()
+	if err != nil {
+		return err
+	}
+
+	pref, err := s.db.Preferences.Get()
+	if err != nil {
+		return err
+	}
+
+	for _, sub := range subs {
+		sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
+		if err = s.db.Subscriptions.Update(sub); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *subscriptionService) orFromPreferences(hours ...int) (int, error) {
@@ -142,6 +167,8 @@ func (s *subscriptionService) Update(sub models.Subscription) error {
 	}
 
 	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
+	s.log.Debug().Time("nextExecution", sub.Info.NextExecution).
+		Msg("subscription will run next on")
 
 	return s.db.Subscriptions.Update(sub)
 }
@@ -153,6 +180,8 @@ func (s *subscriptionService) Delete(id uint) error {
 func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 	s.log.Debug().Int("hour", hour).Msg("creating subscription task")
 	return gocron.NewTask(func() {
+		s.log.Debug().Msg("running subscription task")
+
 		subs, err := s.All()
 		if err != nil {
 			s.log.Error().Err(err).Msg("failed to get subscriptions")
@@ -164,8 +193,10 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 		counter := 0
 		now := time.Now()
 		for _, sub := range subs {
-			nextExec := sub.NextExecution(hour)
+			nextExec := sub.Info.NextExecution.In(time.Local)
 			if !utils.IsSameDay(now, nextExec) {
+				s.log.Debug().Time("nextExec", nextExec).
+					Time("now", now).Msg("next execution is on a different date. Skipping")
 				// Subscription only run once a day, if these don't match. It's for another day.
 				continue
 			}
