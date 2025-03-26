@@ -157,10 +157,23 @@ func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription
 }
 
 func (s *subscriptionService) Update(sub models.Subscription) error {
+	cur, err := s.db.Subscriptions.GetByContentId(sub.ContentId)
+	if err != nil {
+		return err
+	}
+
+	if cur == nil {
+		return errors.New("subscription doesn't exist")
+	}
+
 	pref, err := s.db.Preferences.Get()
 	if err != nil {
 		return err
 	}
+
+	// I can't get gorm to update instead of insert a new row. So lets force it to link here.
+	sub.Info.ID = cur.Info.ID
+	sub.Info.SubscriptionId = cur.Info.SubscriptionId
 
 	if err = sub.Normalize(s.db.Preferences); err != nil {
 		return fmt.Errorf("failed to normalize subscription: %w", err)
