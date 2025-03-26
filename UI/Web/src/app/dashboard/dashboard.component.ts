@@ -84,7 +84,7 @@ export class DashboardComponent implements OnInit {
           this.updateSize(event.data as ContentSizeUpdate);
           break;
         case EventType.DeleteContent:
-          this.dashboardItems.removeFunc(item => item.id !== (event.data as DeleteContent).contentId);
+          this.dashboardItems.removeFunc(item => item.id === (event.data as DeleteContent).contentId);
           break;
         case EventType.ContentProgressUpdate:
           this.updateProgress(event.data as ContentProgressUpdate);
