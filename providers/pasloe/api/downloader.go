@@ -10,6 +10,7 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"os"
 	"path"
@@ -35,6 +36,7 @@ func NewDownloadableFromBlock[T IDAble](scope *dig.Scope, handler string, block 
 		notification services.NotificationService,
 		transLoco services.TranslocoService,
 		preferences models.Preferences,
+		fs afero.Afero,
 	) {
 		base = &DownloadBase[T]{
 			infoProvider: block,
@@ -51,6 +53,7 @@ func NewDownloadableFromBlock[T IDAble](scope *dig.Scope, handler string, block 
 			Notifier:     notification,
 			TransLoco:    transLoco,
 			preferences:  preferences,
+			fs:           fs,
 		}
 	}))
 
@@ -71,6 +74,7 @@ type DownloadBase[T IDAble] struct {
 	SignalR      services.SignalRService
 	Notifier     services.NotificationService
 	TransLoco    services.TranslocoService
+	fs           afero.Afero
 
 	id        string
 	baseDir   string
@@ -254,6 +258,8 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return
 	}
 
+	loadInfoStart := time.Now()
+
 	d.SetState(payload.ContentStateLoading)
 	ctx, cancel := context.WithCancel(context.Background())
 	d.cancel = cancel
@@ -265,15 +271,19 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	}
 	d.Preference = p
 
+	start := time.Now()
 	select {
 	case <-ctx.Done():
 		return
 	case <-d.infoProvider.LoadInfo(ctx):
 	}
 
-	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
-	d.Log.Debug().Msg("Content has downloaded all information")
+	elapsed := time.Since(start)
 
+	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
+	d.Log.Debug().Dur("elapsed", elapsed).Msg("Content has downloaded all information")
+
+	start = time.Now()
 	d.checkContentOnDisk()
 	data := d.infoProvider.All()
 	d.ToDownload = utils.Filter(data, func(t T) bool {
@@ -285,6 +295,19 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		}
 		return download
 	})
+
+	elapsed = time.Since(start)
+	if elapsed > time.Second*5 {
+		d.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
+
+		if d.Req.IsSubscription {
+			d.Notifier.NotifyContent(
+				d.TransLoco.GetTranslation("warn"),
+				d.TransLoco.GetTranslation("long-on-disk-check", d.infoProvider.Title()),
+				d.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
+				models.Orange)
+		}
+	}
 
 	/*if len(d.ToDownload) == 0 {
 		d.Log.Debug().Msg("no chapters to download, stopping")
@@ -306,7 +329,7 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 	d.SignalR.UpdateContentInfo(d.GetInfo())
 
 	d.Log.Debug().Int("all", len(data)).Int("filtered", len(d.ToDownload)).
-		Msg("downloaded content filtered")
+		Dur("StartLoadInfo#duration", time.Since(loadInfoStart)).Msg("downloaded content filtered")
 }
 
 func (d *DownloadBase[T]) StartDownload() {
@@ -340,7 +363,7 @@ func (d *DownloadBase[T]) checkContentOnDisk() {
 }
 
 func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]Content, error) {
-	entries, err := os.ReadDir(path.Join(d.Client.GetBaseDir(), p))
+	entries, err := d.fs.ReadDir(path.Join(d.Client.GetBaseDir(), p))
 	if err != nil {
 		return nil, err
 	}
@@ -500,7 +523,7 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 	l.Trace().Msg("downloading content")
 
 	contentPath := d.infoProvider.ContentPath(t)
-	if err := os.MkdirAll(contentPath, 0755); err != nil {
+	if err := d.fs.MkdirAll(contentPath, 0755); err != nil {
 		return err
 	}
 	d.HasDownloaded = append(d.HasDownloaded, contentPath)

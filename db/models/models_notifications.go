@@ -1,11 +1,7 @@
 package models
 
-import (
-	"gorm.io/gorm"
-)
-
 type Notification struct {
-	gorm.Model
+	Model
 
 	Title   string             `json:"title"`
 	Summary string             `json:"summary"`

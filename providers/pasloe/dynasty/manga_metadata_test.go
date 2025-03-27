@@ -77,7 +77,7 @@ func TestManga_GetAgeRating(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := tempManga(t, req(), io.Discard)
+			m := tempManga(t, req(), io.Discard, &mockRepository{})
 			m.Preference = &models.Preference{
 				AgeRatingMappings: tt.arm,
 			}

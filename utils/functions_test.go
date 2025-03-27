@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestPercent(t *testing.T) {
@@ -422,6 +423,74 @@ func TestTryCatch(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := TryCatch(tt.args.producer, tt.args.mapper, tt.args.fallback, tt.args.errorHandlers...); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("TryCatch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsSameDay(t *testing.T) {
+	type args struct {
+		t1 time.Time
+		t2 time.Time
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Same day, different times",
+			args: args{
+				t1: time.Date(2023, 10, 26, 10, 0, 0, 0, time.UTC),
+				t2: time.Date(2023, 10, 26, 15, 30, 0, 0, time.UTC),
+			},
+			want: true,
+		},
+		{
+			name: "Different days, same year and month",
+			args: args{
+				t1: time.Date(2023, 10, 26, 10, 0, 0, 0, time.UTC),
+				t2: time.Date(2023, 10, 27, 10, 0, 0, 0, time.UTC),
+			},
+			want: false,
+		},
+		{
+			name: "Different months, same year",
+			args: args{
+				t1: time.Date(2023, 10, 26, 10, 0, 0, 0, time.UTC),
+				t2: time.Date(2023, 11, 26, 10, 0, 0, 0, time.UTC),
+			},
+			want: false,
+		},
+		{
+			name: "Different years",
+			args: args{
+				t1: time.Date(2023, 10, 26, 10, 0, 0, 0, time.UTC),
+				t2: time.Date(2024, 10, 26, 10, 0, 0, 0, time.UTC),
+			},
+			want: false,
+		},
+		{
+			name: "Same exact time",
+			args: args{
+				t1: time.Date(2023, 10, 26, 10, 0, 0, 0, time.UTC),
+				t2: time.Date(2023, 10, 26, 10, 0, 0, 0, time.UTC),
+			},
+			want: true,
+		},
+		{
+			name: "Different timezones same day",
+			args: args{
+				t1: time.Date(2023, 10, 26, 10, 0, 0, 0, time.UTC),
+				t2: time.Date(2023, 10, 26, 10, 0, 0, 0, time.FixedZone("EST", -5*60*60)),
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsSameDay(tt.args.t1, tt.args.t2); got != tt.want {
+				t.Errorf("IsSameDay() = %v, want %v", got, tt.want)
 			}
 		})
 	}

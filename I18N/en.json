@@ -19,6 +19,8 @@
   "failed-sub": "Subscription failed to run",
   "failed-get-sub": "Failed to get subscription %d, can't run it",
   "failed-start-sub-download": "Failed to start subscription %s's download: %v",
+  "failed-to-run-subscriptions": "Subscriptions failed to run",
+  "failed-to-run-subscriptions-body": "The subscription service was unable to retrieve your subscriptions from the database. Check your configuration or report this. \n %v",
 
   "sub-downloaded-all-title": "Subscription exhausted",
   "sub-downloaded-all": "The subscription on %s has downloaded all possible content; (%d %s), consider removing it.",
@@ -26,5 +28,8 @@
   "download-finished": "%s finished downloading %d item(s)",
   "re-downloads": "\n %d items were re-downloaded",
   "cleanup-errors-title": "Errors during cleanup!",
-  "cleanup-errors-summary": "Errors occurred during cleanup for %s"
+  "cleanup-errors-summary": "Errors occurred during cleanup for %s",
+  "warn": "Warning",
+  "long-on-disk-check": "Long content check for %s",
+  "long-on-disk-check-body": "It took %s to check for content on disk, consider checking your download settings"
 }

@@ -20,7 +20,7 @@ type notifications struct {
 func (n notifications) DeleteMany(ids []uint) error {
 	notifs := utils.Map(ids, func(id uint) models.Notification {
 		return models.Notification{
-			Model: gorm.Model{
+			Model: models.Model{
 				ID: id,
 			},
 		}
@@ -72,7 +72,7 @@ func (n notifications) Delete(u uint) error {
 
 func (n notifications) MarkRead(u uint) error {
 	model := models.Notification{
-		Model: gorm.Model{
+		Model: models.Model{
 			ID: u,
 		},
 	}
@@ -81,7 +81,7 @@ func (n notifications) MarkRead(u uint) error {
 
 func (n notifications) MarkUnread(u uint) error {
 	model := models.Notification{
-		Model: gorm.Model{
+		Model: models.Model{
 			ID: u,
 		},
 	}

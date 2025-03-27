@@ -64,7 +64,8 @@ export class SubscriptionDialogComponent implements OnInit {
         title: this.searchResult.Name,
         baseDir: this.downloadDir,
         lastCheckSuccess: true,
-        lastCheck: new Date()
+        lastCheck: new Date(),
+        nextExecution: new Date()
       },
       refreshFrequency: RefreshFrequency.Week,
       metadata: {

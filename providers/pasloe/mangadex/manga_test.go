@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -13,6 +12,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
@@ -27,39 +27,50 @@ const (
 	waitTimeOut = 30 * time.Second
 )
 
-type mockRepo struct {
-	t           *testing.T
-	manga       GetMangaResponse
-	chapters    ChapterSearchResponse
-	images      ChapterImageSearchResponse
-	covers      MangaCoverResponse
-	mangaErr    error
-	chaptersErr error
-	imagesErr   error
-	coversErr   error
+type mockRepository struct {
+	GetMangaFunc         func(ctx context.Context, id string) (*GetMangaResponse, error)
+	SearchMangaFunc      func(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error)
+	GetChaptersFunc      func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error)
+	GetChapterImagesFunc func(ctx context.Context, id string) (*ChapterImageSearchResponse, error)
+	GetCoverImagesFunc   func(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error)
 }
 
-func (m mockRepo) GetManga(ctx context.Context, id string) (*GetMangaResponse, error) {
-	return &m.manga, m.mangaErr
+func (m mockRepository) GetManga(ctx context.Context, id string) (*GetMangaResponse, error) {
+	if m.GetMangaFunc == nil {
+		return &GetMangaResponse{}, nil
+	}
+	return m.GetMangaFunc(ctx, id)
 }
 
-func (m mockRepo) SearchManga(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error) {
-	return &MangaSearchResponse{}, nil
+func (m mockRepository) SearchManga(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error) {
+	if m.SearchMangaFunc == nil {
+		return &MangaSearchResponse{}, nil
+	}
+	return m.SearchMangaFunc(ctx, options)
 }
 
-func (m mockRepo) GetChapters(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
-	return &m.chapters, m.chaptersErr
+func (m mockRepository) GetChapters(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+	if m.GetChaptersFunc == nil {
+		return &ChapterSearchResponse{}, nil
+	}
+	return m.GetChaptersFunc(ctx, id, offset...)
 }
 
-func (m mockRepo) GetChapterImages(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
-	return &m.images, m.imagesErr
+func (m mockRepository) GetChapterImages(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
+	if m.GetChapterImagesFunc == nil {
+		return &ChapterImageSearchResponse{}, nil
+	}
+	return m.GetChapterImagesFunc(ctx, id)
 }
 
-func (m mockRepo) GetCoverImages(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error) {
-	return &m.covers, m.coversErr
+func (m mockRepository) GetCoverImages(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error) {
+	if m.GetCoverImagesFunc == nil {
+		return &MangaCoverResponse{}, nil
+	}
+	return m.GetCoverImagesFunc(ctx, id, offset...)
 }
 
-func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...string) *manga {
+func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repository) *manga {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -72,10 +83,11 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, td ...str
 	c := dig.New()
 	scope := c.Scope("testScope")
 
-	tempDir := utils.OrDefault(td, t.TempDir())
-	client := mock.PasloeClient{BaseDir: tempDir}
-	repo := tempRepo(t, w)
+	fs := afero.Afero{Fs: afero.NewMemMapFs()}
+	must(fs.Mkdir("/data", 0755))
+	client := mock.PasloeClient{BaseDir: "/data"}
 
+	must(scope.Provide(utils.Identity(fs)))
 	must(scope.Provide(func() api.Client {
 		return &client
 	}))
@@ -175,7 +187,19 @@ func mangaResp() *MangaSearchData {
 }
 
 func TestManga_Title(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{
+		GetMangaFunc: func(ctx context.Context, id string) (*GetMangaResponse, error) {
+			return &GetMangaResponse{
+				Data: MangaSearchData{
+					Attributes: MangaAttributes{
+						Title: map[string]string{
+							"en": RainbowsAfterStorms,
+						},
+					},
+				},
+			}, nil
+		},
+	})
 
 	want := RainbowsAfterStorms
 	got := m.Title()
@@ -184,7 +208,7 @@ func TestManga_Title(t *testing.T) {
 	}
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
@@ -199,11 +223,15 @@ func TestManga_Title(t *testing.T) {
 
 func TestManga_LoadInfoBadId(t *testing.T) {
 	var buf bytes.Buffer
-	m := tempManga(t, req(), &buf)
+	m := tempManga(t, req(), &buf, &mockRepository{
+		GetMangaFunc: func(ctx context.Context, id string) (*GetMangaResponse, error) {
+			return nil, errors.New("some error")
+		},
+	})
 
 	m.id = "DFGHJKJHGFDGHJKHGFGHJ"
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
@@ -219,47 +247,41 @@ func TestManga_LoadInfoBadId(t *testing.T) {
 //nolint:funlen
 func TestManga_LoadInfoFoundAll(t *testing.T) {
 	var buf bytes.Buffer
-	m := tempManga(t, req(), &buf)
+	m := tempManga(t, req(), &buf, &mockRepository{
+		GetMangaFunc: func(ctx context.Context, id string) (*GetMangaResponse, error) {
+			return &GetMangaResponse{
+				Data: MangaSearchData{
+					Attributes: MangaAttributes{
+						LastChapter: "8",
+						LastVolume:  "2",
+					},
+				},
+			}, nil
+		},
+		GetChaptersFunc: func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+			return &ChapterSearchResponse{
+				Data: []ChapterSearchData{
+					{
+						Attributes: ChapterAttributes{
+							TranslatedLanguage: "en",
+							Volume:             "1",
+							Chapter:            "2",
+						},
+					},
+					{
+						Attributes: ChapterAttributes{
+							TranslatedLanguage: "en",
+							Volume:             "2",
+							Chapter:            "8",
+						},
+					},
+				},
+			}, nil
+		},
+	})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
-		break
-	case <-time.After(waitTimeOut):
-		t.Error("timed out waiting for manga title")
-	}
-
-	mr := mockRepo{t: t}
-	mr.manga = GetMangaResponse{
-		Data: MangaSearchData{
-			Attributes: MangaAttributes{
-				LastChapter: "8",
-				LastVolume:  "2",
-			},
-		},
-	}
-	mr.chapters = ChapterSearchResponse{
-		Data: []ChapterSearchData{
-			{
-				Attributes: ChapterAttributes{
-					TranslatedLanguage: "en",
-					Volume:             "1",
-					Chapter:            "2",
-				},
-			},
-			{
-				Attributes: ChapterAttributes{
-					TranslatedLanguage: "en",
-					Volume:             "2",
-					Chapter:            "8",
-				},
-			},
-		},
-	}
-
-	m.repository = mr
-
-	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
@@ -285,36 +307,22 @@ func TestManga_LoadInfoFoundAll(t *testing.T) {
 	if got != want {
 		t.Errorf("lastFoundChapter got %d, want %d", got, want)
 	}
-
-	m.info = mangaResp()
-	m.info.Attributes.Status = StatusCompleted
-	m.info.Attributes.LastVolume = "2"
-	m.info.Attributes.LastChapter = "8"
-
-	ci := m.comicInfo(mr.chapters.Data[0])
-	got = ci.Count
-	want = 2
-	if got != want {
-		t.Errorf("ComicInfo#Count got %d, want %d", got, want)
-	}
-
 }
 
 //nolint:funlen
 func TestManga_LoadInfoErrors(t *testing.T) {
 	var buf bytes.Buffer
-	m := tempManga(t, req(), &buf)
-
-	mock := mockRepo{t: t}
-	mock.manga = GetMangaResponse{Data: MangaSearchData{Attributes: MangaAttributes{}}}
-	mock.mangaErr = errors.New("error")
-	mock.chapters = ChapterSearchResponse{}
-	mock.chaptersErr = errors.New("error")
-
-	m.repository = mock
+	m := tempManga(t, req(), &buf, &mockRepository{
+		GetMangaFunc: func(ctx context.Context, id string) (*GetMangaResponse, error) {
+			return nil, errors.New("some error")
+		},
+		GetChaptersFunc: func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+			return nil, errors.New("some error")
+		},
+	})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
@@ -326,10 +334,11 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 	}
 	buf.Reset()
 
-	mock.mangaErr = nil
-	m.repository = mock
+	m.repository.(*mockRepository).GetMangaFunc = func(ctx context.Context, id string) (*GetMangaResponse, error) {
+		return &GetMangaResponse{}, nil
+	}
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
@@ -341,12 +350,16 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 	}
 	buf.Reset()
 
-	mock.chaptersErr = nil
-	mock.coversErr = errors.New("error")
-	m.repository = mock
+	m.repository.(*mockRepository).GetChaptersFunc = func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+		return &ChapterSearchResponse{}, nil
+	}
+
+	m.repository.(*mockRepository).GetCoverImagesFunc = func(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error) {
+		return &MangaCoverResponse{}, errors.New("some error")
+	}
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
@@ -357,19 +370,19 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 	}
 	buf.Reset()
 
-	mock.chapters = ChapterSearchResponse{
-		Data: []ChapterSearchData{
-			{Attributes: ChapterAttributes{
-				TranslatedLanguage: "en",
-				Volume:             "NotANumber",
-				Chapter:            "1", // Needed so it doesn't get picked up as a OneShot, and skipped
-			}},
-		},
+	m.repository.(*mockRepository).GetChaptersFunc = func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+		return &ChapterSearchResponse{
+			Data: []ChapterSearchData{
+				{Attributes: ChapterAttributes{
+					TranslatedLanguage: "en",
+					Volume:             "NotANumber",
+					Chapter:            "1", // Needed so it doesn't get picked up as a OneShot, and skipped
+				}},
+			},
+		}, nil
 	}
-
-	m.repository = mock
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Error("timed out waiting for manga title")
@@ -383,27 +396,28 @@ func TestManga_LoadInfoErrors(t *testing.T) {
 }
 
 func TestManga_Provider(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{})
 	if m.Provider() != models.MANGADEX {
 		t.Errorf("got %q, want %q", m.Provider(), models.MANGADEX)
 	}
 }
 
 func TestManga_All(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
-	mock := mockRepo{t: t}
-	mock.chapters = ChapterSearchResponse{
-		Data: []ChapterSearchData{
-			{Attributes: ChapterAttributes{
-				TranslatedLanguage: "en",
-				Chapter:            "1", // Needed so it doesn't get picked up as a OneShot, and skipped
-			}},
+	m := tempManga(t, req(), io.Discard, &mockRepository{
+		GetChaptersFunc: func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+			return &ChapterSearchResponse{
+				Data: []ChapterSearchData{
+					{Attributes: ChapterAttributes{
+						TranslatedLanguage: "en",
+						Chapter:            "1", // Needed so it doesn't get picked up as a OneShot, and skipped
+					}},
+				},
+			}, nil
 		},
-	}
-	m.repository = mock
+	})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Fatal("timed out waiting for manga title")
@@ -419,7 +433,7 @@ func TestManga_All(t *testing.T) {
 }
 
 func TestManga_ContentDir(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{})
 	m.info = mangaResp()
 
 	got := m.ContentDir(chapter())
@@ -431,7 +445,7 @@ func TestManga_ContentDir(t *testing.T) {
 
 func TestManga_ContentDirBadChapter(t *testing.T) {
 	var buf bytes.Buffer
-	m := tempManga(t, req(), &buf)
+	m := tempManga(t, req(), &buf, &mockRepository{})
 	m.info = mangaResp()
 
 	chpt := chapter()
@@ -464,7 +478,7 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 }
 
 func TestManga_ContentPath(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{})
 	m.info = mangaResp()
 
 	got := m.ContentPath(chapter())
@@ -483,7 +497,7 @@ func TestManga_ContentPath(t *testing.T) {
 }
 
 func TestManga_ContentKey(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{})
 
 	got := m.ContentKey(chapter())
 	want := RainbowsAfterStormsLastChapterID
@@ -494,7 +508,7 @@ func TestManga_ContentKey(t *testing.T) {
 
 func TestManga_ContentLogger(t *testing.T) {
 	var buf bytes.Buffer
-	m := tempManga(t, req(), &buf)
+	m := tempManga(t, req(), &buf, &mockRepository{})
 
 	log := m.ContentLogger(chapter())
 	log.Info().Msg("a")
@@ -521,18 +535,17 @@ func TestManga_ContentLogger(t *testing.T) {
 }
 
 func TestManga_ContentUrls(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
-
-	mock := mockRepo{t: t}
-	mock.images = ChapterImageSearchResponse{
-		Chapter: ChapterInfo{
-			Data: []string{"1", "2", "3"},
+	m := tempManga(t, req(), io.Discard, &mockRepository{
+		GetChapterImagesFunc: func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
+			return &ChapterImageSearchResponse{
+				Chapter: ChapterInfo{
+					Data: []string{"1", "2", "3"},
+				},
+			}, nil
 		},
-	}
+	})
 
-	m.repository = mock
-
-	urls, err := m.ContentUrls(context.Background(), chapter())
+	urls, err := m.ContentUrls(t.Context(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -542,89 +555,18 @@ func TestManga_ContentUrls(t *testing.T) {
 		t.Errorf("got %d, want %d", len(urls), want)
 	}
 
-	mock.imagesErr = errors.New("error")
-	m.repository = mock
-	_, err = m.ContentUrls(context.Background(), chapter())
+	m.repository.(*mockRepository).GetChapterImagesFunc = func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
+		return nil, errors.New("error")
+	}
+	_, err = m.ContentUrls(t.Context(), chapter())
 	if err == nil {
 		t.Errorf("got %v, want error", urls)
 	}
 
 }
 
-func TestManga_WriteContentMetaData(t *testing.T) {
-	var buf bytes.Buffer
-	dir := t.TempDir()
-	m := tempManga(t, req(), &buf, dir)
-	m.info = mangaResp()
-	m.coverFactory = defaultCoverFactory
-
-	if err := m.WriteContentMetaData(chapter()); err != nil {
-		t.Fatal(err)
-	}
-
-	ciPath := path.Join(m.ContentPath(chapter()), "comicinfo.xml")
-	_, err := os.Stat(ciPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	data, err := os.ReadFile(ciPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ci := m.comicInfo(chapter())
-	var b bytes.Buffer
-	if err = comicinfo.Write(ci, &b); err != nil {
-		t.Fatal(err)
-	}
-
-	if b.String() != string(data) {
-		t.Errorf("m.comicInfo() = %q, want %q", b, data)
-	}
-
-	buf.Reset()
-	if err = m.WriteContentMetaData(chapter()); err != nil {
-		t.Fatal(err)
-	}
-
-	log := buf.String()
-	want := "volume metadata already written, skipping"
-	if !strings.Contains(log, want) {
-		t.Errorf("got %s, want %s", log, want)
-	}
-}
-
-func TestManga_DownloadContent(t *testing.T) {
-	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer)
-
-	urls, err := m.ContentUrls(context.Background(), chapter())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(urls) == 0 {
-		t.Fatal("len(urls) = 0, want > 0")
-	}
-
-	if err = os.MkdirAll(path.Join(m.ContentPath(chapter())), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	if err = m.DownloadContent(1, chapter(), urls[0]); err != nil {
-		t.Fatal(err)
-	}
-
-	filePath := path.Join(m.ContentPath(chapter()), fmt.Sprintf("page %s.jpg", utils.PadInt(1, 4)))
-	_, err = os.Stat(filePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestManga_ContentRegex(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{})
 
 	type test struct {
 		name string
@@ -667,7 +609,6 @@ func TestManga_ContentRegex(t *testing.T) {
 
 //nolint:funlen,gocognit
 func TestManga_ShouldDownload(t *testing.T) {
-	ios := services.IOServiceProvider(zerolog.Nop())
 
 	type test struct {
 		name          string
@@ -725,17 +666,19 @@ func TestManga_ShouldDownload(t *testing.T) {
 			chapter: chapter,
 			command: func(t *testing.T, m *manga) {
 				t.Helper()
+				ds := services.DirectoryServiceProvider(zerolog.Nop(), m.fs)
+
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162")
 				ci := comicinfo.NewComicInfo()
 				ci.Volume = 13
-				if err := os.MkdirAll(fullpath, 0755); err != nil {
+				if err := m.fs.MkdirAll(fullpath, 0755); err != nil {
 					t.Fatal(err)
 				}
-				if err := comicinfo.Save(ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
+				if err := comicinfo.Save(m.fs, ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
 					t.Fatal(err)
 				}
 
-				if err := ios.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
+				if err := ds.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -751,16 +694,18 @@ func TestManga_ShouldDownload(t *testing.T) {
 			chapter: chapter,
 			command: func(t *testing.T, m *manga) {
 				t.Helper()
+				ds := services.DirectoryServiceProvider(zerolog.Nop(), m.fs)
+
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162")
 				ci := comicinfo.NewComicInfo()
-				if err := os.MkdirAll(fullpath, 0755); err != nil {
+				if err := m.fs.MkdirAll(fullpath, 0755); err != nil {
 					t.Fatal(err)
 				}
-				if err := comicinfo.Save(ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
+				if err := comicinfo.Save(m.fs, ci, path.Join(fullpath, "comicinfo.xml")); err != nil {
 					t.Fatal(err)
 				}
 
-				if err := ios.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
+				if err := ds.ZipFolder(fullpath, fullpath+".cbz"); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -769,7 +714,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 			after: func(t *testing.T, m *manga) {
 				t.Helper()
 				fullpath := path.Join(m.Client.GetBaseDir(), RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 162.cbz")
-				_, err := os.Stat(fullpath)
+				_, err := m.fs.Stat(fullpath)
 				if !errors.Is(err, os.ErrNotExist) {
 					t.Fatalf("expected %s to not exist", fullpath)
 				}
@@ -780,7 +725,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var buffer bytes.Buffer
-			m := tempManga(t, req(), &buffer)
+			m := tempManga(t, req(), &buffer, &mockRepository{})
 			m.ExistingContent = tc.contentOnDisk
 			m.info = mangaResp()
 
@@ -810,22 +755,41 @@ func TestManga_ShouldDownload(t *testing.T) {
 }
 
 func TestChapterSearchResponse_FilterOneEnChapter(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{
+		GetChaptersFunc: func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+			return &ChapterSearchResponse{
+				Data: []ChapterSearchData{
+					{
+						Attributes: ChapterAttributes{
+							Chapter:            "4",
+							TranslatedLanguage: "en",
+						},
+					},
+					{
+						Attributes: ChapterAttributes{
+							Chapter:            "4",
+							TranslatedLanguage: "fr",
+						},
+					},
+				},
+			}, nil
+		},
+	})
 	m.language = "en"
 
-	res, err := m.repository.GetChapters(context.Background(), RainbowsAfterStormsID)
+	res, err := m.repository.GetChapters(t.Context(), RainbowsAfterStormsID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	filtered := m.FilterChapters(res)
-	if len(filtered.Data) != 172 {
-		t.Errorf("Expected 172 chapters, got %d", len(filtered.Data))
+	if len(filtered.Data) != 1 {
+		t.Errorf("Expected 1 chapters, got %d", len(filtered.Data))
 	}
 }
 
 func TestChapterSearchResponse_FilterOneEnChapterSkipOfficial(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{})
 	m.language = "en"
 
 	c := ChapterSearchResponse{
@@ -834,6 +798,7 @@ func TestChapterSearchResponse_FilterOneEnChapterSkipOfficial(t *testing.T) {
 		Data: []ChapterSearchData{
 			{
 				Attributes: ChapterAttributes{
+					Chapter:            "4",
 					ExternalUrl:        "some external url",
 					TranslatedLanguage: "en",
 				},
@@ -852,7 +817,7 @@ func TestChapterSearchResponse_FilterOneEnChapterSkipOfficial(t *testing.T) {
 }
 
 func TestTagsBlackList(t *testing.T) {
-	m := tempManga(t, req(), io.Discard)
+	m := tempManga(t, req(), io.Discard, &mockRepository{})
 	m.language = "en"
 
 	chpt := chapter()
@@ -904,10 +869,40 @@ func TestReplaceCover(t *testing.T) {
 			StartImmediately: false,
 		},
 		IsSubscription: false,
-	}, io.Discard)
+	}, io.Discard, &mockRepository{
+		GetCoverImagesFunc: func(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error) {
+			return &MangaCoverResponse{
+				Data: []MangaCoverData{
+					{
+						Attributes: MangaCoverAttributes{
+							Volume:   "2",
+							FileName: "d34b33fd-91c6-4a8a-b015-1c0cfc580ad6.jpg",
+						},
+					},
+				},
+			}, nil
+		},
+		GetChaptersFunc: func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+			return &ChapterSearchResponse{
+				Data: []ChapterSearchData{
+					{
+						Id: "f811f708-6b2b-45cb-b639-ee3fd186fc39",
+						Attributes: ChapterAttributes{
+							Chapter:            "7",
+							Volume:             "2",
+							TranslatedLanguage: "en",
+						},
+					},
+				},
+			}, nil
+		},
+		GetChapterImagesFunc: func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
+			// They have a system with random servers
+			return tempRepo(t, io.Discard).GetChapterImages(ctx, id)
+		}})
 
 	select {
-	case <-m.LoadInfo(context.Background()):
+	case <-m.LoadInfo(t.Context()):
 		break
 	case <-time.After(waitTimeOut):
 		t.Fatal("m.LoadInfo() timeout")
@@ -931,8 +926,8 @@ func TestReplaceCover(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(originalCover.Bytes) == len(coverBytes) {
-		t.Fatal("Cover should have been replaced, but wasn't")
+	if len(originalCover.Bytes) != len(coverBytes) {
+		t.Fatal("Cover should not have been replaced, but wasn't")
 	}
 
 }

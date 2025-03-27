@@ -12,11 +12,14 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 )
 
 func main() {
 	c := dig.New()
+
+	utils.Must(c.Provide(utils.Identity(afero.Afero{Fs: afero.NewOsFs()})))
 
 	utils.Must(c.Provide(utils.Identity(c)))
 	utils.Must(c.Provide(config.Load))
@@ -36,7 +39,6 @@ func main() {
 	utils.Must(c.Provide(pasloe.New))
 	utils.Must(c.Provide(services.TranslocoServiceProvider))
 	utils.Must(c.Provide(services.MarkdownServiceProvider))
-	utils.Must(c.Provide(services.IOServiceProvider))
 	utils.Must(c.Provide(services.ValidationServiceProvider))
 	utils.Must(c.Provide(services.PageServiceProvider))
 	utils.Must(c.Provide(services.ContentServiceProvider))
@@ -47,10 +49,13 @@ func main() {
 	utils.Must(c.Provide(services.PreferenceServiceProvider))
 	utils.Must(c.Provide(services.ImageServiceProvider))
 	utils.Must(c.Provide(services.CacheServiceProvider))
+	utils.Must(c.Provide(services.DirectoryServiceProvider))
+	utils.Must(c.Provide(services.FileServiceProvider))
 	utils.Must(c.Provide(services.ArchiveServiceProvider))
 	utils.Must(c.Provide(ApplicationProvider))
 
 	utils.Must(c.Invoke(services.RegisterSignalREndPoint))
+	utils.Must(c.Invoke(RegisterCallback))
 	utils.Must(c.Invoke(providers.RegisterProviders))
 	utils.Must(c.Invoke(UpdateBaseUrlInIndex))
 	utils.Must(c.Invoke(startApp))

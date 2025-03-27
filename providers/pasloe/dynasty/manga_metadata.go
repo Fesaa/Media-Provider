@@ -5,7 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
-	"os"
 	"path"
 	"slices"
 	"strconv"
@@ -21,7 +20,7 @@ func (m *manga) WriteContentMetaData(chapter Chapter) error {
 	}
 
 	m.Log.Trace().Str("chapter", chapter.Chapter).Msg("writing comicinfoxml")
-	return comicinfo.Save(m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
+	return comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
 }
 
 func (m *manga) writeCover(chapter Chapter) error {
@@ -41,7 +40,7 @@ func (m *manga) writeCover(chapter Chapter) error {
 		return m.downloadAndWrite(m.seriesInfo.CoverUrl, filePath)
 	}
 
-	return os.WriteFile(filePath, m.coverBytes, 0755)
+	return m.fs.WriteFile(filePath, m.coverBytes, 0755)
 }
 
 func (m *manga) tryReplaceCover() error {

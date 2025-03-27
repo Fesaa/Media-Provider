@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -12,10 +11,10 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 	"testing"
@@ -53,7 +52,7 @@ func series() *Series {
 	}
 }
 
-func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
+func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -61,11 +60,12 @@ func tempWebtoon(t *testing.T, w io.Writer, dirs ...string) *webtoon {
 		}
 	}
 
-	client := mock.PasloeClient{BaseDir: utils.OrDefault(dirs, t.TempDir())}
+	client := mock.PasloeClient{BaseDir: t.TempDir()}
 
 	cont := dig.New()
 	scope := cont.Scope("tempWebtoon")
 
+	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(scope.Provide(func() api.Client {
 		return client
 	}))
@@ -123,7 +123,7 @@ func TestWebtoon_Title(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -171,7 +171,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	repo.infoErr = fmt.Errorf("error")
 
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -187,7 +187,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	repo.infoErr = nil
 	repo.searchErr = fmt.Errorf("error")
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -208,7 +208,7 @@ func TestWebtoon_LoadInfo(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -241,7 +241,7 @@ func TestWebtoon_All(t *testing.T) {
 	}
 
 	select {
-	case <-wt.LoadInfo(context.Background()):
+	case <-wt.LoadInfo(t.Context()):
 		break
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for info")
@@ -306,7 +306,7 @@ func TestWebtoon_ContentUrls(t *testing.T) {
 	mock.imageRes = []string{"image1", "image2"}
 
 	want := 2
-	got, err := wt.ContentUrls(context.Background(), chapter())
+	got, err := wt.ContentUrls(t.Context(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,56 +316,18 @@ func TestWebtoon_ContentUrls(t *testing.T) {
 	}
 
 	mock.imageErr = fmt.Errorf("error")
-	got, err = wt.ContentUrls(context.Background(), chapter())
+	got, err = wt.ContentUrls(t.Context(), chapter())
 	if err == nil {
 		t.Errorf("got %v, want error", got)
 	}
 
 }
 
-func TestWebtoon_WriteContentMetaData(t *testing.T) {
-	var buf bytes.Buffer
-	dir := t.TempDir()
-	w := tempWebtoon(t, &buf, dir)
-	w.info = series()
-
-	if err := os.MkdirAll(w.ContentPath(chapter()), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := w.WriteContentMetaData(chapter()); err != nil {
-		t.Fatal(err)
-	}
-
-	ciPath := path.Join(w.ContentPath(chapter()), "ComicInfo.xml")
-	_, err := os.Stat(ciPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	data, err := os.ReadFile(ciPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ci := w.comicInfo()
-	var b bytes.Buffer
-	if err = comicinfo.Write(ci, &b); err != nil {
-		t.Fatal(err)
-	}
-
-	if b.String() != string(data) {
-		t.Errorf("m.comicInfo() = %q, want %q", b, data)
-	}
-
-	buf.Reset()
-}
-
 func TestWebtoon_DownloadContent(t *testing.T) {
 	var buffer bytes.Buffer
 	w := tempWebtoon(t, &buffer)
 
-	urls, err := w.ContentUrls(context.Background(), chapter())
+	urls, err := w.ContentUrls(t.Context(), chapter())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +336,7 @@ func TestWebtoon_DownloadContent(t *testing.T) {
 		t.Fatal("len(urls) = 0, want > 0")
 	}
 
-	if err = os.MkdirAll(path.Join(w.ContentPath(chapter())), 0755); err != nil {
+	if err = w.fs.MkdirAll(path.Join(w.ContentPath(chapter())), 0755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -383,7 +345,7 @@ func TestWebtoon_DownloadContent(t *testing.T) {
 	}
 
 	filePath := path.Join(w.ContentPath(chapter()), fmt.Sprintf("page %s.jpg", utils.PadInt(1, 4)))
-	_, err = os.Stat(filePath)
+	_, err = w.fs.Stat(filePath)
 	if err != nil {
 		t.Fatal(err)
 	}

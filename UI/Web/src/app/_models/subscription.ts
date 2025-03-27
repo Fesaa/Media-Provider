@@ -16,6 +16,7 @@ export type SubscriptionInfo = {
   baseDir: string;
   lastCheck: Date;
   lastCheckSuccess: boolean;
+  nextExecution: Date;
 }
 
 export enum RefreshFrequency {

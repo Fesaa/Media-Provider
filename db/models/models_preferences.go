@@ -7,7 +7,7 @@ import (
 )
 
 type Preference struct {
-	gorm.Model
+	Model
 
 	SubscriptionRefreshHour int                 `json:"subscriptionRefreshHour" validate:"min=0,max=23"`
 	LogEmptyDownloads       bool                `json:"logEmptyDownloads" validate:"boolean"`
@@ -42,7 +42,7 @@ func (tags Tags) Contains(tag string) bool {
 }
 
 type Tag struct {
-	gorm.Model
+	Model
 
 	PreferenceID   uint
 	AgeRatingMapID uint
@@ -85,7 +85,7 @@ func (arm AgeRatingMappings) GetAgeRating(tag string) (comicinfo.AgeRating, bool
 }
 
 type AgeRatingMap struct {
-	gorm.Model
+	Model
 
 	PreferenceID       uint
 	Tag                Tag                 `json:"tag"`

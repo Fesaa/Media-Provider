@@ -1,7 +1,6 @@
 package mangadex
 
 import (
-	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils/mock"
@@ -141,7 +140,7 @@ func TestBuilder_Normalize(t *testing.T) {
 		Cache:      mock.Cache{},
 	}, zerolog.New(io.Discard))
 
-	res, err := repo.SearchManga(context.Background(), SearchOptions{Query: RainbowsAfterStorms})
+	res, err := repo.SearchManga(t.Context(), SearchOptions{Query: RainbowsAfterStorms})
 	if err != nil {
 		t.Fatal(err)
 	}

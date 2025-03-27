@@ -10,8 +10,24 @@
   >
     <ng-template #header>
       <tr>
-        <th pSortableColumn="info.title">{{ t('title') }}<p-sortIcon field="info.title"/> </th>
-        <th pSortableColumn="info.lastCheck" style="width:10%">{{ t('last') }}<p-sortIcon field="info.lastCheck"/></th>
+        <th pSortableColumn="info.title">
+          <div class="flex flex-row justify-between">
+            <span>{{ t('title') }}</span>
+            <p-sortIcon field="info.title"/>
+          </div>
+        </th>
+        <th pSortableColumn="info.nextExecution">
+          <div class="flex flex-row justify-between">
+            <span>{{t('next-exec')}}</span>
+            <p-sortIcon field="info.nextExecution"/>
+          </div>
+        </th>
+        <th pSortableColumn="info.lastCheck" style="width:10%">
+          <div class="flex flex-row justify-between">
+            <span>{{ t('last') }}</span>
+            <p-sortIcon field="info.lastCheck"/>
+          </div>
+        </th>
         <th style="width:10%">{{ t('frequency') }}</th>
         <th style="width:15%">{{ t('actions.label') }}</th>
       </tr>
@@ -41,6 +57,9 @@
           >
             {{ sub.info.title }}
           </a>
+        </th>
+        <th>
+          {{sub.info.nextExecution | utcToLocalTime:'short'}}
         </th>
         <th>
 

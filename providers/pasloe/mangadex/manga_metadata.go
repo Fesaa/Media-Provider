@@ -7,7 +7,6 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
 	"github.com/rs/zerolog"
-	"os"
 	"path"
 	"slices"
 	"strconv"
@@ -28,7 +27,7 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 
 	l := m.ContentLogger(chapter)
 
-	err := os.MkdirAll(metaPath, 0755)
+	err := m.fs.MkdirAll(metaPath, 0755)
 	if err != nil {
 		return err
 	}
@@ -40,7 +39,7 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 	}
 
 	l.Trace().Msg("writing comicinfoxml")
-	if err = comicinfo.Save(m.comicInfo(chapter), path.Join(metaPath, "comicinfo.xml")); err != nil {
+	if err = comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(metaPath, "comicinfo.xml")); err != nil {
 		return err
 	}
 
@@ -66,7 +65,7 @@ func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
 	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
-	return os.WriteFile(filePath, toWrite, 0644)
+	return m.fs.WriteFile(filePath, toWrite, 0644)
 }
 
 // metronInfo DO NOT USE: Code is outdated!

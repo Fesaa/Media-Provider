@@ -28,8 +28,17 @@ var manualMigrations = []migration{
 		name: "20250215_MigrateTags",
 		f:    manual.MigrateTags,
 	},
+	{
+		name: "20250326_SubscriptionNextExec",
+		f:    manual.SubscriptionNextExec,
+	},
+	{
+		name: "20250327_RemoveAllDeleted",
+		f:    manual.RemoveAllDeleted,
+	},
 }
 
+// TODO: Add versioning, so we don't run migrations when not needed
 func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 	var migrations []models.ManualMigration
 	if err := db.Find(&migrations).Error; err != nil {

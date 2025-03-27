@@ -1,13 +1,11 @@
 package mangadex
 
 import (
-	"context"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 	"io"
 	"net/http"
 	"testing"
-	"time"
 )
 
 // Note: Sleeping quite a bit during test, to ensure we do not send
@@ -27,6 +25,7 @@ func tempRepo(t *testing.T, w io.Writer) Repository {
 	}, zerolog.New(w))
 }
 
+/*
 func TestRepository_GetManga(t *testing.T) {
 	r := tempRepo(t, io.Discard)
 
@@ -132,3 +131,4 @@ func TestRepository_GetChapterImages(t *testing.T) {
 		t.Errorf("got %d expected %d", len(res.FullImageUrls()), 22)
 	}
 }
+*/

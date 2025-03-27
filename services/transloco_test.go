@@ -2,13 +2,14 @@ package services
 
 import (
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"slices"
 	"testing"
 )
 
 func tempTransloco(t *testing.T) TranslocoService {
 	t.Helper()
-	transloco, err := TranslocoServiceProvider(zerolog.Nop())
+	transloco, err := TranslocoServiceProvider(zerolog.Nop(), afero.Afero{Fs: afero.NewMemMapFs()})
 	if err != nil {
 		t.Fatalf("error creating transloco %v", err)
 	}

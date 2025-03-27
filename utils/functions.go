@@ -5,9 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"go.uber.org/dig"
 	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // TryCatch will return the consumed value if the error returned by the producer was nil. Other returns the fallback
@@ -81,6 +83,26 @@ func BytesToSize(bytes float64) string {
 	}
 	i := math.Floor(math.Log(bytes) / math.Log(1024))
 	return fmt.Sprintf("%.2f %s", bytes/math.Pow(1024, i), sizes[int(i)])
+}
+
+// MustInvoke tries construction T with the given scope
+// Ensure the needed method has been Provider to the scope
+func MustInvoke[T any](c *dig.Scope) T {
+	var t T
+	Must(c.Invoke(func(myT T) {
+		t = myT
+	}))
+	return t
+}
+
+// MustInvokeCont tries construction T with the given Container
+// Ensure the needed method has been Provider to the Container
+func MustInvokeCont[T any](c *dig.Container) T {
+	var t T
+	Must(c.Invoke(func(myT T) {
+		t = myT
+	}))
+	return t
 }
 
 func Must(err error) {
@@ -159,4 +181,11 @@ func Shorten(s string, length int) string {
 	}
 
 	return s[:length-3] + "..."
+}
+
+func IsSameDay(t1, t2 time.Time) bool {
+	d1, m1, y1 := t1.Date()
+	d2, m2, y2 := t2.Date()
+
+	return d1 == d2 && m1 == m2 && y1 == y2
 }

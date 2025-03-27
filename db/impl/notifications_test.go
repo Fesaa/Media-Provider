@@ -49,7 +49,7 @@ func TestNotifications_AllAfter(t *testing.T) {
 
 	for range 5 {
 		if err := n.New(models.Notification{
-			Model: gorm.Model{
+			Model: models.Model{
 				CreatedAt: time.Now().Add(time.Hour * -24),
 			},
 		}); err != nil {
@@ -59,7 +59,7 @@ func TestNotifications_AllAfter(t *testing.T) {
 
 	for range 5 {
 		if err := n.New(models.Notification{
-			Model: gorm.Model{
+			Model: models.Model{
 				CreatedAt: time.Now().Add(time.Hour),
 			},
 		}); err != nil {

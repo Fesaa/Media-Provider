@@ -12,7 +12,7 @@ var (
 )
 
 type Subscription struct {
-	gorm.Model
+	Model
 
 	Provider         Provider                `json:"provider" gorm:"type:int"`
 	ContentId        string                  `json:"contentId"`
@@ -44,52 +44,40 @@ func (s *Subscription) ShouldRefresh(old *Subscription) bool {
 	return s.RefreshFrequency != old.RefreshFrequency
 }
 
-func (s *Subscription) Normalize(p Preferences) error {
-	pref, err := p.Get()
-	if err != nil {
-		return ErrFailedToLoadPreferences
-	}
-
-	s.Info.LastCheck = s.normalize(s.Info.LastCheck, pref.SubscriptionRefreshHour)
-
-	return nil
+func (s *Subscription) Normalize(hour int) {
+	s.Info.LastCheck = s.normalize(s.Info.LastCheck, hour)
 }
 
 func (s *Subscription) normalize(t time.Time, hour int) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), hour, 0, 0, 0, time.Local)
 }
 
-func (s *Subscription) NextExecution(p Preferences) (time.Time, error) {
-	pref, err := p.Get()
-	if err != nil {
-		return time.Time{}, ErrFailedToLoadPreferences
-	}
-
+func (s *Subscription) NextExecution(hour int) time.Time {
 	diff := time.Since(s.Info.LastCheck)
 
 	if diff > s.RefreshFrequency.AsDuration() {
-		next := s.normalize(time.Now(), pref.SubscriptionRefreshHour)
+		next := s.normalize(time.Now(), hour)
 
 		if time.Now().After(next) {
 			next = next.Add(time.Hour * 24)
 		}
 
-		return next, nil
+		return next
 	}
 
 	next := time.Now().Add(s.RefreshFrequency.AsDuration() - diff)
-	next = s.normalize(next, pref.SubscriptionRefreshHour)
+	next = s.normalize(next, hour)
 
 	// Save guard, but should not happen
 	if time.Now().After(next) {
 		next = next.Add(time.Hour * 24)
 	}
 
-	return next, nil
+	return next
 }
 
 type SubscriptionInfo struct {
-	gorm.Model
+	Model
 
 	SubscriptionId int
 
@@ -98,6 +86,7 @@ type SubscriptionInfo struct {
 	BaseDir          string    `json:"baseDir"`
 	LastCheck        time.Time `json:"lastCheck"`
 	LastCheckSuccess bool      `json:"lastCheckSuccess"`
+	NextExecution    time.Time `json:"nextExecution"`
 }
 
 type RefreshFrequency int

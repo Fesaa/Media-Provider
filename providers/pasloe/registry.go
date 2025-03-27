@@ -14,6 +14,10 @@ import (
 	"sync"
 )
 
+type Registry interface {
+	Create(c api.Client, req payload.DownloadRequest) (api.Downloadable, error)
+}
+
 type registry struct {
 	r          map[models.Provider]func(scope *dig.Scope) api.Downloadable
 	mu         sync.RWMutex
@@ -21,7 +25,7 @@ type registry struct {
 	container  *dig.Container
 }
 
-func newRegistry(httpClient *http.Client, container *dig.Container) *registry {
+func newRegistry(httpClient *http.Client, container *dig.Container) Registry {
 	r := &registry{
 		r:          make(map[models.Provider]func(scope *dig.Scope) api.Downloadable),
 		mu:         sync.RWMutex{},

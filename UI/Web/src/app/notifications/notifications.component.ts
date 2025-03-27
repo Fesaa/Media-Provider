@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {TableModule} from "primeng/table";
 import {NotificationService} from "../_services/notification.service";
 import {GroupWeight, Notification, NotificationGroup} from "../_models/notifications";
@@ -9,12 +9,14 @@ import {ToastService} from "../_services/toast.service";
 import {Dialog} from "primeng/dialog";
 import {Card} from "primeng/card";
 import {DialogService} from "../_services/dialog.service";
-import { SortedList } from '../shared/data-structures/sorted-list';
+import {SortedList} from '../shared/data-structures/sorted-list';
 import {Select} from "primeng/select";
 import {FormsModule} from "@angular/forms";
 import {NavService} from "../_services/nav.service";
 import {Checkbox} from "primeng/checkbox";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {DatePipe} from "@angular/common";
+import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
 
 @Component({
   selector: 'app-notifications',
@@ -29,6 +31,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     FormsModule,
     Checkbox,
     TranslocoDirective,
+    UtcToLocalTimePipe,
   ],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.css'
@@ -40,19 +43,17 @@ export class NotificationsComponent implements OnInit {
       const d1 = new Date(n1.CreatedAt)
       const d2 = new Date(n2.CreatedAt);
 
-      if (d1.getDay() !== d2.getDay()) {
-        return d1.getDay() - d2.getDay();
-      }
-
       if (n1.group === n2.group) {
-        return new Date(n1.CreatedAt).getTime() - new Date(n2.CreatedAt).getTime()
+        return d2.getTime() - d1.getTime();
       }
 
       return GroupWeight(n2.group) - GroupWeight(n1.group);
     }
   );
+
   infoVisibility: {[key: number]: boolean} = {};
   selectedNotifications: number[] = [];
+  allCheck: boolean = false;
 
   timeAgoOptions = [{
     label: 'Last 24 hours',
@@ -67,7 +68,7 @@ export class NotificationsComponent implements OnInit {
     label: "All",
     value: -1
   }]
-  timeAgo: number = 7;
+  timeAgo: number = 30;
 
   constructor(
     private notificationService: NotificationService,
@@ -80,6 +81,14 @@ export class NotificationsComponent implements OnInit {
   ngOnInit(): void {
     this.navService.setNavVisibility(true)
     this.refresh()
+  }
+
+  toggleAll() {
+    if (this.allCheck) {
+      this.selectedNotifications = this.notifications.items().map(n => n.ID)
+    } else {
+      this.selectedNotifications = []
+    }
   }
 
   refresh() {

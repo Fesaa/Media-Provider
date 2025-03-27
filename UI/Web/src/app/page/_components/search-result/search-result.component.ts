@@ -1,6 +1,5 @@
 import {ChangeDetectorRef, Component, Input} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
-import {FormGroup} from "@angular/forms";
 import {DownloadMetadata, Page, Provider} from "../../../_models/page";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
 import {dropAnimation} from "../../../_animations/drop-animation";

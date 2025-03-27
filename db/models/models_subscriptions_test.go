@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"testing"
 	"time"
 )
@@ -141,20 +140,11 @@ func TestSubscription_Normalize(t *testing.T) {
 		},
 	}
 
-	err := sub.Normalize(&mockPreferences)
-	if err != nil {
-		t.Errorf("Normalize failed: %v", err)
-	}
+	sub.Normalize(mockPreferences.preferences.SubscriptionRefreshHour)
 
 	expected := time.Date(2023, 10, 27, 10, 0, 0, 0, time.Local)
 	if sub.Info.LastCheck != expected {
 		t.Errorf("Normalize time mismatch: expected %v, got %v", expected, sub.Info.LastCheck)
-	}
-
-	mockPreferences.err = errors.New("test error")
-	err = sub.Normalize(&mockPreferences)
-	if err == nil {
-		t.Errorf("Expected error, got nil")
 	}
 }
 
@@ -165,63 +155,6 @@ func TestSubscription_normalize(t *testing.T) {
 	expectedTime := time.Date(2023, 10, 27, 10, 0, 0, 0, time.Local)
 	if normalizedTime != expectedTime {
 		t.Errorf("normalize time mismatch: expected %v, got %v", expectedTime, normalizedTime)
-	}
-}
-
-func TestSubscription_NextExecution(t *testing.T) {
-	t.Skipf("AI made this, not working correctly")
-	mockPreferences := mockPreferences{}
-	mockPreferences.preferences = Preference{SubscriptionRefreshHour: 10}
-
-	now := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 15, 30, 0, 0, time.Local)
-	time.Local = now.Location()
-
-	tests := []struct {
-		Name          string
-		Sub           Subscription
-		ExpectedTime  time.Time
-		ExpectedError error
-	}{
-		{
-			Name: "Refresh due",
-			Sub: Subscription{
-				RefreshFrequency: Day,
-				Info:             SubscriptionInfo{LastCheck: now.Add(-time.Hour * 25)},
-			},
-			ExpectedTime:  time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, time.Local),
-			ExpectedError: nil,
-		},
-		{
-			Name: "Refresh not due",
-			Sub: Subscription{
-				RefreshFrequency: Day,
-				Info:             SubscriptionInfo{LastCheck: now.Add(-time.Hour * 12)},
-			},
-			ExpectedTime:  time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, time.Local),
-			ExpectedError: nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.Name, func(t *testing.T) {
-			next, err := tt.Sub.NextExecution(&mockPreferences)
-			if next != tt.ExpectedTime {
-				t.Errorf("NextExecution time mismatch: expected %v, got %v", tt.ExpectedTime, next)
-			}
-			if !errors.Is(err, tt.ExpectedError) {
-				t.Errorf("NextExecution error mismatch: expected %v, got %v", tt.ExpectedError, err)
-			}
-		})
-	}
-
-	mockPreferences.err = errors.New("test error")
-	sub := Subscription{
-		RefreshFrequency: Day,
-		Info:             SubscriptionInfo{LastCheck: now.Add(-time.Hour * 12)},
-	}
-	_, err := sub.NextExecution(&mockPreferences)
-	if err == nil {
-		t.Errorf("Expected error, got nil")
 	}
 }
 

@@ -10,13 +10,14 @@ import {DatePipe} from "@angular/common";
 import {Tooltip} from "primeng/tooltip";
 import {RefreshFrequencyPipe} from "../_pipes/refresh-frequency.pipe";
 import {Button} from "primeng/button";
-import { DialogService } from '../_services/dialog.service';
+import {DialogService} from '../_services/dialog.service';
 import {ToastService} from "../_services/toast.service";
 import {Tag} from "primeng/tag";
 import {
   SubscriptionEditDialogComponent
 } from "./components/subscription-edit-dialog/subscription-edit-dialog.component";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
 
 @Component({
   selector: 'app-subscription-manager',
@@ -30,6 +31,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     Tag,
     SubscriptionEditDialogComponent,
     TranslocoDirective,
+    UtcToLocalTimePipe,
   ],
   templateUrl: './subscription-manager.component.html',
   styleUrl: './subscription-manager.component.css',
