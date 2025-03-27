@@ -14,7 +14,7 @@ func NewWithRetry(log zerolog.Logger) *http.Client {
 			},
 			log: log.With().Str("handler", "httpClient").Logger(),
 		},
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 30,
 	}
 }
 
@@ -23,6 +23,6 @@ func New(log zerolog.Logger) *http.Client {
 		Transport: &loggingTransport{
 			log: log.With().Str("handler", "httpClient").Logger(),
 		},
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 30,
 	}
 }
