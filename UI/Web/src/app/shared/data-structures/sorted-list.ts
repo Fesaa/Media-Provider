@@ -59,4 +59,8 @@ export class SortedList<T> {
     return this.list;
   }
 
+  sort() {
+    this.list.sort(this.comparator);
+  }
+
 }

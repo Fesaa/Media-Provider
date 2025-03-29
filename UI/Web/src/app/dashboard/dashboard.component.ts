@@ -96,6 +96,7 @@ export class DashboardComponent implements OnInit {
           this.updateInfo(event.data as InfoStat);
           break;
       }
+      this.dashboardItems.sort();
     })
   }
 
