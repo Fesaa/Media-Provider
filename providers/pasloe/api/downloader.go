@@ -523,10 +523,15 @@ func (d *DownloadBase[T]) startDownload() {
 	}
 }
 
-//nolint:funlen,gocognit
+type downloadUrl struct {
+	idx   int
+	url   string
+	dirty bool
+	err   error
+}
+
 func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 	l := d.infoProvider.ContentLogger(t)
-
 	l.Trace().Msg("downloading content")
 
 	contentPath := d.infoProvider.ContentPath(t)
@@ -540,88 +545,109 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 		return err
 	}
 	if len(urls) == 0 {
-		l.Warn().Msg("content has no downloadable urls?")
+		l.Warn().Msg("content has no downloadable urls? Unexpected? Report this!")
 		return nil
 	}
 
-	if err := d.infoProvider.WriteContentMetaData(t); err != nil {
+	if err = d.infoProvider.WriteContentMetaData(t); err != nil {
 		d.Log.Warn().Err(err).Msg("error writing meta data")
 	}
 
 	l.Debug().Int("size", len(urls)).Msg("downloading images")
-
-	wg := &sync.WaitGroup{}
+	urlCh := make(chan downloadUrl, d.maxImages)
 	errCh := make(chan error, 1)
-	sem := make(chan struct{}, d.maxImages)
+	wg := &sync.WaitGroup{}
 	innerCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	for i, url := range urls {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-innerCtx.Done():
-			wg.Wait()
-			return errors.New("content download was cancelled from within")
-		default:
-			wg.Add(1)
-			go func(i int, url string) {
-				defer wg.Done()
-				sem <- struct{}{}
-				defer func() { <-sem }()
-				// Indexing pages from 1
-				if err = d.infoProvider.DownloadContent(i+1, t, url); err != nil {
-					select {
-					case errCh <- err:
-						cancel()
-					default:
-					}
-				}
-			}(i, url)
-		}
-
-		if i%d.maxImages == 0 && i > 0 {
+	go func() {
+		defer close(urlCh)
+		for i, url := range urls {
 			select {
-			case <-time.After(1 * time.Second):
-			case err := <-errCh:
-				wg.Wait()
-				for len(sem) > 0 {
-					<-sem
-				}
-				return fmt.Errorf("encountered an error while downloading images: %w", err)
 			case <-ctx.Done():
-				wg.Wait()
-				return ctx.Err()
-			}
-
-			if i%d.maxImages*2 == 0 {
-				d.UpdateProgress()
+				return
+			case <-innerCtx.Done():
+				return
+			case urlCh <- downloadUrl{url: url, dirty: false, idx: i + 1}:
 			}
 		}
+	}()
 
-		select {
-		case err := <-errCh:
-			wg.Wait()
-			for len(sem) > 0 {
-				<-sem
-			}
-			return fmt.Errorf("encountered an error while downloading images: %w", err)
-		default:
-		}
+	for range d.maxImages {
+		wg.Add(1)
+		go d.channelConsumer(innerCtx, cancel, ctx, t, l, urlCh, errCh, wg)
 	}
 
 	wg.Wait()
+
 	select {
-	case err := <-errCh:
+	case err = <-errCh:
 		return err
 	default:
 	}
 
-	// Ensure there is always at least some sleeping
 	if len(urls) < 5 {
 		time.Sleep(1 * time.Second)
 	}
 
 	d.ContentDownloaded++
 	return nil
+}
+
+func (d *DownloadBase[T]) channelConsumer(
+	innerCtx context.Context,
+	cancel context.CancelFunc,
+	ctx context.Context,
+	t T,
+	l zerolog.Logger,
+	urlCh chan downloadUrl,
+	errCh chan error,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+
+	for urlData := range urlCh {
+		select {
+		case <-innerCtx.Done():
+			return
+		case <-ctx.Done():
+			return
+		default:
+			l.Trace().Int("idx", urlData.idx).Str("url", urlData.url).Msg("downloading page")
+
+			err := d.infoProvider.DownloadContent(urlData.idx, t, urlData.url)
+			if err == nil {
+				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			if urlData.dirty && urlData.err != nil {
+				l.Error().Err(err).Str("lastErr", urlData.err.Error()).
+					Msg("same urlDate failed to download twice, cancelling content")
+				select {
+				case errCh <- fmt.Errorf("download failed %w, before %w", err, urlData.err):
+					// While not an issue, if the channel is full. Cancel will already have been called
+					// So we don't call it again
+					cancel()
+				default:
+				}
+				return
+			}
+
+			urlData.dirty = true
+			urlData.err = err
+
+			select {
+			case <-innerCtx.Done():
+				return
+			case <-ctx.Done():
+				return
+			case urlCh <- urlData:
+				l.Warn().Err(err).Int("idx", urlData.idx).Str("url", urlData.url).
+					Msg("download has failed for a page for the first time, trying page again at the end")
+			}
+
+			time.Sleep(1 * time.Second)
+		}
+	}
 }
