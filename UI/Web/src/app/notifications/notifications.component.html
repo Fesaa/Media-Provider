@@ -53,7 +53,7 @@
               <p-button icon="pi pi-trash" size="small" severity="danger" (click)="delete(notification)" />
 
               <p-dialog [(visible)]="infoVisibility[notification.ID]" [header]="notification.title">
-                {{notification.body}}
+                <span [innerHTML]="formattedBody(notification)"></span>
               </p-dialog>
             </div>
 

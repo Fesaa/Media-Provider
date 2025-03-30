@@ -23,6 +23,7 @@ import (
 
 type IDAble interface {
 	ID() string
+	Label() string
 }
 
 func NewDownloadableFromBlock[T IDAble](scope *dig.Scope, handler string, block DownloadInfoProvider[T]) *DownloadBase[T] {
@@ -209,6 +210,12 @@ func (d *DownloadBase[T]) GetContentByPath(path string) (Content, bool) {
 		}
 	}
 	return Content{}, false
+}
+
+func (d *DownloadBase[T]) GetNewContentNamed() []string {
+	return utils.Map(d.ToDownload, func(t T) string {
+		return t.Label()
+	})
 }
 
 func (d *DownloadBase[T]) GetNewContent() []string {
