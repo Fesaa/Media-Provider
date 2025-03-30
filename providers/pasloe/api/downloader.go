@@ -441,7 +441,7 @@ func (d *DownloadBase[T]) UpdateProgress() {
 		ContentId: d.id,
 		Progress:  utils.Percent(int64(d.ContentDownloaded), int64(d.Size())),
 		SpeedType: payload.IMAGES,
-		Speed:     d.Speed(),
+		Speed:     utils.Ternary(d.State() != payload.ContentStateCleanup, d.Speed(), 0),
 	})
 }
 
@@ -532,10 +532,8 @@ func (d *DownloadBase[T]) startDownload() {
 }
 
 type downloadUrl struct {
-	idx   int
-	url   string
-	dirty bool
-	err   error
+	idx int
+	url string
 }
 
 func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
@@ -564,7 +562,6 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 	l.Debug().Int("size", len(urls)).Msg("downloading images")
 
 	urlCh := make(chan downloadUrl, d.maxImages)
-	defer close(urlCh)
 	errCh := make(chan error, 1)
 	defer close(errCh)
 
@@ -573,13 +570,14 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 	defer cancel()
 
 	go func() {
+		defer close(urlCh)
 		for i, url := range urls {
 			select {
 			case <-ctx.Done():
 				return
 			case <-innerCtx.Done():
 				return
-			case urlCh <- downloadUrl{url: url, dirty: false, idx: i + 1}:
+			case urlCh <- downloadUrl{url: url, idx: i + 1}:
 			}
 		}
 	}()
@@ -629,6 +627,7 @@ func (d *DownloadBase[T]) channelConsumer(
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
+	failedCh := make(chan downloadUrl)
 
 	for urlData := range urlCh {
 		select {
@@ -645,28 +644,12 @@ func (d *DownloadBase[T]) channelConsumer(
 				continue
 			}
 
-			if urlData.dirty && urlData.err != nil {
-				l.Error().Err(err).Str("lastErr", urlData.err.Error()).
-					Msg("same urlDate failed to download twice, cancelling content")
-				select {
-				case errCh <- fmt.Errorf("download failed %w, before %w", err, urlData.err):
-					// While not an issue, if the channel is full. Cancel will already have been called
-					// So we don't call it again
-					cancel()
-				default:
-				}
-				return
-			}
-
-			urlData.dirty = true
-			urlData.err = err
-
 			select {
 			case <-innerCtx.Done():
 				return
 			case <-ctx.Done():
 				return
-			case urlCh <- urlData:
+			case failedCh <- urlData:
 				d.failedDownloads++
 				l.Warn().Err(err).Int("idx", urlData.idx).Str("url", urlData.url).
 					Msg("download has failed for a page for the first time, trying page again at the end")
@@ -674,5 +657,20 @@ func (d *DownloadBase[T]) channelConsumer(
 
 			time.Sleep(1 * time.Second)
 		}
+	}
+
+	close(failedCh)
+	for reTry := range failedCh {
+		if err := d.infoProvider.DownloadContent(reTry.idx, t, reTry.url); err != nil {
+			l.Error().Err(err).Str("url", reTry.url).Msg("Failed final download")
+			select {
+			case errCh <- fmt.Errorf("final download failed %w", err):
+				cancel()
+			default:
+			}
+			return
+		}
+		d.failedDownloads++
+		time.Sleep(1 * time.Second)
 	}
 }
