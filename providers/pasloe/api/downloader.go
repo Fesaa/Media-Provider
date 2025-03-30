@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
+	"math"
 	"os"
 	"path"
 	"slices"
@@ -425,7 +426,7 @@ func (d *DownloadBase[T]) Speed() int64 {
 
 	d.LastRead = d.ImagesDownloaded
 	d.LastTime = time.Now()
-	return max(int64(float64(diff)/timeDiff), 1)
+	return int64(math.Ceil(float64(diff) / timeDiff))
 }
 
 func (d *DownloadBase[T]) Size() int {
