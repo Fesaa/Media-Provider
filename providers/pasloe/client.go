@@ -156,6 +156,10 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 				text += c.transLoco.GetTranslation("content-line", path.Base(newContent))
 			}
 
+			if content.FailedDownloads() > 0 {
+				text += c.transLoco.GetTranslation("failed-downloads", content.FailedDownloads())
+			}
+
 			c.notifier(content.Request()).Notify(models.Notification{
 				Title:   c.transLoco.GetTranslation("download-finished-title"),
 				Summary: utils.Shorten(text, services.SummarySize),

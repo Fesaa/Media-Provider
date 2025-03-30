@@ -99,8 +99,14 @@ type DownloadBase[T IDAble] struct {
 	LastTime          time.Time
 	LastRead          int
 
+	failedDownloads int
+
 	cancel context.CancelFunc
 	Wg     *sync.WaitGroup
+}
+
+func (d *DownloadBase[T]) FailedDownloads() int {
+	return d.failedDownloads
 }
 
 func (d *DownloadBase[T]) Request() payload.DownloadRequest {
@@ -643,6 +649,7 @@ func (d *DownloadBase[T]) channelConsumer(
 			case <-ctx.Done():
 				return
 			case urlCh <- urlData:
+				d.failedDownloads++
 				l.Warn().Err(err).Int("idx", urlData.idx).Str("url", urlData.url).
 					Msg("download has failed for a page for the first time, trying page again at the end")
 			}
