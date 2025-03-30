@@ -322,19 +322,21 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		}
 	}
 
-	/*if len(d.ToDownload) == 0 {
+	if len(d.ToDownload) == 0 {
 		d.Log.Debug().Msg("no chapters to download, stopping")
+
+		d.SetState(payload.ContentStateWaiting)
+
 		req := payload.StopRequest{
 			Provider:    d.Req.Provider,
 			Id:          d.Id(),
 			DeleteFiles: false,
-			StartNext:   true,
 		}
 		if err = d.Client.RemoveDownload(req); err != nil {
 			d.Log.Error().Err(err).Msg("error while cleaning up")
 		}
 		return
-	}*/
+	}
 
 	d.SetState(utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
@@ -560,14 +562,17 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 	}
 
 	l.Debug().Int("size", len(urls)).Msg("downloading images")
+
 	urlCh := make(chan downloadUrl, d.maxImages)
+	defer close(urlCh)
 	errCh := make(chan error, 1)
+	defer close(errCh)
+
 	wg := &sync.WaitGroup{}
 	innerCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	go func() {
-		defer close(urlCh)
 		for i, url := range urls {
 			select {
 			case <-ctx.Done():
@@ -575,6 +580,19 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 			case <-innerCtx.Done():
 				return
 			case urlCh <- downloadUrl{url: url, dirty: false, idx: i + 1}:
+			}
+		}
+	}()
+
+	go func() {
+		for range time.Tick(2 * time.Second) {
+			select {
+			case <-innerCtx.Done():
+				return
+			case <-ctx.Done():
+				return
+			default:
+				d.UpdateProgress()
 			}
 		}
 	}()
