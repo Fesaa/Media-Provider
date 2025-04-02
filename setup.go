@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/contrib/fiberzerolog"
@@ -102,6 +103,30 @@ func RegisterCallback(app *fiber.App) {
 	app.Get("*", func(c *fiber.Ctx) error {
 		return c.SendFile("./public/index.html")
 	})
+}
+
+func UpdateInstalledVersion(ms services.MetadataService, log zerolog.Logger) error {
+	log = log.With().Str("handler", "core").Logger()
+
+	cur, err := ms.Get()
+	if err != nil {
+		return err
+	}
+
+	if cur.Version == config.Version {
+		log.Trace().Msg("no version changes")
+		return nil
+	}
+
+	if cur.Version > config.Version {
+		log.Warn().
+			Str("installedVersion", cur.Version).
+			Str("actualVersion", config.Version).
+			Msg("Installed version is newer, want is going on? Bringing back to sync!")
+	}
+
+	cur.Version = config.Version
+	return ms.Update(cur)
 }
 
 func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero) error {

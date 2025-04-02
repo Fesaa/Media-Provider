@@ -16,7 +16,7 @@ func Metadata(db *gorm.DB) models.Metadata {
 }
 
 func (m *metadata) UpdateRow(metadata models.MetadataRow) error {
-	return m.db.Save(metadata).Error
+	return m.db.Where("key = ?", metadata.Key).Save(metadata).Error
 }
 
 func (m *metadata) Update(rows []models.MetadataRow) error {

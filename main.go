@@ -59,6 +59,7 @@ func main() {
 	utils.Must(c.Invoke(RegisterCallback))
 	utils.Must(c.Invoke(providers.RegisterProviders))
 	utils.Must(c.Invoke(UpdateBaseUrlInIndex))
+	utils.Must(c.Invoke(UpdateInstalledVersion))
 	utils.Must(c.Invoke(startApp))
 }
 

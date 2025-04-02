@@ -44,7 +44,9 @@ func (m *metadataService) Update(pl payload.Metadata) error {
 }
 
 func (m *metadataService) metadataUpdateRows(pl payload.Metadata, rows []models.MetadataRow) []models.MetadataRow {
-	for _, row := range rows {
+	newRows := make([]models.MetadataRow, len(rows))
+
+	for i, row := range rows {
 		switch row.Key {
 		case models.InstalledVersion:
 			row.Value = pl.Version
@@ -53,9 +55,10 @@ func (m *metadataService) metadataUpdateRows(pl payload.Metadata, rows []models.
 		default:
 			continue
 		}
+		newRows[i] = row
 	}
 
-	return rows
+	return newRows
 }
 
 func (m *metadataService) metadataFromRows(rows []models.MetadataRow) payload.Metadata {
