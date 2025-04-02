@@ -20,6 +20,7 @@ type Database struct {
 	Subscriptions models.Subscriptions
 	Preferences   models.Preferences
 	Notifications models.Notifications
+	Metadata      models.Metadata
 }
 
 func (db *Database) DB() *gorm.DB {
@@ -51,6 +52,7 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 		Subscriptions: impl.Subscriptions(db),
 		Preferences:   impl.Preferences(db),
 		Notifications: impl.Notifications(db),
+		Metadata:      impl.Metadata(db),
 	}, nil
 }
 
@@ -60,4 +62,5 @@ func ModelsProvider(db *Database, c *dig.Container) {
 	utils.Must(c.Provide(utils.Identity(db.Subscriptions)))
 	utils.Must(c.Provide(utils.Identity(db.Preferences)))
 	utils.Must(c.Provide(utils.Identity(db.Notifications)))
+	utils.Must(c.Provide(utils.Identity(db.Metadata)))
 }

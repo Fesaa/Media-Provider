@@ -17,6 +17,10 @@ type migration struct {
 
 var manualMigrations = []migration{
 	{
+		name: "20250403_SeedInitialMetadata",
+		f:    manual.InitialMetadata,
+	},
+	{
 		name: "20250112_SubscriptionDurationChanges",
 		f:    manual.SubscriptionDurationChanges,
 	},

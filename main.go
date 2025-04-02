@@ -52,6 +52,7 @@ func main() {
 	utils.Must(c.Provide(services.DirectoryServiceProvider))
 	utils.Must(c.Provide(services.FileServiceProvider))
 	utils.Must(c.Provide(services.ArchiveServiceProvider))
+	utils.Must(c.Provide(services.MetadataServiceProvider))
 	utils.Must(c.Provide(ApplicationProvider))
 
 	utils.Must(c.Invoke(services.RegisterSignalREndPoint))

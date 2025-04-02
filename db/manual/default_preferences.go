@@ -16,6 +16,9 @@ func InsertDefaultPreferences(db *gorm.DB) error {
 }
 
 func MigrateTags(db *gorm.DB) error {
+	if getCurrentVersion(db) != "" {
+		return nil
+	}
 	var blackList pq.StringArray
 	var dynasty pq.StringArray
 

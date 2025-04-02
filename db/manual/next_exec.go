@@ -6,6 +6,9 @@ import (
 )
 
 func SubscriptionNextExec(db *gorm.DB) error {
+	if getCurrentVersion(db) != "" {
+		return nil
+	}
 	var subscriptions []models.Subscription
 	res := db.Preload("Info").Find(&subscriptions)
 	if res.Error != nil {

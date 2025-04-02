@@ -6,6 +6,10 @@ import (
 )
 
 func SubscriptionDurationChanges(db *gorm.DB) error {
+	if getCurrentVersion(db) != "" {
+		return nil
+	}
+
 	var subscriptions []models.Subscription
 	res := db.Find(&subscriptions)
 	if res.Error != nil {

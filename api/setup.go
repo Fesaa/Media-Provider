@@ -57,6 +57,7 @@ func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, lo
 	utils2.Must(scope.Invoke(routes.RegisterSubscriptionRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterPreferencesRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterNotificationRoutes))
+	utils2.Must(scope.Invoke(routes.RegisterMetadataRoutes))
 }
 
 func cacheStorage(cfg *config.Config, log zerolog.Logger) fiber.Storage {

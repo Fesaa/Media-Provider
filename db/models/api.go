@@ -63,4 +63,11 @@ type Users interface {
 	Delete(id uint) error
 }
 
+type Metadata interface {
+	All() ([]MetadataRow, error)
+	GetRow(key MetadataKey) (*MetadataRow, error)
+	UpdateRow(metadata MetadataRow) error
+	Update([]MetadataRow) error
+}
+
 type Option[T any] func(T) T

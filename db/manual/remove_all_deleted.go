@@ -6,6 +6,9 @@ import (
 )
 
 func RemoveAllDeleted(db *gorm.DB) error {
+	if getCurrentVersion(db) != "" {
+		return nil
+	}
 	for _, table := range []string{"modifier_values", "modifiers", "notifications", "pages", "password_resets", "preferences", "subscription_infos", "subscriptions", "tags", "users"} {
 		res := db.Exec("DELETE FROM `" + table + "` WHERE deleted_at IS NOT NULL")
 		if res.Error != nil {
