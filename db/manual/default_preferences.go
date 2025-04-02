@@ -4,19 +4,21 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/lib/pq"
+	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 	"strings"
 )
 
-func InsertDefaultPreferences(db *gorm.DB) error {
+func InsertDefaultPreferences(db *gorm.DB, log zerolog.Logger) error {
 	pref := models.Preference{
 		SubscriptionRefreshHour: 0,
 	}
 	return db.Save(&pref).Error
 }
 
-func MigrateTags(db *gorm.DB) error {
+func MigrateTags(db *gorm.DB, log zerolog.Logger) error {
 	if getCurrentVersion(db) != "" {
+		log.Trace().Msg("Skipping changes, Media-Provider installed after changes are needed")
 		return nil
 	}
 	var blackList pq.StringArray
