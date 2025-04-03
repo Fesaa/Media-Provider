@@ -36,7 +36,6 @@ export class UserSettingsComponent {
 
   users: UserDto[] = []
   authUser: User | null = null;
-  loading: boolean = true;
 
   showEditUserModal: boolean = false;
   editingUser: UserDto | null = null;
@@ -51,9 +50,6 @@ export class UserSettingsComponent {
   ];
   protected readonly hasPermission = hasPermission;
   protected readonly Perm = Perm;
-  protected readonly roles = roles;
-  protected readonly permissionValues = permissionValues;
-  protected readonly permissionNames = permissionNames;
 
   constructor(private accountService: AccountService,
               private toastService: ToastService,
@@ -69,7 +65,6 @@ export class UserSettingsComponent {
     this.accountService.all().subscribe({
       next: users => {
         this.users = users;
-        this.loading = false;
       },
       error: err => {
         this.toastService.genericError(err.error.message);
