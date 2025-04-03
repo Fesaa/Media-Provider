@@ -26,7 +26,7 @@
     </p-floatlabel>
   </div>
 
-  <app-provider-metadata-options [canHideMetadata]="false" [subscription]="subscription" [metadata]="metadata" />
+  <app-provider-metadata-options [canHideMetadata]="true" [hideMetadata]="true" [subscription]="subscription" [metadata]="metadata" />
 
   <div class="flex w-full flex-grow justify-end gap-4 mt-10">
     <p-button (click)="close()" [label]="t('cancel') | titlecase" severity="secondary"/>
