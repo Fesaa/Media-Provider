@@ -10,7 +10,14 @@
 
   </div>
 
-  <p-table [value]="notifications.items()" *transloco="let t;prefix:'notifications.table'">
+  <p-table
+    [value]="notifications.items()"
+    dataKey="ID"
+    [rows]="10"
+    [paginator]="true"
+    *transloco="let t;prefix:'notifications.table'"
+  >
+
     <ng-template #header>
       <tr>
         <th>{{t('time')}}</th>
