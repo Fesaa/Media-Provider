@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ansrivas/fiberprometheus/v2"
@@ -113,19 +114,19 @@ func UpdateInstalledVersion(ms services.MetadataService, log zerolog.Logger) err
 		return err
 	}
 
-	if cur.Version.Equal(config.Version) {
+	if cur.Version.Equal(metadata.Version) {
 		log.Trace().Msg("no version changes")
 		return nil
 	}
 
-	if cur.Version.Newer(config.Version) {
+	if cur.Version.Newer(metadata.Version) {
 		log.Warn().
 			Str("installedVersion", cur.Version.String()).
-			Str("actualVersion", config.Version.String()).
+			Str("actualVersion", metadata.Version.String()).
 			Msg("Installed version is newer, want is going on? Bringing back to sync!")
 	}
 
-	cur.Version = config.Version
+	cur.Version = metadata.Version
 	return ms.Update(cur)
 }
 

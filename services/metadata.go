@@ -1,9 +1,9 @@
 package services
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/rs/zerolog"
 	"time"
 )
@@ -72,7 +72,7 @@ func (m *metadataService) metadataFromRows(rows []models.MetadataRow) payload.Me
 		case models.InstallDate:
 			pl.InstallDate, _ = time.Parse(time.DateTime, row.Value)
 		case models.InstalledVersion:
-			pl.Version = config.SemanticVersion(row.Value)
+			pl.Version = metadata.SemanticVersion(row.Value)
 		case models.FirstInstalledVersion:
 			pl.FirstInstalledVersion = row.Value
 		}

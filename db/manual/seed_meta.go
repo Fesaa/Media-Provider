@@ -1,8 +1,8 @@
 package manual
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 	"time"
@@ -21,7 +21,7 @@ func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {
 
 	rows = append(rows, models.MetadataRow{
 		Key:   models.FirstInstalledVersion,
-		Value: config.Version.String(),
+		Value: metadata.Version.String(),
 	})
 	rows = append(rows, models.MetadataRow{
 		Key:   models.InstallDate,
@@ -29,7 +29,7 @@ func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {
 	})
 	rows = append(rows, models.MetadataRow{
 		Key:   models.InstalledVersion,
-		Value: config.Version.String(),
+		Value: metadata.Version.String(),
 	})
 
 	return db.Create(&rows).Error
