@@ -189,3 +189,13 @@ func IsSameDay(t1, t2 time.Time) bool {
 
 	return d1 == d2 && m1 == m2 && y1 == y2
 }
+
+func Count[T any](array []T, f func(T) bool) int {
+	i := 0
+	for _, t := range array {
+		if f(t) {
+			i++
+		}
+	}
+	return i
+}

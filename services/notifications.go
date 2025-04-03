@@ -39,6 +39,8 @@ type NotificationService interface {
 
 	// MarkRead marks the notification with id as read, and sends the NotificationRead event through SignalR
 	MarkRead(id uint) error
+	// MarkReadMany marks all the notifications as read, and sends the NotificationRead event through SignalR
+	MarkReadMany([]uint) error
 	// MarkUnRead marks the notification with id as unread, and sends the Notification event through SignalR
 	MarkUnRead(id uint) error
 }
@@ -115,8 +117,29 @@ func (n *notificationService) MarkRead(id uint) error {
 	}
 
 	if notification.Group != models.GroupContent {
-		n.signalR.Broadcast(payload.EvenTypeNotificationRead, fiber.Map{})
+		n.signalR.Broadcast(payload.EvenTypeNotificationRead, fiber.Map{
+			"amount": 1,
+		})
 	}
+
+	return nil
+}
+
+func (n *notificationService) MarkReadMany(ids []uint) error {
+	notifications, err := n.db.Notifications.GetMany(ids)
+	if err != nil {
+		return err
+	}
+
+	if err = n.db.Notifications.MarkReadMany(ids); err != nil {
+		return err
+	}
+
+	n.signalR.Broadcast(payload.EvenTypeNotificationRead, fiber.Map{
+		"amount": utils.Count(notifications, func(notification models.Notification) bool {
+			return notification.Group != models.GroupContent
+		}),
+	})
 
 	return nil
 }

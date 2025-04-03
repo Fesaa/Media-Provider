@@ -101,7 +101,7 @@ func (nr *notificationRoutes) ReadMany(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err := nr.DB.Notifications.MarkReadMany(ids); err != nil {
+	if err := nr.NotificationService.MarkReadMany(ids); err != nil {
 		nr.Log.Error().Err(err).Msg("failed to mark notifications read")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),

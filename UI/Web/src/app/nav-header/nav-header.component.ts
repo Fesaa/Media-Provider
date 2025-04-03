@@ -83,7 +83,8 @@ export class NavHeaderComponent implements OnInit {
         this.notifications++;
       }
       if (event.type === EventType.NotificationRead) {
-        this.notifications--;
+        const amount: number = event.data.amount;
+        this.notifications -= amount;
       }
     })
 

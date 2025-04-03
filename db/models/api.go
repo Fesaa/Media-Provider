@@ -14,6 +14,7 @@ type Pages interface {
 
 type Notifications interface {
 	Get(id uint) (Notification, error)
+	GetMany(ids []uint) ([]Notification, error)
 	All() ([]Notification, error)
 	AllAfter(time.Time) ([]Notification, error)
 
