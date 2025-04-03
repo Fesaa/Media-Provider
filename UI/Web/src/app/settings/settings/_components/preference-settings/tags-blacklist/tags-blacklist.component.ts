@@ -74,10 +74,10 @@ export class TagsBlacklistComponent {
       this.toastService.warningLoco("settings.preferences.toasts.blacklist-duplicate");
       return;
     }
-    this.preferences.blackListedTags = [...this.preferences.blackListedTags, {
+    this.preferences.blackListedTags.push({
       name: this.newTag,
       normalizedName: normalize(this.newTag),
-    }];
+    });
     this.filterToDisplay();
     this.newTag = ''
   }
@@ -86,6 +86,12 @@ export class TagsBlacklistComponent {
     if (!this.preferences) {
       return;
     }
+
+    if (this.filter.length === 0) {
+      this.toDisplay = this.preferences.blackListedTags;
+      return;
+    }
+
     this.toDisplay = this.preferences.blackListedTags
       .filter(g => g.normalizedName.includes(normalize(this.filter)));
   }

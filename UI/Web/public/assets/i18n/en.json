@@ -413,7 +413,8 @@
           "p2": "If several are present, the highest will be used."
         },
         "new": "Add new",
-        "filter": "{{shared.filter}}"
+        "filter": "{{shared.filter}}",
+        "empty": "No mappings have been configured"
       },
       "sub-refresh": {
         "label": "Download subscriptions at",

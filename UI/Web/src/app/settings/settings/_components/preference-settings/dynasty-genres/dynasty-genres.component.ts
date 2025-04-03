@@ -74,10 +74,10 @@ export class DynastyGenresComponent {
       this.toastService.warningLoco("settings.preferences.toasts.dynasty-duplicate");
       return;
     }
-    this.preferences.dynastyGenreTags = [...this.preferences.dynastyGenreTags, {
+    this.preferences.dynastyGenreTags.push({
       name: this.dynastyGenresNew,
       normalizedName: normalize(this.dynastyGenresNew)
-    }];
+    });
     this.dynastyGenresFiltered();
     this.dynastyGenresNew = ''
   }
@@ -86,6 +86,12 @@ export class DynastyGenresComponent {
     if (!this.preferences) {
       return;
     }
+
+    if (this.dynastyFilter.length === 0) {
+      this.dynastyToDisplayGenres = this.preferences.dynastyGenreTags;
+      return;
+    }
+
     this.dynastyToDisplayGenres = this.preferences.dynastyGenreTags
       .filter(g => g.normalizedName.includes(normalize(this.dynastyFilter)));
   }

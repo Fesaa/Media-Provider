@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {ChangeDetectorRef, Component, EventEmitter, Input, Output} from '@angular/core';
 import {
   AgeRatingMap,
   ComicInfoAgeRating,
@@ -51,6 +51,7 @@ export class AgeRatingMappingsComponent {
 
   constructor(
     private toastService: ToastService,
+    private cdRef: ChangeDetectorRef,
   ) {
   }
 
@@ -85,13 +86,13 @@ export class AgeRatingMappingsComponent {
       return;
     }
 
-    this.preferences.ageRatingMappings = [...this.preferences.ageRatingMappings, {
-        tag:  {
-          name: this.newAgeRating,
-          normalizedName: normalize(this.newAgeRating),
-        },
-        comicInfoAgeRating: ComicInfoAgeRating.Unknown,
-    }];
+    this.preferences.ageRatingMappings.push({
+      tag:  {
+        name: this.newAgeRating,
+        normalizedName: normalize(this.newAgeRating),
+      },
+      comicInfoAgeRating: ComicInfoAgeRating.Unknown,
+    });
     this.filterToDisplay();
     this.newAgeRating = ''
   }
@@ -101,8 +102,14 @@ export class AgeRatingMappingsComponent {
       return;
     }
 
+    if (this.filter.length === 0) {
+      this.toDisplay = this.preferences.ageRatingMappings;
+      return;
+    }
+
     this.toDisplay = this.preferences.ageRatingMappings
       .filter(ar => ar.tag.normalizedName.includes(normalize(this.filter)))
+    this.cdRef.markForCheck();
   }
 
   protected readonly ComicInfoAgeRatings = ComicInfoAgeRatings;
