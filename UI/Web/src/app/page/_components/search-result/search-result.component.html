@@ -49,7 +49,7 @@
 
         <p-dialog resizable="false" [(visible)]="showSubscriptionDialog" [header]="t('sub-header')"
                   [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }"
-                  [contentStyle]="{ 'overflow': 'visible' }">
+                  [contentStyle]="{ 'overflow-y': 'visible' }">
           <app-subscription-dialog [(visible)]="showSubscriptionDialog" [downloadDir]="dir"
                                    [searchResult]="searchResult" [metadata]="metadata"/>
         </p-dialog>
