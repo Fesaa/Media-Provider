@@ -44,14 +44,6 @@
           </div>
         }
 
-        @defer (when selected == SettingsID.Server; prefetch on idle) {
-          @if (selected === SettingsID.Server && canSee(SettingsID.Server)) {
-            <div class="mt-5 md:ml-5">
-              <app-server-settings></app-server-settings>
-            </div>
-          }
-        }
-
         @defer (when selected == SettingsID.Preferences; prefetch on idle) {
           @if (selected === SettingsID.Preferences && canSee(SettingsID.Preferences)) {
             <div class="mt-5 md:ml-5">
@@ -64,6 +56,14 @@
           @if (selected === SettingsID.Pages && canSee(SettingsID.Pages)) {
             <div class="md:ml-5">
               <app-pages-settings></app-pages-settings>
+            </div>
+          }
+        }
+
+        @defer (when selected == SettingsID.Server; prefetch on idle) {
+          @if (selected === SettingsID.Server && canSee(SettingsID.Server)) {
+            <div class="mt-5 md:ml-5">
+              <app-server-settings></app-server-settings>
             </div>
           }
         }
