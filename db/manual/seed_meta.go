@@ -21,7 +21,7 @@ func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {
 
 	rows = append(rows, models.MetadataRow{
 		Key:   models.FirstInstalledVersion,
-		Value: config.Version,
+		Value: config.Version.String(),
 	})
 	rows = append(rows, models.MetadataRow{
 		Key:   models.InstallDate,
@@ -29,7 +29,7 @@ func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {
 	})
 	rows = append(rows, models.MetadataRow{
 		Key:   models.InstalledVersion,
-		Value: config.Version,
+		Value: config.Version.String(),
 	})
 
 	return db.Create(&rows).Error

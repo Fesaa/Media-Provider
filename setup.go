@@ -113,15 +113,15 @@ func UpdateInstalledVersion(ms services.MetadataService, log zerolog.Logger) err
 		return err
 	}
 
-	if cur.Version == config.Version {
+	if cur.Version.Equal(config.Version) {
 		log.Trace().Msg("no version changes")
 		return nil
 	}
 
-	if cur.Version > config.Version {
+	if cur.Version.Newer(config.Version) {
 		log.Warn().
-			Str("installedVersion", cur.Version).
-			Str("actualVersion", config.Version).
+			Str("installedVersion", cur.Version.String()).
+			Str("actualVersion", config.Version.String()).
 			Msg("Installed version is newer, want is going on? Bringing back to sync!")
 	}
 

@@ -22,7 +22,7 @@ func RegisterMetadataRoutes(mr metadataRoutes) {
 	group := mr.Router.Group("/metadata", mr.Auth.Middleware)
 
 	group.Get("/", mr.Get)
-	//group.Post("/", mr.Update)
+	// group.Post("/", mr.Update)
 }
 
 func (mr *metadataRoutes) Get(c *fiber.Ctx) error {
