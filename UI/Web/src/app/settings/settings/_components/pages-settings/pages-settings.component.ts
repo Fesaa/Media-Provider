@@ -12,6 +12,9 @@ import {TableModule} from "primeng/table";
 import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray} from "@angular/cdk/drag-drop";
+import {Card} from "primeng/card";
+import {NgForOf} from "@angular/common";
 
 @Component({
   selector: 'app-pages-settings',
@@ -22,6 +25,11 @@ import {TranslocoDirective} from "@jsverse/transloco";
     TableModule,
     Tooltip,
     TranslocoDirective,
+    CdkDropList,
+    Card,
+    NgForOf,
+    CdkDragHandle,
+    CdkDrag,
   ],
   templateUrl: './pages-settings.component.html',
   styleUrl: './pages-settings.component.css',
@@ -67,40 +75,19 @@ export class PagesSettingsComponent {
     });
   }
 
-  isFirst(page: Page): boolean {
-    if (this.pages.length == 0) {
-      return false;
-    }
-    return this.pages[0].ID === page.ID;
-  }
+  drop($event: CdkDragDrop<any, any>) {
+    // Assume no error will occur
+    moveItemInArray(this.pages, $event.previousIndex, $event.currentIndex)
 
-  isLast(page: Page): boolean {
-    if (this.pages.length == 0) {
-      return false;
-    }
-    return this.pages[this.pages.length - 1].ID === page.ID;
-  }
-
-  moveUp(page: Page) {
-    const index = this.pages.indexOf(page);
-    const other = this.pages[index - 1];
-    this.swap(page, other);
-  }
-
-  moveDown(page: Page) {
-    const index = this.pages.indexOf(page);
-    const other = this.pages[index + 1];
-    this.swap(page, other);
-  }
-
-  swap(page1: Page, page2: Page) {
+    const page1 = this.pages[$event.previousIndex];
+    const page2 = this.pages[$event.currentIndex];
     this.pageService.swapPages(page1.ID, page2.ID).subscribe({
       next: () => {
-        this.toastService.successLoco("settings.pages.toasts.swapped.success", {},
-          {page1: page1.title, page2: page2.title});
         this.pageService.refreshPages();
       },
       error: (err) => {
+        // Could not move, set back
+        moveItemInArray(this.pages, $event.currentIndex, $event.previousIndex)
         this.toastService.genericError(err.error.message);
       }
     });
