@@ -283,7 +283,7 @@
             "p1": "Modifiers are an import part of the search experience, you can configure them to help you narrow down results, apart from name. Each provider has different modifiers it can use to narrow down your search. See the ",
             "link": "wiki",
             "p2": "for more information. Read the wiki carefully to ensure you use the correct keys for the modifiers.",
-            "p3": "Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search, while the value is what will be shown on your screen."
+            "p3": "Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search, while the display name is what will be shown on your screen."
           },
           "kinds": {
             "legend": "Kinds",
@@ -300,10 +300,14 @@
           "add-new-modifier-value": "Add new option",
           "title": "Title",
           "key": "Key",
-          "value": "Value",
+          "value": "Display Name",
           "check-wiki": "Check wiki!",
           "next": "{{shared.next}}",
-          "back": "{{shared.back}}"
+          "back": "{{shared.back}}",
+          "modifier-needs": {
+            "title": "Not adding new modifier",
+            "summary": "A modifier needs a title, key, and at least one value"
+          }
         },
         "save": {
           "header": "Save",
