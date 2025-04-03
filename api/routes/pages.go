@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -97,6 +98,11 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
+
+	page.Modifiers = utils.MapWithIdx(page.Modifiers, func(i int, mod models.Modifier) models.Modifier {
+		mod.Sort = i
+		return mod
+	})
 
 	if err := pr.PageService.UpdateOrCreate(&page); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to update page")
