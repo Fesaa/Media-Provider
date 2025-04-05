@@ -1,12 +1,11 @@
 package metadata
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
 	"testing"
 )
 
 func TestMPVersion_String(t *testing.T) {
-	v := config.SemanticVersion("1.2.3")
+	v := SemanticVersion("1.2.3")
 	if v.String() != "1.2.3" {
 		t.Errorf("String() = %v, want %v", v.String(), "1.2.3")
 	}
@@ -14,8 +13,8 @@ func TestMPVersion_String(t *testing.T) {
 
 func TestMPVersion_Older(t *testing.T) {
 	tests := []struct {
-		v1   config.SemanticVersion
-		v2   config.SemanticVersion
+		v1   SemanticVersion
+		v2   SemanticVersion
 		want bool
 	}{
 		{v1: "1.2.3", v2: "1.2.4", want: true},
@@ -34,8 +33,8 @@ func TestMPVersion_Older(t *testing.T) {
 
 func TestMPVersion_Newer(t *testing.T) {
 	tests := []struct {
-		v1   config.SemanticVersion
-		v2   config.SemanticVersion
+		v1   SemanticVersion
+		v2   SemanticVersion
 		want bool
 	}{
 		{v1: "1.2.3", v2: "1.2.4", want: false},
@@ -54,8 +53,8 @@ func TestMPVersion_Newer(t *testing.T) {
 
 func TestMPVersion_Equal(t *testing.T) {
 	tests := []struct {
-		v1   config.SemanticVersion
-		v2   config.SemanticVersion
+		v1   SemanticVersion
+		v2   SemanticVersion
 		want bool
 	}{
 		{v1: "1.2.3", v2: "1.2.3", want: true},
@@ -71,7 +70,7 @@ func TestMPVersion_Equal(t *testing.T) {
 
 func TestMPVersion_EqualS(t *testing.T) {
 	tests := []struct {
-		v1   config.SemanticVersion
+		v1   SemanticVersion
 		v2   string
 		want bool
 	}{
