@@ -28,7 +28,7 @@ export enum SettingsID {
     UserSettingsComponent,
     PreferenceSettingsComponent,
     Button,
-    TranslocoDirective
+    TranslocoDirective,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
@@ -38,14 +38,8 @@ export class SettingsComponent implements OnInit {
   showMobileConfig = false;
 
   user: User | null = null;
-  selected: SettingsID = SettingsID.Server;
+  selected: SettingsID = SettingsID.Preferences;
   settings: { id: SettingsID, title: string, icon: string, perm: Perm, badge?: number }[] = [
-    {
-      id: SettingsID.Server,
-      title: 'Server',
-      icon: 'pi pi-server',
-      perm: Perm.WriteConfig
-    },
     {
       id: SettingsID.Preferences,
       title: "Preferences",
@@ -57,6 +51,12 @@ export class SettingsComponent implements OnInit {
       title: 'Pages',
       icon: 'pi pi-thumbtack',
       perm: Perm.All,
+    },
+    {
+      id: SettingsID.Server,
+      title: 'Server',
+      icon: 'pi pi-server',
+      perm: Perm.WriteConfig
     },
     {
       id: SettingsID.User,

@@ -11,10 +11,9 @@ import {ToastService} from "../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
 import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType} from "../../../_models/page";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
-import {MultiSelect} from "primeng/multiselect";
-import {ToggleSwitch} from "primeng/toggleswitch";
-import {Tooltip} from "primeng/tooltip";
+import {
+  ProviderMetadataOptionsComponent
+} from "../../../shared/_component/provider-metadata-options/provider-metadata-options.component";
 
 @Component({
   selector: 'app-subscription-dialog',
@@ -27,12 +26,7 @@ import {Tooltip} from "primeng/tooltip";
     Select,
     TranslocoDirective,
     TitleCasePipe,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
-    CdkVirtualScrollViewport,
-    MultiSelect,
-    ToggleSwitch,
-    Tooltip
+    ProviderMetadataOptionsComponent
   ],
   templateUrl: './subscription-dialog.component.html',
   styleUrl: './subscription-dialog.component.css'

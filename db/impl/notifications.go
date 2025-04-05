@@ -17,6 +17,15 @@ type notifications struct {
 	db *gorm.DB
 }
 
+func (n notifications) GetMany(ids []uint) ([]models.Notification, error) {
+	var many []models.Notification
+	err := n.db.Where("id IN (?)", ids).Find(&many).Error
+	if err != nil {
+		return nil, err
+	}
+	return many, nil
+}
+
 func (n notifications) DeleteMany(ids []uint) error {
 	notifs := utils.Map(ids, func(id uint) models.Notification {
 		return models.Notification{

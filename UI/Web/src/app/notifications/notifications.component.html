@@ -10,7 +10,14 @@
 
   </div>
 
-  <p-table [value]="notifications.items()" *transloco="let t;prefix:'notifications.table'">
+  <p-table
+    [value]="notifications.items()"
+    dataKey="ID"
+    [rows]="10"
+    [paginator]="true"
+    *transloco="let t;prefix:'notifications.table'"
+  >
+
     <ng-template #header>
       <tr>
         <th>{{t('time')}}</th>
@@ -53,7 +60,7 @@
               <p-button icon="pi pi-trash" size="small" severity="danger" (click)="delete(notification)" />
 
               <p-dialog [(visible)]="infoVisibility[notification.ID]" [header]="notification.title">
-                {{notification.body}}
+                <span [innerHTML]="formattedBody(notification)"></span>
               </p-dialog>
             </div>
 

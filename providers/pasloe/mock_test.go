@@ -49,6 +49,10 @@ func (i ID) ID() string {
 	return string(i)
 }
 
+func (i ID) Label() string {
+	return string(i)
+}
+
 type MockContent struct {
 	*api.DownloadBase[ID]
 	mockTitle               string

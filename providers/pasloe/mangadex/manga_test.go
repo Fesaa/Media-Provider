@@ -927,7 +927,84 @@ func TestReplaceCover(t *testing.T) {
 	}
 
 	if len(originalCover.Bytes) != len(coverBytes) {
-		t.Fatal("Cover should not have been replaced, but wasn't")
+		t.Fatal("Cover should not have been replaced, but was")
+	}
+
+}
+
+func TestReplaceCoverDestructionLover(t *testing.T) {
+	m := tempManga(t, payload.DownloadRequest{
+		Provider:  models.MANGADEX,
+		Id:        "192f8421-55f9-46e2-9c6e-87a88c2f048a",
+		BaseDir:   "Manga",
+		TempTitle: "Destruction Lover",
+		DownloadMetadata: models.DownloadRequestMetadata{
+			StartImmediately: false,
+		},
+		IsSubscription: false,
+	}, io.Discard, &mockRepository{
+		GetCoverImagesFunc: func(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error) {
+			return &MangaCoverResponse{
+				Data: []MangaCoverData{
+					{
+						Attributes: MangaCoverAttributes{
+							Volume:   "2",
+							FileName: "a9f46f7a-fb0a-448a-8d21-b0434ade2037.jpg",
+						},
+					},
+				},
+			}, nil
+		},
+		GetChaptersFunc: func(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
+			return &ChapterSearchResponse{
+				Data: []ChapterSearchData{
+					{
+						Id: "9d7673d5-caee-4c19-8844-31af2133de96",
+						Attributes: ChapterAttributes{
+							Chapter:            "5",
+							Volume:             "2",
+							TranslatedLanguage: "en",
+						},
+					},
+				},
+			}, nil
+		},
+		GetChapterImagesFunc: func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
+			// They have a system with random servers
+			return tempRepo(t, io.Discard).GetChapterImages(ctx, id)
+		}})
+
+	select {
+	case <-m.LoadInfo(t.Context()):
+		break
+	case <-time.After(waitTimeOut):
+		t.Fatal("m.LoadInfo() timeout")
+	}
+
+	chapterFive := utils.Find(m.chapters.Data, func(data ChapterSearchData) bool {
+		return data.Attributes.Chapter == "5"
+	})
+
+	if chapterFive == nil {
+		t.Fatal("chapterFive is nil")
+	}
+
+	originalCover, ok := m.coverFactory(chapterFive.Attributes.Volume)
+	if !ok {
+		t.Fatalf("chapterSeven.Attributes.Volume (%s) cover not available", chapterFive.Attributes.Volume)
+	}
+
+	coverBytes, firstPage, err := m.getBetterChapterCover(*chapterFive, originalCover)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(originalCover.Bytes) == len(coverBytes) {
+		t.Fatal("Cover should have been replaced, but wasn't")
+	}
+
+	if !firstPage {
+		t.Fatal("Expected firstPage to be a valid cover")
 	}
 
 }

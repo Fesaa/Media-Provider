@@ -12,10 +12,14 @@ import (
 
 type migration struct {
 	name string
-	f    func(db *gorm.DB) error
+	f    func(db *gorm.DB, log zerolog.Logger) error
 }
 
 var manualMigrations = []migration{
+	{
+		name: "20250403_SeedInitialMetadata",
+		f:    manual.InitialMetadata,
+	},
 	{
 		name: "20250112_SubscriptionDurationChanges",
 		f:    manual.SubscriptionDurationChanges,
@@ -50,6 +54,7 @@ func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 			return t.Name, true
 		}
 
+		log.Trace().Str("name", t.Name).Msg("Migration has ran, but was unsuccessful, trying again")
 		return "", false
 	})
 
@@ -57,11 +62,17 @@ func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 		return !slices.Contains(success, m.name)
 	})
 
+	log.Debug().Int("total", len(migrations)).Int("todo", len(toDo)).Msg("migrations to run")
+
 	for _, m := range toDo {
 		err := db.Transaction(func(tx *gorm.DB) error {
-			log.WithLevel(zerolog.FatalLevel).Str("name", m.name).Msg("Running manual migration. This is not an error")
+
+			migrationLogger := log.With().Str("migration", m.name).Logger()
+
+			migrationLogger.WithLevel(zerolog.FatalLevel).Msg("Running manual migration. This is not an error")
 			var errorTally []error
-			err := m.f(tx)
+
+			err := m.f(tx, migrationLogger)
 			if err != nil {
 				errorTally = append(errorTally, err)
 			}
@@ -73,21 +84,21 @@ func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 
 			err = tx.Save(&model).Error
 			if err != nil {
-				log.Warn().Err(err).Str("name", m.name).Msg("Failed to save manual migration")
+				migrationLogger.Warn().Err(err).Msg("Failed to save manual migration")
 				errorTally = append(errorTally, err)
 			}
 
 			if len(errorTally) > 0 {
 				err = tx.Rollback().Error
 				if err != nil {
-					log.Warn().Err(err).Str("name", m.name).Msg("Failed to rollback manual migration")
+					migrationLogger.Warn().Err(err).Msg("Failed to rollback manual migration")
 				}
 
 				errorTally = append(errorTally, err)
 				return errors.Join(errorTally...)
 			}
 
-			log.WithLevel(zerolog.FatalLevel).Str("name", m.name).Msg("Finished running manual migration. This is not an error")
+			migrationLogger.WithLevel(zerolog.FatalLevel).Msg("Finished running manual migration. This is not an error")
 			return nil
 		})
 

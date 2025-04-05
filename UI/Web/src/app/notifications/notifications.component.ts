@@ -218,4 +218,10 @@ export class NotificationsComponent implements OnInit {
     })
   }
 
+  formattedBody(notification: Notification) {
+    let body = notification.body;
+    body = body ? body.replace(/\n/g, '<br>') : '';
+    return body;
+  }
+
 }

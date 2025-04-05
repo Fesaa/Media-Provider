@@ -61,6 +61,10 @@ type Chapter struct {
 	Date     string
 }
 
+func (c Chapter) Label() string {
+	return fmt.Sprintf("%s (%s)", c.Title, c.Number)
+}
+
 func (c Chapter) ID() string {
 	return c.Number
 }

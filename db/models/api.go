@@ -14,6 +14,7 @@ type Pages interface {
 
 type Notifications interface {
 	Get(id uint) (Notification, error)
+	GetMany(ids []uint) ([]Notification, error)
 	All() ([]Notification, error)
 	AllAfter(time.Time) ([]Notification, error)
 
@@ -61,6 +62,13 @@ type Users interface {
 	DeleteReset(key string) error
 
 	Delete(id uint) error
+}
+
+type Metadata interface {
+	All() ([]MetadataRow, error)
+	GetRow(key MetadataKey) (*MetadataRow, error)
+	UpdateRow(metadata MetadataRow) error
+	Update([]MetadataRow) error
 }
 
 type Option[T any] func(T) T

@@ -2,10 +2,16 @@ package manual
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )
 
-func SubscriptionDurationChanges(db *gorm.DB) error {
+func SubscriptionDurationChanges(db *gorm.DB, log zerolog.Logger) error {
+	if getCurrentVersion(db) != "" {
+		log.Trace().Msg("Skipping changes, Media-Provider installed after changes are needed")
+		return nil
+	}
+
 	var subscriptions []models.Subscription
 	res := db.Find(&subscriptions)
 	if res.Error != nil {

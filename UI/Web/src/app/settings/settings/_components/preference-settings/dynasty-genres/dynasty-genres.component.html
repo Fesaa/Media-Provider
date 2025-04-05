@@ -26,7 +26,7 @@
 
   </div>
 
-  @if (preferences.dynastyGenreTags.length === 0) {
+  @if (dynastyToDisplayGenres.length === 0) {
     <span>{{ t('empty') }}</span>
   } @else {
     <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px">

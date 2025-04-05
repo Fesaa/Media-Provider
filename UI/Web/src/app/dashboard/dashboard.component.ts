@@ -96,6 +96,7 @@ export class DashboardComponent implements OnInit {
           this.updateInfo(event.data as InfoStat);
           break;
       }
+      this.dashboardItems.sort();
     })
   }
 
@@ -133,6 +134,8 @@ export class DashboardComponent implements OnInit {
     content.estimated = event.estimated;
     content.speed = event.speed;
     content.speed_type = event.speed_type;
+    // Sometimes the updateState seems to get out of sync, if content is sending progress updates, it's downloading
+    content.contentState = ContentState.Downloading;
   }
 
   private updateState(event: ContentStateUpdate) {

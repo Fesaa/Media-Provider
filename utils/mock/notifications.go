@@ -12,6 +12,7 @@ type Notifications struct {
 	NotifyGeneralFunc   func(string, string, string, ...models.NotificationColour)
 	NotifyGeneralQFunc  func(string, string, ...models.NotificationColour)
 	MarkReadFunc        func(uint) error
+	MarkReadManyFunc    func([]uint) error
 	MarkUnReadFunc      func(uint) error
 }
 
@@ -66,6 +67,13 @@ func (m Notifications) NotifyGeneralQ(title, body string, colours ...models.Noti
 func (m Notifications) MarkRead(id uint) error {
 	if m.MarkReadFunc != nil {
 		return m.MarkReadFunc(id)
+	}
+	return nil
+}
+
+func (m Notifications) MarkReadMany(ids []uint) error {
+	if m.MarkReadManyFunc != nil {
+		return m.MarkReadManyFunc(ids)
 	}
 	return nil
 }

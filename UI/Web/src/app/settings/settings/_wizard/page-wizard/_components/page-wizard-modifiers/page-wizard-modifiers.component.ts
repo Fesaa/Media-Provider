@@ -14,6 +14,9 @@ import {InputIcon} from "primeng/inputicon";
 import {DialogService} from "../../../../../../_services/dialog.service";
 import {ToastService} from "../../../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray} from "@angular/cdk/drag-drop";
+import {Dialog} from "primeng/dialog";
+import {ModifierEditModalComponent} from "./_components/modifier-edit-modal/modifier-edit-modal.component";
 
 @Component({
   selector: 'app-page-wizard-modifiers',
@@ -22,34 +25,35 @@ import {TranslocoDirective} from "@jsverse/transloco";
     Fieldset,
     FormsModule,
     Button,
-    InputText,
-    Tooltip,
-    FloatLabel,
-    Select,
     NgForOf,
-    IconField,
-    InputIcon,
     TranslocoDirective,
     TitleCasePipe,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
+    ModifierEditModalComponent,
   ],
   templateUrl: './page-wizard-modifiers.component.html',
   styleUrl: './page-wizard-modifiers.component.css'
 })
 export class PageWizardModifiersComponent {
 
-  typeOptions = [
-    {label: "Dropdown", value: ModifierType.DROPDOWN},
-    {label: "Multi select", value: ModifierType.MULTI},
-  ]
-
   @Input({required: true}) page!: Page;
   @Output() next: EventEmitter<void> = new EventEmitter();
   @Output() back: EventEmitter<void> = new EventEmitter();
+
+  modifierVisible: { [key: string]: boolean } = {};
+  editModifier: Modifier | null = null;
 
   constructor(
     private toastService: ToastService,
     private dialogService: DialogService,
   ) {
+  }
+
+  show(mod: Modifier) {
+    this.modifierVisible = {}
+    this.modifierVisible[mod.ID] = true;
   }
 
   nextCallback() {
@@ -71,26 +75,6 @@ export class PageWizardModifiersComponent {
     this.next.emit();
   }
 
-  addNewModifierValue(mod: Modifier) {
-    if (mod.values.filter(v => v.key == '' || v.value == '').length > 0) {
-      this.toastService.warningLoco("settings.pages.toasts.already-adding-new");
-      return;
-    }
-
-    mod.values.push({
-      key: '',
-      value: ''
-    });
-  }
-
-  async deleteModifierValue(mod: Modifier, key: string) {
-    if (!await this.dialogService.openDialog("settings.pages.wizard.confirm-delete-modifier-value", {name: mod.title, key: key})) {
-      return;
-    }
-
-    mod.values = mod.values.filter(value => value.key !== key);
-  }
-
   async delete(toDelete: Modifier) {
     if (!await this.dialogService.openDialog("settings.pages.wizard.confirm-delete-modifier", {name: toDelete.title})) {
       return;
@@ -100,12 +84,40 @@ export class PageWizardModifiersComponent {
   }
 
   addNewModifier(): void {
-    this.page.modifiers = [{
+    if (this.editModifier !== null) {
+      return;
+    }
+
+    this.editModifier = {
       key: '',
       ID: 0,
       title: '',
       type: ModifierType.DROPDOWN,
-      values: []
-    }, ...this.page.modifiers];
+      values: [
+        {key: '', value: ''},
+      ]
+    }
+    this.show(this.editModifier);
+  }
+
+  closeEdit() {
+    if (this.editModifier === null) {
+      return;
+    }
+
+    if (this.editModifier.title.length === 0
+      || this.editModifier.key.length === 0
+      || this.editModifier.values.length === 0
+    ) {
+      this.toastService.warningLoco("settings.pages.wizard.modifiers.modifier-needs");
+    } else {
+      this.page.modifiers.push(this.editModifier);
+    }
+
+    this.editModifier = null;
+  }
+
+  drop(event: CdkDragDrop<any, any>) {
+    moveItemInArray(this.page.modifiers, event.previousIndex, event.currentIndex)
   }
 }

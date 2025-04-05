@@ -27,6 +27,8 @@
   "download-finished-title": "Download completed",
   "download-finished": "%s finished downloading %d item(s)",
   "re-downloads": "\n %d items were re-downloaded",
+  "content-line": "\n\t- %s",
+  "failed-downloads": "\n%d pages were re-downloaded",
   "cleanup-errors-title": "Errors during cleanup!",
   "cleanup-errors-summary": "Errors occurred during cleanup for %s",
   "warn": "Warning",

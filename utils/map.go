@@ -1,11 +1,17 @@
 package utils
 
-func Map[T, S any](in []T, f func(T) S) []S {
+func MapWithIdx[T, S any](in []T, f func(int, T) S) []S {
 	out := make([]S, len(in))
 	for i, t := range in {
-		out[i] = f(t)
+		out[i] = f(i, t)
 	}
 	return out
+}
+
+func Map[T, S any](in []T, f func(T) S) []S {
+	return MapWithIdx(in, func(_ int, t T) S {
+		return f(t)
+	})
 }
 
 func FlatMapMany[E any](in ...[]E) []E {

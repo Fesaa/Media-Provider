@@ -15,18 +15,22 @@ func Pages(db *gorm.DB) models.Pages {
 }
 
 func (p *pages) All() ([]models.Page, error) {
-	var pages []models.Page
-	result := p.db.Preload("Modifiers").Preload("Modifiers.Values").Find(&pages)
+	var allPages []models.Page
+	result := p.db.Preload("Modifiers", func(db *gorm.DB) *gorm.DB {
+		return db.Order("sort ASC")
+	}).Preload("Modifiers.Values").Find(&allPages)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return pages, nil
+	return allPages, nil
 }
 
 func (p *pages) Get(id uint) (*models.Page, error) {
 	var page models.Page
-	result := p.db.Preload("Modifiers").Preload("Modifiers.Values").First(&page, id)
+	result := p.db.Preload("Modifiers", func(db *gorm.DB) *gorm.DB {
+		return db.Order("sort ASC")
+	}).Preload("Modifiers.Values").First(&page, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

@@ -66,6 +66,7 @@ type Modifier struct {
 	Type   ModifierType    `json:"type"`
 	Key    string          `json:"key"`
 	Values []ModifierValue `json:"values"`
+	Sort   int
 }
 
 type ModifierValue struct {

@@ -52,12 +52,14 @@ func main() {
 	utils.Must(c.Provide(services.DirectoryServiceProvider))
 	utils.Must(c.Provide(services.FileServiceProvider))
 	utils.Must(c.Provide(services.ArchiveServiceProvider))
+	utils.Must(c.Provide(services.MetadataServiceProvider))
 	utils.Must(c.Provide(ApplicationProvider))
 
 	utils.Must(c.Invoke(services.RegisterSignalREndPoint))
 	utils.Must(c.Invoke(RegisterCallback))
 	utils.Must(c.Invoke(providers.RegisterProviders))
 	utils.Must(c.Invoke(UpdateBaseUrlInIndex))
+	utils.Must(c.Invoke(UpdateInstalledVersion))
 	utils.Must(c.Invoke(startApp))
 }
 

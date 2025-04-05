@@ -1,55 +1,35 @@
 @if (user) {
-  <p-table
-    [value]="pages"
-    dataKey="id"
-    [rows]="10"
-    [paginator]="true"
-    [loading]="loading"
-    *transloco="let t;prefix:'settings.pages'"
-  >
-    <ng-template #header>
-      <tr>
-        <th style="width:10%">{{ t('icon') }}</th>
-        <th style="width:56%">{{ t('name') }}</th>
-        <th style="width:33%">{{ t('actions.label') }}</th>
-      </tr>
-    </ng-template>
 
-    <ng-template #body let-page>
-      <tr>
-        <td>
-          @if (page.icon !== "") {
-            <span [class]="'pi ' + page.icon"></span>
-          }
-        </td>
-        <td>
-          <a routerLink="/page" [queryParams]="{index: page.ID}" class="hover:cursor-pointer">{{ page.title }}</a>
-        </td>
-        <td class="flex flex-row space-x-5">
+  <div cdkDropList
+       *transloco="let t;prefix:'settings.pages'"
+       class="flex flex-col space-y-5"
+       (cdkDropListDropped)="drop($event)"
+  >
+
+    <p-card *ngFor="let page of pages" cdkDrag>
+      <div class="flex flex-row justify-between items-center">
+        <span class="pi pi-arrows-alt hover:cursor-pointer" cdkDragHandle></span>
+        <span [class]="'pi ' + page.icon + ' w-16'"></span>
+        <a routerLink="/page" [queryParams]="{index: page.ID}" class="hover:cursor-pointer">{{ page.title }}</a>
+
+        <div class="flex-grow flex flex-row justify-end space-x-5">
           @if (hasPermission(user, Perm.WritePage)) {
             <p-button routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}"
-                      [pTooltip]="t('actions.edit')" tooltipPosition="bottom" icon="pi pi-file-edit" severity="info"/>
+                      [pTooltip]="t('actions.edit')" variant="outlined"
+                      tooltipPosition="bottom" icon="pi pi-file-edit" severity="info"/>
           }
 
           @if (hasPermission(user, Perm.DeletePage)) {
             <p-button (click)="remove(page)"
-                      [pTooltip]="t('actions.delete')" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
+                      [pTooltip]="t('actions.delete')" variant="outlined"
+                      tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
           }
-          <p-button [disabled]="isFirst(page)" (click)="moveUp(page)" icon="pi pi-sort-up-fill" severity="secondary"/>
-          <p-button [disabled]="isLast(page)" (click)="moveDown(page)" icon="pi pi-sort-down-fill"
-                    severity="secondary"/>
-        </td>
-      </tr>
-    </ng-template>
-
-    <ng-template #caption>
-      @if (hasPermission(user, Perm.WritePage)) {
-        <div class="flex flex-grow justify-end">
-          <p-button routerLink="/settings/wizard/page"
-                    [label]="t('actions.new')" icon="pi pi-user-plus"/>
         </div>
-      }
-    </ng-template>
-  </p-table>
+
+      </div>
+    </p-card>
+
+  </div>
+
 
 }

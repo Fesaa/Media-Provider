@@ -1,4 +1,4 @@
-	module github.com/Fesaa/Media-Provider
+module github.com/Fesaa/Media-Provider
 
 go 1.24.1
 
