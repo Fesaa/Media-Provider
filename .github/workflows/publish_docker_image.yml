@@ -57,6 +57,6 @@ jobs:
             context: .
             file: ./Dockerfile
             push: true
-            tags:
-              - ameliaah/media-provider:latest
-              - ameliaah/media-provider:${{ env.VERSION }}
+            tags: |
+                ameliaah/media-provider:latest
+                ameliaah/media-provider:${{ env.VERSION }}
