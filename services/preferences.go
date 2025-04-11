@@ -38,7 +38,13 @@ func (p *preferencesService) Update(preference models.Preference) error {
 
 	preference.BlackListedTags = mergeTags(cur.BlackListedTags, preference.BlackListedTags)
 	preference.DynastyGenreTags = mergeTags(cur.DynastyGenreTags, preference.DynastyGenreTags)
-	return p.pref.Update(preference)
+
+	if err = p.pref.Update(preference); err != nil {
+		return err
+	}
+
+	// Reset preference cache
+	return p.pref.Flush()
 }
 
 func mergeTags(currentTags, newTags []models.Tag) []models.Tag {
