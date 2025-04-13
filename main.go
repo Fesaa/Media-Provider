@@ -60,6 +60,7 @@ func main() {
 	utils.Must(c.Invoke(providers.RegisterProviders))
 	utils.Must(c.Invoke(UpdateBaseUrlInIndex))
 	utils.Must(c.Invoke(UpdateInstalledVersion))
+	utils.Must(c.Invoke(PprofEndPoint))
 	utils.Must(c.Invoke(startApp))
 }
 
