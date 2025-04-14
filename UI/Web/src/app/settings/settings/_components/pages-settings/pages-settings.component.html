@@ -8,8 +8,12 @@
 
     <p-card *ngFor="let page of pages" cdkDrag>
       <div class="flex flex-row justify-between items-center">
-        <span class="pi pi-arrows-alt hover:cursor-pointer" cdkDragHandle></span>
-        <span [class]="'pi ' + page.icon + ' w-16'"></span>
+
+        <div class="flex flex-row space-x-5">
+          <span class="pi pi-arrows-alt hover:cursor-pointer" cdkDragHandle></span>
+          <span [class]="'pi ' + page.icon + ' w-16'"></span>
+        </div>
+
         <a routerLink="/page" [queryParams]="{index: page.ID}" class="hover:cursor-pointer">{{ page.title }}</a>
 
         <div class="flex-grow flex flex-row justify-end space-x-5">
