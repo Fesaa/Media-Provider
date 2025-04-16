@@ -107,18 +107,6 @@ export class NotificationsComponent implements OnInit {
     this.infoVisibility[id] = true;
   }
 
-  groupSeverity(group: NotificationGroup) {
-    switch (group) {
-      case NotificationGroup.Content:
-      case NotificationGroup.General:
-        return "info"
-      case NotificationGroup.Error:
-        return "danger"
-      case NotificationGroup.Security:
-        return "warn"
-    }
-  }
-
   markRead(notification: Notification) {
     this.notificationService.markAsRead(notification.ID).subscribe({
       next: () => {
