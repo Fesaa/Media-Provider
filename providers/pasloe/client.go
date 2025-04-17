@@ -147,23 +147,26 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		})
 
 		if len(content.GetNewContent()) > 0 || alwaysLog {
-			text := c.transLoco.GetTranslation("download-finished", content.Title(), len(content.GetNewContent()))
-			if len(content.GetToRemoveContent()) > 0 {
-				text += c.transLoco.GetTranslation("re-downloads", len(content.GetToRemoveContent()))
-			}
+			var summary, body string
 
-			for _, newContent := range content.GetNewContentNamed() {
-				text += c.transLoco.GetTranslation("content-line", path.Base(newContent))
+			summary = c.transLoco.GetTranslation("download-finished", content.Title(), len(content.GetNewContent()))
+			if len(content.GetToRemoveContent()) > 0 {
+				summary += c.transLoco.GetTranslation("re-downloads", len(content.GetToRemoveContent()))
 			}
 
 			if content.FailedDownloads() > 0 {
-				text += c.transLoco.GetTranslation("failed-downloads", content.FailedDownloads())
+				summary += c.transLoco.GetTranslation("failed-downloads", content.FailedDownloads())
+			}
+
+			body = summary
+			for _, newContent := range content.GetNewContentNamed() {
+				body += c.transLoco.GetTranslation("content-line", path.Base(newContent))
 			}
 
 			c.notifier(content.Request()).Notify(models.Notification{
 				Title:   c.transLoco.GetTranslation("download-finished-title"),
-				Summary: utils.Shorten(text, services.SummarySize),
-				Body:    text,
+				Summary: utils.Shorten(summary, services.SummarySize),
+				Body:    body,
 				Colour:  models.Green,
 				Group:   models.GroupContent,
 			})
