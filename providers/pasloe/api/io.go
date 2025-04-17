@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (d *DownloadBase[T]) checkContentOnDisk() {
+func (d *DownloadBase[T]) loadContentOnDisk() {
 	d.Log.Debug().Str("dir", d.GetDownloadDir()).Msg("checking content on disk")
 	content, err := d.readDirectoryForContent(d.GetDownloadDir())
 	if err != nil {

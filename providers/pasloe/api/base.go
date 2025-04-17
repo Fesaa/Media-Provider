@@ -204,29 +204,25 @@ func (d *DownloadBase[T]) Cancel() {
 	}
 }
 
-func (d *DownloadBase[T]) StartLoadInfo() {
+func (d *DownloadBase[T]) initializeLoadInfo() (context.Context, bool) {
 	if d.cancel != nil {
 		d.Log.Debug().Msg("content already started")
-		return
+		return nil, false
 	}
-
-	loadInfoStart := time.Now()
 
 	d.SetState(payload.ContentStateLoading)
 	ctx, cancel := context.WithCancel(context.Background())
 	d.cancel = cancel
 	d.Log.Debug().Msg("loading content info")
 
-	p, err := d.preferences.GetComplete()
-	if err != nil {
-		d.Log.Error().Err(err).Msg("unable to get preferences, some features may not work")
-	}
-	d.Preference = p
+	return ctx, true
+}
 
+func (d *DownloadBase[T]) loadContentInfo(ctx context.Context) bool {
 	start := time.Now()
 	select {
 	case <-ctx.Done():
-		return
+		return false
 	case <-d.infoProvider.LoadInfo(ctx):
 	}
 
@@ -234,9 +230,14 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 
 	d.Log = d.Log.With().Str("title", d.infoProvider.Title()).Logger()
 	d.Log.Debug().Dur("elapsed", elapsed).Msg("Content has downloaded all information")
+	return true
+}
 
-	start = time.Now()
-	d.checkContentOnDisk()
+// prepareContentToDownload checks what content exists on disk and filters what needs to be downloaded
+func (d *DownloadBase[T]) prepareContentToDownload() ([]T, time.Duration) {
+	start := time.Now()
+	d.loadContentOnDisk()
+
 	data := d.infoProvider.All()
 	d.ToDownload = utils.Filter(data, func(t T) bool {
 		download := d.infoProvider.ShouldDownload(t)
@@ -248,7 +249,10 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 		return download
 	})
 
-	elapsed = time.Since(start)
+	return data, time.Since(start)
+}
+
+func (d *DownloadBase[T]) handleLongDiskCheck(elapsed time.Duration) {
 	if elapsed > time.Second*5 {
 		d.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
 
@@ -260,7 +264,9 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 				models.Orange)
 		}
 	}
+}
 
+func (d *DownloadBase[T]) handleNoContentToDownload() bool {
 	if len(d.ToDownload) == 0 {
 		d.Log.Debug().Msg("no chapters to download, stopping")
 
@@ -271,12 +277,15 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 			Id:          d.Id(),
 			DeleteFiles: false,
 		}
-		if err = d.Client.RemoveDownload(req); err != nil {
+		if err := d.Client.RemoveDownload(req); err != nil {
 			d.Log.Error().Err(err).Msg("error while cleaning up")
 		}
-		return
+		return true
 	}
+	return false
+}
 
+func (d *DownloadBase[T]) finalizeLoadInfo(data []T, loadInfoStart time.Time) {
 	d.SetState(utils.Ternary(d.Req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
 		payload.ContentStateWaiting))
@@ -284,6 +293,34 @@ func (d *DownloadBase[T]) StartLoadInfo() {
 
 	d.Log.Debug().Int("all", len(data)).Int("filtered", len(d.ToDownload)).
 		Dur("StartLoadInfo#duration", time.Since(loadInfoStart)).Msg("downloaded content filtered")
+}
+
+func (d *DownloadBase[T]) StartLoadInfo() {
+	ctx, shouldContinue := d.initializeLoadInfo()
+	if !shouldContinue {
+		return
+	}
+
+	loadInfoStart := time.Now()
+
+	p, err := d.preferences.GetComplete()
+	if err != nil {
+		d.Log.Error().Err(err).Msg("unable to get preferences, some features may not work")
+	}
+	d.Preference = p
+
+	if !d.loadContentInfo(ctx) {
+		return
+	}
+
+	data, elapsed := d.prepareContentToDownload()
+	d.handleLongDiskCheck(elapsed)
+
+	if d.handleNoContentToDownload() {
+		return
+	}
+
+	d.finalizeLoadInfo(data, loadInfoStart)
 }
 
 func (d *DownloadBase[T]) StartDownload() {
