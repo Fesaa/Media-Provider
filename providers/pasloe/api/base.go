@@ -21,7 +21,7 @@ type IDAble interface {
 	Label() string
 }
 
-func NewDownloadableFromBlock[T IDAble](scope *dig.Scope, handler string, block DownloadInfoProvider[T]) *DownloadBase[T] {
+func NewBaseWithProvider[T IDAble](scope *dig.Scope, handler string, provider DownloadInfoProvider[T]) *DownloadBase[T] {
 	var base = &DownloadBase[T]{}
 
 	utils.Must(scope.Invoke(func(
@@ -35,7 +35,7 @@ func NewDownloadableFromBlock[T IDAble](scope *dig.Scope, handler string, block 
 		fs afero.Afero,
 	) {
 		base = &DownloadBase[T]{
-			infoProvider: block,
+			infoProvider: provider,
 			Client:       client,
 			Log:          log.With().Str("handler", handler).Str("id", req.Id).Logger(),
 			id:           req.Id,

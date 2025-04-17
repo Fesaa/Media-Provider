@@ -40,7 +40,7 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 			fs:              fs,
 		}
 
-		wt.DownloadBase = api.NewDownloadableFromBlock[Chapter](scope, "webtoon", wt)
+		wt.DownloadBase = api.NewBaseWithProvider[Chapter](scope, "webtoon", wt)
 	}))
 	return wt
 }
