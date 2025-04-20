@@ -40,7 +40,7 @@
             [pTooltip]="notification.CreatedAt | utcToLocalTime:'short'" tooltipPosition="top">
           {{notification.CreatedAt | utcToLocalTime:'shortDate'}}
         </td>
-        <td style="{width: 10%}"><p-tag [value]="notification.group" [severity]="groupSeverity(notification.group)" /></td>
+        <td style="{width: 10%}"><p-tag [value]="notification.group" [severity]="notification.colour" /></td>
         <td style="{width: 20%}">{{notification.title}}</td>
         <td style="{width: 40%}">{{notification.summary}}</td>
         <td style="{width: 20%}">

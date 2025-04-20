@@ -38,7 +38,7 @@ func (m mockRegistry) Create(c api.Client, req payload.DownloadRequest) (api.Dow
 		block.mockAll = []ID{"a", "b"}
 	}
 
-	base := api.NewDownloadableFromBlock(scope, "", block)
+	base := api.NewBaseWithProvider(scope, "", block)
 	block.DownloadBase = base
 	return block, nil
 }
@@ -77,7 +77,7 @@ type MockContent struct {
 
 func NewMockContent(scope *dig.Scope) *MockContent {
 	mc := &MockContent{}
-	base := api.NewDownloadableFromBlock[ID](scope, "mock-content", mc)
+	base := api.NewBaseWithProvider[ID](scope, "mock-content", mc)
 	mc.DownloadBase = base
 	return mc
 }

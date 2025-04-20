@@ -45,7 +45,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
-		m.DownloadBase = api.NewDownloadableFromBlock[ChapterSearchData](scope, "mangadex", m)
+		m.DownloadBase = api.NewBaseWithProvider[ChapterSearchData](scope, "mangadex", m)
 	}))
 
 	return m

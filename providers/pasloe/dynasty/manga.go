@@ -40,7 +40,7 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			fs:              fs,
 		}
 
-		m.DownloadBase = api.NewDownloadableFromBlock[Chapter](scope, "dynasty-manga", m)
+		m.DownloadBase = api.NewBaseWithProvider[Chapter](scope, "dynasty-manga", m)
 	}))
 
 	return m

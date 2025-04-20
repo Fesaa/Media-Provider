@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// Add new relations in impl/preferences.go (update & Preferences.GetComplete)
+
 type Preference struct {
 	Model
 

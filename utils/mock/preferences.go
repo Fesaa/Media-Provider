@@ -20,3 +20,7 @@ func (p *Preferences) Update(pref models.Preference) error {
 	p.Model = pref
 	return nil
 }
+
+func (p *Preferences) Flush() error {
+	return nil
+}

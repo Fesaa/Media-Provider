@@ -29,9 +29,13 @@ type Notifications interface {
 }
 
 type Preferences interface {
+	// Get returns a pointer to Preference, with no relations loaded
 	Get() (*Preference, error)
+	// GetComplete returns a pointer to Preference, with all relations loaded
 	GetComplete() (*Preference, error)
 	Update(pref Preference) error
+	// Flush set the cached value for Get and GetComplete to nil
+	Flush() error
 }
 
 type Subscriptions interface {
