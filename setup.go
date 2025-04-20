@@ -20,13 +20,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"path"
 	"path/filepath"
 	"slices"
-	"strings"
 )
 
 type appParams struct {
@@ -182,19 +179,4 @@ func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero
 	}
 
 	return nil
-}
-
-func PprofEndPoint(log zerolog.Logger) {
-	if strings.ToLower(os.Getenv("PPROF")) != "true" {
-		log.Debug().Msg("pprof is not enabled, not starting http server")
-		return
-	}
-
-	go func() {
-		log.Info().Msg("Starting pprof endpoint on localhost:6060")
-		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
-			log.Error().Err(err).Msg("Failed to start pprof")
-		}
-	}()
-
 }
