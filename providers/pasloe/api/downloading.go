@@ -222,7 +222,14 @@ func (d *DownloadBase[T]) channelConsumer(
 	failedCh := make(chan downloadUrl)
 
 	d.processInitialDownloads(innerCtx, ctx, t, l, urlCh, failedCh)
-	d.processFailedDownloads(innerCtx, ctx, t, l, failedCh, errCh, cancel)
+
+	select {
+	case <-innerCtx.Done():
+	case <-ctx.Done():
+		return
+	default:
+		d.processFailedDownloads(innerCtx, ctx, t, l, failedCh, errCh, cancel)
+	}
 }
 
 func (d *DownloadBase[T]) processInitialDownloads(
