@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	CachedItemExpired = errors.New("cached item has expired")
+	ErrCachedItemExpired = errors.New("cached item has expired")
 )
 
 // CachedItem is the simplest way of caching an item, do not use for more complicated stuff
@@ -24,7 +24,7 @@ type cachedItem[T any] struct {
 func (c *cachedItem[T]) Get() (T, error) {
 	if c.HasExpired() {
 		var zero T
-		return zero, CachedItemExpired
+		return zero, ErrCachedItemExpired
 	}
 
 	return c.data, nil
