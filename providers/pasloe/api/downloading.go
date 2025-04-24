@@ -159,7 +159,7 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 
 	for range d.maxImages {
 		wg.Add(1)
-		go d.channelConsumer(innerCtx, cancel, ctx, t, l, urlCh, errCh, wg)
+		go d.channelConsumer(innerCtx, cancel, ctx, t, len(urls), l, urlCh, errCh, wg)
 	}
 
 	wg.Wait()
@@ -213,13 +213,14 @@ func (d *DownloadBase[T]) channelConsumer(
 	cancel context.CancelFunc,
 	ctx context.Context,
 	t T,
+	size int,
 	l zerolog.Logger,
 	urlCh chan downloadUrl,
 	errCh chan error,
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
-	failedCh := make(chan downloadUrl)
+	failedCh := make(chan downloadUrl, size)
 
 	d.processInitialDownloads(innerCtx, ctx, t, l, urlCh, failedCh)
 
