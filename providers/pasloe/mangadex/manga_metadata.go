@@ -232,6 +232,10 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		m.Log.Trace().Err(err).Str("volume", chapter.Attributes.Volume).Msg("unable to parse volume number")
 	}
 
+	if chapter.Attributes.Chapter != "" {
+		ci.Number = chapter.Attributes.Chapter
+	}
+
 	m.writeTagsAndGenres(ci)
 
 	ci.Writer = strings.Join(m.info.Authors(), ",")

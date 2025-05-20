@@ -20,7 +20,8 @@ type DownloadRequest struct {
 	DownloadMetadata models.DownloadRequestMetadata `json:"downloadMetadata,omitempty"`
 
 	// Internal communication
-	IsSubscription bool
+	IsSubscription bool `json:"-"`
+	Sub            *models.Subscription
 }
 
 // IncludesMetadataSlice returns true if the request includes metadata for all passed keys, false otherwise

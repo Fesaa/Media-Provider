@@ -25,7 +25,7 @@
   "sub-downloaded-all-title": "Subscription exhausted",
   "sub-downloaded-all": "The subscription on %s has downloaded all possible content; (%d %s), consider removing it.",
   "download-finished-title": "Download completed",
-  "download-finished": "%s finished downloading %d item(s)",
+  "download-finished": "<a class=\"hover:pointer hover:underline\" href=\"%s\" target=\"_blank\">%s</a> finished downloading %d item(s)",
   "re-downloads": "\n %d items were re-downloaded",
   "content-line": "\n\t- %s",
   "failed-downloads": "\n%d pages were re-downloaded",

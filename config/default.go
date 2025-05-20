@@ -4,7 +4,6 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"os"
-	"path"
 )
 
 func DefaultConfig() *Config {
@@ -13,9 +12,14 @@ func DefaultConfig() *Config {
 		panic(err)
 	}
 
+	pwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
 	return &Config{
 		SyncId:  0,
-		RootDir: path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"),
+		RootDir: OrDefault(os.Getenv("CONFIG_DIR"), pwd),
 		BaseUrl: "",
 		Secret:  secret,
 		Cache: CacheConfig{

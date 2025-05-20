@@ -8,11 +8,17 @@ import (
 	"github.com/rs/zerolog"
 )
 
+type DisplayInformation struct {
+	Name string
+}
+
 type Downloadable interface {
 	services.Content
 	GetBaseDir() string
 	Cancel()
 	GetDownloadDir() string
+
+	DisplayInformation() DisplayInformation
 
 	// GetOnDiskContent returns the name of the files that have been identified as already existing content
 	GetOnDiskContent() []Content

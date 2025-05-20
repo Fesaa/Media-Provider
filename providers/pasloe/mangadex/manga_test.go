@@ -933,6 +933,7 @@ func TestReplaceCover(t *testing.T) {
 }
 
 func TestReplaceCoverDestructionLover(t *testing.T) {
+	t.Skipf("Removed from mangadex")
 	m := tempManga(t, payload.DownloadRequest{
 		Provider:  models.MANGADEX,
 		Id:        "192f8421-55f9-46e2-9c6e-87a88c2f048a",

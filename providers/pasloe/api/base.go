@@ -100,6 +100,17 @@ type DownloadBase[T IDAble] struct {
 	Wg     *sync.WaitGroup
 }
 
+func (d *DownloadBase[T]) DisplayInformation() DisplayInformation {
+	return DisplayInformation{
+		Name: func() string {
+			if d.Req.IsSubscription && d.Req.Sub != nil {
+				return d.Req.Sub.Info.Title
+			}
+			return d.infoProvider.Title()
+		}(),
+	}
+}
+
 func (d *DownloadBase[T]) FailedDownloads() int {
 	return d.failedDownloads
 }

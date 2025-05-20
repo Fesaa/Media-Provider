@@ -76,6 +76,8 @@ export class UserLoginComponent implements OnInit {
       next: () => {
         this.loginForm.reset();
         this.pageService.refreshPages();
+        this.navService.setNavVisibility(true);
+
         const pageResume = localStorage.getItem(AuthGuard.urlKey);
         localStorage.setItem(AuthGuard.urlKey, '');
         if (pageResume && pageResume != '/login') {

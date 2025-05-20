@@ -99,6 +99,10 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		}
 	}
 
+	if chapter.Chapter != "" {
+		ci.Number = chapter.Chapter
+	}
+
 	ci.Writer = strings.Join(utils.Map(m.seriesInfo.Authors, func(t Author) string {
 		return t.DisplayName
 	}), ",")

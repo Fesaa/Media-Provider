@@ -149,7 +149,9 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		if len(content.GetNewContent()) > 0 || alwaysLog {
 			var summary, body string
 
-			summary = c.transLoco.GetTranslation("download-finished", content.Title(), len(content.GetNewContent()))
+			di := content.DisplayInformation()
+
+			summary = c.transLoco.GetTranslation("download-finished", content.GetInfo().RefUrl, di.Name, len(content.GetNewContent()))
 			if len(content.GetToRemoveContent()) > 0 {
 				summary += c.transLoco.GetTranslation("re-downloads", len(content.GetToRemoveContent()))
 			}
@@ -165,7 +167,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 
 			c.notifier(content.Request()).Notify(models.Notification{
 				Title:   c.transLoco.GetTranslation("download-finished-title"),
-				Summary: utils.Shorten(summary, services.SummarySize),
+				Summary: summary,
 				Body:    body,
 				Colour:  models.Green,
 				Group:   models.GroupContent,
