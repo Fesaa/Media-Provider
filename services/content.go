@@ -160,6 +160,7 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription, isSub ..
 		DownloadMetadata: sub.Payload,
 
 		IsSubscription: utils.OrDefault(isSub, true),
+		Sub:            sub,
 	})
 }
 
