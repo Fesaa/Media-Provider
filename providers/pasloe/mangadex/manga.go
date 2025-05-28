@@ -3,7 +3,6 @@ package mangadex
 import (
 	"context"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -211,8 +210,7 @@ func (m *manga) ContentUrls(ctx context.Context, chapter ChapterSearchData) ([]s
 }
 
 func (m *manga) DownloadContent(page int, chapter ChapterSearchData, url string) error {
-	ext := config.OrDefault(path.Ext(url), "jpg")
-	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(page, 4)))
+	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(page, 4)))
 	if err := m.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}

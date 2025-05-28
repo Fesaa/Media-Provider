@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -185,8 +184,7 @@ func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, err
 }
 
 func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
-	ext := config.OrDefault(path.Ext(url), "jpg")
-	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(idx, 4)))
+	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(idx, 4)))
 	if err := m.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}
