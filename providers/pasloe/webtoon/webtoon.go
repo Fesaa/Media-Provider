@@ -206,7 +206,7 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 }
 
 func (w *webtoon) DownloadContent(page int, chapter Chapter, url string) error {
-	filePath := path.Join(w.ContentPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(page, 4)))
+	filePath := path.Join(w.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(page, 4)))
 	if err := w.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}

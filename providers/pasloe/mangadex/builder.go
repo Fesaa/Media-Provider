@@ -114,6 +114,7 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 			},
 			{
 				Key:      ScanlationGroupKey,
+				Advanced: true,
 				FormType: payload.TEXT,
 			},
 			{
@@ -127,6 +128,7 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 			},
 			{
 				Key:      UpdateCover,
+				Advanced: true,
 				FormType: payload.SWITCH,
 			},
 		},

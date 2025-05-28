@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {TableModule} from "primeng/table";
 import {NotificationService} from "../_services/notification.service";
-import {GroupWeight, Notification, NotificationGroup} from "../_models/notifications";
+import {GroupWeight, Notification} from "../_models/notifications";
 import {Tag} from "primeng/tag";
 import {Button} from "primeng/button";
 import {Tooltip} from "primeng/tooltip";
@@ -15,7 +15,6 @@ import {FormsModule} from "@angular/forms";
 import {NavService} from "../_services/nav.service";
 import {Checkbox} from "primeng/checkbox";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {DatePipe} from "@angular/common";
 import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
 
 @Component({

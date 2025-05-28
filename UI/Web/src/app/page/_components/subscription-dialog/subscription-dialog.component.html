@@ -1,35 +1,55 @@
-<div class="flex flex-col space-y-5 mt-5 mb-2" *transloco="let t;prefix:'page.subscription-dialog'">
 
-  <div class="card flex">
-    <p-floatlabel [style]="{width: '100%'}" variant="on">
-      <input [(ngModel)]="this.subscription.info.title" autocomplete="off" class="w-full p-2"
-             id="title" pInputText type="text"/>
-      <label for="title">{{ t('title') }}</label>
-    </p-floatlabel>
-  </div>
+<p-tabs [value]="TabId.General" *transloco="let t;prefix:'page.subscription-dialog'">
+  <p-tablist>
+    <p-tab [value]="TabId.General">{{t(TabId.General)}}</p-tab>
+    <p-tab [value]="TabId.Metadata">{{t(TabId.Metadata)}}</p-tab>
+  </p-tablist>
+  <p-tabpanels>
+    <p-tabpanel [value]="TabId.General">
+      <div class="flex flex-col mb-2 space-y-5 max-h-80">
+        <div class="card flex">
+          <p-floatlabel [style]="{width: '100%'}" variant="on">
+            <input [(ngModel)]="this.subscription.info.title" autocomplete="off" class="w-full p-2"
+                   id="title" pInputText type="text"/>
+            <label for="title">{{ t('title') }}</label>
+          </p-floatlabel>
+        </div>
 
-  <div class="card flex w-full">
-    <p-floatlabel [style]="{width: '100%'}" variant="on">
-      <input [(ngModel)]="this.subscription.info.baseDir" autocomplete="off" class="w-full flex-grow p-2"
-             id="download_dir" pInputText type="text"/>
-      <label for="download_dir">{{ t('directory') }}</label>
-    </p-floatlabel>
-  </div>
+        <div class="card flex w-full">
+          <p-floatlabel [style]="{width: '100%'}" variant="on">
+            <input [(ngModel)]="this.subscription.info.baseDir" autocomplete="off" class="w-full flex-grow p-2"
+                   id="download_dir" pInputText type="text"/>
+            <label for="download_dir">{{ t('directory') }}</label>
+          </p-floatlabel>
+        </div>
 
-  <div class="card flex">
-    <p-floatlabel [style]="{width: '100%'}" variant="on">
-      <p-select [(ngModel)]="this.subscription.refreshFrequency"
-                [options]="RefreshFrequencies"
-                id="refresh_frequency"
-                styleClass="w-full"/>
-      <label for="refresh_frequency">{{ t('refresh-frequency') }}</label>
-    </p-floatlabel>
-  </div>
-
-  <app-provider-metadata-options [canHideMetadata]="true" [hideMetadata]="true" [subscription]="subscription" [metadata]="metadata" />
+        <div class="card flex">
+          <p-floatlabel [style]="{width: '100%'}" variant="on">
+            <p-select [(ngModel)]="this.subscription.refreshFrequency"
+                      [options]="RefreshFrequencies"
+                      id="refresh_frequency"
+                      styleClass="w-full"/>
+            <label for="refresh_frequency">{{ t('refresh-frequency') }}</label>
+          </p-floatlabel>
+        </div>
+      </div>
+    </p-tabpanel>
+    <p-tabpanel [value]="TabId.Metadata">
+      <app-provider-metadata-options [canHideMetadata]="false" [hideMetadata]="false" [subscription]="subscription" [metadata]="metadata" />
+    </p-tabpanel>
+  </p-tabpanels>
 
   <div class="flex w-full flex-grow justify-end gap-4 mt-10">
     <p-button (click)="close()" [label]="t('cancel') | titlecase" severity="secondary"/>
     <p-button (click)="subscribe()" [label]="t('subscribe')" />
   </div>
-</div>
+
+</p-tabs>
+
+
+
+
+
+
+
+

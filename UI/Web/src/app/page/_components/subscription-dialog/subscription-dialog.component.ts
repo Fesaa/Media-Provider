@@ -14,6 +14,12 @@ import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType} 
 import {
   ProviderMetadataOptionsComponent
 } from "../../../shared/_component/provider-metadata-options/provider-metadata-options.component";
+import {Tab, TabList, TabPanel, TabPanels, Tabs} from "primeng/tabs";
+
+enum TabId {
+  General = "general",
+  Metadata = "metadata",
+}
 
 @Component({
   selector: 'app-subscription-dialog',
@@ -26,7 +32,12 @@ import {
     Select,
     TranslocoDirective,
     TitleCasePipe,
-    ProviderMetadataOptionsComponent
+    ProviderMetadataOptionsComponent,
+    Tab,
+    TabList,
+    TabPanel,
+    TabPanels,
+    Tabs
   ],
   templateUrl: './subscription-dialog.component.html',
   styleUrl: './subscription-dialog.component.css'
@@ -96,4 +107,5 @@ export class SubscriptionDialogComponent implements OnInit {
 
   protected readonly DownloadMetadataFormType = DownloadMetadataFormType;
   protected readonly Boolean = Boolean;
+  protected readonly TabId = TabId;
 }

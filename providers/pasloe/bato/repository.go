@@ -131,6 +131,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 
 	return &Series{
 		Id:                id,
+		CoverUrl:          doc.Find("main > div > div > div > img").AttrOr("src", ""),
 		Title:             info.Find("div > h3 a.link.link-hover").First().Text(),
 		OriginalTitle:     info.Find("div > div > span").First().Text(),
 		Authors:           info.Find("div.text-sm > a.link.link-hover.link-primary").Map(mapToContent),
