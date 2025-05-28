@@ -15,6 +15,7 @@ const (
 	MANGADEX
 	WEBTOON
 	DYNASTY
+	BATO
 )
 
 func (p Provider) String() string {
@@ -33,6 +34,8 @@ func (p Provider) String() string {
 		return "Webtoon"
 	case DYNASTY:
 		return "Dynasty"
+	case BATO:
+		return "Bato"
 	default:
 		return "Unknown Provider"
 	}

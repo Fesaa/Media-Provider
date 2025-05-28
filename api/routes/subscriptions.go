@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	allowedProviders      = []models.Provider{models.MANGADEX, models.WEBTOON, models.DYNASTY}
+	allowedProviders      = []models.Provider{models.MANGADEX, models.WEBTOON, models.DYNASTY, models.BATO}
 	errDisallowedProvider = errors.New("the passed provider does not support subscription")
 )
 

@@ -22,6 +22,8 @@ export class ProviderNamePipe implements PipeTransform {
         return "YTS";
       case Provider.WEBTOON:
         return "WebToon";
+      case Provider.BATO:
+        return "Bato";
       default:
         return "Unknown";
     }

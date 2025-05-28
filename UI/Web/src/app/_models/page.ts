@@ -30,6 +30,7 @@ export enum Provider {
   MANGADEX,
   WEBTOON,
   DYNASTY,
+  BATO
 }
 
 export const Providers = [
@@ -60,6 +61,10 @@ export const Providers = [
   {
     label: "Dynasty",
     value: Provider.DYNASTY
+  },
+  {
+    label: "Bato",
+    value: Provider.BATO
   }
 ];
 

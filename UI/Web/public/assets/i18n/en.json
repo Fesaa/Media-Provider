@@ -386,9 +386,9 @@
     },
     "preferences": {
       "dynasty-genres": {
-        "label": "Dynasty tags to save as genre",
-        "header": "Dynasty Tags to Genre mapper",
-        "explanation": "The following tags will be added as a genre when downloading from Dynasty, add or remove as wanted.",
+        "label": "Tags to save as genre",
+        "header": "Tags to Genre mapper",
+        "explanation": "The following tags will be added as a genre when downloading from Dynasty or Bato, add or remove as wanted.",
         "add-new": "Add new genre",
         "filter": "{{shared.filter}}",
         "empty": "No genres have been configured yet."

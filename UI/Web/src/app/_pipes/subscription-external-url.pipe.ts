@@ -15,6 +15,8 @@ export class SubscriptionExternalUrlPipe implements PipeTransform {
         return "https://www.webtoons.com/episodeList?titleNo=" + contentId;
       case Provider.DYNASTY:
         return "https://dynasty-scans.com/series/" + contentId;
+      case Provider.BATO:
+        return "https://bato.to/title/" + contentId;
       default:
         throw new Error(`Unsupported provider: ${provider}`);
     }

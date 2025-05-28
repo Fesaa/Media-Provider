@@ -107,3 +107,9 @@ func GroupBy[K comparable, V any](s []V, f func(V) K) map[K][]V {
 
 	return out
 }
+
+func MapToString[T ~string](m []T) []string {
+	return Map(m, func(t T) string {
+		return string(t)
+	})
+}
