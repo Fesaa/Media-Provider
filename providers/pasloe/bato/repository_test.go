@@ -83,6 +83,14 @@ func TestRepository_SeriesInfo(t *testing.T) {
 		t.Fatalf("got %s want nil", series.Chapters[0].Volume)
 	}
 
+	lilyClub := utils.Find(series.Authors, func(s string) bool {
+		return s == "Lily Club (橘姬社)"
+	})
+
+	if lilyClub == nil {
+		t.Fatalf("got no Lily Club")
+	}
+
 }
 
 func TestRepository_SeriesWithVolume(t *testing.T) {

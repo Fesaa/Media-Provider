@@ -133,7 +133,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 		Id:                id,
 		Title:             info.Find("div > h3 a.link.link-hover").First().Text(),
 		OriginalTitle:     info.Find("div > div > span").First().Text(),
-		Authors:           info.Find("div > div:nth-child(2) > a.link.link-hover.link-primary ").Map(mapToContent),
+		Authors:           info.Find("div.text-sm > a.link.link-hover.link-primary").Map(mapToContent),
 		Tags:              extractSeperatedList(info.Find("div.space-y-2 > div.flex.items-center.flex-wrap > span > span"), ","),
 		PublicationStatus: Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").First().Text()),
 		Summary:           info.Find("div.limit-html-p").First().Text(),
