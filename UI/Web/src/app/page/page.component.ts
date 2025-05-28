@@ -23,6 +23,7 @@ import {FloatLabel} from "primeng/floatlabel";
 import {ContentService} from "../_services/content.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {Paginator} from "primeng/paginator";
+import {Button} from "primeng/button";
 
 @Component({
   selector: 'app-page',
@@ -37,7 +38,8 @@ import {Paginator} from "primeng/paginator";
     MultiSelect,
     FloatLabel,
     TranslocoDirective,
-    Paginator
+    Paginator,
+    Button
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.css',

@@ -150,6 +150,8 @@
 
   "page": {
     "download-dialog": {
+      "general": "General",
+      "advanced": "Advanced",
       "directory": "Download directory",
       "start-now": "Start download immediately",
       "extra-metadata": {

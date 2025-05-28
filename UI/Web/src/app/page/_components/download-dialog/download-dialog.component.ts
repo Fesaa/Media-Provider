@@ -13,8 +13,17 @@ import {MultiSelect} from "primeng/multiselect";
 import {ToastService} from "../../../_services/toast.service";
 import {Tooltip} from "primeng/tooltip";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {TitleCasePipe} from "@angular/common";
+import {NgTemplateOutlet, TitleCasePipe} from "@angular/common";
 import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
+import {Tab, TabList, TabPanel, TabPanels, Tabs} from "primeng/tabs";
+import {DirectorySelectorComponent} from "../../../shared/_component/directory-selector/directory-selector.component";
+import {IconField} from "primeng/iconfield";
+import {InputIcon} from "primeng/inputicon";
+
+enum TabId {
+  General = "general",
+  Advanced = "advanced",
+}
 
 @Component({
   selector: 'app-download-dialog',
@@ -30,9 +39,15 @@ import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} fr
     Tooltip,
     TranslocoDirective,
     TitleCasePipe,
-    CdkVirtualScrollViewport,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf
+    Tabs,
+    TabList,
+    Tab,
+    TabPanel,
+    TabPanels,
+    DirectorySelectorComponent,
+    IconField,
+    InputIcon,
+    NgTemplateOutlet
   ],
   templateUrl: './download-dialog.component.html',
   styleUrl: './download-dialog.component.css'
@@ -45,6 +60,7 @@ export class DownloadDialogComponent implements OnInit {
   @Input({required: true}) downloadDir!: string;
   @Input({required: true}) searchResult!: SearchInfo;
   @Input({required: true}) metadata!: DownloadMetadata | undefined;
+  showPicker: boolean = false;
 
   requestMetadata: DownloadRequestMetadata = {
     extra: {},
@@ -69,6 +85,16 @@ export class DownloadDialogComponent implements OnInit {
         this.requestMetadata.extra[met.key] = [met.defaultOption]
       }
     }
+  }
+
+  advanced() {
+    if (!this.metadata || !this.metadata.definitions) return [];
+    return this.metadata.definitions.filter(definition => definition.advanced);
+  }
+
+  simple() {
+    if (!this.metadata || !this.metadata.definitions) return [];
+    return this.metadata.definitions.filter(definition => !definition.advanced)
   }
 
   changeChoice(meta: DownloadMetadataDefinition, value: string | boolean | string[]) {
@@ -103,4 +129,6 @@ export class DownloadDialogComponent implements OnInit {
   close() {
     this.visibleChange.emit(false);
   }
+
+  protected readonly TabId = TabId;
 }

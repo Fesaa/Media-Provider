@@ -17,6 +17,7 @@ type DownloadMetadata struct {
 
 type DownloadMetadataDefinition struct {
 	Key           string                   `json:"key"`
+	Advanced      bool                     `json:"advanced"`
 	FormType      DownloadMetadataFormType `json:"formType"`
 	DefaultOption string                   `json:"defaultOption"`
 	Options       []MetadataOption         `json:"options"`
