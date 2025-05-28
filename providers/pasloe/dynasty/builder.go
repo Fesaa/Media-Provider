@@ -66,6 +66,7 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 			},
 			{
 				Key:      IncludeNotMatchedTagsKey,
+				Advanced: true,
 				FormType: payload.SWITCH,
 			},
 			{
