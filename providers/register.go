@@ -3,6 +3,7 @@ package providers
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/bato"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
@@ -22,6 +23,7 @@ func RegisterProviders(s services.ContentService, container *dig.Container) {
 	utils.Must(container.Provide(webtoon.NewRepository))
 	utils.Must(container.Provide(mangadex.NewRepository))
 	utils.Must(container.Provide(dynasty.NewRepository))
+	utils.Must(container.Provide(bato.NewRepository))
 
 	utils.Must(scope.Provide(yts.NewBuilder))
 	utils.Must(scope.Provide(subsplease.NewBuilder))
@@ -30,6 +32,7 @@ func RegisterProviders(s services.ContentService, container *dig.Container) {
 	utils.Must(scope.Provide(mangadex.NewBuilder))
 	utils.Must(scope.Provide(dynasty.NewBuilder))
 	utils.Must(scope.Provide(nyaa.NewBuilder))
+	utils.Must(scope.Provide(bato.NewBuilder))
 
 	utils.Must(registerProviderAdapter[*yts.Builder](s, scope))
 	utils.Must(registerProviderAdapter[*subsplease.Builder](s, scope))
@@ -38,6 +41,7 @@ func RegisterProviders(s services.ContentService, container *dig.Container) {
 	utils.Must(registerProviderAdapter[*mangadex.Builder](s, scope))
 	utils.Must(registerProviderAdapter[*dynasty.Builder](s, scope))
 	utils.Must(registerProviderAdapter[*nyaa.Builder](s, scope))
+	utils.Must(registerProviderAdapter[*bato.Builder](s, scope))
 }
 
 type defaultProviderAdapter[T any, S any] struct {

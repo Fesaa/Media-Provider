@@ -8,7 +8,7 @@ import (
 
 func isValidProvider(fl validator.FieldLevel) bool {
 	provider := models.Provider(fl.Field().Int())
-	return provider >= models.NYAA && provider <= models.DYNASTY
+	return provider >= models.NYAA && provider <= models.BATO
 }
 
 func diffValidator(fl validator.FieldLevel) bool {
