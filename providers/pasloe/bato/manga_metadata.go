@@ -39,9 +39,9 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci.Writer = strings.Join(m.seriesInfo.Authors, ",")
 	ci.Web = m.seriesInfo.RefUrl()
 
-	m.WriteGenreAndTags(chapter, ci)
+	m.WriteGenreAndTags(ci)
 
-	if ar, ok := m.getAgeRating(chapter); ok {
+	if ar, ok := m.getAgeRating(); ok {
 		ci.AgeRating = ar
 	}
 
@@ -49,7 +49,7 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 }
 
-func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
+func (m *manga) WriteGenreAndTags(ci *comicinfo.ComicInfo) {
 	tags := m.seriesInfo.Tags
 
 	var genres, blackList models.Tags
@@ -100,7 +100,7 @@ func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
 	}
 }
 
-func (m *manga) getAgeRating(chapter Chapter) (comicinfo.AgeRating, bool) {
+func (m *manga) getAgeRating() (comicinfo.AgeRating, bool) {
 	if m.Preference == nil {
 		m.Log.Warn().Msg("Could not load age rate mapping, not setting age rating")
 		return "", false

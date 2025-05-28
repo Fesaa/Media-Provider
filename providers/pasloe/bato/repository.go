@@ -65,13 +65,13 @@ func (r *repository) selectionToSearchResult(_ int, sel *goquery.Selection) Sear
 
 	info := sel.Find("div:nth-child(2)")
 	sr.Title = info.Find("h3 a span span").First().Text()
-	//sr.Authors = extractSeperatedList(info.Find("div:nth-child(2) span"), "/")
-	//sr.Tags = extractSeperatedList(info.Find("div:nth-child(4) span"), ",")
+	// sr.Authors = extractSeperatedList(info.Find("div:nth-child(2) span"), "/")
+	// sr.Tags = extractSeperatedList(info.Find("div:nth-child(4) span"), ",")
 
-	//meta := info.Find("div:nth-child(5)")
-	//sr.LatestChapter = meta.Find("span a span").First().Text()
-	//sr.UploaderImg = meta.Find("span div div a img").AttrOr("src", "")
-	//sr.LastUploaded = meta.Find("span span time").First().Text()
+	// meta := info.Find("div:nth-child(5)")
+	// sr.LatestChapter = meta.Find("span a span").First().Text()
+	// sr.UploaderImg = meta.Find("span div div a img").AttrOr("src", "")
+	// sr.LastUploaded = meta.Find("span span time").First().Text()
 
 	return sr
 }

@@ -1,7 +1,6 @@
 package bato
 
 import (
-	"context"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"io"
@@ -25,7 +24,7 @@ func TestRepository_Search(t *testing.T) {
 		BatoUploadStatus:   []Publication{PublicationOngoing},
 	}
 
-	series, err := repo.Search(context.Background(), options)
+	series, err := repo.Search(t.Context(), options)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +50,7 @@ func TestRepository_Search(t *testing.T) {
 func TestRepository_SeriesInfo(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	series, err := repo.SeriesInfo(context.Background(), "172024-heart-of-thorns")
+	series, err := repo.SeriesInfo(t.Context(), "172024-heart-of-thorns")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +88,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 func TestRepository_SeriesWithVolume(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	series, err := repo.SeriesInfo(context.Background(), "133980-little-mushroom")
+	series, err := repo.SeriesInfo(t.Context(), "133980-little-mushroom")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +109,7 @@ func TestRepository_SeriesWithVolume(t *testing.T) {
 func TestRepository_ChapterImages(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	images, err := repo.ChapterImages(context.Background(), "172024-heart-of-thorns/3343778-ch_77")
+	images, err := repo.ChapterImages(t.Context(), "172024-heart-of-thorns/3343778-ch_77")
 	if err != nil {
 		t.Fatal(err)
 	}
