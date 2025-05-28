@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
@@ -206,7 +207,8 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 }
 
 func (w *webtoon) DownloadContent(page int, chapter Chapter, url string) error {
-	filePath := path.Join(w.ContentPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(page, 4)))
+	ext := config.OrDefault(path.Ext(url), "jpg")
+	filePath := path.Join(w.ContentPath(chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(page, 4)))
 	if err := w.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}

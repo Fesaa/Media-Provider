@@ -11,8 +11,22 @@ import (
 )
 
 func (m *manga) WriteContentMetaData(chapter Chapter) error {
+
+	if m.Req.GetBool(IncludeCover, true) {
+		if err := m.writeCover(chapter); err != nil {
+			return err
+		}
+	}
+
 	m.Log.Trace().Str("chapter", chapter.Chapter).Msg("writing comicinfoxml")
 	return comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
+}
+
+func (m *manga) writeCover(chapter Chapter) error {
+	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
+	// first by most readers, and in particular, kavita.
+	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
+	return m.downloadAndWrite(m.seriesInfo.CoverUrl, filePath)
 }
 
 func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
