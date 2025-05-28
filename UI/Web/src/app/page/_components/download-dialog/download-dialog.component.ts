@@ -14,7 +14,6 @@ import {ToastService} from "../../../_services/toast.service";
 import {Tooltip} from "primeng/tooltip";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {NgTemplateOutlet, TitleCasePipe} from "@angular/common";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from "primeng/tabs";
 import {DirectorySelectorComponent} from "../../../shared/_component/directory-selector/directory-selector.component";
 import {IconField} from "primeng/iconfield";

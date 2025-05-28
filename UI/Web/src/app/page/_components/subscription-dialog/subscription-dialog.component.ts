@@ -14,9 +14,6 @@ import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType} 
 import {
   ProviderMetadataOptionsComponent
 } from "../../../shared/_component/provider-metadata-options/provider-metadata-options.component";
-import {DirectorySelectorComponent} from "../../../shared/_component/directory-selector/directory-selector.component";
-import {IconField} from "primeng/iconfield";
-import {InputIcon} from "primeng/inputicon";
 import {Tab, TabList, TabPanel, TabPanels, Tabs} from "primeng/tabs";
 
 enum TabId {
@@ -36,9 +33,6 @@ enum TabId {
     TranslocoDirective,
     TitleCasePipe,
     ProviderMetadataOptionsComponent,
-    DirectorySelectorComponent,
-    IconField,
-    InputIcon,
     Tab,
     TabList,
     TabPanel,

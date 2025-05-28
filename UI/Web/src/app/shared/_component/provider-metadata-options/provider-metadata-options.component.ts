@@ -7,8 +7,7 @@ import {Select} from "primeng/select";
 import {MultiSelect} from "primeng/multiselect";
 import {FormsModule} from "@angular/forms";
 import {InputText} from "primeng/inputtext";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
-import { Subscription } from '../../../_models/subscription';
+import {Subscription} from '../../../_models/subscription';
 import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({

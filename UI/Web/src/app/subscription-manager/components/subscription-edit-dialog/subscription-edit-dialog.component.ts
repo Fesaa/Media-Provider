@@ -9,13 +9,7 @@ import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
 import {SubscriptionExternalUrlPipe} from "../../../_pipes/subscription-external-url.pipe";
 import {Select} from "primeng/select";
-import {
-  DownloadMetadata,
-  DownloadMetadataDefinition,
-  DownloadMetadataFormType,
-  Provider,
-  Providers
-} from "../../../_models/page";
+import {DownloadMetadata, Provider, Providers} from "../../../_models/page";
 import {ToastService} from "../../../_services/toast.service";
 import {Button} from "primeng/button";
 import {DirectorySelectorComponent} from "../../../shared/_component/directory-selector/directory-selector.component";
