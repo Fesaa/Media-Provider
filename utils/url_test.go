@@ -34,7 +34,7 @@ func TestExt(t *testing.T) {
 				uri:        "https://www.example.com/file.webp?q=40#80",
 				defaultExt: nil,
 			},
-			want: ".xwebp",
+			want: ".webp",
 		},
 	}
 	for _, tt := range tests {
