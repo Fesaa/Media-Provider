@@ -204,6 +204,8 @@
       "sub-header": "Subscribe"
     },
     "subscription-dialog": {
+      "general": "General",
+      "metadata": "Extra",
       "title": "Title",
       "directory": "{{page.download-dialog.directory}}",
       "refresh-frequency": "Refresh frequency",
@@ -573,6 +575,8 @@
 
   "subscriptions": {
     "dialog": {
+      "general": "General",
+      "metadata": "Extra",
       "header": "Edit subscription",
       "title": "Title",
       "content-id": "Content Id",

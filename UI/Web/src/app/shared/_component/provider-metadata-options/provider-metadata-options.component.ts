@@ -15,11 +15,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
   selector: 'app-provider-metadata-options',
   imports: [
     NgIf,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
     Tooltip,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualScrollViewport,
     ToggleSwitch,
     Select,
     MultiSelect,
@@ -36,6 +32,7 @@ export class ProviderMetadataOptionsComponent {
   @Input() metadata!: DownloadMetadata | undefined;
   @Input() canHideMetadata: boolean = false;
   @Input() hideMetadata: boolean = false;
+  @Input() showTitle: boolean = false;
 
   changeChoice(meta: DownloadMetadataDefinition, value: string | boolean | string[]) {
     if (value instanceof Array) {
