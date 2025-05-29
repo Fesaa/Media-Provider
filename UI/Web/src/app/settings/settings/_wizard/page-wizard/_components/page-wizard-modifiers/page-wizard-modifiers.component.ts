@@ -94,7 +94,7 @@ export class PageWizardModifiersComponent {
       title: '',
       type: ModifierType.DROPDOWN,
       values: [
-        {key: '', value: ''},
+        {key: '', value: '', default: false},
       ]
     }
     this.show(this.editModifier);

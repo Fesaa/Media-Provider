@@ -14,6 +14,14 @@ func Map[T, S any](in []T, f func(T) S) []S {
 	})
 }
 
+func MapWithState[T, U any, S any](in []T, state S, f func(T, S) (U, S)) []U {
+	out := make([]U, len(in))
+	for i, t := range in {
+		out[i], state = f(t, state)
+	}
+	return out
+}
+
 func FlatMapMany[E any](in ...[]E) []E {
 	var out []E
 	for _, e := range in {

@@ -101,6 +101,17 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 
 	page.Modifiers = utils.MapWithIdx(page.Modifiers, func(i int, mod models.Modifier) models.Modifier {
 		mod.Sort = i
+
+		// Ensure only one modifier value has the default state
+		if mod.Type == models.DROPDOWN {
+			mod.Values = utils.MapWithState(mod.Values, false, func(m models.ModifierValue, foundDefault bool) (models.ModifierValue, bool) {
+				if foundDefault {
+					m.Default = false
+				}
+				return m, foundDefault || m.Default
+			})
+		}
+
 		return mod
 	})
 

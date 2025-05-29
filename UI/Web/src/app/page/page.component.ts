@@ -108,10 +108,14 @@ export class PageComponent implements OnInit {
         if (mod.values.length > 0) {
           switch (mod.type) {
             case ModifierType.DROPDOWN:
-              this.searchRequest.modifiers[mod.key] = [mod.values[0].key]
+              const defaultValue = mod.values.find((v) => v.default);
+              this.searchRequest.modifiers[mod.key] = defaultValue ? [defaultValue.key] : [];
               break;
             case ModifierType.MULTI:
-              this.searchRequest.modifiers[mod.key] = []
+              const defaultValues = mod.values
+                .filter(v => v.default)
+                .map(v => v.key);
+              this.searchRequest.modifiers[mod.key] = defaultValues;
               break;
           }
         }
