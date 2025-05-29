@@ -25,6 +25,14 @@
   <div class="flex flex-col md:grid md:grid-cols-2 md:gap-4 md:gap-y-10 md:mt-10 md:space-y-0">
     <div *ngFor="let modV of mod.values"
          class="flex flex-col md:flex-row mb-7 md:mb-0 md:mt-0 justify-between items-center">
+
+      <div class="px-2">
+        <p-checkbox [inputId]="mod.ID + '_key_' + modV.key + '_default'"
+                    [binary]="true" [(ngModel)]="modV.default" [pTooltip]="t('default')"
+                    (onChange)="toggleOthers(mod, modV)"
+        />
+      </div>
+
       <p-floatlabel>
         <label [for]="mod.ID + '_key_' + modV.key">{{ t('key') }}</label>
 

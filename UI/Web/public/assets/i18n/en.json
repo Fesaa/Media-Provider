@@ -305,6 +305,7 @@
           "title": "Title",
           "key": "Key",
           "value": "Display Name",
+          "default": "Default",
           "check-wiki": "Check wiki!",
           "next": "{{shared.next}}",
           "back": "{{shared.back}}",

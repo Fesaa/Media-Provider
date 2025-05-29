@@ -76,11 +76,11 @@ export class PagesSettingsComponent {
   }
 
   drop($event: CdkDragDrop<any, any>) {
-    // Assume no error will occur
-    moveItemInArray(this.pages, $event.previousIndex, $event.currentIndex)
-
     const page1 = this.pages[$event.previousIndex];
     const page2 = this.pages[$event.currentIndex];
+
+    // Assume no error will occur
+    moveItemInArray(this.pages, $event.previousIndex, $event.currentIndex);
     this.pageService.swapPages(page1.ID, page2.ID).subscribe({
       next: () => {
         this.pageService.refreshPages();

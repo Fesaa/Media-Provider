@@ -9,6 +9,7 @@ import {Clipboard} from "@angular/cdk/clipboard";
 import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {Button} from "primeng/button";
 
 @Component({
   selector: 'app-server-settings',
@@ -17,7 +18,8 @@ import {TranslocoDirective} from "@jsverse/transloco";
     FormInputComponent,
     FormSelectComponent,
     Tooltip,
-    TranslocoDirective
+    TranslocoDirective,
+    Button
   ],
   templateUrl: './server-settings.component.html',
   styleUrl: './server-settings.component.css',

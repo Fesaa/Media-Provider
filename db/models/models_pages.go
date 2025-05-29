@@ -78,4 +78,5 @@ type ModifierValue struct {
 	ModifierID uint
 	Key        string `json:"key"`
 	Value      string `json:"value"`
+	Default    bool   `json:"default"`
 }

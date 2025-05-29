@@ -8,11 +8,12 @@ import {InputText} from "primeng/inputtext";
 import {NgForOf} from "@angular/common";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Select} from "primeng/select";
-import {Modifier, ModifierType} from "../../../../../../../../_models/page";
+import {Modifier, ModifierType, ModifierValue} from "../../../../../../../../_models/page";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../../../../../../../../_services/toast.service";
 import {DialogService} from "../../../../../../../../_services/dialog.service";
+import {Checkbox} from "primeng/checkbox";
 
 @Component({
   selector: 'app-modifier-edit-modal',
@@ -28,7 +29,8 @@ import {DialogService} from "../../../../../../../../_services/dialog.service";
     Select,
     FormsModule,
     TranslocoDirective,
-    Tooltip
+    Tooltip,
+    Checkbox
   ],
   templateUrl: './modifier-edit-modal.component.html',
   styleUrl: './modifier-edit-modal.component.css'
@@ -58,7 +60,8 @@ export class ModifierEditModalComponent {
 
     mod.values.push({
       key: '',
-      value: ''
+      value: '',
+      default: false,
     });
   }
 
@@ -68,6 +71,16 @@ export class ModifierEditModalComponent {
     }
 
     mod.values = mod.values.filter(value => value.key !== key);
+  }
+
+  toggleOthers(mod: Modifier, val: ModifierValue) {
+    if (mod.type !== ModifierType.DROPDOWN) return;
+
+    for (const key in mod.values) {
+      if (mod.values[key].key !== val.key) {
+        mod.values[key].default = false;
+      }
+    }
   }
 
 }

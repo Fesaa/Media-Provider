@@ -24,6 +24,22 @@ const (
 	PublicationCancelled Publication = "cancelled"
 )
 
+func toPublication(s string) (Publication, bool) {
+	switch s {
+	case "pending":
+		return PublicationPending, true
+	case "ongoing":
+		return PublicationOngoing, true
+	case "completed":
+		return PublicationCompleted, true
+	case "hiatus":
+		return PublicationHiatus, true
+	case "cancelled":
+		return PublicationCancelled, true
+	}
+	return "", false
+}
+
 type SearchResult struct {
 	Id            string
 	ImageUrl      string

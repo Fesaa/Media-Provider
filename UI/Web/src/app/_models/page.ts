@@ -20,6 +20,7 @@ export type Modifier = {
 export type ModifierValue = {
   key: string;
   value: string;
+  default: boolean;
 }
 
 export enum Provider {

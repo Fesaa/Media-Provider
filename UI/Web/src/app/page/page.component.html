@@ -19,6 +19,7 @@
                 @case (ModifierType.DROPDOWN) {
                   <p-floatlabel variant="on">
                     <p-select class="w-full" id="mod_{{mod.ID}}"
+                              [ngModel]="this.searchRequest.modifiers![mod.key][0] ?? ''"
                               [options]="mod.values" optionValue="key" optionLabel="value"
                               (onChange)="updateDropdownModifier(mod, $event.value)"
                     />
