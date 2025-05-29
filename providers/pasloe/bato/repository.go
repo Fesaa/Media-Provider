@@ -65,6 +65,10 @@ func (r *repository) selectionToSearchResult(_ int, sel *goquery.Selection) Sear
 
 	info := sel.Find("div:nth-child(2)")
 	sr.Title = info.Find("h3 a span span").First().Text()
+	if sr.Title == "" {
+		sr.Title = info.Find("h3 a span").First().Text()
+	}
+
 	// sr.Authors = extractSeperatedList(info.Find("div:nth-child(2) span"), "/")
 	// sr.Tags = extractSeperatedList(info.Find("div:nth-child(4) span"), ",")
 
@@ -109,11 +113,11 @@ func searchUrl(options SearchOptions) string {
 	}
 
 	if len(options.OriginalWorkStatus) > 0 {
-		q.Add(StatusTag, strings.Join(utils.MapToString(options.OriginalWorkStatus), ","))
+		q.Add(StatusTag, string(options.OriginalWorkStatus[0]))
 	}
 
 	if len(options.BatoUploadStatus) > 0 {
-		q.Add(UploadTag, strings.Join(utils.MapToString(options.BatoUploadStatus), ","))
+		q.Add(UploadTag, string(options.BatoUploadStatus[0]))
 	}
 
 	uri.RawQuery = q.Encode()

@@ -62,16 +62,12 @@ func (b *Builder) Transform(request payload.SearchRequest) SearchOptions {
 
 	workStatus, ok := request.Modifiers[StatusTag]
 	if ok {
-		so.OriginalWorkStatus = utils.Map(workStatus, func(t string) Publication {
-			return Publication(t)
-		})
+		so.OriginalWorkStatus = utils.MaybeMap(workStatus, toPublication)
 	}
 
 	uploadStatus, ok := request.Modifiers[UploadTag]
 	if ok {
-		so.BatoUploadStatus = utils.Map(uploadStatus, func(t string) Publication {
-			return Publication(t)
-		})
+		so.BatoUploadStatus = utils.MaybeMap(uploadStatus, toPublication)
 	}
 
 	return so

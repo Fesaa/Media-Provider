@@ -19,5 +19,6 @@ nav:
       - Mangadex: mangadex.md
       - Webtoon: webtoon.md
       - Dynasty: dynasty.md
+      - Bato: bato.md
 
 theme: readthedocs
