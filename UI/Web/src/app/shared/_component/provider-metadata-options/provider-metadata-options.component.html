@@ -1,59 +1,61 @@
 @if (metadata && metadata.definitions && metadata.definitions.length > 0) {
 
-  <div class="flex flex-col items-start" *transloco="let t;prefix:'page.download-dialog'">
+  <div class="flex flex-col items-start max-h-80 overflow-y-scroll" *transloco="let t;prefix:'page.download-dialog'">
 
-    <div class="flex flex-row items-center space-x-5 text-start m-2 font-bold w-2/3 border-b-4 border-gray-200 rounded">
+    <div *ngIf="showTitle" class="flex flex-row items-center space-x-5 text-start p-2 font-bold w-2/3 border-b-4 border-gray-200 rounded">
       <span *ngIf="canHideMetadata" [class]="(hideMetadata ? 'pi pi-eye' : 'pi pi-eye-slash') + ' hover:cursor-pointer'" (click)="hideMetadata=!hideMetadata"></span>
       <h1>{{ t('extra-metadata.title') }}</h1>
     </div>
 
-    <cdk-virtual-scroll-viewport *ngIf="!hideMetadata" itemSize="50" style="height: 200px"  class="flex flex-col w-full">
-      <div *cdkVirtualFor="let meta of metadata.definitions" class="flex flex-col md:flex-row flex-grow w-full mt-8 md:mt-4 items-start md:items-center" style="height: 50px">
-        <label [for]="meta.key" [pTooltip]="t('extra-metadata.' + meta.key+'.tooltip')" tooltipPosition="bottom"
-               class="w-full md:w-1/2 text-start md:text-center">
-          {{ t('extra-metadata.' + meta.key+'.title') }}
-        </label>
+    @if (!hideMetadata) {
+      @for (meta of metadata.definitions; track meta.key) {
+        <div class="flex flex-col md:flex-row flex-grow w-full mt-8 md:mt-4 items-start md:items-center" >
+          <label [for]="meta.key" [pTooltip]="t('extra-metadata.' + meta.key+'.tooltip')" tooltipPosition="bottom"
+                 class="w-full md:w-1/2 text-start md:text-center">
+            {{ t('extra-metadata.' + meta.key+'.title') }}
+          </label>
 
-        <div class="flex flex-row w-full md:w-1/2 justify-center">
-          @switch (meta.formType) {
-            @case (DownloadMetadataFormType.SWITCH) {
-              <p-toggle-switch [id]="meta.key"
-                               [ngModel]="Boolean(getValues(meta))"
-                               (onChange)="changeChoice(meta, $event.checked)"/>
+          <div class="flex flex-row w-full md:w-1/2 justify-center">
+            @switch (meta.formType) {
+              @case (DownloadMetadataFormType.SWITCH) {
+                <p-toggle-switch [id]="meta.key"
+                                 [ngModel]="Boolean(getValues(meta))"
+                                 (onChange)="changeChoice(meta, $event.checked)"/>
+              }
+              @case (DownloadMetadataFormType.DROPDOWN) {
+                <p-select styleClass="w-full"
+                          size="small"
+                          variant="filled"
+                          [placeholder]="t('extra-metadata.' + meta.key+'.title')"
+                          [ngModel]="getValues(meta)"
+                          optionLabel="value"
+                          optionValue="key"
+                          [options]="meta.options"
+                          (onChange)="changeChoice(meta, $event.value)"
+                          [id]="meta.key"/>
+              }
+              @case (DownloadMetadataFormType.MULTI) {
+                <p-multiSelect [filter]="false"
+                               [selectAll]="false"
+                               size="small"
+                               variant="filled"
+                               [showToggleAll]="false"
+                               styleClass="w-full"
+                               [placeholder]="t('extra-metadata.' + meta.key+'.title')"
+                               [ngModel]="getValues(meta)"
+                               optionLabel="value"
+                               optionValue="key"
+                               [options]="meta.options"
+                               (onChange)="changeChoice(meta, $event.value)"
+                               [id]="meta.key"/>
+              }
+              @case (DownloadMetadataFormType.TEXT) {
+                <input pInputText #inputElement [ngModel]="getValues(meta)" (change)="changeChoice(meta, inputElement.value)"/>
+              }
             }
-            @case (DownloadMetadataFormType.DROPDOWN) {
-              <p-select styleClass="w-full"
-                        size="small"
-                        variant="filled"
-                        [placeholder]="t('extra-metadata.' + meta.key+'.title')"
-                        [ngModel]="getValues(meta)"
-                        optionLabel="value"
-                        optionValue="key"
-                        [options]="meta.options"
-                        (onChange)="changeChoice(meta, $event.value)"
-                        [id]="meta.key"/>
-            }
-            @case (DownloadMetadataFormType.MULTI) {
-              <p-multiSelect [filter]="false"
-                             [selectAll]="false"
-                             size="small"
-                             variant="filled"
-                             [showToggleAll]="false"
-                             styleClass="w-full"
-                             [placeholder]="t('extra-metadata.' + meta.key+'.title')"
-                             [ngModel]="getValues(meta)"
-                             optionLabel="value"
-                             optionValue="key"
-                             [options]="meta.options"
-                             (onChange)="changeChoice(meta, $event.value)"
-                             [id]="meta.key"/>
-            }
-            @case (DownloadMetadataFormType.TEXT) {
-              <input pInputText #inputElement [ngModel]="getValues(meta)" (change)="changeChoice(meta, inputElement.value)"/>
-            }
-          }
+          </div>
         </div>
-      </div>
-    </cdk-virtual-scroll-viewport>
+      }
+    }
   </div>
 }

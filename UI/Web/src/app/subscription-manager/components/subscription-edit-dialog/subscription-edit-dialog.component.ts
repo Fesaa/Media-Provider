@@ -9,13 +9,7 @@ import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
 import {SubscriptionExternalUrlPipe} from "../../../_pipes/subscription-external-url.pipe";
 import {Select} from "primeng/select";
-import {
-  DownloadMetadata,
-  DownloadMetadataDefinition,
-  DownloadMetadataFormType,
-  Provider,
-  Providers
-} from "../../../_models/page";
+import {DownloadMetadata, Provider, Providers} from "../../../_models/page";
 import {ToastService} from "../../../_services/toast.service";
 import {Button} from "primeng/button";
 import {DirectorySelectorComponent} from "../../../shared/_component/directory-selector/directory-selector.component";
@@ -25,6 +19,12 @@ import {PageService} from "../../../_services/page.service";
 import {
   ProviderMetadataOptionsComponent
 } from "../../../shared/_component/provider-metadata-options/provider-metadata-options.component";
+import {Tab, TabList, TabPanel, TabPanels, Tabs} from "primeng/tabs";
+
+enum TabId {
+  General = "general",
+  Metadata = "metadata",
+}
 
 @Component({
   selector: 'app-subscription-edit-dialog',
@@ -41,6 +41,11 @@ import {
     TranslocoDirective,
     TitleCasePipe,
     ProviderMetadataOptionsComponent,
+    Tabs,
+    TabList,
+    Tab,
+    TabPanels,
+    TabPanel,
   ],
   templateUrl: './subscription-edit-dialog.component.html',
   styleUrl: './subscription-edit-dialog.component.css'
@@ -144,4 +149,6 @@ export class SubscriptionEditDialogComponent {
   }
 
   protected readonly RefreshFrequencies = RefreshFrequencies;
+  protected readonly Tab = Tab;
+  protected readonly TabId = TabId;
 }

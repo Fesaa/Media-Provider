@@ -210,7 +210,7 @@ func (m *manga) ContentUrls(ctx context.Context, chapter ChapterSearchData) ([]s
 }
 
 func (m *manga) DownloadContent(page int, chapter ChapterSearchData, url string) error {
-	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(page, 4)))
+	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(page, 4)))
 	if err := m.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}

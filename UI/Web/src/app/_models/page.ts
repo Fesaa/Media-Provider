@@ -84,6 +84,7 @@ export type DownloadMetadata = {
 
 export type DownloadMetadataDefinition = {
   key: string;
+  advanced: boolean;
   formType: DownloadMetadataFormType;
   defaultOption: string;
   options: MetadataOption[];

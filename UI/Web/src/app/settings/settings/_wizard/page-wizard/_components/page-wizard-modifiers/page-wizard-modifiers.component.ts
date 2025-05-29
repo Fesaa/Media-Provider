@@ -4,18 +4,11 @@ import {Card} from "primeng/card";
 import {Fieldset} from "primeng/fieldset";
 import {FormsModule} from "@angular/forms";
 import {Button} from "primeng/button";
-import {InputText} from "primeng/inputtext";
-import {Tooltip} from "primeng/tooltip";
-import {FloatLabel} from "primeng/floatlabel";
-import {Select} from "primeng/select";
 import {NgForOf, TitleCasePipe} from "@angular/common";
-import {IconField} from "primeng/iconfield";
-import {InputIcon} from "primeng/inputicon";
 import {DialogService} from "../../../../../../_services/dialog.service";
 import {ToastService} from "../../../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray} from "@angular/cdk/drag-drop";
-import {Dialog} from "primeng/dialog";
 import {ModifierEditModalComponent} from "./_components/modifier-edit-modal/modifier-edit-modal.component";
 
 @Component({

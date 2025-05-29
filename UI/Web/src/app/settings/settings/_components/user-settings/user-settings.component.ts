@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
-import {hasPermission, Perm, permissionNames, permissionValues, roles, User, UserDto} from "../../../../_models/user";
+import {hasPermission, Perm, roles, User, UserDto} from "../../../../_models/user";
 import {TableModule} from "primeng/table";
 import {Button} from "primeng/button";
 import {DialogService} from "../../../../_services/dialog.service";

@@ -1,79 +1,122 @@
-<div class="flex flex-col space-y-5 mt-5 mb-2" *transloco="let t;prefix:'page.download-dialog'">
+<div class="" *transloco="let t;prefix:'page.download-dialog'">
 
-  <div class="card flex w-full">
-    <p-floatlabel variant="on">
-      <input [(ngModel)]="downloadDir" autocomplete="off" class="w-full p-2"
-             id="download_dir" pInputText type="text"/>
-      <label for="download_dir">{{ t('directory') }}</label>
-    </p-floatlabel>
-  </div>
 
-  <div class="flex flex-row flex-grow w-full items-center">
-    <label class="w-1/2" for="startImmediately">{{ t('start-now') }}</label>
-    <div class="flex flex-row w-1/2 justify-center">
-      <p-toggle-switch [(ngModel)]="requestMetadata.startImmediately" id="startImmediately"/>
-    </div>
-  </div>
+  <p-tabs [value]="TabId.General">
+    <p-tablist>
+      <p-tab [value]="TabId.General">{{t(TabId.General)}}</p-tab>
+      @if (advanced().length > 0) {
+        <p-tab [value]="TabId.Advanced">{{t(TabId.Advanced)}}</p-tab>
+      }
+    </p-tablist>
+    <p-tabpanels>
 
-  @if (metadata && metadata.definitions && metadata.definitions.length > 0) {
+      <p-tabpanel [value]="TabId.General">
+        <div class="flex flex-col items-start max-h-80 overflow-y-scroll gap-y-2">
 
-    <div class="flex flex-col items-start">
+          <div class="flex flex-grow w-full mt-5 gap-x-2">
+            <div class="flex-grow w-full">
+              <p-floatlabel class="w-full" variant="on">
+                <p-iconfield class="w-full">
+                  <p-inputicon class="pi pi-folder hover:cursor-pointer" (click)="showPicker = true"></p-inputicon>
+                  <input class="w-full overflow-clip" pInputText id="content-dir" [(ngModel)]="downloadDir" />
+                </p-iconfield>
+                <label for="download_dir">{{ t('directory') }}</label>
+              </p-floatlabel>
+            </div>
 
-      <h1 class="text-start m-2 font-bold w-2/3 border-b-4 border-gray-200 rounded">{{ t('extra-metadata.title') }}</h1>
+            <app-directory-selector
+              [root]="''"
+              [(visible)]="showPicker"
+              (resultDir)="downloadDir = $event ?? downloadDir"
+            />
+          </div>
 
-      <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px"  class="flex flex-col w-full">
-          <div *cdkVirtualFor="let meta of metadata.definitions" class="flex flex-col md:flex-row flex-grow w-full mt-8 md:mt-4 items-start md:items-center" style="height: 50px">
-            <label [for]="meta.key" [pTooltip]="t('extra-metadata.' + meta.key+'.tooltip')" tooltipPosition="bottom"
-                   class="w-full md:w-1/2 text-start md:text-center">
-              {{ t('extra-metadata.' + meta.key+'.title') }}
-            </label>
 
+          <div class="flex flex-col md:flex-row flex-grow w-full items-start md:items-center">
+            <label class="w-full md:w-1/2 text-start md:text-center" for="startImmediately">{{ t('start-now') }}</label>
             <div class="flex flex-row w-full md:w-1/2 justify-center">
-              @switch (meta.formType) {
-                @case (DownloadMetadataFormType.SWITCH) {
-                  <p-toggle-switch [id]="meta.key"
-                                   [ngModel]="Boolean(meta.defaultOption)"
-                                   (onChange)="changeChoice(meta, $event.checked)"/>
-                }
-                @case (DownloadMetadataFormType.DROPDOWN) {
-                  <p-select styleClass="w-full"
-                            size="small"
-                            variant="filled"
-                            [placeholder]="t('extra-metadata.' + meta.key+'.title')"
-                            [ngModel]="meta.defaultOption"
-                            optionLabel="value"
-                            optionValue="key"
-                            [options]="meta.options"
-                            (onChange)="changeChoice(meta, $event.value)"
-                            [id]="meta.key"/>
-                }
-                @case (DownloadMetadataFormType.MULTI) {
-                  <p-multiSelect [filter]="false"
-                                 [selectAll]="false"
-                                 size="small"
-                                 variant="filled"
-                                 [showToggleAll]="false"
-                                 styleClass="w-full"
-                                 [placeholder]="t('extra-metadata.' + meta.key+'.title')"
-                                 [ngModel]="meta.defaultOption"
-                                 optionLabel="value"
-                                 optionValue="key"
-                                 [options]="meta.options"
-                                 (onChange)="changeChoice(meta, $event.value)"
-                                 [id]="meta.key"/>
-                }
-                @case (DownloadMetadataFormType.TEXT) {
-                  <input pInputText #inputElement (change)="changeChoice(meta, inputElement.value)"/>
-                }
-              }
+              <p-toggle-switch [(ngModel)]="requestMetadata.startImmediately" id="startImmediately"/>
             </div>
           </div>
-      </cdk-virtual-scroll-viewport>
-    </div>
-  }
+
+          @if (simple().length > 0) {
+            @for (meta of simple(); track meta.key) {
+              <ng-container *ngTemplateOutlet="metaInput; context: {$implicit: meta}"  ></ng-container>
+            }
+          }
+        </div>
+      </p-tabpanel>
+
+      @if (advanced().length > 0) {
+        <p-tabpanel [value]="TabId.Advanced">
+
+          <div class="flex flex-col justify-start items-start max-h-80 overflow-y-scroll gap-y-2">
+            @for (meta of advanced(); track meta.key) {
+              <ng-container *ngTemplateOutlet="metaInput; context: {$implicit: meta}"  ></ng-container>
+            }
+          </div>
+
+        </p-tabpanel>
+      }
+
+    </p-tabpanels>
+  </p-tabs>
 
   <div class="flex w-full flex-grow justify-end gap-4 mt-10">
     <p-button (click)="close()" [label]="t('cancel') | titlecase" severity="secondary"/>
     <p-button (click)="download()" [label]="t('download')" />
   </div>
+
+
+  <ng-template #metaInput let-meta>
+    <div class="flex flex-col md:flex-row p-2 w-full items-start md:items-center">
+      <label [for]="meta.key" class="w-full md:w-1/2 text-start md:text-center"
+             [pTooltip]="t('extra-metadata.' + meta.key+'.tooltip')" tooltipPosition="bottom">
+        {{ t('extra-metadata.' + meta.key+'.title') }}
+      </label>
+
+      <div class="flex flex-row w-full md:w-1/2 justify-center">
+        @switch (meta.formType) {
+          @case (DownloadMetadataFormType.SWITCH) {
+            <p-toggle-switch [id]="meta.key"
+                             [ngModel]="Boolean(meta.defaultOption)"
+                             (onChange)="changeChoice(meta, $event.checked)"/>
+          }
+          @case (DownloadMetadataFormType.DROPDOWN) {
+            <p-select styleClass="w-full"
+                      size="small"
+                      variant="filled"
+                      appendTo="body"
+                      [placeholder]="t('extra-metadata.' + meta.key+'.title')"
+                      [ngModel]="meta.defaultOption"
+                      optionLabel="value"
+                      optionValue="key"
+                      [options]="meta.options"
+                      (onChange)="changeChoice(meta, $event.value)"
+                      [id]="meta.key"/>
+          }
+          @case (DownloadMetadataFormType.MULTI) {
+            <p-multiSelect [filter]="false"
+                           [selectAll]="false"
+                           size="small"
+                           variant="filled"
+                           [showToggleAll]="false"
+                           styleClass="w-full"
+                           [placeholder]="t('extra-metadata.' + meta.key+'.title')"
+                           [ngModel]="meta.defaultOption"
+                           optionLabel="value"
+                           optionValue="key"
+                           [options]="meta.options"
+                           (onChange)="changeChoice(meta, $event.value)"
+                           [id]="meta.key"/>
+          }
+          @case (DownloadMetadataFormType.TEXT) {
+            <input pInputText #inputElement (change)="changeChoice(meta, inputElement.value)"/>
+          }
+        }
+      </div>
+    </div>
+  </ng-template>
+
 </div>
+

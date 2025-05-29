@@ -1,8 +1,8 @@
 /**
  * Copied from https://github.com/Kareadita/Kavita/blob/develop/UI/Web/src/app/_pipes/utc-to-local-time.pipe.ts
  */
-import { Pipe, PipeTransform } from '@angular/core';
-import { DateTime } from 'luxon';
+import {Pipe, PipeTransform} from '@angular/core';
+import {DateTime} from 'luxon';
 
 type UtcToLocalTimeFormat = 'full' | 'short' | 'shortDate' | 'shortTime';
 

@@ -73,6 +73,7 @@ export class PageWizardSaveComponent {
     obs.subscribe({
       next: (page) => {
         this.toastService.successLoco("settings.pages.toasts.save.success");
+        this.pageService.refreshPages();
         this.router.navigate(["/page"], {
           queryParams: {
             index: page.ID,

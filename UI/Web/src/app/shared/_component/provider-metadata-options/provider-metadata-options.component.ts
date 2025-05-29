@@ -7,19 +7,14 @@ import {Select} from "primeng/select";
 import {MultiSelect} from "primeng/multiselect";
 import {FormsModule} from "@angular/forms";
 import {InputText} from "primeng/inputtext";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
-import { Subscription } from '../../../_models/subscription';
+import {Subscription} from '../../../_models/subscription';
 import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
   selector: 'app-provider-metadata-options',
   imports: [
     NgIf,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
     Tooltip,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualScrollViewport,
     ToggleSwitch,
     Select,
     MultiSelect,
@@ -36,6 +31,7 @@ export class ProviderMetadataOptionsComponent {
   @Input() metadata!: DownloadMetadata | undefined;
   @Input() canHideMetadata: boolean = false;
   @Input() hideMetadata: boolean = false;
+  @Input() showTitle: boolean = false;
 
   changeChoice(meta: DownloadMetadataDefinition, value: string | boolean | string[]) {
     if (value instanceof Array) {

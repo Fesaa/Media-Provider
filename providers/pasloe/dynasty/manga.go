@@ -206,7 +206,7 @@ func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, err
 }
 
 func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
-	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s.jpg", utils.PadInt(idx, 4)))
+	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(idx, 4)))
 	if err := m.downloadAndWrite(url, filePath); err != nil {
 		return err
 	}

@@ -150,6 +150,8 @@
 
   "page": {
     "download-dialog": {
+      "general": "General",
+      "advanced": "Advanced",
       "directory": "Download directory",
       "start-now": "Start download immediately",
       "extra-metadata": {
@@ -202,6 +204,8 @@
       "sub-header": "Subscribe"
     },
     "subscription-dialog": {
+      "general": "General",
+      "metadata": "Extra",
       "title": "Title",
       "directory": "{{page.download-dialog.directory}}",
       "refresh-frequency": "Refresh frequency",
@@ -572,6 +576,8 @@
 
   "subscriptions": {
     "dialog": {
+      "general": "General",
+      "metadata": "Extra",
       "header": "Edit subscription",
       "title": "Title",
       "content-id": "Content Id",

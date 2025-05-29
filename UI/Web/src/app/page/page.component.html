@@ -49,23 +49,17 @@
               <p-inputicon class="pi pi-times hover:cursor-pointer" (click)="clearCustomDir()" />
             </p-iconfield>
 
-            <button
-              (click)="search()"
-              class="focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-4"
-            >
+            <p-button styleClass="mt-3 md:mt-6 w-full rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-4" (onClick)="search()">
               {{ t('search') }}
-            </button>
+            </p-button>
           </div>
         </div>
       </div>
     } @else if (!hideSearchForm) {
       <div class="flex flex-row flex-grow justify-center" [@bounceIn500ms]>
-        <button
-          class="rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700 mt-5"
-          (click)="toggleSearchForm()"
-        >
+        <p-button styleClass="mt-3 md:mt-6 w-full rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-4" (onClick)="toggleSearchForm()">
           {{ t('search') }}
-        </button>
+        </p-button>
       </div>
 
     }

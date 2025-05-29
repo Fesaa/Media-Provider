@@ -54,6 +54,7 @@ type SearchResult struct {
 type Series struct {
 	Id                string
 	Title             string
+	CoverUrl          string
 	OriginalTitle     string
 	Authors           []string
 	Tags              []string

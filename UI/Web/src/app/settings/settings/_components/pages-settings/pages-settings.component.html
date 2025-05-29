@@ -1,5 +1,14 @@
 @if (user) {
 
+  <div *transloco="let t;prefix:'settings.pages'" class="flex flex-row w-full items-end justify-end mb-5">
+    @if (hasPermission(user, Perm.WritePage)) {
+      <p-button [pTooltip]="t('actions.new')"
+                tooltipPosition="bottom" icon="pi pi-plus" severity="primary"
+                routerLink="/settings/wizard/page"
+      />
+    }
+  </div>
+
   <div cdkDropList
        *transloco="let t;prefix:'settings.pages'"
        class="flex flex-col space-y-5"
