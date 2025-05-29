@@ -125,17 +125,17 @@
   --p-secondary-900: var(--secondary-900) !important;
   --p-secondary-950: var(--secondary-950) !important;
 
-  --p-accent-50: var(--accent-50) !important;
-  --p-accent-100: var(--accent-100) !important;
-  --p-accent-200: var(--accent-200) !important;
-  --p-accent-300: var(--accent-300) !important;
-  --p-accent-400: var(--accent-400) !important;
-  --p-accent-500: var(--accent-500) !important;
-  --p-accent-600: var(--accent-600) !important;
-  --p-accent-700: var(--accent-700) !important;
-  --p-accent-800: var(--accent-800) !important;
-  --p-accent-900: var(--accent-900) !important;
-  --p-accent-950: var(--accent-950) !important;
+  --p-purple-50: var(--accent-50) !important;
+  --p-purple-100: var(--accent-100) !important;
+  --p-purple-200: var(--accent-200) !important;
+  --p-purple-300: var(--accent-300) !important;
+  --p-purple-400: var(--accent-400) !important;
+  --p-purple-500: var(--accent-500) !important;
+  --p-purple-600: var(--accent-600) !important;
+  --p-purple-700: var(--accent-700) !important;
+  --p-purple-800: var(--accent-800) !important;
+  --p-purple-900: var(--accent-900) !important;
+  --p-purple-950: var(--accent-950) !important;
 
 
   --p-secondary-color: var(--secondary) !important;
