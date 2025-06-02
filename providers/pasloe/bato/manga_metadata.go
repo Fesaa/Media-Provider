@@ -59,7 +59,7 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		ci.AgeRating = ar
 	}
 
-	if m.seriesInfo.PublicationStatus == PublicationCompleted {
+	if m.seriesInfo.PublicationStatus == PublicationCompleted && m.seriesInfo.BatoUploadStatus == PublicationCompleted {
 		ci.Count = m.ChapterCount()
 	}
 
