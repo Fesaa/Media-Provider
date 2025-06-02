@@ -20,6 +20,10 @@ export class NotificationService {
     return this.http.get<Notification[]>(`${this.baseUrl}/all`, { params });
   }
 
+  recent(limit: number = 5) {
+    return this.http.get<Notification[]>(`${this.baseUrl}/recent?limit=${limit}`)
+  }
+
   amount() {
     return this.http.get<number>(`${this.baseUrl}/amount`);
   }

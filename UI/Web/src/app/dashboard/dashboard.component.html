@@ -9,6 +9,7 @@
   <div class="w-full" *transloco="let t;prefix:'dashboard'">
     @if (dashboardItems.length() === 0 && !this.loading) {
       <app-suggestion-dashboard></app-suggestion-dashboard>
+      <app-recently-downloaded></app-recently-downloaded>
     }
 
     @if (dashboardItems.length() > 0) {

@@ -12,6 +12,17 @@ import (
 	"time"
 )
 
+// Clamp returns at least minV, and at most maxV
+//
+// Will panic if maxV < minV or minV > maxV
+func Clamp(val, minV, maxV int) int {
+	if (minV > maxV) || (maxV < minV) {
+		panic(fmt.Sprintf("Clamp(?, %v, %v) out of range", val, minV))
+	}
+
+	return max(minV, min(maxV, val))
+}
+
 // TryCatch will return the consumed value if the error returned by the producer was nil. Other returns the fallback
 // value and calls the first errorHandler if present
 func TryCatch[T, U any](

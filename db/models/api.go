@@ -17,6 +17,7 @@ type Notifications interface {
 	GetMany(ids []uint) ([]Notification, error)
 	All() ([]Notification, error)
 	AllAfter(time.Time) ([]Notification, error)
+	Recent(int, NotificationGroup) ([]Notification, error)
 
 	New(Notification) error
 	Delete(uint) error
