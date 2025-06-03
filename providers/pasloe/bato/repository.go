@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	VolumeChapterRegex = regexp.MustCompile(`(?:Volume (\d+)\s+)?Chapter (\d+)`)
+	VolumeChapterRegex = regexp.MustCompile(`(?:Volume (\d+)\s+)?Chapter ([\d\\.]+)`)
 	AuthorMappings     = map[string]comicinfo.Roles{
 		"(Story&Art)": {comicinfo.Writer, comicinfo.Colorist},
 		"(Story)":     {comicinfo.Writer},

@@ -110,6 +110,38 @@ func TestRepository_SeriesInfo(t *testing.T) {
 
 }
 
+func TestRepository_SeriesInfo_ChapterDecimals(t *testing.T) {
+	repo := tempRepository(io.Discard)
+	series, err := repo.SeriesInfo(t.Context(), "99749-still-sick-official")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := 26
+	if len(series.Chapters) != want {
+		t.Fatalf("got %d series, want %d", len(series.Chapters), want)
+	}
+
+	groupByChapter := utils.GroupBy(series.Chapters, func(chapter Chapter) string {
+		return chapter.Chapter
+	})
+
+	for _, chapter := range groupByChapter {
+		if len(chapter) != 1 {
+			t.Fatalf("got a duplicate chapter %s: %d", chapter[0].Chapter, len(chapter))
+		}
+	}
+
+	volume3Chapter23Point5 := utils.Find(series.Chapters, func(chapter Chapter) bool {
+		return chapter.Volume == "3" && chapter.Chapter == "23.5"
+	})
+
+	if volume3Chapter23Point5 == nil {
+		t.Fatalf("failed to find volume 3 chapter 23.5")
+	}
+
+}
+
 func TestRepository_SeriesWithVolume(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
