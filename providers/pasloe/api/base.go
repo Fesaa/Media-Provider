@@ -86,8 +86,9 @@ type DownloadBase[T IDAble] struct {
 	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
 	ToDownloadUserSelected []string
 
-	preferences models.Preferences
-	Preference  *models.Preference
+	preferences   models.Preferences
+	Preference    *models.Preference
+	hasWarnedTags bool
 
 	ContentDownloaded int
 	ImagesDownloaded  int

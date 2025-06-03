@@ -16,6 +16,7 @@ type Preference struct {
 	CoverFallbackMethod     CoverFallbackMethod `json:"coverFallbackMethod"`
 	DynastyGenreTags        []Tag               `json:"dynastyGenreTags" gorm:"many2many:preference_dynasty_genre_tags"`
 	BlackListedTags         []Tag               `json:"blackListedTags" gorm:"many2many:preference_black_list_tags"`
+	WhiteListedTags         []Tag               `json:"whiteListedTags" gorm:"many2many:preference_white_list_tags"`
 	AgeRatingMappings       []AgeRatingMap      `json:"ageRatingMappings" gorm:"many2many:preference_age_rating_mappings"`
 }
 
@@ -51,6 +52,13 @@ type Tag struct {
 
 	Name           string `json:"name"`
 	NormalizedName string `json:"normalizedName"`
+}
+
+func NewTag(name string) Tag {
+	return Tag{
+		Name:           name,
+		NormalizedName: utils.Normalize(name),
+	}
 }
 
 func (tag *Tag) IsNotNormalized(t string) bool {

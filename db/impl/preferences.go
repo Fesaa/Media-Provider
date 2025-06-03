@@ -72,6 +72,10 @@ func (p *preferences) Update(pref models.Preference) error {
 			return err
 		}
 
+		if err := tx.Model(&pref).Association("WhiteListedTags").Replace(pref.WhiteListedTags); err != nil {
+			return err
+		}
+
 		if err := tx.Model(&pref).Association("AgeRatingMappings").Replace(pref.AgeRatingMappings); err != nil {
 			return err
 		}

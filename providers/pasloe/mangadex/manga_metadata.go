@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
 	"github.com/rs/zerolog"
@@ -246,36 +247,25 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 }
 
 func (m *manga) getAgeRating() comicinfo.AgeRating {
-	mangadexAgeRating := m.info.Attributes.ContentRating.ComicInfoAgeRating()
-	if m.Preference == nil {
-		m.Log.Warn().Msg("Could not load age rate mapping, falling back to mangadex provider one")
-		return mangadexAgeRating
-	}
-
-	var mappings models.AgeRatingMappings = m.Preference.AgeRatingMappings
-
-	mangadexWeight := comicinfo.AgeRatingIndex[mangadexAgeRating]
-	tagsMappingWeights := utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (int, bool) {
+	tags := utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (api.Tag, bool) {
 		tag, ok := t.Attributes.Name[m.language]
 		if !ok {
-			return 0, false
+			return nil, false
 		}
-
-		ar, ok := mappings.GetAgeRating(tag)
-		if !ok {
-			return 0, false
-		}
-
-		return comicinfo.AgeRatingIndex[ar], true
+		return api.NewStringTag(tag), true
 	})
 
-	if len(tagsMappingWeights) == 0 {
-		return mangadexAgeRating
+	mar := m.info.Attributes.ContentRating.ComicInfoAgeRating()
+	ar, ok := m.GetAgeRating(tags)
+	if !ok {
+		return mar
 	}
 
-	return comicinfo.IndexToAgeRating[max(mangadexWeight, slices.Max(tagsMappingWeights))]
-
+	highest := max(comicinfo.AgeRatingIndex[ar], comicinfo.AgeRatingIndex[mar])
+	return comicinfo.IndexToAgeRating[highest]
 }
+
+// Mangadex has its own writeTagsAndGenres as they do have a concept of genre's and tag. As opposed to only tags
 
 //nolint:funlen
 func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {

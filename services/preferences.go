@@ -36,8 +36,10 @@ func (p *preferencesService) Update(preference models.Preference) error {
 		}
 	}
 
+	// TODO: Could we pass all tags as current? So they share tags?
 	preference.BlackListedTags = mergeTags(cur.BlackListedTags, preference.BlackListedTags)
 	preference.DynastyGenreTags = mergeTags(cur.DynastyGenreTags, preference.DynastyGenreTags)
+	preference.WhiteListedTags = mergeTags(cur.WhiteListedTags, preference.WhiteListedTags)
 
 	if err = p.pref.Update(preference); err != nil {
 		return err
