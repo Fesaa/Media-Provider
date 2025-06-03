@@ -178,7 +178,11 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 	uriEl := s.Find("div > a.link-hover.link-primary").First()
 	chpt.Id = strings.TrimPrefix(uriEl.AttrOr("href", ""), "/title/")
 	chpt.Volume, chpt.Chapter = extractVolumeAndChapter(uriEl.Text())
-	chpt.Title = strings.TrimSpace(strings.TrimPrefix(s.Find("div > span").First().Text(), ": "))
+
+	titleText := s.Find("div > span.opacity-80").First().Text()
+	if strings.HasPrefix(titleText, ":") {
+		chpt.Title = strings.TrimSpace(strings.TrimPrefix(titleText, ": "))
+	}
 
 	return chpt
 }
