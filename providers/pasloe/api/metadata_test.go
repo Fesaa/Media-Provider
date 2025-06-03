@@ -33,6 +33,7 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 		genres     models.Tags
 		blacklist  models.Tags
 		whitelist  models.Tags
+		mappings   []models.TagMap
 		includeAll bool
 	}
 
@@ -97,6 +98,25 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 			wantG: "genre1",
 			wantT: "tag1, extra",
 		},
+		{
+			name: "test map",
+			fields: fields{
+				genres:    models.Tags{models.NewTag("genre2")},
+				blacklist: models.Tags{models.NewTag("badtag")},
+				whitelist: models.Tags{models.NewTag("tag1")},
+				mappings: []models.TagMap{
+					{
+						Origin: models.NewTag("genre1"),
+						Dest:   models.NewTag("genre2"),
+					},
+				},
+			},
+			tags: []Tag{
+				NewStringTag("genre1"),
+			},
+			wantG: "genre2",
+			wantT: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -113,6 +133,7 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 					DynastyGenreTags: tt.fields.genres,
 					BlackListedTags:  tt.fields.blacklist,
 					WhiteListedTags:  tt.fields.whitelist,
+					TagMappings:      tt.fields.mappings,
 				},
 			}
 
@@ -131,6 +152,7 @@ func TestManga_GetAgeRating(t *testing.T) {
 	type test struct {
 		name        string
 		arm         []models.AgeRatingMap
+		mappings    []models.TagMap
 		seriesTags  []Tag
 		chapterTags []Tag
 		want        bool
@@ -187,6 +209,29 @@ func TestManga_GetAgeRating(t *testing.T) {
 			want:   true,
 			wanted: comicinfo.AgeRatingMAPlus15,
 		},
+		{
+			name: "test with map",
+			arm: []models.AgeRatingMap{
+				{
+					Tag: models.Tag{
+						Name:           "MyTag",
+						NormalizedName: "mytag",
+					},
+					ComicInfoAgeRating: comicinfo.AgeRatingTeen,
+				},
+			},
+			mappings: []models.TagMap{
+				{
+					Origin: models.NewTag("MyOtherTag"),
+					Dest:   models.NewTag("MyTag"),
+				},
+			},
+			seriesTags: []Tag{
+				NewStringTag("MyOtherTag"),
+			},
+			want:   true,
+			wanted: comicinfo.AgeRatingTeen,
+		},
 	}
 
 	for _, tt := range tests {
@@ -194,6 +239,7 @@ func TestManga_GetAgeRating(t *testing.T) {
 			base := testBase(t, req(), io.Discard)
 			base.Preference = &models.Preference{
 				AgeRatingMappings: tt.arm,
+				TagMappings:       tt.mappings,
 			}
 
 			got, ok := base.GetAgeRating(utils.FlatMapMany(tt.chapterTags, tt.seriesTags))

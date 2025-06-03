@@ -12,7 +12,7 @@ import (
 
 func (m *manga) WriteContentMetaData(chapter Chapter) error {
 
-	if m.Req.GetBool(IncludeCover, true) {
+	if m.Req.GetBool(api.IncludeCover, true) {
 		if err := m.writeCover(chapter); err != nil {
 			return err
 		}

@@ -24,11 +24,16 @@ type ScopedTag interface {
 }
 
 func NewStringTag(value string) Tag {
-	return &stringTag{value}
+	return &stringTag{value, ""}
+}
+
+func NewStringTagWithId(value string, id string) Tag {
+	return &stringTag{value, id}
 }
 
 type stringTag struct {
 	tag string
+	id  string
 }
 
 func (t *stringTag) Value() string {
@@ -36,6 +41,9 @@ func (t *stringTag) Value() string {
 }
 
 func (t *stringTag) Identifier() string {
+	if t.id != "" {
+		return t.id
+	}
 	return t.tag
 }
 
@@ -51,6 +59,8 @@ func (t *stringTag) Identifier() string {
 //   - It is either in the whitelist or the request has IncludeNotMatchedTagsKey set to true.
 func (d *DownloadBase[T]) GetGenreAndTags(tags []Tag) (string, string) {
 	var genres, blackList, whitelist models.Tags
+	var tagMappings models.TagMaps
+
 	p, err := d.preferences.GetComplete()
 	if err != nil {
 		d.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
@@ -65,7 +75,14 @@ func (d *DownloadBase[T]) GetGenreAndTags(tags []Tag) (string, string) {
 		genres = p.DynastyGenreTags
 		blackList = p.BlackListedTags
 		whitelist = p.WhiteListedTags
+		tagMappings = p.TagMappings
 	}
+
+	tags = utils.Map(tags, func(t Tag) Tag {
+		val := tagMappings.MapTag(t.Value())
+		id := tagMappings.MapTag(t.Identifier())
+		return NewStringTagWithId(val, id)
+	})
 
 	tagContains := func(slice models.Tags, tag Tag) bool {
 		return slice.Contains(tag.Value()) || slice.Contains(tag.Identifier())
@@ -122,6 +139,12 @@ func (d *DownloadBase[T]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
 		d.Log.Warn().Msg("Could not load age rate mapping, not setting age rating")
 		return "", false
 	}
+
+	tags = utils.Map(tags, func(t Tag) Tag {
+		val := models.TagMaps(d.Preference.TagMappings).MapTag(t.Value())
+		id := models.TagMaps(d.Preference.TagMappings).MapTag(t.Identifier())
+		return NewStringTagWithId(val, id)
+	})
 
 	var mappings models.AgeRatingMappings = d.Preference.AgeRatingMappings
 	weights := utils.MaybeMap(tags, func(t Tag) (int, bool) {

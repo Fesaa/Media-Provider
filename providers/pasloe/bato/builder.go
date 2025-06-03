@@ -82,7 +82,7 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{
 		Definitions: []payload.DownloadMetadataDefinition{
 			{
-				Key:           IncludeCover,
+				Key:           api.IncludeCover,
 				FormType:      payload.SWITCH,
 				DefaultOption: "true",
 			},
