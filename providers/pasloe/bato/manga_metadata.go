@@ -50,7 +50,18 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		ci.Number = chapter.Chapter
 	}
 
-	ci.Writer = strings.Join(m.seriesInfo.Authors, ",")
+	ci.Writer = strings.Join(utils.MaybeMap(m.seriesInfo.Authors, func(author Author) (string, bool) {
+		if author.Roles.HasRole(comicinfo.Writer) {
+			return author.Name, true
+		}
+		return "", false
+	}), ",")
+	ci.Colorist = strings.Join(utils.MaybeMap(m.seriesInfo.Authors, func(author Author) (string, bool) {
+		if author.Roles.HasRole(comicinfo.Colorist) {
+			return author.Name, true
+		}
+		return "", false
+	}), ",")
 	ci.Web = m.seriesInfo.RefUrl()
 
 	m.WriteGenreAndTags(ci)
