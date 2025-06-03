@@ -16,7 +16,9 @@ type Preference struct {
 	CoverFallbackMethod     CoverFallbackMethod `json:"coverFallbackMethod"`
 	DynastyGenreTags        []Tag               `json:"dynastyGenreTags" gorm:"many2many:preference_dynasty_genre_tags"`
 	BlackListedTags         []Tag               `json:"blackListedTags" gorm:"many2many:preference_black_list_tags"`
+	WhiteListedTags         []Tag               `json:"whiteListedTags" gorm:"many2many:preference_white_list_tags"`
 	AgeRatingMappings       []AgeRatingMap      `json:"ageRatingMappings" gorm:"many2many:preference_age_rating_mappings"`
+	TagMappings             []TagMap            `json:"tagMappings"`
 }
 
 type CoverFallbackMethod int
@@ -51,6 +53,13 @@ type Tag struct {
 
 	Name           string `json:"name"`
 	NormalizedName string `json:"normalizedName"`
+}
+
+func NewTag(name string) Tag {
+	return Tag{
+		Name:           name,
+		NormalizedName: utils.Normalize(name),
+	}
 }
 
 func (tag *Tag) IsNotNormalized(t string) bool {
@@ -93,4 +102,28 @@ type AgeRatingMap struct {
 	Tag                Tag                 `json:"tag"`
 	ComicInfoAgeRating comicinfo.AgeRating `json:"comicInfoAgeRating"`
 	// MetronAgeRating    metroninfo.AgeRating `json:"metronAgeRating"`
+}
+
+type TagMap struct {
+	Model
+
+	PreferenceID uint
+	OriginID     uint
+	Origin       Tag `json:"origin" gorm:"foreignKey:OriginID;references:ID"`
+	DestID       uint
+	Dest         Tag `json:"dest" gorm:"foreignKey:DestID;references:ID"`
+}
+
+type TagMaps []TagMap
+
+func (tm TagMaps) MapTag(tag string) string {
+	tagN := utils.Normalize(tag)
+
+	for _, t := range tm {
+		if t.Origin.Is(tag, tagN) {
+			return t.Dest.Name
+		}
+	}
+
+	return tag
 }

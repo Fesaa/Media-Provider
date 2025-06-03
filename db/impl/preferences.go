@@ -47,8 +47,12 @@ func (p *preferences) GetComplete() (*models.Preference, error) {
 	err := p.db.
 		Preload("DynastyGenreTags").
 		Preload("BlackListedTags").
+		Preload("WhiteListedTags").
 		Preload("AgeRatingMappings").
 		Preload("AgeRatingMappings.Tag").
+		Preload("TagMappings").
+		Preload("TagMappings.Origin").
+		Preload("TagMappings.Dest").
 		First(&pref).Error
 	if err != nil {
 		return nil, err
@@ -72,7 +76,15 @@ func (p *preferences) Update(pref models.Preference) error {
 			return err
 		}
 
+		if err := tx.Model(&pref).Association("WhiteListedTags").Replace(pref.WhiteListedTags); err != nil {
+			return err
+		}
+
 		if err := tx.Model(&pref).Association("AgeRatingMappings").Replace(pref.AgeRatingMappings); err != nil {
+			return err
+		}
+
+		if err := tx.Model(&pref).Association("TagMappings").Replace(pref.TagMappings); err != nil {
 			return err
 		}
 

@@ -2,6 +2,7 @@ package bato
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/comicinfo"
 	"strconv"
 )
 
@@ -56,13 +57,18 @@ type Series struct {
 	Title             string
 	CoverUrl          string
 	OriginalTitle     string
-	Authors           []string
+	Authors           []Author
 	Tags              []string
 	PublicationStatus Publication
 	BatoUploadStatus  Publication
 	Summary           string
 	WebLinks          []string
 	Chapters          []Chapter
+}
+
+type Author struct {
+	Name  string
+	Roles comicinfo.Roles
 }
 
 func (s *Series) RefUrl() string {

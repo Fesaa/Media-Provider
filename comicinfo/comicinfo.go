@@ -26,6 +26,8 @@ https://github.com/fmartingr/go-comicinfo/blob/latest/schema.go, but with Tags s
 */
 package comicinfo
 
+import "slices"
+
 var xmlHeader = []byte(`<?xml version="1.0" encoding="UTF-8"?>`)
 
 // ComicInfo ...
@@ -78,6 +80,24 @@ type ComicInfo struct {
 	XmlNsXsi string `xml:"xmlns:xsi,attr"`
 	// XsiSchemaLocation string `xml:"xsi:schemaLocation,attr,omitempty"`
 }
+
+type Roles []Role
+
+func (r Roles) HasRole(role Role) bool {
+	return slices.Contains(r, role)
+}
+
+type Role string
+
+const (
+	Writer      Role = "writer"
+	Penciller   Role = "penciler"
+	Inker       Role = "inker"
+	Colorist    Role = "colorist"
+	Letterer    Role = "letterer"
+	CoverArtist Role = "cover_artist"
+	Editor      Role = "editor"
+)
 
 func (ci *ComicInfo) SetXMLAttributes() {
 	ci.XmlnsXsd = "http://www.w3.org/2001/XMLSchema"

@@ -61,16 +61,16 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{
 		Definitions: []payload.DownloadMetadataDefinition{
 			{
-				Key:      DownloadOneShotKey,
+				Key:      api.DownloadOneShotKey,
 				FormType: payload.SWITCH,
 			},
 			{
-				Key:      IncludeNotMatchedTagsKey,
+				Key:      api.IncludeNotMatchedTagsKey,
 				Advanced: true,
 				FormType: payload.SWITCH,
 			},
 			{
-				Key:           IncludeCover,
+				Key:           api.IncludeCover,
 				FormType:      payload.SWITCH,
 				DefaultOption: "true",
 			},

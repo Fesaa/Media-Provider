@@ -84,24 +84,24 @@ func TestRepository_SeriesInfo(t *testing.T) {
 		t.Fatalf("got %s want nil", series.Chapters[0].Volume)
 	}
 
-	lilyClub := utils.Find(series.Authors, func(s string) bool {
-		return s == "Lily Club (橘姬社)"
+	lilyClub := utils.Find(series.Authors, func(s Author) bool {
+		return s.Name == "Lily Club (橘姬社)"
 	})
 
 	if lilyClub == nil {
 		t.Fatalf("got no Lily Club")
 	}
 
-	cleaned := utils.Find(series.Authors, func(s string) bool {
-		return s == "狐泥"
+	cleaned := utils.Find(series.Authors, func(s Author) bool {
+		return s.Name == "狐泥"
 	})
 
 	if cleaned == nil {
 		t.Fatalf("got no cleaned Authors")
 	}
 
-	notCleaned := utils.Find(series.Authors, func(s string) bool {
-		return strings.Contains(s, "(Story&Art)")
+	notCleaned := utils.Find(series.Authors, func(s Author) bool {
+		return strings.Contains(s.Name, "(Story&Art)")
 	})
 
 	if notCleaned != nil {

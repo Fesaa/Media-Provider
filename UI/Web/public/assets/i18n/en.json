@@ -414,12 +414,34 @@
         "filter": "{{shared.filter}}",
         "empty": "No tags have been configured yet."
       },
+      "tags-whitelist": {
+        "label": "Tags whitelist",
+        "header": "Tags whitelist",
+        "explanation": {
+          "p1": "Any tags configured here will be used as tag, if it's not in the blacklist or configured to be used as a genre. Check documentation for how matching happens."
+        },
+        "new": "Add new tag",
+        "filter": "{{shared.filter}}",
+        "empty": "No tags have been configured yet."
+      },
       "age-rating-mappings": {
         "label": "Age ratings mappings",
         "header": "Age rating mappings",
         "explanation": {
           "p1": "Configure which tags and/or genre's will be used to determine the downloaded content's AgeRating.",
           "p2": "If several are present, the highest will be used."
+        },
+        "new": "Add new",
+        "filter": "{{shared.filter}}",
+        "empty": "No mappings have been configured"
+      },
+      "tags-mappings": {
+        "label": "Tag mappings",
+        "header": "Tag mappings",
+        "explanation": {
+          "p1": "Configure how tags are transformed ",
+          "before": "before",
+          "p2": " being processed by anything else."
         },
         "new": "Add new",
         "filter": "{{shared.filter}}",

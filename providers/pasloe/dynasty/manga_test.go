@@ -444,7 +444,7 @@ func TestTagToGenre(t *testing.T) {
 	}
 
 	m.Req.DownloadMetadata.Extra = make(map[string][]string, 1)
-	m.Req.DownloadMetadata.Extra[IncludeNotMatchedTagsKey] = []string{"true"}
+	m.Req.DownloadMetadata.Extra[api.IncludeNotMatchedTagsKey] = []string{"true"}
 
 	ci = m.comicInfo(chapter())
 	tags = strings.Split(ci.Tags, ",")

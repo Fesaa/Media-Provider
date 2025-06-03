@@ -22,6 +22,14 @@ type Author Identifiable
 
 type Tag Identifiable
 
+func (i Tag) Value() string {
+	return i.DisplayName
+}
+
+func (i Tag) Identifier() string {
+	return i.Id
+}
+
 type Identifiable struct {
 	DisplayName string
 	Id          string

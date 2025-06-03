@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog"
@@ -27,7 +28,11 @@ const (
 
 var (
 	VolumeChapterRegex = regexp.MustCompile(`(?:Volume (\d+)\s+)?Chapter (\d+)`)
-	AuthorClean        = []string{"(Story&Art)"}
+	AuthorMappings     = map[string]comicinfo.Roles{
+		"(Story&Art)": {comicinfo.Writer, comicinfo.Colorist},
+		"(Story)":     {comicinfo.Writer},
+		"(Art)":       {comicinfo.Colorist},
+	}
 )
 
 type Repository interface {
@@ -139,7 +144,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 		CoverUrl:          doc.Find("main > div > div > div > img").AttrOr("src", ""),
 		Title:             info.Find("div > h3 a.link.link-hover").First().Text(),
 		OriginalTitle:     info.Find("div > div > span").First().Text(),
-		Authors:           info.Find("div.text-sm > a.link.link-hover.link-primary").Map(cleanAuthor),
+		Authors:           goquery.Map(info.Find("div.text-sm > a.link.link-hover.link-primary"), mapAuthor),
 		Tags:              extractSeperatedList(info.Find("div.space-y-2 > div.flex.items-center.flex-wrap > span > span"), ","),
 		PublicationStatus: Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").First().Text()),
 		BatoUploadStatus:  Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").Eq(1).Text()),
@@ -149,14 +154,22 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 	}, nil
 }
 
-func cleanAuthor(_ int, sel *goquery.Selection) string {
-	author := mapToContent(-1, sel)
+func mapAuthor(_ int, sel *goquery.Selection) Author {
+	cleaned := mapToContent(-1, sel)
 
-	for _, v := range AuthorClean {
-		author = strings.ReplaceAll(author, v, "")
+	for v, role := range AuthorMappings {
+		if strings.Contains(cleaned, v) {
+			return Author{
+				Name:  strings.ReplaceAll(cleaned, v, ""),
+				Roles: role,
+			}
+		}
 	}
 
-	return author
+	return Author{
+		Name:  cleaned,
+		Roles: comicinfo.Roles{comicinfo.Writer},
+	}
 }
 
 func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {

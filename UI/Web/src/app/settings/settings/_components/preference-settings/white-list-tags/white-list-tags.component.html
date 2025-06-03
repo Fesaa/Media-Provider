@@ -1,0 +1,42 @@
+<p-dialog [(visible)]="showDialog" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
+          [style]="{ width: '50vw' }" [header]="t('header')"
+          (onShow)="filterToDisplay()" (onHide)="hide()"
+          *transloco="let t;prefix:'settings.preferences.tags-whitelist'"
+>
+
+  <p class="mb-5">
+    {{ t('explanation.p1') }}
+  </p>
+
+  <div class="mb-5 flex flex-col md:flex-row justify-between space-y-2 md:space-y-0">
+    <p-floatlabel variant="on">
+      <p-iconfield>
+        <p-inputicon class="pi pi-plus hover:cursor-pointer" (click)="addTag()" />
+        <input id="newGenre" type="text" pInputText [(ngModel)]="newTag" (keydown.enter)="addTag()">
+      </p-iconfield>
+      <label for="newGenre">{{ t('new') }}</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="on">
+      <input id="filter" type="text" pInputText [(ngModel)]="filter"
+             (ngModelChange)="filterToDisplay()"
+      >
+      <label for="filter">{{ t('filter') | titlecase }}</label>
+    </p-floatlabel>
+
+  </div>
+
+  @if (toDisplay.length === 0) {
+    <span>{{ t('empty') }}</span>
+  } @else {
+    <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px">
+      <div *cdkVirtualFor="let tag of toDisplay">
+        <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3" style="height: 50px;">
+          <span>{{tag.name}}</span>
+          <span class="pi pi-trash hover:cursor-pointer" (click)="removeTag(tag)"></span>
+        </div>
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+
+</p-dialog>

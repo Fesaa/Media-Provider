@@ -4,7 +4,9 @@ export type Preferences = {
   coverFallbackMethod: CoverFallbackMethod,
   dynastyGenreTags: Tag[],
   blackListedTags: Tag[],
+  whiteListedTags: Tag[],
   ageRatingMappings: AgeRatingMap[],
+  tagMappings: TagMap[],
 };
 
 export enum CoverFallbackMethod {
@@ -28,6 +30,11 @@ export type Tag = {
 
 export function normalize(s: string): string {
   return s.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+}
+
+export type TagMap = {
+  origin: Tag,
+  dest: Tag,
 }
 
 export type AgeRatingMap = {

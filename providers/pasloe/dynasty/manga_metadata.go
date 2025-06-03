@@ -3,17 +3,16 @@ package dynasty
 import (
 	"context"
 	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/utils"
 	"path"
-	"slices"
 	"strconv"
 	"strings"
 )
 
 func (m *manga) WriteContentMetaData(chapter Chapter) error {
 
-	if m.Req.GetBool(IncludeCover, true) {
+	if m.Req.GetBool(api.IncludeCover, true) {
 		if err := m.writeCover(chapter); err != nil {
 			return err
 		}
@@ -108,86 +107,13 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	}), ",")
 	ci.Web = m.seriesInfo.RefUrl()
 
-	m.WriteGenreAndTags(chapter, ci)
-
-	if ar, ok := m.getAgeRating(chapter); ok {
+	tags := utils.Map(utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags), func(t Tag) api.Tag {
+		return t
+	})
+	ci.Genre, ci.Tags = m.GetGenreAndTags(tags)
+	if ar, ok := m.GetAgeRating(tags); ok {
 		ci.AgeRating = ar
 	}
 
 	return ci
-}
-
-func (m *manga) WriteGenreAndTags(chapter Chapter, ci *comicinfo.ComicInfo) {
-	tags := utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags)
-
-	var genres, blackList models.Tags
-	p, err := m.preferences.GetComplete()
-	if err != nil {
-		m.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
-		if !m.hasWarnedBlacklist {
-			m.hasWarnedBlacklist = true
-			m.Notifier.NotifyContentQ(
-				m.TransLoco.GetTranslation("blacklist-failed-to-load-title", m.Title()),
-				m.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
-				models.Orange)
-		}
-	} else {
-		genres = p.DynastyGenreTags
-		blackList = p.BlackListedTags
-	}
-
-	tagContains := func(slice models.Tags, tag Tag) bool {
-		return slice.Contains(tag.Id) || slice.Contains(tag.DisplayName)
-	}
-
-	tagAllowed := func(tag Tag) bool {
-		return err == nil && !tagContains(blackList, tag)
-	}
-
-	ci.Genre = strings.Join(utils.MaybeMap(tags, func(t Tag) (string, bool) {
-		if tagContains(genres, t) && tagAllowed(t) {
-			return t.DisplayName, true
-		}
-		m.Log.Trace().Str("tag", t.DisplayName).
-			Msg("ignoring tag as genre, not configured in preferences or blacklisted")
-		return "", false
-	}), ",")
-
-	if m.Req.GetBool(IncludeNotMatchedTagsKey, false) {
-		ci.Tags = strings.Join(utils.MaybeMap(tags, func(t Tag) (string, bool) {
-			if !tagAllowed(t) {
-				return "", false
-			}
-			if tagContains(genres, t) {
-				return "", false
-			}
-			return t.DisplayName, true
-		}), ",")
-	} else {
-		m.Log.Trace().Msg("not including unmatched tags in comicinfo.xml")
-	}
-}
-
-func (m *manga) getAgeRating(chapter Chapter) (comicinfo.AgeRating, bool) {
-	if m.Preference == nil {
-		m.Log.Warn().Msg("Could not load age rate mapping, not setting age rating")
-		return "", false
-	}
-
-	var mappings models.AgeRatingMappings = m.Preference.AgeRatingMappings
-	allTags := append(m.seriesInfo.Tags, chapter.Tags...) //nolint:gocritic
-	weights := utils.MaybeMap(allTags, func(t Tag) (int, bool) {
-		ar, ok := mappings.GetAgeRating(t.DisplayName)
-		if !ok {
-			return 0, false
-		}
-
-		return comicinfo.AgeRatingIndex[ar], true
-	})
-
-	if len(weights) == 0 {
-		return "", false
-	}
-
-	return comicinfo.IndexToAgeRating[slices.Max(weights)], true
 }
