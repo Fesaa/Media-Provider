@@ -414,6 +414,16 @@
         "filter": "{{shared.filter}}",
         "empty": "No tags have been configured yet."
       },
+      "tags-whitelist": {
+        "label": "Tags whitelist",
+        "header": "Tags whitelist",
+        "explanation": {
+          "p1": "Any tags configured here will be used as tag, if it's not in the blacklist or configured to be used as a genre. Check documentation for how matching happens."
+        },
+        "new": "Add new tag",
+        "filter": "{{shared.filter}}",
+        "empty": "No tags have been configured yet."
+      },
       "age-rating-mappings": {
         "label": "Age ratings mappings",
         "header": "Age rating mappings",

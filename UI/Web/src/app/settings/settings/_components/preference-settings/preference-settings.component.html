@@ -44,6 +44,14 @@
       </div>
 
       <div class="preference-item">
+        <label class="flex-grow">{{ t('tags-whitelist.label') }}</label>
+        <p-button severity="help" (onClick)="displayWhiteListTagDialog=true">{{ t('configure') }}</p-button>
+
+        <app-white-list-tags [(showDialog)]="displayWhiteListTagDialog" [(preferences)]="preferences" />
+
+      </div>
+
+      <div class="preference-item">
         <label class="flex-grow">{{ t('age-rating-mappings.label') }}</label>
         <p-button severity="help" (onClick)="displayAgeRatingMappingDialog=true">{{ t('configure') }}</p-button>
 

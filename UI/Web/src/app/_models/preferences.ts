@@ -4,6 +4,7 @@ export type Preferences = {
   coverFallbackMethod: CoverFallbackMethod,
   dynastyGenreTags: Tag[],
   blackListedTags: Tag[],
+  whiteListedTags: Tag[],
   ageRatingMappings: AgeRatingMap[],
 };
 

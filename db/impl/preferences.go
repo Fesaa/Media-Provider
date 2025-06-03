@@ -47,6 +47,7 @@ func (p *preferences) GetComplete() (*models.Preference, error) {
 	err := p.db.
 		Preload("DynastyGenreTags").
 		Preload("BlackListedTags").
+		Preload("WhiteListedTags").
 		Preload("AgeRatingMappings").
 		Preload("AgeRatingMappings.Tag").
 		First(&pref).Error
