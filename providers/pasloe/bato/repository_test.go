@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -89,6 +90,22 @@ func TestRepository_SeriesInfo(t *testing.T) {
 
 	if lilyClub == nil {
 		t.Fatalf("got no Lily Club")
+	}
+
+	cleaned := utils.Find(series.Authors, func(s string) bool {
+		return s == "狐泥"
+	})
+
+	if cleaned == nil {
+		t.Fatalf("got no cleaned Authors")
+	}
+
+	notCleaned := utils.Find(series.Authors, func(s string) bool {
+		return strings.Contains(s, "(Story&Art)")
+	})
+
+	if notCleaned != nil {
+		t.Fatalf("got %s want nil", *notCleaned)
 	}
 
 }
