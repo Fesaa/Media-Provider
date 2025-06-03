@@ -279,7 +279,7 @@ func (c *client) deleteNewContent(content api.Downloadable, l zerolog.Logger) (c
 		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
 		if err := c.fs.RemoveAll(contentPath); err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while removing new content dir")
-			cleanupErrs = append(cleanupErrs, err)
+			cleanupErrs = append(cleanupErrs, fmt.Errorf("error removing new content dir %s: %w", contentPath, err))
 		}
 	}
 	return cleanupErrs
@@ -289,7 +289,7 @@ func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupEr
 	entries, err := c.fs.ReadDir(dir)
 	if err != nil {
 		l.Error().Err(err).Str("dir", dir).Msg("error while reading dir, unable to remove empty dirs")
-		return append(cleanupErrs, err)
+		return append(cleanupErrs, fmt.Errorf("failed to read directory %s: %w", dir, err))
 	}
 
 	for _, entry := range entries {
@@ -301,7 +301,7 @@ func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupEr
 		if err != nil {
 			l.Error().Err(err).Str("dir", dir).Str("name", entry.Name()).
 				Msg("error while reading dir, will not remove")
-			cleanupErrs = append(cleanupErrs, err)
+			cleanupErrs = append(cleanupErrs, fmt.Errorf("error reading dir %s: %w", entry.Name(), err))
 			continue
 		}
 
@@ -315,7 +315,7 @@ func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupEr
 			Msg("Dir has no content, removing entire directory")
 		if err := c.fs.Remove(path.Join(dir, entry.Name())); err != nil {
 			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
-			cleanupErrs = append(cleanupErrs, err)
+			cleanupErrs = append(cleanupErrs, fmt.Errorf("error removing dir %s: %w", entry.Name(), err))
 		}
 	}
 	return cleanupErrs
@@ -349,7 +349,7 @@ func (c *client) removeOldContent(content api.Downloadable, l zerolog.Logger) (c
 		l.Trace().Str("name", contentPath).Msg("removing old content")
 		if err := c.fs.Remove(contentPath); err != nil {
 			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
-			cleanupErrs = append(cleanupErrs, err)
+			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while removing old content: %w", err))
 		}
 	}
 	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(content.GetToRemoveContent())).
@@ -364,13 +364,13 @@ func (c *client) zipAndRemoveNewContent(newContent []string, l zerolog.Logger) (
 		err := c.dirService.ZipToCbz(contentPath)
 		if err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while zipping dir")
-			cleanupErrs = append(cleanupErrs, err)
+			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while zipping dir %s: %w", contentPath, err))
 			continue
 		}
 
 		if err = c.fs.RemoveAll(contentPath); err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while deleting new content directory")
-			cleanupErrs = append(cleanupErrs, err)
+			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while deleting new content directory %s: %w", contentPath, err))
 			continue
 		}
 	}
