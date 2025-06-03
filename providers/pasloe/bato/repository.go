@@ -142,6 +142,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 		Authors:           info.Find("div.text-sm > a.link.link-hover.link-primary").Map(cleanAuthor),
 		Tags:              extractSeperatedList(info.Find("div.space-y-2 > div.flex.items-center.flex-wrap > span > span"), ","),
 		PublicationStatus: Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").First().Text()),
+		BatoUploadStatus:  Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").Eq(1).Text()),
 		Summary:           info.Find("div.limit-html-p").First().Text(),
 		WebLinks:          info.Find("div.limit-html div.limit-html-p a").Map(mapToContent),
 		Chapters:          goquery.Map(doc.Find(`[name="chapter-list"] astro-slot > div`), r.readChapters),
@@ -158,7 +159,7 @@ func cleanAuthor(_ int, sel *goquery.Selection) string {
 	return author
 }
 
-func (r *repository) readChapters(i int, s *goquery.Selection) Chapter {
+func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 	chpt := Chapter{}
 
 	uriEl := s.Find("div > a.link-hover.link-primary").First()
