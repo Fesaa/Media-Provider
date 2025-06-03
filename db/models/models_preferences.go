@@ -18,7 +18,7 @@ type Preference struct {
 	BlackListedTags         []Tag               `json:"blackListedTags" gorm:"many2many:preference_black_list_tags"`
 	WhiteListedTags         []Tag               `json:"whiteListedTags" gorm:"many2many:preference_white_list_tags"`
 	AgeRatingMappings       []AgeRatingMap      `json:"ageRatingMappings" gorm:"many2many:preference_age_rating_mappings"`
-	TagMappings             []TagMap            `json:"tagMappings" gorm:"many2many:preference_tag_maps"`
+	TagMappings             []TagMap            `json:"tagMappings"`
 }
 
 type CoverFallbackMethod int
@@ -50,7 +50,6 @@ type Tag struct {
 
 	PreferenceID   uint
 	AgeRatingMapID uint
-	TagMapID       uint
 
 	Name           string `json:"name"`
 	NormalizedName string `json:"normalizedName"`
@@ -109,8 +108,10 @@ type TagMap struct {
 	Model
 
 	PreferenceID uint
-	Origin       Tag `json:"origin"`
-	Dest         Tag `json:"dest"`
+	OriginID     uint
+	Origin       Tag `json:"origin" gorm:"foreignKey:OriginID;references:ID"`
+	DestID       uint
+	Dest         Tag `json:"dest" gorm:"foreignKey:DestID;references:ID"`
 }
 
 type TagMaps []TagMap

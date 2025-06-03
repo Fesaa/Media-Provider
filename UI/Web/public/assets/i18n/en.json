@@ -435,6 +435,18 @@
         "filter": "{{shared.filter}}",
         "empty": "No mappings have been configured"
       },
+      "tags-mappings": {
+        "label": "Tag mappings",
+        "header": "Tag mappings",
+        "explanation": {
+          "p1": "Configure how tags are transformed ",
+          "before": "before",
+          "p2": " being processed by anything else."
+        },
+        "new": "Add new",
+        "filter": "{{shared.filter}}",
+        "empty": "No mappings have been configured"
+      },
       "sub-refresh": {
         "label": "Download subscriptions at",
         "tooltip": "This is the hour"

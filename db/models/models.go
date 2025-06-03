@@ -13,4 +13,5 @@ var MODELS = []any{
 	&Notification{},
 	&Tag{},
 	&MetadataRow{},
+	&TagMap{},
 }

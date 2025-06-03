@@ -58,6 +58,13 @@
         <app-age-rating-mappings [(showDialog)]="displayAgeRatingMappingDialog" [(preferences)]="preferences" />
       </div>
 
+      <div class="preference-item">
+        <label class="flex-grow">{{ t('tags-mappings.label') }}</label>
+        <p-button severity="help" (onClick)="displayTagMappingDialog=true">{{ t('configure') }}</p-button>
+
+        <app-tag-mappings [(showDialog)]="displayTagMappingDialog" [(preferences)]="preferences" />
+      </div>
+
       <div class="flex justify-center md:justify-end mt-10">
         <p-button severity="primary" (onClick)="save()" >{{ t('save') }}</p-button>
       </div>

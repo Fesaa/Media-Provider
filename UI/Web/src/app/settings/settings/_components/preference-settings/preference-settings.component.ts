@@ -13,6 +13,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 import {Select} from "primeng/select";
 import {AgeRatingMappingsComponent} from "./age-rating-mappings/age-rating-mappings.component";
 import {WhiteListTagsComponent} from "./white-list-tags/white-list-tags.component";
+import {TagMappingsComponent} from "./tag-mappings/tag-mappings.component";
 
 @Component({
   selector: 'app-preference-settings',
@@ -30,6 +31,7 @@ import {WhiteListTagsComponent} from "./white-list-tags/white-list-tags.componen
     Select,
     AgeRatingMappingsComponent,
     WhiteListTagsComponent,
+    TagMappingsComponent,
   ],
   templateUrl: './preference-settings.component.html',
   styleUrl: './preference-settings.component.css'
@@ -41,6 +43,7 @@ export class PreferenceSettingsComponent implements OnInit {
   displayBlackListTagDialog: boolean = false;
   displayWhiteListTagDialog: boolean = false;
   displayAgeRatingMappingDialog: boolean = false;
+  displayTagMappingDialog: boolean = false;
 
   constructor(private preferencesService: PreferencesService,
               private toastService: ToastService,
