@@ -495,3 +495,71 @@ func TestIsSameDay(t *testing.T) {
 		})
 	}
 }
+
+func TestClamp(t *testing.T) {
+	type args struct {
+		val  int
+		minV int
+		maxV int
+	}
+	tests := []struct {
+		name   string
+		args   args
+		want   int
+		panics bool
+	}{
+		{
+			name: "valid",
+			args: args{
+				val:  1,
+				minV: 1,
+				maxV: 2,
+			},
+			want: 1,
+		},
+		{
+			name: "invalid below",
+			args: args{
+				val:  1,
+				minV: 5,
+				maxV: 10,
+			},
+			want: 5,
+		},
+		{
+			name: "invalid above",
+			args: args{
+				val:  100,
+				minV: 5,
+				maxV: 10,
+			},
+			want: 10,
+		},
+		{
+			name: "invalid equal",
+			args: args{
+				val:  1,
+				minV: 5,
+				maxV: 2,
+			},
+			want:   1,
+			panics: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if tt.panics {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("Clamp() did not panic")
+					}
+				}()
+			}
+
+			if got := Clamp(tt.args.val, tt.args.minV, tt.args.maxV); got != tt.want {
+				t.Errorf("Clamp() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

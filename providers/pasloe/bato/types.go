@@ -59,6 +59,7 @@ type Series struct {
 	Authors           []string
 	Tags              []string
 	PublicationStatus Publication
+	BatoUploadStatus  Publication
 	Summary           string
 	WebLinks          []string
 	Chapters          []Chapter

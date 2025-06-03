@@ -17,6 +17,21 @@ type notifications struct {
 	db *gorm.DB
 }
 
+func (n notifications) Recent(i int, group models.NotificationGroup) ([]models.Notification, error) {
+	var many []models.Notification
+	err := n.db.
+		Where(&models.Notification{Group: group}).
+		Where(map[string]any{"read": false}).
+		Order("created_at desc").
+		Limit(i).
+		Find(&many).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	return many, nil
+}
+
 func (n notifications) GetMany(ids []uint) ([]models.Notification, error) {
 	var many []models.Notification
 	err := n.db.Where("id IN (?)", ids).Find(&many).Error

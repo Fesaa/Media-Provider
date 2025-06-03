@@ -27,6 +27,7 @@ const (
 
 var (
 	VolumeChapterRegex = regexp.MustCompile(`(?:Volume (\d+)\s+)?Chapter (\d+)`)
+	AuthorClean        = []string{"(Story&Art)"}
 )
 
 type Repository interface {
@@ -138,16 +139,27 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 		CoverUrl:          doc.Find("main > div > div > div > img").AttrOr("src", ""),
 		Title:             info.Find("div > h3 a.link.link-hover").First().Text(),
 		OriginalTitle:     info.Find("div > div > span").First().Text(),
-		Authors:           info.Find("div.text-sm > a.link.link-hover.link-primary").Map(mapToContent),
+		Authors:           info.Find("div.text-sm > a.link.link-hover.link-primary").Map(cleanAuthor),
 		Tags:              extractSeperatedList(info.Find("div.space-y-2 > div.flex.items-center.flex-wrap > span > span"), ","),
 		PublicationStatus: Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").First().Text()),
+		BatoUploadStatus:  Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").Eq(1).Text()),
 		Summary:           info.Find("div.limit-html-p").First().Text(),
 		WebLinks:          info.Find("div.limit-html div.limit-html-p a").Map(mapToContent),
 		Chapters:          goquery.Map(doc.Find(`[name="chapter-list"] astro-slot > div`), r.readChapters),
 	}, nil
 }
 
-func (r *repository) readChapters(i int, s *goquery.Selection) Chapter {
+func cleanAuthor(_ int, sel *goquery.Selection) string {
+	author := mapToContent(-1, sel)
+
+	for _, v := range AuthorClean {
+		author = strings.ReplaceAll(author, v, "")
+	}
+
+	return author
+}
+
+func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 	chpt := Chapter{}
 
 	uriEl := s.Find("div > a.link-hover.link-primary").First()

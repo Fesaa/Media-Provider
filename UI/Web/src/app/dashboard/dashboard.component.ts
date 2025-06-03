@@ -22,6 +22,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {SortedList} from "../shared/data-structures/sorted-list";
+import {RecentlyDownloadedComponent} from "./_components/recently-downloaded/recently-downloaded.component";
 
 @Component({
   selector: 'app-dashboard',
@@ -38,7 +39,8 @@ import {SortedList} from "../shared/data-structures/sorted-list";
     ContentStatePipe,
     ContentPickerDialogComponent,
     TranslocoDirective,
-    TitleCasePipe
+    TitleCasePipe,
+    RecentlyDownloadedComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'

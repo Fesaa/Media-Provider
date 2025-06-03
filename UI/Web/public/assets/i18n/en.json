@@ -28,6 +28,10 @@
     }
   },
 
+  "recently-downloaded": {
+    "title": "Recently downloaded subscriptions"
+  },
+
   "services": {
     "image": {
       "failed": {

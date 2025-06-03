@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -26,6 +27,7 @@ type notificationRoutes struct {
 func RegisterNotificationRoutes(nr notificationRoutes) {
 	notificationGroup := nr.Router.Group("/notifications", nr.Auth.Middleware)
 	notificationGroup.Get("/all", nr.All)
+	notificationGroup.Get("/recent", nr.Recent)
 	notificationGroup.Get("/amount", nr.Amount)
 	notificationGroup.Post("/:id/read", nr.Read)
 	notificationGroup.Post("/:id/unread", nr.Unread)
@@ -62,6 +64,19 @@ func (nr *notificationRoutes) All(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.JSON(notifications)
+}
+
+func (nr *notificationRoutes) Recent(ctx *fiber.Ctx) error {
+	limit := ctx.QueryInt("limit", 5)
+	nots, err := nr.DB.Notifications.Recent(utils.Clamp(limit, 1, 10), models.GroupContent)
+	if err != nil {
+		nr.Log.Error().Err(err).Msg("failed to fetch recent notifications")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.JSON(nots)
 }
 
 func (nr *notificationRoutes) Amount(ctx *fiber.Ctx) error {

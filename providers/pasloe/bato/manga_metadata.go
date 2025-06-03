@@ -59,8 +59,23 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		ci.AgeRating = ar
 	}
 
+	if m.seriesInfo.PublicationStatus == PublicationCompleted && m.seriesInfo.BatoUploadStatus == PublicationCompleted {
+		ci.Count = m.ChapterCount()
+	}
+
 	return ci
 
+}
+
+func (m *manga) ChapterCount() int {
+	c := 0
+	for _, ch := range m.seriesInfo.Chapters {
+		if v, err := strconv.Atoi(ch.Chapter); err == nil {
+			c = max(c, v)
+		}
+	}
+
+	return c
 }
 
 func (m *manga) WriteGenreAndTags(ci *comicinfo.ComicInfo) {
