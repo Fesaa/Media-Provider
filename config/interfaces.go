@@ -7,7 +7,7 @@ import (
 )
 
 func (current *Config) GetRootDir() string {
-	return OrDefault(current.RootDir, path.Join(OrDefault(os.Getenv("CONFIG_DIR"), "."), "temp"))
+	return orDefault(current.RootDir, path.Join(orDefault(os.Getenv("CONFIG_DIR"), "."), "temp"))
 }
 
 func (current *Config) GetMaxConcurrentTorrents() int {

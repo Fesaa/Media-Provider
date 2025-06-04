@@ -86,6 +86,10 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				FormType:      payload.SWITCH,
 				DefaultOption: "true",
 			},
+			{
+				Key:      api.DownloadOneShotKey,
+				FormType: payload.SWITCH,
+			},
 		},
 	}
 }

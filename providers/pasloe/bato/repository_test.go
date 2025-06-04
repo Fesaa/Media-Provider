@@ -205,6 +205,38 @@ func TestRepository_SeriesWithVolume(t *testing.T) {
 	}
 }
 
+func TestRepository_SeriesInfoEpisodesAndSeasons(t *testing.T) {
+	repo := tempRepository(io.Discard)
+
+	series, err := repo.SeriesInfo(t.Context(), "148408-mage-demon-queen-official")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s1E12 := getChapter(series, "12", "1")
+	if s1E12 == nil {
+		t.Fatalf("failed to find s1E12")
+	}
+
+	want := "Melathia Fanfic 1"
+	got := s1E12.Title
+	if got != want {
+		t.Fatalf("got \"%s\" want \"%s\"", got, want)
+	}
+
+	s3E1 := getChapter(series, "1", "3")
+	if s3E1 == nil {
+		t.Fatalf("failed to find s3E1")
+	}
+
+	want = "Season 3 Premiere"
+	got = s3E1.Title
+	if got != want {
+		t.Fatalf("got \"%s\" want \"%s\"", got, want)
+	}
+
+}
+
 func TestRepository_ChapterImages(t *testing.T) {
 	repo := tempRepository(io.Discard)
 

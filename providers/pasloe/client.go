@@ -185,7 +185,7 @@ func (c *client) GetCurrentDownloads() []api.Downloadable {
 }
 
 func (c *client) GetBaseDir() string {
-	return config.OrDefault(c.config.GetRootDir(), "temp")
+	return utils.OrElse(c.config.GetRootDir(), "temp")
 }
 
 func (c *client) GetConfig() api.Config {

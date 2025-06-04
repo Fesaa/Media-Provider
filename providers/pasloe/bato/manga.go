@@ -111,9 +111,7 @@ func (m *manga) ContentList() []payload.ListContentData {
 			return payload.ListContentData{
 				SubContentId: chapter.Id,
 				Selected:     len(m.ToDownloadUserSelected) == 0 || slices.Contains(m.ToDownloadUserSelected, chapter.Id),
-				Label: utils.Ternary(chapter.Title == "",
-					m.Title()+" "+chapter.Label(),
-					chapter.Label()),
+				Label:        utils.Ternary(chapter.Title == "", m.Title()+" "+chapter.Label(), chapter.Label()),
 			}
 		})
 	}
