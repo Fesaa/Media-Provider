@@ -8,6 +8,13 @@ import (
 
 var re = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
+func OrElse(s string, def string) string {
+	if len(s) == 0 {
+		return def
+	}
+	return s
+}
+
 func Normalize(s string) string {
 	return strings.ToLower(re.ReplaceAllString(s, ""))
 }

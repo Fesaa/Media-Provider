@@ -45,7 +45,7 @@ func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 	dirService services.DirectoryService, notify services.NotificationService,
 	transLoco services.TranslocoService, fs afero.Afero,
 ) (Yoitsu, error) {
-	dir := config.OrDefault(c.GetRootDir(), "temp")
+	dir := utils.OrElse(c.GetRootDir(), "temp")
 
 	impl := &yoitsu{
 		dir:         dir,

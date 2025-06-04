@@ -26,14 +26,30 @@ const (
 	UploadTag         = "upload"
 )
 
+type volumeChapterMapping struct {
+	Regex         *regexp.Regexp
+	DefaultVolume string
+}
+
+// TODO: Make these configurable? Especially mapping and cleans
+//
+//	Would be fun to have YAMLs for these. I think UI/DB is over the top for them
+//	But maybe not?
 var (
-	VolumeChapterRegex = regexp.MustCompile(`(?:Volume (\d+)\s+)?Chapter ([\d\\.]+)`)
-	AuthorMappings     = map[string]comicinfo.Roles{
+	VolumeChapterRegexes = []volumeChapterMapping{
+		{regexp.MustCompile(`(?:Volume (\d+)\s+)?Chapter ([\d\\.]+)`), ""}, // Volume 1 Chapter 1.5
+		{regexp.MustCompile(`(?:\[S(\d+)])? ?Episode ([\d\\.]+)`), "1"},    // [S1] Episode 5
+	}
+	AuthorMappings = map[string]comicinfo.Roles{
 		"(Story&Art)": {comicinfo.Writer, comicinfo.Colorist},
 		"(Story)":     {comicinfo.Writer},
 		"(Art)":       {comicinfo.Colorist},
 	}
-	TitleCleans = []string{"(Official)", "(Unofficial)"}
+	TitleCleans = []string{
+		"(Official)",
+		"(Unofficial)",
+		"[Mature]",
+	}
 )
 
 type Repository interface {
@@ -185,37 +201,47 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 
 	uriEl := s.Find("div > a.link-hover.link-primary").First()
 	chpt.Id = strings.TrimPrefix(uriEl.AttrOr("href", ""), "/title/")
-	chpt.Volume, chpt.Chapter = extractVolumeAndChapter(uriEl.Text())
+	chpt.Volume, chpt.Chapter = r.extractVolumeAndChapter(uriEl.Text())
 
-	chpt.Title = extractTitle(uriEl.Text())
+	// One Shot
+	if chpt.Volume == "" && chpt.Chapter == "" {
+		chpt.Title = utils.OrElse(extractTitle(uriEl.Text()), uriEl.Text())
+	} else {
+		chpt.Title = extractTitle(uriEl.Text())
 
-	if chpt.Title == "" {
-		titleText := s.Find("div > span.opacity-80").First().Text()
-		if strings.HasPrefix(titleText, ":") {
-			chpt.Title = strings.TrimSpace(strings.TrimPrefix(titleText, ": "))
+		if chpt.Title == "" {
+			titleText := s.Find("div > span.opacity-80").First().Text()
+			if strings.HasPrefix(titleText, ":") {
+				chpt.Title = strings.TrimSpace(strings.TrimPrefix(titleText, ": "))
+			}
 		}
 	}
 
 	return chpt
 }
 
-func extractVolumeAndChapter(s string) (string, string) {
-	matches := VolumeChapterRegex.FindStringSubmatch(s)
+func (r *repository) extractVolumeAndChapter(s string) (string, string) {
+	for _, mapping := range VolumeChapterRegexes {
+		matches := mapping.Regex.FindStringSubmatch(s)
 
-	if len(matches) == 0 {
-		return "", ""
+		if len(matches) == 0 {
+			continue
+		}
+
+		volume := ""
+		if len(matches) > 1 {
+			volume = matches[1]
+		}
+		chapter := ""
+		if len(matches) > 2 {
+			chapter = matches[2]
+		}
+
+		return utils.OrElse(volume, mapping.DefaultVolume), chapter
 	}
 
-	volume := ""
-	if len(matches) > 1 {
-		volume = matches[1]
-	}
-	chapter := ""
-	if len(matches) > 2 {
-		chapter = matches[2]
-	}
-
-	return volume, chapter
+	r.log.Warn().Str("input", s).Msg("failed to match volume and chapter")
+	return "", ""
 }
 
 func extractTitle(s string) string {
@@ -248,10 +274,12 @@ func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, er
 
 		err = json.Unmarshal([]byte(props), &imageProps)
 		if err != nil {
+			r.log.Trace().Err(err).Str("input", props).Msg("failed to unmarshal images")
 			continue
 		}
 
 		if len(imageProps.ImageFiles) == 0 {
+			r.log.Trace().Str("input", props).Msg("no images found in props, but was able to unmarshal")
 			continue
 		}
 	}

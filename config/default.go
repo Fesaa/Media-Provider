@@ -19,7 +19,7 @@ func DefaultConfig() *Config {
 
 	return &Config{
 		SyncId:  0,
-		RootDir: OrDefault(os.Getenv("CONFIG_DIR"), pwd),
+		RootDir: orDefault(os.Getenv("CONFIG_DIR"), pwd),
 		BaseUrl: "",
 		Secret:  secret,
 		Cache: CacheConfig{
