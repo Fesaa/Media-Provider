@@ -179,9 +179,13 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 	chpt.Id = strings.TrimPrefix(uriEl.AttrOr("href", ""), "/title/")
 	chpt.Volume, chpt.Chapter = extractVolumeAndChapter(uriEl.Text())
 
-	titleText := s.Find("div > span.opacity-80").First().Text()
-	if strings.HasPrefix(titleText, ":") {
-		chpt.Title = strings.TrimSpace(strings.TrimPrefix(titleText, ": "))
+	chpt.Title = extractTitle(uriEl.Text())
+
+	if chpt.Title == "" {
+		titleText := s.Find("div > span.opacity-80").First().Text()
+		if strings.HasPrefix(titleText, ":") {
+			chpt.Title = strings.TrimSpace(strings.TrimPrefix(titleText, ": "))
+		}
 	}
 
 	return chpt
@@ -204,6 +208,19 @@ func extractVolumeAndChapter(s string) (string, string) {
 	}
 
 	return volume, chapter
+}
+
+func extractTitle(s string) string {
+	idx := strings.Index(s, ":")
+	if idx == -1 {
+		return ""
+	}
+
+	if idx+1 == len(s) {
+		return ""
+	}
+
+	return strings.TrimSpace(s[idx+1:])
 }
 
 func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, error) {

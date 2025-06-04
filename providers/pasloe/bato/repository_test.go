@@ -13,6 +13,16 @@ func tempRepository(w io.Writer) Repository {
 	return NewRepository(http.DefaultClient, zerolog.New(w))
 }
 
+func getChapter(series *Series, chapter string, volume ...string) *Chapter {
+	return utils.Find(series.Chapters, func(c Chapter) bool {
+		if len(volume) > 0 {
+			return c.Volume == volume[0] && c.Chapter == chapter
+		}
+
+		return c.Chapter == chapter
+	})
+}
+
 func TestRepository_Search(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
@@ -132,12 +142,44 @@ func TestRepository_SeriesInfo_ChapterDecimals(t *testing.T) {
 		}
 	}
 
-	volume3Chapter23Point5 := utils.Find(series.Chapters, func(chapter Chapter) bool {
-		return chapter.Volume == "3" && chapter.Chapter == "23.5"
-	})
+	volume3Chapter23Point5 := getChapter(series, "23.5", "3")
 
 	if volume3Chapter23Point5 == nil {
 		t.Fatalf("failed to find volume 3 chapter 23.5")
+	}
+
+}
+
+func TestRepository_SeriesInfoFullyAnchoredTitles(t *testing.T) {
+	repo := tempRepository(io.Discard)
+
+	series, err := repo.SeriesInfo(t.Context(), "149409-romance-of-the-stars-official")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chapter12 := getChapter(series, "12")
+
+	if chapter12 == nil {
+		t.Fatalf("failed to find chapter 12")
+	}
+
+	want := "Yitong, I'm Sorry, But"
+	got := chapter12.Title
+
+	if got != want {
+		t.Fatalf("got \"%s\" want \"%s\"", got, want)
+	}
+
+	chapter5 := getChapter(series, "5")
+	if chapter5 == nil {
+		t.Fatalf("failed to find chapter 5")
+	}
+
+	want = "Jealous Friend"
+	got = chapter5.Title
+	if got != want {
+		t.Fatalf("got \"%s\" want \"%s\"", got, want)
 	}
 
 }
