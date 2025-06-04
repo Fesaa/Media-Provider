@@ -33,6 +33,7 @@ var (
 		"(Story)":     {comicinfo.Writer},
 		"(Art)":       {comicinfo.Colorist},
 	}
+	TitleCleans = []string{"(Official)", "(Unofficial)"}
 )
 
 type Repository interface {
@@ -142,7 +143,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 	return &Series{
 		Id:                id,
 		CoverUrl:          doc.Find("main > div > div > div > img").AttrOr("src", ""),
-		Title:             info.Find("div > h3 a.link.link-hover").First().Text(),
+		Title:             cleanTitle(info.Find("div > h3 a.link.link-hover").First().Text()),
 		OriginalTitle:     info.Find("div > div > span").First().Text(),
 		Authors:           goquery.Map(info.Find("div.text-sm > a.link.link-hover.link-primary"), mapAuthor),
 		Tags:              extractSeperatedList(info.Find("div.space-y-2 > div.flex.items-center.flex-wrap > span > span"), ","),
@@ -152,6 +153,13 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 		WebLinks:          info.Find("div.limit-html div.limit-html-p a").Map(mapToContent),
 		Chapters:          goquery.Map(doc.Find(`[name="chapter-list"] astro-slot > div`), r.readChapters),
 	}, nil
+}
+
+func cleanTitle(title string) string {
+	for _, t := range TitleCleans {
+		title = strings.ReplaceAll(title, t, "")
+	}
+	return title
 }
 
 func mapAuthor(_ int, sel *goquery.Selection) Author {
