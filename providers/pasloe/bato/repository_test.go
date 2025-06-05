@@ -213,7 +213,7 @@ func TestRepository_SeriesInfoEpisodesAndSeasons(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s1E12 := getChapter(series, "12", "1")
+	s1E12 := getChapter(series, "12", "")
 	if s1E12 == nil {
 		t.Fatalf("failed to find s1E12")
 	}
