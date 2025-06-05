@@ -1,4 +1,4 @@
-package impl
+package db
 
 import (
 	"github.com/Fesaa/Media-Provider/comicinfo"

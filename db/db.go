@@ -2,7 +2,6 @@ package db
 
 import (
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/db/impl"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/glebarez/sqlite"
@@ -47,12 +46,12 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 
 	return &Database{
 		db:            db,
-		Users:         impl.Users(db),
-		Pages:         impl.Pages(db),
-		Subscriptions: impl.Subscriptions(db),
-		Preferences:   impl.Preferences(db),
-		Notifications: impl.Notifications(db),
-		Metadata:      impl.Metadata(db),
+		Users:         Users(db),
+		Pages:         Pages(db),
+		Subscriptions: Subscriptions(db),
+		Preferences:   Preferences(db),
+		Notifications: Notifications(db),
+		Metadata:      Metadata(db),
 	}, nil
 }
 

@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	HeaderName = "Authorization"
-	AuthScheme = "Bearer"
+	Header = "Authorization"
+	Scheme = "Bearer"
 )
 
 var (
@@ -37,11 +37,16 @@ func NewJwtAuth(db *db.Database, cfg *config.Config, log zerolog.Logger) Provide
 
 func (jwtAuth *jwtAuth) Middleware(ctx *fiber.Ctx) error {
 	isAuthenticated, err := jwtAuth.IsAuthenticated(ctx)
-	if err != nil {
-		jwtAuth.log.Debug().Err(err).Msg("error while checking authentication status")
+	if !isAuthenticated {
+		if err != nil {
+			jwtAuth.log.Debug().Err(err).Msg("error while checking authentication status")
+		}
+
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	}
-	if !isAuthenticated {
+
+	if err != nil {
+		jwtAuth.log.Debug().Err(err).Msg("error while checking authentication status")
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	}
 
@@ -49,13 +54,13 @@ func (jwtAuth *jwtAuth) Middleware(ctx *fiber.Ctx) error {
 }
 
 func (jwtAuth *jwtAuth) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
-	auth := ctx.Get(HeaderName)
-	l := len(AuthScheme)
+	auth := ctx.Get(Header)
+	l := len(Scheme)
 	key, err := func() (string, error) {
 		if len(auth) > 0 && l == 0 {
 			return auth, nil
 		}
-		if len(auth) > l+1 && auth[:l] == AuthScheme {
+		if len(auth) > l+1 && auth[:l] == Scheme {
 			return auth[l+1:], nil
 		}
 
