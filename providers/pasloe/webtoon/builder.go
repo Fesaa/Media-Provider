@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -13,7 +13,7 @@ import (
 type Builder struct {
 	log        zerolog.Logger
 	repository Repository
-	ps         api.Client
+	ps         core.Client
 }
 
 func (b *Builder) Provider() models.Provider {
@@ -68,7 +68,7 @@ func (b *Builder) Client() services.Client {
 	return b.ps
 }
 
-func NewBuilder(log zerolog.Logger, ps api.Client, repository Repository) *Builder {
+func NewBuilder(log zerolog.Logger, ps core.Client, repository Repository) *Builder {
 	return &Builder{
 		log:        log.With().Str("handler", "webtoon-provider").Logger(),
 		repository: repository,

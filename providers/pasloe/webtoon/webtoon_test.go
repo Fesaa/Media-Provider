@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
@@ -66,7 +66,7 @@ func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	scope := cont.Scope("tempWebtoon")
 
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
-	must(scope.Provide(func() api.Client {
+	must(scope.Provide(func() core.Client {
 		return client
 	}))
 	must(scope.Provide(utils.Identity(http.DefaultClient)))

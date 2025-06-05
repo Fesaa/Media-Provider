@@ -7,7 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
@@ -88,7 +88,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	client := mock.PasloeClient{BaseDir: "/data"}
 
 	must(scope.Provide(utils.Identity(fs)))
-	must(scope.Provide(func() api.Client {
+	must(scope.Provide(func() core.Client {
 		return &client
 	}))
 	must(scope.Provide(utils.Identity(log)))
@@ -612,7 +612,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 
 	type test struct {
 		name          string
-		contentOnDisk []api.Content
+		contentOnDisk []core.Content
 		chapter       func() ChapterSearchData
 		command       func(*testing.T, *manga)
 		want          bool
@@ -623,13 +623,13 @@ func TestManga_ShouldDownload(t *testing.T) {
 	tests := []test{
 		{
 			name:          "New Download",
-			contentOnDisk: []api.Content{},
+			contentOnDisk: []core.Content{},
 			chapter:       chapter,
 			want:          true,
 		},
 		{
 			name: "Volume on disk",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Vol. 13.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13.cbz")},
 			},
 			chapter: chapter,
@@ -637,7 +637,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 		{
 			name: "Chapter on disk, no volume",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter: func() ChapterSearchData {
@@ -649,7 +649,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 		{
 			name: "Chapter on disk, fail volume check",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter:    chapter,
@@ -660,7 +660,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 		{
 			name: "Chapter on disk, same volume on disk",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter: chapter,
@@ -688,7 +688,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 		{
 			name: "Chapter on disk, replacing loose chapter",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter: chapter,

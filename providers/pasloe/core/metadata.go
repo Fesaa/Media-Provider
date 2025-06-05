@@ -1,4 +1,4 @@
-package api
+package core
 
 import (
 	"github.com/Fesaa/Media-Provider/comicinfo"

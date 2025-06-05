@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
 	"github.com/rs/zerolog"
@@ -247,12 +247,12 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 }
 
 func (m *manga) getAgeRating() comicinfo.AgeRating {
-	tags := utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (api.Tag, bool) {
+	tags := utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (core.Tag, bool) {
 		tag, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return nil, false
 		}
-		return api.NewStringTag(tag), true
+		return core.NewStringTag(tag), true
 	})
 
 	mar := m.info.Attributes.ContentRating.ComicInfoAgeRating()

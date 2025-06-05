@@ -6,7 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -16,7 +16,7 @@ import (
 type Builder struct {
 	log        zerolog.Logger
 	httpClient *menou.Client
-	ps         api.Client
+	ps         core.Client
 	repository Repository
 }
 
@@ -139,7 +139,7 @@ func (b *Builder) Client() services.Client {
 	return b.ps
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps api.Client, repository Repository) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps core.Client, repository Repository) *Builder {
 	return &Builder{log.With().Str("handler", "mangadex-provider").Logger(),
 		httpClient, ps, repository}
 }

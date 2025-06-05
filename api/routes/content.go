@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
@@ -20,7 +20,7 @@ type contentRoutes struct {
 	Cache  fiber.Handler `name:"cache"`
 	Auth   auth.Provider `name:"jwt-auth"`
 	YS     yoitsu.Yoitsu
-	PS     api.Client
+	PS     core.Client
 	Log    zerolog.Logger
 
 	Val            services.ValidationService

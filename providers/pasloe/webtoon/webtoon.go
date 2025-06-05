@@ -8,7 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-func NewWebToon(scope *dig.Scope) api.Downloadable {
+func NewWebToon(scope *dig.Scope) core.Downloadable {
 	var wt *webtoon
 
 	utils.Must(scope.Invoke(func(
@@ -41,7 +41,7 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 			fs:              fs,
 		}
 
-		wt.DownloadBase = api.NewBaseWithProvider[Chapter](scope, "webtoon", wt)
+		wt.DownloadBase = core.NewBaseWithProvider[Chapter](scope, "webtoon", wt)
 	}))
 	return wt
 }
@@ -52,7 +52,7 @@ type webtoon struct {
 	markdownService services.MarkdownService
 	fs              afero.Afero
 
-	*api.DownloadBase[Chapter]
+	*core.DownloadBase[Chapter]
 	id string
 
 	searchInfo *SearchData

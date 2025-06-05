@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
@@ -69,7 +69,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	client := mock.PasloeClient{BaseDir: tempDir}
 
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
-	must(scope.Provide(func() api.Client {
+	must(scope.Provide(func() core.Client {
 		return &client
 	}))
 	must(scope.Provide(utils.Identity(log)))
@@ -372,7 +372,7 @@ func TestManga_ContentRegex(t *testing.T) {
 func TestManga_ShouldDownload(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer, &mockRepository{})
-	m.ExistingContent = []api.Content{
+	m.ExistingContent = []core.Content{
 		{
 			Name: "Sailor Girlfriend Ch. 0001.cbz",
 		},
@@ -444,7 +444,7 @@ func TestTagToGenre(t *testing.T) {
 	}
 
 	m.Req.DownloadMetadata.Extra = make(map[string][]string, 1)
-	m.Req.DownloadMetadata.Extra[api.IncludeNotMatchedTagsKey] = []string{"true"}
+	m.Req.DownloadMetadata.Extra[core.IncludeNotMatchedTagsKey] = []string{"true"}
 
 	ci = m.comicInfo(chapter())
 	tags = strings.Split(ci.Tags, ",")

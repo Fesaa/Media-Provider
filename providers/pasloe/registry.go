@@ -5,8 +5,8 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/bato"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
@@ -16,11 +16,11 @@ import (
 )
 
 type Registry interface {
-	Create(c api.Client, req payload.DownloadRequest) (api.Downloadable, error)
+	Create(c core.Client, req payload.DownloadRequest) (core.Downloadable, error)
 }
 
 type registry struct {
-	r          map[models.Provider]func(scope *dig.Scope) api.Downloadable
+	r          map[models.Provider]func(scope *dig.Scope) core.Downloadable
 	mu         sync.RWMutex
 	httpClient *menou.Client
 	container  *dig.Container
@@ -28,7 +28,7 @@ type registry struct {
 
 func newRegistry(httpClient *menou.Client, container *dig.Container) Registry {
 	r := &registry{
-		r:          make(map[models.Provider]func(scope *dig.Scope) api.Downloadable),
+		r:          make(map[models.Provider]func(scope *dig.Scope) core.Downloadable),
 		mu:         sync.RWMutex{},
 		httpClient: httpClient,
 		container:  container,
@@ -42,13 +42,13 @@ func newRegistry(httpClient *menou.Client, container *dig.Container) Registry {
 	return r
 }
 
-func (r *registry) Register(provider models.Provider, fn func(scope *dig.Scope) api.Downloadable) {
+func (r *registry) Register(provider models.Provider, fn func(scope *dig.Scope) core.Downloadable) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.r[provider] = fn
 }
 
-func (r *registry) Create(c api.Client, req payload.DownloadRequest) (api.Downloadable, error) {
+func (r *registry) Create(c core.Client, req payload.DownloadRequest) (core.Downloadable, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	fn, ok := r.r[req.Provider]

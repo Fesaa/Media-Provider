@@ -5,7 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
@@ -27,7 +27,7 @@ func must(t *testing.T, err error) {
 	}
 }
 
-func testClient(t *testing.T, options ...utils.Option[*client]) api.Client {
+func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 	t.Helper()
 
 	cont := dig.New()
@@ -49,7 +49,7 @@ func testClient(t *testing.T, options ...utils.Option[*client]) api.Client {
 	must(t, cont.Provide(services.MarkdownServiceProvider))
 	must(t, cont.Provide(services.ImageServiceProvider))
 	must(t, cont.Provide(New))
-	c := utils.MustInvokeCont[api.Client](cont).(*client)
+	c := utils.MustInvokeCont[core.Client](cont).(*client)
 
 	c.registry = &mockRegistry{
 		cont: cont,
@@ -65,10 +65,10 @@ func testClient(t *testing.T, options ...utils.Option[*client]) api.Client {
 type stateInfo struct {
 	state    payload.ContentState
 	provider models.Provider
-	callback func(api.Downloadable)
+	callback func(core.Downloadable)
 }
 
-func (si stateInfo) ToContent(id string) api.Downloadable {
+func (si stateInfo) ToContent(id string) core.Downloadable {
 	return &MockContent{
 		mockProvider: si.provider,
 		mockId:       id,

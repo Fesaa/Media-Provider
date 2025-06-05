@@ -3,7 +3,7 @@ package dynasty
 import (
 	"context"
 	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"path"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 
 func (m *manga) WriteContentMetaData(chapter Chapter) error {
 
-	if m.Req.GetBool(api.IncludeCover, true) {
+	if m.Req.GetBool(core.IncludeCover, true) {
 		if err := m.writeCover(chapter); err != nil {
 			return err
 		}
@@ -107,7 +107,7 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	}), ",")
 	ci.Web = m.seriesInfo.RefUrl()
 
-	tags := utils.Map(utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags), func(t Tag) api.Tag {
+	tags := utils.Map(utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags), func(t Tag) core.Tag {
 		return t
 	})
 	ci.Genre, ci.Tags = m.GetGenreAndTags(tags)

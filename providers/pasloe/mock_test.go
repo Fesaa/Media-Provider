@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -16,7 +16,7 @@ type mockRegistry struct {
 	finishContent bool
 }
 
-func (m mockRegistry) Create(c api.Client, req payload.DownloadRequest) (api.Downloadable, error) {
+func (m mockRegistry) Create(c core.Client, req payload.DownloadRequest) (core.Downloadable, error) {
 	scope := m.cont.Scope("pasloe::registry::create")
 
 	utils.Must(scope.Provide(utils.Identity(c)))
@@ -38,7 +38,7 @@ func (m mockRegistry) Create(c api.Client, req payload.DownloadRequest) (api.Dow
 		block.mockAll = []ID{"a", "b"}
 	}
 
-	base := api.NewBaseWithProvider(scope, "", block)
+	base := core.NewBaseWithProvider(scope, "", block)
 	block.DownloadBase = base
 	return block, nil
 }
@@ -54,7 +54,7 @@ func (i ID) Label() string {
 }
 
 type MockContent struct {
-	*api.DownloadBase[ID]
+	*core.DownloadBase[ID]
 	mockTitle               string
 	mockRefUrl              string
 	mockProvider            models.Provider
@@ -77,7 +77,7 @@ type MockContent struct {
 
 func NewMockContent(scope *dig.Scope) *MockContent {
 	mc := &MockContent{}
-	base := api.NewBaseWithProvider[ID](scope, "mock-content", mc)
+	base := core.NewBaseWithProvider[ID](scope, "mock-content", mc)
 	mc.DownloadBase = base
 	return mc
 }

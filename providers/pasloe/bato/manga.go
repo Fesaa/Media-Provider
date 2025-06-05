@@ -7,7 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-func NewManga(scope *dig.Scope) api.Downloadable {
+func NewManga(scope *dig.Scope) core.Downloadable {
 	var m *manga
 
 	utils.Must(scope.Invoke(func(
@@ -41,14 +41,14 @@ func NewManga(scope *dig.Scope) api.Downloadable {
 			fs:              fs,
 		}
 
-		m.DownloadBase = api.NewBaseWithProvider[Chapter](scope, "dynasty-manga", m)
+		m.DownloadBase = core.NewBaseWithProvider[Chapter](scope, "dynasty-manga", m)
 	}))
 
 	return m
 }
 
 type manga struct {
-	*api.DownloadBase[Chapter]
+	*core.DownloadBase[Chapter]
 
 	httpClient      *menou.Client
 	repository      Repository
@@ -210,7 +210,7 @@ func (m *manga) IsContent(name string) bool {
 
 func (m *manga) ShouldDownload(chapter Chapter) bool {
 	_, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
-	if ok || (chapter.Chapter == "" && !m.Req.GetBool(api.DownloadOneShotKey)) {
+	if ok || (chapter.Chapter == "" && !m.Req.GetBool(core.DownloadOneShotKey)) {
 		return false
 	}
 

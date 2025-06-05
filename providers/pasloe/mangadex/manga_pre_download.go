@@ -3,7 +3,7 @@ package mangadex
 import (
 	"context"
 	"errors"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"path"
@@ -194,7 +194,7 @@ func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {
 	return reDownload
 }
 
-func (m *manga) hasBeenAssignedVolume(chapter ChapterSearchData, content api.Content) bool {
+func (m *manga) hasBeenAssignedVolume(chapter ChapterSearchData, content core.Content) bool {
 	l := m.ContentLogger(chapter)
 	fullPath := path.Join(m.Client.GetBaseDir(), content.Path)
 
@@ -215,7 +215,7 @@ func (m *manga) hasBeenAssignedVolume(chapter ChapterSearchData, content api.Con
 	return true
 }
 
-func (m *manga) hasOutdatedCover(chapter ChapterSearchData, content api.Content) bool {
+func (m *manga) hasOutdatedCover(chapter ChapterSearchData, content core.Content) bool {
 	if !m.Req.GetBool(UpdateCover, false) || !m.Req.GetBool(IncludeCover, true) {
 		return false
 	}
