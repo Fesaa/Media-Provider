@@ -1,4 +1,4 @@
-package wisewolf
+package menou
 
 import (
 	"github.com/rs/zerolog"

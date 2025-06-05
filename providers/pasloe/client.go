@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/services"
@@ -12,12 +13,11 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"net/http"
 	"path"
 	"time"
 )
 
-func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
+func New(c *config.Config, httpClient *menou.Client, container *dig.Container, log zerolog.Logger,
 	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
 	preferences models.Preferences, transLoco services.TranslocoService, fs afero.Afero,
 ) api.Client {

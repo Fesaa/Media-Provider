@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog"
-	"io"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -39,11 +38,11 @@ type Repository interface {
 }
 
 type repository struct {
-	httpClient *http.Client
+	httpClient *menou.Client
 	log        zerolog.Logger
 }
 
-func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
+func NewRepository(httpClient *menou.Client, log zerolog.Logger) Repository {
 	return &repository{
 		httpClient: httpClient,
 		log:        log.With().Str("handler", "dynasty-repository").Logger(),
@@ -51,7 +50,7 @@ func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
 }
 
 func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, error) {
-	doc, err := r.wrapInDoc(ctx, chapterURL(id))
+	doc, err := r.httpClient.WrapInDoc(ctx, chapterURL(id))
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +116,7 @@ func chapterURL(id string) string {
 }
 
 func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
-	doc, err := r.wrapInDoc(ctx, seriesURL(id))
+	doc, err := r.httpClient.WrapInDoc(ctx, seriesURL(id))
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +191,7 @@ func seriesURL(id string) string {
 }
 
 func (r *repository) SearchSeries(ctx context.Context, opt SearchOptions) ([]SearchData, error) {
-	doc, err := r.wrapInDoc(ctx, searchURL(opt.Query))
+	doc, err := r.httpClient.WrapInDoc(ctx, searchURL(opt.Query))
 	if err != nil {
 		return nil, err
 	}
@@ -237,32 +236,4 @@ func toTag(_ int, s *goquery.Selection) Tag {
 		DisplayName: s.Text(),
 		Id:          href,
 	}
-}
-
-func (r *repository) wrapInDoc(ctx context.Context, url string) (*goquery.Document, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := r.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func(Body io.ReadCloser) {
-		if err = Body.Close(); err != nil {
-			r.log.Warn().Err(err).Msg("failed to close body")
-		}
-	}(res.Body)
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
-	}
-
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return doc, nil
 }

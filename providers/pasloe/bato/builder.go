@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"net/http"
 )
 
 type Builder struct {
 	log        zerolog.Logger
-	httpClient *http.Client
+	httpClient *menou.Client
 	ps         api.Client
 	repository Repository
 }
@@ -98,7 +98,7 @@ func (b *Builder) Client() services.Client {
 	return b.ps
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *http.Client, ps api.Client, repository Repository) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps api.Client, repository Repository) *Builder {
 	return &Builder{
 		log:        log.With().Str("handler", "dynasty-provider").Logger(),
 		httpClient: httpClient,

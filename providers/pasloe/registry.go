@@ -3,6 +3,7 @@ package pasloe
 import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/bato"
@@ -11,7 +12,6 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/utils"
 	"go.uber.org/dig"
-	"net/http"
 	"sync"
 )
 
@@ -22,11 +22,11 @@ type Registry interface {
 type registry struct {
 	r          map[models.Provider]func(scope *dig.Scope) api.Downloadable
 	mu         sync.RWMutex
-	httpClient *http.Client
+	httpClient *menou.Client
 	container  *dig.Container
 }
 
-func newRegistry(httpClient *http.Client, container *dig.Container) Registry {
+func newRegistry(httpClient *menou.Client, container *dig.Container) Registry {
 	r := &registry{
 		r:          make(map[models.Provider]func(scope *dig.Scope) api.Downloadable),
 		mu:         sync.RWMutex{},

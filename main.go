@@ -4,7 +4,7 @@ import (
 	"github.com/Fesaa/Media-Provider/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
-	"github.com/Fesaa/Media-Provider/http/wisewolf"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
@@ -33,8 +33,8 @@ func main() {
 	utils.Must(c.Provide(auth.NewJwtAuth, dig.Name("jwt-auth")))
 	utils.Must(c.Provide(auth.NewApiKeyAuth, dig.Name("api-key-auth")))
 
-	utils.Must(c.Provide(wisewolf.New))
-	utils.Must(c.Provide(wisewolf.NewWithRetry, dig.Name("http-retry")))
+	utils.Must(c.Provide(menou.New))
+	utils.Must(c.Provide(menou.NewWithRetry, dig.Name("http-retry")))
 	utils.Must(c.Provide(yoitsu.New))
 	utils.Must(c.Provide(pasloe.New))
 	utils.Must(c.Provide(services.TranslocoServiceProvider))

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
 	"github.com/Fesaa/Media-Provider/services"
@@ -28,7 +29,7 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 	var wt *webtoon
 
 	utils.Must(scope.Invoke(func(
-		req payload.DownloadRequest, httpClient *http.Client,
+		req payload.DownloadRequest, httpClient *menou.Client,
 		repository Repository, markdownService services.MarkdownService,
 		fs afero.Afero,
 	) {
@@ -46,7 +47,7 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 }
 
 type webtoon struct {
-	httpClient      *http.Client
+	httpClient      *menou.Client
 	repository      Repository
 	markdownService services.MarkdownService
 	fs              afero.Afero

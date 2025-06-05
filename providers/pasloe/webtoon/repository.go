@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -35,11 +35,11 @@ type Repository interface {
 }
 
 type repository struct {
-	httpClient *http.Client
+	httpClient *menou.Client
 	log        zerolog.Logger
 }
 
-func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
+func NewRepository(httpClient *menou.Client, log zerolog.Logger) Repository {
 	return &repository{
 		httpClient: httpClient,
 		log:        log,
@@ -47,7 +47,7 @@ func NewRepository(httpClient *http.Client, log zerolog.Logger) Repository {
 }
 
 func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchData, error) {
-	doc, err := r.wrapInDoc(ctx, searchUrl(options.Query))
+	doc, err := r.httpClient.WrapInDoc(ctx, searchUrl(options.Query))
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (r *repository) extractSeries(_ int, s *goquery.Selection) SearchData {
 }
 
 func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string, error) {
-	doc, err := r.wrapInDoc(ctx, chapter.Url)
+	doc, err := r.httpClient.WrapInDoc(ctx, chapter.Url)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string,
 
 func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
 	seriesStartUrl := fmt.Sprintf(EpisodeList, id)
-	doc, err := r.wrapInDoc(ctx, seriesStartUrl)
+	doc, err := r.httpClient.WrapInDoc(ctx, seriesStartUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 
 	pages := utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
 	for index := 1; len(pages) > index; index++ {
-		doc, err = r.wrapInDoc(ctx, Domain+pages[index])
+		doc, err = r.httpClient.WrapInDoc(ctx, Domain+pages[index])
 		if err != nil {
 			return nil, err
 		}
@@ -175,27 +175,4 @@ func notEmpty(s string) bool {
 
 func href(_ int, selection *goquery.Selection) string {
 	return selection.AttrOr("href", "")
-}
-
-func (r *repository) wrapInDoc(ctx context.Context, url string) (*goquery.Document, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	res, err := r.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
-	}
-
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return doc, nil
 }

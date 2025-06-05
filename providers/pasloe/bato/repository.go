@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog"
-	"io"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -49,6 +48,7 @@ var (
 		"(Official)",
 		"(Unofficial)",
 		"[Mature]",
+		"«Official»",
 	}
 )
 
@@ -58,7 +58,7 @@ type Repository interface {
 	ChapterImages(ctx context.Context, id string) ([]string, error)
 }
 
-func NewRepository(httpClient *http.Client, logger zerolog.Logger) Repository {
+func NewRepository(httpClient *menou.Client, logger zerolog.Logger) Repository {
 	return &repository{
 		httpClient: httpClient,
 		log:        logger,
@@ -66,12 +66,12 @@ func NewRepository(httpClient *http.Client, logger zerolog.Logger) Repository {
 }
 
 type repository struct {
-	httpClient *http.Client
+	httpClient *menou.Client
 	log        zerolog.Logger
 }
 
 func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchResult, error) {
-	doc, err := r.wrapInDoc(ctx, searchUrl(options))
+	doc, err := r.httpClient.WrapInDoc(ctx, searchUrl(options))
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func searchUrl(options SearchOptions) string {
 }
 
 func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
-	doc, err := r.wrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, id))
+	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, id))
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +258,7 @@ func extractTitle(s string) string {
 }
 
 func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, error) {
-	doc, err := r.wrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, id))
+	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, id))
 	if err != nil {
 		return nil, err
 	}
@@ -317,32 +317,4 @@ type ImageRenderProps struct {
 	PageOpts   []any `json:"pageOpts"`
 	ImageFiles []any `json:"imageFiles"`
 	UrlP       []any `json:"urlP"`
-}
-
-func (r *repository) wrapInDoc(ctx context.Context, url string) (*goquery.Document, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := r.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func(Body io.ReadCloser) {
-		if err = Body.Close(); err != nil {
-			r.log.Warn().Err(err).Msg("failed to close body")
-		}
-	}(res.Body)
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
-	}
-
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return doc, nil
 }

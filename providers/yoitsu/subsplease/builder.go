@@ -2,17 +2,17 @@ package subsplease
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/rs/zerolog"
-	"net/http"
 )
 
 type Builder struct {
 	log        zerolog.Logger
-	httpClient *http.Client
+	httpClient *menou.Client
 	ys         yoitsu.Yoitsu
 }
 
@@ -76,6 +76,6 @@ func (b *Builder) Client() services.Client {
 	return b.ys
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *http.Client, ys yoitsu.Yoitsu) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ys yoitsu.Yoitsu) *Builder {
 	return &Builder{log.With().Str("handler", "subsplease-provider").Logger(), httpClient, ys}
 }
