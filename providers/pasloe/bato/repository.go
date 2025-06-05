@@ -25,6 +25,7 @@ const (
 	UploadTag         = "upload"
 )
 
+// TODO: More flexibility with the default volume; Don't assign if no other volume has been found
 type volumeChapterMapping struct {
 	Regex         *regexp.Regexp
 	DefaultVolume string
@@ -37,7 +38,7 @@ type volumeChapterMapping struct {
 var (
 	VolumeChapterRegexes = []volumeChapterMapping{
 		{regexp.MustCompile(`(?:Volume (\d+)\s+)?Chapter ([\d\\.]+)`), ""}, // Volume 1 Chapter 1.5
-		{regexp.MustCompile(`(?:\[S(\d+)])? ?Episode ([\d\\.]+)`), "1"},    // [S1] Episode 5
+		{regexp.MustCompile(`(?:\[S(\d+)])? ?Episode ([\d\\.]+)`), ""},     // [S1] Episode 5
 	}
 	AuthorMappings = map[string]comicinfo.Roles{
 		"(Story&Art)": {comicinfo.Writer, comicinfo.Colorist},
@@ -45,10 +46,14 @@ var (
 		"(Art)":       {comicinfo.Colorist},
 	}
 	TitleCleans = []string{
-		"(Official)",
-		"(Unofficial)",
-		"[Mature]",
-		"«Official»",
+		"Official",
+		"Unofficial",
+		"Mature",
+	}
+	Braces = map[string]string{
+		"[": "]",
+		"(": ")",
+		"«": "»",
 	}
 )
 
@@ -173,7 +178,10 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 
 func cleanTitle(title string) string {
 	for _, t := range TitleCleans {
-		title = strings.ReplaceAll(title, t, "")
+		for start, end := range Braces {
+			constructed := start + t + end
+			title = strings.ReplaceAll(title, constructed, "")
+		}
 	}
 	return title
 }
