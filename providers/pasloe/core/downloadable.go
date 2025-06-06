@@ -48,6 +48,5 @@ type DownloadInfoProvider[T any] interface {
 	ContentUrls(ctx context.Context, t T) ([]string, error)
 	WriteContentMetaData(t T) error
 
-	IsContent(string) bool
 	ShouldDownload(t T) bool
 }

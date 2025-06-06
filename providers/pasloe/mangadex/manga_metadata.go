@@ -16,15 +16,7 @@ import (
 )
 
 func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
-	metaKey, metaPath := chapter.Attributes.Chapter, m.ContentPath(chapter)
-
-	if slices.Contains(m.volumeMetadata, metaKey) {
-		m.Log.Trace().
-			Str("volume", chapter.Attributes.Volume).
-			Str("chapter", chapter.Attributes.Chapter).
-			Msg("volume metadata already written, skipping")
-		return nil
-	}
+	metaPath := m.ContentPath(chapter)
 
 	l := m.ContentLogger(chapter)
 
@@ -49,7 +41,6 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 		return err
 	}*/
 
-	m.volumeMetadata = append(m.volumeMetadata, metaKey)
 	return nil
 }
 

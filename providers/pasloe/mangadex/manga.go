@@ -33,7 +33,6 @@ func NewManga(scope *dig.Scope) core.Downloadable {
 			httpClient:      httpClient,
 			repository:      repository,
 			markdownService: markdownService,
-			volumeMetadata:  make([]string, 0),
 			imageService:    imageService,
 			archiveService:  archiveService,
 			fs:              fs,
@@ -60,8 +59,7 @@ type manga struct {
 	info     *MangaSearchData
 	chapters ChapterSearchResponse
 
-	coverFactory   CoverFactory
-	volumeMetadata []string
+	coverFactory CoverFactory
 
 	lastFoundChapter int
 	lastFoundVolume  int

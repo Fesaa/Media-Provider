@@ -16,7 +16,6 @@ import (
 	"go.uber.org/dig"
 	"net/http"
 	"path"
-	"regexp"
 	"slices"
 	"strings"
 )
@@ -184,12 +183,6 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	}
 
 	return ci
-}
-
-var chapterRegex = regexp.MustCompile(".* Ch\\. (\\d+).cbz")
-
-func (w *webtoon) IsContent(name string) bool {
-	return chapterRegex.MatchString(name)
 }
 
 func (w *webtoon) ShouldDownload(chapter Chapter) bool {

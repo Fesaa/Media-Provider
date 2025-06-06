@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"path"
+	"regexp"
 	"strconv"
 )
 
@@ -73,6 +74,28 @@ func (c *Core[T]) ContentDir(chapter T) string {
 	}
 
 	return fmt.Sprintf("%s Ch. %s", c.infoProvider.Title(), chapter.GetChapter())
+}
+
+var (
+	contentRegex    = regexp.MustCompile(".* (?:Ch|Vol)\\. ([\\d|\\.]+).cbz")
+	oneShotRegexOld = regexp.MustCompile(".+ OneShot .+\\.cbz")
+	oneShotRegex    = regexp.MustCompile(".+ \\(OneShot\\).cbz")
+)
+
+func (c *Core[T]) IsContent(name string) bool {
+	if contentRegex.MatchString(name) {
+		return true
+	}
+
+	if oneShotRegex.MatchString(name) {
+		return true
+	}
+
+	if oneShotRegexOld.MatchString(name) {
+		return true
+	}
+
+	return false
 }
 
 func IsOneShot(chapter Chapter) bool {

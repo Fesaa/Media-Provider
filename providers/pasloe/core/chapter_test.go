@@ -140,3 +140,52 @@ func TestCore_ContentDir(t *testing.T) {
 		})
 	}
 }
+
+func TestCore_IsContent(t *testing.T) {
+	type testCase[T Chapter] struct {
+		name     string
+		diskName string
+		want     bool
+	}
+	tests := []testCase[ChapterMock]{
+		{
+			name:     "Valid Chapter Format",
+			diskName: "My Manga Ch. 0012.cbz",
+			want:     true,
+		},
+		{
+			name:     "Valid Volume Format",
+			diskName: "My Manga Vol. 05.cbz",
+			want:     true,
+		},
+		{
+			name:     "Valid OneShot Format (new)",
+			diskName: "My Manga Oneshot Title (OneShot).cbz",
+			want:     true,
+		},
+		{
+			name:     "Valid OneShot Format (old)",
+			diskName: "My Manga OneShot Oneshot Title.cbz",
+			want:     true,
+		},
+		{
+			name:     "Invalid Format - no match",
+			diskName: "Random_File_Name.zip",
+			want:     false,
+		},
+		{
+			name:     "Invalid Format - wrong extension",
+			diskName: "My Manga Ch. 0012.pdf",
+			want:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			core := testBase(t, req(), io.Discard, ProviderMock{})
+
+			if got := core.IsContent(tt.diskName); got != tt.want {
+				t.Errorf("IsContent() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

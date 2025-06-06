@@ -7,7 +7,6 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"path"
-	"regexp"
 	"slices"
 	"strconv"
 )
@@ -149,23 +148,6 @@ func (m *manga) chapterSearchFunc(scanlation string, skipOneShot bool) func(Chap
 			return relationship.Id == scanlation
 		})
 	}
-}
-
-var (
-	contentRegex = regexp.MustCompile(".* (?:Ch|Vol)\\. ([\\d|\\.]+).cbz")
-	oneShotRegex = regexp.MustCompile(".+ OneShot .+\\.cbz")
-)
-
-func (m *manga) IsContent(name string) bool {
-	if contentRegex.MatchString(name) {
-		return true
-	}
-
-	if oneShotRegex.MatchString(name) {
-		return true
-	}
-
-	return false
 }
 
 func (m *manga) ShouldDownload(chapter ChapterSearchData) bool {

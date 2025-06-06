@@ -48,7 +48,7 @@ func (c *Core[T]) readDirectoryForContent(p string) ([]Content, error) {
 
 		}
 
-		matches := c.infoProvider.IsContent(entry.Name())
+		matches := c.IsContent(entry.Name())
 		if !matches {
 			c.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
 			continue

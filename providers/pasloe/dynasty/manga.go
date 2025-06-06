@@ -12,7 +12,6 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"regexp"
 	"slices"
 )
 
@@ -158,23 +157,6 @@ func (m *manga) All() []Chapter {
 
 func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
 	return m.repository.ChapterImages(ctx, chapter.Id)
-}
-
-var (
-	chapterRegex = regexp.MustCompile(".* Ch\\. ([\\d|\\.]+).cbz")
-	oneShotRegex = regexp.MustCompile(".+ OneShot .+\\.cbz")
-)
-
-func (m *manga) IsContent(name string) bool {
-	if chapterRegex.MatchString(name) {
-		return true
-	}
-
-	if oneShotRegex.MatchString(name) {
-		return true
-	}
-
-	return false
 }
 
 func (m *manga) ShouldDownload(chapter Chapter) bool {
