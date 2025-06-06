@@ -1,16 +1,16 @@
 package bato
 
 import (
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"io"
-	"net/http"
 	"strings"
 	"testing"
 )
 
 func tempRepository(w io.Writer) Repository {
-	return NewRepository(http.DefaultClient, zerolog.New(w))
+	return NewRepository(menou.DefaultClient, zerolog.New(w))
 }
 
 func getChapter(series *Series, chapter string, volume ...string) *Chapter {
@@ -213,7 +213,7 @@ func TestRepository_SeriesInfoEpisodesAndSeasons(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	s1E12 := getChapter(series, "12", "1")
+	s1E12 := getChapter(series, "12", "")
 	if s1E12 == nil {
 		t.Fatalf("failed to find s1E12")
 	}

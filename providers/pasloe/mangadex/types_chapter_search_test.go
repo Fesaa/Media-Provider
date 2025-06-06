@@ -6,8 +6,8 @@ import (
 
 func TestChapterSearchData_ID(t *testing.T) {
 	chapter := ChapterSearchData{Id: "test-id"}
-	if chapter.ID() != "test-id" {
-		t.Errorf("Expected ID to be 'test-id', got '%s'", chapter.ID())
+	if chapter.GetId() != "test-id" {
+		t.Errorf("Expected ID to be 'test-id', got '%s'", chapter.GetId())
 	}
 }
 

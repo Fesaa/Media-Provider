@@ -1,10 +1,10 @@
 package mangadex
 
 import (
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 	"io"
-	"net/http"
 	"testing"
 )
 
@@ -20,7 +20,7 @@ var loadedTags = false
 func tempRepo(t *testing.T, w io.Writer) Repository {
 	t.Helper()
 	return NewRepository(repositoryParams{
-		HttpClient: http.DefaultClient,
+		HttpClient: menou.DefaultClient,
 		Cache:      mock.Cache{},
 	}, zerolog.New(w))
 }

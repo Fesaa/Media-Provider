@@ -13,13 +13,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"io"
-	"net/http"
 	"path"
 	"regexp"
 	"slices"
 	"strconv"
-	"time"
 )
 
 func NewManga(scope *dig.Scope) core.Downloadable {
@@ -41,14 +38,14 @@ func NewManga(scope *dig.Scope) core.Downloadable {
 			fs:              fs,
 		}
 
-		m.DownloadBase = core.NewBaseWithProvider[Chapter](scope, "dynasty-manga", m)
+		m.Core = core.New[Chapter](scope, "dynasty-manga", m)
 	}))
 
 	return m
 }
 
 type manga struct {
-	*core.DownloadBase[Chapter]
+	*core.Core[Chapter]
 
 	httpClient      *menou.Client
 	repository      Repository
@@ -208,7 +205,7 @@ func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, err
 
 func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
 	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(idx, 4)))
-	if err := m.downloadAndWrite(url, filePath); err != nil {
+	if err := m.DownloadAndWrite(url, filePath); err != nil {
 		return err
 	}
 	m.ImagesDownloaded++
@@ -239,51 +236,4 @@ func (m *manga) ShouldDownload(chapter Chapter) bool {
 	}
 
 	return true
-}
-
-func (m *manga) download(url string, tryAgain ...bool) ([]byte, error) {
-	resp, err := m.httpClient.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode != http.StatusTooManyRequests {
-			return nil, fmt.Errorf("bad status: %s", resp.Status)
-		}
-
-		if len(tryAgain) > 0 && !tryAgain[0] {
-			return nil, fmt.Errorf("hit rate limit too many times")
-		}
-
-		d := time.Minute
-		m.Log.Warn().Dur("sleeping_for", d).Msg("Hit rate limit, sleeping for 1 minute")
-		time.Sleep(d)
-		return m.download(url, false)
-
-	}
-
-	defer func(Body io.ReadCloser) {
-		if err = Body.Close(); err != nil {
-			m.Log.Warn().Err(err).Msg("error closing body")
-		}
-	}(resp.Body)
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func (m *manga) downloadAndWrite(url string, path string, tryAgain ...bool) error {
-	data, err := m.download(url, tryAgain...)
-	if err != nil {
-		return err
-	}
-
-	if err = m.fs.WriteFile(path, data, 0755); err != nil {
-		return err
-	}
-
-	return nil
 }

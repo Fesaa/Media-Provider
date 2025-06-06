@@ -15,14 +15,11 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"io"
 	"net/http"
 	"path"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
-	"time"
 )
 
 func NewWebToon(scope *dig.Scope) core.Downloadable {
@@ -41,7 +38,7 @@ func NewWebToon(scope *dig.Scope) core.Downloadable {
 			fs:              fs,
 		}
 
-		wt.DownloadBase = core.NewBaseWithProvider[Chapter](scope, "webtoon", wt)
+		wt.Core = core.New[Chapter](scope, "webtoon", wt)
 	}))
 	return wt
 }
@@ -52,7 +49,7 @@ type webtoon struct {
 	markdownService services.MarkdownService
 	fs              afero.Afero
 
-	*core.DownloadBase[Chapter]
+	*core.Core[Chapter]
 	id string
 
 	searchInfo *SearchData
@@ -172,7 +169,7 @@ func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
 			}
 			return chapter.ImageUrl
 		}()
-		if err := w.downloadAndWrite(imageUrl, filePath); err != nil {
+		if err := w.DownloadAndWrite(imageUrl, filePath); err != nil {
 			return err
 		}
 	}
@@ -208,7 +205,7 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 func (w *webtoon) DownloadContent(page int, chapter Chapter, url string) error {
 	filePath := path.Join(w.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(page, 4)))
-	if err := w.downloadAndWrite(url, filePath); err != nil {
+	if err := w.DownloadAndWrite(url, filePath); err != nil {
 		return err
 	}
 	w.ImagesDownloaded++
@@ -226,60 +223,9 @@ func (w *webtoon) ShouldDownload(chapter Chapter) bool {
 	return !ok
 }
 
-func (w *webtoon) downloadAndWrite(url string, path string, tryAgain ...bool) error {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-
+func (w *webtoon) CustomizeRequest(req *http.Request) error {
 	req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
-
-	resp, err := w.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func(Body io.ReadCloser) {
-		if err = Body.Close(); err != nil {
-			w.Log.Warn().Err(err).Msg("error closing body")
-		}
-	}(resp.Body)
-
-	if resp.StatusCode == http.StatusOK {
-		data, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-
-		if err = w.fs.WriteFile(path, data, 0755); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	if resp.StatusCode != http.StatusTooManyRequests {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	if len(tryAgain) > 0 && !tryAgain[0] {
-		w.Log.Error().Msg("Reached rate limit, after sleeping. What is going on?")
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	retryAfter := resp.Header.Get("X-RateLimit-Retry-After")
-	var d time.Duration
-	if unix, err := strconv.ParseInt(retryAfter, 10, 64); err == nil {
-		t := time.Unix(unix, 0)
-		d = time.Until(t)
-	} else {
-		w.Log.Debug().Err(err).Str("retry-after", retryAfter).Msg("Could not parse retry-after")
-		d = time.Minute
-	}
-
-	w.Log.Warn().Str("retryAfter", retryAfter).Dur("sleeping_for", d).Msg("Hit rate limit, try again after it's over")
-	time.Sleep(d)
-	return w.downloadAndWrite(url, path, false)
+	return nil
 }
 
 func webToonUrl(s string) string {

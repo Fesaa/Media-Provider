@@ -8,10 +8,16 @@ import (
 	"net/http"
 )
 
-func (c *Client) WrapInDoc(ctx context.Context, url string) (*goquery.Document, error) {
+func (c *Client) WrapInDoc(ctx context.Context, url string, f ...func(*http.Request) error) (*goquery.Document, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(f) > 0 {
+		if err := f[0](req); err != nil {
+			return nil, err
+		}
 	}
 
 	res, err := c.Do(req)

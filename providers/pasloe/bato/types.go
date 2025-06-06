@@ -82,6 +82,18 @@ type Chapter struct {
 	Chapter string
 }
 
+func (c Chapter) GetChapter() string {
+	return c.Chapter
+}
+
+func (c Chapter) GetVolume() string {
+	return c.Volume
+}
+
+func (c Chapter) GetTitle() string {
+	return c.Title
+}
+
 func (c Chapter) VolumeFloat() float64 {
 	if c.Volume == "" {
 		return -1
@@ -102,7 +114,7 @@ func (c Chapter) ChapterFloat() float64 {
 	return -1
 }
 
-func (c Chapter) ID() string {
+func (c Chapter) GetId() string {
 	return c.Id
 }
 

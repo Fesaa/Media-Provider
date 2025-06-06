@@ -1,13 +1,13 @@
 package subsplease
 
 import (
-	"net/http"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"testing"
 )
 
 // Subsplease does weird stuff when not having any results.
 func TestBuilder_SearchEmpty(t *testing.T) {
-	got, err := (&Builder{httpClient: http.DefaultClient}).Search(SearchOptions{
+	got, err := (&Builder{httpClient: menou.DefaultClient}).Search(SearchOptions{
 		Query: "Something they don't have",
 	})
 
@@ -21,7 +21,7 @@ func TestBuilder_SearchEmpty(t *testing.T) {
 }
 
 func TestBuilder_Search(t *testing.T) {
-	got, err := (&Builder{httpClient: http.DefaultClient}).Search(SearchOptions{
+	got, err := (&Builder{httpClient: menou.DefaultClient}).Search(SearchOptions{
 		Query: "Spice and Wolf",
 	})
 

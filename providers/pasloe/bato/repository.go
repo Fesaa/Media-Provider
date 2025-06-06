@@ -183,7 +183,7 @@ func cleanTitle(title string) string {
 			title = strings.ReplaceAll(title, constructed, "")
 		}
 	}
-	return title
+	return strings.TrimSpace(title)
 }
 
 func mapAuthor(_ int, sel *goquery.Selection) Author {

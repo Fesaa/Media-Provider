@@ -457,7 +457,7 @@ func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover *C
 		return currentCover.Bytes, false, nil
 	}
 
-	candidateBytes, err := m.download(images[0])
+	candidateBytes, err := m.Download(images[0])
 	if err != nil {
 		return nil, false, err
 	}

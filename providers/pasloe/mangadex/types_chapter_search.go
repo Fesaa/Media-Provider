@@ -14,7 +14,19 @@ type ChapterSearchData struct {
 	Relationships []Relationship    `json:"relationships"`
 }
 
-func (chapter ChapterSearchData) ID() string {
+func (chapter ChapterSearchData) GetChapter() string {
+	return chapter.Attributes.Chapter
+}
+
+func (chapter ChapterSearchData) GetVolume() string {
+	return chapter.Attributes.Volume
+}
+
+func (chapter ChapterSearchData) GetTitle() string {
+	return chapter.Attributes.Title
+}
+
+func (chapter ChapterSearchData) GetId() string {
 	return chapter.Id
 }
 

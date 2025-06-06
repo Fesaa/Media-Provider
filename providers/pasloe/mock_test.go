@@ -38,14 +38,26 @@ func (m mockRegistry) Create(c core.Client, req payload.DownloadRequest) (core.D
 		block.mockAll = []ID{"a", "b"}
 	}
 
-	base := core.NewBaseWithProvider(scope, "", block)
-	block.DownloadBase = base
+	base := core.New(scope, "", block)
+	block.Core = base
 	return block, nil
 }
 
 type ID string
 
-func (i ID) ID() string {
+func (i ID) GetChapter() string {
+	return i.GetId()
+}
+
+func (i ID) GetVolume() string {
+	return i.GetId()
+}
+
+func (i ID) GetTitle() string {
+	return i.GetId()
+}
+
+func (i ID) GetId() string {
 	return string(i)
 }
 
@@ -54,7 +66,7 @@ func (i ID) Label() string {
 }
 
 type MockContent struct {
-	*core.DownloadBase[ID]
+	*core.Core[ID]
 	mockTitle               string
 	mockRefUrl              string
 	mockProvider            models.Provider
@@ -77,8 +89,8 @@ type MockContent struct {
 
 func NewMockContent(scope *dig.Scope) *MockContent {
 	mc := &MockContent{}
-	base := core.NewBaseWithProvider[ID](scope, "mock-content", mc)
-	mc.DownloadBase = base
+	base := core.New[ID](scope, "mock-content", mc)
+	mc.Core = base
 	return mc
 }
 
@@ -127,21 +139,21 @@ func (m *MockContent) ContentDir(t ID) string {
 	if m.mockContentDirFunc != nil {
 		return m.mockContentDirFunc(t)
 	}
-	return t.ID()
+	return t.GetId()
 }
 
 func (m *MockContent) ContentPath(t ID) string {
 	if m.mockContentPathFunc != nil {
 		return m.mockContentPathFunc(t)
 	}
-	return t.ID()
+	return t.GetId()
 }
 
 func (m *MockContent) ContentKey(t ID) string {
 	if m.mockContentKeyFunc != nil {
 		return m.mockContentKeyFunc(t)
 	}
-	return t.ID()
+	return t.GetId()
 }
 
 func (m *MockContent) ContentLogger(t ID) zerolog.Logger {

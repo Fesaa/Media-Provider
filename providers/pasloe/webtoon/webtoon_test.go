@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
@@ -14,7 +15,6 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
-	"net/http"
 	"path"
 	"strings"
 	"testing"
@@ -69,7 +69,7 @@ func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	must(scope.Provide(func() core.Client {
 		return client
 	}))
-	must(scope.Provide(utils.Identity(http.DefaultClient)))
+	must(scope.Provide(utils.Identity(menou.DefaultClient)))
 	must(scope.Provide(utils.Identity(zerolog.New(w))))
 	must(scope.Provide(utils.Identity(req())))
 	must(scope.Provide(NewRepository))

@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+var DefaultClient = &Client{
+	Client: http.DefaultClient,
+	log:    zerolog.Nop(),
+}
+
 type Client struct {
 	*http.Client
 	log zerolog.Logger

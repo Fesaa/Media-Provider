@@ -2,11 +2,11 @@ package mangadex
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 	"io"
-	"net/http"
 	"reflect"
 	"testing"
 )
@@ -136,7 +136,7 @@ func TestBuilder_Normalize(t *testing.T) {
 	b := &Builder{}
 
 	repo := NewRepository(repositoryParams{
-		HttpClient: http.DefaultClient,
+		HttpClient: menou.DefaultClient,
 		Cache:      mock.Cache{},
 	}, zerolog.New(io.Discard))
 

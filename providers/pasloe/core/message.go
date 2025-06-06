@@ -7,16 +7,16 @@ import (
 	"strconv"
 )
 
-func (d *DownloadBase[T]) Message(msg payload.Message) (payload.Message, error) {
+func (c *Core[T]) Message(msg payload.Message) (payload.Message, error) {
 	var jsonBytes []byte
 	var err error
 	switch msg.MessageType {
 	case payload.MessageListContent:
-		jsonBytes, err = json.Marshal(d.infoProvider.ContentList())
+		jsonBytes, err = json.Marshal(c.infoProvider.ContentList())
 	case payload.SetToDownload:
-		err = d.SetUserFiltered(msg.Data)
+		err = c.SetUserFiltered(msg.Data)
 	case payload.StartDownload:
-		err = d.MarkReady()
+		err = c.MarkReady()
 	default:
 		return payload.Message{}, services.ErrUnknownMessageType
 	}
@@ -26,30 +26,30 @@ func (d *DownloadBase[T]) Message(msg payload.Message) (payload.Message, error) 
 	}
 
 	return payload.Message{
-		Provider:    d.Req.Provider,
-		ContentId:   d.id,
+		Provider:    c.Req.Provider,
+		ContentId:   c.id,
 		MessageType: msg.MessageType,
 		Data:        jsonBytes,
 	}, nil
 }
 
-func (d *DownloadBase[T]) MarkReady() error {
-	if d.contentState != payload.ContentStateWaiting {
+func (c *Core[T]) MarkReady() error {
+	if c.contentState != payload.ContentStateWaiting {
 		return services.ErrWrongState
 	}
 
-	if d.Client.CanStart(d.Req.Provider) {
-		go d.StartDownload()
+	if c.Client.CanStart(c.Req.Provider) {
+		go c.StartDownload()
 		return nil
 	}
 
-	d.SetState(payload.ContentStateReady)
+	c.SetState(payload.ContentStateReady)
 	return nil
 }
 
-func (d *DownloadBase[T]) SetUserFiltered(msg json.RawMessage) error {
-	if d.contentState != payload.ContentStateWaiting &&
-		d.contentState != payload.ContentStateReady {
+func (c *Core[T]) SetUserFiltered(msg json.RawMessage) error {
+	if c.contentState != payload.ContentStateWaiting &&
+		c.contentState != payload.ContentStateReady {
 		return services.ErrWrongState
 	}
 
@@ -58,7 +58,7 @@ func (d *DownloadBase[T]) SetUserFiltered(msg json.RawMessage) error {
 	if err != nil {
 		return err
 	}
-	d.ToDownloadUserSelected = filter
-	d.SignalR.SizeUpdate(d.Id(), strconv.Itoa(d.Size())+" Chapters")
+	c.ToDownloadUserSelected = filter
+	c.SignalR.SizeUpdate(c.Id(), strconv.Itoa(c.Size())+" Chapters")
 	return nil
 }

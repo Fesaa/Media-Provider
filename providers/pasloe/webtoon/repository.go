@@ -7,7 +7,9 @@ import (
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -74,7 +76,10 @@ func (r *repository) extractSeries(_ int, s *goquery.Selection) SearchData {
 }
 
 func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, chapter.Url)
+	doc, err := r.httpClient.WrapInDoc(ctx, chapter.Url, func(req *http.Request) error {
+		req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}

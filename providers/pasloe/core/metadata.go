@@ -57,18 +57,18 @@ func (t *stringTag) Identifier() string {
 //   - It is not in the blocklist.
 //   - It is not mapped as a genre.
 //   - It is either in the whitelist or the request has IncludeNotMatchedTagsKey set to true.
-func (d *DownloadBase[T]) GetGenreAndTags(tags []Tag) (string, string) {
+func (c *Core[T]) GetGenreAndTags(tags []Tag) (string, string) {
 	var genres, blackList, whitelist models.Tags
 	var tagMappings models.TagMaps
 
-	p, err := d.preferences.GetComplete()
+	p, err := c.preferences.GetComplete()
 	if err != nil {
-		d.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
-		if !d.hasWarnedTags {
-			d.hasWarnedTags = true
-			d.Notifier.NotifyContentQ(
-				d.TransLoco.GetTranslation("blacklist-failed-to-load-title", d.infoProvider.Title()),
-				d.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
+		c.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
+		if !c.hasWarnedTags {
+			c.hasWarnedTags = true
+			c.Notifier.NotifyContentQ(
+				c.TransLoco.GetTranslation("blacklist-failed-to-load-title", c.infoProvider.Title()),
+				c.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
 				models.Orange)
 		}
 	} else {
@@ -120,7 +120,7 @@ func (d *DownloadBase[T]) GetGenreAndTags(tags []Tag) (string, string) {
 			return t.Value(), true
 		}
 
-		if d.Req.GetBool(IncludeNotMatchedTagsKey, false) &&
+		if c.Req.GetBool(IncludeNotMatchedTagsKey, false) &&
 			!tagContains(genres, t) &&
 			!tagContains(blackList, t) {
 			return t.Value(), true
@@ -134,19 +134,19 @@ func (d *DownloadBase[T]) GetGenreAndTags(tags []Tag) (string, string) {
 
 // GetAgeRating returns the highest comicinfo.AgeRating that is mapped under the models.AgeRatingMappings
 // Returns false if no Tag was mapped
-func (d *DownloadBase[T]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
-	if d.Preference == nil {
-		d.Log.Warn().Msg("Could not load age rate mapping, not setting age rating")
+func (c *Core[T]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
+	if c.Preference == nil {
+		c.Log.Warn().Msg("Could not load age rate mapping, not setting age rating")
 		return "", false
 	}
 
 	tags = utils.Map(tags, func(t Tag) Tag {
-		val := models.TagMaps(d.Preference.TagMappings).MapTag(t.Value())
-		id := models.TagMaps(d.Preference.TagMappings).MapTag(t.Identifier())
+		val := models.TagMaps(c.Preference.TagMappings).MapTag(t.Value())
+		id := models.TagMaps(c.Preference.TagMappings).MapTag(t.Identifier())
 		return NewStringTagWithId(val, id)
 	})
 
-	var mappings models.AgeRatingMappings = d.Preference.AgeRatingMappings
+	var mappings models.AgeRatingMappings = c.Preference.AgeRatingMappings
 	weights := utils.MaybeMap(tags, func(t Tag) (int, bool) {
 		ar, ok := mappings.GetAgeRating(t.Value())
 		if !ok {

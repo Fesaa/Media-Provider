@@ -36,7 +36,7 @@ func (m *manga) writeCover(chapter Chapter) error {
 
 	if len(m.coverBytes) == 0 {
 		m.Log.Trace().Str("chapter", chapter.Chapter).Msg("no cover bytes set, downloading from url")
-		return m.downloadAndWrite(m.seriesInfo.CoverUrl, filePath)
+		return m.DownloadAndWrite(m.seriesInfo.CoverUrl, filePath)
 	}
 
 	return m.fs.WriteFile(filePath, m.coverBytes, 0755)
@@ -62,12 +62,12 @@ func (m *manga) tryReplaceCover() error {
 		return nil
 	}
 
-	coverBytes, err := m.download(m.seriesInfo.CoverUrl)
+	coverBytes, err := m.Download(m.seriesInfo.CoverUrl)
 	if err != nil {
 		return err
 	}
 
-	firstChapterCoverBytes, err := m.download(images[0])
+	firstChapterCoverBytes, err := m.Download(images[0])
 	if err != nil {
 		return err
 	}

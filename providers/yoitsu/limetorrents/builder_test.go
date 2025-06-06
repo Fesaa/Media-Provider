@@ -2,18 +2,18 @@ package limetorrents
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"io"
-	"net/http"
 	"reflect"
 	"strings"
 	"testing"
 )
 
 func tempBuilder(w io.Writer) *Builder {
-	return NewBuilder(zerolog.New(w), http.DefaultClient, nil)
+	return NewBuilder(zerolog.New(w), menou.DefaultClient, nil)
 }
 
 func TestBuilder_Search(t *testing.T) {

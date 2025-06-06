@@ -70,7 +70,19 @@ type Chapter struct {
 	Authors     []Author
 }
 
-func (c Chapter) ID() string {
+func (c Chapter) GetChapter() string {
+	return c.Chapter
+}
+
+func (c Chapter) GetVolume() string {
+	return c.Volume
+}
+
+func (c Chapter) GetTitle() string {
+	return c.Title
+}
+
+func (c Chapter) GetId() string {
 	return c.Id
 }
 

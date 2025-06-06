@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
@@ -15,7 +16,6 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -92,7 +92,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 		return &client
 	}))
 	must(scope.Provide(utils.Identity(log)))
-	must(scope.Provide(utils.Identity(http.DefaultClient)))
+	must(scope.Provide(utils.Identity(menou.DefaultClient)))
 	must(scope.Provide(utils.Identity(repo)))
 	must(scope.Provide(utils.Identity(req)))
 	must(scope.Provide(services.MarkdownServiceProvider))

@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -65,7 +66,7 @@ func req() payload.DownloadRequest {
 	}
 }
 
-func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer) *DownloadBase[IDAble] {
+func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer) *Core[Chapter] {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -82,6 +83,7 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer) *DownloadB
 	client := PasloeClient{BaseDir: tempDir}
 
 	must(scope.Provide(utils.Identity(req)))
+	must(scope.Provide(utils.Identity(menou.DefaultClient)))
 	must(scope.Provide(func() Client {
 		return &client
 	}))
@@ -92,5 +94,5 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer) *DownloadB
 	must(scope.Provide(func() models.Preferences { return nil }))
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 
-	return NewBaseWithProvider[IDAble](scope, "test", nil)
+	return New[Chapter](scope, "test", nil)
 }

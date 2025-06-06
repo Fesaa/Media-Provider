@@ -8,25 +8,25 @@ import (
 	"strings"
 )
 
-func (d *DownloadBase[T]) loadContentOnDisk() {
-	d.Log.Debug().Str("dir", d.GetDownloadDir()).Msg("checking content on disk")
-	content, err := d.readDirectoryForContent(d.GetDownloadDir())
+func (c *Core[T]) loadContentOnDisk() {
+	c.Log.Debug().Str("dir", c.GetDownloadDir()).Msg("checking content on disk")
+	content, err := c.readDirectoryForContent(c.GetDownloadDir())
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			d.Log.Trace().Msg("directory not found, fresh download")
+			c.Log.Trace().Msg("directory not found, fresh download")
 		} else {
-			d.Log.Warn().Err(err).Msg("unable to check for already downloaded content. Downloading all")
+			c.Log.Warn().Err(err).Msg("unable to check for already downloaded content. Downloading all")
 		}
-		d.ExistingContent = []Content{}
+		c.ExistingContent = []Content{}
 		return
 	}
 
-	d.Log.Trace().Str("content", fmt.Sprintf("%v", content)).Msg("found following content on disk")
-	d.ExistingContent = content
+	c.Log.Trace().Str("content", fmt.Sprintf("%v", content)).Msg("found following content on disk")
+	c.ExistingContent = content
 }
 
-func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]Content, error) {
-	entries, err := d.fs.ReadDir(path.Join(d.Client.GetBaseDir(), p))
+func (c *Core[T]) readDirectoryForContent(p string) ([]Content, error) {
+	entries, err := c.fs.ReadDir(path.Join(c.Client.GetBaseDir(), p))
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]Content, error) {
 	out := make([]Content, 0)
 	for _, entry := range entries {
 		if entry.IsDir() {
-			dirContent, err2 := d.readDirectoryForContent(path.Join(p, entry.Name()))
+			dirContent, err2 := c.readDirectoryForContent(path.Join(p, entry.Name()))
 			if err2 != nil {
 				return nil, err2
 			}
@@ -43,17 +43,17 @@ func (d *DownloadBase[T]) readDirectoryForContent(p string) ([]Content, error) {
 		}
 
 		if !strings.HasSuffix(entry.Name(), ".cbz") {
-			d.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
+			c.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
 			continue
 
 		}
 
-		matches := d.infoProvider.IsContent(entry.Name())
+		matches := c.infoProvider.IsContent(entry.Name())
 		if !matches {
-			d.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
+			c.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
 			continue
 		}
-		d.Log.Trace().Str("file", entry.Name()).Msg("found  content on disk")
+		c.Log.Trace().Str("file", entry.Name()).Msg("found  content on disk")
 		out = append(out, Content{
 			Name: entry.Name(),
 			Path: path.Join(p, entry.Name()),

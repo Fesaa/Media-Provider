@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
@@ -15,7 +16,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"net/http"
 	"testing"
 	"time"
 )
@@ -34,7 +34,7 @@ func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 
 	must(t, cont.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(t, cont.Provide(utils.Identity(&config.Config{})))
-	must(t, cont.Provide(utils.Identity(http.DefaultClient)))
+	must(t, cont.Provide(utils.Identity(menou.DefaultClient)))
 	must(t, cont.Provide(utils.Identity(cont)))
 	must(t, cont.Provide(utils.Identity(zerolog.Nop())))
 	must(t, cont.Provide(func() services.SignalRService { return &mock.SignalR{} }))
@@ -269,9 +269,9 @@ func TestClient_QueueProgressing(t *testing.T) {
 
 	// Setup state and some items to download
 	spiceAndWolf.SetState(payload.ContentStateDownloading)
-	spiceAndWolf.(*MockContent).DownloadBase.ToDownload = []ID{"a", "b"}
+	spiceAndWolf.(*MockContent).Core.ToDownload = []ID{"a", "b"}
 	theExecutionerAndHerWayOfLife.SetState(payload.ContentStateReady)
-	theExecutionerAndHerWayOfLife.(*MockContent).DownloadBase.ToDownload = []ID{"a", "b"}
+	theExecutionerAndHerWayOfLife.(*MockContent).Core.ToDownload = []ID{"a", "b"}
 	c.content.Set(spiceAndWolf.Id(), spiceAndWolf)
 	c.content.Set(theExecutionerAndHerWayOfLife.Id(), theExecutionerAndHerWayOfLife)
 

@@ -13,106 +13,106 @@ import (
 	"time"
 )
 
-func (d *DownloadBase[T]) abortDownload(reason error) {
+func (c *Core[T]) abortDownload(reason error) {
 	if errors.Is(reason, context.Canceled) {
 		return
 	}
 
-	d.Log.Error().Err(reason).Msg("error while downloading content; cleaning up")
+	c.Log.Error().Err(reason).Msg("error while downloading content; cleaning up")
 	req := payload.StopRequest{
-		Provider:    d.Req.Provider,
-		Id:          d.Id(),
+		Provider:    c.Req.Provider,
+		Id:          c.Id(),
 		DeleteFiles: true,
 	}
-	if err := d.Client.RemoveDownload(req); err != nil {
-		d.Log.Error().Err(err).Msg("error while cleaning up")
+	if err := c.Client.RemoveDownload(req); err != nil {
+		c.Log.Error().Err(err).Msg("error while cleaning up")
 	}
-	d.Notifier.Notify(models.Notification{
+	c.Notifier.Notify(models.Notification{
 		Title:   "Failed download",
-		Summary: fmt.Sprintf("%s failed to download", d.infoProvider.Title()),
-		Body:    fmt.Sprintf("Download failed for %s, because %v", d.infoProvider.Title(), reason),
+		Summary: fmt.Sprintf("%s failed to download", c.infoProvider.Title()),
+		Body:    fmt.Sprintf("Download failed for %s, because %v", c.infoProvider.Title(), reason),
 		Colour:  models.Red,
 		Group:   models.GroupError,
 	})
 }
 
-func (d *DownloadBase[T]) filterContentByUserSelection() {
-	if len(d.ToDownloadUserSelected) > 0 {
-		currentSize := len(d.ToDownload)
-		d.ToDownload = utils.Filter(d.ToDownload, func(t T) bool {
-			return slices.Contains(d.ToDownloadUserSelected, t.ID())
+func (c *Core[T]) filterContentByUserSelection() {
+	if len(c.ToDownloadUserSelected) > 0 {
+		currentSize := len(c.ToDownload)
+		c.ToDownload = utils.Filter(c.ToDownload, func(t T) bool {
+			return slices.Contains(c.ToDownloadUserSelected, t.GetId())
 		})
-		d.Log.Debug().Int("size", currentSize).Int("newSize", len(d.ToDownload)).
+		c.Log.Debug().Int("size", currentSize).Int("newSize", len(c.ToDownload)).
 			Msg("content further filtered after user has made a selection in the UI")
 
-		if len(d.ToRemoveContent) > 0 {
-			paths := utils.Map(d.ToDownload, func(t T) string {
-				return d.infoProvider.ContentPath(t) + ".cbz"
+		if len(c.ToRemoveContent) > 0 {
+			paths := utils.Map(c.ToDownload, func(t T) string {
+				return c.infoProvider.ContentPath(t) + ".cbz"
 			})
-			d.ToRemoveContent = utils.Filter(d.ToRemoveContent, func(s string) bool {
+			c.ToRemoveContent = utils.Filter(c.ToRemoveContent, func(s string) bool {
 				return slices.Contains(paths, s)
 			})
 		}
 	}
 }
 
-func (d *DownloadBase[T]) processDownloads(ctx context.Context) error {
-	for _, content := range d.ToDownload {
+func (c *Core[T]) processDownloads(ctx context.Context) error {
+	for _, content := range c.ToDownload {
 		select {
 		case <-ctx.Done():
-			d.Wg.Wait()
+			c.Wg.Wait()
 			return errors.New("download cancelled")
 		default:
-			d.Wg.Add(1)
-			err := d.downloadContent(ctx, content)
-			d.Wg.Done()
+			c.Wg.Add(1)
+			err := c.downloadContent(ctx, content)
+			c.Wg.Done()
 			if err != nil {
-				d.abortDownload(err)
-				d.Wg.Wait()
+				c.abortDownload(err)
+				c.Wg.Wait()
 				return err
 			}
 		}
-		d.UpdateProgress()
+		c.UpdateProgress()
 	}
 	return nil
 }
 
-func (d *DownloadBase[T]) cleanupAfterDownload() {
-	d.Wg.Wait()
+func (c *Core[T]) cleanupAfterDownload() {
+	c.Wg.Wait()
 	req := payload.StopRequest{
-		Provider:    d.Req.Provider,
-		Id:          d.Id(),
+		Provider:    c.Req.Provider,
+		Id:          c.Id(),
 		DeleteFiles: false,
 	}
-	if err := d.Client.RemoveDownload(req); err != nil {
-		d.Log.Error().Err(err).Msg("error while cleaning up files")
+	if err := c.Client.RemoveDownload(req); err != nil {
+		c.Log.Error().Err(err).Msg("error while cleaning up files")
 	}
 }
 
-func (d *DownloadBase[T]) startDownload() {
+func (c *Core[T]) startDownload() {
 	// Overwrite cancel, as we're doing something else
 	ctx, cancel := context.WithCancel(context.Background())
-	d.cancel = cancel
+	c.cancel = cancel
 
-	data := d.infoProvider.All()
-	d.Log.Trace().Int("size", len(data)).Msg("downloading content")
-	d.Wg = &sync.WaitGroup{}
+	data := c.infoProvider.All()
+	c.Log.Trace().Int("size", len(data)).Msg("downloading content")
+	c.Wg = &sync.WaitGroup{}
 
-	d.filterContentByUserSelection()
+	c.filterContentByUserSelection()
 
-	d.Log.Info().
+	c.Log.Info().
 		Int("all", len(data)).
-		Int("toDownload", len(d.ToDownload)).
-		Int("reDownloads", len(d.ToRemoveContent)).
-		Str("into", d.GetDownloadDir()).
+		Int("toDownload", len(c.ToDownload)).
+		Int("reDownloads", len(c.ToRemoveContent)).
+		Str("into", c.GetDownloadDir()).
 		Msg("downloading content")
 
-	if err := d.processDownloads(ctx); err != nil {
-		d.Log.Trace().Err(err).Msg("download failed")
+	if err := c.processDownloads(ctx); err != nil {
+		c.Log.Trace().Err(err).Msg("download failed")
 		return
 	}
 
-	d.cleanupAfterDownload()
+	c.cleanupAfterDownload()
 }
 
 type downloadUrl struct {
@@ -120,17 +120,17 @@ type downloadUrl struct {
 	url string
 }
 
-func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
-	l := d.infoProvider.ContentLogger(t)
+func (c *Core[T]) downloadContent(ctx context.Context, t T) error {
+	l := c.infoProvider.ContentLogger(t)
 	l.Trace().Msg("downloading content")
 
-	contentPath := d.infoProvider.ContentPath(t)
-	if err := d.fs.MkdirAll(contentPath, 0755); err != nil {
+	contentPath := c.infoProvider.ContentPath(t)
+	if err := c.fs.MkdirAll(contentPath, 0755); err != nil {
 		return err
 	}
-	d.HasDownloaded = append(d.HasDownloaded, contentPath)
+	c.HasDownloaded = append(c.HasDownloaded, contentPath)
 
-	urls, err := d.infoProvider.ContentUrls(ctx, t)
+	urls, err := c.infoProvider.ContentUrls(ctx, t)
 	if err != nil {
 		return err
 	}
@@ -139,13 +139,13 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 		return nil
 	}
 
-	if err = d.infoProvider.WriteContentMetaData(t); err != nil {
-		d.Log.Warn().Err(err).Msg("error writing meta data")
+	if err = c.infoProvider.WriteContentMetaData(t); err != nil {
+		c.Log.Warn().Err(err).Msg("error writing meta data")
 	}
 
 	l.Debug().Int("size", len(urls)).Msg("downloading images")
 
-	urlCh := make(chan downloadUrl, d.maxImages)
+	urlCh := make(chan downloadUrl, c.maxImages)
 	errCh := make(chan error, 1)
 	defer close(errCh)
 
@@ -153,13 +153,13 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 	innerCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	d.produceURLs(ctx, innerCtx, urls, urlCh)
+	c.produceURLs(ctx, innerCtx, urls, urlCh)
 
-	d.startProgressUpdater(ctx, innerCtx)
+	c.startProgressUpdater(ctx, innerCtx)
 
-	for range d.maxImages {
+	for range c.maxImages {
 		wg.Add(1)
-		go d.channelConsumer(innerCtx, cancel, ctx, t, len(urls), l, urlCh, errCh, wg)
+		go c.channelConsumer(innerCtx, cancel, ctx, t, len(urls), l, urlCh, errCh, wg)
 	}
 
 	wg.Wait()
@@ -174,11 +174,11 @@ func (d *DownloadBase[T]) downloadContent(ctx context.Context, t T) error {
 		time.Sleep(1 * time.Second)
 	}
 
-	d.ContentDownloaded++
+	c.ContentDownloaded++
 	return nil
 }
 
-func (d *DownloadBase[T]) produceURLs(ctx context.Context, innerCtx context.Context, urls []string, urlCh chan<- downloadUrl) {
+func (c *Core[T]) produceURLs(ctx context.Context, innerCtx context.Context, urls []string, urlCh chan<- downloadUrl) {
 	go func() {
 		defer close(urlCh)
 		for i, url := range urls {
@@ -193,7 +193,7 @@ func (d *DownloadBase[T]) produceURLs(ctx context.Context, innerCtx context.Cont
 	}()
 }
 
-func (d *DownloadBase[T]) startProgressUpdater(ctx context.Context, innerCtx context.Context) {
+func (c *Core[T]) startProgressUpdater(ctx context.Context, innerCtx context.Context) {
 	go func() {
 		for range time.Tick(2 * time.Second) {
 			select {
@@ -202,13 +202,13 @@ func (d *DownloadBase[T]) startProgressUpdater(ctx context.Context, innerCtx con
 			case <-ctx.Done():
 				return
 			default:
-				d.UpdateProgress()
+				c.UpdateProgress()
 			}
 		}
 	}()
 }
 
-func (d *DownloadBase[T]) channelConsumer(
+func (c *Core[T]) channelConsumer(
 	innerCtx context.Context,
 	cancel context.CancelFunc,
 	ctx context.Context,
@@ -222,18 +222,18 @@ func (d *DownloadBase[T]) channelConsumer(
 	defer wg.Done()
 	failedCh := make(chan downloadUrl, size)
 
-	d.processInitialDownloads(innerCtx, ctx, t, l, urlCh, failedCh)
+	c.processInitialDownloads(innerCtx, ctx, t, l, urlCh, failedCh)
 
 	select {
 	case <-innerCtx.Done():
 	case <-ctx.Done():
 		return
 	default:
-		d.processFailedDownloads(innerCtx, ctx, t, l, failedCh, errCh, cancel)
+		c.processFailedDownloads(innerCtx, ctx, t, l, failedCh, errCh, cancel)
 	}
 }
 
-func (d *DownloadBase[T]) processInitialDownloads(
+func (c *Core[T]) processInitialDownloads(
 	innerCtx context.Context,
 	ctx context.Context,
 	t T,
@@ -248,13 +248,13 @@ func (d *DownloadBase[T]) processInitialDownloads(
 		case <-ctx.Done():
 			return
 		default:
-			d.downloadURL(innerCtx, ctx, t, l, urlData, failedCh)
+			c.downloadURL(innerCtx, ctx, t, l, urlData, failedCh)
 		}
 	}
 	close(failedCh)
 }
 
-func (d *DownloadBase[T]) downloadURL(
+func (c *Core[T]) downloadURL(
 	innerCtx context.Context,
 	ctx context.Context,
 	t T,
@@ -264,7 +264,7 @@ func (d *DownloadBase[T]) downloadURL(
 ) {
 	l.Trace().Int("idx", urlData.idx).Str("url", urlData.url).Msg("downloading page")
 
-	err := d.infoProvider.DownloadContent(urlData.idx, t, urlData.url)
+	err := c.infoProvider.DownloadContent(urlData.idx, t, urlData.url)
 	if err == nil {
 		time.Sleep(1 * time.Second)
 		return
@@ -276,7 +276,7 @@ func (d *DownloadBase[T]) downloadURL(
 	case <-ctx.Done():
 		return
 	case failedCh <- urlData:
-		d.failedDownloads++
+		c.failedDownloads++
 		l.Warn().Err(err).Int("idx", urlData.idx).Str("url", urlData.url).
 			Msg("download has failed for a page for the first time, trying page again at the end")
 	}
@@ -284,7 +284,7 @@ func (d *DownloadBase[T]) downloadURL(
 	time.Sleep(1 * time.Second)
 }
 
-func (d *DownloadBase[T]) processFailedDownloads(
+func (c *Core[T]) processFailedDownloads(
 	innerCtx context.Context,
 	ctx context.Context,
 	t T,
@@ -300,7 +300,7 @@ func (d *DownloadBase[T]) processFailedDownloads(
 		case <-ctx.Done():
 			return
 		default:
-			if err := d.infoProvider.DownloadContent(reTry.idx, t, reTry.url); err != nil {
+			if err := c.infoProvider.DownloadContent(reTry.idx, t, reTry.url); err != nil {
 				l.Error().Err(err).Str("url", reTry.url).Msg("Failed final download")
 				select {
 				case errCh <- fmt.Errorf("final download failed %w", err):
@@ -309,7 +309,7 @@ func (d *DownloadBase[T]) processFailedDownloads(
 				}
 				return
 			}
-			d.failedDownloads++
+			c.failedDownloads++
 			time.Sleep(1 * time.Second)
 		}
 	}
