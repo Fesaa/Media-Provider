@@ -127,7 +127,7 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 				r.DownloadMetadata.Extra[IncludeNotMatchedTagsKey] = []string{"true"}
 			}
 
-			base := testBase(t, r, io.Discard)
+			base := testBase(t, r, io.Discard, ProviderMock{})
 			base.preferences = preferences{
 				m: &models.Preference{
 					DynastyGenreTags: tt.fields.genres,
@@ -236,7 +236,7 @@ func TestManga_GetAgeRating(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			base := testBase(t, req(), io.Discard)
+			base := testBase(t, req(), io.Discard, ProviderMock{})
 			base.Preference = &models.Preference{
 				AgeRatingMappings: tt.arm,
 				TagMappings:       tt.mappings,

@@ -253,9 +253,9 @@ func (c *Core[T]) prepareContentToDownload() ([]T, time.Duration) {
 	c.ToDownload = utils.Filter(data, func(t T) bool {
 		download := c.infoProvider.ShouldDownload(t)
 		if !download {
-			c.Log.Trace().Str("key", c.infoProvider.ContentKey(t)).Msg("content already downloaded, skipping")
+			c.Log.Trace().Str("key", c.ContentKey(t)).Msg("content already downloaded, skipping")
 		} else {
-			c.Log.Trace().Str("key", c.infoProvider.ContentKey(t)).Msg("adding content to download queue")
+			c.Log.Trace().Str("key", c.ContentKey(t)).Msg("adding content to download queue")
 		}
 		return download
 	})

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -66,7 +67,70 @@ func req() payload.DownloadRequest {
 	}
 }
 
-func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer) *Core[Chapter] {
+type ProviderMock struct {
+	title      string
+	contentDir string
+}
+
+func (p ProviderMock) Title() string {
+	return p.title
+}
+
+func (p ProviderMock) RefUrl() string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) Provider() models.Provider {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) LoadInfo(ctx context.Context) chan struct{} {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) GetInfo() payload.InfoStat {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) All() []ChapterMock {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) ContentList() []payload.ListContentData {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) ContentDir(t ChapterMock) string {
+	return p.contentDir
+}
+
+func (p ProviderMock) ContentUrls(ctx context.Context, t ChapterMock) ([]string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) WriteContentMetaData(t ChapterMock) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) IsContent(s string) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p ProviderMock) ShouldDownload(t ChapterMock) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider ProviderMock) *Core[ChapterMock] {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -79,7 +143,8 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer) *Core[Chap
 	c := dig.New()
 	scope := c.Scope("testScope")
 
-	tempDir := t.TempDir()
+	tempDir := utils.OrElse(req.BaseDir, t.TempDir())
+	req.BaseDir = "" // Reset base dir so prevent stacking
 	client := PasloeClient{BaseDir: tempDir}
 
 	must(scope.Provide(utils.Identity(req)))
@@ -94,5 +159,5 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer) *Core[Chap
 	must(scope.Provide(func() models.Preferences { return nil }))
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 
-	return New[Chapter](scope, "test", nil)
+	return New[ChapterMock](scope, "test", provider)
 }

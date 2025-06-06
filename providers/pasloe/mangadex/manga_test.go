@@ -457,43 +457,24 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 	}
 
 	log := buf.String()
-	if !strings.Contains(log, "unable to parse chpt number, not padding") {
-		t.Errorf("got %q, want 'unable to parse chpt number, not padding'", log)
+	if !strings.Contains(log, "unable to parse chapter number, not padding") {
+		t.Errorf("got %q, want 'unable to parse chapter number, not padding'", log)
 	}
 	buf.Reset()
 
 	chpt.Attributes.Chapter = ""
 	got = m.ContentDir(chpt)
-	want = "Rainbows After Storms OneShot My Lover"
+	want = "Rainbows After Storms My Lover (OneShot)"
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}
 
 	log = buf.String()
-	if strings.Contains(log, "unable to parse chpt number, not padding") {
-		t.Errorf("got %q, didn't want 'unable to parse chpt number, not padding'", log)
+	if strings.Contains(log, "unable to parse chapter number, not padding") {
+		t.Errorf("got %q, didn't want 'unable to parse chapter number, not padding'", log)
 	}
 	buf.Reset()
 
-}
-
-func TestManga_ContentPath(t *testing.T) {
-	m := tempManga(t, req(), io.Discard, &mockRepository{})
-	m.info = mangaResp()
-
-	got := m.ContentPath(chapter())
-	want := "Rainbows After Storms/Rainbows After Storms Vol. 13/" + m.ContentDir(chapter())
-	if !strings.HasSuffix(got, want) {
-		t.Errorf("got %s, want %s", got, want)
-	}
-
-	chpt := chapter()
-	chpt.Attributes.Volume = ""
-	got = m.ContentPath(chpt)
-	want = "Rainbows After Storms/" + m.ContentDir(chpt)
-	if !strings.HasSuffix(got, want) {
-		t.Errorf("got %s, want %s", got, want)
-	}
 }
 
 func TestManga_ContentKey(t *testing.T) {
@@ -504,34 +485,6 @@ func TestManga_ContentKey(t *testing.T) {
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}
-}
-
-func TestManga_ContentLogger(t *testing.T) {
-	var buf bytes.Buffer
-	m := tempManga(t, req(), &buf, &mockRepository{})
-
-	log := m.ContentLogger(chapter())
-	log.Info().Msg("a")
-
-	want := "{\"level\":\"info\",\"handler\":\"mangadex\",\"id\":\"bc86a871-ddc5-4e42-812a-ccd38101d82e\",\"chapterId\":\"7d327897-5903-4fa1-92d7-f01c3c686a36\",\"chapter\":\"162\",\"volume\":\"13\",\"title\":\"My Lover\",\"message\":\"a\"}"
-	out := buf.String()
-	if !strings.Contains(out, want) {
-		t.Errorf("got %s, want %s", buf.String(), want)
-	}
-	buf.Reset()
-
-	chpt := chapter()
-	chpt.Attributes.Volume = ""
-	log = m.ContentLogger(chpt)
-	log.Info().Msg("b")
-
-	out = buf.String()
-	want = "{\"level\":\"info\",\"handler\":\"mangadex\",\"id\":\"bc86a871-ddc5-4e42-812a-ccd38101d82e\",\"chapterId\":\"7d327897-5903-4fa1-92d7-f01c3c686a36\",\"chapter\":\"162\",\"title\":\"My Lover\",\"message\":\"b\"}"
-	if !strings.Contains(out, want) {
-		t.Errorf("got %s, want %s", buf.String(), want)
-	}
-	buf.Reset()
-
 }
 
 func TestManga_ContentUrls(t *testing.T) {

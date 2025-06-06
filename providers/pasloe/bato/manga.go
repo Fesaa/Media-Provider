@@ -10,13 +10,10 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"path"
 	"regexp"
 	"slices"
-	"strconv"
 )
 
 func NewManga(scope *dig.Scope) core.Downloadable {
@@ -135,57 +132,8 @@ func (m *manga) ContentList() []payload.ListContentData {
 	return out
 }
 
-func (m *manga) ContentDir(chapter Chapter) string {
-	if chapter.Chapter == "" {
-		return fmt.Sprintf("%s OneShot %s", m.Title(), chapter.Title)
-	}
-
-	if _, err := strconv.ParseFloat(chapter.Chapter, 32); err == nil {
-		padded := utils.PadFloatFromString(chapter.Chapter, 4)
-		chDir := fmt.Sprintf("%s Ch. %s", m.Title(), padded)
-		return chDir
-	} else if chapter.Chapter != "" {
-		m.Log.Warn().Err(err).Str("chapter", chapter.Chapter).Msg("unable to parse chapter number, not padding")
-	}
-
-	return fmt.Sprintf("%s Ch. %s", m.Title(), chapter.Chapter)
-}
-
-func (m *manga) ContentPath(chapter Chapter) string {
-	return path.Join(m.Client.GetBaseDir(), m.GetBaseDir(), m.Title(), m.ContentDir(chapter))
-}
-
-func (m *manga) ContentKey(chapter Chapter) string {
-	return chapter.Id
-}
-
-func (m *manga) ContentLogger(chapter Chapter) zerolog.Logger {
-	builder := m.Log.With().
-		Str("chapterId", chapter.Id).
-		Str("chapter", chapter.Chapter)
-
-	if chapter.Title != "" {
-		builder = builder.Str("title", chapter.Title)
-	}
-
-	if chapter.Volume != "" {
-		builder = builder.Str("volume", chapter.Volume)
-	}
-
-	return builder.Logger()
-}
-
 func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
 	return m.repository.ChapterImages(ctx, chapter.Id)
-}
-
-func (m *manga) DownloadContent(idx int, chapter Chapter, url string) error {
-	filePath := path.Join(m.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(idx, 4)))
-	if err := m.DownloadAndWrite(url, filePath); err != nil {
-		return err
-	}
-	m.ImagesDownloaded++
-	return nil
 }
 
 var (

@@ -5,7 +5,6 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
-	"github.com/rs/zerolog"
 )
 
 type DisplayInformation struct {
@@ -46,14 +45,8 @@ type DownloadInfoProvider[T any] interface {
 	All() []T
 	ContentList() []payload.ListContentData
 
-	ContentDir(t T) string
-	ContentPath(t T) string
-	ContentKey(t T) string
-	ContentLogger(t T) zerolog.Logger
-
 	ContentUrls(ctx context.Context, t T) ([]string, error)
 	WriteContentMetaData(t T) error
-	DownloadContent(idx int, t T, url string) error
 
 	IsContent(string) bool
 	ShouldDownload(t T) bool

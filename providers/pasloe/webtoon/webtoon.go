@@ -12,7 +12,6 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"net/http"
@@ -135,22 +134,6 @@ func (w *webtoon) ContentList() []payload.ListContentData {
 	})
 }
 
-func (w *webtoon) ContentDir(chapter Chapter) string {
-	return fmt.Sprintf("%s Ch. %s", w.Title(), chapter.Number)
-}
-
-func (w *webtoon) ContentPath(chapter Chapter) string {
-	return path.Join(w.Client.GetBaseDir(), w.GetBaseDir(), w.Title(), w.ContentDir(chapter))
-}
-
-func (w *webtoon) ContentKey(chapter Chapter) string {
-	return chapter.Number
-}
-
-func (w *webtoon) ContentLogger(chapter Chapter) zerolog.Logger {
-	return w.Log.With().Str("number", chapter.Number).Str("title", chapter.Title).Logger()
-}
-
 func (w *webtoon) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
 	return w.repository.LoadImages(ctx, chapter)
 }
@@ -201,15 +184,6 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	}
 
 	return ci
-}
-
-func (w *webtoon) DownloadContent(page int, chapter Chapter, url string) error {
-	filePath := path.Join(w.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(page, 4)))
-	if err := w.DownloadAndWrite(url, filePath); err != nil {
-		return err
-	}
-	w.ImagesDownloaded++
-	return nil
 }
 
 var chapterRegex = regexp.MustCompile(".* Ch\\. (\\d+).cbz")

@@ -47,7 +47,7 @@ func (c *Core[T]) filterContentByUserSelection() {
 
 		if len(c.ToRemoveContent) > 0 {
 			paths := utils.Map(c.ToDownload, func(t T) string {
-				return c.infoProvider.ContentPath(t) + ".cbz"
+				return c.ContentPath(t) + ".cbz"
 			})
 			c.ToRemoveContent = utils.Filter(c.ToRemoveContent, func(s string) bool {
 				return slices.Contains(paths, s)
@@ -121,10 +121,10 @@ type downloadUrl struct {
 }
 
 func (c *Core[T]) downloadContent(ctx context.Context, t T) error {
-	l := c.infoProvider.ContentLogger(t)
+	l := c.ContentLogger(t)
 	l.Trace().Msg("downloading content")
 
-	contentPath := c.infoProvider.ContentPath(t)
+	contentPath := c.ContentPath(t)
 	if err := c.fs.MkdirAll(contentPath, 0755); err != nil {
 		return err
 	}
@@ -264,7 +264,7 @@ func (c *Core[T]) downloadURL(
 ) {
 	l.Trace().Int("idx", urlData.idx).Str("url", urlData.url).Msg("downloading page")
 
-	err := c.infoProvider.DownloadContent(urlData.idx, t, urlData.url)
+	err := c.DownloadContent(urlData.idx, t, urlData.url)
 	if err == nil {
 		time.Sleep(1 * time.Second)
 		return
@@ -300,7 +300,7 @@ func (c *Core[T]) processFailedDownloads(
 		case <-ctx.Done():
 			return
 		default:
-			if err := c.infoProvider.DownloadContent(reTry.idx, t, reTry.url); err != nil {
+			if err := c.DownloadContent(reTry.idx, t, reTry.url); err != nil {
 				l.Error().Err(err).Str("url", reTry.url).Msg("Failed final download")
 				select {
 				case errCh <- fmt.Errorf("final download failed %w", err):
