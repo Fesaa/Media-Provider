@@ -77,56 +77,22 @@ func (p ProviderMock) Title() string {
 }
 
 func (p ProviderMock) RefUrl() string {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (p ProviderMock) Provider() models.Provider {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (p ProviderMock) LoadInfo(ctx context.Context) chan struct{} {
-	//TODO implement me
 	panic("implement me")
-}
-
-func (p ProviderMock) GetInfo() payload.InfoStat {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p ProviderMock) All() []ChapterMock {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p ProviderMock) ContentList() []payload.ListContentData {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p ProviderMock) ContentDir(t ChapterMock) string {
-	return p.contentDir
 }
 
 func (p ProviderMock) ContentUrls(ctx context.Context, t ChapterMock) ([]string, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (p ProviderMock) WriteContentMetaData(t ChapterMock) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p ProviderMock) IsContent(s string) bool {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (p ProviderMock) ShouldDownload(t ChapterMock) bool {
-	//TODO implement me
 	panic("implement me")
 }
 

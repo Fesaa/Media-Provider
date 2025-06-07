@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-func NewWebToon(scope *dig.Scope) core.Downloadable {
+func New(scope *dig.Scope) core.Downloadable {
 	var wt *webtoon
 
 	utils.Must(scope.Invoke(func(

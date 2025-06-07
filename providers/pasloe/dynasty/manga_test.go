@@ -84,7 +84,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 	must(scope.Provide(services.ImageServiceProvider))
 
-	return NewManga(scope).(*manga)
+	return New(scope).(*manga)
 }
 
 func req() payload.DownloadRequest {

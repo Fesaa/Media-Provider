@@ -80,7 +80,7 @@ func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 
-	web := NewWebToon(scope)
+	web := New(scope)
 	return web.(*webtoon)
 }
 

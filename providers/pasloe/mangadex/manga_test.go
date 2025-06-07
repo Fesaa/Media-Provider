@@ -104,7 +104,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	must(scope.Provide(services.ImageServiceProvider))
 	must(scope.Provide(services.ArchiveServiceProvider))
 
-	return NewManga(scope).(*manga)
+	return New(scope).(*manga)
 }
 
 func req() payload.DownloadRequest {

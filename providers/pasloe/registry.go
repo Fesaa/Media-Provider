@@ -34,10 +34,10 @@ func newRegistry(httpClient *menou.Client, container *dig.Container) Registry {
 		container:  container,
 	}
 
-	r.Register(models.WEBTOON, webtoon.NewWebToon)
-	r.Register(models.MANGADEX, mangadex.NewManga)
-	r.Register(models.DYNASTY, dynasty.NewManga)
-	r.Register(models.BATO, bato.NewManga)
+	r.Register(models.WEBTOON, webtoon.New)
+	r.Register(models.MANGADEX, mangadex.New)
+	r.Register(models.DYNASTY, dynasty.New)
+	r.Register(models.BATO, bato.New)
 
 	return r
 }

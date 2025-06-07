@@ -13,7 +13,7 @@ import (
 	"go.uber.org/dig"
 )
 
-func NewManga(scope *dig.Scope) core.Downloadable {
+func New(scope *dig.Scope) core.Downloadable {
 	var m *manga
 
 	utils.Must(scope.Invoke(func(
