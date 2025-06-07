@@ -7,15 +7,10 @@ import (
 	"fmt"
 	"go.uber.org/dig"
 	"math"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
 )
-
-func IsNil[T any](v T) bool {
-	return reflect.ValueOf(v).IsNil()
-}
 
 // Clamp returns at least minV, and at most maxV
 //

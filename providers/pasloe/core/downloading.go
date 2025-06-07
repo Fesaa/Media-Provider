@@ -29,8 +29,8 @@ func (c *Core[C, S]) abortDownload(reason error) {
 	}
 	c.Notifier.Notify(models.Notification{
 		Title:   "Failed download",
-		Summary: fmt.Sprintf("%s failed to download", c.Title()),
-		Body:    fmt.Sprintf("Download failed for %s, because %v", c.Title(), reason),
+		Summary: fmt.Sprintf("%s failed to download", c.impl.Title()),
+		Body:    fmt.Sprintf("Download failed for %s, because %v", c.impl.Title(), reason),
 		Colour:  models.Red,
 		Group:   models.GroupError,
 	})

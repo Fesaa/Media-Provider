@@ -130,7 +130,7 @@ func (p ProviderMock) ShouldDownload(t ChapterMock) bool {
 	panic("implement me")
 }
 
-func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider ProviderMock) *Core[ChapterMock] {
+func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider ProviderMock) *Core[ChapterMock, *SeriesMock] {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -158,6 +158,6 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider P
 	must(scope.Provide(func() services.TranslocoService { return nil }))
 	must(scope.Provide(func() models.Preferences { return nil }))
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
-
-	return New[ChapterMock](scope, "test", provider)
+	must(scope.Provide(services.ArchiveServiceProvider))
+	return New[ChapterMock, *SeriesMock](scope, "test", provider)
 }

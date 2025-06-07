@@ -37,6 +37,14 @@ type manga struct {
 	id string
 }
 
+func (m *manga) Title() string {
+	if m.SeriesInfo == nil {
+		return utils.NonEmpty(m.Req.TempTitle, m.Req.Id)
+	}
+
+	return utils.NonEmpty(m.SeriesInfo.GetTitle(), m.Req.TempTitle, m.Req.Id)
+}
+
 func (m *manga) RefUrl() string {
 	return fmt.Sprintf("%s/title/%s", Domain, m.Id())
 }

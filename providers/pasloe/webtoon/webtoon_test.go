@@ -74,6 +74,7 @@ func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	must(scope.Provide(utils.Identity(req())))
 	must(scope.Provide(NewRepository))
 	must(scope.Provide(services.MarkdownServiceProvider))
+	must(scope.Provide(services.ArchiveServiceProvider))
 	must(scope.Provide(func() services.SignalRService { return &mock.SignalR{} }))
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
@@ -141,7 +142,7 @@ func TestWebtoon_Title(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 
-	wt.info = nil
+	wt.SeriesInfo = nil
 	wt.Req.TempTitle = ""
 
 	want = "4747"
@@ -248,7 +249,7 @@ func TestWebtoon_All(t *testing.T) {
 	}
 
 	want := 2
-	got := wt.All()
+	got := wt.GetAllLoadedChapters()
 	if len(got) != want {
 		t.Errorf("got %d, want %d", len(got), want)
 	}

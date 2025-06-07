@@ -50,7 +50,14 @@ type webtoon struct {
 	id string
 
 	searchInfo *SearchData
-	info       *Series
+}
+
+func (w *webtoon) Title() string {
+	if w.SeriesInfo == nil {
+		return utils.NonEmpty(w.Req.TempTitle, w.Req.Id)
+	}
+
+	return utils.NonEmpty(w.SeriesInfo.GetTitle(), w.Req.TempTitle, w.Req.Id)
 }
 
 func (w *webtoon) Provider() models.Provider {
@@ -77,7 +84,7 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 			return
 		}
 
-		w.info = info
+		w.SeriesInfo = info
 
 		// TempTitle is the title we previously got from the search, just should ensure we get the correct stuff
 		// WebToons search is surprisingly bad at correcting for spaces, special characters, etc...
@@ -129,9 +136,9 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
 	ci.Series = w.Title()
-	ci.Summary = w.markdownService.SanitizeHtml(w.info.Description)
+	ci.Summary = w.markdownService.SanitizeHtml(w.SeriesInfo.Description)
 	ci.Manga = comicinfo.MangaYes
-	ci.Genre = w.info.Genre
+	ci.Genre = w.SeriesInfo.Genre
 
 	if w.searchInfo != nil {
 		ci.Writer = strings.Join(w.searchInfo.AuthorNameList, ",")
@@ -143,8 +150,8 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		ci.Number = chapter.Number
 	}
 
-	if w.info.Completed {
-		ci.Count = len(w.info.Chapters)
+	if w.SeriesInfo.Completed {
+		ci.Count = len(w.SeriesInfo.Chapters)
 	}
 
 	return ci

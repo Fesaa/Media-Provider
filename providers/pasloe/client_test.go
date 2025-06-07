@@ -48,6 +48,7 @@ func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 	must(t, cont.Provide(services.DirectoryServiceProvider))
 	must(t, cont.Provide(services.MarkdownServiceProvider))
 	must(t, cont.Provide(services.ImageServiceProvider))
+	must(t, cont.Provide(services.ArchiveServiceProvider))
 	must(t, cont.Provide(New))
 	c := utils.MustInvokeCont[core.Client](cont).(*client)
 

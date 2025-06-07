@@ -77,6 +77,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	must(scope.Provide(utils.Identity(repo)))
 	must(scope.Provide(utils.Identity(req)))
 	must(scope.Provide(services.MarkdownServiceProvider))
+	must(scope.Provide(services.ArchiveServiceProvider))
 	must(scope.Provide(func() services.SignalRService { return &mock.SignalR{} }))
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
@@ -405,7 +406,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 func TestTagToGenre(t *testing.T) {
 	m := tempManga(t, req(), io.Discard, &mockRepository{})
 
-	m.seriesInfo = &Series{
+	m.SeriesInfo = &Series{
 		Id:          "",
 		Title:       "",
 		AltTitle:    "",
@@ -521,7 +522,7 @@ func TestCoverReplace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	originalCover, err := m.Download(m.seriesInfo.CoverUrl, false)
+	originalCover, err := m.Download(m.SeriesInfo.CoverUrl, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -572,7 +573,7 @@ func TestCoverNoReplace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	originalCover, err := m.Download(m.seriesInfo.CoverUrl, false)
+	originalCover, err := m.Download(m.SeriesInfo.CoverUrl, false)
 	if err != nil {
 		t.Fatal(err)
 	}

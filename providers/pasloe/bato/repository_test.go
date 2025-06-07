@@ -2,6 +2,7 @@ package bato
 
 import (
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"io"
@@ -10,10 +11,11 @@ import (
 )
 
 func tempRepository(w io.Writer) Repository {
-	return NewRepository(menou.DefaultClient, zerolog.New(w))
+	log := zerolog.New(w)
+	return NewRepository(menou.DefaultClient, log, services.MarkdownServiceProvider(log))
 }
 
-func getChapter(series *Series, chapter string, volume ...string) *Chapter {
+func getChapter(series Series, chapter string, volume ...string) *Chapter {
 	return utils.Find(series.Chapters, func(c Chapter) bool {
 		if len(volume) > 0 {
 			return c.Volume == volume[0] && c.Chapter == chapter

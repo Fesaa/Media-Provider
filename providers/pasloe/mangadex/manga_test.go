@@ -434,7 +434,7 @@ func TestManga_All(t *testing.T) {
 
 func TestManga_ContentDir(t *testing.T) {
 	m := tempManga(t, req(), io.Discard, &mockRepository{})
-	m.info = mangaResp()
+	m.SeriesInfo = mangaResp()
 
 	got := m.ContentDir(chapter())
 	want := "Rainbows After Storms Ch. 0162"
@@ -446,7 +446,7 @@ func TestManga_ContentDir(t *testing.T) {
 func TestManga_ContentDirBadChapter(t *testing.T) {
 	var buf bytes.Buffer
 	m := tempManga(t, req(), &buf, &mockRepository{})
-	m.info = mangaResp()
+	m.SeriesInfo = mangaResp()
 
 	chpt := chapter()
 	chpt.Attributes.Chapter = "NotAFloat"
@@ -680,7 +680,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 			var buffer bytes.Buffer
 			m := tempManga(t, req(), &buffer, &mockRepository{})
 			m.ExistingContent = tc.contentOnDisk
-			m.info = mangaResp()
+			m.SeriesInfo = mangaResp()
 
 			if tc.command != nil {
 				tc.command(t, m)
@@ -791,7 +791,7 @@ func TestTagsBlackList(t *testing.T) {
 		},
 	}
 
-	m.info = mangaResp()
+	m.SeriesInfo = mangaResp()
 
 	ci := m.comicInfo(chpt)
 	genres := strings.Split(ci.Genre, ",")

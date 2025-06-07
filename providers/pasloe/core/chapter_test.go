@@ -102,7 +102,7 @@ func TestCore_ContentDir(t *testing.T) {
 				Chapter: "",
 				Title:   "Oneshot Title",
 			},
-			want: "My Manga Oneshot Title (OneShot)",
+			want: "Spice and Wolf Oneshot Title (OneShot)",
 		},
 		{
 			name: "Numeric Chapter",
@@ -110,7 +110,7 @@ func TestCore_ContentDir(t *testing.T) {
 				Chapter: "12.5",
 				Title:   "Something",
 			},
-			want: "My Manga Ch. 0012.5",
+			want: "Spice and Wolf Ch. 0012.5",
 		},
 		{
 			name: "Non-Numeric Chapter",
@@ -118,7 +118,7 @@ func TestCore_ContentDir(t *testing.T) {
 				Chapter: "extra-a",
 				Title:   "Extra",
 			},
-			want: "My Manga Ch. extra-a",
+			want: "Spice and Wolf Ch. extra-a",
 		},
 		{
 			name: "Empty Chapter String",
@@ -126,13 +126,13 @@ func TestCore_ContentDir(t *testing.T) {
 				Chapter: "",
 				Title:   "Bonus",
 			},
-			want: "My Manga Bonus (OneShot)",
+			want: "Spice and Wolf Bonus (OneShot)",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			core := testBase(t, req(), io.Discard, ProviderMock{
-				title: "My Manga",
+				title: "Spice and Wolf",
 			})
 			if got := core.ContentDir(tt.chapter); got != tt.want {
 				t.Errorf("ContentDir() = %v, want %v", got, tt.want)

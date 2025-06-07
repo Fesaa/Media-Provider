@@ -37,6 +37,7 @@ type Downloadable interface {
 
 type DownloadInfoProvider[T any] interface {
 	Provider() models.Provider
+	Title() string
 	RefUrl() string
 	LoadInfo(ctx context.Context) chan struct{}
 

@@ -32,7 +32,7 @@ func (c *Core[C, S]) hasBeenAssignedVolume(chapter C, content Content) bool {
 
 	ci, err := c.archiveService.GetComicInfo(fullPath)
 	if err != nil {
-		l.Warn().Err(err).Str("path", fullPath).Msg("Failed to get comic info")
+		l.Warn().Err(err).Str("path", fullPath).Msg("unable to read comic info in zip")
 		return false
 	}
 

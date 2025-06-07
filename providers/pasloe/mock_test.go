@@ -38,12 +38,16 @@ func (m mockRegistry) Create(c core.Client, req payload.DownloadRequest) (core.D
 		block.mockAll = []ID{"a", "b"}
 	}
 
-	base := core.New(scope, "", block)
+	base := core.New[ID, ID](scope, "", block)
 	block.Core = base
 	return block, nil
 }
 
 type ID string
+
+func (i ID) AllChapters() []ID {
+	return []ID{}
+}
 
 func (i ID) GetChapter() string {
 	return i.GetId()
@@ -66,7 +70,7 @@ func (i ID) Label() string {
 }
 
 type MockContent struct {
-	*core.Core[ID]
+	*core.Core[ID, ID]
 	mockTitle               string
 	mockRefUrl              string
 	mockProvider            models.Provider
@@ -89,7 +93,7 @@ type MockContent struct {
 
 func NewMockContent(scope *dig.Scope) *MockContent {
 	mc := &MockContent{}
-	base := core.New[ID](scope, "mock-content", mc)
+	base := core.New[ID, ID](scope, "mock-content", mc)
 	mc.Core = base
 	return mc
 }
@@ -127,7 +131,7 @@ func (m *MockContent) GetInfo() payload.InfoStat {
 	return m.mockInfo
 }
 
-func (m *MockContent) All() []ID {
+func (m *MockContent) CustomizeAllChapters() []ID {
 	return m.mockAll
 }
 

@@ -111,7 +111,7 @@ func (c *Core[C, S]) DisplayInformation() DisplayInformation {
 			if c.Req.IsSubscription && c.Req.Sub != nil {
 				return c.Req.Sub.Info.Title
 			}
-			return c.Title()
+			return c.impl.Title()
 		}(),
 	}
 }
@@ -138,7 +138,7 @@ func (c *Core[C, S]) GetBaseDir() string {
 }
 
 func (c *Core[C, S]) GetDownloadDir() string {
-	title := c.Title()
+	title := c.impl.Title()
 	if title == "" {
 		return c.baseDir
 	}
@@ -210,7 +210,7 @@ func (c *Core[C, S]) ContentList() []payload.ListContentData {
 				SubContentId: chapter.GetId(),
 				Selected:     len(c.ToDownloadUserSelected) == 0 || slices.Contains(c.ToDownloadUserSelected, chapter.GetId()),
 				Label: utils.Ternary(chapter.GetTitle() == "",
-					c.Title()+" "+chapter.Label(),
+					c.impl.Title()+" "+chapter.Label(),
 					chapter.Label()),
 			}
 		})
@@ -242,7 +242,7 @@ func (c *Core[C, S]) GetInfo() payload.InfoStat {
 		Provider:     models.DYNASTY,
 		Id:           c.Id(),
 		ContentState: c.contentState,
-		Name:         c.Title(),
+		Name:         c.impl.Title(),
 		RefUrl:       c.impl.RefUrl(),
 		Size:         strconv.Itoa(c.Size()) + " Chapters",
 		Downloading:  c.State() == payload.ContentStateDownloading,
@@ -294,7 +294,7 @@ func (c *Core[C, S]) loadContentInfo(ctx context.Context) bool {
 
 	elapsed := time.Since(start)
 
-	c.Log = c.Log.With().Str("title", c.Title()).Logger()
+	c.Log = c.Log.With().Str("title", c.impl.Title()).Logger()
 	c.Log.Debug().Dur("elapsed", elapsed).Msg("Content has downloaded all information")
 	return true
 }
@@ -325,7 +325,7 @@ func (c *Core[C, S]) handleLongDiskCheck(elapsed time.Duration) {
 		if c.Req.IsSubscription {
 			c.Notifier.NotifyContent(
 				c.TransLoco.GetTranslation("warn"),
-				c.TransLoco.GetTranslation("long-on-disk-check", c.Title()),
+				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
 				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
 				models.Orange)
 		}
