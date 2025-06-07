@@ -35,7 +35,7 @@ func NewWebToon(scope *dig.Scope) core.Downloadable {
 			fs:              fs,
 		}
 
-		wt.Core = core.New[Chapter](scope, "webtoon", wt)
+		wt.Core = core.New[Chapter, *Series](scope, "webtoon", wt)
 	}))
 	return wt
 }
@@ -46,26 +46,11 @@ type webtoon struct {
 	markdownService services.MarkdownService
 	fs              afero.Afero
 
-	*core.Core[Chapter]
+	*core.Core[Chapter, *Series]
 	id string
 
 	searchInfo *SearchData
 	info       *Series
-}
-
-func (w *webtoon) Title() string {
-	if w.searchInfo != nil {
-		return w.searchInfo.Name
-	}
-	if w.info != nil {
-		return w.info.Name
-	}
-
-	if w.Req.TempTitle != "" {
-		return w.Req.TempTitle
-	}
-
-	return w.id
 }
 
 func (w *webtoon) Provider() models.Provider {
@@ -73,11 +58,10 @@ func (w *webtoon) Provider() models.Provider {
 }
 
 func (w *webtoon) RefUrl() string {
-	if w.searchInfo != nil {
-		return w.searchInfo.Url()
+	if w.SeriesInfo == nil {
+		return ""
 	}
-
-	return ""
+	return w.SeriesInfo.RefUrl()
 }
 
 func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
@@ -112,10 +96,6 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 		}
 	}()
 	return out
-}
-
-func (w *webtoon) All() []Chapter {
-	return w.info.Chapters
 }
 
 func (w *webtoon) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
@@ -168,11 +148,6 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	}
 
 	return ci
-}
-
-func (w *webtoon) ShouldDownload(chapter Chapter) bool {
-	_, ok := w.GetContentByName(w.ContentDir(chapter) + ".cbz")
-	return !ok
 }
 
 func (w *webtoon) CustomizeRequest(req *http.Request) error {

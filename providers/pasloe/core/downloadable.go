@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 )
 
@@ -37,15 +36,10 @@ type Downloadable interface {
 }
 
 type DownloadInfoProvider[T any] interface {
-	Title() string
-	RefUrl() string
 	Provider() models.Provider
+	RefUrl() string
 	LoadInfo(ctx context.Context) chan struct{}
-	GetInfo() payload.InfoStat
-	All() []T
 
 	ContentUrls(ctx context.Context, t T) ([]string, error)
 	WriteContentMetaData(t T) error
-
-	ShouldDownload(t T) bool
 }

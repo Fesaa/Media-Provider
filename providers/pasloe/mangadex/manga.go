@@ -38,14 +38,14 @@ func NewManga(scope *dig.Scope) core.Downloadable {
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
 		}
-		m.Core = core.New[ChapterSearchData](scope, "mangadex", m)
+		m.Core = core.New[ChapterSearchData, *MangaSearchData](scope, "mangadex", m)
 	}))
 
 	return m
 }
 
 type manga struct {
-	*core.Core[ChapterSearchData]
+	*core.Core[ChapterSearchData, *MangaSearchData]
 	id string
 
 	httpClient      *menou.Client
@@ -55,7 +55,6 @@ type manga struct {
 	archiveService  services.ArchiveService
 	fs              afero.Afero
 
-	info     *MangaSearchData
 	chapters ChapterSearchResponse
 
 	coverFactory CoverFactory
@@ -72,16 +71,8 @@ type manga struct {
 	language string
 }
 
-func (m *manga) Title() string {
-	if m.info == nil {
-		if m.Req.TempTitle != "" {
-			return m.Req.TempTitle
-		}
-
-		return m.id
-	}
-
-	return m.info.Attributes.LangTitle(m.language)
+func (m *manga) CustomizeAllChapters() []ChapterSearchData {
+	return m.chapters.Data
 }
 
 func (m *manga) Provider() models.Provider {
@@ -89,15 +80,7 @@ func (m *manga) Provider() models.Provider {
 }
 
 func (m *manga) RefUrl() string {
-	if m.info == nil {
-		return fmt.Sprintf("https://mangadex.org/title/%s/", m.Id())
-	}
-
-	return m.info.RefURL()
-}
-
-func (m *manga) All() []ChapterSearchData {
-	return m.chapters.Data
+	return fmt.Sprintf("https://mangadex.org/%s", m.id)
 }
 
 func (m *manga) ContentUrls(ctx context.Context, chapter ChapterSearchData) ([]string, error) {
@@ -106,12 +89,4 @@ func (m *manga) ContentUrls(ctx context.Context, chapter ChapterSearchData) ([]s
 		return nil, err
 	}
 	return imageInfo.FullImageUrls(), nil
-}
-
-func (m *manga) volumeDir(v string) string {
-	if v == "" {
-		return fmt.Sprintf("%s Special", m.Title())
-	}
-
-	return fmt.Sprintf("%s Vol. %s", m.Title(), v)
 }

@@ -266,7 +266,7 @@ func TestManga_All(t *testing.T) {
 		t.Fatal("m.LoadInfo() timeout")
 	}
 
-	got := m.All()
+	got := m.GetAllLoadedChapters()
 	if len(got) != 5 {
 		t.Errorf("len(got) = %d, want %d", len(got), 5)
 	}

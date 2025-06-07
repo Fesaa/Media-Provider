@@ -15,6 +15,15 @@ func OrElse(s string, def string) string {
 	return s
 }
 
+func NonEmpty(s ...string) string {
+	for _, v := range s {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 func Normalize(s string) string {
 	return strings.ToLower(re.ReplaceAllString(s, ""))
 }

@@ -66,13 +66,25 @@ type Series struct {
 	Chapters          []Chapter
 }
 
-type Author struct {
-	Name  string
-	Roles comicinfo.Roles
+func (s *Series) AllChapters() []Chapter {
+	return s.Chapters
+}
+
+func (s *Series) GetId() string {
+	return s.Id
+}
+
+func (s *Series) GetTitle() string {
+	return s.Title
 }
 
 func (s *Series) RefUrl() string {
 	return fmt.Sprintf("%s/title/%s", Domain, s.Id)
+}
+
+type Author struct {
+	Name  string
+	Roles comicinfo.Roles
 }
 
 type Chapter struct {

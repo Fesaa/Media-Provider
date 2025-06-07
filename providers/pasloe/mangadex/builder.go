@@ -54,7 +54,7 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 				payload.Of("Date", strconv.Itoa(data.Attributes.Year)),
 			},
 			InfoHash: data.Id,
-			RefUrl:   data.RefURL(),
+			RefUrl:   data.RefUrl(),
 			Provider: models.MANGADEX,
 			ImageUrl: data.CoverURL(),
 		})

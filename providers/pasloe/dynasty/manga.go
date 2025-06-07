@@ -32,14 +32,14 @@ func NewManga(scope *dig.Scope) core.Downloadable {
 			fs:              fs,
 		}
 
-		m.Core = core.New[Chapter](scope, "dynasty-manga", m)
+		m.Core = core.New[Chapter, *Series](scope, "dynasty-manga", m)
 	}))
 
 	return m
 }
 
 type manga struct {
-	*core.Core[Chapter]
+	*core.Core[Chapter, *Series]
 
 	httpClient      *menou.Client
 	repository      Repository
@@ -50,23 +50,10 @@ type manga struct {
 	fs              afero.Afero
 
 	id              string
-	seriesInfo      *Series
 	coverBytes      []byte
 	hasCheckedCover bool
 
 	hasWarnedBlacklist bool
-}
-
-func (m *manga) Title() string {
-	if m.seriesInfo != nil {
-		return m.seriesInfo.Title
-	}
-
-	if temp := m.Req.TempTitle; temp != "" {
-		return temp
-	}
-
-	return m.id
 }
 
 func (m *manga) Provider() models.Provider {
@@ -74,11 +61,11 @@ func (m *manga) Provider() models.Provider {
 }
 
 func (m *manga) RefUrl() string {
-	if m.seriesInfo == nil {
+	if m.SeriesInfo == nil {
 		return ""
 	}
 
-	return m.seriesInfo.RefUrl()
+	return m.SeriesInfo.RefUrl()
 }
 
 func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
@@ -94,25 +81,12 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 			return
 		}
 
-		m.seriesInfo = info
+		m.SeriesInfo = info
 	}()
 
 	return out
 }
 
-func (m *manga) All() []Chapter {
-	return m.seriesInfo.Chapters
-}
-
 func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
 	return m.repository.ChapterImages(ctx, chapter.Id)
-}
-
-func (m *manga) ShouldDownload(chapter Chapter) bool {
-	_, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
-	if ok || (chapter.Chapter == "" && !m.Req.GetBool(core.DownloadOneShotKey)) {
-		return false
-	}
-
-	return true
 }

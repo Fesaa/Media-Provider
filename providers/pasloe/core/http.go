@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (c *Core[T]) Download(url string, tryAgain ...bool) ([]byte, error) {
+func (c *Core[C, S]) Download(url string, tryAgain ...bool) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (c *Core[T]) Download(url string, tryAgain ...bool) ([]byte, error) {
 	return c.Download(url, false)
 }
 
-func (c *Core[T]) DownloadAndWrite(url string, filePath string, tryAgain ...bool) error {
+func (c *Core[C, S]) DownloadAndWrite(url string, filePath string, tryAgain ...bool) error {
 	data, err := c.Download(url, tryAgain...)
 	if err != nil {
 		return err

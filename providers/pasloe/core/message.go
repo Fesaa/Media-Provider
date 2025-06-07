@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func (c *Core[T]) Message(msg payload.Message) (payload.Message, error) {
+func (c *Core[C, S]) Message(msg payload.Message) (payload.Message, error) {
 	var jsonBytes []byte
 	var err error
 	switch msg.MessageType {
@@ -33,7 +33,7 @@ func (c *Core[T]) Message(msg payload.Message) (payload.Message, error) {
 	}, nil
 }
 
-func (c *Core[T]) MarkReady() error {
+func (c *Core[C, S]) MarkReady() error {
 	if c.contentState != payload.ContentStateWaiting {
 		return services.ErrWrongState
 	}
@@ -47,7 +47,7 @@ func (c *Core[T]) MarkReady() error {
 	return nil
 }
 
-func (c *Core[T]) SetUserFiltered(msg json.RawMessage) error {
+func (c *Core[C, S]) SetUserFiltered(msg json.RawMessage) error {
 	if c.contentState != payload.ContentStateWaiting &&
 		c.contentState != payload.ContentStateReady {
 		return services.ErrWrongState

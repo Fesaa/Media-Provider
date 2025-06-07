@@ -22,24 +22,23 @@ func NewManga(scope *dig.Scope) core.Downloadable {
 			fs:         fs,
 		}
 
-		m.Core = core.New[Chapter](scope, "bato", m)
+		m.Core = core.New[Chapter, *Series](scope, "bato", m)
 	}))
 
 	return m
 }
 
 type manga struct {
-	*core.Core[Chapter]
+	*core.Core[Chapter, *Series]
 
 	repository Repository
 	fs         afero.Afero
 
-	id         string
-	seriesInfo *Series
+	id string
 }
 
 func (m *manga) RefUrl() string {
-	return fmt.Sprintf("%s/title/%s", Domain, m.id)
+	return fmt.Sprintf("%s/title/%s", Domain, m.Id())
 }
 
 func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
@@ -56,35 +55,14 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 			return
 		}
 
-		m.seriesInfo = info
+		m.SeriesInfo = &info
 	}()
 
 	return out
 }
 
-func (m *manga) All() []Chapter {
-	return m.seriesInfo.Chapters
-}
-
 func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
 	return m.repository.ChapterImages(ctx, chapter.Id)
-}
-
-func (m *manga) ShouldDownload(chapter Chapter) bool {
-	_, ok := m.GetContentByName(m.ContentDir(chapter) + ".cbz")
-	if ok || (chapter.Chapter == "" && !m.Req.GetBool(core.DownloadOneShotKey)) {
-		return false
-	}
-
-	return true
-}
-
-func (m *manga) Title() string {
-	if m.seriesInfo == nil {
-		return utils.OrElse(m.Req.TempTitle, m.id)
-	}
-
-	return m.seriesInfo.Title
 }
 
 func (m *manga) Provider() models.Provider {

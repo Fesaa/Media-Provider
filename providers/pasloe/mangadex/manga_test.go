@@ -423,7 +423,7 @@ func TestManga_All(t *testing.T) {
 		t.Fatal("timed out waiting for manga title")
 	}
 
-	got := m.All()
+	got := m.GetAllLoadedChapters()
 	want := 1
 
 	if len(got) != want {

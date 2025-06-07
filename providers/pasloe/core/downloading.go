@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func (c *Core[T]) abortDownload(reason error) {
+func (c *Core[C, S]) abortDownload(reason error) {
 	if errors.Is(reason, context.Canceled) {
 		return
 	}
@@ -29,24 +29,24 @@ func (c *Core[T]) abortDownload(reason error) {
 	}
 	c.Notifier.Notify(models.Notification{
 		Title:   "Failed download",
-		Summary: fmt.Sprintf("%s failed to download", c.impl.Title()),
-		Body:    fmt.Sprintf("Download failed for %s, because %v", c.impl.Title(), reason),
+		Summary: fmt.Sprintf("%s failed to download", c.Title()),
+		Body:    fmt.Sprintf("Download failed for %s, because %v", c.Title(), reason),
 		Colour:  models.Red,
 		Group:   models.GroupError,
 	})
 }
 
-func (c *Core[T]) filterContentByUserSelection() {
+func (c *Core[C, S]) filterContentByUserSelection() {
 	if len(c.ToDownloadUserSelected) > 0 {
 		currentSize := len(c.ToDownload)
-		c.ToDownload = utils.Filter(c.ToDownload, func(t T) bool {
+		c.ToDownload = utils.Filter(c.ToDownload, func(t C) bool {
 			return slices.Contains(c.ToDownloadUserSelected, t.GetId())
 		})
 		c.Log.Debug().Int("size", currentSize).Int("newSize", len(c.ToDownload)).
 			Msg("content further filtered after user has made a selection in the UI")
 
 		if len(c.ToRemoveContent) > 0 {
-			paths := utils.Map(c.ToDownload, func(t T) string {
+			paths := utils.Map(c.ToDownload, func(t C) string {
 				return c.ContentPath(t) + ".cbz"
 			})
 			c.ToRemoveContent = utils.Filter(c.ToRemoveContent, func(s string) bool {
@@ -56,7 +56,7 @@ func (c *Core[T]) filterContentByUserSelection() {
 	}
 }
 
-func (c *Core[T]) processDownloads(ctx context.Context) error {
+func (c *Core[C, S]) processDownloads(ctx context.Context) error {
 	for _, content := range c.ToDownload {
 		select {
 		case <-ctx.Done():
@@ -77,7 +77,7 @@ func (c *Core[T]) processDownloads(ctx context.Context) error {
 	return nil
 }
 
-func (c *Core[T]) cleanupAfterDownload() {
+func (c *Core[C, S]) cleanupAfterDownload() {
 	c.Wg.Wait()
 	req := payload.StopRequest{
 		Provider:    c.Req.Provider,
@@ -89,12 +89,12 @@ func (c *Core[T]) cleanupAfterDownload() {
 	}
 }
 
-func (c *Core[T]) startDownload() {
+func (c *Core[C, S]) startDownload() {
 	// Overwrite cancel, as we're doing something else
 	ctx, cancel := context.WithCancel(context.Background())
 	c.cancel = cancel
 
-	data := c.impl.All()
+	data := c.GetAllLoadedChapters()
 	c.Log.Trace().Int("size", len(data)).Msg("downloading content")
 	c.Wg = &sync.WaitGroup{}
 
@@ -120,7 +120,7 @@ type downloadUrl struct {
 	url string
 }
 
-func (c *Core[T]) downloadContent(ctx context.Context, t T) error {
+func (c *Core[C, S]) downloadContent(ctx context.Context, t C) error {
 	l := c.ContentLogger(t)
 	l.Trace().Msg("downloading content")
 
@@ -178,7 +178,7 @@ func (c *Core[T]) downloadContent(ctx context.Context, t T) error {
 	return nil
 }
 
-func (c *Core[T]) produceURLs(ctx context.Context, innerCtx context.Context, urls []string, urlCh chan<- downloadUrl) {
+func (c *Core[C, S]) produceURLs(ctx context.Context, innerCtx context.Context, urls []string, urlCh chan<- downloadUrl) {
 	go func() {
 		defer close(urlCh)
 		for i, url := range urls {
@@ -193,7 +193,7 @@ func (c *Core[T]) produceURLs(ctx context.Context, innerCtx context.Context, url
 	}()
 }
 
-func (c *Core[T]) startProgressUpdater(ctx context.Context, innerCtx context.Context) {
+func (c *Core[C, S]) startProgressUpdater(ctx context.Context, innerCtx context.Context) {
 	go func() {
 		for range time.Tick(2 * time.Second) {
 			select {
@@ -208,11 +208,11 @@ func (c *Core[T]) startProgressUpdater(ctx context.Context, innerCtx context.Con
 	}()
 }
 
-func (c *Core[T]) channelConsumer(
+func (c *Core[C, S]) channelConsumer(
 	innerCtx context.Context,
 	cancel context.CancelFunc,
 	ctx context.Context,
-	t T,
+	t C,
 	size int,
 	l zerolog.Logger,
 	urlCh chan downloadUrl,
@@ -233,10 +233,10 @@ func (c *Core[T]) channelConsumer(
 	}
 }
 
-func (c *Core[T]) processInitialDownloads(
+func (c *Core[C, S]) processInitialDownloads(
 	innerCtx context.Context,
 	ctx context.Context,
-	t T,
+	t C,
 	l zerolog.Logger,
 	urlCh chan downloadUrl,
 	failedCh chan downloadUrl,
@@ -254,10 +254,10 @@ func (c *Core[T]) processInitialDownloads(
 	close(failedCh)
 }
 
-func (c *Core[T]) downloadURL(
+func (c *Core[C, S]) downloadURL(
 	innerCtx context.Context,
 	ctx context.Context,
-	t T,
+	t C,
 	l zerolog.Logger,
 	urlData downloadUrl,
 	failedCh chan downloadUrl,
@@ -284,10 +284,10 @@ func (c *Core[T]) downloadURL(
 	time.Sleep(1 * time.Second)
 }
 
-func (c *Core[T]) processFailedDownloads(
+func (c *Core[C, S]) processFailedDownloads(
 	innerCtx context.Context,
 	ctx context.Context,
-	t T,
+	t C,
 	l zerolog.Logger,
 	failedCh chan downloadUrl,
 	errCh chan error,

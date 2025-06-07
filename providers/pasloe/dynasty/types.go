@@ -56,6 +56,18 @@ type Series struct {
 	Chapters []Chapter
 }
 
+func (s *Series) GetId() string {
+	return s.Id
+}
+
+func (s *Series) GetTitle() string {
+	return s.Title
+}
+
+func (s *Series) AllChapters() []Chapter {
+	return s.Chapters
+}
+
 func (s *Series) RefUrl() string {
 	return seriesURL(s.Id)
 }

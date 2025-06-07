@@ -60,7 +60,7 @@ var (
 
 type Repository interface {
 	Search(ctx context.Context, options SearchOptions) ([]SearchResult, error)
-	SeriesInfo(ctx context.Context, id string) (*Series, error)
+	SeriesInfo(ctx context.Context, id string) (Series, error)
 	ChapterImages(ctx context.Context, id string) ([]string, error)
 }
 
@@ -156,15 +156,15 @@ func searchUrl(options SearchOptions) string {
 	return uri.String()
 }
 
-func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
+func (r *repository) SeriesInfo(ctx context.Context, id string) (Series, error) {
 	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, id))
 	if err != nil {
-		return nil, err
+		return Series{}, err
 	}
 
 	info := doc.Find("div.mt-3.grow.grid.gap-3.grid-cols-1")
 
-	return &Series{
+	return Series{
 		Id:                id,
 		CoverUrl:          doc.Find("main > div > div > div > img").AttrOr("src", ""),
 		Title:             cleanTitle(info.Find("div > h3 a.link.link-hover").First().Text()),

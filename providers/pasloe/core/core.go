@@ -19,8 +19,8 @@ import (
 	"time"
 )
 
-func New[T Chapter](scope *dig.Scope, handler string, provider DownloadInfoProvider[T]) *Core[T] {
-	var base *Core[T]
+func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider DownloadInfoProvider[C]) *Core[C, S] {
+	var base *Core[C, S]
 
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest,
@@ -30,25 +30,27 @@ func New[T Chapter](scope *dig.Scope, handler string, provider DownloadInfoProvi
 		notification services.NotificationService,
 		transLoco services.TranslocoService,
 		preferences models.Preferences,
+		archiveService services.ArchiveService,
 		fs afero.Afero,
 		httpClient *menou.Client,
 	) {
-		base = &Core[T]{
-			impl:         provider,
-			Client:       client,
-			Log:          log.With().Str("handler", handler).Str("id", req.Id).Logger(),
-			id:           req.Id,
-			baseDir:      req.BaseDir,
-			maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 5),
-			Req:          req,
-			LastTime:     time.Now(),
-			contentState: payload.ContentStateQueued,
-			SignalR:      signalR,
-			Notifier:     notification,
-			TransLoco:    transLoco,
-			preferences:  preferences,
-			fs:           fs,
-			httpClient:   httpClient,
+		base = &Core[C, S]{
+			impl:           provider,
+			Client:         client,
+			Log:            log.With().Str("handler", handler).Str("id", req.Id).Logger(),
+			id:             req.Id,
+			baseDir:        req.BaseDir,
+			maxImages:      min(client.GetConfig().GetMaxConcurrentImages(), 5),
+			Req:            req,
+			LastTime:       time.Now(),
+			contentState:   payload.ContentStateQueued,
+			SignalR:        signalR,
+			Notifier:       notification,
+			TransLoco:      transLoco,
+			archiveService: archiveService,
+			preferences:    preferences,
+			fs:             fs,
+			httpClient:     httpClient,
 		}
 	}))
 
@@ -60,24 +62,27 @@ type Content struct {
 	Path string
 }
 
-type Core[T Chapter] struct {
-	impl DownloadInfoProvider[T]
+type Core[C Chapter, S Series[C]] struct {
+	impl DownloadInfoProvider[C]
 
-	Client       Client
-	Log          zerolog.Logger
-	contentState payload.ContentState
-	SignalR      services.SignalRService
-	Notifier     services.NotificationService
-	TransLoco    services.TranslocoService
-	fs           afero.Afero
-	httpClient   *menou.Client
+	Client         Client
+	Log            zerolog.Logger
+	contentState   payload.ContentState
+	SignalR        services.SignalRService
+	Notifier       services.NotificationService
+	TransLoco      services.TranslocoService
+	archiveService services.ArchiveService
+	fs             afero.Afero
+	httpClient     *menou.Client
 
 	id        string
 	baseDir   string
 	maxImages int
 	Req       payload.DownloadRequest
 
-	ToDownload      []T
+	SeriesInfo S
+
+	ToDownload      []C
 	HasDownloaded   []string
 	ExistingContent []Content
 	ToRemoveContent []string
@@ -100,57 +105,57 @@ type Core[T Chapter] struct {
 	Wg     *sync.WaitGroup
 }
 
-func (c *Core[T]) DisplayInformation() DisplayInformation {
+func (c *Core[C, S]) DisplayInformation() DisplayInformation {
 	return DisplayInformation{
 		Name: func() string {
 			if c.Req.IsSubscription && c.Req.Sub != nil {
 				return c.Req.Sub.Info.Title
 			}
-			return c.impl.Title()
+			return c.Title()
 		}(),
 	}
 }
 
-func (c *Core[T]) FailedDownloads() int {
+func (c *Core[C, S]) FailedDownloads() int {
 	return c.failedDownloads
 }
 
-func (c *Core[T]) Request() payload.DownloadRequest {
+func (c *Core[C, S]) Request() payload.DownloadRequest {
 	return c.Req
 }
 
-func (c *Core[T]) SetState(state payload.ContentState) {
+func (c *Core[C, S]) SetState(state payload.ContentState) {
 	c.contentState = state
 	c.SignalR.StateUpdate(c.id, c.contentState)
 }
 
-func (c *Core[T]) Id() string {
+func (c *Core[C, S]) Id() string {
 	return c.id
 }
 
-func (c *Core[T]) GetBaseDir() string {
+func (c *Core[C, S]) GetBaseDir() string {
 	return c.baseDir
 }
 
-func (c *Core[T]) GetDownloadDir() string {
-	title := c.impl.Title()
+func (c *Core[C, S]) GetDownloadDir() string {
+	title := c.Title()
 	if title == "" {
 		return c.baseDir
 	}
 	return path.Join(c.baseDir, title)
 }
 
-func (c *Core[T]) GetOnDiskContent() []Content {
+func (c *Core[C, S]) GetOnDiskContent() []Content {
 	return c.ExistingContent
 }
 
-func (c *Core[T]) ExistingContentNames() []string {
+func (c *Core[C, S]) ExistingContentNames() []string {
 	return utils.Map(c.ExistingContent, func(t Content) string {
 		return t.Name
 	})
 }
 
-func (c *Core[T]) GetContentByName(name string) (Content, bool) {
+func (c *Core[C, S]) GetContentByName(name string) (Content, bool) {
 	for _, content := range c.ExistingContent {
 		if content.Name == name {
 			return content, true
@@ -159,7 +164,7 @@ func (c *Core[T]) GetContentByName(name string) (Content, bool) {
 	return Content{}, false
 }
 
-func (c *Core[T]) GetContentByPath(path string) (Content, bool) {
+func (c *Core[C, S]) GetContentByPath(path string) (Content, bool) {
 	for _, content := range c.ExistingContent {
 		if content.Path == path {
 			return content, true
@@ -168,44 +173,44 @@ func (c *Core[T]) GetContentByPath(path string) (Content, bool) {
 	return Content{}, false
 }
 
-func (c *Core[T]) GetNewContentNamed() []string {
-	return utils.Map(c.ToDownload, func(t T) string {
+func (c *Core[C, S]) GetNewContentNamed() []string {
+	return utils.Map(c.ToDownload, func(t C) string {
 		return t.Label()
 	})
 }
 
-func (c *Core[T]) GetNewContent() []string {
+func (c *Core[C, S]) GetNewContent() []string {
 	return c.HasDownloaded
 }
 
-func (c *Core[T]) GetToRemoveContent() []string {
+func (c *Core[C, S]) GetToRemoveContent() []string {
 	return c.ToRemoveContent
 }
 
-func (c *Core[T]) ContentList() []payload.ListContentData {
-	chapters := c.impl.All()
+func (c *Core[C, S]) ContentList() []payload.ListContentData {
+	chapters := c.GetAllLoadedChapters()
 	if len(chapters) == 0 {
 		return nil
 	}
 
-	data := utils.GroupBy(chapters, func(v T) string {
+	data := utils.GroupBy(chapters, func(v C) string {
 		return v.GetVolume()
 	})
 
-	childrenFunc := func(chapters []T) []payload.ListContentData {
-		slices.SortFunc(chapters, func(a, b T) int {
+	childrenFunc := func(chapters []C) []payload.ListContentData {
+		slices.SortFunc(chapters, func(a, b C) int {
 			if a.GetVolume() != b.GetVolume() {
 				return (int)(utils.SafeFloat(b.GetVolume()) - utils.SafeFloat(a.GetVolume()))
 			}
 			return (int)(utils.SafeFloat(b.GetChapter()) - utils.SafeFloat(a.GetChapter()))
 		})
 
-		return utils.Map(chapters, func(chapter T) payload.ListContentData {
+		return utils.Map(chapters, func(chapter C) payload.ListContentData {
 			return payload.ListContentData{
 				SubContentId: chapter.GetId(),
 				Selected:     len(c.ToDownloadUserSelected) == 0 || slices.Contains(c.ToDownloadUserSelected, chapter.GetId()),
 				Label: utils.Ternary(chapter.GetTitle() == "",
-					c.impl.Title()+" "+chapter.Label(),
+					c.Title()+" "+chapter.Label(),
 					chapter.Label()),
 			}
 		})
@@ -216,28 +221,28 @@ func (c *Core[T]) ContentList() []payload.ListContentData {
 
 	out := make([]payload.ListContentData, 0, len(data))
 	for _, volume := range sortSlice {
-		chapters := data[volume]
+		chaptersInVolume := data[volume]
 
 		// Do not add No Volume label if there are no volumes
 		if volume == "" && len(sortSlice) == 1 {
-			out = append(out, childrenFunc(chapters)...)
+			out = append(out, childrenFunc(chaptersInVolume)...)
 			continue
 		}
 
 		out = append(out, payload.ListContentData{
 			Label:    utils.Ternary(volume == "", "No Volume", fmt.Sprintf("Volume %s", volume)),
-			Children: childrenFunc(chapters),
+			Children: childrenFunc(chaptersInVolume),
 		})
 	}
 	return out
 }
 
-func (c *Core[T]) GetInfo() payload.InfoStat {
+func (c *Core[C, S]) GetInfo() payload.InfoStat {
 	return payload.InfoStat{
 		Provider:     models.DYNASTY,
 		Id:           c.Id(),
 		ContentState: c.contentState,
-		Name:         c.impl.Title(),
+		Name:         c.Title(),
 		RefUrl:       c.impl.RefUrl(),
 		Size:         strconv.Itoa(c.Size()) + " Chapters",
 		Downloading:  c.State() == payload.ContentStateDownloading,
@@ -249,7 +254,7 @@ func (c *Core[T]) GetInfo() payload.InfoStat {
 }
 
 // Cancel calls d.cancel and send a StopRequest with DeleteFiles=true to the Client
-func (c *Core[T]) Cancel() {
+func (c *Core[C, S]) Cancel() {
 	c.Log.Trace().Msg("calling cancel on content")
 	if c.cancel != nil {
 		c.cancel()
@@ -265,7 +270,7 @@ func (c *Core[T]) Cancel() {
 	}
 }
 
-func (c *Core[T]) initializeLoadInfo() (context.Context, bool) {
+func (c *Core[C, S]) initializeLoadInfo() (context.Context, bool) {
 	if c.cancel != nil {
 		c.Log.Debug().Msg("content already started")
 		return nil, false
@@ -279,7 +284,7 @@ func (c *Core[T]) initializeLoadInfo() (context.Context, bool) {
 	return ctx, true
 }
 
-func (c *Core[T]) loadContentInfo(ctx context.Context) bool {
+func (c *Core[C, S]) loadContentInfo(ctx context.Context) bool {
 	start := time.Now()
 	select {
 	case <-ctx.Done():
@@ -289,19 +294,19 @@ func (c *Core[T]) loadContentInfo(ctx context.Context) bool {
 
 	elapsed := time.Since(start)
 
-	c.Log = c.Log.With().Str("title", c.impl.Title()).Logger()
+	c.Log = c.Log.With().Str("title", c.Title()).Logger()
 	c.Log.Debug().Dur("elapsed", elapsed).Msg("Content has downloaded all information")
 	return true
 }
 
 // prepareContentToDownload checks what content exists on disk and filters what needs to be downloaded
-func (c *Core[T]) prepareContentToDownload() ([]T, time.Duration) {
+func (c *Core[C, S]) prepareContentToDownload() ([]C, time.Duration) {
 	start := time.Now()
 	c.loadContentOnDisk()
 
-	data := c.impl.All()
-	c.ToDownload = utils.Filter(data, func(t T) bool {
-		download := c.impl.ShouldDownload(t)
+	data := c.GetAllLoadedChapters()
+	c.ToDownload = utils.Filter(data, func(t C) bool {
+		download := c.ShouldDownload(t)
 		if !download {
 			c.Log.Trace().Str("key", c.ContentKey(t)).Msg("content already downloaded, skipping")
 		} else {
@@ -313,21 +318,21 @@ func (c *Core[T]) prepareContentToDownload() ([]T, time.Duration) {
 	return data, time.Since(start)
 }
 
-func (c *Core[T]) handleLongDiskCheck(elapsed time.Duration) {
+func (c *Core[C, S]) handleLongDiskCheck(elapsed time.Duration) {
 	if elapsed > time.Second*5 {
 		c.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
 
 		if c.Req.IsSubscription {
 			c.Notifier.NotifyContent(
 				c.TransLoco.GetTranslation("warn"),
-				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
+				c.TransLoco.GetTranslation("long-on-disk-check", c.Title()),
 				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
 				models.Orange)
 		}
 	}
 }
 
-func (c *Core[T]) handleNoContentToDownload() bool {
+func (c *Core[C, S]) handleNoContentToDownload() bool {
 	if len(c.ToDownload) == 0 {
 		c.Log.Debug().Msg("no chapters to download, stopping")
 
@@ -346,7 +351,7 @@ func (c *Core[T]) handleNoContentToDownload() bool {
 	return false
 }
 
-func (c *Core[T]) finalizeLoadInfo(data []T, loadInfoStart time.Time) {
+func (c *Core[C, S]) finalizeLoadInfo(data []C, loadInfoStart time.Time) {
 	c.SetState(utils.Ternary(c.Req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
 		payload.ContentStateWaiting))
@@ -356,7 +361,7 @@ func (c *Core[T]) finalizeLoadInfo(data []T, loadInfoStart time.Time) {
 		Dur("StartLoadInfo#duration", time.Since(loadInfoStart)).Msg("downloaded content filtered")
 }
 
-func (c *Core[T]) StartLoadInfo() {
+func (c *Core[C, S]) StartLoadInfo() {
 	ctx, shouldContinue := c.initializeLoadInfo()
 	if !shouldContinue {
 		return
@@ -384,7 +389,7 @@ func (c *Core[T]) StartLoadInfo() {
 	c.finalizeLoadInfo(data, loadInfoStart)
 }
 
-func (c *Core[T]) StartDownload() {
+func (c *Core[C, S]) StartDownload() {
 	if c.State() != payload.ContentStateReady && c.State() != payload.ContentStateWaiting {
 		c.Log.Warn().Any("state", c.State()).Msg("cannot start download, content not ready")
 		return
@@ -393,12 +398,12 @@ func (c *Core[T]) StartDownload() {
 	go c.startDownload()
 }
 
-func (c *Core[T]) State() payload.ContentState {
+func (c *Core[C, S]) State() payload.ContentState {
 	return c.contentState
 }
 
 // Speed returns the speed at which this content is downloading images
-func (c *Core[T]) Speed() int64 {
+func (c *Core[C, S]) Speed() int64 {
 	if c.contentState != payload.ContentStateDownloading {
 		return 0
 	}
@@ -410,7 +415,7 @@ func (c *Core[T]) Speed() int64 {
 	return int64(math.Ceil(float64(diff) / timeDiff))
 }
 
-func (c *Core[T]) Size() int {
+func (c *Core[C, S]) Size() int {
 	if len(c.ToDownloadUserSelected) == 0 {
 		return len(c.ToDownload)
 	}
@@ -418,7 +423,7 @@ func (c *Core[T]) Size() int {
 	return len(c.ToDownloadUserSelected)
 }
 
-func (c *Core[T]) UpdateProgress() {
+func (c *Core[C, S]) UpdateProgress() {
 	c.SignalR.ProgressUpdate(payload.ContentProgressUpdate{
 		ContentId: c.id,
 		Progress:  utils.Percent(int64(c.ContentDownloaded), int64(c.Size())),

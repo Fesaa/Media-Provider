@@ -57,7 +57,7 @@ func (t *stringTag) Identifier() string {
 //   - It is not in the blocklist.
 //   - It is not mapped as a genre.
 //   - It is either in the whitelist or the request has IncludeNotMatchedTagsKey set to true.
-func (c *Core[T]) GetGenreAndTags(tags []Tag) (string, string) {
+func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
 	var genres, blackList, whitelist models.Tags
 	var tagMappings models.TagMaps
 
@@ -67,7 +67,7 @@ func (c *Core[T]) GetGenreAndTags(tags []Tag) (string, string) {
 		if !c.hasWarnedTags {
 			c.hasWarnedTags = true
 			c.Notifier.NotifyContentQ(
-				c.TransLoco.GetTranslation("blacklist-failed-to-load-title", c.impl.Title()),
+				c.TransLoco.GetTranslation("blacklist-failed-to-load-title", c.Title()),
 				c.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
 				models.Orange)
 		}
@@ -134,7 +134,7 @@ func (c *Core[T]) GetGenreAndTags(tags []Tag) (string, string) {
 
 // GetAgeRating returns the highest comicinfo.AgeRating that is mapped under the models.AgeRatingMappings
 // Returns false if no Tag was mapped
-func (c *Core[T]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
+func (c *Core[C, S]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
 	if c.Preference == nil {
 		c.Log.Warn().Msg("Could not load age rate mapping, not setting age rating")
 		return "", false

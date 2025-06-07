@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (c *Core[T]) loadContentOnDisk() {
+func (c *Core[C, S]) loadContentOnDisk() {
 	c.Log.Debug().Str("dir", c.GetDownloadDir()).Msg("checking content on disk")
 	content, err := c.readDirectoryForContent(c.GetDownloadDir())
 	if err != nil {
@@ -25,7 +25,7 @@ func (c *Core[T]) loadContentOnDisk() {
 	c.ExistingContent = content
 }
 
-func (c *Core[T]) readDirectoryForContent(p string) ([]Content, error) {
+func (c *Core[C, S]) readDirectoryForContent(p string) ([]Content, error) {
 	entries, err := c.fs.ReadDir(path.Join(c.Client.GetBaseDir(), p))
 	if err != nil {
 		return nil, err

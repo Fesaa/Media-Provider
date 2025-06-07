@@ -21,11 +21,11 @@ type Chapter interface {
 	GetTitle() string
 }
 
-func (c *Core[T]) ContentKey(chapter T) string {
+func (c *Core[C, S]) ContentKey(chapter C) string {
 	return chapter.GetId()
 }
 
-func (c *Core[T]) ContentLogger(chapter T) zerolog.Logger {
+func (c *Core[C, S]) ContentLogger(chapter C) zerolog.Logger {
 	builder := c.Log.With().
 		Str("chapterId", chapter.GetId()).
 		Str("chapter", chapter.GetChapter())
@@ -42,7 +42,7 @@ func (c *Core[T]) ContentLogger(chapter T) zerolog.Logger {
 }
 
 // DownloadContent TODO: Add context.Context
-func (c *Core[T]) DownloadContent(idx int, chapter T, url string) error {
+func (c *Core[C, S]) DownloadContent(idx int, chapter C, url string) error {
 	filePath := path.Join(c.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(idx, 4)))
 	if err := c.DownloadAndWrite(url, filePath); err != nil {
 		return err
@@ -51,29 +51,33 @@ func (c *Core[T]) DownloadContent(idx int, chapter T, url string) error {
 	return nil
 }
 
-func (c *Core[T]) ContentPath(chapter T) string {
-	base := path.Join(c.Client.GetBaseDir(), c.GetBaseDir(), c.impl.Title())
+func (c *Core[C, S]) ContentPath(chapter C) string {
+	base := path.Join(c.Client.GetBaseDir(), c.GetBaseDir(), c.Title())
 
 	if chapter.GetVolume() != "" {
-		base = path.Join(base, fmt.Sprintf("%s Vol. %s", c.impl.Title(), chapter.GetVolume()))
+		base = path.Join(base, c.VolumeDir(chapter))
 	}
 
 	return path.Join(base, c.ContentDir(chapter))
 }
 
-func (c *Core[T]) ContentDir(chapter T) string {
+func (c *Core[C, S]) VolumeDir(chapter C) string {
+	return fmt.Sprintf("%s Vol. %s", c.Title(), chapter.GetVolume())
+}
+
+func (c *Core[C, S]) ContentDir(chapter C) string {
 	if chapter.GetChapter() == "" {
-		return fmt.Sprintf("%s %s (OneShot)", c.impl.Title(), chapter.GetTitle())
+		return fmt.Sprintf("%s %s (OneShot)", c.Title(), chapter.GetTitle())
 	}
 
 	if _, err := strconv.ParseFloat(chapter.GetChapter(), 32); err == nil {
 		padded := utils.PadFloatFromString(chapter.GetChapter(), 4)
-		return fmt.Sprintf("%s Ch. %s", c.impl.Title(), padded)
+		return fmt.Sprintf("%s Ch. %s", c.Title(), padded)
 	} else if chapter.GetChapter() != "" {
 		c.Log.Warn().Err(err).Str("chapter", chapter.GetChapter()).Msg("unable to parse chapter number, not padding")
 	}
 
-	return fmt.Sprintf("%s Ch. %s", c.impl.Title(), chapter.GetChapter())
+	return fmt.Sprintf("%s Ch. %s", c.Title(), chapter.GetChapter())
 }
 
 var (
@@ -82,7 +86,7 @@ var (
 	oneShotRegex    = regexp.MustCompile(".+ \\(OneShot\\).cbz")
 )
 
-func (c *Core[T]) IsContent(name string) bool {
+func (c *Core[C, S]) IsContent(name string) bool {
 	if contentRegex.MatchString(name) {
 		return true
 	}
