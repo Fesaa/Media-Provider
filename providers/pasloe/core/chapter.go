@@ -101,7 +101,3 @@ func (c *Core[C, S]) IsContent(name string) bool {
 
 	return false
 }
-
-func IsOneShot(chapter Chapter) bool {
-	return chapter.GetChapter() == "" && chapter.GetVolume() == ""
-}

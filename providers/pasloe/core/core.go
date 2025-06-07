@@ -190,7 +190,7 @@ func (c *Core[C, S]) GetToRemoveContent() []string {
 func (c *Core[C, S]) ContentList() []payload.ListContentData {
 	chapters := c.GetAllLoadedChapters()
 	if len(chapters) == 0 {
-		return nil
+		return []payload.ListContentData{}
 	}
 
 	data := utils.GroupBy(chapters, func(v C) string {

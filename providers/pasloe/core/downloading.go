@@ -37,23 +37,27 @@ func (c *Core[C, S]) abortDownload(reason error) {
 }
 
 func (c *Core[C, S]) filterContentByUserSelection() {
-	if len(c.ToDownloadUserSelected) > 0 {
-		currentSize := len(c.ToDownload)
-		c.ToDownload = utils.Filter(c.ToDownload, func(t C) bool {
-			return slices.Contains(c.ToDownloadUserSelected, t.GetId())
-		})
-		c.Log.Debug().Int("size", currentSize).Int("newSize", len(c.ToDownload)).
-			Msg("content further filtered after user has made a selection in the UI")
-
-		if len(c.ToRemoveContent) > 0 {
-			paths := utils.Map(c.ToDownload, func(t C) string {
-				return c.ContentPath(t) + ".cbz"
-			})
-			c.ToRemoveContent = utils.Filter(c.ToRemoveContent, func(s string) bool {
-				return slices.Contains(paths, s)
-			})
-		}
+	if len(c.ToDownloadUserSelected) == 0 {
+		return
 	}
+
+	currentSize := len(c.ToDownload)
+	c.ToDownload = utils.Filter(c.ToDownload, func(t C) bool {
+		return slices.Contains(c.ToDownloadUserSelected, t.GetId())
+	})
+	c.Log.Debug().Int("size", currentSize).Int("newSize", len(c.ToDownload)).
+		Msg("content further filtered after user has made a selection in the UI")
+
+	if len(c.ToRemoveContent) == 0 {
+		return
+	}
+
+	paths := utils.Map(c.ToDownload, func(t C) string {
+		return c.ContentPath(t) + ".cbz"
+	})
+	c.ToRemoveContent = utils.Filter(c.ToRemoveContent, func(s string) bool {
+		return slices.Contains(paths, s)
+	})
 }
 
 func (c *Core[C, S]) processDownloads(ctx context.Context) error {

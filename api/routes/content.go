@@ -3,7 +3,7 @@ package routes
 import (
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"

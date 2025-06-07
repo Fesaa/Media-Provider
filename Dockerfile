@@ -18,7 +18,6 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY ./api ./api
-COPY ./auth ./auth
 COPY ./comicinfo ./comicinfo
 COPY ./config ./config
 COPY ./db ./db

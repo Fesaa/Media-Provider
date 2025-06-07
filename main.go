@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"

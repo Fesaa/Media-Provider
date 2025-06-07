@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
+	"reflect"
 	"testing"
 )
 
@@ -126,4 +127,112 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider P
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(scope.Provide(services.ArchiveServiceProvider))
 	return New[ChapterMock, *SeriesMock](scope, "test", provider)
+}
+
+func TestContentList_EmptyChapters(t *testing.T) {
+	core := &Core[ChapterMock, SeriesMock]{
+		SeriesInfo: SeriesMock{
+			chapters: []ChapterMock{},
+		},
+	}
+
+	got := core.ContentList()
+	if len(got) != 0 {
+		t.Errorf("Expected nil, got %#v", got)
+	}
+}
+
+func TestContentList_SingleChapterNoVolume(t *testing.T) {
+	core := &Core[ChapterMock, SeriesMock]{
+		SeriesInfo: SeriesMock{
+			chapters: []ChapterMock{
+				{Id: "1", Title: "", LabelStr: "Ch 1", Volume: "", Chapter: "1"},
+			},
+		},
+		impl: ProviderMock{title: "MockSeries"},
+	}
+
+	got := core.ContentList()
+	if len(got) != 1 {
+		t.Fatalf("Expected 1 item, got %d", len(got))
+	}
+	expectedLabel := "MockSeries Ch 1"
+	if got[0].Label != expectedLabel {
+		t.Errorf("Expected label %q, got %q", expectedLabel, got[0].Label)
+	}
+	if got[0].SubContentId != "1" {
+		t.Errorf("Expected SubContentId '1', got %q", got[0].SubContentId)
+	}
+	if !got[0].Selected {
+		t.Error("Expected Selected true, got false")
+	}
+}
+
+func TestContentList_SingleChapterWithVolume(t *testing.T) {
+	core := &Core[ChapterMock, SeriesMock]{
+		SeriesInfo: SeriesMock{
+			chapters: []ChapterMock{
+				{Id: "1", Title: "T", LabelStr: "Ch 1", Volume: "1", Chapter: "1"},
+			},
+		},
+		impl: ProviderMock{title: "MockSeries"},
+	}
+
+	got := core.ContentList()
+	if len(got) != 1 {
+		t.Fatalf("Expected 1 volume group, got %d", len(got))
+	}
+	if got[0].Label != "Volume 1" {
+		t.Errorf("Expected label 'Volume 1', got %q", got[0].Label)
+	}
+	if len(got[0].Children) != 1 {
+		t.Fatalf("Expected 1 child, got %d", len(got[0].Children))
+	}
+	if got[0].Children[0].Label != "Ch 1" {
+		t.Errorf("Expected child label 'Ch 1', got %q", got[0].Children[0].Label)
+	}
+}
+
+func TestContentList_MultipleVolumesSorted(t *testing.T) {
+	core := &Core[ChapterMock, SeriesMock]{
+		SeriesInfo: SeriesMock{
+			chapters: []ChapterMock{
+				{Id: "1", Title: "T", LabelStr: "C1", Volume: "2", Chapter: "1"},
+				{Id: "2", Title: "T", LabelStr: "C2", Volume: "1", Chapter: "1"},
+			},
+		},
+		impl: ProviderMock{title: "MockSeries"},
+	}
+
+	got := core.ContentList()
+	if len(got) != 2 {
+		t.Fatalf("Expected 2 volume groups, got %d", len(got))
+	}
+	if got[0].Label != "Volume 2" || got[1].Label != "Volume 1" {
+		t.Errorf("Expected volume labels 'Volume 1' and 'Volume 2', got %q and %q", got[0].Label, got[1].Label)
+	}
+}
+
+func TestContentList_SelectedFiltering(t *testing.T) {
+	core := &Core[ChapterMock, SeriesMock]{
+		SeriesInfo: SeriesMock{
+			chapters: []ChapterMock{
+				{Id: "1", Title: "", LabelStr: "C1", Volume: "", Chapter: "1"},
+				{Id: "2", Title: "", LabelStr: "C2", Volume: "", Chapter: "2"},
+			},
+		},
+		ToDownloadUserSelected: []string{"2"},
+		impl:                   ProviderMock{title: "MockSeries"},
+	}
+
+	got := core.ContentList()
+	if len(got) != 2 {
+		t.Fatalf("Expected 2 items, got %d", len(got))
+	}
+
+	gotSelected := []bool{got[0].Selected, got[1].Selected}
+	expected := []bool{true, false}
+	if !reflect.DeepEqual(gotSelected, expected) {
+		t.Errorf("Expected selected flags %v, got %v", expected, gotSelected)
+	}
 }

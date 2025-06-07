@@ -3,10 +3,23 @@ package core
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/utils"
 	"io"
 	"path/filepath"
 	"testing"
 )
+
+// SimpleChapter returns a chapter mock, args are
+// chapter - volume - title - label
+func SimpleChapter(id string, args ...string) ChapterMock {
+	return ChapterMock{
+		Id:       id,
+		Chapter:  utils.AtIdx(args, 0),
+		Volume:   utils.AtIdx(args, 1),
+		Title:    utils.AtIdx(args, 2),
+		LabelStr: utils.AtIdx(args, 3),
+	}
+}
 
 type ChapterMock struct {
 	Id       string
@@ -188,4 +201,18 @@ func TestCore_IsContent(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCore_ContentKey(t *testing.T) {
+	core := testBase(t, req(), io.Discard, ProviderMock{})
+
+	want := "Spice and Wolf"
+	got := core.ContentKey(ChapterMock{
+		Id: "Spice and Wolf",
+	})
+
+	if got != want {
+		t.Errorf("ContentKey() = %v, want %v", got, want)
+	}
+
 }
