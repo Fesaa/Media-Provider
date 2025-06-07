@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog"
@@ -63,16 +64,18 @@ type Repository interface {
 	ChapterImages(ctx context.Context, id string) ([]string, error)
 }
 
-func NewRepository(httpClient *menou.Client, logger zerolog.Logger) Repository {
+func NewRepository(httpClient *menou.Client, logger zerolog.Logger, markdown services.MarkdownService) Repository {
 	return &repository{
 		httpClient: httpClient,
-		log:        logger,
+		log:        logger.With().Str("handler", "bato-repository").Logger(),
+		markdown:   markdown,
 	}
 }
 
 type repository struct {
 	httpClient *menou.Client
 	log        zerolog.Logger
+	markdown   services.MarkdownService
 }
 
 func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchResult, error) {
@@ -170,7 +173,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 		Tags:              extractSeperatedList(info.Find("div.space-y-2 > div.flex.items-center.flex-wrap > span > span"), ","),
 		PublicationStatus: Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").First().Text()),
 		BatoUploadStatus:  Publication(info.Find("div.space-y-2 > div > span.font-bold.uppercase").Eq(1).Text()),
-		Summary:           info.Find("div.limit-html-p").First().Text(),
+		Summary:           r.markdown.SanitizeHtml(doc.Find(`meta[name="description"]`).First().AttrOr("content", "")),
 		WebLinks:          info.Find("div.limit-html div.limit-html-p a").Map(mapToContent),
 		Chapters:          goquery.Map(doc.Find(`[name="chapter-list"] astro-slot > div`), r.readChapters),
 	}, nil
@@ -290,6 +293,7 @@ func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, er
 			r.log.Trace().Str("input", props).Msg("no images found in props, but was able to unmarshal")
 			continue
 		}
+		break
 	}
 
 	if len(imageProps.ImageFiles) != 2 {

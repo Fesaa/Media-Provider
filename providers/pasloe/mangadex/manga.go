@@ -74,8 +74,8 @@ type manga struct {
 
 func (m *manga) Title() string {
 	if m.info == nil {
-		if m.TempTitle != "" {
-			return m.TempTitle
+		if m.Req.TempTitle != "" {
+			return m.Req.TempTitle
 		}
 
 		return m.id

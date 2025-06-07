@@ -39,7 +39,6 @@ func New[T Chapter](scope *dig.Scope, handler string, provider DownloadInfoProvi
 			Log:          log.With().Str("handler", handler).Str("id", req.Id).Logger(),
 			id:           req.Id,
 			baseDir:      req.BaseDir,
-			TempTitle:    req.TempTitle,
 			maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 5),
 			Req:          req,
 			LastTime:     time.Now(),
@@ -75,7 +74,6 @@ type Core[T Chapter] struct {
 
 	id        string
 	baseDir   string
-	TempTitle string
 	maxImages int
 	Req       payload.DownloadRequest
 

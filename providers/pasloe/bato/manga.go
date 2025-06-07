@@ -81,7 +81,7 @@ func (m *manga) ShouldDownload(chapter Chapter) bool {
 
 func (m *manga) Title() string {
 	if m.seriesInfo == nil {
-		return m.id
+		return utils.OrElse(m.Req.TempTitle, m.id)
 	}
 
 	return m.seriesInfo.Title
