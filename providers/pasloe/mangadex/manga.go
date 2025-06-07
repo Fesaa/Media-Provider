@@ -88,7 +88,7 @@ func (m *manga) Provider() models.Provider {
 }
 
 func (m *manga) RefUrl() string {
-	return fmt.Sprintf("https://mangadex.org/%s", m.id)
+	return fmt.Sprintf("https://mangadex.org/title/%s", m.id)
 }
 
 func (m *manga) ContentUrls(ctx context.Context, chapter ChapterSearchData) ([]string, error) {

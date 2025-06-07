@@ -24,16 +24,31 @@ type ScopedTag interface {
 }
 
 func NewStringTag(value string) Tag {
-	return &stringTag{value, ""}
+	return NewStringTagWithId(value, "")
 }
 
 func NewStringTagWithId(value string, id string) Tag {
 	return &stringTag{value, id}
 }
 
+func NewStringTagWithIdAndGenre(value, id string, genre bool) Tag {
+	return &stringTagWithScope{
+		stringTag: stringTag{
+			tag: value,
+			id:  id,
+		},
+		genre: genre,
+	}
+}
+
 type stringTag struct {
 	tag string
 	id  string
+}
+
+type stringTagWithScope struct {
+	stringTag
+	genre bool
 }
 
 func (t *stringTag) Value() string {
@@ -45,6 +60,24 @@ func (t *stringTag) Identifier() string {
 		return t.id
 	}
 	return t.tag
+}
+
+func (t *stringTagWithScope) IsGenre() bool {
+	return t.genre
+}
+
+// MapTags transforms all tags as configured by the tag mappings. This method keeps scoped tags, scoped
+func (c *Core[C, S]) MapTags(mappings models.TagMaps, tags []Tag) []Tag {
+	return utils.Map(tags, func(t Tag) Tag {
+		val := mappings.MapTag(t.Value())
+		id := mappings.MapTag(t.Identifier())
+
+		if scoped, ok := t.(ScopedTag); ok {
+			return NewStringTagWithIdAndGenre(val, id, scoped.IsGenre())
+		}
+
+		return NewStringTagWithId(val, id)
+	})
 }
 
 // GetGenreAndTags returns two comma-separated strings: one for genres and one for tags.
@@ -78,11 +111,7 @@ func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
 		tagMappings = p.TagMappings
 	}
 
-	tags = utils.Map(tags, func(t Tag) Tag {
-		val := tagMappings.MapTag(t.Value())
-		id := tagMappings.MapTag(t.Identifier())
-		return NewStringTagWithId(val, id)
-	})
+	tags = c.MapTags(tagMappings, tags)
 
 	tagContains := func(slice models.Tags, tag Tag) bool {
 		return slice.Contains(tag.Value()) || slice.Contains(tag.Identifier())
@@ -95,39 +124,29 @@ func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
 		return false
 	}
 
+	// Not blacklisted, configured as genre or forced
 	tagAllowedAsGenre := func(tag Tag) bool {
 		return err == nil &&
 			!tagContains(blackList, tag) &&
 			(tagContains(genres, tag) || forceGenre(tag))
 	}
+	// not blacklisted, whitelisted or include all, not a genre
 	tagAllowedAsTag := func(tag Tag) bool {
 		return err == nil &&
 			!tagContains(blackList, tag) &&
-			tagContains(whitelist, tag) &&
+			(tagContains(whitelist, tag) || c.Req.GetBool(IncludeNotMatchedTagsKey, false)) &&
 			!tagContains(genres, tag) &&
 			!forceGenre(tag)
 	}
 
-	filteredGenres := utils.MaybeMap(tags, func(t Tag) (string, bool) {
-		if tagAllowedAsGenre(t) {
-			return t.Value(), true
-		}
-		return "", false
-	})
+	filterTags := func(tags []Tag, f func(Tag) bool) []string {
+		return utils.MaybeMap(tags, func(tag Tag) (string, bool) {
+			return tag.Value(), f(tag)
+		})
+	}
 
-	filteredTags := utils.MaybeMap(tags, func(t Tag) (string, bool) {
-		if tagAllowedAsTag(t) {
-			return t.Value(), true
-		}
-
-		if c.Req.GetBool(IncludeNotMatchedTagsKey, false) &&
-			!tagContains(genres, t) &&
-			!tagContains(blackList, t) {
-			return t.Value(), true
-		}
-
-		return "", false
-	})
+	filteredGenres := filterTags(tags, tagAllowedAsGenre)
+	filteredTags := filterTags(tags, tagAllowedAsTag)
 
 	return strings.Join(filteredGenres, ", "), strings.Join(filteredTags, ", ")
 }
@@ -140,11 +159,7 @@ func (c *Core[C, S]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
 		return "", false
 	}
 
-	tags = utils.Map(tags, func(t Tag) Tag {
-		val := models.TagMaps(c.Preference.TagMappings).MapTag(t.Value())
-		id := models.TagMaps(c.Preference.TagMappings).MapTag(t.Identifier())
-		return NewStringTagWithId(val, id)
-	})
+	tags = c.MapTags(c.Preference.TagMappings, tags)
 
 	var mappings models.AgeRatingMappings = c.Preference.AgeRatingMappings
 	weights := utils.MaybeMap(tags, func(t Tag) (int, bool) {

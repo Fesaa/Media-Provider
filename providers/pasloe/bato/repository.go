@@ -212,7 +212,7 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 
 	uriEl := s.Find("div > a.link-hover.link-primary").First()
 	chpt.Id = strings.TrimPrefix(uriEl.AttrOr("href", ""), "/title/")
-	chpt.Volume, chpt.Chapter = r.extractVolumeAndChapter(uriEl.Text())
+	chpt.Volume, chpt.Chapter = r.extractVolumeAndChapter(chpt.Id, uriEl.Text())
 
 	// One Shot
 	if chpt.Volume == "" && chpt.Chapter == "" {
@@ -231,7 +231,8 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 	return chpt
 }
 
-func (r *repository) extractVolumeAndChapter(s string) (string, string) {
+// extractVolumeAndChapter tries to get the volume(season) and chapter(episode). id is the chapter id for logging purposes
+func (r *repository) extractVolumeAndChapter(id, s string) (string, string) {
 	for _, mapping := range VolumeChapterRegexes {
 		matches := mapping.Regex.FindStringSubmatch(s)
 
@@ -251,7 +252,7 @@ func (r *repository) extractVolumeAndChapter(s string) (string, string) {
 		return utils.OrElse(volume, mapping.DefaultVolume), chapter
 	}
 
-	r.log.Warn().Str("input", s).Msg("failed to match volume and chapter")
+	r.log.Warn().Str("chapter", id).Str("input", s).Msg("failed to match volume and chapter")
 	return "", ""
 }
 
