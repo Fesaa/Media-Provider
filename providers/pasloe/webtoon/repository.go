@@ -49,7 +49,7 @@ func NewRepository(httpClient *menou.Client, log zerolog.Logger) Repository {
 }
 
 func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchData, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, searchUrl(options.Query))
+	doc, err := r.httpClient.WrapInDoc(ctx, searchUrl(options.Query), addHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -76,10 +76,7 @@ func (r *repository) extractSeries(_ int, s *goquery.Selection) SearchData {
 }
 
 func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, chapter.Url, func(req *http.Request) error {
-		req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
-		return nil
-	})
+	doc, err := r.httpClient.WrapInDoc(ctx, chapter.Url, addHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +98,7 @@ func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string,
 
 func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
 	seriesStartUrl := fmt.Sprintf(EpisodeList, id)
-	doc, err := r.httpClient.WrapInDoc(ctx, seriesStartUrl)
+	doc, err := r.httpClient.WrapInDoc(ctx, seriesStartUrl, addHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +116,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 
 	pages := utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
 	for index := 1; len(pages) > index; index++ {
-		doc, err = r.httpClient.WrapInDoc(ctx, Domain+pages[index])
+		doc, err = r.httpClient.WrapInDoc(ctx, Domain+pages[index], addHeader)
 		if err != nil {
 			return nil, err
 		}
@@ -172,6 +169,11 @@ func extractChapters(doc *goquery.Document) []Chapter {
 		}()
 		return chapter
 	})
+}
+
+func addHeader(req *http.Request) error {
+	req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
+	return nil
 }
 
 func notEmpty(s string) bool {
