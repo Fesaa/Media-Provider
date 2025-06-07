@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
@@ -15,7 +16,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"net/http"
 	"testing"
 	"time"
 )
@@ -27,14 +27,14 @@ func must(t *testing.T, err error) {
 	}
 }
 
-func testClient(t *testing.T, options ...utils.Option[*client]) api.Client {
+func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 	t.Helper()
 
 	cont := dig.New()
 
 	must(t, cont.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(t, cont.Provide(utils.Identity(&config.Config{})))
-	must(t, cont.Provide(utils.Identity(http.DefaultClient)))
+	must(t, cont.Provide(utils.Identity(menou.DefaultClient)))
 	must(t, cont.Provide(utils.Identity(cont)))
 	must(t, cont.Provide(utils.Identity(zerolog.Nop())))
 	must(t, cont.Provide(func() services.SignalRService { return &mock.SignalR{} }))
@@ -48,8 +48,9 @@ func testClient(t *testing.T, options ...utils.Option[*client]) api.Client {
 	must(t, cont.Provide(services.DirectoryServiceProvider))
 	must(t, cont.Provide(services.MarkdownServiceProvider))
 	must(t, cont.Provide(services.ImageServiceProvider))
+	must(t, cont.Provide(services.ArchiveServiceProvider))
 	must(t, cont.Provide(New))
-	c := utils.MustInvokeCont[api.Client](cont).(*client)
+	c := utils.MustInvokeCont[core.Client](cont).(*client)
 
 	c.registry = &mockRegistry{
 		cont: cont,
@@ -65,10 +66,10 @@ func testClient(t *testing.T, options ...utils.Option[*client]) api.Client {
 type stateInfo struct {
 	state    payload.ContentState
 	provider models.Provider
-	callback func(api.Downloadable)
+	callback func(core.Downloadable)
 }
 
-func (si stateInfo) ToContent(id string) api.Downloadable {
+func (si stateInfo) ToContent(id string) core.Downloadable {
 	return &MockContent{
 		mockProvider: si.provider,
 		mockId:       id,
@@ -269,9 +270,9 @@ func TestClient_QueueProgressing(t *testing.T) {
 
 	// Setup state and some items to download
 	spiceAndWolf.SetState(payload.ContentStateDownloading)
-	spiceAndWolf.(*MockContent).DownloadBase.ToDownload = []ID{"a", "b"}
+	spiceAndWolf.(*MockContent).Core.ToDownload = []ID{"a", "b"}
 	theExecutionerAndHerWayOfLife.SetState(payload.ContentStateReady)
-	theExecutionerAndHerWayOfLife.(*MockContent).DownloadBase.ToDownload = []ID{"a", "b"}
+	theExecutionerAndHerWayOfLife.(*MockContent).Core.ToDownload = []ID{"a", "b"}
 	c.content.Set(spiceAndWolf.Id(), spiceAndWolf)
 	c.content.Set(theExecutionerAndHerWayOfLife.Id(), theExecutionerAndHerWayOfLife)
 

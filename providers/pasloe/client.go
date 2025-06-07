@@ -5,22 +5,22 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"net/http"
 	"path"
 	"time"
 )
 
-func New(c *config.Config, httpClient *http.Client, container *dig.Container, log zerolog.Logger,
+func New(c *config.Config, httpClient *menou.Client, container *dig.Container, log zerolog.Logger,
 	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
 	preferences models.Preferences, transLoco services.TranslocoService, fs afero.Afero,
-) api.Client {
+) core.Client {
 	return &client{
 		config:     c,
 		registry:   newRegistry(httpClient, container),
@@ -32,12 +32,12 @@ func New(c *config.Config, httpClient *http.Client, container *dig.Container, lo
 		transLoco:  transLoco,
 		fs:         fs,
 
-		content: utils.NewSafeMap[string, api.Downloadable](),
+		content: utils.NewSafeMap[string, core.Downloadable](),
 	}
 }
 
 type client struct {
-	config     api.Config
+	config     core.Config
 	registry   Registry
 	log        zerolog.Logger
 	dirService services.DirectoryService
@@ -47,7 +47,7 @@ type client struct {
 	pref       models.Preferences
 	fs         afero.Afero
 
-	content utils.SafeMap[string, api.Downloadable]
+	content utils.SafeMap[string, core.Downloadable]
 }
 
 func (c *client) Content(id string) services.Content {
@@ -180,7 +180,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 	return nil
 }
 
-func (c *client) GetCurrentDownloads() []api.Downloadable {
+func (c *client) GetCurrentDownloads() []core.Downloadable {
 	return c.content.Values()
 }
 
@@ -188,12 +188,12 @@ func (c *client) GetBaseDir() string {
 	return utils.OrElse(c.config.GetRootDir(), "temp")
 }
 
-func (c *client) GetConfig() api.Config {
+func (c *client) GetConfig() core.Config {
 	return c.config
 }
 
 func (c *client) CanStart(provider models.Provider) bool {
-	providerBusy := c.content.Any(func(k string, d api.Downloadable) bool {
+	providerBusy := c.content.Any(func(k string, d core.Downloadable) bool {
 		return d.Provider() == provider &&
 			d.State() > payload.ContentStateQueued &&
 			d.State() != payload.ContentStateWaiting &&
@@ -211,7 +211,7 @@ func (c *client) notifier(req payload.DownloadRequest) services.Notifier {
 }
 
 func (c *client) loadAllInfo(provider models.Provider) {
-	nextQueue := func(id string, d api.Downloadable) bool {
+	nextQueue := func(id string, d core.Downloadable) bool {
 		return d.Provider() == provider && d.State() == payload.ContentStateQueued
 	}
 
@@ -228,7 +228,7 @@ func (c *client) loadAllInfo(provider models.Provider) {
 func (c *client) startNext(provider models.Provider) {
 	c.loadAllInfo(provider)
 
-	inext, ok := c.content.Find(func(k string, d api.Downloadable) bool {
+	inext, ok := c.content.Find(func(k string, d core.Downloadable) bool {
 		return d.Provider() == provider && d.State() == payload.ContentStateReady
 	})
 	if !ok {
@@ -252,7 +252,7 @@ func (c *client) startNext(provider models.Provider) {
 	next.StartDownload()
 }
 
-func (c *client) deleteFiles(content api.Downloadable) {
+func (c *client) deleteFiles(content core.Downloadable) {
 	defer c.signalR.DeleteContent(content.Id())
 
 	downloadDir := content.GetDownloadDir()
@@ -274,7 +274,7 @@ func (c *client) deleteFiles(content api.Downloadable) {
 	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing newly downloaded files")
 }
 
-func (c *client) deleteNewContent(content api.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
+func (c *client) deleteNewContent(content core.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
 	for _, contentPath := range content.GetNewContent() {
 		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
 		if err := c.fs.RemoveAll(contentPath); err != nil {
@@ -321,7 +321,7 @@ func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupEr
 	return cleanupErrs
 }
 
-func (c *client) cleanup(content api.Downloadable) {
+func (c *client) cleanup(content core.Downloadable) {
 	defer c.signalR.DeleteContent(content.Id())
 
 	l := c.log.With().Str("contentId", content.Id()).Logger()
@@ -343,7 +343,7 @@ func (c *client) cleanup(content api.Downloadable) {
 	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished cleanup")
 }
 
-func (c *client) removeOldContent(content api.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
+func (c *client) removeOldContent(content core.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
 	start := time.Now()
 	for _, contentPath := range content.GetToRemoveContent() {
 		l.Trace().Str("name", contentPath).Msg("removing old content")
@@ -380,7 +380,7 @@ func (c *client) zipAndRemoveNewContent(newContent []string, l zerolog.Logger) (
 	return cleanupErrs
 }
 
-func (c *client) notifyCleanUpError(content api.Downloadable, cleanupErrs ...error) {
+func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...error) {
 	joinedErr := errors.Join(cleanupErrs...)
 	if joinedErr == nil {
 		return

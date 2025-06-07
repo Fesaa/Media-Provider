@@ -3,7 +3,7 @@ package mock
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 )
 
@@ -31,15 +31,15 @@ func (m PasloeClient) GetBaseDir() string {
 	return m.BaseDir
 }
 
-func (m PasloeClient) GetCurrentDownloads() []api.Downloadable {
-	return []api.Downloadable{}
+func (m PasloeClient) GetCurrentDownloads() []core.Downloadable {
+	return []core.Downloadable{}
 }
 
 func (m PasloeClient) GetQueuedDownloads() []payload.InfoStat {
 	return []payload.InfoStat{}
 }
 
-func (m PasloeClient) GetConfig() api.Config {
+func (m PasloeClient) GetConfig() core.Config {
 	return m
 }
 

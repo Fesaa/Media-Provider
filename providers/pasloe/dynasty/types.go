@@ -56,6 +56,18 @@ type Series struct {
 	Chapters []Chapter
 }
 
+func (s *Series) GetId() string {
+	return s.Id
+}
+
+func (s *Series) GetTitle() string {
+	return s.Title
+}
+
+func (s *Series) AllChapters() []Chapter {
+	return s.Chapters
+}
+
 func (s *Series) RefUrl() string {
 	return seriesURL(s.Id)
 }
@@ -70,7 +82,19 @@ type Chapter struct {
 	Authors     []Author
 }
 
-func (c Chapter) ID() string {
+func (c Chapter) GetChapter() string {
+	return c.Chapter
+}
+
+func (c Chapter) GetVolume() string {
+	return c.Volume
+}
+
+func (c Chapter) GetTitle() string {
+	return c.Title
+}
+
+func (c Chapter) GetId() string {
 	return c.Id
 }
 

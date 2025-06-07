@@ -6,8 +6,9 @@ import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
@@ -15,7 +16,6 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -88,11 +88,11 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	client := mock.PasloeClient{BaseDir: "/data"}
 
 	must(scope.Provide(utils.Identity(fs)))
-	must(scope.Provide(func() api.Client {
+	must(scope.Provide(func() core.Client {
 		return &client
 	}))
 	must(scope.Provide(utils.Identity(log)))
-	must(scope.Provide(utils.Identity(http.DefaultClient)))
+	must(scope.Provide(utils.Identity(menou.DefaultClient)))
 	must(scope.Provide(utils.Identity(repo)))
 	must(scope.Provide(utils.Identity(req)))
 	must(scope.Provide(services.MarkdownServiceProvider))
@@ -104,7 +104,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	must(scope.Provide(services.ImageServiceProvider))
 	must(scope.Provide(services.ArchiveServiceProvider))
 
-	return NewManga(scope).(*manga)
+	return New(scope).(*manga)
 }
 
 func req() payload.DownloadRequest {
@@ -423,7 +423,7 @@ func TestManga_All(t *testing.T) {
 		t.Fatal("timed out waiting for manga title")
 	}
 
-	got := m.All()
+	got := m.GetAllLoadedChapters()
 	want := 1
 
 	if len(got) != want {
@@ -434,7 +434,7 @@ func TestManga_All(t *testing.T) {
 
 func TestManga_ContentDir(t *testing.T) {
 	m := tempManga(t, req(), io.Discard, &mockRepository{})
-	m.info = mangaResp()
+	m.SeriesInfo = mangaResp()
 
 	got := m.ContentDir(chapter())
 	want := "Rainbows After Storms Ch. 0162"
@@ -446,7 +446,7 @@ func TestManga_ContentDir(t *testing.T) {
 func TestManga_ContentDirBadChapter(t *testing.T) {
 	var buf bytes.Buffer
 	m := tempManga(t, req(), &buf, &mockRepository{})
-	m.info = mangaResp()
+	m.SeriesInfo = mangaResp()
 
 	chpt := chapter()
 	chpt.Attributes.Chapter = "NotAFloat"
@@ -457,43 +457,24 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 	}
 
 	log := buf.String()
-	if !strings.Contains(log, "unable to parse chpt number, not padding") {
-		t.Errorf("got %q, want 'unable to parse chpt number, not padding'", log)
+	if !strings.Contains(log, "unable to parse chapter number, not padding") {
+		t.Errorf("got %q, want 'unable to parse chapter number, not padding'", log)
 	}
 	buf.Reset()
 
 	chpt.Attributes.Chapter = ""
 	got = m.ContentDir(chpt)
-	want = "Rainbows After Storms OneShot My Lover"
+	want = "Rainbows After Storms My Lover (OneShot)"
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}
 
 	log = buf.String()
-	if strings.Contains(log, "unable to parse chpt number, not padding") {
-		t.Errorf("got %q, didn't want 'unable to parse chpt number, not padding'", log)
+	if strings.Contains(log, "unable to parse chapter number, not padding") {
+		t.Errorf("got %q, didn't want 'unable to parse chapter number, not padding'", log)
 	}
 	buf.Reset()
 
-}
-
-func TestManga_ContentPath(t *testing.T) {
-	m := tempManga(t, req(), io.Discard, &mockRepository{})
-	m.info = mangaResp()
-
-	got := m.ContentPath(chapter())
-	want := "Rainbows After Storms/Rainbows After Storms Vol. 13/" + m.ContentDir(chapter())
-	if !strings.HasSuffix(got, want) {
-		t.Errorf("got %s, want %s", got, want)
-	}
-
-	chpt := chapter()
-	chpt.Attributes.Volume = ""
-	got = m.ContentPath(chpt)
-	want = "Rainbows After Storms/" + m.ContentDir(chpt)
-	if !strings.HasSuffix(got, want) {
-		t.Errorf("got %s, want %s", got, want)
-	}
 }
 
 func TestManga_ContentKey(t *testing.T) {
@@ -504,34 +485,6 @@ func TestManga_ContentKey(t *testing.T) {
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}
-}
-
-func TestManga_ContentLogger(t *testing.T) {
-	var buf bytes.Buffer
-	m := tempManga(t, req(), &buf, &mockRepository{})
-
-	log := m.ContentLogger(chapter())
-	log.Info().Msg("a")
-
-	want := "{\"level\":\"info\",\"handler\":\"mangadex\",\"id\":\"bc86a871-ddc5-4e42-812a-ccd38101d82e\",\"chapterId\":\"7d327897-5903-4fa1-92d7-f01c3c686a36\",\"chapter\":\"162\",\"volume\":\"13\",\"title\":\"My Lover\",\"message\":\"a\"}"
-	out := buf.String()
-	if !strings.Contains(out, want) {
-		t.Errorf("got %s, want %s", buf.String(), want)
-	}
-	buf.Reset()
-
-	chpt := chapter()
-	chpt.Attributes.Volume = ""
-	log = m.ContentLogger(chpt)
-	log.Info().Msg("b")
-
-	out = buf.String()
-	want = "{\"level\":\"info\",\"handler\":\"mangadex\",\"id\":\"bc86a871-ddc5-4e42-812a-ccd38101d82e\",\"chapterId\":\"7d327897-5903-4fa1-92d7-f01c3c686a36\",\"chapter\":\"162\",\"title\":\"My Lover\",\"message\":\"b\"}"
-	if !strings.Contains(out, want) {
-		t.Errorf("got %s, want %s", buf.String(), want)
-	}
-	buf.Reset()
-
 }
 
 func TestManga_ContentUrls(t *testing.T) {
@@ -612,7 +565,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 
 	type test struct {
 		name          string
-		contentOnDisk []api.Content
+		contentOnDisk []core.Content
 		chapter       func() ChapterSearchData
 		command       func(*testing.T, *manga)
 		want          bool
@@ -623,13 +576,13 @@ func TestManga_ShouldDownload(t *testing.T) {
 	tests := []test{
 		{
 			name:          "New Download",
-			contentOnDisk: []api.Content{},
+			contentOnDisk: []core.Content{},
 			chapter:       chapter,
 			want:          true,
 		},
 		{
 			name: "Volume on disk",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Vol. 13.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13.cbz")},
 			},
 			chapter: chapter,
@@ -637,7 +590,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 		{
 			name: "Chapter on disk, no volume",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter: func() ChapterSearchData {
@@ -649,7 +602,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 		{
 			name: "Chapter on disk, fail volume check",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter:    chapter,
@@ -660,7 +613,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 		{
 			name: "Chapter on disk, same volume on disk",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Vol. 13", RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter: chapter,
@@ -688,7 +641,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 		},
 		{
 			name: "Chapter on disk, replacing loose chapter",
-			contentOnDisk: []api.Content{
+			contentOnDisk: []core.Content{
 				{Name: RainbowsAfterStorms + " Ch. 0162.cbz", Path: path.Join(RainbowsAfterStorms, RainbowsAfterStorms+" Ch. 0162.cbz")},
 			},
 			chapter: chapter,
@@ -727,7 +680,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 			var buffer bytes.Buffer
 			m := tempManga(t, req(), &buffer, &mockRepository{})
 			m.ExistingContent = tc.contentOnDisk
-			m.info = mangaResp()
+			m.SeriesInfo = mangaResp()
 
 			if tc.command != nil {
 				tc.command(t, m)
@@ -838,7 +791,7 @@ func TestTagsBlackList(t *testing.T) {
 		},
 	}
 
-	m.info = mangaResp()
+	m.SeriesInfo = mangaResp()
 
 	ci := m.comicInfo(chpt)
 	genres := strings.Split(ci.Genre, ",")

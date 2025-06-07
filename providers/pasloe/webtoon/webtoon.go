@@ -6,29 +6,24 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"io"
 	"net/http"
 	"path"
-	"regexp"
-	"slices"
-	"strconv"
 	"strings"
-	"time"
 )
 
-func NewWebToon(scope *dig.Scope) api.Downloadable {
+func New(scope *dig.Scope) core.Downloadable {
 	var wt *webtoon
 
 	utils.Must(scope.Invoke(func(
-		req payload.DownloadRequest, httpClient *http.Client,
+		req payload.DownloadRequest, httpClient *menou.Client,
 		repository Repository, markdownService services.MarkdownService,
 		fs afero.Afero,
 	) {
@@ -40,37 +35,29 @@ func NewWebToon(scope *dig.Scope) api.Downloadable {
 			fs:              fs,
 		}
 
-		wt.DownloadBase = api.NewBaseWithProvider[Chapter](scope, "webtoon", wt)
+		wt.Core = core.New[Chapter, *Series](scope, "webtoon", wt)
 	}))
 	return wt
 }
 
 type webtoon struct {
-	httpClient      *http.Client
+	httpClient      *menou.Client
 	repository      Repository
 	markdownService services.MarkdownService
 	fs              afero.Afero
 
-	*api.DownloadBase[Chapter]
+	*core.Core[Chapter, *Series]
 	id string
 
 	searchInfo *SearchData
-	info       *Series
 }
 
 func (w *webtoon) Title() string {
-	if w.searchInfo != nil {
-		return w.searchInfo.Name
-	}
-	if w.info != nil {
-		return w.info.Name
+	if w.SeriesInfo == nil {
+		return utils.NonEmpty(w.Req.TempTitle, w.Req.Id)
 	}
 
-	if w.Req.TempTitle != "" {
-		return w.Req.TempTitle
-	}
-
-	return w.id
+	return utils.NonEmpty(w.SeriesInfo.GetTitle(), w.Req.TempTitle, w.Req.Id)
 }
 
 func (w *webtoon) Provider() models.Provider {
@@ -78,11 +65,10 @@ func (w *webtoon) Provider() models.Provider {
 }
 
 func (w *webtoon) RefUrl() string {
-	if w.searchInfo != nil {
-		return w.searchInfo.Url()
+	if w.SeriesInfo == nil {
+		return ""
 	}
-
-	return ""
+	return w.SeriesInfo.RefUrl()
 }
 
 func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
@@ -98,7 +84,7 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 			return
 		}
 
-		w.info = info
+		w.SeriesInfo = info
 
 		// TempTitle is the title we previously got from the search, just should ensure we get the correct stuff
 		// WebToons search is surprisingly bad at correcting for spaces, special characters, etc...
@@ -119,40 +105,6 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 	return out
 }
 
-func (w *webtoon) All() []Chapter {
-	return w.info.Chapters
-}
-
-func (w *webtoon) ContentList() []payload.ListContentData {
-	if w.info == nil {
-		return nil
-	}
-
-	return utils.Map(w.info.Chapters, func(chapter Chapter) payload.ListContentData {
-		return payload.ListContentData{
-			SubContentId: chapter.Number,
-			Selected:     len(w.ToDownloadUserSelected) == 0 || slices.Contains(w.ToDownloadUserSelected, chapter.Number),
-			Label:        fmt.Sprintf("%s #%s - %s", w.info.Name, chapter.Number, chapter.Title),
-		}
-	})
-}
-
-func (w *webtoon) ContentDir(chapter Chapter) string {
-	return fmt.Sprintf("%s Ch. %s", w.Title(), chapter.Number)
-}
-
-func (w *webtoon) ContentPath(chapter Chapter) string {
-	return path.Join(w.Client.GetBaseDir(), w.GetBaseDir(), w.Title(), w.ContentDir(chapter))
-}
-
-func (w *webtoon) ContentKey(chapter Chapter) string {
-	return chapter.Number
-}
-
-func (w *webtoon) ContentLogger(chapter Chapter) zerolog.Logger {
-	return w.Log.With().Str("number", chapter.Number).Str("title", chapter.Title).Logger()
-}
-
 func (w *webtoon) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {
 	return w.repository.LoadImages(ctx, chapter)
 }
@@ -171,7 +123,7 @@ func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
 			}
 			return chapter.ImageUrl
 		}()
-		if err := w.downloadAndWrite(imageUrl, filePath); err != nil {
+		if err := w.DownloadAndWrite(imageUrl, filePath); err != nil {
 			return err
 		}
 	}
@@ -184,9 +136,9 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
 	ci.Series = w.Title()
-	ci.Summary = w.markdownService.SanitizeHtml(w.info.Description)
+	ci.Summary = w.markdownService.SanitizeHtml(w.SeriesInfo.Description)
 	ci.Manga = comicinfo.MangaYes
-	ci.Genre = w.info.Genre
+	ci.Genre = w.SeriesInfo.Genre
 
 	if w.searchInfo != nil {
 		ci.Writer = strings.Join(w.searchInfo.AuthorNameList, ",")
@@ -198,87 +150,16 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		ci.Number = chapter.Number
 	}
 
-	if w.info.Completed {
-		ci.Count = len(w.info.Chapters)
+	if w.SeriesInfo.Completed {
+		ci.Count = len(w.SeriesInfo.Chapters)
 	}
 
 	return ci
 }
 
-func (w *webtoon) DownloadContent(page int, chapter Chapter, url string) error {
-	filePath := path.Join(w.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(page, 4)))
-	if err := w.downloadAndWrite(url, filePath); err != nil {
-		return err
-	}
-	w.ImagesDownloaded++
-	return nil
-}
-
-var chapterRegex = regexp.MustCompile(".* Ch\\. (\\d+).cbz")
-
-func (w *webtoon) IsContent(name string) bool {
-	return chapterRegex.MatchString(name)
-}
-
-func (w *webtoon) ShouldDownload(chapter Chapter) bool {
-	_, ok := w.GetContentByName(w.ContentDir(chapter) + ".cbz")
-	return !ok
-}
-
-func (w *webtoon) downloadAndWrite(url string, path string, tryAgain ...bool) error {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-
+func (w *webtoon) CustomizeRequest(req *http.Request) error {
 	req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
-
-	resp, err := w.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func(Body io.ReadCloser) {
-		if err = Body.Close(); err != nil {
-			w.Log.Warn().Err(err).Msg("error closing body")
-		}
-	}(resp.Body)
-
-	if resp.StatusCode == http.StatusOK {
-		data, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-
-		if err = w.fs.WriteFile(path, data, 0755); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	if resp.StatusCode != http.StatusTooManyRequests {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	if len(tryAgain) > 0 && !tryAgain[0] {
-		w.Log.Error().Msg("Reached rate limit, after sleeping. What is going on?")
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
-
-	retryAfter := resp.Header.Get("X-RateLimit-Retry-After")
-	var d time.Duration
-	if unix, err := strconv.ParseInt(retryAfter, 10, 64); err == nil {
-		t := time.Unix(unix, 0)
-		d = time.Until(t)
-	} else {
-		w.Log.Debug().Err(err).Str("retry-after", retryAfter).Msg("Could not parse retry-after")
-		d = time.Minute
-	}
-
-	w.Log.Warn().Str("retryAfter", retryAfter).Dur("sleeping_for", d).Msg("Hit rate limit, try again after it's over")
-	time.Sleep(d)
-	return w.downloadAndWrite(url, path, false)
+	return nil
 }
 
 func webToonUrl(s string) string {

@@ -5,8 +5,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
@@ -14,7 +15,6 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
-	"net/http"
 	"path"
 	"strings"
 	"testing"
@@ -69,21 +69,22 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	client := mock.PasloeClient{BaseDir: tempDir}
 
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
-	must(scope.Provide(func() api.Client {
+	must(scope.Provide(func() core.Client {
 		return &client
 	}))
 	must(scope.Provide(utils.Identity(log)))
-	must(scope.Provide(utils.Identity(http.DefaultClient)))
+	must(scope.Provide(utils.Identity(menou.DefaultClient)))
 	must(scope.Provide(utils.Identity(repo)))
 	must(scope.Provide(utils.Identity(req)))
 	must(scope.Provide(services.MarkdownServiceProvider))
+	must(scope.Provide(services.ArchiveServiceProvider))
 	must(scope.Provide(func() services.SignalRService { return &mock.SignalR{} }))
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 	must(scope.Provide(services.ImageServiceProvider))
 
-	return NewManga(scope).(*manga)
+	return New(scope).(*manga)
 }
 
 func req() payload.DownloadRequest {
@@ -266,7 +267,7 @@ func TestManga_All(t *testing.T) {
 		t.Fatal("m.LoadInfo() timeout")
 	}
 
-	got := m.All()
+	got := m.GetAllLoadedChapters()
 	if len(got) != 5 {
 		t.Errorf("len(got) = %d, want %d", len(got), 5)
 	}
@@ -372,7 +373,7 @@ func TestManga_ContentRegex(t *testing.T) {
 func TestManga_ShouldDownload(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer, &mockRepository{})
-	m.ExistingContent = []api.Content{
+	m.ExistingContent = []core.Content{
 		{
 			Name: "Sailor Girlfriend Ch. 0001.cbz",
 		},
@@ -405,7 +406,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 func TestTagToGenre(t *testing.T) {
 	m := tempManga(t, req(), io.Discard, &mockRepository{})
 
-	m.seriesInfo = &Series{
+	m.SeriesInfo = &Series{
 		Id:          "",
 		Title:       "",
 		AltTitle:    "",
@@ -444,7 +445,7 @@ func TestTagToGenre(t *testing.T) {
 	}
 
 	m.Req.DownloadMetadata.Extra = make(map[string][]string, 1)
-	m.Req.DownloadMetadata.Extra[api.IncludeNotMatchedTagsKey] = []string{"true"}
+	m.Req.DownloadMetadata.Extra[core.IncludeNotMatchedTagsKey] = []string{"true"}
 
 	ci = m.comicInfo(chapter())
 	tags = strings.Split(ci.Tags, ",")
@@ -521,7 +522,7 @@ func TestCoverReplace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	originalCover, err := m.download(m.seriesInfo.CoverUrl, false)
+	originalCover, err := m.Download(m.SeriesInfo.CoverUrl, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -572,7 +573,7 @@ func TestCoverNoReplace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	originalCover, err := m.download(m.seriesInfo.CoverUrl, false)
+	originalCover, err := m.Download(m.SeriesInfo.CoverUrl, false)
 	if err != nil {
 		t.Fatal(err)
 	}

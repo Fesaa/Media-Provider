@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/api"
-	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"

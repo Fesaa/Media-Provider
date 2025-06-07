@@ -2,7 +2,7 @@ package routes
 
 import (
 	"errors"
-	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"

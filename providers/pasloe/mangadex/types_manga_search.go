@@ -58,9 +58,23 @@ type MangaSearchData struct {
 	Type          string          `json:"type"`
 	Attributes    MangaAttributes `json:"attributes"`
 	Relationships []Relationship  `json:"relationships"`
+
+	Language string `json:"-"`
 }
 
-func (a *MangaSearchData) RefURL() string {
+func (a *MangaSearchData) GetId() string {
+	return a.Id
+}
+
+func (a *MangaSearchData) GetTitle() string {
+	return a.Attributes.LangTitle(a.Language)
+}
+
+func (a *MangaSearchData) AllChapters() []ChapterSearchData {
+	panic("mangadex does not support getting chapters from the series")
+}
+
+func (a *MangaSearchData) RefUrl() string {
 	return fmt.Sprintf("https://mangadex.org/title/%s/", a.Id)
 }
 
@@ -196,7 +210,7 @@ func (a *MangaSearchData) FormattedLinks() []string {
 			out = append(out, conv(link))
 		}
 	}
-	out = append(out, a.RefURL())
+	out = append(out, a.RefUrl())
 	return out
 }
 

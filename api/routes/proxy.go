@@ -2,7 +2,8 @@ package routes
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/auth"
+	"github.com/Fesaa/Media-Provider/api/auth"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +22,7 @@ type proxyRoutes struct {
 	Auth       auth.Provider `name:"api-key-auth"`
 	Cache      fiber.Handler `name:"cache"`
 	Log        zerolog.Logger
-	HttpClient *http.Client
+	HttpClient *menou.Client
 	Transloco  services.TranslocoService
 }
 

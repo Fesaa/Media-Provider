@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
 	"github.com/rs/zerolog"
@@ -16,15 +16,7 @@ import (
 )
 
 func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
-	metaKey, metaPath := chapter.Attributes.Chapter, m.ContentPath(chapter)
-
-	if slices.Contains(m.volumeMetadata, metaKey) {
-		m.Log.Trace().
-			Str("volume", chapter.Attributes.Volume).
-			Str("chapter", chapter.Attributes.Chapter).
-			Msg("volume metadata already written, skipping")
-		return nil
-	}
+	metaPath := m.ContentPath(chapter)
 
 	l := m.ContentLogger(chapter)
 
@@ -49,7 +41,6 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 		return err
 	}*/
 
-	m.volumeMetadata = append(m.volumeMetadata, metaKey)
 	return nil
 }
 
@@ -84,9 +75,9 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 	}
 
 	mi.Series = metroninfo.Series{
-		Name:      m.info.Attributes.LangTitle(m.language),
-		StartYear: m.info.Attributes.Year,
-		AlternativeNames: utils.FlatMap(utils.Map(m.info.Attributes.AltTitles, func(t map[string]string) []metroninfo.AlternativeName {
+		Name:      m.SeriesInfo.Attributes.LangTitle(m.language),
+		StartYear: m.SeriesInfo.Attributes.Year,
+		AlternativeNames: utils.FlatMap(utils.Map(m.SeriesInfo.Attributes.AltTitles, func(t map[string]string) []metroninfo.AlternativeName {
 			var out []metroninfo.AlternativeName
 			for key, value := range t {
 				out = append(out, metroninfo.AlternativeName{
@@ -97,11 +88,11 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 			return out
 		})),
 	}
-	mi.Summary = m.markdownService.MdToSafeHtml(m.info.Attributes.LangDescription(m.language))
-	mi.AgeRating = m.info.Attributes.ContentRating.MetronInfoAgeRating()
-	mi.URLs = utils.Map(m.info.FormattedLinks(), func(t string) metroninfo.URL {
+	mi.Summary = m.markdownService.MdToSafeHtml(m.SeriesInfo.Attributes.LangDescription(m.language))
+	mi.AgeRating = m.SeriesInfo.Attributes.ContentRating.MetronInfoAgeRating()
+	mi.URLs = utils.Map(m.SeriesInfo.FormattedLinks(), func(t string) metroninfo.URL {
 		return metroninfo.URL{
-			Primary: t == m.info.RefURL(),
+			Primary: t == m.SeriesInfo.RefUrl(),
 			Value:   t,
 		}
 	})
@@ -121,7 +112,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 		}
 	}
 
-	if m.info.Attributes.Status == StatusCompleted {
+	if m.SeriesInfo.Attributes.Status == StatusCompleted {
 		switch {
 		case m.lastFoundVolume == 0 && m.foundLastChapter:
 			mi.Series.VolumeCount = m.lastFoundChapter
@@ -130,15 +121,15 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 		case !m.hasWarned:
 			m.hasWarned = true
 			m.Log.Warn().
-				Str("lastChapter", m.info.Attributes.LastChapter).
+				Str("lastChapter", m.SeriesInfo.Attributes.LastChapter).
 				Bool("foundLastChapter", m.foundLastChapter).
-				Str("lastVolume", m.info.Attributes.LastVolume).
+				Str("lastVolume", m.SeriesInfo.Attributes.LastVolume).
 				Bool("foundLastVolume", m.foundLastVolume).
 				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
 		}
 	}
 
-	mi.Genres = utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (metroninfo.Genre, bool) {
+	mi.Genres = utils.MaybeMap(m.SeriesInfo.Attributes.Tags, func(t TagData) (metroninfo.Genre, bool) {
 		n, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return metroninfo.Genre{}, false
@@ -152,7 +143,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 			Value: n,
 		}, true
 	})
-	mi.Tags = utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (metroninfo.Tag, bool) {
+	mi.Tags = utils.MaybeMap(m.SeriesInfo.Attributes.Tags, func(t TagData) (metroninfo.Tag, bool) {
 		n, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return metroninfo.Tag{}, false
@@ -180,9 +171,9 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 		}
 	}
 
-	authors := utils.Map(m.info.Authors(), roleMapper(metroninfo.RoleWriter))
-	artists := utils.Map(m.info.Artists(), roleMapper(metroninfo.RoleArtist))
-	scanlation := utils.Map(m.info.ScanlationGroup(), roleMapper(metroninfo.RoleTranslator))
+	authors := utils.Map(m.SeriesInfo.Authors(), roleMapper(metroninfo.RoleWriter))
+	artists := utils.Map(m.SeriesInfo.Artists(), roleMapper(metroninfo.RoleArtist))
+	scanlation := utils.Map(m.SeriesInfo.ScanlationGroup(), roleMapper(metroninfo.RoleTranslator))
 
 	mi.Credits = utils.FlatMapMany(authors, artists, scanlation)
 	mi.Notes = metronInfoNote
@@ -195,12 +186,12 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
-	ci.Series = m.info.Attributes.LangTitle(m.language)
-	ci.Year = m.info.Attributes.Year
-	ci.Summary = m.markdownService.MdToSafeHtml(m.info.Attributes.LangDescription(m.language))
+	ci.Series = m.SeriesInfo.Attributes.LangTitle(m.language)
+	ci.Year = m.SeriesInfo.Attributes.Year
+	ci.Summary = m.markdownService.MdToSafeHtml(m.SeriesInfo.Attributes.LangDescription(m.language))
 	ci.Manga = comicinfo.MangaYes
 	ci.AgeRating = m.getAgeRating()
-	ci.Web = strings.Join(m.info.FormattedLinks(), ",")
+	ci.Web = strings.Join(m.SeriesInfo.FormattedLinks(), ",")
 	ci.LanguageISO = m.language
 
 	ci.Title = chapter.Attributes.Title
@@ -215,7 +206,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		}
 	}
 
-	alts := m.info.Attributes.LangAltTitles(m.language)
+	alts := m.SeriesInfo.Attributes.LangAltTitles(m.language)
 	if len(alts) > 0 {
 		ci.LocalizedSeries = alts[0]
 	}
@@ -239,23 +230,23 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 	m.writeTagsAndGenres(ci)
 
-	ci.Writer = strings.Join(m.info.Authors(), ",")
-	ci.Colorist = strings.Join(m.info.Artists(), ",")
+	ci.Writer = strings.Join(m.SeriesInfo.Authors(), ",")
+	ci.Colorist = strings.Join(m.SeriesInfo.Artists(), ",")
 
 	ci.Notes = comicInfoNote
 	return ci
 }
 
 func (m *manga) getAgeRating() comicinfo.AgeRating {
-	tags := utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (api.Tag, bool) {
+	tags := utils.MaybeMap(m.SeriesInfo.Attributes.Tags, func(t TagData) (core.Tag, bool) {
 		tag, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return nil, false
 		}
-		return api.NewStringTag(tag), true
+		return core.NewStringTag(tag), true
 	})
 
-	mar := m.info.Attributes.ContentRating.ComicInfoAgeRating()
+	mar := m.SeriesInfo.Attributes.ContentRating.ComicInfoAgeRating()
 	ar, ok := m.GetAgeRating(tags)
 	if !ok {
 		return mar
@@ -298,7 +289,7 @@ func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 		return true
 	}
 
-	ci.Genre = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
+	ci.Genre = strings.Join(utils.MaybeMap(m.SeriesInfo.Attributes.Tags, func(t TagData) (string, bool) {
 		n, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return "", false
@@ -315,7 +306,7 @@ func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 		return n, true
 	}), ",")
 
-	ci.Tags = strings.Join(utils.MaybeMap(m.info.Attributes.Tags, func(t TagData) (string, bool) {
+	ci.Tags = strings.Join(utils.MaybeMap(m.SeriesInfo.Attributes.Tags, func(t TagData) (string, bool) {
 		n, ok := t.Attributes.Name[m.language]
 		if !ok {
 			return "", false
@@ -336,30 +327,30 @@ func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 // getCiStatus updates the ComicInfo.Count field according the Mangadex's information
 // and adds a notification in case a subscription has been exhausted
 func (m *manga) getCiStatus() (int, bool) {
-	if m.info.Attributes.Status != StatusCompleted {
+	if m.SeriesInfo.Attributes.Status != StatusCompleted {
 		m.Log.Trace().Msg("Series not completed, no status to write")
 		return 0, false
 	}
 
-	if m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter == "" {
+	if m.SeriesInfo.Attributes.LastVolume == "" && m.SeriesInfo.Attributes.LastChapter == "" {
 		m.Log.Warn().Msg("Mangadex marked this series as completed, but no last volume or chapter were provided?")
 		return 0, false
 	}
 
 	var lastWantedChapter, lastWantedVolume int
-	if m.info.Attributes.LastChapter != "" {
-		val, err := strconv.ParseInt(m.info.Attributes.LastChapter, 10, 64)
+	if m.SeriesInfo.Attributes.LastChapter != "" {
+		val, err := strconv.ParseInt(m.SeriesInfo.Attributes.LastChapter, 10, 64)
 		if err != nil {
-			m.Log.Warn().Err(err).Str("chapter", m.info.Attributes.LastChapter).
+			m.Log.Warn().Err(err).Str("chapter", m.SeriesInfo.Attributes.LastChapter).
 				Msg("Series was completed, but we failed to parse the last chapter from mangadex")
 			return 0, false
 		}
 		lastWantedChapter = int(val)
 	}
-	if m.info.Attributes.LastVolume != "" {
-		val, err := strconv.ParseInt(m.info.Attributes.LastVolume, 10, 64)
+	if m.SeriesInfo.Attributes.LastVolume != "" {
+		val, err := strconv.ParseInt(m.SeriesInfo.Attributes.LastVolume, 10, 64)
 		if err != nil {
-			m.Log.Warn().Err(err).Str("volume", m.info.Attributes.LastVolume).
+			m.Log.Warn().Err(err).Str("volume", m.SeriesInfo.Attributes.LastVolume).
 				Msg("Series was completed, but we failed to parse the last volume from mangadex")
 			return 0, false
 		}
@@ -368,7 +359,7 @@ func (m *manga) getCiStatus() (int, bool) {
 
 	var count, found int
 	var content string
-	if m.info.Attributes.LastVolume == "" && m.info.Attributes.LastChapter != "" {
+	if m.SeriesInfo.Attributes.LastVolume == "" && m.SeriesInfo.Attributes.LastChapter != "" {
 		count = lastWantedChapter
 		found = m.lastFoundChapter
 		content = "Chapters"
@@ -378,15 +369,15 @@ func (m *manga) getCiStatus() (int, bool) {
 		content = "Volumes"
 	}
 
-	lastVolumeReachedChaptersMissing := m.info.Attributes.LastVolume != "" && m.info.Attributes.LastChapter != "" &&
+	lastVolumeReachedChaptersMissing := m.SeriesInfo.Attributes.LastVolume != "" && m.SeriesInfo.Attributes.LastChapter != "" &&
 		m.lastFoundChapter < lastWantedChapter
 	if found < count || lastVolumeReachedChaptersMissing {
 		if !m.hasWarned {
 			m.hasWarned = true
 			m.Log.Warn().
-				Str("lastChapter", m.info.Attributes.LastChapter).
+				Str("lastChapter", m.SeriesInfo.Attributes.LastChapter).
 				Int("lastFoundChapter", m.lastFoundChapter).
-				Str("lastVolume", m.info.Attributes.LastVolume).
+				Str("lastVolume", m.SeriesInfo.Attributes.LastVolume).
 				Int("lastFoundVolume", m.lastFoundVolume).
 				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
 		}
@@ -457,7 +448,7 @@ func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover *C
 		return currentCover.Bytes, false, nil
 	}
 
-	candidateBytes, err := m.download(images[0])
+	candidateBytes, err := m.Download(images[0])
 	if err != nil {
 		return nil, false, err
 	}

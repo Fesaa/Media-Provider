@@ -79,7 +79,7 @@ func TestManga_AgeRating(t *testing.T) {
 			m.Preference = &models.Preference{
 				AgeRatingMappings: tt.arm,
 			}
-			m.info = &MangaSearchData{
+			m.SeriesInfo = &MangaSearchData{
 				Attributes: MangaAttributes{
 					ContentRating: tt.mangadex,
 					Tags:          tt.tags,
@@ -153,7 +153,7 @@ func TestManga_CIStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var buffer bytes.Buffer
 			m := tempManga(t, req(), &buffer, &mockRepository{})
-			m.info = &MangaSearchData{
+			m.SeriesInfo = &MangaSearchData{
 				Attributes: MangaAttributes{
 					Status:      tt.Status,
 					LastChapter: tt.LastChapter,

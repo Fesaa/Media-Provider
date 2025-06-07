@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
@@ -16,7 +16,7 @@ type mockRegistry struct {
 	finishContent bool
 }
 
-func (m mockRegistry) Create(c api.Client, req payload.DownloadRequest) (api.Downloadable, error) {
+func (m mockRegistry) Create(c core.Client, req payload.DownloadRequest) (core.Downloadable, error) {
 	scope := m.cont.Scope("pasloe::registry::create")
 
 	utils.Must(scope.Provide(utils.Identity(c)))
@@ -38,14 +38,30 @@ func (m mockRegistry) Create(c api.Client, req payload.DownloadRequest) (api.Dow
 		block.mockAll = []ID{"a", "b"}
 	}
 
-	base := api.NewBaseWithProvider(scope, "", block)
-	block.DownloadBase = base
+	base := core.New[ID, ID](scope, "", block)
+	block.Core = base
 	return block, nil
 }
 
 type ID string
 
-func (i ID) ID() string {
+func (i ID) AllChapters() []ID {
+	return []ID{}
+}
+
+func (i ID) GetChapter() string {
+	return i.GetId()
+}
+
+func (i ID) GetVolume() string {
+	return i.GetId()
+}
+
+func (i ID) GetTitle() string {
+	return i.GetId()
+}
+
+func (i ID) GetId() string {
 	return string(i)
 }
 
@@ -54,7 +70,7 @@ func (i ID) Label() string {
 }
 
 type MockContent struct {
-	*api.DownloadBase[ID]
+	*core.Core[ID, ID]
 	mockTitle               string
 	mockRefUrl              string
 	mockProvider            models.Provider
@@ -77,8 +93,8 @@ type MockContent struct {
 
 func NewMockContent(scope *dig.Scope) *MockContent {
 	mc := &MockContent{}
-	base := api.NewBaseWithProvider[ID](scope, "mock-content", mc)
-	mc.DownloadBase = base
+	base := core.New[ID, ID](scope, "mock-content", mc)
+	mc.Core = base
 	return mc
 }
 
@@ -115,7 +131,7 @@ func (m *MockContent) GetInfo() payload.InfoStat {
 	return m.mockInfo
 }
 
-func (m *MockContent) All() []ID {
+func (m *MockContent) CustomizeAllChapters() []ID {
 	return m.mockAll
 }
 
@@ -127,21 +143,21 @@ func (m *MockContent) ContentDir(t ID) string {
 	if m.mockContentDirFunc != nil {
 		return m.mockContentDirFunc(t)
 	}
-	return t.ID()
+	return t.GetId()
 }
 
 func (m *MockContent) ContentPath(t ID) string {
 	if m.mockContentPathFunc != nil {
 		return m.mockContentPathFunc(t)
 	}
-	return t.ID()
+	return t.GetId()
 }
 
 func (m *MockContent) ContentKey(t ID) string {
 	if m.mockContentKeyFunc != nil {
 		return m.mockContentKeyFunc(t)
 	}
-	return t.ID()
+	return t.GetId()
 }
 
 func (m *MockContent) ContentLogger(t ID) zerolog.Logger {

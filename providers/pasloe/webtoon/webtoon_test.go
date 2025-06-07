@@ -5,8 +5,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
@@ -14,7 +15,6 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"io"
-	"net/http"
 	"path"
 	"strings"
 	"testing"
@@ -66,20 +66,21 @@ func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	scope := cont.Scope("tempWebtoon")
 
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
-	must(scope.Provide(func() api.Client {
+	must(scope.Provide(func() core.Client {
 		return client
 	}))
-	must(scope.Provide(utils.Identity(http.DefaultClient)))
+	must(scope.Provide(utils.Identity(menou.DefaultClient)))
 	must(scope.Provide(utils.Identity(zerolog.New(w))))
 	must(scope.Provide(utils.Identity(req())))
 	must(scope.Provide(NewRepository))
 	must(scope.Provide(services.MarkdownServiceProvider))
+	must(scope.Provide(services.ArchiveServiceProvider))
 	must(scope.Provide(func() services.SignalRService { return &mock.SignalR{} }))
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 
-	web := NewWebToon(scope)
+	web := New(scope)
 	return web.(*webtoon)
 }
 
@@ -141,7 +142,7 @@ func TestWebtoon_Title(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 
-	wt.info = nil
+	wt.SeriesInfo = nil
 	wt.Req.TempTitle = ""
 
 	want = "4747"
@@ -248,7 +249,7 @@ func TestWebtoon_All(t *testing.T) {
 	}
 
 	want := 2
-	got := wt.All()
+	got := wt.GetAllLoadedChapters()
 	if len(got) != want {
 		t.Errorf("got %d, want %d", len(got), want)
 	}
@@ -257,7 +258,7 @@ func TestWebtoon_All(t *testing.T) {
 func TestWebtoon_ContentDir(t *testing.T) {
 	wt := tempWebtoon(t, io.Discard)
 
-	want := WebToonName + " Ch. 8"
+	want := WebToonName + " Ch. 0008"
 	got := wt.ContentDir(chapter())
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
@@ -267,7 +268,7 @@ func TestWebtoon_ContentDir(t *testing.T) {
 func TestWebtoon_ContentPath(t *testing.T) {
 	wt := tempWebtoon(t, io.Discard)
 
-	want := path.Join(WebToonName, WebToonName+" Ch. 8")
+	want := path.Join(WebToonName, WebToonName+" Ch. 0008")
 	got := wt.ContentPath(chapter())
 
 	if !strings.HasSuffix(got, want) {
@@ -279,20 +280,6 @@ func TestWebtoon_ContentKey(t *testing.T) {
 	wt := tempWebtoon(t, io.Discard)
 	want := "8"
 	got := wt.ContentKey(chapter())
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
-	}
-}
-
-func TestWebtoon_ContentLogger(t *testing.T) {
-	var buffer bytes.Buffer
-	wt := tempWebtoon(t, &buffer)
-
-	l := wt.ContentLogger(chapter())
-	l.Info().Msg("a")
-
-	want := "{\"level\":\"info\",\"handler\":\"webtoon\",\"id\":\"4747\",\"number\":\"8\",\"title\":\"Episode 8\",\"message\":\"a\"}\n"
-	got := buffer.String()
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}

@@ -2,10 +2,10 @@ package dynasty
 
 import (
 	"bytes"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"io"
-	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -18,7 +18,7 @@ const (
 )
 
 func tempRepository(w io.Writer) Repository {
-	return NewRepository(http.DefaultClient, zerolog.New(w))
+	return NewRepository(menou.DefaultClient, zerolog.New(w))
 }
 
 func TestRepository_SearchSeries(t *testing.T) {

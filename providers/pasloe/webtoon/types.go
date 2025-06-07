@@ -53,6 +53,22 @@ type Series struct {
 	Chapters    []Chapter
 }
 
+func (s *Series) RefUrl() string {
+	return fmt.Sprintf(BaseUrl+"%s/%s/list?title_no=%s", s.Genre, url.PathEscape(s.Name), s.Id)
+}
+
+func (s *Series) GetId() string {
+	return s.Id
+}
+
+func (s *Series) GetTitle() string {
+	return s.Name
+}
+
+func (s *Series) AllChapters() []Chapter {
+	return s.Chapters
+}
+
 type Chapter struct {
 	Url      string
 	ImageUrl string
@@ -61,10 +77,22 @@ type Chapter struct {
 	Date     string
 }
 
+func (c Chapter) GetChapter() string {
+	return c.Number
+}
+
+func (c Chapter) GetVolume() string {
+	return ""
+}
+
+func (c Chapter) GetTitle() string {
+	return c.Title
+}
+
 func (c Chapter) Label() string {
 	return fmt.Sprintf("%s (%s)", c.Title, c.Number)
 }
 
-func (c Chapter) ID() string {
+func (c Chapter) GetId() string {
 	return c.Number
 }

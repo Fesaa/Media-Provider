@@ -2,7 +2,7 @@ package bato
 
 import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"path"
 	"strconv"
@@ -11,7 +11,7 @@ import (
 
 func (m *manga) WriteContentMetaData(chapter Chapter) error {
 
-	if m.Req.GetBool(api.IncludeCover, true) {
+	if m.Req.GetBool(core.IncludeCover, true) {
 		if err := m.writeCover(chapter); err != nil {
 			return err
 		}
@@ -25,15 +25,15 @@ func (m *manga) writeCover(chapter Chapter) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
 	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
-	return m.downloadAndWrite(m.seriesInfo.CoverUrl, filePath)
+	return m.DownloadAndWrite(m.SeriesInfo.CoverUrl, filePath)
 }
 
 func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
-	ci.Series = m.seriesInfo.Title
-	ci.AlternateSeries = m.seriesInfo.OriginalTitle
-	ci.Summary = m.seriesInfo.Summary
+	ci.Series = m.SeriesInfo.Title
+	ci.AlternateSeries = m.SeriesInfo.OriginalTitle
+	ci.Summary = m.SeriesInfo.Summary
 	ci.Manga = comicinfo.MangaYes
 	ci.Title = chapter.Title
 
@@ -49,27 +49,27 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		ci.Number = chapter.Chapter
 	}
 
-	ci.Writer = strings.Join(utils.MaybeMap(m.seriesInfo.Authors, func(author Author) (string, bool) {
+	ci.Writer = strings.Join(utils.MaybeMap(m.SeriesInfo.Authors, func(author Author) (string, bool) {
 		if author.Roles.HasRole(comicinfo.Writer) {
 			return author.Name, true
 		}
 		return "", false
 	}), ",")
-	ci.Colorist = strings.Join(utils.MaybeMap(m.seriesInfo.Authors, func(author Author) (string, bool) {
+	ci.Colorist = strings.Join(utils.MaybeMap(m.SeriesInfo.Authors, func(author Author) (string, bool) {
 		if author.Roles.HasRole(comicinfo.Colorist) {
 			return author.Name, true
 		}
 		return "", false
 	}), ",")
-	ci.Web = m.seriesInfo.RefUrl()
+	ci.Web = m.SeriesInfo.RefUrl()
 
-	tags := utils.Map(m.seriesInfo.Tags, api.NewStringTag)
+	tags := utils.Map(m.SeriesInfo.Tags, core.NewStringTag)
 	ci.Genre, ci.Tags = m.GetGenreAndTags(tags)
 	if ar, ok := m.GetAgeRating(tags); ok {
 		ci.AgeRating = ar
 	}
 
-	if m.seriesInfo.PublicationStatus == PublicationCompleted && m.seriesInfo.BatoUploadStatus == PublicationCompleted {
+	if m.SeriesInfo.PublicationStatus == PublicationCompleted && m.SeriesInfo.BatoUploadStatus == PublicationCompleted {
 		ci.Count = m.ChapterCount()
 	}
 
@@ -79,7 +79,7 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 func (m *manga) ChapterCount() int {
 	c := 0
-	for _, ch := range m.seriesInfo.Chapters {
+	for _, ch := range m.SeriesInfo.Chapters {
 		if v, err := strconv.Atoi(ch.Chapter); err == nil {
 			c = max(c, v)
 		}

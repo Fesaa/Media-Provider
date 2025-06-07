@@ -3,7 +3,7 @@ package dynasty
 import (
 	"context"
 	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/api"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"path"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 
 func (m *manga) WriteContentMetaData(chapter Chapter) error {
 
-	if m.Req.GetBool(api.IncludeCover, true) {
+	if m.Req.GetBool(core.IncludeCover, true) {
 		if err := m.writeCover(chapter); err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ func (m *manga) writeCover(chapter Chapter) error {
 
 	if len(m.coverBytes) == 0 {
 		m.Log.Trace().Str("chapter", chapter.Chapter).Msg("no cover bytes set, downloading from url")
-		return m.downloadAndWrite(m.seriesInfo.CoverUrl, filePath)
+		return m.DownloadAndWrite(m.SeriesInfo.CoverUrl, filePath)
 	}
 
 	return m.fs.WriteFile(filePath, m.coverBytes, 0755)
@@ -44,7 +44,7 @@ func (m *manga) writeCover(chapter Chapter) error {
 
 func (m *manga) tryReplaceCover() error {
 	m.Log.Trace().Msg("Checking if first image of first chapter has a higher quality cover")
-	firstChapter := utils.Find(m.seriesInfo.Chapters, func(chapter Chapter) bool {
+	firstChapter := utils.Find(m.SeriesInfo.Chapters, func(chapter Chapter) bool {
 		return chapter.Chapter == "1"
 	})
 
@@ -62,12 +62,12 @@ func (m *manga) tryReplaceCover() error {
 		return nil
 	}
 
-	coverBytes, err := m.download(m.seriesInfo.CoverUrl)
+	coverBytes, err := m.Download(m.SeriesInfo.CoverUrl)
 	if err != nil {
 		return err
 	}
 
-	firstChapterCoverBytes, err := m.download(images[0])
+	firstChapterCoverBytes, err := m.Download(images[0])
 	if err != nil {
 		return err
 	}
@@ -85,9 +85,9 @@ func (m *manga) tryReplaceCover() error {
 func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
-	ci.Series = m.seriesInfo.Title
-	ci.AlternateSeries = m.seriesInfo.AltTitle
-	ci.Summary = m.markdownService.SanitizeHtml(m.seriesInfo.Description)
+	ci.Series = m.SeriesInfo.Title
+	ci.AlternateSeries = m.SeriesInfo.AltTitle
+	ci.Summary = m.markdownService.SanitizeHtml(m.SeriesInfo.Description)
 	ci.Manga = comicinfo.MangaYes
 	ci.Title = chapter.Title
 	if chapter.Volume != "" {
@@ -102,12 +102,12 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 		ci.Number = chapter.Chapter
 	}
 
-	ci.Writer = strings.Join(utils.Map(m.seriesInfo.Authors, func(t Author) string {
+	ci.Writer = strings.Join(utils.Map(m.SeriesInfo.Authors, func(t Author) string {
 		return t.DisplayName
 	}), ",")
-	ci.Web = m.seriesInfo.RefUrl()
+	ci.Web = m.SeriesInfo.RefUrl()
 
-	tags := utils.Map(utils.FlatMapMany(chapter.Tags, m.seriesInfo.Tags), func(t Tag) api.Tag {
+	tags := utils.Map(utils.FlatMapMany(chapter.Tags, m.SeriesInfo.Tags), func(t Tag) core.Tag {
 		return t
 	})
 	ci.Genre, ci.Tags = m.GetGenreAndTags(tags)

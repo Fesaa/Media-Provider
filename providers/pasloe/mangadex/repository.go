@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -22,7 +23,7 @@ type Repository interface {
 }
 
 type repository struct {
-	httpClient *http.Client
+	httpClient *menou.Client
 	cache      services.CacheService
 	log        zerolog.Logger
 	tags       utils.SafeMap[string, string]
@@ -31,7 +32,7 @@ type repository struct {
 type repositoryParams struct {
 	dig.In
 
-	HttpClient *http.Client `name:"http-retry"`
+	HttpClient *menou.Client `name:"http-retry"`
 	Cache      services.CacheService
 }
 

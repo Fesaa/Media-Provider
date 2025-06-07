@@ -7,8 +7,8 @@ import (
 func TestMangaSearchData_RefURL(t *testing.T) {
 	manga := &MangaSearchData{Id: "test-id"}
 	expectedURL := "https://mangadex.org/title/test-id/"
-	if manga.RefURL() != expectedURL {
-		t.Errorf("Expected RefURL to be '%s', got '%s'", expectedURL, manga.RefURL())
+	if manga.RefUrl() != expectedURL {
+		t.Errorf("Expected RefURL to be '%s', got '%s'", expectedURL, manga.RefUrl())
 	}
 }
 
