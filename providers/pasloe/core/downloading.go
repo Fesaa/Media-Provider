@@ -29,8 +29,8 @@ func (c *Core[T]) abortDownload(reason error) {
 	}
 	c.Notifier.Notify(models.Notification{
 		Title:   "Failed download",
-		Summary: fmt.Sprintf("%s failed to download", c.infoProvider.Title()),
-		Body:    fmt.Sprintf("Download failed for %s, because %v", c.infoProvider.Title(), reason),
+		Summary: fmt.Sprintf("%s failed to download", c.impl.Title()),
+		Body:    fmt.Sprintf("Download failed for %s, because %v", c.impl.Title(), reason),
 		Colour:  models.Red,
 		Group:   models.GroupError,
 	})
@@ -94,7 +94,7 @@ func (c *Core[T]) startDownload() {
 	ctx, cancel := context.WithCancel(context.Background())
 	c.cancel = cancel
 
-	data := c.infoProvider.All()
+	data := c.impl.All()
 	c.Log.Trace().Int("size", len(data)).Msg("downloading content")
 	c.Wg = &sync.WaitGroup{}
 
@@ -130,7 +130,7 @@ func (c *Core[T]) downloadContent(ctx context.Context, t T) error {
 	}
 	c.HasDownloaded = append(c.HasDownloaded, contentPath)
 
-	urls, err := c.infoProvider.ContentUrls(ctx, t)
+	urls, err := c.impl.ContentUrls(ctx, t)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func (c *Core[T]) downloadContent(ctx context.Context, t T) error {
 		return nil
 	}
 
-	if err = c.infoProvider.WriteContentMetaData(t); err != nil {
+	if err = c.impl.WriteContentMetaData(t); err != nil {
 		c.Log.Warn().Err(err).Msg("error writing meta data")
 	}
 

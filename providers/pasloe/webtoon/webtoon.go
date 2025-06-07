@@ -16,7 +16,6 @@ import (
 	"go.uber.org/dig"
 	"net/http"
 	"path"
-	"slices"
 	"strings"
 )
 
@@ -117,20 +116,6 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 
 func (w *webtoon) All() []Chapter {
 	return w.info.Chapters
-}
-
-func (w *webtoon) ContentList() []payload.ListContentData {
-	if w.info == nil {
-		return nil
-	}
-
-	return utils.Map(w.info.Chapters, func(chapter Chapter) payload.ListContentData {
-		return payload.ListContentData{
-			SubContentId: chapter.Number,
-			Selected:     len(w.ToDownloadUserSelected) == 0 || slices.Contains(w.ToDownloadUserSelected, chapter.Number),
-			Label:        fmt.Sprintf("%s #%s - %s", w.info.Name, chapter.Number, chapter.Title),
-		}
-	})
 }
 
 func (w *webtoon) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {

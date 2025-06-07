@@ -12,7 +12,7 @@ func (c *Core[T]) Message(msg payload.Message) (payload.Message, error) {
 	var err error
 	switch msg.MessageType {
 	case payload.MessageListContent:
-		jsonBytes, err = json.Marshal(c.infoProvider.ContentList())
+		jsonBytes, err = json.Marshal(c.ContentList())
 	case payload.SetToDownload:
 		err = c.SetUserFiltered(msg.Data)
 	case payload.StartDownload:

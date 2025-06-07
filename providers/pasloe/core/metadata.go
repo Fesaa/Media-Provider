@@ -67,7 +67,7 @@ func (c *Core[T]) GetGenreAndTags(tags []Tag) (string, string) {
 		if !c.hasWarnedTags {
 			c.hasWarnedTags = true
 			c.Notifier.NotifyContentQ(
-				c.TransLoco.GetTranslation("blacklist-failed-to-load-title", c.infoProvider.Title()),
+				c.TransLoco.GetTranslation("blacklist-failed-to-load-title", c.impl.Title()),
 				c.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
 				models.Orange)
 		}

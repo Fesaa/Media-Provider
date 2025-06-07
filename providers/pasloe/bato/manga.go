@@ -5,25 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"slices"
 )
 
 func NewManga(scope *dig.Scope) core.Downloadable {
 	var m *manga
 
-	utils.Must(scope.Invoke(func(
-		req payload.DownloadRequest, httpClient *menou.Client,
-		repository Repository, fs afero.Afero,
-	) {
+	utils.Must(scope.Invoke(func(req payload.DownloadRequest, repository Repository, fs afero.Afero) {
 		m = &manga{
 			id:         req.Id,
-			httpClient: httpClient,
 			repository: repository,
 			fs:         fs,
 		}
@@ -37,7 +31,6 @@ func NewManga(scope *dig.Scope) core.Downloadable {
 type manga struct {
 	*core.Core[Chapter]
 
-	httpClient *menou.Client
 	repository Repository
 	fs         afero.Afero
 
@@ -71,53 +64,6 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 
 func (m *manga) All() []Chapter {
 	return m.seriesInfo.Chapters
-}
-
-func (m *manga) ContentList() []payload.ListContentData {
-	if m.seriesInfo == nil {
-		return nil
-	}
-
-	data := utils.GroupBy(m.seriesInfo.Chapters, func(v Chapter) string {
-		return v.Volume
-	})
-
-	childrenFunc := func(chapters []Chapter) []payload.ListContentData {
-		slices.SortFunc(chapters, func(a, b Chapter) int {
-			if a.Volume != b.Volume {
-				return (int)(b.VolumeFloat() - a.VolumeFloat())
-			}
-			return (int)(b.ChapterFloat() - a.ChapterFloat())
-		})
-
-		return utils.Map(chapters, func(chapter Chapter) payload.ListContentData {
-			return payload.ListContentData{
-				SubContentId: chapter.Id,
-				Selected:     len(m.ToDownloadUserSelected) == 0 || slices.Contains(m.ToDownloadUserSelected, chapter.Id),
-				Label:        utils.Ternary(chapter.Title == "", m.Title()+" "+chapter.Label(), chapter.Label()),
-			}
-		})
-	}
-
-	sortSlice := utils.Keys(data)
-	slices.SortFunc(sortSlice, utils.SortFloats)
-
-	var out []payload.ListContentData
-	for _, volume := range sortSlice {
-		chapters := data[volume]
-
-		// Do not add No Volume label if there are no volumes
-		if volume == "" && len(sortSlice) == 1 {
-			out = append(out, childrenFunc(chapters)...)
-			continue
-		}
-
-		out = append(out, payload.ListContentData{
-			Label:    utils.Ternary(volume == "", "No Volume", fmt.Sprintf("Volume %s", volume)),
-			Children: childrenFunc(chapters),
-		})
-	}
-	return out
 }
 
 func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, error) {

@@ -43,7 +43,6 @@ type DownloadInfoProvider[T any] interface {
 	LoadInfo(ctx context.Context) chan struct{}
 	GetInfo() payload.InfoStat
 	All() []T
-	ContentList() []payload.ListContentData
 
 	ContentUrls(ctx context.Context, t T) ([]string, error)
 	WriteContentMetaData(t T) error

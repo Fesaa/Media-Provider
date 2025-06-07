@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -12,6 +13,7 @@ import (
 	"go.uber.org/dig"
 	"math"
 	"path"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -32,13 +34,13 @@ func New[T Chapter](scope *dig.Scope, handler string, provider DownloadInfoProvi
 		httpClient *menou.Client,
 	) {
 		base = &Core[T]{
-			infoProvider: provider,
+			impl:         provider,
 			Client:       client,
 			Log:          log.With().Str("handler", handler).Str("id", req.Id).Logger(),
 			id:           req.Id,
 			baseDir:      req.BaseDir,
 			TempTitle:    req.TempTitle,
-			maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 4),
+			maxImages:    min(client.GetConfig().GetMaxConcurrentImages(), 5),
 			Req:          req,
 			LastTime:     time.Now(),
 			contentState: payload.ContentStateQueued,
@@ -60,7 +62,7 @@ type Content struct {
 }
 
 type Core[T Chapter] struct {
-	infoProvider DownloadInfoProvider[T]
+	impl DownloadInfoProvider[T]
 
 	Client       Client
 	Log          zerolog.Logger
@@ -106,7 +108,7 @@ func (c *Core[T]) DisplayInformation() DisplayInformation {
 			if c.Req.IsSubscription && c.Req.Sub != nil {
 				return c.Req.Sub.Info.Title
 			}
-			return c.infoProvider.Title()
+			return c.impl.Title()
 		}(),
 	}
 }
@@ -133,7 +135,7 @@ func (c *Core[T]) GetBaseDir() string {
 }
 
 func (c *Core[T]) GetDownloadDir() string {
-	title := c.infoProvider.Title()
+	title := c.impl.Title()
 	if title == "" {
 		return c.baseDir
 	}
@@ -182,13 +184,63 @@ func (c *Core[T]) GetToRemoveContent() []string {
 	return c.ToRemoveContent
 }
 
+func (c *Core[T]) ContentList() []payload.ListContentData {
+	chapters := c.impl.All()
+	if len(chapters) == 0 {
+		return nil
+	}
+
+	data := utils.GroupBy(chapters, func(v T) string {
+		return v.GetVolume()
+	})
+
+	childrenFunc := func(chapters []T) []payload.ListContentData {
+		slices.SortFunc(chapters, func(a, b T) int {
+			if a.GetVolume() != b.GetVolume() {
+				return (int)(utils.SafeFloat(b.GetVolume()) - utils.SafeFloat(a.GetVolume()))
+			}
+			return (int)(utils.SafeFloat(b.GetChapter()) - utils.SafeFloat(a.GetChapter()))
+		})
+
+		return utils.Map(chapters, func(chapter T) payload.ListContentData {
+			return payload.ListContentData{
+				SubContentId: chapter.GetId(),
+				Selected:     len(c.ToDownloadUserSelected) == 0 || slices.Contains(c.ToDownloadUserSelected, chapter.GetId()),
+				Label: utils.Ternary(chapter.GetTitle() == "",
+					c.impl.Title()+" "+chapter.Label(),
+					chapter.Label()),
+			}
+		})
+	}
+
+	sortSlice := utils.Keys(data)
+	slices.SortFunc(sortSlice, utils.SortFloats)
+
+	out := make([]payload.ListContentData, 0, len(data))
+	for _, volume := range sortSlice {
+		chapters := data[volume]
+
+		// Do not add No Volume label if there are no volumes
+		if volume == "" && len(sortSlice) == 1 {
+			out = append(out, childrenFunc(chapters)...)
+			continue
+		}
+
+		out = append(out, payload.ListContentData{
+			Label:    utils.Ternary(volume == "", "No Volume", fmt.Sprintf("Volume %s", volume)),
+			Children: childrenFunc(chapters),
+		})
+	}
+	return out
+}
+
 func (c *Core[T]) GetInfo() payload.InfoStat {
 	return payload.InfoStat{
 		Provider:     models.DYNASTY,
 		Id:           c.Id(),
 		ContentState: c.contentState,
-		Name:         c.infoProvider.Title(),
-		RefUrl:       c.infoProvider.RefUrl(),
+		Name:         c.impl.Title(),
+		RefUrl:       c.impl.RefUrl(),
 		Size:         strconv.Itoa(c.Size()) + " Chapters",
 		Downloading:  c.State() == payload.ContentStateDownloading,
 		Progress:     utils.Percent(int64(c.ContentDownloaded), int64(c.Size())),
@@ -206,7 +258,7 @@ func (c *Core[T]) Cancel() {
 	}
 	if c.Client.Content(c.id) != nil {
 		if err := c.Client.RemoveDownload(payload.StopRequest{
-			Provider:    c.infoProvider.Provider(),
+			Provider:    c.impl.Provider(),
 			Id:          c.id,
 			DeleteFiles: true,
 		}); err != nil {
@@ -234,12 +286,12 @@ func (c *Core[T]) loadContentInfo(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
 		return false
-	case <-c.infoProvider.LoadInfo(ctx):
+	case <-c.impl.LoadInfo(ctx):
 	}
 
 	elapsed := time.Since(start)
 
-	c.Log = c.Log.With().Str("title", c.infoProvider.Title()).Logger()
+	c.Log = c.Log.With().Str("title", c.impl.Title()).Logger()
 	c.Log.Debug().Dur("elapsed", elapsed).Msg("Content has downloaded all information")
 	return true
 }
@@ -249,9 +301,9 @@ func (c *Core[T]) prepareContentToDownload() ([]T, time.Duration) {
 	start := time.Now()
 	c.loadContentOnDisk()
 
-	data := c.infoProvider.All()
+	data := c.impl.All()
 	c.ToDownload = utils.Filter(data, func(t T) bool {
-		download := c.infoProvider.ShouldDownload(t)
+		download := c.impl.ShouldDownload(t)
 		if !download {
 			c.Log.Trace().Str("key", c.ContentKey(t)).Msg("content already downloaded, skipping")
 		} else {
@@ -270,7 +322,7 @@ func (c *Core[T]) handleLongDiskCheck(elapsed time.Duration) {
 		if c.Req.IsSubscription {
 			c.Notifier.NotifyContent(
 				c.TransLoco.GetTranslation("warn"),
-				c.TransLoco.GetTranslation("long-on-disk-check", c.infoProvider.Title()),
+				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
 				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
 				models.Orange)
 		}

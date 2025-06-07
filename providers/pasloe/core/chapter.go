@@ -52,10 +52,10 @@ func (c *Core[T]) DownloadContent(idx int, chapter T, url string) error {
 }
 
 func (c *Core[T]) ContentPath(chapter T) string {
-	base := path.Join(c.Client.GetBaseDir(), c.GetBaseDir(), c.infoProvider.Title())
+	base := path.Join(c.Client.GetBaseDir(), c.GetBaseDir(), c.impl.Title())
 
 	if chapter.GetVolume() != "" {
-		base = path.Join(base, fmt.Sprintf("%s Vol. %s", c.infoProvider.Title(), chapter.GetVolume()))
+		base = path.Join(base, fmt.Sprintf("%s Vol. %s", c.impl.Title(), chapter.GetVolume()))
 	}
 
 	return path.Join(base, c.ContentDir(chapter))
@@ -63,17 +63,17 @@ func (c *Core[T]) ContentPath(chapter T) string {
 
 func (c *Core[T]) ContentDir(chapter T) string {
 	if chapter.GetChapter() == "" {
-		return fmt.Sprintf("%s %s (OneShot)", c.infoProvider.Title(), chapter.GetTitle())
+		return fmt.Sprintf("%s %s (OneShot)", c.impl.Title(), chapter.GetTitle())
 	}
 
 	if _, err := strconv.ParseFloat(chapter.GetChapter(), 32); err == nil {
 		padded := utils.PadFloatFromString(chapter.GetChapter(), 4)
-		return fmt.Sprintf("%s Ch. %s", c.infoProvider.Title(), padded)
+		return fmt.Sprintf("%s Ch. %s", c.impl.Title(), padded)
 	} else if chapter.GetChapter() != "" {
 		c.Log.Warn().Err(err).Str("chapter", chapter.GetChapter()).Msg("unable to parse chapter number, not padding")
 	}
 
-	return fmt.Sprintf("%s Ch. %s", c.infoProvider.Title(), chapter.GetChapter())
+	return fmt.Sprintf("%s Ch. %s", c.impl.Title(), chapter.GetChapter())
 }
 
 var (

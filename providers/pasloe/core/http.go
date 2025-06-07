@@ -14,7 +14,7 @@ func (c *Core[T]) Download(url string, tryAgain ...bool) ([]byte, error) {
 		return nil, err
 	}
 
-	if customizer, ok := c.infoProvider.(DownloadCustomizer); ok {
+	if customizer, ok := c.impl.(DownloadCustomizer); ok {
 		if err := customizer.CustomizeRequest(req); err != nil {
 			return nil, err
 		}
