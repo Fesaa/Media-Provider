@@ -3,7 +3,6 @@ package pasloe
 import (
 	"errors"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/bato"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
@@ -20,18 +19,16 @@ type Registry interface {
 }
 
 type registry struct {
-	r          map[models.Provider]func(scope *dig.Scope) core.Downloadable
-	mu         sync.RWMutex
-	httpClient *menou.Client
-	container  *dig.Container
+	r         map[models.Provider]func(scope *dig.Scope) core.Downloadable
+	mu        sync.RWMutex
+	container *dig.Container
 }
 
-func newRegistry(httpClient *menou.Client, container *dig.Container) Registry {
+func newRegistry(container *dig.Container) Registry {
 	r := &registry{
-		r:          make(map[models.Provider]func(scope *dig.Scope) core.Downloadable),
-		mu:         sync.RWMutex{},
-		httpClient: httpClient,
-		container:  container,
+		r:         make(map[models.Provider]func(scope *dig.Scope) core.Downloadable),
+		mu:        sync.RWMutex{},
+		container: container,
 	}
 
 	r.Register(models.WEBTOON, webtoon.New)
