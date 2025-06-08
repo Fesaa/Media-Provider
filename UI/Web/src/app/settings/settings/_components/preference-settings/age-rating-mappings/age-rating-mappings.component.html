@@ -31,15 +31,17 @@
   @if (toDisplay.length === 0) {
     <span>{{ t('empty') }}</span>
   } @else {
-    <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px">
-      <div *cdkVirtualFor="let arm of toDisplay">
-        <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3 overflow-clip" style="height: 50px;">
+
+    <virtual-scroller #scroll [items]="toDisplay">
+      @for (arm of scroll.viewPortItems; track $index) {
+        <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3 overflow-clip" style="height: 50px; width: 100%">
           <span>{{arm.tag.name}}</span>
           <p-select [options]="ComicInfoAgeRatings" [(ngModel)]="arm.comicInfoAgeRating" appendTo="body"  />
           <span class="pi pi-trash hover:cursor-pointer" (click)="removeAgeRatingMap(arm)"></span>
         </div>
-      </div>
-    </cdk-virtual-scroll-viewport>
+      }
+
+    </virtual-scroller>
   }
 
 </p-dialog>

@@ -9,7 +9,7 @@ import {InputIcon} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
 import {InputText} from "primeng/inputtext";
 import {TitleCasePipe} from "@angular/common";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
+import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
 
 @Component({
   selector: 'app-white-list-tags',
@@ -22,10 +22,7 @@ import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} fr
     FormsModule,
     InputText,
     TitleCasePipe,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualScrollViewport
+    VirtualScrollerModule
   ],
   templateUrl: './white-list-tags.component.html',
   styleUrl: './white-list-tags.component.css'

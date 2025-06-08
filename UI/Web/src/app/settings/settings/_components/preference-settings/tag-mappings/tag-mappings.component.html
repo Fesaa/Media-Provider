@@ -32,16 +32,17 @@
   @if (toDisplay.length === 0) {
     <span>{{ t('empty') }}</span>
   } @else {
-    <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px">
-      <div *cdkVirtualFor="let tm of toDisplay">
+
+    <virtual-scroller #scroll [items]="toDisplay">
+      @for (tm of scroll.viewPortItems; track $index) {
         <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3 overflow-clip" style="height: 50px;">
           <input id="filter" type="text" pInputText [(ngModel)]="tm.origin.name">
           <input id="filter" type="text" pInputText [(ngModel)]="tm.dest.name">
 
           <span class="pi pi-trash hover:cursor-pointer" (click)="removeTagMap(tm)"></span>
         </div>
-      </div>
-    </cdk-virtual-scroll-viewport>
+      }
+    </virtual-scroller>
   }
 
 </p-dialog>

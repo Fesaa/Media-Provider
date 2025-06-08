@@ -8,7 +8,6 @@ import {
 } from "../../../../../_models/preferences";
 import {Dialog} from "primeng/dialog";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 import {FloatLabel} from "primeng/floatlabel";
 import {FormsModule} from "@angular/forms";
 import {IconField} from "primeng/iconfield";
@@ -17,22 +16,21 @@ import {InputText} from "primeng/inputtext";
 import {TitleCasePipe} from "@angular/common";
 import {ToastService} from "../../../../../_services/toast.service";
 import {Select} from "primeng/select";
+import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
 
 @Component({
   selector: 'app-age-rating-mappings',
   imports: [
     Dialog,
     TranslocoDirective,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
-    CdkVirtualScrollViewport,
     FloatLabel,
     FormsModule,
     IconField,
     InputIcon,
     InputText,
     TitleCasePipe,
-    Select
+    Select,
+    VirtualScrollerModule
   ],
   templateUrl: './age-rating-mappings.component.html',
   styleUrl: './age-rating-mappings.component.css'
