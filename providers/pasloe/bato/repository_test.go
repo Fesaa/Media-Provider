@@ -252,3 +252,69 @@ func TestRepository_ChapterImages(t *testing.T) {
 	}
 
 }
+
+func Test_repository_extractVolumeAndChapter(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+		want1 string
+	}{
+		{
+			name:  "Season and episode",
+			input: "[S1] Episode 2",
+			want:  "1",
+			want1: "2",
+		},
+		{
+			name:  "No Season, Episode",
+			input: "Episode 4",
+			want:  "",
+			want1: "4",
+		},
+		{
+			name:  "No volume marker",
+			input: "Chapter 5: Mischievous Wolf and No Laughing Matter",
+			want:  "",
+			want1: "5",
+		},
+		{
+			name:  "Volume and chapter marker",
+			input: "Volume 2 Chapter 1: Bird Feather and Mysterious Ore",
+			want:  "2",
+			want1: "1",
+		},
+		{
+			name:  "Shortened volume marker",
+			input: "Vol. 3 Chapter 7",
+			want:  "3",
+			want1: "7",
+		},
+		{
+			name:  "Shortened chapter marker",
+			input: "Ch. 12",
+			want:  "",
+			want1: "12",
+		},
+		{
+			name:  "Empty",
+			input: "",
+			want:  "",
+			want1: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &repository{
+				log: zerolog.Nop(),
+			}
+			got, got1 := r.extractVolumeAndChapter("", tt.input)
+			if got != tt.want {
+				t.Errorf("extractVolumeAndChapter() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("extractVolumeAndChapter() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
