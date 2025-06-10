@@ -17,7 +17,6 @@ func New(scope *dig.Scope) core.Downloadable {
 
 	utils.Must(scope.Invoke(func(req payload.DownloadRequest, repository Repository, fs afero.Afero) {
 		m = &manga{
-			id:         req.Id,
 			repository: repository,
 			fs:         fs,
 		}
@@ -33,8 +32,6 @@ type manga struct {
 
 	repository Repository
 	fs         afero.Afero
-
-	id string
 }
 
 func (m *manga) RefUrl() string {
@@ -46,7 +43,7 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 
 	go func() {
 		defer close(out)
-		info, err := m.repository.SeriesInfo(ctx, m.id)
+		info, err := m.repository.SeriesInfo(ctx, m.Id())
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				m.Log.Error().Err(err).Msg("error while loading series info")
