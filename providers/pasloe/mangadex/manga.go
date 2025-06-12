@@ -24,8 +24,7 @@ func New(scope *dig.Scope) core.Downloadable {
 	utils.Must(scope.Invoke(func(
 		req payload.DownloadRequest, httpClient *menou.Client,
 		repository Repository, markdownService services.MarkdownService,
-		imageService services.ImageService, archiveService services.ArchiveService,
-		fs afero.Afero,
+		imageService services.ImageService, fs afero.Afero,
 	) {
 		m = &manga{
 			id:              req.Id,
@@ -33,7 +32,6 @@ func New(scope *dig.Scope) core.Downloadable {
 			repository:      repository,
 			markdownService: markdownService,
 			imageService:    imageService,
-			archiveService:  archiveService,
 			fs:              fs,
 
 			language: utils.MustHave(req.GetString(LanguageKey, "en")),
@@ -52,7 +50,6 @@ type manga struct {
 	repository      Repository
 	markdownService services.MarkdownService
 	imageService    services.ImageService
-	archiveService  services.ArchiveService
 	fs              afero.Afero
 
 	chapters ChapterSearchResponse

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
@@ -23,13 +22,10 @@ func New(scope *dig.Scope) core.Downloadable {
 	var wt *webtoon
 
 	utils.Must(scope.Invoke(func(
-		req payload.DownloadRequest, httpClient *menou.Client,
-		repository Repository, markdownService services.MarkdownService,
-		fs afero.Afero,
+		req payload.DownloadRequest, repository Repository,
+		markdownService services.MarkdownService, fs afero.Afero,
 	) {
 		wt = &webtoon{
-			id:              req.Id,
-			httpClient:      httpClient,
 			repository:      repository,
 			markdownService: markdownService,
 			fs:              fs,
@@ -41,13 +37,11 @@ func New(scope *dig.Scope) core.Downloadable {
 }
 
 type webtoon struct {
-	httpClient      *menou.Client
+	*core.Core[Chapter, *Series]
+
 	repository      Repository
 	markdownService services.MarkdownService
 	fs              afero.Afero
-
-	*core.Core[Chapter, *Series]
-	id string
 
 	searchInfo *SearchData
 }
@@ -75,7 +69,7 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 	out := make(chan struct{})
 	go func() {
 		defer close(out)
-		info, err := w.repository.SeriesInfo(ctx, w.id)
+		info, err := w.repository.SeriesInfo(ctx, w.Id())
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				w.Log.Error().Err(err).Msg("error while loading webtoon info")
@@ -96,7 +90,7 @@ func (w *webtoon) LoadInfo(ctx context.Context) chan struct{} {
 		}
 
 		w.searchInfo = utils.Find(search, func(data SearchData) bool {
-			return data.Id == w.id
+			return data.Id == w.Id()
 		})
 		if w.searchInfo == nil {
 			w.Log.Warn().Msg("was unable to load searchInfo, some meta-data may be off")
@@ -119,7 +113,7 @@ func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
 			// Kavita uses the image of the first chapter as the cover image in lists
 			// We replace this with the nicer looking image. As this software is still targeting Kavita
 			if w.searchInfo != nil && chapter.Number == "1" {
-				return webToonUrl(w.searchInfo.ThumbnailMobile)
+				return fmt.Sprintf("https://webtoon-phinf.pstatic.net%s", w.searchInfo.ThumbnailMobile)
 			}
 			return chapter.ImageUrl
 		}()
@@ -160,8 +154,4 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 func (w *webtoon) CustomizeRequest(req *http.Request) error {
 	req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
 	return nil
-}
-
-func webToonUrl(s string) string {
-	return fmt.Sprintf("https://webtoon-phinf.pstatic.net%s", s)
 }

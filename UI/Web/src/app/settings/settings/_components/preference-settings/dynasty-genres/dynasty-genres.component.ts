@@ -4,12 +4,12 @@ import {Dialog} from "primeng/dialog";
 import {FloatLabel} from "primeng/floatlabel";
 import {IconField} from "primeng/iconfield";
 import {InputIcon} from "primeng/inputicon";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 import {FormsModule} from "@angular/forms";
 import {InputText} from "primeng/inputtext";
 import {ToastService} from "../../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
+import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
 
 @Component({
   selector: 'app-dynasty-genres',
@@ -18,13 +18,11 @@ import {TitleCasePipe} from "@angular/common";
     FloatLabel,
     IconField,
     InputIcon,
-    CdkVirtualScrollViewport,
-    CdkVirtualForOf,
     FormsModule,
-    CdkFixedSizeVirtualScroll,
     InputText,
     TranslocoDirective,
-    TitleCasePipe
+    TitleCasePipe,
+    VirtualScrollerModule
   ],
   templateUrl: './dynasty-genres.component.html',
   styleUrl: './dynasty-genres.component.css'

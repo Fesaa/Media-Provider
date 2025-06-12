@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
@@ -17,17 +16,13 @@ func New(scope *dig.Scope) core.Downloadable {
 	var m *manga
 
 	utils.Must(scope.Invoke(func(
-		req payload.DownloadRequest, httpClient *menou.Client,
-		repository Repository, markdownService services.MarkdownService,
-		preferences models.Preferences, imageService services.ImageService,
+		req payload.DownloadRequest, repository Repository,
+		markdownService services.MarkdownService, imageService services.ImageService,
 		fs afero.Afero,
 	) {
 		m = &manga{
-			id:              req.Id,
-			httpClient:      httpClient,
 			repository:      repository,
 			markdownService: markdownService,
-			preferences:     preferences,
 			imageService:    imageService,
 			fs:              fs,
 		}
@@ -41,19 +36,14 @@ func New(scope *dig.Scope) core.Downloadable {
 type manga struct {
 	*core.Core[Chapter, *Series]
 
-	httpClient      *menou.Client
 	repository      Repository
 	markdownService services.MarkdownService
-	preferences     models.Preferences
 	transLoco       services.TranslocoService
 	imageService    services.ImageService
 	fs              afero.Afero
 
-	id              string
 	coverBytes      []byte
 	hasCheckedCover bool
-
-	hasWarnedBlacklist bool
 }
 
 func (m *manga) Title() string {
@@ -80,7 +70,7 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 	out := make(chan struct{})
 	go func() {
 		defer close(out)
-		info, err := m.repository.SeriesInfo(ctx, m.id)
+		info, err := m.repository.SeriesInfo(ctx, m.Id())
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				m.Log.Error().Err(err).Msg("error while loading series info")

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
@@ -14,16 +13,17 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 	"path"
+	"strings"
 	"time"
 )
 
-func New(c *config.Config, httpClient *menou.Client, container *dig.Container, log zerolog.Logger,
+func New(c *config.Config, container *dig.Container, log zerolog.Logger,
 	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
 	preferences models.Preferences, transLoco services.TranslocoService, fs afero.Afero,
 ) core.Client {
 	return &client{
 		config:     c,
-		registry:   newRegistry(httpClient, container),
+		registry:   newRegistry(container),
 		log:        log.With().Str("handler", "pasloe").Logger(),
 		dirService: dirService,
 		signalR:    signalR,
@@ -99,6 +99,16 @@ func (c *client) Download(req payload.DownloadRequest) error {
 	return nil
 }
 
+func (c *client) alwaysLog() bool {
+	p, err := c.pref.Get()
+	if err != nil {
+		c.log.Error().Err(err).Msg("failed to retrieve preferences, falling back to default behaviour")
+		return false
+	}
+
+	return p.LogEmptyDownloads
+}
+
 func (c *client) RemoveDownload(req payload.StopRequest) error {
 	content, ok := c.content.Get(req.Id)
 	if !ok {
@@ -140,44 +150,46 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 			return
 		}
 
-		alwaysLog := utils.TryCatch(c.pref.Get, func(p *models.Preference) bool {
-			return p.LogEmptyDownloads
-		}, false, func(err error) {
-			c.log.Error().Err(err).Msg("failed to retrieve preferences, falling back to default behaviour")
-		})
-
-		if len(content.GetNewContent()) > 0 || alwaysLog {
-			var summary, body string
-
-			di := content.DisplayInformation()
-
-			summary = c.transLoco.GetTranslation("download-finished", content.GetInfo().RefUrl, di.Name, len(content.GetNewContent()))
-			if len(content.GetToRemoveContent()) > 0 {
-				summary += c.transLoco.GetTranslation("re-downloads", len(content.GetToRemoveContent()))
-			}
-
-			if content.FailedDownloads() > 0 {
-				summary += c.transLoco.GetTranslation("failed-downloads", content.FailedDownloads())
-			}
-
-			body = summary
-			for _, newContent := range content.GetNewContentNamed() {
-				body += c.transLoco.GetTranslation("content-line", path.Base(newContent))
-			}
-
-			c.notifier(content.Request()).Notify(models.Notification{
-				Title:   c.transLoco.GetTranslation("download-finished-title"),
-				Summary: summary,
-				Body:    body,
-				Colour:  models.Green,
-				Group:   models.GroupContent,
-			})
-		}
-
+		c.logContentCompletion(content)
 		go c.cleanup(content)
+
 		c.startNext(content.Provider())
 	}()
 	return nil
+}
+
+func (c *client) logContentCompletion(content core.Downloadable) {
+	alwaysLog := c.alwaysLog()
+
+	if len(content.GetNewContent()) == 0 && !alwaysLog {
+		return
+	}
+
+	var summary, body string
+
+	di := content.DisplayInformation()
+
+	summary = c.transLoco.GetTranslation("download-finished", content.GetInfo().RefUrl, di.Name, len(content.GetNewContent()))
+	if len(content.GetToRemoveContent()) > 0 {
+		summary += c.transLoco.GetTranslation("re-downloads", len(content.GetToRemoveContent()))
+	}
+
+	if content.FailedDownloads() > 0 {
+		summary += c.transLoco.GetTranslation("failed-downloads", content.FailedDownloads())
+	}
+
+	body = summary
+	for _, newContent := range content.GetNewContentNamed() {
+		body += c.transLoco.GetTranslation("content-line", path.Base(newContent))
+	}
+
+	c.notifier(content.Request()).Notify(models.Notification{
+		Title:   c.transLoco.GetTranslation("download-finished-title"),
+		Summary: summary,
+		Body:    body,
+		Colour:  models.Green,
+		Group:   models.GroupContent,
+	})
 }
 
 func (c *client) GetCurrentDownloads() []core.Downloadable {
@@ -255,7 +267,7 @@ func (c *client) startNext(provider models.Provider) {
 func (c *client) deleteFiles(content core.Downloadable) {
 	defer c.signalR.DeleteContent(content.Id())
 
-	downloadDir := content.GetDownloadDir()
+	downloadDir := strings.TrimSpace(content.GetDownloadDir())
 	if downloadDir == "" {
 		c.log.Error().Msg("download dir is empty, not removing any files")
 		return
@@ -345,13 +357,16 @@ func (c *client) cleanup(content core.Downloadable) {
 
 func (c *client) removeOldContent(content core.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
 	start := time.Now()
+
 	for _, contentPath := range content.GetToRemoveContent() {
 		l.Trace().Str("name", contentPath).Msg("removing old content")
+
 		if err := c.fs.Remove(contentPath); err != nil {
 			l.Error().Err(err).Str("name", contentPath).Msg("error while removing old content")
 			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while removing old content: %w", err))
 		}
 	}
+
 	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(content.GetToRemoveContent())).
 		Msg("finished removing replaced downloaded content")
 	return cleanupErrs
@@ -359,16 +374,17 @@ func (c *client) removeOldContent(content core.Downloadable, l zerolog.Logger) (
 
 func (c *client) zipAndRemoveNewContent(newContent []string, l zerolog.Logger) (cleanupErrs []error) {
 	start := time.Now()
+
 	for _, contentPath := range newContent {
 		l.Trace().Str("path", contentPath).Msg("Zipping file")
-		err := c.dirService.ZipToCbz(contentPath)
-		if err != nil {
+
+		if err := c.dirService.ZipToCbz(contentPath); err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while zipping dir")
 			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while zipping dir %s: %w", contentPath, err))
 			continue
 		}
 
-		if err = c.fs.RemoveAll(contentPath); err != nil {
+		if err := c.fs.RemoveAll(contentPath); err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while deleting new content directory")
 			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while deleting new content directory %s: %w", contentPath, err))
 			continue

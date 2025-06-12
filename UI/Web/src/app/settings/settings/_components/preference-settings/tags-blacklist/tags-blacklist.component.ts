@@ -6,10 +6,10 @@ import {IconField} from "primeng/iconfield";
 import {InputText} from "primeng/inputtext";
 import {InputIcon} from "primeng/inputicon";
 import {FormsModule} from "@angular/forms";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
 import {ToastService} from "../../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
+import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
 
 @Component({
   selector: 'app-tags-blacklist',
@@ -20,11 +20,9 @@ import {TitleCasePipe} from "@angular/common";
     InputText,
     InputIcon,
     FormsModule,
-    CdkVirtualScrollViewport,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
     TranslocoDirective,
-    TitleCasePipe
+    TitleCasePipe,
+    VirtualScrollerModule
   ],
   templateUrl: './tags-blacklist.component.html',
   styleUrl: './tags-blacklist.component.css'

@@ -29,14 +29,15 @@
   @if (toDisplay.length === 0) {
     <span>{{ t('empty') }}</span>
   } @else {
-    <cdk-virtual-scroll-viewport itemSize="50" style="height: 200px">
-      <div *cdkVirtualFor="let tag of toDisplay">
+
+    <virtual-scroller #scroll [items]="toDisplay">
+      @for (tag of scroll.viewPortItems; track $index) {
         <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3" style="height: 50px;">
           <span>{{tag.name}}</span>
           <span class="pi pi-trash hover:cursor-pointer" (click)="removeTag(tag)"></span>
         </div>
-      </div>
-    </cdk-virtual-scroll-viewport>
+      }
+    </virtual-scroller>
   }
 
 </p-dialog>

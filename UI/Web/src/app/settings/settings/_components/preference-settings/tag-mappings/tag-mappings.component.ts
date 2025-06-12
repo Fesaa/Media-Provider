@@ -9,7 +9,7 @@ import {IconField} from "primeng/iconfield";
 import {InputText} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
 import {TitleCasePipe} from "@angular/common";
-import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} from "@angular/cdk/scrolling";
+import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
 
 @Component({
   selector: 'app-tag-mappings',
@@ -22,9 +22,7 @@ import {CdkFixedSizeVirtualScroll, CdkVirtualForOf, CdkVirtualScrollViewport} fr
     InputText,
     FormsModule,
     TitleCasePipe,
-    CdkFixedSizeVirtualScroll,
-    CdkVirtualForOf,
-    CdkVirtualScrollViewport
+    VirtualScrollerModule
   ],
   templateUrl: './tag-mappings.component.html',
   styleUrl: './tag-mappings.component.css'
