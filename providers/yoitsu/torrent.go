@@ -3,6 +3,7 @@ package yoitsu
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -159,7 +160,17 @@ func (t *torrentImpl) ContentList() []payload.ListContentData {
 	}
 
 	paths := utils.Map(t.t.Files(), func(file *torrent.File) []string {
-		return strings.Split(file.Path(), "/")
+		branch := strings.Split(file.Path(), "/")
+		if len(branch) == 0 {
+			return branch
+		}
+
+		// Append file size at the end of the name
+		fileIdx := len(branch) - 1
+		totalBytes := utils.BytesToSize(float64(file.Length()))
+		branch[fileIdx] = fmt.Sprintf("%s (%s)", branch[fileIdx], totalBytes)
+
+		return branch
 	})
 
 	return t.buildTree(paths)
