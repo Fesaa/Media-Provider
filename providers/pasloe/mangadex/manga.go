@@ -72,6 +72,14 @@ func (m *manga) CustomizeAllChapters() []ChapterSearchData {
 	return m.chapters.Data
 }
 
+func (m *manga) Title() string {
+	if m.SeriesInfo == nil {
+		return utils.NonEmpty(m.Req.TempTitle, m.Req.Id)
+	}
+
+	return utils.NonEmpty(m.SeriesInfo.GetTitle(), m.Req.TempTitle, m.Req.Id)
+}
+
 func (m *manga) Provider() models.Provider {
 	return m.Req.Provider
 }

@@ -46,6 +46,14 @@ type webtoon struct {
 	searchInfo *SearchData
 }
 
+func (w *webtoon) Title() string {
+	if w.SeriesInfo == nil {
+		return utils.NonEmpty(w.Req.TempTitle, w.Req.Id)
+	}
+
+	return utils.NonEmpty(w.SeriesInfo.GetTitle(), w.Req.TempTitle, w.Req.Id)
+}
+
 func (w *webtoon) Provider() models.Provider {
 	return w.Req.Provider
 }
