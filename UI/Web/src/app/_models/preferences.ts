@@ -1,6 +1,7 @@
 export type Preferences = {
   subscriptionRefreshHour: number,
   logEmptyDownloads: boolean,
+  convertToWebp: boolean,
   coverFallbackMethod: CoverFallbackMethod,
   dynastyGenreTags: Tag[],
   blackListedTags: Tag[],

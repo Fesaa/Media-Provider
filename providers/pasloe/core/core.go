@@ -31,6 +31,7 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 		transLoco services.TranslocoService,
 		preferences models.Preferences,
 		archiveService services.ArchiveService,
+		imageService services.ImageService,
 		fs afero.Afero,
 		httpClient *menou.Client,
 	) {
@@ -48,6 +49,7 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 			Notifier:       notification,
 			TransLoco:      transLoco,
 			archiveService: archiveService,
+			imageService:   imageService,
 			preferences:    preferences,
 			fs:             fs,
 			httpClient:     httpClient,
@@ -72,6 +74,7 @@ type Core[C Chapter, S Series[C]] struct {
 	Notifier       services.NotificationService
 	TransLoco      services.TranslocoService
 	archiveService services.ArchiveService
+	imageService   services.ImageService
 	fs             afero.Afero
 	httpClient     *menou.Client
 

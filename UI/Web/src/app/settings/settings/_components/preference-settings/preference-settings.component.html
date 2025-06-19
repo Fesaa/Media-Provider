@@ -23,6 +23,11 @@
       </div>
 
       <div class="preference-item">
+        <label class="flex-grow" for="convertToWebp">{{ t('convertToWebp') }}</label>
+        <p-toggle-switch id="convertToWebp" [(ngModel)]="preferences.convertToWebp" />
+      </div>
+
+      <div class="preference-item">
         <label class="flex-grow" for="coverFallbackMethod">{{t('cover-fallback-method')}}</label>
         <p-select id="coverFallbackMethod" [options]="CoverFallbackMethods" [(ngModel)]="preferences.coverFallbackMethod" />
       </div>
