@@ -26,10 +26,29 @@ jobs:
       - name: 🧪 Test
         run: go test -v ./...
 
+  generate-metadata:
+    runs-on: ubuntu-latest
+    outputs:
+      COMMIT_HASH: ${{ steps.metadata.outputs.COMMIT_HASH }}
+      BUILD_TIMESTAMP: ${{ steps.metadata.outputs.BUILD_TIMESTAMP }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: nightly
+
+      - name: Generate metadata
+        id: metadata
+        run: |
+          echo "COMMIT_HASH=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "BUILD_TIMESTAMP=$(date '+%Y-%m-%dT%H:%M:%S')" >> "$GITHUB_OUTPUT"
+
 
   push_to_registry:
     name: Push Docker image to Docker Hub
-    needs: tests
+    needs:
+      - tests
+      - generate-metadata
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -57,6 +76,9 @@ jobs:
             context: .
             file: ./Dockerfile
             push: true
+            build-args: |
+              CommitHash=${{ needs.generate-metadata.outputs.COMMIT_HASH }}
+              BuildTimestamp=${{ needs.generate-metadata.outputs.BUILD_TIMESTAMP }}
             tags: |
                 ameliaah/media-provider:latest
                 ameliaah/media-provider:${{ env.VERSION }}

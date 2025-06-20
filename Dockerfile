@@ -28,7 +28,7 @@ COPY ./services ./services
 COPY ./utils ./utils
 COPY ./*.go ./
 
-RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static"'
+RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static" -X github.com/Fesaa/Media-Provider/metadata.CommitHash=${CommitHash} -X github.com/Fesaa/Media-Provider/metadata.BuildTimestamp=${BuildTimestamp}'
 
 FROM alpine:latest
 

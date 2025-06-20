@@ -126,6 +126,7 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider P
 	must(scope.Provide(func() models.Preferences { return nil }))
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(scope.Provide(services.ArchiveServiceProvider))
+	must(scope.Provide(services.ImageServiceProvider))
 	return New[ChapterMock, *SeriesMock](scope, "test", provider)
 }
 

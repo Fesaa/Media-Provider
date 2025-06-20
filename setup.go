@@ -41,7 +41,8 @@ func ApplicationProvider(params appParams) *fiber.App {
 	baseUrl := params.Cfg.BaseUrl
 
 	app := fiber.New(fiber.Config{
-		AppName: "Media-Provider",
+		AppName:               "Media-Provider",
+		DisableStartupMessage: true,
 	})
 
 	if os.Getenv("DEV") == "" {
