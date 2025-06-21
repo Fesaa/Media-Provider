@@ -1,48 +1,5 @@
+version: "2"
 linters:
-  disable:
-    - inamedparam
-    - wsl
-    - nlreturn
-    - containedctx
-    - depguard
-    - wrapcheck
-    - varnamelen
-    - mnd
-    - interfacebloat
-    - forcetypeassert
-    - bodyclose
-    - whitespace
-    - tagalign
-    - lll
-    - gofumpt
-    - godox
-    - godot
-    - gci
-    - goimports
-    - tagliatelle
-    - err113
-    - gochecknoinits
-    - forbidigo
-    - stylecheck
-    - noctx
-    - perfsprint
-    - ireturn
-    - nilnil
-    - gochecknoglobals
-    - exhaustruct
-    - cyclop
-    - canonicalheader
-    - unused
-    - paralleltest
-    - testpackage
-    - prealloc
-    - nonamedreturns
-    - dupl
-    - gosmopolitan
-    - goconst
-    - funlen
-    - dupword
-
   enable:
     - asasalint
     - asciicheck
@@ -52,11 +9,11 @@ linters:
     - decorder
     - dogsled
     - durationcheck
-    - errcheck
     - errchkjson
     - errname
     - errorlint
     - exhaustive
+    - exptostd
     - fatcontext
     - ginkgolinter
     - gocheckcompilerdirectives
@@ -64,18 +21,14 @@ linters:
     - gocognit
     - gocritic
     - gocyclo
-    - gofmt
     - goheader
     - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
-    - govet
     - grouper
     - iface
     - importas
-    - ineffassign
     - intrange
     - loggercheck
     - maintidx
@@ -86,6 +39,7 @@ linters:
     - nakedret
     - nestif
     - nilerr
+    - nilnesserr
     - nolintlint
     - nosprintfhostport
     - predeclared
@@ -98,7 +52,6 @@ linters:
     - sloglint
     - spancheck
     - sqlclosecheck
-    - staticcheck
     - testableexamples
     - testifylint
     - thelper
@@ -106,50 +59,84 @@ linters:
     - unconvert
     - unparam
     - usestdlibvars
+    - usetesting
     - wastedassign
     - zerologlint
-
-  # Enable presets.
-  # https://golangci-lint.run/usage/linters
-  # Default: []
-  presets:
-    - bugs
-    - comment
-    - complexity
-    - error
-    - format
-    - import
-    - metalinter
-    - module
-    - performance
-    - sql
-    - style
-    - test
+  disable:
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - cyclop
+    - depguard
+    - dupl
+    - dupword
+    - err113
+    - exhaustruct
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - goconst
+    - godot
+    - godox
+    - gosmopolitan
+    - inamedparam
+    - interfacebloat
+    - ireturn
+    - lll
+    - mnd
+    - nilnil
+    - nlreturn
+    - noctx
+    - nonamedreturns
+    - paralleltest
+    - perfsprint
+    - prealloc
+    - tagalign
+    - tagliatelle
+    - testpackage
     - unused
-
-linters-settings:
-  revive:
+    - varnamelen
+    - whitespace
+    - wrapcheck
+    - wsl
+  settings:
+    gosec:
+      excludes:
+        - G306
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
+    staticcheck:
+      checks:
+        - all
+        - -S1007
+        - -ST1003
+        - -SA9004
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: var-naming
-        disabled: true
-  staticcheck:
-    checks:
-      - "all"
-      - "-SA9004"
-  gosimple:
-    checks:
-      - "all"
-      - "-S1007"
-  gosec:
-    excludes:
-      - G306
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - funlen
-        - nolintlint
-
-run:
-  timeout: 5m
+      - linters:
+          - funlen
+          - nolintlint
+        path: _test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
