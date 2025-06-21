@@ -142,6 +142,8 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 	if chapter.Number != "" {
 		ci.Number = chapter.Number
+	} else {
+		ci.Format = "Special"
 	}
 
 	if w.SeriesInfo.Completed {

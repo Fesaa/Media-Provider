@@ -100,6 +100,8 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 	if chapter.Chapter != "" {
 		ci.Number = chapter.Chapter
+	} else {
+		ci.Format = "Special"
 	}
 
 	ci.Writer = strings.Join(utils.Map(m.SeriesInfo.Authors, func(t Author) string {
