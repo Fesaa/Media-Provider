@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 )
 
@@ -77,7 +78,19 @@ func (c *Core[C, S]) VolumeDir(chapter C) string {
 
 func (c *Core[C, S]) ContentDir(chapter C) string {
 	if chapter.GetChapter() == "" {
-		return fmt.Sprintf("%s %s (OneShot)", c.impl.Title(), chapter.GetTitle())
+		oneShotPath := fmt.Sprintf("%s %s (OneShot)", c.impl.Title(), chapter.GetTitle())
+
+		finalOneShotPath := oneShotPath
+		for i := 0; slices.Contains(c.HasDownloaded, finalOneShotPath); i++ {
+			finalOneShotPath = fmt.Sprintf("%s (%d)", oneShotPath, i)
+			if i >= 25 {
+				log := c.ContentLogger(chapter)
+				log.Warn().Int("tries", i).Msg("Amount of unnamed, or same named OneShots has exceeded 25. Falling back to random generated string")
+				finalOneShotPath = fmt.Sprintf("%s (%s)", oneShotPath, utils.MustReturn(utils.GenerateSecret(8)))
+			}
+		}
+
+		return finalOneShotPath
 	}
 
 	if _, err := strconv.ParseFloat(chapter.GetChapter(), 32); err == nil {
