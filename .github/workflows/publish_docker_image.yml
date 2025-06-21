@@ -78,8 +78,8 @@ jobs:
             file: ./Dockerfile
             push: true
             build-args: |
-              CommitHash=${{ needs.generate-metadata.outputs.COMMIT_HASH }}
-              BuildTimestamp=${{ needs.generate-metadata.outputs.BUILD_TIMESTAMP }}
+              COMMIT_HASH=${{ needs.generate-metadata.outputs.COMMIT_HASH }}
+              BUILD_TIMESTAMP=${{ needs.generate-metadata.outputs.BUILD_TIMESTAMP }}
             tags: |
                 ameliaah/media-provider:latest
                 ameliaah/media-provider:${{ env.VERSION }}

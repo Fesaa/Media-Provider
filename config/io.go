@@ -23,6 +23,9 @@ func Load() (*Config, error) {
 
 	if errors.Is(err, os.ErrNotExist) {
 		slog.Warn("Config file not found, creating new one", "path", configPath)
+		if err = os.MkdirAll(Dir, os.ModePerm); err != nil {
+			return nil, err
+		}
 		cfg = DefaultConfig()
 		err = write(configPath, cfg)
 	}
