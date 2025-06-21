@@ -153,14 +153,11 @@ func OrDefault[T any](array []T, defaultValue T) T {
 	return array[0]
 }
 
-func Ternary[T any](condition bool, tuple ...T) T {
-	if len(tuple) != 2 {
-		panic("Tuple should be of length 2")
-	}
+func Ternary[T any](condition bool, ifTrue, ifFalse T) T {
 	if condition {
-		return tuple[0]
+		return ifTrue
 	}
-	return tuple[1]
+	return ifFalse
 }
 
 func SortFloats(a, b string) int {

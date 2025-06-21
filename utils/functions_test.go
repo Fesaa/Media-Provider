@@ -174,14 +174,6 @@ func TestTernary(t *testing.T) {
 	if got != 2 {
 		t.Fatalf("Ternary(true, 1, 2) = %d; want 2", got)
 	}
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("Ternary(true, 1, 2, 3) should have panicked")
-		}
-	}()
-
-	Ternary(true, 1, 2, 3)
 }
 
 func TestHumanReadableSpeed(t *testing.T) {

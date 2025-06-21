@@ -43,10 +43,20 @@ func (c *Core[C, S]) ContentLogger(chapter C) zerolog.Logger {
 
 // DownloadContent TODO: Add context.Context
 func (c *Core[C, S]) DownloadContent(idx int, chapter C, url string) error {
-	filePath := path.Join(c.ContentPath(chapter), fmt.Sprintf("page %s"+utils.Ext(url), utils.PadInt(idx, 4)))
-	if err := c.DownloadAndWrite(url, filePath); err != nil {
+	data, err := c.Download(url)
+	if err != nil {
 		return err
 	}
+
+	data, ok := c.imageService.ConvertToWebp(data)
+
+	ext := utils.Ternary(ok, ".webp", utils.Ext(url))
+	filePath := path.Join(c.ContentPath(chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(idx, 4)))
+
+	if err = c.fs.WriteFile(filePath, data, 0755); err != nil {
+		return err
+	}
+
 	c.ImagesDownloaded++
 	return nil
 }

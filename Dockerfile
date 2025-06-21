@@ -28,7 +28,7 @@ COPY ./services ./services
 COPY ./utils ./utils
 COPY ./*.go ./
 
-RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static"'
+RUN go build -o /media-provider -ldflags '-linkmode external -extldflags "-static" -X github.com/Fesaa/Media-Provider/metadata.CommitHash=${CommitHash} -X github.com/Fesaa/Media-Provider/metadata.BuildTimestamp=${BuildTimestamp}'
 
 FROM alpine:latest
 
@@ -38,7 +38,7 @@ COPY --from=go-stage /media-provider /app/media-provider
 COPY --from=npm-stage /app/dist/web/browser /app/public
 COPY ./I18N /app/I18N
 
-RUN apk add --no-cache ca-certificates curl tzdata
+RUN apk add --no-cache ca-certificates curl tzdata libwebp
 
 ENV CONFIG_DIR="/mp/"
 ENV DOCKER="true"

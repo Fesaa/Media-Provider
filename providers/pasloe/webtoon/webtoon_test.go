@@ -79,6 +79,7 @@ func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
+	must(scope.Provide(services.ImageServiceProvider))
 
 	web := New(scope)
 	return web.(*webtoon)

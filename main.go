@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
@@ -14,6 +15,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
+	"runtime"
 )
 
 func main() {
@@ -64,7 +66,15 @@ func main() {
 }
 
 func startApp(app *fiber.App, log zerolog.Logger, cfg *config.Config) {
-	log.Info().Str("handler", "core").Str("baseUrl", cfg.BaseUrl).Msg("Starting Media-Provider")
+	log.WithLevel(zerolog.NoLevel).Str("handler", "core").
+		Str("Version", metadata.Version.String()).
+		Str("CommitHash", metadata.CommitHash).
+		Str("BuildTimestamp", metadata.BuildTimestamp).
+		Str("GoVersion", runtime.Version()).
+		Str("GOOS", runtime.GOOS).
+		Str("GOARCH", runtime.GOARCH).
+		Str("baseUrl", cfg.BaseUrl).
+		Msg("Starting")
 
 	e := app.Listen(":8080")
 	if e != nil {

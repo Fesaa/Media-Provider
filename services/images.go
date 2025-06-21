@@ -2,11 +2,21 @@ package services
 
 import (
 	"bytes"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/disintegration/imaging"
+	"github.com/kolesa-team/go-webp/encoder"
+	"github.com/kolesa-team/go-webp/webp"
 	"github.com/rs/zerolog"
-	_ "golang.org/x/image/webp"
 	"image"
+)
+
+const (
+	webpFormatKey = "webp"
+)
+
+var (
+	encodingOptions = utils.MustReturn(encoder.NewLossyEncoderOptions(encoder.PresetDefault, 80))
 )
 
 type ImageService interface {
@@ -17,16 +27,48 @@ type ImageService interface {
 	MeanSquareError(img1, img2 image.Image) float64
 	IsCover(data []byte) bool
 	ToImage(data []byte) (image.Image, error)
+	ConvertToWebp(data []byte) ([]byte, bool)
 }
 
 type imageService struct {
-	log zerolog.Logger
+	log  zerolog.Logger
+	pref models.Preferences
 }
 
-func ImageServiceProvider(log zerolog.Logger) ImageService {
+func ImageServiceProvider(log zerolog.Logger, pref models.Preferences) ImageService {
 	return &imageService{
-		log: log.With().Str("handler", "image-service").Logger(),
+		log:  log.With().Str("handler", "image-service").Logger(),
+		pref: pref,
 	}
+}
+
+func (i *imageService) ConvertToWebp(data []byte) ([]byte, bool) {
+	p, err := i.pref.Get()
+	if err != nil {
+		i.log.Warn().Err(err).Msg("pref.Get() failed, not converting to webp")
+		return data, false
+	}
+
+	if !p.ConvertToWebp {
+		return data, false
+	}
+
+	img, format, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return data, false
+	}
+
+	if format == webpFormatKey {
+		return data, false
+	}
+
+	buf := new(bytes.Buffer)
+	if err = webp.Encode(buf, img, encodingOptions); err != nil {
+		i.log.Error().Err(err).Msg("webp.Encode() failed")
+		return data, false
+	}
+
+	return buf.Bytes(), true
 }
 
 func (i *imageService) ToImage(data []byte) (image.Image, error) {

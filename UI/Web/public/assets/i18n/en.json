@@ -452,6 +452,7 @@
         "tooltip": "This is the hour"
       },
       "empty-download-notification": "Notification when a subscription downloads 0 items",
+      "convertToWebp": "Convert images to webp before downloading (pasloe)",
       "cover-fallback-method": "Cover to use as fallback",
       "configure": "Configure",
       "save": "Save",
