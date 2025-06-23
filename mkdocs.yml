@@ -11,6 +11,7 @@ nav:
       - Downloading: downloading.md
       - Subscriptions: subscriptions.md
       - Users: users.md
+      - Features (config): features.md
   - Providers:
       - Nyaa: nyaa.md
       - YTS: yts.md

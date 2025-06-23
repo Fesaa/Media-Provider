@@ -464,7 +464,7 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 
 	chpt.Attributes.Chapter = ""
 	got = m.ContentDir(chpt)
-	want = "Rainbows After Storms My Lover (OneShot)"
+	want = "Rainbows After Storms My Lover (One Shot)"
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}

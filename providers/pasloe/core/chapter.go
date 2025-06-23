@@ -2,10 +2,12 @@ package core
 
 import (
 	"fmt"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 )
 
@@ -64,7 +66,7 @@ func (c *Core[C, S]) DownloadContent(idx int, chapter C, url string) error {
 func (c *Core[C, S]) ContentPath(chapter C) string {
 	base := path.Join(c.Client.GetBaseDir(), c.GetBaseDir(), c.impl.Title())
 
-	if chapter.GetVolume() != "" {
+	if chapter.GetVolume() != "" && !config.DisableVolumeDirs {
 		base = path.Join(base, c.VolumeDir(chapter))
 	}
 
@@ -77,7 +79,22 @@ func (c *Core[C, S]) VolumeDir(chapter C) string {
 
 func (c *Core[C, S]) ContentDir(chapter C) string {
 	if chapter.GetChapter() == "" {
-		return fmt.Sprintf("%s %s (OneShot)", c.impl.Title(), chapter.GetTitle())
+		oneShotPath := fmt.Sprintf("%s %s", c.impl.Title(), chapter.GetTitle())
+		if !config.DisableOneShotInFileName {
+			oneShotPath += " (One Shot)"
+		}
+
+		finalOneShotPath := oneShotPath
+		for i := 0; slices.Contains(c.HasDownloaded, finalOneShotPath); i++ {
+			finalOneShotPath = fmt.Sprintf("%s (%d)", oneShotPath, i)
+			if i >= 25 {
+				log := c.ContentLogger(chapter)
+				log.Warn().Int("tries", i).Msg("Amount of unnamed, or same named OneShots has exceeded 25. Falling back to random generated string")
+				finalOneShotPath = fmt.Sprintf("%s (%s)", oneShotPath, utils.MustReturn(utils.GenerateSecret(8)))
+			}
+		}
+
+		return finalOneShotPath
 	}
 
 	if _, err := strconv.ParseFloat(chapter.GetChapter(), 32); err == nil {
@@ -92,8 +109,8 @@ func (c *Core[C, S]) ContentDir(chapter C) string {
 
 var (
 	contentRegex    = regexp.MustCompile(".* (?:Ch|Vol)\\. ([\\d|\\.]+).cbz")
-	oneShotRegexOld = regexp.MustCompile(".+ OneShot .+\\.cbz")
-	oneShotRegex    = regexp.MustCompile(".+ \\(OneShot\\).cbz")
+	oneShotRegexOld = regexp.MustCompile(".+ One ?Shot .+\\.cbz")
+	oneShotRegex    = regexp.MustCompile(".+ \\(One ?Shot\\).cbz")
 )
 
 func (c *Core[C, S]) IsContent(name string) bool {

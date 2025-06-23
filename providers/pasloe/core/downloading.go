@@ -60,19 +60,19 @@ func (c *Core[C, S]) filterContentByUserSelection() {
 	})
 }
 
-func (c *Core[C, S]) processDownloads(ctx context.Context) error {
+func (c *Core[C, S]) processDownloads(ctx context.Context, wg *sync.WaitGroup) error {
 	for _, content := range c.ToDownload {
 		select {
 		case <-ctx.Done():
-			c.Wg.Wait()
+			wg.Wait()
 			return errors.New("download cancelled")
 		default:
-			c.Wg.Add(1)
+			wg.Add(1)
 			err := c.downloadContent(ctx, content)
-			c.Wg.Done()
+			wg.Done()
 			if err != nil {
 				c.abortDownload(err)
-				c.Wg.Wait()
+				wg.Wait()
 				return err
 			}
 		}
@@ -81,8 +81,8 @@ func (c *Core[C, S]) processDownloads(ctx context.Context) error {
 	return nil
 }
 
-func (c *Core[C, S]) cleanupAfterDownload() {
-	c.Wg.Wait()
+func (c *Core[C, S]) cleanupAfterDownload(wg *sync.WaitGroup) {
+	wg.Wait()
 	req := payload.StopRequest{
 		Provider:    c.Req.Provider,
 		Id:          c.Id(),
@@ -100,7 +100,6 @@ func (c *Core[C, S]) startDownload() {
 
 	data := c.GetAllLoadedChapters()
 	c.Log.Trace().Int("size", len(data)).Msg("downloading content")
-	c.Wg = &sync.WaitGroup{}
 
 	c.filterContentByUserSelection()
 
@@ -111,12 +110,13 @@ func (c *Core[C, S]) startDownload() {
 		Str("into", c.GetDownloadDir()).
 		Msg("downloading content")
 
-	if err := c.processDownloads(ctx); err != nil {
+	wg := &sync.WaitGroup{}
+	if err := c.processDownloads(ctx, wg); err != nil {
 		c.Log.Trace().Err(err).Msg("download failed")
 		return
 	}
 
-	c.cleanupAfterDownload()
+	c.cleanupAfterDownload(wg)
 }
 
 type downloadUrl struct {

@@ -85,7 +85,7 @@ func TestCore_ContentPath(t *testing.T) {
 			chapter: ChapterMock{
 				Title: "Christmas Special",
 			},
-			expected: filepath.Join(baseDir, "Spice and Wolf", "Spice and Wolf Christmas Special (OneShot)"),
+			expected: filepath.Join(baseDir, "Spice and Wolf", "Spice and Wolf Christmas Special (One Shot)"),
 		},
 	}
 	for _, tt := range tests {
@@ -115,7 +115,7 @@ func TestCore_ContentDir(t *testing.T) {
 				Chapter: "",
 				Title:   "Oneshot Title",
 			},
-			want: "Spice and Wolf Oneshot Title (OneShot)",
+			want: "Spice and Wolf Oneshot Title (One Shot)",
 		},
 		{
 			name: "Numeric Chapter",
@@ -139,7 +139,7 @@ func TestCore_ContentDir(t *testing.T) {
 				Chapter: "",
 				Title:   "Bonus",
 			},
-			want: "Spice and Wolf Bonus (OneShot)",
+			want: "Spice and Wolf Bonus (One Shot)",
 		},
 	}
 	for _, tt := range tests {

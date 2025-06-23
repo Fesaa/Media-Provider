@@ -15,7 +15,6 @@ import (
 	"path"
 	"slices"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -85,9 +84,12 @@ type Core[C Chapter, S Series[C]] struct {
 
 	SeriesInfo S
 
-	ToDownload      []C
-	HasDownloaded   []string
+	ToDownload []C
+	// Path to the directory container the chapters files
+	HasDownloaded []string
+	// Content already on disk before download started
 	ExistingContent []Content
+	// Content on disk that has to be removed as it has been redownloaded
 	ToRemoveContent []string
 
 	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
@@ -97,15 +99,16 @@ type Core[C Chapter, S Series[C]] struct {
 	Preference    *models.Preference
 	hasWarnedTags bool
 
+	// # Chapters downloaded
 	ContentDownloaded int
-	ImagesDownloaded  int
-	LastTime          time.Time
-	LastRead          int
+	// Total amount of images downloaded
+	ImagesDownloaded int
+	LastTime         time.Time
+	LastRead         int
 
 	failedDownloads int
 
 	cancel context.CancelFunc
-	Wg     *sync.WaitGroup
 }
 
 func (c *Core[C, S]) DisplayInformation() DisplayInformation {

@@ -270,9 +270,9 @@ func TestClient_QueueProgressing(t *testing.T) {
 
 	// Setup state and some items to download
 	spiceAndWolf.SetState(payload.ContentStateDownloading)
-	spiceAndWolf.(*MockContent).Core.ToDownload = []ID{"a", "b"}
+	spiceAndWolf.(*MockContent).ToDownload = []ID{"a", "b"}
 	theExecutionerAndHerWayOfLife.SetState(payload.ContentStateReady)
-	theExecutionerAndHerWayOfLife.(*MockContent).Core.ToDownload = []ID{"a", "b"}
+	theExecutionerAndHerWayOfLife.(*MockContent).ToDownload = []ID{"a", "b"}
 	c.content.Set(spiceAndWolf.Id(), spiceAndWolf)
 	c.content.Set(theExecutionerAndHerWayOfLife.Id(), theExecutionerAndHerWayOfLife)
 

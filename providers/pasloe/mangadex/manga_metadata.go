@@ -216,6 +216,8 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		if count, ok := m.getCiStatus(); ok {
 			ci.Count = count
 		}
+	} else {
+		ci.Format = "Special"
 	}
 
 	if v, err := strconv.Atoi(chapter.Attributes.Volume); err == nil {
