@@ -97,14 +97,20 @@ func (c *Core[C, S]) ContentDir(chapter C) string {
 		return finalOneShotPath
 	}
 
+	fileName := c.impl.Title()
+	// Add vol marker in the file name when not using volume dirs
+	if chapter.GetVolume() != "" && config.DisableVolumeDirs {
+		fileName += fmt.Sprintf(" Vol. %s", chapter.GetVolume())
+	}
+
 	if _, err := strconv.ParseFloat(chapter.GetChapter(), 32); err == nil {
 		padded := utils.PadFloatFromString(chapter.GetChapter(), 4)
-		return fmt.Sprintf("%s Ch. %s", c.impl.Title(), padded)
+		return fmt.Sprintf("%s Ch. %s", fileName, padded)
 	} else if chapter.GetChapter() != "" {
 		c.Log.Warn().Err(err).Str("chapter", chapter.GetChapter()).Msg("unable to parse chapter number, not padding")
 	}
 
-	return fmt.Sprintf("%s Ch. %s", c.impl.Title(), chapter.GetChapter())
+	return fmt.Sprintf("%s Ch. %s", fileName, chapter.GetChapter())
 }
 
 var (
