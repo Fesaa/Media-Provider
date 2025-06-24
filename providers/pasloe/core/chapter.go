@@ -114,7 +114,7 @@ func (c *Core[C, S]) ContentDir(chapter C) string {
 }
 
 var (
-	contentRegex    = regexp.MustCompile(".* (?:Ch|Vol)\\. ([\\d|\\.]+).cbz")
+	contentRegex    = regexp.MustCompile(".* (?:Vol\\. [\\d|\\.]+ )?(?:Ch|Vol)\\. ([\\d|\\.]+).cbz")
 	oneShotRegexOld = regexp.MustCompile(".+ One ?Shot .+\\.cbz")
 	oneShotRegex    = regexp.MustCompile(".+ \\(One ?Shot\\).cbz")
 )

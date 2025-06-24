@@ -191,6 +191,11 @@ func TestCore_IsContent(t *testing.T) {
 			diskName: "My Manga Ch. 0012.pdf",
 			want:     false,
 		},
+		{
+			name:     "Valid format with Volume",
+			diskName: "My Manga Vol. 5 Ch. 0007.cbz",
+			want:     true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
