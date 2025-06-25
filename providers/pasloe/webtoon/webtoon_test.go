@@ -277,15 +277,6 @@ func TestWebtoon_ContentPath(t *testing.T) {
 	}
 }
 
-func TestWebtoon_ContentKey(t *testing.T) {
-	wt := tempWebtoon(t, io.Discard)
-	want := "8"
-	got := wt.ContentKey(chapter())
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
-	}
-}
-
 func TestWebtoon_ContentUrls(t *testing.T) {
 	wt := tempWebtoon(t, io.Discard)
 	mock := mockRepository{}

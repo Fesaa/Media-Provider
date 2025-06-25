@@ -477,16 +477,6 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 
 }
 
-func TestManga_ContentKey(t *testing.T) {
-	m := tempManga(t, req(), io.Discard, &mockRepository{})
-
-	got := m.ContentKey(chapter())
-	want := RainbowsAfterStormsLastChapterID
-	if got != want {
-		t.Errorf("got %s, want %s", got, want)
-	}
-}
-
 func TestManga_ContentUrls(t *testing.T) {
 	m := tempManga(t, req(), io.Discard, &mockRepository{
 		GetChapterImagesFunc: func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {

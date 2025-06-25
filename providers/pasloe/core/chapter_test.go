@@ -102,7 +102,7 @@ func TestCore_ContentPath(t *testing.T) {
 	}
 }
 
-func TestCore_ContentDir(t *testing.T) {
+func TestCore_ContentFileName(t *testing.T) {
 	type testCase[T Chapter] struct {
 		name    string
 		chapter ChapterMock
@@ -152,6 +152,34 @@ func TestCore_ContentDir(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCore_ContentFileName_DuplicateChapters(t *testing.T) {
+	core := testBase(t, req(), io.Discard, ProviderMock{
+		title: "Spice and Wolf",
+	})
+
+	core.SeriesInfo = &SeriesMock{
+		chapters: []ChapterMock{
+			SimpleChapter("1", "1", "1"),
+			SimpleChapter("2", "2", "1"),
+			SimpleChapter("3", "1", "2"),
+			SimpleChapter("4", "2", "2"),
+		},
+	}
+
+	want := "Spice and Wolf Vol. 1 Ch. 0001"
+	got := core.ContentFileName(SimpleChapter("1", "1", "1"))
+	if got != want {
+		t.Errorf("ContentFileName() = %v, want %v", got, want)
+	}
+
+	want = "Spice and Wolf Vol. 2 Ch. 0001"
+	got = core.ContentFileName(SimpleChapter("3", "1", "2"))
+	if got != want {
+		t.Errorf("ContentFileName() = %v, want %v", got, want)
+	}
+
 }
 
 func TestCore_IsContent(t *testing.T) {
@@ -222,18 +250,4 @@ func TestCore_IsContent(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestCore_ContentKey(t *testing.T) {
-	core := testBase(t, req(), io.Discard, ProviderMock{})
-
-	want := "Spice and Wolf"
-	got := core.ContentKey(ChapterMock{
-		Id: "Spice and Wolf",
-	})
-
-	if got != want {
-		t.Errorf("ContentKey() = %v, want %v", got, want)
-	}
-
 }

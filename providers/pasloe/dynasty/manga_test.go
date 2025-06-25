@@ -297,17 +297,6 @@ func TestManga_ContentPath(t *testing.T) {
 	}
 }
 
-func TestManga_ContentKey(t *testing.T) {
-	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer, &mockRepository{})
-
-	got := m.ContentKey(chapter())
-	want := "sailor_girlfriend_ch4_5"
-	if got != want {
-		t.Errorf("m.ContentKey() = %q, want %q", got, want)
-	}
-}
-
 func TestManga_ContentLogger(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer, &mockRepository{})
