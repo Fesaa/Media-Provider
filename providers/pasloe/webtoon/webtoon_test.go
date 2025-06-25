@@ -260,7 +260,7 @@ func TestWebtoon_ContentDir(t *testing.T) {
 	wt := tempWebtoon(t, io.Discard)
 
 	want := WebToonName + " Ch. 0008"
-	got := wt.ContentDir(chapter())
+	got := wt.ContentFileName(chapter())
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}

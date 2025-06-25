@@ -436,7 +436,7 @@ func TestManga_ContentDir(t *testing.T) {
 	m := tempManga(t, req(), io.Discard, &mockRepository{})
 	m.SeriesInfo = mangaResp()
 
-	got := m.ContentDir(chapter())
+	got := m.ContentFileName(chapter())
 	want := "Rainbows After Storms Ch. 0162"
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
@@ -450,7 +450,7 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 
 	chpt := chapter()
 	chpt.Attributes.Chapter = "NotAFloat"
-	got := m.ContentDir(chpt)
+	got := m.ContentFileName(chpt)
 	want := "Rainbows After Storms Ch. NotAFloat"
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)
@@ -463,7 +463,7 @@ func TestManga_ContentDirBadChapter(t *testing.T) {
 	buf.Reset()
 
 	chpt.Attributes.Chapter = ""
-	got = m.ContentDir(chpt)
+	got = m.ContentFileName(chpt)
 	want = "Rainbows After Storms My Lover (One Shot)"
 	if got != want {
 		t.Errorf("got %s, want %s", got, want)

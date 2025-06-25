@@ -147,8 +147,8 @@ func TestCore_ContentDir(t *testing.T) {
 			core := testBase(t, req(), io.Discard, ProviderMock{
 				title: "Spice and Wolf",
 			})
-			if got := core.ContentDir(tt.chapter); got != tt.want {
-				t.Errorf("ContentDir() = %v, want %v", got, tt.want)
+			if got := core.ContentFileName(tt.chapter); got != tt.want {
+				t.Errorf("ContentFileName() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -277,11 +277,11 @@ func TestManga_ContentDir(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer, &mockRepository{})
 
-	got := m.ContentDir(chapter())
+	got := m.ContentFileName(chapter())
 	want := SailorGirlFriend + " Ch. 0004.5"
 
 	if got != want {
-		t.Errorf("m.ContentDir() = %q, want %q", got, want)
+		t.Errorf("m.ContentFileName() = %q, want %q", got, want)
 	}
 
 }

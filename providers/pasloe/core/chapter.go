@@ -70,33 +70,22 @@ func (c *Core[C, S]) ContentPath(chapter C) string {
 		base = path.Join(base, c.VolumeDir(chapter))
 	}
 
-	return path.Join(base, c.ContentDir(chapter))
+	return path.Join(base, c.ContentFileName(chapter))
 }
 
 func (c *Core[C, S]) VolumeDir(chapter C) string {
 	return fmt.Sprintf("%s Vol. %s", c.impl.Title(), chapter.GetVolume())
 }
 
-func (c *Core[C, S]) ContentDir(chapter C) string {
+func (c *Core[C, S]) ContentFileName(chapter C) string {
 	if chapter.GetChapter() == "" {
-		oneShotPath := fmt.Sprintf("%s %s", c.impl.Title(), chapter.GetTitle())
-		if !config.DisableOneShotInFileName {
-			oneShotPath += " (One Shot)"
-		}
-
-		finalOneShotPath := oneShotPath
-		for i := 0; slices.Contains(c.HasDownloaded, finalOneShotPath); i++ {
-			finalOneShotPath = fmt.Sprintf("%s (%d)", oneShotPath, i)
-			if i >= 25 {
-				log := c.ContentLogger(chapter)
-				log.Warn().Int("tries", i).Msg("Amount of unnamed, or same named OneShots has exceeded 25. Falling back to random generated string")
-				finalOneShotPath = fmt.Sprintf("%s (%s)", oneShotPath, utils.MustReturn(utils.GenerateSecret(8)))
-			}
-		}
-
-		return finalOneShotPath
+		return c.OneShotFileName(chapter)
 	}
 
+	return c.DefaultFileName(chapter)
+}
+
+func (c *Core[C, S]) DefaultFileName(chapter C) string {
 	fileName := c.impl.Title()
 	// Add vol marker in the file name when not using volume dirs
 	if chapter.GetVolume() != "" && config.DisableVolumeDirs {
@@ -111,6 +100,25 @@ func (c *Core[C, S]) ContentDir(chapter C) string {
 	}
 
 	return fmt.Sprintf("%s Ch. %s", fileName, chapter.GetChapter())
+}
+
+func (c *Core[C, S]) OneShotFileName(chapter C) string {
+	oneShotPath := fmt.Sprintf("%s %s", c.impl.Title(), chapter.GetTitle())
+	if !config.DisableOneShotInFileName {
+		oneShotPath += " (One Shot)"
+	}
+
+	finalOneShotPath := oneShotPath
+	for i := 0; slices.Contains(c.HasDownloaded, finalOneShotPath); i++ {
+		finalOneShotPath = fmt.Sprintf("%s (%d)", oneShotPath, i)
+		if i >= 25 {
+			log := c.ContentLogger(chapter)
+			log.Warn().Int("tries", i).Msg("Amount of unnamed, or same named OneShots has exceeded 25. Falling back to random generated string")
+			finalOneShotPath = fmt.Sprintf("%s (%s)", oneShotPath, utils.MustReturn(utils.GenerateSecret(8)))
+		}
+	}
+
+	return finalOneShotPath
 }
 
 var (
