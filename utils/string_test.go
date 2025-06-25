@@ -222,3 +222,34 @@ func TestOrElse(t *testing.T) {
 		})
 	}
 }
+
+func TestTrimLeadingZero(t *testing.T) {
+	tests := []struct {
+		name string
+		args string
+		want string
+	}{
+		{
+			name: "Empty",
+			args: "",
+			want: "",
+		},
+		{
+			name: "Leading zeroes",
+			args: "001",
+			want: "1",
+		},
+		{
+			name: "Trailing zeroes",
+			args: "0010",
+			want: "10",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := TrimLeadingZero(tt.args); got != tt.want {
+				t.Errorf("TrimLeadingZero() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

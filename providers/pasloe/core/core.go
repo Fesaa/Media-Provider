@@ -61,6 +61,9 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 type Content struct {
 	Name string
 	Path string
+	// The following fields are parsed from the file name
+	Chapter string
+	Volume  string
 }
 
 type Core[C Chapter, S Series[C]] struct {
@@ -173,6 +176,18 @@ func (c *Core[C, S]) GetContentByName(name string) (Content, bool) {
 func (c *Core[C, S]) GetContentByPath(path string) (Content, bool) {
 	for _, content := range c.ExistingContent {
 		if content.Path == path {
+			return content, true
+		}
+	}
+	return Content{}, false
+}
+
+func (c *Core[C, S]) GetContentByVolumeAndChapter(volume string, chapter string) (Content, bool) {
+	for _, content := range c.ExistingContent {
+		if content.Volume == volume && content.Chapter == chapter {
+			return content, true
+		}
+		if content.Volume == "" && content.Chapter == chapter {
 			return content, true
 		}
 	}

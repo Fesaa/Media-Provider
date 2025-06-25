@@ -159,17 +159,22 @@ func TestCore_IsContent(t *testing.T) {
 		name     string
 		diskName string
 		want     bool
+		chapter  string
+		volume   string
 	}
 	tests := []testCase[ChapterMock]{
 		{
 			name:     "Valid Chapter Format",
 			diskName: "My Manga Ch. 0012.cbz",
 			want:     true,
+			volume:   "",
+			chapter:  "12",
 		},
 		{
 			name:     "Valid Volume Format",
 			diskName: "My Manga Vol. 05.cbz",
 			want:     true,
+			volume:   "5",
 		},
 		{
 			name:     "Valid OneShot Format (new)",
@@ -195,14 +200,25 @@ func TestCore_IsContent(t *testing.T) {
 			name:     "Valid format with Volume",
 			diskName: "My Manga Vol. 5 Ch. 0007.cbz",
 			want:     true,
+			volume:   "5",
+			chapter:  "7",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			core := testBase(t, req(), io.Discard, ProviderMock{})
 
-			if got := core.IsContent(tt.diskName); got != tt.want {
+			content, got := core.IsContent(tt.diskName)
+			if got != tt.want {
 				t.Errorf("IsContent() = %v, want %v", got, tt.want)
+			}
+
+			if content.Volume != tt.volume {
+				t.Errorf("IsContent() = %v,\n want %v", content.Volume, tt.volume)
+			}
+
+			if content.Chapter != tt.chapter {
+				t.Errorf("IsContent() = %v,\n want %v", content.Chapter, tt.chapter)
 			}
 		})
 	}

@@ -122,23 +122,43 @@ func (c *Core[C, S]) OneShotFileName(chapter C) string {
 }
 
 var (
-	contentRegex    = regexp.MustCompile(".* (?:Vol\\. [\\d|\\.]+ )?(?:Ch|Vol)\\. ([\\d|\\.]+).cbz")
-	oneShotRegexOld = regexp.MustCompile(".+ One ?Shot .+\\.cbz")
-	oneShotRegex    = regexp.MustCompile(".+ \\(One ?Shot\\).cbz")
+	contentVolumeAndChapterRegex = regexp.MustCompile(".* (?:Vol\\. ([\\d\\.]+)) (?:Ch)\\. ([\\d\\.]+).cbz")
+	contentChapterRegex          = regexp.MustCompile(".* Ch\\. ([\\d\\.]+).cbz")
+	contentVolumeRegex           = regexp.MustCompile(".* Vol\\. ([\\d\\.]+).cbz")
+	oneShotRegexOld              = regexp.MustCompile(".+ One ?Shot .+\\.cbz")
+	oneShotRegex                 = regexp.MustCompile(".+ \\(One ?Shot\\).cbz")
 )
 
-func (c *Core[C, S]) IsContent(name string) bool {
-	if contentRegex.MatchString(name) {
-		return true
+func (c *Core[C, S]) IsContent(name string) (Content, bool) {
+	matches := contentVolumeAndChapterRegex.FindStringSubmatch(name)
+	if len(matches) == 3 {
+		return Content{
+			Volume:  utils.TrimLeadingZero(matches[1]),
+			Chapter: utils.TrimLeadingZero(matches[2]),
+		}, true
+	}
+
+	matches = contentVolumeRegex.FindStringSubmatch(name)
+	if len(matches) == 2 {
+		return Content{
+			Volume: utils.TrimLeadingZero(matches[1]),
+		}, true
+	}
+
+	matches = contentChapterRegex.FindStringSubmatch(name)
+	if len(matches) == 2 {
+		return Content{
+			Chapter: utils.TrimLeadingZero(matches[1]),
+		}, true
 	}
 
 	if oneShotRegex.MatchString(name) {
-		return true
+		return Content{}, true
 	}
 
 	if oneShotRegexOld.MatchString(name) {
-		return true
+		return Content{}, true
 	}
 
-	return false
+	return Content{}, false
 }

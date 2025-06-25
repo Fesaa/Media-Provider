@@ -110,7 +110,7 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider P
 	c := dig.New()
 	scope := c.Scope("testScope")
 
-	tempDir := utils.OrElse(req.BaseDir, t.TempDir())
+	tempDir := utils.OrElse(req.BaseDir, "")
 	req.BaseDir = "" // Reset base dir so prevent stacking
 	client := PasloeClient{BaseDir: tempDir}
 

@@ -552,7 +552,8 @@ func TestManga_ContentRegex(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if m.IsContent(tc.s) != tc.want {
+			_, ok := m.IsContent(tc.s)
+			if ok != tc.want {
 				t.Errorf("got %v, want %v for %s", !tc.want, tc.want, tc.s)
 			}
 		})
