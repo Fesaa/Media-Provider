@@ -94,6 +94,10 @@ func TestCore_ContentPath(t *testing.T) {
 				title:      tt.req.TempTitle,
 				contentDir: tt.chapter.Title,
 			})
+			c.SeriesInfo = &SeriesMock{
+				chapters: []ChapterMock{},
+			}
+
 			got := c.ContentPath(tt.chapter)
 			if got != tt.expected {
 				t.Errorf("ContentPath() = %v,\n want %v", got, tt.expected)
