@@ -277,11 +277,11 @@ func TestManga_ContentDir(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer, &mockRepository{})
 
-	got := m.ContentDir(chapter())
+	got := m.ContentFileName(chapter())
 	want := SailorGirlFriend + " Ch. 0004.5"
 
 	if got != want {
-		t.Errorf("m.ContentDir() = %q, want %q", got, want)
+		t.Errorf("m.ContentFileName() = %q, want %q", got, want)
 	}
 
 }
@@ -294,17 +294,6 @@ func TestManga_ContentPath(t *testing.T) {
 	want := path.Join(m.Client.GetBaseDir(), fmt.Sprintf("%s/%s Ch. 0004.5", SailorGirlFriend, SailorGirlFriend))
 	if got != want {
 		t.Errorf("m.ContentPath() = %q, want %q", got, want)
-	}
-}
-
-func TestManga_ContentKey(t *testing.T) {
-	var buffer bytes.Buffer
-	m := tempManga(t, req(), &buffer, &mockRepository{})
-
-	got := m.ContentKey(chapter())
-	want := "sailor_girlfriend_ch4_5"
-	if got != want {
-		t.Errorf("m.ContentKey() = %q, want %q", got, want)
 	}
 }
 
@@ -357,15 +346,15 @@ func TestManga_ContentRegex(t *testing.T) {
 	var buffer bytes.Buffer
 	m := tempManga(t, req(), &buffer, &mockRepository{})
 
-	if m.IsContent("Not a Valid Chapter") {
+	if _, ok := m.IsContent("Not a Valid Chapter"); ok {
 		t.Error("m.ContentRegex().MatchString() returned true")
 	}
 
-	if !m.IsContent("Sailor Girlfriend Ch. 0004.5.cbz") {
+	if _, ok := m.IsContent("Sailor Girlfriend Ch. 0004.5.cbz"); !ok {
 		t.Error("m.ContentRegex().MatchString() returned false")
 	}
 
-	if !m.IsContent("Shiawase Trimming OneShot Manga Time Kirara 20th Anniversary Special Collaboration: Stardust Telepath x Shiawase Trimming.cbz") {
+	if _, ok := m.IsContent("Shiawase Trimming OneShot Manga Time Kirara 20th Anniversary Special Collaboration: Stardust Telepath x Shiawase Trimming.cbz"); !ok {
 		t.Error("m.ContentRegex().MatchString() returned false")
 	}
 }

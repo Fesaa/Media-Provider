@@ -11,9 +11,12 @@ func (c *Core[C, S]) ShouldDownload(chapter C) bool {
 		return false
 	}
 
-	content, ok := c.GetContentByName(c.ContentDir(chapter) + ".cbz")
+	content, ok := c.GetContentByName(c.ContentFileName(chapter) + ".cbz")
 	if !ok {
-		return true
+		content, ok = c.GetContentByVolumeAndChapter(chapter.GetVolume(), chapter.GetChapter())
+		if !ok {
+			return true
+		}
 	}
 
 	// Redownload

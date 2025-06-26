@@ -9,3 +9,9 @@ func AtIdx[T any](s []T, index int) T {
 
 	return s[index]
 }
+
+func ForEach[T any](s []T, f func(T)) {
+	for _, t := range s {
+		f(t)
+	}
+}

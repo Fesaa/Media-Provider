@@ -260,7 +260,7 @@ func TestWebtoon_ContentDir(t *testing.T) {
 	wt := tempWebtoon(t, io.Discard)
 
 	want := WebToonName + " Ch. 0008"
-	got := wt.ContentDir(chapter())
+	got := wt.ContentFileName(chapter())
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
@@ -273,15 +273,6 @@ func TestWebtoon_ContentPath(t *testing.T) {
 	got := wt.ContentPath(chapter())
 
 	if !strings.HasSuffix(got, want) {
-		t.Errorf("got %q, want %q", got, want)
-	}
-}
-
-func TestWebtoon_ContentKey(t *testing.T) {
-	wt := tempWebtoon(t, io.Discard)
-	want := "8"
-	got := wt.ContentKey(chapter())
-	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
@@ -363,7 +354,7 @@ func TestWebtoon_ContentRegex(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := wt.IsContent(tt.s); got != tt.match {
+			if _, got := wt.IsContent(tt.s); got != tt.match {
 				t.Errorf("got %v, want %v", got, tt.match)
 			}
 		})

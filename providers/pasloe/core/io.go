@@ -48,15 +48,17 @@ func (c *Core[C, S]) readDirectoryForContent(p string) ([]Content, error) {
 
 		}
 
-		matches := c.IsContent(entry.Name())
+		content, matches := c.IsContent(entry.Name())
 		if !matches {
 			c.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
 			continue
 		}
 		c.Log.Trace().Str("file", entry.Name()).Msg("found  content on disk")
 		out = append(out, Content{
-			Name: entry.Name(),
-			Path: path.Join(p, entry.Name()),
+			Name:    entry.Name(),
+			Path:    path.Join(p, entry.Name()),
+			Volume:  content.Volume,
+			Chapter: content.Chapter,
 		})
 	}
 

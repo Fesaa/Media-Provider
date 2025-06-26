@@ -94,6 +94,10 @@ func TestCore_ContentPath(t *testing.T) {
 				title:      tt.req.TempTitle,
 				contentDir: tt.chapter.Title,
 			})
+			c.SeriesInfo = &SeriesMock{
+				chapters: []ChapterMock{},
+			}
+
 			got := c.ContentPath(tt.chapter)
 			if got != tt.expected {
 				t.Errorf("ContentPath() = %v,\n want %v", got, tt.expected)
@@ -102,7 +106,7 @@ func TestCore_ContentPath(t *testing.T) {
 	}
 }
 
-func TestCore_ContentDir(t *testing.T) {
+func TestCore_ContentFileName(t *testing.T) {
 	type testCase[T Chapter] struct {
 		name    string
 		chapter ChapterMock
@@ -147,11 +151,39 @@ func TestCore_ContentDir(t *testing.T) {
 			core := testBase(t, req(), io.Discard, ProviderMock{
 				title: "Spice and Wolf",
 			})
-			if got := core.ContentDir(tt.chapter); got != tt.want {
-				t.Errorf("ContentDir() = %v, want %v", got, tt.want)
+			if got := core.ContentFileName(tt.chapter); got != tt.want {
+				t.Errorf("ContentFileName() = %v, want %v", got, tt.want)
 			}
 		})
 	}
+}
+
+func TestCore_ContentFileName_DuplicateChapters(t *testing.T) {
+	core := testBase(t, req(), io.Discard, ProviderMock{
+		title: "Spice and Wolf",
+	})
+
+	core.SeriesInfo = &SeriesMock{
+		chapters: []ChapterMock{
+			SimpleChapter("1", "1", "1"),
+			SimpleChapter("2", "2", "1"),
+			SimpleChapter("3", "1", "2"),
+			SimpleChapter("4", "2", "2"),
+		},
+	}
+
+	want := "Spice and Wolf Vol. 1 Ch. 0001"
+	got := core.ContentFileName(SimpleChapter("1", "1", "1"))
+	if got != want {
+		t.Errorf("ContentFileName() = %v, want %v", got, want)
+	}
+
+	want = "Spice and Wolf Vol. 2 Ch. 0001"
+	got = core.ContentFileName(SimpleChapter("3", "1", "2"))
+	if got != want {
+		t.Errorf("ContentFileName() = %v, want %v", got, want)
+	}
+
 }
 
 func TestCore_IsContent(t *testing.T) {
@@ -159,17 +191,22 @@ func TestCore_IsContent(t *testing.T) {
 		name     string
 		diskName string
 		want     bool
+		chapter  string
+		volume   string
 	}
 	tests := []testCase[ChapterMock]{
 		{
 			name:     "Valid Chapter Format",
 			diskName: "My Manga Ch. 0012.cbz",
 			want:     true,
+			volume:   "",
+			chapter:  "12",
 		},
 		{
 			name:     "Valid Volume Format",
 			diskName: "My Manga Vol. 05.cbz",
 			want:     true,
+			volume:   "5",
 		},
 		{
 			name:     "Valid OneShot Format (new)",
@@ -195,29 +232,26 @@ func TestCore_IsContent(t *testing.T) {
 			name:     "Valid format with Volume",
 			diskName: "My Manga Vol. 5 Ch. 0007.cbz",
 			want:     true,
+			volume:   "5",
+			chapter:  "7",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			core := testBase(t, req(), io.Discard, ProviderMock{})
 
-			if got := core.IsContent(tt.diskName); got != tt.want {
+			content, got := core.IsContent(tt.diskName)
+			if got != tt.want {
 				t.Errorf("IsContent() = %v, want %v", got, tt.want)
+			}
+
+			if content.Volume != tt.volume {
+				t.Errorf("IsContent() = %v,\n want %v", content.Volume, tt.volume)
+			}
+
+			if content.Chapter != tt.chapter {
+				t.Errorf("IsContent() = %v,\n want %v", content.Chapter, tt.chapter)
 			}
 		})
 	}
-}
-
-func TestCore_ContentKey(t *testing.T) {
-	core := testBase(t, req(), io.Discard, ProviderMock{})
-
-	want := "Spice and Wolf"
-	got := core.ContentKey(ChapterMock{
-		Id: "Spice and Wolf",
-	})
-
-	if got != want {
-		t.Errorf("ContentKey() = %v, want %v", got, want)
-	}
-
 }

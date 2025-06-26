@@ -50,3 +50,9 @@ func pad(str string, n int) string {
 	}
 	return str
 }
+
+func TrimLeadingZero(s string) string {
+	return strings.TrimLeftFunc(s, func(r rune) bool {
+		return r == '0'
+	})
+}

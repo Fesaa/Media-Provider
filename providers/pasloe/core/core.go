@@ -61,6 +61,9 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 type Content struct {
 	Name string
 	Path string
+	// The following fields are parsed from the file name
+	Chapter string
+	Volume  string
 }
 
 type Core[C Chapter, S Series[C]] struct {
@@ -83,6 +86,9 @@ type Core[C Chapter, S Series[C]] struct {
 	Req       payload.DownloadRequest
 
 	SeriesInfo S
+	// hasDuplicatedChapters is true if the same chapter number is used across different volumes
+	// forcing us to use volumes in the file name
+	hasDuplicatedChapters utils.Settable[bool]
 
 	ToDownload []C
 	// Path to the directory container the chapters files
@@ -173,6 +179,18 @@ func (c *Core[C, S]) GetContentByName(name string) (Content, bool) {
 func (c *Core[C, S]) GetContentByPath(path string) (Content, bool) {
 	for _, content := range c.ExistingContent {
 		if content.Path == path {
+			return content, true
+		}
+	}
+	return Content{}, false
+}
+
+func (c *Core[C, S]) GetContentByVolumeAndChapter(volume string, chapter string) (Content, bool) {
+	for _, content := range c.ExistingContent {
+		if content.Volume == volume && content.Chapter == chapter {
+			return content, true
+		}
+		if content.Volume == "" && content.Chapter == chapter {
 			return content, true
 		}
 	}
@@ -314,9 +332,9 @@ func (c *Core[C, S]) prepareContentToDownload() ([]C, time.Duration) {
 	c.ToDownload = utils.Filter(data, func(t C) bool {
 		download := c.ShouldDownload(t)
 		if !download {
-			c.Log.Trace().Str("key", c.ContentKey(t)).Msg("content already downloaded, skipping")
+			c.Log.Trace().Str("key", t.GetId()).Msg("content already downloaded, skipping")
 		} else {
-			c.Log.Trace().Str("key", c.ContentKey(t)).Msg("adding content to download queue")
+			c.Log.Trace().Str("key", t.GetId()).Msg("adding content to download queue")
 		}
 		return download
 	})
