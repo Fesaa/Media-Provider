@@ -10,6 +10,7 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"time"
 )
 
 type Builder struct {
@@ -17,6 +18,7 @@ type Builder struct {
 	httpClient *menou.Client
 	ps         core.Client
 	repository Repository
+	cache      services.CacheService
 }
 
 func (b *Builder) Provider() models.Provider {
@@ -29,10 +31,13 @@ func (b *Builder) Logger() zerolog.Logger {
 
 func (b *Builder) Normalize(t []SearchResult) []payload.Info {
 	return utils.Map(t, func(t SearchResult) payload.Info {
+		if err := b.cache.Set(t.Id, []byte(t.ImageUrl), time.Hour*24); err != nil {
+			b.log.Warn().Err(err).Str("id", t.Id).Msg("failed to cache image")
+		}
 		return payload.Info{
 			Name:     t.Title,
-			Tags:     nil,
-			ImageUrl: t.ImageUrl,
+			Tags:     []payload.InfoTag{},
+			ImageUrl: fmt.Sprintf("proxy/bato/covers/%s", t.Id),
 			InfoHash: t.Id,
 			RefUrl:   fmt.Sprintf("%s/title/%s", Domain, t.Id),
 			Provider: models.BATO,
@@ -98,11 +103,12 @@ func (b *Builder) Client() services.Client {
 	return b.ps
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps core.Client, repository Repository) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps core.Client, repository Repository, cache services.CacheService) *Builder {
 	return &Builder{
 		log:        log.With().Str("handler", "dynasty-provider").Logger(),
 		httpClient: httpClient,
 		ps:         ps,
 		repository: repository,
+		cache:      cache,
 	}
 }
