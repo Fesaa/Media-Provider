@@ -107,7 +107,7 @@ func (c *Core[C, S]) ShouldIncludeVolume() bool {
 		return true
 	}
 
-	if b, err := c.hasDuplicatedChapters.Get(); err == nil {
+	if b, ok := c.hasDuplicatedChapters.Get(); ok {
 		return b
 	}
 
