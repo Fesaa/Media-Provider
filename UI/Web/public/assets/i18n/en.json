@@ -203,9 +203,9 @@
       }
     },
     "search-result": {
-      "download": "{{shared.download}}",
+      "download": "{{shared.download}}: {{name}}",
       "add-as-sub": "Add as a subscription",
-      "sub-header": "Subscribe"
+      "sub-header": "Subscribe to: {{name}}"
     },
     "subscription-dialog": {
       "general": "General",

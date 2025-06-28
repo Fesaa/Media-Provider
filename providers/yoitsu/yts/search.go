@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 )
 
 const URL string = "https://yts.mx/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
@@ -23,12 +25,12 @@ func (o SearchOptions) toURL() string {
 		o.SortBy = "title"
 	}
 
-	return fmt.Sprintf(URL, o.Query, o.Page, o.SortBy)
+	return fmt.Sprintf(URL, url.QueryEscape(o.Query), o.Page, o.SortBy)
 }
 
 func (b *Builder) Search(options SearchOptions) (*SearchResult, error) {
-	url := options.toURL()
-	req, err := b.httpClient.Get(url)
+	uri := options.toURL()
+	req, err := b.httpClient.Get(uri)
 	if err != nil {
 		return nil, err
 	}
@@ -37,6 +39,10 @@ func (b *Builder) Search(options SearchOptions) (*SearchResult, error) {
 			b.log.Warn().Err(err).Msg("failed to close response body")
 		}
 	}(req.Body)
+
+	if req.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("search returned status code %d", req.StatusCode)
+	}
 
 	data, err := io.ReadAll(req.Body)
 	if err != nil {
