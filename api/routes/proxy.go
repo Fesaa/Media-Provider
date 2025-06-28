@@ -32,7 +32,7 @@ func RegisterProxyRoutes(pr proxyRoutes) {
 	proxy := pr.Router.Group("/proxy", pr.Auth.Middleware, pr.Cache)
 	proxy.Get("/mangadex/covers/:id/:filename", pr.MangaDexCoverProxy)
 	proxy.Get("/webtoon/covers/:date/:id/:filename", pr.WebToonCoverProxy)
-	proxy.Get("/bato/covers/:id", pr.BAtoCoverProxy)
+	proxy.Get("/bato/covers/:id", pr.BatoCoverProxy)
 }
 
 func (pr *proxyRoutes) mangadexUrl(id, fileName string) string {
@@ -84,8 +84,8 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 		})
 	}
 
-	if resp.StatusCode != 200 {
-		pr.Log.Error().Err(err).Msg("Failed to download cover image from mangadex")
+	if resp.StatusCode != http.StatusOK {
+		pr.Log.Error().Int("statusCode", resp.StatusCode).Msg("Failed to download cover image from webtoon")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": pr.Transloco.GetTranslation("request-failed"),
 		})
@@ -125,8 +125,8 @@ func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
 		})
 	}
 
-	if resp.StatusCode != 200 {
-		pr.Log.Error().Err(err).Msg("Failed to download cover image from mangadex")
+	if resp.StatusCode != http.StatusOK {
+		pr.Log.Error().Int("statusCode", resp.StatusCode).Msg("Failed to download cover image from mangadex")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": pr.Transloco.GetTranslation("request-failed"),
 		})
@@ -150,7 +150,7 @@ func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
 	return c.Send(data)
 }
 
-func (pr *proxyRoutes) BAtoCoverProxy(c *fiber.Ctx) error {
+func (pr *proxyRoutes) BatoCoverProxy(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
 		return fiber.ErrBadRequest
@@ -167,6 +167,13 @@ func (pr *proxyRoutes) BAtoCoverProxy(c *fiber.Ctx) error {
 	resp, err := pr.HttpClient.Get(string(uri))
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to download cover image from bato")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": pr.Transloco.GetTranslation("request-failed"),
+		})
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		pr.Log.Error().Int("statusCode", resp.StatusCode).Msg("Failed to download cover image from bato")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": pr.Transloco.GetTranslation("request-failed"),
 		})
