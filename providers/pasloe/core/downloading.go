@@ -268,7 +268,7 @@ func (c *Core[C, S]) downloadURL(
 ) {
 	l.Trace().Int("idx", urlData.idx).Str("url", urlData.url).Msg("downloading page")
 
-	err := c.DownloadContent(urlData.idx, t, urlData.url)
+	err := c.DownloadContent(innerCtx, urlData.idx, t, urlData.url)
 	if err == nil {
 		time.Sleep(1 * time.Second)
 		return
@@ -304,7 +304,7 @@ func (c *Core[C, S]) processFailedDownloads(
 		case <-ctx.Done():
 			return
 		default:
-			if err := c.DownloadContent(reTry.idx, t, reTry.url); err != nil {
+			if err := c.DownloadContent(innerCtx, reTry.idx, t, reTry.url); err != nil {
 				l.Error().Err(err).Str("url", reTry.url).Msg("Failed final download")
 				select {
 				case errCh <- fmt.Errorf("final download failed %w", err):

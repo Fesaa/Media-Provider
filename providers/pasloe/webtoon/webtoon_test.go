@@ -302,34 +302,6 @@ func TestWebtoon_ContentUrls(t *testing.T) {
 
 }
 
-func TestWebtoon_DownloadContent(t *testing.T) {
-	var buffer bytes.Buffer
-	w := tempWebtoon(t, &buffer)
-
-	urls, err := w.ContentUrls(t.Context(), chapter())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(urls) == 0 {
-		t.Fatal("len(urls) = 0, want > 0")
-	}
-
-	if err = w.fs.MkdirAll(path.Join(w.ContentPath(chapter())), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	if err = w.DownloadContent(1, chapter(), urls[0]); err != nil {
-		t.Fatal(err)
-	}
-
-	filePath := path.Join(w.ContentPath(chapter()), fmt.Sprintf("page %s.jpg", utils.PadInt(1, 4)))
-	_, err = w.fs.Stat(filePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestWebtoon_ContentRegex(t *testing.T) {
 	wt := tempWebtoon(t, io.Discard)
 

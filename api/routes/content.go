@@ -65,7 +65,7 @@ func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
 			})
 		}
 
-		cr.Log.Error().Err(err).Msg("An error occurred while sending a message down to Content") // TODO: better msg
+		cr.Log.Error().Err(err).Msg("An error occurred while sending a message down to Content")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})

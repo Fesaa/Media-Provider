@@ -429,7 +429,7 @@ func TestCoverReplace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	originalCover, err := m.Download(m.SeriesInfo.CoverUrl, false)
+	originalCover, err := m.Download(t.Context(), m.SeriesInfo.CoverUrl, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -480,7 +480,7 @@ func TestCoverNoReplace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	originalCover, err := m.Download(m.SeriesInfo.CoverUrl, false)
+	originalCover, err := m.Download(t.Context(), m.SeriesInfo.CoverUrl, false)
 	if err != nil {
 		t.Fatal(err)
 	}

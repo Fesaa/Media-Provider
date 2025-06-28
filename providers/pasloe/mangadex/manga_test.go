@@ -865,7 +865,7 @@ func TestReplaceCover(t *testing.T) {
 		t.Fatal("chapterSeven.Attributes.Volume cover not available")
 	}
 
-	coverBytes, _, err := m.getBetterChapterCover(*chapterSeven, originalCover)
+	coverBytes, _, err := m.getBetterChapterCover(t.Context(), *chapterSeven, originalCover)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -939,7 +939,7 @@ func TestReplaceCoverDestructionLover(t *testing.T) {
 		t.Fatalf("chapterSeven.Attributes.Volume (%s) cover not available", chapterFive.Attributes.Volume)
 	}
 
-	coverBytes, firstPage, err := m.getBetterChapterCover(*chapterFive, originalCover)
+	coverBytes, firstPage, err := m.getBetterChapterCover(t.Context(), *chapterFive, originalCover)
 	if err != nil {
 		t.Fatal(err)
 	}

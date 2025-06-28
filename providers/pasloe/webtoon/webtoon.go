@@ -117,7 +117,7 @@ func (w *webtoon) WriteContentMetaData(ctx context.Context, chapter Chapter) err
 			}
 			return chapter.ImageUrl
 		}()
-		if err := w.DownloadAndWrite(imageUrl, filePath); err != nil {
+		if err := w.DownloadAndWrite(ctx, imageUrl, filePath); err != nil {
 			return err
 		}
 	}

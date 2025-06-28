@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,8 +9,8 @@ import (
 	"time"
 )
 
-func (c *Core[C, S]) Download(url string, tryAgain ...bool) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func (c *Core[C, S]) Download(ctx context.Context, url string, tryAgain ...bool) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -59,11 +60,11 @@ func (c *Core[C, S]) Download(url string, tryAgain ...bool) ([]byte, error) {
 
 	c.Log.Warn().Dur("sleeping_for", d).Msg("Hit rate limit, sleeping")
 	time.Sleep(d)
-	return c.Download(url, false)
+	return c.Download(ctx, url, false)
 }
 
-func (c *Core[C, S]) DownloadAndWrite(url string, filePath string, tryAgain ...bool) error {
-	data, err := c.Download(url, tryAgain...)
+func (c *Core[C, S]) DownloadAndWrite(ctx context.Context, url string, filePath string, tryAgain ...bool) error {
+	data, err := c.Download(ctx, url, tryAgain...)
 	if err != nil {
 		return err
 	}
