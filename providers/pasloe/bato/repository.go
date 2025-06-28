@@ -215,16 +215,11 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 	chpt.Volume, chpt.Chapter = r.extractVolumeAndChapter(chpt.Id, uriEl.Text())
 
 	// One Shot
-	if chpt.Volume == "" && chpt.Chapter == "" {
-		chpt.Title = utils.OrElse(extractTitle(uriEl.Text()), uriEl.Text())
-	} else {
-		chpt.Title = extractTitle(uriEl.Text())
-
-		if chpt.Title == "" {
-			titleText := s.Find("div > span.opacity-80").First().Text()
-			if strings.HasPrefix(titleText, ":") {
-				chpt.Title = strings.TrimSpace(strings.TrimPrefix(titleText, ": "))
-			}
+	chpt.Title = extractTitle(uriEl.Text())
+	if chpt.Title == "" {
+		titleText := s.Find("div > span.opacity-80").First().Text()
+		if strings.HasPrefix(titleText, ":") {
+			chpt.Title = strings.TrimSpace(strings.TrimPrefix(titleText, ": "))
 		}
 	}
 
