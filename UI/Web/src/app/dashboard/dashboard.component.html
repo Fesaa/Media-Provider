@@ -37,7 +37,7 @@
                 @if (info.ref_url === "") {
                   <h2 class="text-lg font-semibold">{{ info.name | contentTitle }}</h2>
                 } @else {
-                  <a class="text-lg font-semibold hover:underline" target="_blank"
+                  <a class="text-lg font-semibold hover:underline" target="_blank" rel="noopener noreferrer"
                      [href]="info.ref_url">{{ info.name | contentTitle }}</a>
                 }
               </th>
