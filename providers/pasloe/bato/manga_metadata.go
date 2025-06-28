@@ -25,7 +25,7 @@ func (m *manga) WriteContentMetaData(ctx context.Context, chapter Chapter) error
 func (m *manga) writeCover(ctx context.Context, chapter Chapter) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
-	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
+	filePath := path.Join(m.ContentPath(chapter), "!0000 cover"+utils.Ext(m.SeriesInfo.CoverUrl))
 	return m.DownloadAndWrite(ctx, m.SeriesInfo.CoverUrl, filePath)
 }
 
