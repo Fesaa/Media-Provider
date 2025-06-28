@@ -439,7 +439,7 @@ func (m *manga) getBetterChapterCover(ctx context.Context, chapter ChapterSearch
 		}
 	}
 
-	res, err := m.repository.GetChapterImages(context.Background(), chapter.Id)
+	res, err := m.repository.GetChapterImages(ctx, chapter.Id)
 	if err != nil {
 		return nil, false, err
 	}
