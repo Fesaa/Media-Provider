@@ -93,7 +93,7 @@ func (p ProviderMock) ContentUrls(ctx context.Context, t ChapterMock) ([]string,
 	panic("implement me")
 }
 
-func (p ProviderMock) WriteContentMetaData(t ChapterMock) error {
+func (p ProviderMock) WriteContentMetaData(ctx context.Context, t ChapterMock) error {
 	panic("implement me")
 }
 

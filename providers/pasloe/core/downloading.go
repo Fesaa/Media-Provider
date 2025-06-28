@@ -143,7 +143,7 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, t C) error {
 		return nil
 	}
 
-	if err = c.impl.WriteContentMetaData(t); err != nil {
+	if err = c.impl.WriteContentMetaData(ctx, t); err != nil {
 		c.Log.Warn().Err(err).Msg("error writing meta data")
 	}
 

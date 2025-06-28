@@ -42,5 +42,5 @@ type DownloadInfoProvider[T any] interface {
 	LoadInfo(ctx context.Context) chan struct{}
 
 	ContentUrls(ctx context.Context, t T) ([]string, error)
-	WriteContentMetaData(t T) error
+	WriteContentMetaData(ctx context.Context, t T) error
 }

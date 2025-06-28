@@ -1,6 +1,7 @@
 package bato
 
 import (
+	"context"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -9,7 +10,7 @@ import (
 	"strings"
 )
 
-func (m *manga) WriteContentMetaData(chapter Chapter) error {
+func (m *manga) WriteContentMetaData(ctx context.Context, chapter Chapter) error {
 
 	if m.Req.GetBool(core.IncludeCover, true) {
 		if err := m.writeCover(chapter); err != nil {

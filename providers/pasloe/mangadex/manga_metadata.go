@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
+func (m *manga) WriteContentMetaData(ctx context.Context, chapter ChapterSearchData) error {
 	metaPath := m.ContentPath(chapter)
 
 	l := m.ContentLogger(chapter)

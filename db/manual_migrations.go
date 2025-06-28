@@ -42,7 +42,6 @@ var manualMigrations = []migration{
 	},
 }
 
-// TODO: Add versioning, so we don't run migrations when not needed
 func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 	var migrations []models.ManualMigration
 	if err := db.Find(&migrations).Error; err != nil {
