@@ -103,7 +103,7 @@ func (w *webtoon) ContentUrls(ctx context.Context, chapter Chapter) ([]string, e
 	return w.repository.LoadImages(ctx, chapter)
 }
 
-func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
+func (w *webtoon) WriteContentMetaData(ctx context.Context, chapter Chapter) error {
 
 	if w.Req.GetBool(IncludeCover, true) {
 		// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
@@ -117,7 +117,7 @@ func (w *webtoon) WriteContentMetaData(chapter Chapter) error {
 			}
 			return chapter.ImageUrl
 		}()
-		if err := w.DownloadAndWrite(imageUrl, filePath); err != nil {
+		if err := w.DownloadAndWrite(ctx, imageUrl, filePath); err != nil {
 			return err
 		}
 	}

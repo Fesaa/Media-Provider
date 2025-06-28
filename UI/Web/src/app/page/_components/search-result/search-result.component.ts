@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, Input} from '@angular/core';
+import {ChangeDetectorRef, Component, Input, OnInit} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {DownloadMetadata, Page, Provider} from "../../../_models/page";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
@@ -9,6 +9,7 @@ import {Dialog} from "primeng/dialog";
 import {DownloadDialogComponent} from "../download-dialog/download-dialog.component";
 import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-dialog.component";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {NgStyle} from "@angular/common";
 
 @Component({
   selector: 'app-search-result',
@@ -18,12 +19,13 @@ import {TranslocoDirective} from "@jsverse/transloco";
     DownloadDialogComponent,
     SubscriptionDialogComponent,
     TranslocoDirective,
+    NgStyle,
   ],
   templateUrl: './search-result.component.html',
   styleUrl: './search-result.component.css',
   animations: [bounceIn200ms, dropAnimation]
 })
-export class SearchResultComponent {
+export class SearchResultComponent implements OnInit{
 
   @Input({required: true}) page!: Page;
   @Input({required: true}) searchResult!: SearchInfo;
@@ -54,6 +56,11 @@ export class SearchResultComponent {
   ) {
   }
 
+  ngOnInit(): void {
+    this.loadImage();
+    this.cdRef.markForCheck();
+  }
+
   addAsSub() {
     this.showSubscriptionDialog = true;
   }
@@ -78,15 +85,6 @@ export class SearchResultComponent {
 
   getColour(idx: number): string {
     return this.colours[idx % this.colours.length];
-  }
-
-  toggleExtra() {
-    this.showExtra = !this.showExtra;
-    if (this.imageSource == null) {
-      this.loadImage();
-    }
-
-    this.cdRef.detectChanges();
   }
 
 }

@@ -425,11 +425,11 @@ func TestCoverReplace(t *testing.T) {
 		t.Fatal("m.LoadInfo() timeout")
 	}
 
-	if err := m.tryReplaceCover(); err != nil {
+	if err := m.tryReplaceCover(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 
-	originalCover, err := m.Download(m.SeriesInfo.CoverUrl, false)
+	originalCover, err := m.Download(t.Context(), m.SeriesInfo.CoverUrl, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -473,14 +473,14 @@ func TestCoverNoReplace(t *testing.T) {
 		t.Fatal("m.LoadInfo() timeout")
 	}
 
-	if err := m.tryReplaceCover(); err != nil {
+	if err := m.tryReplaceCover(t.Context()); err != nil {
 		if strings.Contains(err.Error(), "503") {
 			t.Skipf("Skipping due to 503 error: %v", err)
 		}
 		t.Fatal(err)
 	}
 
-	originalCover, err := m.Download(m.SeriesInfo.CoverUrl, false)
+	originalCover, err := m.Download(t.Context(), m.SeriesInfo.CoverUrl, false)
 	if err != nil {
 		t.Fatal(err)
 	}

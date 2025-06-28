@@ -35,10 +35,7 @@ func (m *markdownService) MdToSafeHtml(mdString string) string {
 
 	mdBytes := []byte(mdString)
 
-	// TODO: Have it not add <p> tags. These cause it to be a little too big for Kavita most of the time.
-	// Instead of replacing it ourselves
 	unsafeHtml := string(markdown.ToHTML(mdBytes, p, m.renderer))
-
 	unsafeHtml = strings.ReplaceAll(unsafeHtml, "<p>", "")
 	unsafeHtml = strings.ReplaceAll(unsafeHtml, "</p>", "")
 	return strings.TrimSuffix(m.SanitizeHtml(unsafeHtml), "\n")

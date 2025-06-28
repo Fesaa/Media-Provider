@@ -174,7 +174,7 @@ func (m *MockContent) ContentUrls(ctx context.Context, t ID) ([]string, error) {
 	return nil, nil
 }
 
-func (m *MockContent) WriteContentMetaData(t ID) error {
+func (m *MockContent) WriteContentMetaData(ctx context.Context, t ID) error {
 	if m.mockWriteMetaDataFunc != nil {
 		return m.mockWriteMetaDataFunc(t)
 	}

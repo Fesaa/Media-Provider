@@ -10,10 +10,10 @@ import (
 	"strings"
 )
 
-func (m *manga) WriteContentMetaData(chapter Chapter) error {
+func (m *manga) WriteContentMetaData(ctx context.Context, chapter Chapter) error {
 
 	if m.Req.GetBool(core.IncludeCover, true) {
-		if err := m.writeCover(chapter); err != nil {
+		if err := m.writeCover(ctx, chapter); err != nil {
 			return err
 		}
 	}
@@ -22,27 +22,27 @@ func (m *manga) WriteContentMetaData(chapter Chapter) error {
 	return comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
 }
 
-func (m *manga) writeCover(chapter Chapter) error {
+func (m *manga) writeCover(ctx context.Context, chapter Chapter) error {
 	// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 	// first by most readers, and in particular, kavita.
 	filePath := path.Join(m.ContentPath(chapter), "!0000 cover.jpg")
 
 	if !m.hasCheckedCover {
 		m.hasCheckedCover = true
-		if err := m.tryReplaceCover(); err != nil {
+		if err := m.tryReplaceCover(ctx); err != nil {
 			return err
 		}
 	}
 
 	if len(m.coverBytes) == 0 {
 		m.Log.Trace().Str("chapter", chapter.Chapter).Msg("no cover bytes set, downloading from url")
-		return m.DownloadAndWrite(m.SeriesInfo.CoverUrl, filePath)
+		return m.DownloadAndWrite(ctx, m.SeriesInfo.CoverUrl, filePath)
 	}
 
 	return m.fs.WriteFile(filePath, m.coverBytes, 0755)
 }
 
-func (m *manga) tryReplaceCover() error {
+func (m *manga) tryReplaceCover(ctx context.Context) error {
 	m.Log.Trace().Msg("Checking if first image of first chapter has a higher quality cover")
 	firstChapter := utils.Find(m.SeriesInfo.Chapters, func(chapter Chapter) bool {
 		return chapter.Chapter == "1"
@@ -52,8 +52,7 @@ func (m *manga) tryReplaceCover() error {
 		return nil
 	}
 
-	// TODO: Pass context
-	images, err := m.repository.ChapterImages(context.Background(), firstChapter.Id)
+	images, err := m.repository.ChapterImages(ctx, firstChapter.Id)
 	if err != nil {
 		return err
 	}
@@ -62,12 +61,12 @@ func (m *manga) tryReplaceCover() error {
 		return nil
 	}
 
-	coverBytes, err := m.Download(m.SeriesInfo.CoverUrl)
+	coverBytes, err := m.Download(ctx, m.SeriesInfo.CoverUrl)
 	if err != nil {
 		return err
 	}
 
-	firstChapterCoverBytes, err := m.Download(images[0])
+	firstChapterCoverBytes, err := m.Download(ctx, images[0])
 	if err != nil {
 		return err
 	}

@@ -39,11 +39,7 @@ func TestQueueImpl_Dequeue(t *testing.T) {
 		t.Fatalf("queue dequeue failed: %v", err)
 	}
 
-	if item == nil {
-		t.Fatalf("queue dequeue returned nil")
-	}
-
-	if *item != "a" {
+	if item != "a" {
 		t.Fatalf("queue dequeue got %v, want %v", item, "a")
 	}
 
@@ -52,11 +48,7 @@ func TestQueueImpl_Dequeue(t *testing.T) {
 		t.Fatalf("queue dequeue failed: %v", err)
 	}
 
-	if item == nil {
-		t.Fatalf("queue dequeue returned nil")
-	}
-
-	if *item != "b" {
+	if item != "b" {
 		t.Fatalf("queue dequeue got %v, want %v", item, "b")
 	}
 

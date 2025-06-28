@@ -11,7 +11,7 @@ var (
 
 type Queue[T comparable] interface {
 	Enqueue(item T)
-	Dequeue() (*T, error) // TODO: Change to (T, error)
+	Dequeue() (T, error)
 	IsEmpty() bool
 	Size() int
 	Items() []T
@@ -30,13 +30,14 @@ func (q *queueImpl[T]) Enqueue(item T) {
 	q.items = append(q.items, item)
 }
 
-func (q *queueImpl[T]) Dequeue() (*T, error) {
+func (q *queueImpl[T]) Dequeue() (T, error) {
 	if q.IsEmpty() {
-		return nil, ErrQueueEmpty
+		var zero T
+		return zero, ErrQueueEmpty
 	}
 	item := q.items[0]
 	q.items = q.items[1:]
-	return &item, nil
+	return item, nil
 }
 
 func (q *queueImpl[T]) IsEmpty() bool {

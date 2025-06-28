@@ -66,10 +66,12 @@
 
     <section id="search-results" class="flex flex-col space-y-2 pt-5 mb-10">
       @if (searchResult.length > 0) {
-        @for (res of toShowResults(); track res.InfoHash) {
-          <app-search-result [dir]="getDir()" [metadata]="getDownloadMetadata(res.Provider)" [page]="page"
-                             [searchResult]="res" [providers]="providers" [@fadeAnimation]></app-search-result>
-        }
+        <div class="results-grid">
+          @for (res of toShowResults(); track res.InfoHash) {
+            <app-search-result [dir]="getDir()" [metadata]="getDownloadMetadata(res.Provider)" [page]="page"
+                               [searchResult]="res" [providers]="providers" [@fadeAnimation]></app-search-result>
+          }
+        </div>
         <p-paginator (onPageChange)="onPageChange($event.page!)" [rows]="10"
                      [totalRecords]="searchResult.length" [showFirstLastIcon]="false" [showPageLinks]="true" />
       } @else {

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -39,9 +40,8 @@ func (c *Core[C, S]) ContentLogger(chapter C) zerolog.Logger {
 	return builder.Logger()
 }
 
-// DownloadContent TODO: Add context.Context
-func (c *Core[C, S]) DownloadContent(idx int, chapter C, url string) error {
-	data, err := c.Download(url)
+func (c *Core[C, S]) DownloadContent(ctx context.Context, idx int, chapter C, url string) error {
+	data, err := c.Download(ctx, url)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (c *Core[C, S]) ShouldIncludeVolume() bool {
 		return true
 	}
 
-	if b, err := c.hasDuplicatedChapters.Get(); err == nil {
+	if b, ok := c.hasDuplicatedChapters.Get(); ok {
 		return b
 	}
 

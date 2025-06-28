@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
+func (m *manga) WriteContentMetaData(ctx context.Context, chapter ChapterSearchData) error {
 	metaPath := m.ContentPath(chapter)
 
 	l := m.ContentLogger(chapter)
@@ -26,7 +26,7 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 	}
 
 	if m.Req.GetBool(IncludeCover, true) {
-		if err = m.writeCover(l, chapter); err != nil {
+		if err = m.writeCover(ctx, l, chapter); err != nil {
 			return err
 		}
 	}
@@ -44,8 +44,8 @@ func (m *manga) WriteContentMetaData(chapter ChapterSearchData) error {
 	return nil
 }
 
-func (m *manga) writeCover(l zerolog.Logger, chapter ChapterSearchData) error {
-	toWrite, isFirstPage := m.getChapterCover(chapter)
+func (m *manga) writeCover(ctx context.Context, l zerolog.Logger, chapter ChapterSearchData) error {
+	toWrite, isFirstPage := m.getChapterCover(ctx, chapter)
 	if toWrite == nil {
 		l.Trace().Msg("no cover found")
 		return nil
@@ -400,7 +400,7 @@ func (m *manga) getCiStatus() (int, bool) {
 
 // getChapterCover returns the cover for the chapter, and if it's the first page in the chapter
 // if no cover is found. Returns nil
-func (m *manga) getChapterCover(chapter ChapterSearchData) ([]byte, bool) {
+func (m *manga) getChapterCover(ctx context.Context, chapter ChapterSearchData) ([]byte, bool) {
 	l := m.ContentLogger(chapter)
 	cover, ok := m.coverFactory(chapter.Attributes.Volume)
 	if !ok {
@@ -408,7 +408,7 @@ func (m *manga) getChapterCover(chapter ChapterSearchData) ([]byte, bool) {
 		return nil, false
 	}
 
-	coverBytes, isFirstPage, err := m.getBetterChapterCover(chapter, cover)
+	coverBytes, isFirstPage, err := m.getBetterChapterCover(ctx, chapter, cover)
 	if err != nil {
 		l.Warn().Err(err).Msg("an error occurred when trying to compare cover with the first page. Falling back")
 		coverBytes = cover.Bytes
@@ -418,7 +418,7 @@ func (m *manga) getChapterCover(chapter ChapterSearchData) ([]byte, bool) {
 
 // getBetterChapterCover check if a higher quality cover is used inside chapters. Returns true
 // when the Cover returned if the first page of the chapter passed as an argument
-func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover *Cover) ([]byte, bool, error) {
+func (m *manga) getBetterChapterCover(ctx context.Context, chapter ChapterSearchData, currentCover *Cover) ([]byte, bool, error) {
 	replaced := false
 	if chapter.Attributes.Volume != "" {
 		chapters := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
@@ -439,7 +439,7 @@ func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover *C
 		}
 	}
 
-	res, err := m.repository.GetChapterImages(context.Background(), chapter.Id)
+	res, err := m.repository.GetChapterImages(ctx, chapter.Id)
 	if err != nil {
 		return nil, false, err
 	}
@@ -450,7 +450,7 @@ func (m *manga) getBetterChapterCover(chapter ChapterSearchData, currentCover *C
 		return currentCover.Bytes, false, nil
 	}
 
-	candidateBytes, err := m.Download(images[0])
+	candidateBytes, err := m.Download(ctx, images[0])
 	if err != nil {
 		return nil, false, err
 	}
