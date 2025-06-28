@@ -29,10 +29,10 @@ type proxyRoutes struct {
 }
 
 func RegisterProxyRoutes(pr proxyRoutes) {
-	proxy := pr.Router.Group("/proxy", pr.Cache)
-	proxy.Get("/mangadex/covers/:id/:filename", pr.Auth.Middleware, pr.MangaDexCoverProxy)
-	proxy.Get("/webtoon/covers/:date/:id/:filename", pr.Auth.Middleware, pr.WebToonCoverProxy)
-	proxy.Get("/bato/covers/:id", pr.Auth.Middleware, pr.BAtoCoverProxy)
+	proxy := pr.Router.Group("/proxy", pr.Auth.Middleware, pr.Cache)
+	proxy.Get("/mangadex/covers/:id/:filename", pr.MangaDexCoverProxy)
+	proxy.Get("/webtoon/covers/:date/:id/:filename", pr.WebToonCoverProxy)
+	proxy.Get("/bato/covers/:id", pr.BAtoCoverProxy)
 }
 
 func (pr *proxyRoutes) mangadexUrl(id, fileName string) string {
