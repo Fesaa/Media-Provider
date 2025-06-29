@@ -50,7 +50,7 @@ func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 	must(t, cont.Provide(services.ImageServiceProvider))
 	must(t, cont.Provide(services.ArchiveServiceProvider))
 	must(t, cont.Provide(New))
-	c := utils.MustInvokeCont[core.Client](cont).(*client)
+	c := utils.MustInvoke[core.Client](cont).(*client)
 
 	c.registry = &mockRegistry{
 		cont: cont,

@@ -15,6 +15,7 @@ import (
 	"path"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -211,6 +212,16 @@ func (c *Core[C, S]) GetToRemoveContent() []string {
 	return c.ToRemoveContent
 }
 
+func (c *Core[C, S]) WillBeDownloaded(chapter C) bool {
+	if len(c.ToDownloadUserSelected) > 0 {
+		return slices.Contains(c.ToDownloadUserSelected, chapter.GetId())
+	}
+
+	return utils.Find(c.ToDownload, func(c C) bool {
+		return c.GetId() == chapter.GetId()
+	}) != nil
+}
+
 func (c *Core[C, S]) ContentList() []payload.ListContentData {
 	chapters := c.GetAllLoadedChapters()
 	if len(chapters) == 0 {
@@ -232,10 +243,8 @@ func (c *Core[C, S]) ContentList() []payload.ListContentData {
 		return utils.Map(chapters, func(chapter C) payload.ListContentData {
 			return payload.ListContentData{
 				SubContentId: chapter.GetId(),
-				Selected:     len(c.ToDownloadUserSelected) == 0 || slices.Contains(c.ToDownloadUserSelected, chapter.GetId()),
-				Label: utils.Ternary(chapter.GetTitle() == "",
-					c.impl.Title()+" "+chapter.Label(),
-					chapter.Label()),
+				Selected:     c.WillBeDownloaded(chapter),
+				Label:        strings.TrimSpace(chapter.GetTitle() + " " + chapter.Label()),
 			}
 		})
 	}
@@ -329,16 +338,7 @@ func (c *Core[C, S]) prepareContentToDownload() ([]C, time.Duration) {
 	c.loadContentOnDisk()
 
 	data := c.GetAllLoadedChapters()
-	c.ToDownload = utils.Filter(data, func(t C) bool {
-		download := c.ShouldDownload(t)
-		if !download {
-			c.Log.Trace().Str("key", t.GetId()).Msg("content already downloaded, skipping")
-		} else {
-			c.Log.Trace().Str("key", t.GetId()).Msg("adding content to download queue")
-		}
-		return download
-	})
-
+	c.ToDownload = utils.Filter(data, c.ShouldDownload)
 	return data, time.Since(start)
 }
 

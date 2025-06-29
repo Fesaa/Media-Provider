@@ -2,8 +2,6 @@ package utils
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -360,61 +358,6 @@ func TestShorten(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Shorten(tt.args.s, tt.args.length); got != tt.want {
 				t.Errorf("Shorten() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestTryCatch(t *testing.T) {
-	type args[T any, U any] struct {
-		producer      func() (T, error)
-		mapper        func(T) U
-		fallback      U
-		errorHandlers []func(error)
-	}
-	type testCase[T any, U any] struct {
-		name string
-		args args[T, U]
-		want U
-	}
-	tests := []testCase[string, int]{
-		{
-			name: "success",
-			args: args[string, int]{
-				producer: func() (string, error) {
-					return "foo", nil
-				},
-				mapper: func(s string) int {
-					return len(s)
-				},
-				fallback:      2,
-				errorHandlers: nil,
-			},
-			want: 3,
-		},
-		{
-			name: "error",
-			args: args[string, int]{
-				producer: func() (string, error) {
-					return "foo", fmt.Errorf("foo")
-				},
-				mapper: func(s string) int {
-					return len(s)
-				},
-				fallback: 2,
-				errorHandlers: []func(error){
-					func(e error) {
-
-					},
-				},
-			},
-			want: 2,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := TryCatch(tt.args.producer, tt.args.mapper, tt.args.fallback, tt.args.errorHandlers...); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("TryCatch() = %v, want %v", got, tt.want)
 			}
 		})
 	}
