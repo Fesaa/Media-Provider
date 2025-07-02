@@ -29,6 +29,8 @@ func CacheServiceProvider(log zerolog.Logger, cfg *config.Config) CacheService {
 		cs.Storage = utils.NewRedisCacheStorage(log, "cache-service", cfg.Cache.RedisAddr)
 	case config.MEMORY:
 		cs.Storage = newMemoryCache()
+	default:
+		cs.log.Fatal().Any("config", cfg.Cache).Msg("invalid cache type")
 	}
 
 	return cs

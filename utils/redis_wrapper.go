@@ -19,8 +19,7 @@ func NewRedisCacheStorage(log zerolog.Logger, clientName, redisAddr string) fibe
 	})
 
 	if err := rds.Ping(context.Background()).Err(); err != nil {
-		log.Warn().Err(err).Msg("failed to connect to redis")
-		return nil
+		log.Fatal().Err(err).Msg("failed to connect to redis")
 	}
 
 	return &redisWrapper{

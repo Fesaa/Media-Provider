@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit, signal} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SubscriptionService} from '../_services/subscription.service';
 import {RefreshFrequency, Subscription} from "../_models/subscription";
@@ -45,6 +45,8 @@ export class SubscriptionManagerComponent implements OnInit {
 
   size = 10
 
+  hasRanAll = signal(false);
+
   constructor(private navService: NavService,
               private subscriptionService: SubscriptionService,
               private cdRef: ChangeDetectorRef,
@@ -62,6 +64,19 @@ export class SubscriptionManagerComponent implements OnInit {
     this.subscriptionService.providers().subscribe(providers => {
       this.allowedProviders = providers;
       this.cdRef.detectChanges();
+    })
+  }
+
+  runAll() {
+    this.hasRanAll.set(true);
+    this.subscriptionService.runAll().subscribe({
+      next: (result) => {
+        this.toastService.successLoco("subscriptions.actions.run-all-success")
+      },
+      error: (error) => {
+        console.error(error);
+        this.toastService.genericError(error);
+      }
     })
   }
 
