@@ -3,6 +3,8 @@ package api
 import (
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/services"
 	utils2 "github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
@@ -13,11 +15,16 @@ import (
 	"time"
 )
 
-func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, log zerolog.Logger) {
+func Setup(router fiber.Router, container *dig.Container, settingsService services.SettingsService, log zerolog.Logger) error {
 	log.Debug().Str("handler", "http-routing").Msg("registering api routes")
 
+	settings, err := settingsService.GetSettingsDto()
+	if err != nil {
+		return err
+	}
+
 	cacheHandler := cache.New(cache.Config{
-		Storage:      cacheStorage(cfg, log),
+		Storage:      cacheStorage(settings, log),
 		CacheControl: true,
 		Next: func(c *fiber.Ctx) bool {
 			return false
@@ -32,7 +39,7 @@ func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, lo
 		Expiration: time.Hour,
 		ExpirationGenerator: func(ctx *fiber.Ctx, c *cache.Config) time.Duration {
 			if strings.HasPrefix(ctx.Route().Path, "/api/proxy") {
-				if cfg.Cache.Type == config.REDIS {
+				if settings.CacheType == config.REDIS {
 					return 7 * 24 * time.Hour
 				}
 				return 24 * time.Hour
@@ -58,12 +65,14 @@ func Setup(router fiber.Router, container *dig.Container, cfg *config.Config, lo
 	utils2.Must(scope.Invoke(routes.RegisterPreferencesRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterNotificationRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterMetadataRoutes))
+
+	return nil
 }
 
-func cacheStorage(cfg *config.Config, log zerolog.Logger) fiber.Storage {
-	switch cfg.Cache.Type {
+func cacheStorage(settings payload.Settings, log zerolog.Logger) fiber.Storage {
+	switch settings.CacheType {
 	case config.REDIS:
-		return utils2.NewRedisCacheStorage(log, "go-fiber-http-cache", cfg.Cache.RedisAddr)
+		return utils2.NewRedisCacheStorage(log, "go-fiber-http-cache", settings.RedisAddr)
 	case config.MEMORY:
 		return nil
 	default:

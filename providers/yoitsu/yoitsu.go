@@ -43,13 +43,18 @@ type yoitsu struct {
 
 func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 	dirService services.DirectoryService, notify services.NotificationService,
-	transLoco services.TranslocoService, fs afero.Afero,
+	transLoco services.TranslocoService, fs afero.Afero, settingsService services.SettingsService,
 ) (Yoitsu, error) {
-	dir := utils.OrElse(c.GetRootDir(), "temp")
+	settings, err := settingsService.GetSettingsDto()
+	if err != nil {
+		return nil, err
+	}
+
+	dir := utils.OrElse(settings.RootDir, "temp")
 
 	impl := &yoitsu{
 		dir:         dir,
-		maxTorrents: c.GetMaxConcurrentTorrents(),
+		maxTorrents: settings.MaxConcurrentTorrents,
 
 		torrents: utils.NewSafeMap[string, Torrent](),
 		baseDirs: utils.NewSafeMap[string, string](),
@@ -69,7 +74,7 @@ func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 	conf := torrent.NewDefaultClientConfig()
 	conf.DefaultStorage = storage.NewFileOpts(opts)
 	conf.ListenPort = rand.Intn(65535-49152) + 49152 //nolint:gosec
-	conf.DisableIPv6 = c.Downloader.DisableIpv6
+	conf.DisableIPv6 = settings.DisableIpv6
 
 	client, err := torrent.NewClient(conf)
 	if err != nil {

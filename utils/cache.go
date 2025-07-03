@@ -14,6 +14,7 @@ var (
 type CachedItem[T any] interface {
 	Get() (T, error)
 	HasExpired() bool
+	SetExpired()
 }
 
 type cachedItem[T any] struct {
@@ -32,6 +33,10 @@ func (c *cachedItem[T]) Get() (T, error) {
 
 func (c *cachedItem[T]) HasExpired() bool {
 	return c.expiredAt.Before(time.Now())
+}
+
+func (c *cachedItem[T]) SetExpired() {
+	c.expiredAt = time.Now()
 }
 
 func NewCachedItem[T any](data T, exp time.Duration) CachedItem[T] {

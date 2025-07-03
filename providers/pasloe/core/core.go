@@ -34,14 +34,21 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 		imageService services.ImageService,
 		fs afero.Afero,
 		httpClient *menou.Client,
-	) {
+		settingsService services.SettingsService,
+	) error {
+
+		settings, err := settingsService.GetSettingsDto()
+		if err != nil {
+			return err
+		}
+
 		base = &Core[C, S]{
 			impl:           provider,
 			Client:         client,
 			Log:            log.With().Str("handler", handler).Str("id", req.Id).Logger(),
 			id:             req.Id,
 			baseDir:        req.BaseDir,
-			maxImages:      min(client.GetConfig().GetMaxConcurrentImages(), 5),
+			maxImages:      utils.Clamp(settings.MaxConcurrentImages, 1, 5),
 			Req:            req,
 			LastTime:       time.Now(),
 			contentState:   payload.ContentStateQueued,
@@ -54,6 +61,8 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 			fs:             fs,
 			httpClient:     httpClient,
 		}
+
+		return nil
 	}))
 
 	return base

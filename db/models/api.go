@@ -76,4 +76,10 @@ type Metadata interface {
 	Update([]MetadataRow) error
 }
 
+type Settings interface {
+	All() ([]ServerSetting, error)
+	GetById(SettingKey) (ServerSetting, error)
+	Update([]ServerSetting) error
+}
+
 type Option[T any] func(T) T

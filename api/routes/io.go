@@ -17,13 +17,14 @@ import (
 type ioRoutes struct {
 	dig.In
 
-	Router    fiber.Router
-	Cfg       *config.Config
-	Auth      auth.Provider `name:"jwt-auth"`
-	Log       zerolog.Logger
-	Val       services.ValidationService
-	Transloco services.TranslocoService
-	Fs        afero.Afero
+	Router          fiber.Router
+	Cfg             *config.Config
+	Auth            auth.Provider `name:"jwt-auth"`
+	Log             zerolog.Logger
+	Val             services.ValidationService
+	Transloco       services.TranslocoService
+	SettingsService services.SettingsService
+	Fs              afero.Afero
 }
 
 func RegisterIoRoutes(ior ioRoutes) {
@@ -41,7 +42,14 @@ func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
 		})
 	}
 
-	entries, err := ior.Fs.ReadDir(path.Join(ior.Cfg.GetRootDir(), path.Clean(req.Dir)))
+	settings, err := ior.SettingsService.GetSettingsDto()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	entries, err := ior.Fs.ReadDir(path.Join(settings.RootDir, path.Clean(req.Dir)))
 	if err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to read dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -80,10 +88,15 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 		})
 	}
 
-	root := ior.Cfg.GetRootDir()
-	p := path.Join(root, req.BaseDir, path.Clean(req.NewDir))
-	err := ior.Fs.Mkdir(p, 0755)
+	settings, err := ior.SettingsService.GetSettingsDto()
 	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	p := path.Join(settings.RootDir, req.BaseDir, path.Clean(req.NewDir))
+	if err = ior.Fs.Mkdir(p, 0755); err != nil {
 		ior.Log.Warn().Err(err).Msg("failed to create dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
