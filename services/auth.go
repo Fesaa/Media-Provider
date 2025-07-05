@@ -1,12 +1,14 @@
 package services
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rs/zerolog"
@@ -39,20 +41,36 @@ type MpClaims struct {
 
 var (
 	ErrMissingOrMalformedAPIKey = errors.New("missing or malformed API key")
+	ErrEmailNotVerified         = errors.New("email not verified")
 )
 
 type jwtAuthService struct {
 	users models.Users
 	cfg   *config.Config
 	log   zerolog.Logger
+
+	verifier *oidc.IDTokenVerifier
 }
 
-func JwtAuthServiceProvider(users models.Users, cfg *config.Config) AuthService {
-	return &jwtAuthService{
+func JwtAuthServiceProvider(service SettingsService, users models.Users, cfg *config.Config) (AuthService, error) {
+	settings, err := service.GetSettingsDto()
+	if err != nil {
+		return nil, err
+	}
+
+	s := &jwtAuthService{
 		users: users,
 		cfg:   cfg,
 		log:   zerolog.New(os.Stdout).With().Str("service", "jwt-auth-service").Logger(),
 	}
+
+	verifier, err := s.oidcTokenVerifier(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	s.verifier = verifier
+	return s, nil
 }
 
 func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthService {
@@ -99,6 +117,68 @@ func (jwtAuth *jwtAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
+	if jwtAuth.verifier != nil {
+		ok, err := jwtAuth.OidcJWT(ctx, key)
+		if err != nil {
+			jwtAuth.log.Debug().Err(err).Msg("error while checking OIDC JWT")
+		}
+		if err == nil && ok {
+			return ok, err
+		}
+	}
+
+	return jwtAuth.LocalJWT(ctx, key)
+}
+
+func (jwtAuth *jwtAuthService) OidcJWT(ctx *fiber.Ctx, key string) (bool, error) {
+	token, err := jwtAuth.verifier.Verify(ctx.UserContext(), key)
+	if err != nil {
+		return false, err
+	}
+
+	user, err := jwtAuth.users.GetByExternalId(token.Subject)
+	if err != nil {
+		return false, err
+	}
+
+	if user != nil {
+		ctx.Locals("user", *user)
+		return true, nil
+	}
+
+	var claims struct {
+		Email    string `json:"email"`
+		Verified bool   `json:"email_verified"`
+	}
+	if err = token.Claims(&claims); err != nil {
+		return false, err
+	}
+
+	if !claims.Verified {
+		return false, ErrEmailNotVerified
+	}
+
+	user, err = jwtAuth.users.GetByEmail(claims.Email)
+	if err != nil {
+		return false, err
+	}
+	if user != nil {
+		user.ExternalId = token.Subject
+		if _, err = jwtAuth.users.Update(*user); err != nil {
+			jwtAuth.log.Error().Err(err).
+				Str("email", claims.Email).
+				Msg("failed to assign external id to user")
+			return false, err
+		}
+
+		ctx.Locals("user", *user)
+		return true, nil
+	}
+
+	return false, ErrMissingOrMalformedAPIKey
+}
+
+func (jwtAuth *jwtAuthService) LocalJWT(ctx *fiber.Ctx, key string) (bool, error) {
 	token, err := jwt.ParseWithClaims(key, &MpClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %s", t.Header["alg"])
@@ -183,6 +263,23 @@ func (jwtAuth *jwtAuthService) Login(loginRequest payload.LoginRequest) (*payloa
 		ApiKey:      user.ApiKey,
 		Permissions: user.Permission,
 	}, nil
+}
+
+func (jwtAuth *jwtAuthService) oidcTokenVerifier(dto payload.Settings) (*oidc.IDTokenVerifier, error) {
+	if dto.Oidc.Authority == "" || dto.Oidc.ClientID == "" {
+		jwtAuth.log.Debug().
+			Str("authority", dto.Oidc.Authority).
+			Str("client_id", dto.Oidc.ClientID).
+			Msg("not setting up OIDC")
+		return nil, nil
+	}
+
+	provider, err := oidc.NewProvider(context.Background(), dto.Oidc.Authority)
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.Verifier(&oidc.Config{ClientID: dto.Oidc.ClientID}), nil
 }
 
 type apiKeyAuthServiceParams struct {

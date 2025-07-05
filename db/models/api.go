@@ -54,6 +54,8 @@ type Users interface {
 	ExistsAny() (bool, error)
 
 	GetById(id uint) (*User, error)
+	GetByExternalId(ExternalId string) (*User, error)
+	GetByEmail(email string) (*User, error)
 	GetByName(name string) (*User, error)
 	GetByApiKey(key string) (*User, error)
 
