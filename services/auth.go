@@ -14,7 +14,6 @@ import (
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
-	"os"
 	"time"
 )
 
@@ -52,7 +51,7 @@ type jwtAuthService struct {
 	verifier *oidc.IDTokenVerifier
 }
 
-func JwtAuthServiceProvider(service SettingsService, users models.Users, cfg *config.Config) (AuthService, error) {
+func JwtAuthServiceProvider(service SettingsService, users models.Users, cfg *config.Config, log zerolog.Logger) (AuthService, error) {
 	settings, err := service.GetSettingsDto()
 	if err != nil {
 		return nil, err
@@ -61,7 +60,7 @@ func JwtAuthServiceProvider(service SettingsService, users models.Users, cfg *co
 	s := &jwtAuthService{
 		users: users,
 		cfg:   cfg,
-		log:   zerolog.New(os.Stdout).With().Str("service", "jwt-auth-service").Logger(),
+		log:   log.With().Str("handler", "jwt-auth-service").Logger(),
 	}
 
 	verifier, err := s.oidcTokenVerifier(settings)
@@ -77,7 +76,7 @@ func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthService {
 	return &apiKeyAuthService{
 		users: params.Users,
 		jwt:   params.JWT,
-		log:   params.Log,
+		log:   params.Log.With().Str("handler", "api-key-auth-service").Logger(),
 	}
 }
 

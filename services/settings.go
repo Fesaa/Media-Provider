@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -58,10 +59,15 @@ func (s *settingsService) UpdateSettingsDto(dto payload.Settings) error {
 		return err
 	}
 
-	for _, setting := range settings {
-		if err = s.SerializeSetting(&setting, dto); err != nil {
-			return err
+	var errs []error
+	settings = utils.Map(settings, func(t models.ServerSetting) models.ServerSetting {
+		if err = s.SerializeSetting(&t, dto); err != nil {
+			errs = append(errs, err)
 		}
+		return t
+	})
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	if err = s.settings.Update(settings); err != nil {
@@ -92,6 +98,10 @@ func (s *settingsService) SerializeSetting(setting *models.ServerSetting, dto pa
 		setting.Value = dto.Oidc.Authority
 	case models.OidcClientID:
 		setting.Value = dto.Oidc.ClientID
+	case models.OidcAutoLogin:
+		setting.Value = strconv.FormatBool(dto.Oidc.AutoLogin)
+	case models.OidcDisablePasswordLogin:
+		setting.Value = strconv.FormatBool(dto.Oidc.DisablePasswordLogin)
 	}
 
 	return err
@@ -118,6 +128,10 @@ func (s *settingsService) ParseSetting(setting models.ServerSetting, dto *payloa
 		dto.Oidc.Authority = setting.Value
 	case models.OidcClientID:
 		dto.Oidc.ClientID = setting.Value
+	case models.OidcAutoLogin:
+		dto.Oidc.AutoLogin, err = strconv.ParseBool(setting.Value)
+	case models.OidcDisablePasswordLogin:
+		dto.Oidc.DisablePasswordLogin, err = strconv.ParseBool(setting.Value)
 	}
 
 	return err

@@ -42,7 +42,7 @@ func MigrateSettings(db *gorm.DB, log zerolog.Logger) error {
 	}
 
 	for _, setting := range settings {
-		if err = db.Save(&setting).Error; err != nil {
+		if err = db.Create(&setting).Error; err != nil {
 			return err
 		}
 	}

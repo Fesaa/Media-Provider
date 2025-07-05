@@ -475,14 +475,8 @@
     },
     "server": {
       "general": "General",
-      "logging-cache": "Logging & Cache",
       "root-dir": "Root directory",
       "base-url": "Base Url",
-      "handler": {
-        "label": "Handler",
-        "tooltip": "Requires a restart"
-      },
-      "log-level": "Level",
       "cache-type": {
         "label": "Cache type",
         "tooltip": "Redis allows requests to be cached between restarts"
@@ -496,6 +490,29 @@
       "max-images": {
         "label": "Max Images",
         "tooltip": "Amount of images(/chapter) downloaded at once, not shared between providers"
+      },
+      "oidc": {
+        "title": "OpenID Connect",
+        "authority": {
+          "label": "Authority",
+          "subTitle": "Must have the discovery endpoint accessible",
+          "tooltip": ""
+        },
+        "clientId": {
+          "label": "ClientID",
+          "subTitle": "Can be anything",
+          "toolTip": ""
+        },
+        "disablePasswordLogin": {
+          "label": "Disable password login",
+          "subTitle": "",
+          "toolTip": ""
+        },
+        "autoLogin": {
+          "label": "Auto redirect to your OIDC login page",
+          "subTitle": "",
+          "toolTip": ""
+        }
       },
       "save": "Save",
       "toasts": {

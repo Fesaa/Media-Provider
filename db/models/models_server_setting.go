@@ -12,9 +12,11 @@ const (
 	MaxConcurrentImages
 	DisableIpv6
 	RootDir
+	OidcAutoLogin
+	OidcDisablePasswordLogin
 )
 
 type ServerSetting struct {
-	Key   SettingKey `gorm:"primary_key"`
+	Key   SettingKey `gorm:"unique"`
 	Value string     `gorm:"type:text"`
 }

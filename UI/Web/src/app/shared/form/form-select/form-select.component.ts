@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 @Component({
@@ -18,6 +18,7 @@ export class FormSelectComponent {
   @Input({required: true}) options!: string[];
   @Input() values: string[] | undefined;
   @Input() formGroupName: string | undefined;
+  @Output() onChange: EventEmitter<void> = new EventEmitter();
 
   constructor() {
 

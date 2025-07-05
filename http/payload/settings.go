@@ -14,6 +14,8 @@ type Settings struct {
 }
 
 type OidcSettings struct {
-	Authority string `json:"authority"`
-	ClientID  string `json:"clientId"`
+	Authority            string `json:"authority"`
+	ClientID             string `json:"clientId"`
+	DisablePasswordLogin bool   `json:"disablePasswordLogin"`
+	AutoLogin            bool   `json:"autoLogin"`
 }

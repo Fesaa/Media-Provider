@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db/manual"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/glebarez/sqlite"
@@ -42,6 +43,10 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 	}
 
 	if err = manualMigration(db, log.With().Str("handler", "migrations").Logger()); err != nil {
+		return nil, err
+	}
+
+	if err = manual.SyncSettings(db, log.With().Str("handler", "settings").Logger()); err != nil {
 		return nil, err
 	}
 

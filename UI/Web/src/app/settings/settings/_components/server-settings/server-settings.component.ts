@@ -1,15 +1,13 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit} from '@angular/core';
-import {CacheType, Config, LogHandler, LogLevel} from '../../../../_models/config';
-import {ConfigService} from "../../../../_services/config.service";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, OnInit} from '@angular/core';
+import {CacheType} from '../../../../_models/config';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
-import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/BoundNumberValidator";
-import {Clipboard} from "@angular/cdk/clipboard";
 import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {Button} from "primeng/button";
+import {SettingsService} from "../../../../_services/settings.service";
 
 @Component({
   selector: 'app-server-settings',
@@ -25,34 +23,47 @@ import {Button} from "primeng/button";
   styleUrl: './server-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ServerSettingsComponent implements OnInit {
+export class ServerSettingsComponent {
 
-  config: Config | undefined;
+  private readonly settingsService = inject(SettingsService);
+
+  config = this.settingsService.config;
+
   settingsForm: FormGroup | undefined;
 
-  showKey = false;
-  protected readonly LogHandler = LogHandler;
   protected readonly Object = Object;
-  protected readonly LogLevel = LogLevel;
   protected readonly CacheType = CacheType;
 
-  constructor(private configService: ConfigService,
-              private fb: FormBuilder,
-              private cdRef: ChangeDetectorRef,
+  constructor(private fb: FormBuilder,
+              protected cdRef: ChangeDetectorRef,
               private toastService: ToastService,
-              private clipBoardService: Clipboard
   ) {
-  }
 
-  ngOnInit(): void {
-    this.configService.getConfig().subscribe(config => {
-      this.config = config;
-      this.buildForm();
-    })
-  }
+    effect(() => {
+      const config = this.settingsService.config();
+      if (config == undefined) return
 
-  hidden() {
-    return "X".repeat(this.config!.api_key.length);
+      this.settingsForm = this.fb.group({
+        rootDir: this.fb.control(config.rootDir, Validators.required),
+        baseUrl: this.fb.control(config.baseUrl),
+        cache: this.fb.group({
+          cacheType: this.fb.control(config.cacheType),
+          redisAddr: this.fb.control(config.redisAddr),
+        }),
+        downloader: this.fb.group({
+          maxConcurrentImages: this.fb.control(config.maxConcurrentImages),
+          maxConcurrentTorrents: this.fb.control(config.maxConcurrentTorrents),
+        }),
+        oidc: this.fb.group({
+          authority: this.fb.control(config.oidc.authority),
+          clientId: this.fb.control(config.oidc.clientId),
+          disablePasswordLogin: this.fb.control(config.oidc.disablePasswordLogin),
+          autoLogin: this.fb.control(config.oidc.autoLogin),
+        }),
+      });
+      this.cdRef.detectChanges();
+    });
+
   }
 
   save() {
@@ -75,45 +86,14 @@ export class ServerSettingsComponent implements OnInit {
       this.settingsForm.value.cache.redis = ""
     }
 
-    this.configService.updateConfig(this.settingsForm.value).subscribe({
+    this.settingsService.updateConfig(this.settingsForm.value).subscribe({
       next: () => {
-        this.configService.getConfig().subscribe(config => {
-          this.config = config;
-          this.buildForm();
-          this.toastService.successLoco("settings.server.toasts.save.success");
-        });
+        this.toastService.successLoco("settings.server.toasts.save.success");
       },
       error: (error) => {
         this.toastService.genericError(error.error.message);
       }
     });
-  }
-
-  private buildForm() {
-    if (!this.config) {
-      return;
-    }
-
-    this.settingsForm = this.fb.group({
-      password: this.fb.control(this.config.password),
-      root_dir: this.fb.control(this.config.root_dir, Validators.required),
-      base_url: this.fb.control(this.config.base_url),
-      cache: this.fb.group({
-        type: this.fb.control(this.config.cache.type, [Validators.required]),
-        redis: this.fb.control(this.config.cache.redis),
-      }),
-      logging: this.fb.group({
-        level: this.fb.control(this.config.logging.level, Validators.required),
-        source: this.fb.control(this.config.logging.source, Validators.required),
-        handler: this.fb.control(this.config.logging.handler, Validators.required),
-        log_http: this.fb.control(this.config.logging.log_http, Validators.required),
-      }),
-      downloader: this.fb.group({
-        max_torrents: new IntegerFormControl(this.config.downloader.max_torrents, [Validators.required, BoundNumberValidator(1, 10)]),
-        max_mangadex_images: new IntegerFormControl(this.config.downloader.max_mangadex_images, [Validators.required, BoundNumberValidator(1, 5)]),
-      })
-    });
-    this.cdRef.detectChanges();
   }
 
   private errors() {

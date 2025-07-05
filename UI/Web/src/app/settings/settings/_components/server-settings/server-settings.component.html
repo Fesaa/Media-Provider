@@ -1,6 +1,6 @@
 <div class="flex w-full flex-grow" *transloco="let t;prefix:'settings.server'">
 
-  @if (settingsForm !== undefined && config !== undefined) {
+  @if (settingsForm !== undefined && config() !== undefined) {
     <form [formGroup]="settingsForm" class="w-full px-2" (ngSubmit)="save()">
 
       <div class="flex flex-col items-center space-y-4 md:space-y-0">
@@ -8,49 +8,34 @@
           <h3 class="w-2/5 border-b-2 border-black dark:border-white">{{ t('general') }}</h3>
 
           <div class="md:grid md:grid-cols-3 md:p-5 gap-10 mt-2 md:mt-0">
-            <app-form-input [formGroup]="settingsForm" [label]="t('root-dir')" controlName="root_dir"></app-form-input>
+            <app-form-input [formGroup]="settingsForm" [label]="t('root-dir')" controlName="rootDir"></app-form-input>
 
-            <app-form-input [formGroup]="settingsForm" [label]="t('base-url')" controlName="base_url"></app-form-input>
+            <app-form-input [formGroup]="settingsForm" [label]="t('base-url')" controlName="baseUrl"></app-form-input>
           </div>
         </div>
 
         <div class="w-full">
-          <h3 class="w-2/5 border-b-2 border-black dark:border-white">{{ t('logging-cache') }}</h3>
 
-          <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
-            <app-form-select
-              [pTooltip]="t('handler.tooltip')"
-              tooltipPosition="bottom"
-              [formGroupName]="'logging'"
-              [formGroup]="settingsForm"
-              [label]="t('handler.label')"
-              controlName="handler"
-              [options]="Object.values(LogHandler)"
-              [values]="Object.keys(LogHandler)"/>
-
-            <app-form-select
-              [formGroupName]="'logging'"
-              [formGroup]="settingsForm"
-              [label]="t('log-level')" controlName="level"
-              [options]="Object.values(LogLevel)"/>
-
+          <div class="md:grid md:grid-cols-4 md:p-5 gap-10">
             <app-form-select
               [pTooltip]="t('cache-type.tooltip')"
               tooltipPosition="bottom"
               [formGroupName]="'cache'"
               [formGroup]="settingsForm"
               [label]="t('cache-type.label')"
-              controlName="type"
+              controlName="cacheType"
               [options]="Object.values(CacheType)"
-              [values]="Object.keys(CacheType)"/>
+              [values]="Object.keys(CacheType)"
+              (onChange)="cdRef.markForCheck()"
+            />
 
-            @switch (settingsForm.value.cache.type) {
+            @switch (settingsForm.value.cache.cacheType) {
               @case (CacheType.REDIS) {
                 <app-form-input
                   formGroupName="cache"
                   [formGroup]="settingsForm"
                   [label]="t('redis-address')"
-                  controlName="redis"
+                  controlName="redisAddr"
                   type="text"
                 />
               }
@@ -66,22 +51,35 @@
               <app-form-input
                 [pTooltip]="t('max-torrents.tooltip')"
                 tooltipPosition="bottom"
-                formGroupName="downloader"
+                [formGroupName]="'downloader'"
                 [formGroup]="settingsForm"
                 [label]="t('max-torrents.label')"
-                controlName="max_torrents"
+                controlName="maxConcurrentTorrents"
                 type="number"
               />
 
               <app-form-input
                 [pTooltip]="t('max-images.tooltip')"
                 tooltipPosition="bottom"
-                formGroupName="downloader"
+                [formGroupName]="'downloader'"
                 [formGroup]="settingsForm"
                 [label]="t('max-images.label')"
-                controlName="max_mangadex_images"
+                controlName="maxConcurrentImages"
                 type="number"
               />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col w-full items-center ">
+          <div class="w-full">
+            <h3 class="w-2/5 border-b-2 border-black dark:border-white">{{ t('oidc.title') }}</h3>
+
+            <div class="md:grid md:grid-cols-4 md:p-5 gap-10 mt-2 md:mt-0">
+              <app-form-input [formGroup]="settingsForm" [formGroupName]="'oidc'" [translationKey]="'settings.server.oidc.authority'" controlName="authority"></app-form-input>
+              <app-form-input [formGroup]="settingsForm" [formGroupName]="'oidc'" [translationKey]="'settings.server.oidc.clientId'" controlName="clientId"></app-form-input>
+              <app-form-input [formGroup]="settingsForm" [formGroupName]="'oidc'" [translationKey]="'settings.server.oidc.autoLogin'" controlName="autoLogin" type="switch"></app-form-input>
+              <app-form-input [formGroup]="settingsForm" [formGroupName]="'oidc'" [translationKey]="'settings.server.oidc.disablePasswordLogin'" controlName="disablePasswordLogin" type="switch"></app-form-input>
             </div>
           </div>
         </div>
