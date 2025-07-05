@@ -30,7 +30,8 @@ func SettingsServiceProvider(settings models.Settings, log zerolog.Logger) Setti
 }
 
 func (s *settingsService) GetSettingsDto() (payload.Settings, error) {
-	if !s.cachedSettings.HasExpired() {
+	if s.cachedSettings != nil && !s.cachedSettings.HasExpired() {
+		s.log.Trace().Msg("settings being returned from cache")
 		return s.cachedSettings.Get()
 	}
 

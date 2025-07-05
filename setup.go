@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/api"
-	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
@@ -32,7 +31,7 @@ type appParams struct {
 
 	Cfg       *config.Config
 	Container *dig.Container
-	Auth      auth.Provider `name:"api-key-auth"`
+	Auth      services.AuthService `name:"api-key-auth"`
 	Log       zerolog.Logger
 }
 

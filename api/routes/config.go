@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
@@ -15,7 +14,7 @@ type configRoutes struct {
 
 	Cfg    *config.Config
 	Router fiber.Router
-	Auth   auth.Provider `name:"jwt-auth"`
+	Auth   services.AuthService `name:"jwt-auth"`
 	Val    services.ValidationService
 	Log    zerolog.Logger
 }

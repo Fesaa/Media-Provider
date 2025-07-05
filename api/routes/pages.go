@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -19,7 +18,7 @@ type pageRoutes struct {
 
 	Router fiber.Router
 	DB     *db.Database
-	Auth   auth.Provider `name:"jwt-auth"`
+	Auth   services.AuthService `name:"jwt-auth"`
 	Log    zerolog.Logger
 
 	Val            services.ValidationService
