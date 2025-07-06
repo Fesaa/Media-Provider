@@ -111,7 +111,7 @@
                            [id]="meta.key"/>
           }
           @case (DownloadMetadataFormType.TEXT) {
-            <input pInputText #inputElement (change)="changeChoice(meta, inputElement.value)"/>
+            <input pInputText #inputElement (input)="changeChoice(meta, inputElement.value)"/>
           }
         }
       </div>

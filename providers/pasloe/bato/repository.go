@@ -247,7 +247,7 @@ func (r *repository) extractVolumeAndChapter(id, s string) (string, string) {
 		return utils.OrElse(volume, mapping.DefaultVolume), chapter
 	}
 
-	r.log.Debug().Str("chapter", id).Str("input", s).Msg("failed to match volume and chapter")
+	r.log.Trace().Str("chapter", id).Str("input", s).Msg("failed to match volume and chapter")
 	return "", ""
 }
 

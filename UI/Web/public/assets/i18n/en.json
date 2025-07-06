@@ -187,6 +187,10 @@
         "no-sub-dir": {
           "title": "Download into parent",
           "tooltip": "Content will be copied in your selected dir, instead of creating child directory first"
+        },
+        "title_override": {
+          "title": "Override title",
+          "tooltip": "Set a specific title"
         }
       },
       "cancel": "{{shared.cancel}}",
