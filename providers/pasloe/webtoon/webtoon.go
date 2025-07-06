@@ -47,6 +47,10 @@ type webtoon struct {
 }
 
 func (w *webtoon) Title() string {
+	if titleOverride, ok := w.Req.GetString(core.TitleOverride); ok {
+		return titleOverride
+	}
+
 	if w.SeriesInfo == nil {
 		return utils.NonEmpty(w.Req.TempTitle, w.Req.Id)
 	}
@@ -105,7 +109,7 @@ func (w *webtoon) ContentUrls(ctx context.Context, chapter Chapter) ([]string, e
 
 func (w *webtoon) WriteContentMetaData(ctx context.Context, chapter Chapter) error {
 
-	if w.Req.GetBool(IncludeCover, true) {
+	if w.Req.GetBool(core.IncludeCover, true) {
 		// Use !0000 cover.jpg to make sure it's the first file in the archive, this causes it to be read
 		// first by most readers, and in particular, kavita.
 		filePath := path.Join(w.ContentPath(chapter), "!0000 cover.jpg")

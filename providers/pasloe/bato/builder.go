@@ -95,6 +95,11 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Key:      core.DownloadOneShotKey,
 				FormType: payload.SWITCH,
 			},
+			{
+				Key:      core.TitleOverride,
+				Advanced: true,
+				FormType: payload.TEXT,
+			},
 		},
 	}
 }
