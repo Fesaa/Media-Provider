@@ -82,6 +82,8 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 	}
 
 	if strings.Contains(req.NewDir, "..") || strings.Contains(req.BaseDir, "..") {
+		ior.Log.Warn().Str("newDir", req.NewDir).Str("baseDir", req.BaseDir).
+			Msg("path contained invalid characters")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": ior.Transloco.GetTranslation("invalid-path"),
 		})

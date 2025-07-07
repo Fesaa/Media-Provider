@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewContainerRef} from '@angular/core';
+import {Component, effect, inject, OnInit, ViewContainerRef} from '@angular/core';
 import {RouterOutlet} from '@angular/router';
 import {AccountService} from "./_services/account.service";
 import {NavHeaderComponent} from "./nav-header/nav-header.component";
@@ -8,6 +8,8 @@ import {EventType, SignalRService} from "./_services/signal-r.service";
 import {Toast} from "primeng/toast";
 import {MessageService} from "primeng/api";
 import {Notification} from "./_models/notifications";
+import {OidcService} from "./_services/oidc.service";
+import {NavService} from "./_services/nav.service";
 
 @Component({
   selector: 'app-root',
@@ -18,6 +20,8 @@ import {Notification} from "./_models/notifications";
 export class AppComponent implements OnInit {
   title = 'Media Provider';
 
+  private readonly oidcService = inject(OidcService);
+
   constructor(
     protected accountService: AccountService,
     private titleService: Title,
@@ -25,9 +29,27 @@ export class AppComponent implements OnInit {
     private ds: DialogService,
     private signalR: SignalRService,
     private messageService: MessageService,
+    private navService: NavService,
   ) {
     this.titleService.setTitle(this.title);
     this.ds.viewContainerRef = this.vcr;
+
+    // Login automatically when a token is available
+    effect(() => {
+      const ready = this.oidcService.ready();
+      const user = this.accountService.currentUserSignal();
+      if (!ready || !this.oidcService.token || user) return;
+
+      this.accountService.loginByToken(this.oidcService.token).subscribe({
+        next: () => {
+          this.navService.handleLogin();
+        },
+        error: err => {
+          console.error(err);
+        }
+      });
+    });
+
   }
 
   ngOnInit(): void {

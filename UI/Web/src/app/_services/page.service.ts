@@ -19,14 +19,14 @@ export class PageService {
   private metadataCache: { [key: number]: DownloadMetadata } = {};
 
   constructor(private httpClient: HttpClient,) {
-    this.refreshPages();
+    this.refreshPages().subscribe();
   }
 
   refreshPages() {
-    this.httpClient.get<Page[]>(this.baseUrl).subscribe(pages => {
+    return this.httpClient.get<Page[]>(this.baseUrl).pipe(tap(pages => {
       this.pages = pages;
       this.pagesSource.next(pages);
-    })
+    }));
   }
 
   getPage(id: number): Observable<Page> {

@@ -28,6 +28,10 @@
     }
   },
 
+  "oidc": {
+    "timeout": "Timed out loading oidc info"
+  },
+
   "recently-downloaded": {
     "title": "Recently downloaded subscriptions"
   },
@@ -57,6 +61,9 @@
     "password": "{{shared.password}}",
     "remember-me": "Remember me for 7 days",
     "reset-password": "Reset {{shared.password}}",
+    "or": "Or",
+    "sign-in-with-oidc": "Sign in with OIDC",
+    "welcome-tagline": "Access your account securely and quickly",
     "toasts": {
       "login-failed": {
         "title": "Error",

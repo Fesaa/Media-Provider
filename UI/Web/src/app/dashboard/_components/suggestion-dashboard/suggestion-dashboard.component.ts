@@ -31,7 +31,7 @@ export class SuggestionDashboardComponent {
   loadDefault() {
     this.pageService.loadDefault().subscribe({
       next: () => {
-        this.pageService.refreshPages();
+        this.pageService.refreshPages().subscribe();
       },
       error: (err) => {
         this.toastService.genericError(err.error.message);

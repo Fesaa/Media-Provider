@@ -2,9 +2,9 @@ import {DestroyRef, inject, Injectable} from '@angular/core';
 import {environment} from "../../environments/environment";
 import {Observable, ReplaySubject, tap} from "rxjs";
 import {User, UserDto} from "../_models/user";
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {Router} from "@angular/router";
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {takeUntilDestroyed, toSignal} from "@angular/core/rxjs-interop";
 import {PasswordReset} from "../_models/password_reset";
 
 @Injectable({
@@ -17,6 +17,7 @@ export class AccountService {
   private readonly destroyRef = inject(DestroyRef);
   private currentUserSource = new ReplaySubject<User | undefined>(1);
   public currentUser$ = this.currentUserSource.asObservable();
+  public currentUserSignal = toSignal(this.currentUser$);
   private currentUser: User | undefined;
 
   constructor(private httpClient: HttpClient, private router: Router) {
@@ -34,6 +35,21 @@ export class AccountService {
     return this.httpClient.post<User>(this.baseUrl + 'login', model).pipe(
       tap((user: User) => {
         if (user) {
+          this.setCurrentUser(user)
+        }
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    );
+  }
+
+  loginByToken(token: string): Observable<User> {
+    const headers = new HttpHeaders({
+      "Authorization": `Bearer ${token}`
+    })
+    return this.httpClient.get<User>(`${this.baseUrl}user/me`, {headers}).pipe(
+      tap((user: User) => {
+        if (user) {
+          user.oidcToken = token;
           this.setCurrentUser(user)
         }
       }),

@@ -40,6 +40,23 @@ func RegisterUserRoutes(ur userRoutes) {
 	user.Post("/update", ur.UpdateUser)
 	user.Delete("/:userId", ur.DeleteUser)
 	user.Post("/reset/:userId", ur.GenerateResetPassword)
+	user.Get("/me", ur.Me)
+}
+
+func (ur *userRoutes) Me(ctx *fiber.Ctx) error {
+	user, ok := ctx.Locals("user").(models.User)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "could not find user",
+		})
+	}
+
+	return ctx.JSON(payload.LoginResponse{
+		Id:          user.ID,
+		Name:        user.Name,
+		ApiKey:      user.ApiKey,
+		Permissions: user.Permission,
+	})
 }
 
 func (ur *userRoutes) AnyUserExists(ctx *fiber.Ctx) error {

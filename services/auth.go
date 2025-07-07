@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 	"time"
 )
 
@@ -41,6 +42,7 @@ type MpClaims struct {
 var (
 	ErrMissingOrMalformedAPIKey = errors.New("missing or malformed API key")
 	ErrEmailNotVerified         = errors.New("email not verified")
+	ErrCouldNotLinkUser         = errors.New("could not link user")
 )
 
 type jwtAuthService struct {
@@ -118,7 +120,7 @@ func (jwtAuth *jwtAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 
 	if jwtAuth.verifier != nil {
 		ok, err := jwtAuth.OidcJWT(ctx, key)
-		if err != nil {
+		if err != nil && !strings.HasPrefix(err.Error(), "oidc: id token issued by a different provider") {
 			jwtAuth.log.Debug().Err(err).Msg("error while checking OIDC JWT")
 		}
 		if err == nil && ok {
@@ -174,7 +176,7 @@ func (jwtAuth *jwtAuthService) OidcJWT(ctx *fiber.Ctx, key string) (bool, error)
 		return true, nil
 	}
 
-	return false, ErrMissingOrMalformedAPIKey
+	return false, ErrCouldNotLinkUser
 }
 
 func (jwtAuth *jwtAuthService) LocalJWT(ctx *fiber.Ctx, key string) (bool, error) {

@@ -91,6 +91,7 @@ export class ServerSettingsComponent {
         this.toastService.successLoco("settings.server.toasts.save.success");
       },
       error: (error) => {
+        console.error(error);
         this.toastService.genericError(error.error.message);
       }
     });

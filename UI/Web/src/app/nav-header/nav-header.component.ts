@@ -13,6 +13,7 @@ import {EventType, SignalRService} from "../_services/signal-r.service";
 import {BadgeDirective} from "primeng/badge";
 import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
 import {User} from "../_models/user";
+import {OidcService} from "../_services/oidc.service";
 
 @Component({
   selector: 'app-nav-header',
@@ -46,6 +47,7 @@ export class NavHeaderComponent implements OnInit {
               private notificationService: NotificationService,
               private signalR: SignalRService,
               private transLoco: TranslocoService,
+              private oidcService: OidcService,
   ) {
   }
 
@@ -137,6 +139,7 @@ export class NavHeaderComponent implements OnInit {
           {
             label: this.transLoco.translate("nav-bar.sign-out"),
             command: () => {
+              this.oidcService.logout();
               this.accountService.logout()
             },
             icon: "pi pi-sign-out"

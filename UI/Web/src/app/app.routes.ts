@@ -1,11 +1,15 @@
 import {Routes} from '@angular/router';
 import {AuthGuard} from "./_guards/auth.guard";
+import {OidcResolver} from "./_resolvers/oidc.resolver";
 
 export const routes: Routes = [
   {
     path: '',
     canActivate: [AuthGuard],
     runGuardsAndResolvers: 'always',
+    resolve: {
+      _: OidcResolver,
+    },
     children: [
       {
         path: 'home',
@@ -29,5 +33,9 @@ export const routes: Routes = [
   {
     path: 'login',
     loadChildren: () => import('./_routes/registration.routes').then(m => m.routes)
+  },
+  {
+    path: 'oidc',
+    loadChildren: () => import('./_routes/oidc.routes').then(m => m.routes)
   }
 ];
