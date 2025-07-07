@@ -84,7 +84,7 @@ func (m *manga) tryReplaceCover(ctx context.Context) error {
 func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
-	ci.Series = m.SeriesInfo.Title
+	ci.Series = utils.NonEmpty(m.Req.GetStringOrDefault(core.TitleOverride, ""), m.SeriesInfo.Title)
 	ci.AlternateSeries = m.SeriesInfo.AltTitle
 	ci.Summary = m.markdownService.SanitizeHtml(m.SeriesInfo.Description)
 	ci.Manga = comicinfo.MangaYes

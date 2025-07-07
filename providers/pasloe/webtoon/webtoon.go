@@ -133,7 +133,7 @@ func (w *webtoon) WriteContentMetaData(ctx context.Context, chapter Chapter) err
 func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
-	ci.Series = w.Title()
+	ci.Series = utils.NonEmpty(w.Req.GetStringOrDefault(core.TitleOverride, ""), w.Title())
 	ci.Summary = w.markdownService.SanitizeHtml(w.SeriesInfo.Description)
 	ci.Manga = comicinfo.MangaYes
 	ci.Genre = w.SeriesInfo.Genre
