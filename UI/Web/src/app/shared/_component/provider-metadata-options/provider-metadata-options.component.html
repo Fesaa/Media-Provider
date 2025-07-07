@@ -50,7 +50,7 @@
                                [id]="meta.key"/>
               }
               @case (DownloadMetadataFormType.TEXT) {
-                <input pInputText #inputElement [ngModel]="getValues(meta)" (change)="changeChoice(meta, inputElement.value)"/>
+                <input pInputText #inputElement [ngModel]="getValues(meta)" (input)="changeChoice(meta, inputElement.value)"/>
               }
             }
           </div>
