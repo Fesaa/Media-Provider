@@ -1,5 +1,5 @@
 import {Component, effect, inject, OnInit, ViewContainerRef} from '@angular/core';
-import {RouterOutlet} from '@angular/router';
+import {Router, RouterOutlet} from '@angular/router';
 import {AccountService} from "./_services/account.service";
 import {NavHeaderComponent} from "./nav-header/nav-header.component";
 import {Title} from "@angular/platform-browser";
@@ -30,6 +30,7 @@ export class AppComponent implements OnInit {
     private signalR: SignalRService,
     private messageService: MessageService,
     private navService: NavService,
+    private router: Router,
   ) {
     this.titleService.setTitle(this.title);
     this.ds.viewContainerRef = this.vcr;
@@ -46,6 +47,9 @@ export class AppComponent implements OnInit {
         },
         error: err => {
           console.error(err);
+          this.accountService.logout();
+          this.oidcService.logout();
+          this.router.navigate(['login']);
         }
       });
     });
