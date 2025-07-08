@@ -6,15 +6,20 @@ import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {Router} from "@angular/router";
 import {takeUntilDestroyed, toSignal} from "@angular/core/rxjs-interop";
 import {PasswordReset} from "../_models/password_reset";
+import {SignalRService} from "./signal-r.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class AccountService {
 
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly signalR = inject(SignalRService);
+
   baseUrl = environment.apiUrl;
   userKey = 'mp-user';
-  private readonly destroyRef = inject(DestroyRef);
+
+
   private currentUserSource = new ReplaySubject<User | undefined>(1);
   public currentUser$ = this.currentUserSource.asObservable();
   public currentUserSignal = toSignal(this.currentUser$);
@@ -92,6 +97,11 @@ export class AccountService {
 
     this.currentUser = user;
     this.currentUserSource.next(user);
+
+    if (user) {
+      this.signalR.stopConnection()
+        .then(() => this.signalR.startConnection(user));
+    }
   }
 
   logout() {

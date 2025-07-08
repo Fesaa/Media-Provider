@@ -57,23 +57,26 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.signalR.events$.subscribe(event => {
+      switch (event.type) {
+        case EventType.Notification:
+          const notification = event.data as Notification;
+          this.messageService.add({
+            severity: notification.colour,
+            summary: notification.title,
+            detail: notification.summary, // I know they're switched here
+          });
+      }
+    });
+
     this.accountService.currentUser$.subscribe(user => {
       if (!user) {
         return;
       }
 
+      if (user.oidcToken && !this.oidcService.hasValidAccessToken()) return;
+
       this.signalR.startConnection(user);
-      this.signalR.events$.subscribe(event => {
-        switch (event.type) {
-          case EventType.Notification:
-            const notification = event.data as Notification;
-            this.messageService.add({
-              severity: notification.colour,
-              summary: notification.title,
-              detail: notification.summary, // I know they're switched here
-            });
-        }
-      })
     })
   }
 }

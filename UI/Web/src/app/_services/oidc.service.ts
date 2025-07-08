@@ -41,6 +41,8 @@ export class OidcService {
   public readonly settings = this._settings.asReadonly();
 
   constructor() {
+    this.oauth2.setStorage(localStorage);
+
     // log events in dev
     if (!environment.production) {
       this.oauth2.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
@@ -53,6 +55,7 @@ export class OidcService {
     }
 
     this.config().subscribe(oidcSetting => {
+      this._settings.set(oidcSetting);
       if (!oidcSetting.authority) {
         this._loaded.set(true);
         return
@@ -70,8 +73,8 @@ export class OidcService {
         scope: "openid profile email roles offline_access",
         // Not all OIDC providers follow this nicely
         strictDiscoveryDocumentValidation: false,
+        useSilentRefresh: false,
       });
-      this._settings.set(oidcSetting);
       this.oauth2.setupAutomaticSilentRefresh();
 
       from(this.oauth2.loadDiscoveryDocumentAndTryLogin()).subscribe({
@@ -103,6 +106,10 @@ export class OidcService {
 
   get token() {
     return this.oauth2.getAccessToken();
+  }
+
+  hasValidAccessToken() {
+    return this.oauth2.hasValidAccessToken();
   }
 
 }

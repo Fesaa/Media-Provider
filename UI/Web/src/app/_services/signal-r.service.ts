@@ -36,6 +36,11 @@ export class SignalRService {
 
   }
 
+  stopConnection() {
+    if (!this.hubConnection) return Promise.resolve();
+    return this.hubConnection.stop();
+  }
+
   startConnection(user: User) {
     this.hubConnection = new HubConnectionBuilder()
       .withUrl(this.baseUrl.substring(0, this.baseUrl.length - "api/".length) + "ws", {
