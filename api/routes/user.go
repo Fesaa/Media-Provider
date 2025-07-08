@@ -22,9 +22,10 @@ type userRoutes struct {
 	DB     *db.Database
 	Log    zerolog.Logger
 
-	Val       services.ValidationService
-	Notify    services.NotificationService
-	Transloco services.TranslocoService
+	Val             services.ValidationService
+	Notify          services.NotificationService
+	Transloco       services.TranslocoService
+	SettingsService services.SettingsService
 }
 
 func RegisterUserRoutes(ur userRoutes) {
@@ -151,6 +152,19 @@ func (ur *userRoutes) LoginUser(ctx *fiber.Ctx) error {
 	if err := ur.Val.ValidateCtx(ctx, &login); err != nil {
 		ur.Log.Error().Err(err).Msg("failed to parse body")
 		return fiber.ErrBadRequest
+	}
+
+	settings, err := ur.SettingsService.GetSettingsDto()
+	if err != nil {
+		ur.Log.Error().Err(err).Msg("failed to get settings")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to get settings",
+			"error":   err.Error(),
+		})
+	}
+
+	if settings.Oidc.DisablePasswordLogin {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
 	res, err := ur.Auth.Login(login)
