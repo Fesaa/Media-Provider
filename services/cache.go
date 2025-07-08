@@ -35,7 +35,7 @@ func CacheServiceProvider(log zerolog.Logger, service SettingsService) (CacheSer
 	case config.MEMORY:
 		cs.Storage = newMemoryCache()
 	default:
-		cs.log.Fatal().Any("config", cfg.Cache).Msg("invalid cache type")
+		cs.log.Fatal().Any("config", settings.CacheType).Msg("invalid cache type")
 	}
 
 	return cs, nil
