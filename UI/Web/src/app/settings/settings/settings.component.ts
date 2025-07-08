@@ -1,127 +1,117 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
-import {NavService} from "../../_services/nav.service";
-import {ServerSettingsComponent} from "./_components/server-settings/server-settings.component";
-import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
-import {dropAnimation} from "../../_animations/drop-animation";
-import {ActivatedRoute, Router} from "@angular/router";
-import {hasPermission, Perm, User} from "../../_models/user";
-import {AccountService} from "../../_services/account.service";
-import {UserSettingsComponent} from "./_components/user-settings/user-settings.component";
+import {Component, computed, effect, inject, signal} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {NavService} from '../../_services/nav.service';
+import {AccountService} from '../../_services/account.service';
+import {hasPermission, Perm, User} from '../../_models/user';
 import {PreferenceSettingsComponent} from "./_components/preference-settings/preference-settings.component";
-import {Button} from "primeng/button";
+import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
+import {ServerSettingsComponent} from "./_components/server-settings/server-settings.component";
+import {UserSettingsComponent} from "./_components/user-settings/user-settings.component";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {AccountSettingsComponent} from "./_components/account-settings/account-settings.component";
 
 export enum SettingsID {
-
+  Account = "account",
   Server = "server",
   Preferences = "preferences",
   Pages = "pages",
   User = "user"
+}
 
+interface SettingsTab {
+  id: SettingsID,
+  title: string,
+  icon: string,
+  perm: Perm,
 }
 
 @Component({
   selector: 'app-settings',
+  standalone: true,
   imports: [
-    ServerSettingsComponent,
-    PagesSettingsComponent,
-    UserSettingsComponent,
     PreferenceSettingsComponent,
-    Button,
+    PagesSettingsComponent,
+    ServerSettingsComponent,
+    UserSettingsComponent,
     TranslocoDirective,
+    AccountSettingsComponent
+
   ],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css',
-  animations: [dropAnimation]
+  styleUrls: ['./settings.component.css']
 })
-export class SettingsComponent implements OnInit {
-  showMobileConfig = false;
+export class SettingsComponent {
+  private navService = inject(NavService);
+  private accountService = inject(AccountService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-  user: User | null = null;
-  selected: SettingsID = SettingsID.Preferences;
-  settings: { id: SettingsID, title: string, icon: string, perm: Perm, badge?: number }[] = [
-    {
-      id: SettingsID.Preferences,
-      title: "Preferences",
-      icon: 'pi pi-ethereum',
-      perm: Perm.WriteConfig,
-    },
-    {
-      id: SettingsID.Pages,
-      title: 'Pages',
-      icon: 'pi pi-thumbtack',
-      perm: Perm.All,
-    },
-    {
-      id: SettingsID.Server,
-      title: 'Server',
-      icon: 'pi pi-server',
-      perm: Perm.WriteConfig
-    },
-    {
-      id: SettingsID.User,
-      title: 'Users',
-      icon: 'pi pi-users',
-      perm: Perm.WriteUser,
-    },
-  ]
-  protected readonly SettingsID = SettingsID;
+  readonly SettingsID = SettingsID;
 
-  constructor(private navService: NavService,
-              private cdRef: ChangeDetectorRef,
-              private activatedRoute: ActivatedRoute,
-              private router: Router,
-              private accountService: AccountService,
-  ) {
+  user = signal<User | null>(null);
+  selected = signal<SettingsID>(SettingsID.Account);
+  showMobileConfig = signal(false);
+
+  readonly settings: SettingsTab[] = [
+    { id: SettingsID.Account, title: "Account", icon: 'pi pi-user', perm: Perm.All },
+    { id: SettingsID.Preferences, title: "Preferences", icon: 'pi pi-ethereum', perm: Perm.WriteConfig },
+    { id: SettingsID.Pages, title: 'Pages', icon: 'pi pi-thumbtack', perm: Perm.All },
+    { id: SettingsID.Server, title: 'Server', icon: 'pi pi-server', perm: Perm.WriteConfig },
+    { id: SettingsID.User, title: 'Users', icon: 'pi pi-users', perm: Perm.WriteUser },
+  ];
+
+  readonly visibleSettings = computed(() => {
+    this.user(); // Compute when user changes
+
+    return this.settings.filter(setting => this.canSee(setting.id));
+  });
+
+  constructor() {
+    this.navService.setNavVisibility(true);
+
     this.accountService.currentUser$.subscribe(user => {
-      if (user) {
-        this.user = user;
-      } else {
+      if (!user) {
         this.router.navigateByUrl('/login');
         return;
       }
+      this.user.set(user);
 
-      if (!this.canSee(this.selected)) {
-        this.setSettings(this.settings.find(s => this.canSee(s.id))!.id)
+      if (!this.canSee(this.selected())) {
+        this.selected.set(this.visibleSettings()[0].id);
       }
-    })
+    });
 
-    this.activatedRoute.fragment.subscribe(fragment => {
-      if (fragment) {
-        if (Object.values(SettingsID).find(id => id === fragment)) {
-          this.selected = fragment as SettingsID;
-        }
+    this.route.fragment.subscribe(fragment => {
+      if (fragment && Object.values(SettingsID).includes(fragment as SettingsID)) {
+        this.selected.set(fragment as SettingsID);
       }
-    })
-  }
+    });
 
-  ngOnInit(): void {
-    this.navService.setNavVisibility(true)
+    effect(() => {
+      this.router.navigate([], { fragment: this.selected() });
+    });
   }
 
   toggleMobile() {
-    this.showMobileConfig = !this.showMobileConfig;
-    this.cdRef.markForCheck();
+    this.showMobileConfig.update(v => !v);
   }
 
   setSettings(id: SettingsID) {
-    this.selected = id;
-    this.router.navigate([], {fragment: id});
-    this.cdRef.markForCheck();
+    this.selected.set(id);
+    this.showMobileConfig.set(false);
   }
 
   canSee(id: SettingsID): boolean {
-    if (!this.user) {
-      return false;
-    }
+    const user = this.user();
+    if (!user) return false;
 
-    const setting = this.settings.find(setting => setting.id === id);
-    if (!setting) {
-      return false;
-    }
+    const setting = this.settings.find(s => s.id === id);
+    if (!setting) return false;
 
-    return hasPermission(this.user, setting.perm);
+    return hasPermission(user, setting.perm);
   }
 
-  protected readonly String = String;
+  isMobile(): boolean {
+    return window.innerWidth <= 768;
+  }
 }

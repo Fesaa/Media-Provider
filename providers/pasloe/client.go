@@ -3,7 +3,6 @@ package pasloe
 import (
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
@@ -17,12 +16,16 @@ import (
 	"time"
 )
 
-func New(c *config.Config, container *dig.Container, log zerolog.Logger,
+func New(s services.SettingsService, container *dig.Container, log zerolog.Logger,
 	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
 	preferences models.Preferences, transLoco services.TranslocoService, fs afero.Afero,
-) core.Client {
+) (core.Client, error) {
+	settings, err := s.GetSettingsDto()
+	if err != nil {
+		return nil, err
+	}
+
 	return &client{
-		config:     c,
 		registry:   newRegistry(container),
 		log:        log.With().Str("handler", "pasloe").Logger(),
 		dirService: dirService,
@@ -33,11 +36,11 @@ func New(c *config.Config, container *dig.Container, log zerolog.Logger,
 		fs:         fs,
 
 		content: utils.NewSafeMap[string, core.Downloadable](),
-	}
+		rootDir: settings.RootDir,
+	}, nil
 }
 
 type client struct {
-	config     core.Config
 	registry   Registry
 	log        zerolog.Logger
 	dirService services.DirectoryService
@@ -48,6 +51,7 @@ type client struct {
 	fs         afero.Afero
 
 	content utils.SafeMap[string, core.Downloadable]
+	rootDir string
 }
 
 func (c *client) Content(id string) services.Content {
@@ -197,11 +201,7 @@ func (c *client) GetCurrentDownloads() []core.Downloadable {
 }
 
 func (c *client) GetBaseDir() string {
-	return utils.OrElse(c.config.GetRootDir(), "temp")
-}
-
-func (c *client) GetConfig() core.Config {
-	return c.config
+	return utils.OrElse(c.rootDir, "temp")
 }
 
 func (c *client) CanStart(provider models.Provider) bool {

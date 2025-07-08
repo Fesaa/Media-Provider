@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -27,12 +28,14 @@ var (
 
 type User struct {
 	Model
-	Name         string `gorm:"unique"`
+	Name         string         `gorm:"unique"`
+	Email        sql.NullString `gorm:"unique"`
 	PasswordHash string
 	ApiKey       string
 	Permission   int
 	// Will not be updated in the UpdateUser method, should be set on creation. And only for the first account
-	Original bool
+	Original   bool
+	ExternalId sql.NullString `gorm:"unique,nullable"`
 }
 
 func (u *User) HasPermission(permission UserPermission) bool {

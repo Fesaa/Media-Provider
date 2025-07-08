@@ -1,58 +1,67 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit} from '@angular/core';
-import {CacheType, Config, LogHandler, LogLevel} from '../../../../_models/config';
-import {ConfigService} from "../../../../_services/config.service";
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, OnInit} from '@angular/core';
+import {CacheType, CacheTypes, Config} from '../../../../_models/config';
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
-import {BoundNumberValidator, IntegerFormControl} from "../../../../_validators/BoundNumberValidator";
-import {Clipboard} from "@angular/cdk/clipboard";
 import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {Button} from "primeng/button";
+import {SettingsService} from "../../../../_services/settings.service";
 
 @Component({
   selector: 'app-server-settings',
   imports: [
     ReactiveFormsModule,
     FormInputComponent,
-    FormSelectComponent,
-    Tooltip,
     TranslocoDirective,
-    Button
+    Button,
+    FormSelectComponent
   ],
   templateUrl: './server-settings.component.html',
   styleUrl: './server-settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ServerSettingsComponent implements OnInit {
+export class ServerSettingsComponent {
 
-  config: Config | undefined;
+  private readonly settingsService = inject(SettingsService);
+
+  config = this.settingsService.config;
+
   settingsForm: FormGroup | undefined;
 
-  showKey = false;
-  protected readonly LogHandler = LogHandler;
-  protected readonly Object = Object;
-  protected readonly LogLevel = LogLevel;
-  protected readonly CacheType = CacheType;
-
-  constructor(private configService: ConfigService,
-              private fb: FormBuilder,
-              private cdRef: ChangeDetectorRef,
+  constructor(private fb: FormBuilder,
+              protected cdRef: ChangeDetectorRef,
               private toastService: ToastService,
-              private clipBoardService: Clipboard
   ) {
+
+    effect(() => {
+      const config = this.settingsService.config();
+      if (config == undefined) return
+
+      this.settingsForm = this.fb.group({
+        rootDir: this.fb.control(config.rootDir, [Validators.required]),
+        baseUrl: this.fb.control(config.baseUrl),
+        cacheType: this.fb.control(config.cacheType, [Validators.required]),
+        redisAddr: this.fb.control(config.redisAddr),
+        maxConcurrentImages: this.fb.control(config.maxConcurrentImages, [Validators.required, Validators.min(1), Validators.max(5)]),
+        maxConcurrentTorrents: this.fb.control(config.maxConcurrentTorrents, [Validators.required, Validators.min(1), Validators.max(10)]),
+        oidc: this.fb.group({
+          authority: this.fb.control(config.oidc.authority),
+          clientId: this.fb.control(config.oidc.clientId),
+          disablePasswordLogin: this.fb.control(config.oidc.disablePasswordLogin),
+          autoLogin: this.fb.control(config.oidc.autoLogin),
+        }),
+      });
+      this.cdRef.detectChanges();
+    });
   }
 
-  ngOnInit(): void {
-    this.configService.getConfig().subscribe(config => {
-      this.config = config;
-      this.buildForm();
-    })
-  }
+  getFormControl(path: string): FormControl | null {
+    if (!this.settingsForm) return null;
 
-  hidden() {
-    return "X".repeat(this.config!.api_key.length);
+    const control = this.settingsForm.get(path);
+    return control instanceof FormControl ? control : null;
   }
 
   save() {
@@ -71,49 +80,23 @@ export class ServerSettingsComponent implements OnInit {
       return;
     }
 
-    if (this.settingsForm.value.cache.type != CacheType.REDIS) {
-      this.settingsForm.value.cache.redis = ""
+    const dto: Config = this.settingsForm.getRawValue();
+    dto.maxConcurrentImages = parseInt(String(dto.maxConcurrentImages))
+    dto.maxConcurrentTorrents = parseInt(String(dto.maxConcurrentTorrents))
+
+    if (dto.cacheType != CacheType.REDIS) {
+      dto.redisAddr = ""
     }
 
-    this.configService.updateConfig(this.settingsForm.value).subscribe({
+    this.settingsService.updateConfig(dto).subscribe({
       next: () => {
-        this.configService.getConfig().subscribe(config => {
-          this.config = config;
-          this.buildForm();
-          this.toastService.successLoco("settings.server.toasts.save.success");
-        });
+        this.toastService.successLoco("settings.server.toasts.save.success");
       },
       error: (error) => {
+        console.error(error);
         this.toastService.genericError(error.error.message);
       }
     });
-  }
-
-  private buildForm() {
-    if (!this.config) {
-      return;
-    }
-
-    this.settingsForm = this.fb.group({
-      password: this.fb.control(this.config.password),
-      root_dir: this.fb.control(this.config.root_dir, Validators.required),
-      base_url: this.fb.control(this.config.base_url),
-      cache: this.fb.group({
-        type: this.fb.control(this.config.cache.type, [Validators.required]),
-        redis: this.fb.control(this.config.cache.redis),
-      }),
-      logging: this.fb.group({
-        level: this.fb.control(this.config.logging.level, Validators.required),
-        source: this.fb.control(this.config.logging.source, Validators.required),
-        handler: this.fb.control(this.config.logging.handler, Validators.required),
-        log_http: this.fb.control(this.config.logging.log_http, Validators.required),
-      }),
-      downloader: this.fb.group({
-        max_torrents: new IntegerFormControl(this.config.downloader.max_torrents, [Validators.required, BoundNumberValidator(1, 10)]),
-        max_mangadex_images: new IntegerFormControl(this.config.downloader.max_mangadex_images, [Validators.required, BoundNumberValidator(1, 5)]),
-      })
-    });
-    this.cdRef.detectChanges();
   }
 
   private errors() {
@@ -128,4 +111,7 @@ export class ServerSettingsComponent implements OnInit {
 
     return count
   }
+
+  protected readonly CacheType = CacheType;
+  protected readonly CacheTypes = CacheTypes;
 }

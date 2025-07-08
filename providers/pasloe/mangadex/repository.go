@@ -43,11 +43,15 @@ func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 		log:        log.With().Str("handler", "mangadex-repository").Logger(),
 		tags:       utils.NewSafeMap[string, string](),
 	}
-	if err := r.loadTags(); err != nil {
-		r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
-	} else {
-		r.log.Debug().Int("size", r.tags.Len()).Msg("loaded tags")
-	}
+
+	go func() {
+		if err := r.loadTags(); err != nil {
+			r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
+		} else {
+			r.log.Debug().Int("size", r.tags.Len()).Msg("loaded tags")
+		}
+	}()
+
 	return r
 }
 

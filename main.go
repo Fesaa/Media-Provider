@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
@@ -32,8 +31,8 @@ func main() {
 	utils.Must(c.Provide(db.DatabaseProvider))
 	utils.Must(c.Invoke(db.ModelsProvider))
 
-	utils.Must(c.Provide(auth.NewJwtAuth, dig.Name("jwt-auth")))
-	utils.Must(c.Provide(auth.NewApiKeyAuth, dig.Name("api-key-auth")))
+	utils.Must(c.Provide(services.JwtAuthServiceProvider, dig.Name("jwt-auth")))
+	utils.Must(c.Provide(services.ApiKeyAuthServiceProvider, dig.Name("api-key-auth")))
 
 	utils.Must(c.Provide(menou.New))
 	utils.Must(c.Provide(menou.NewWithRetry, dig.Name("http-retry")))
@@ -55,6 +54,7 @@ func main() {
 	utils.Must(c.Provide(services.FileServiceProvider))
 	utils.Must(c.Provide(services.ArchiveServiceProvider))
 	utils.Must(c.Provide(services.MetadataServiceProvider))
+	utils.Must(c.Provide(services.SettingsServiceProvider))
 	utils.Must(c.Provide(ApplicationProvider))
 
 	utils.Must(c.Invoke(services.RegisterSignalREndPoint))

@@ -28,6 +28,10 @@
     }
   },
 
+  "oidc": {
+    "timeout": "Timed out loading oidc info"
+  },
+
   "recently-downloaded": {
     "title": "Recently downloaded subscriptions"
   },
@@ -57,6 +61,9 @@
     "password": "{{shared.password}}",
     "remember-me": "Remember me for 7 days",
     "reset-password": "Reset {{shared.password}}",
+    "or": "Or",
+    "sign-in-with-oidc": "Sign in with OIDC",
+    "welcome-tagline": "Access your account securely and quickly",
     "toasts": {
       "login-failed": {
         "title": "Error",
@@ -479,27 +486,49 @@
     },
     "server": {
       "general": "General",
-      "logging-cache": "Logging & Cache",
       "root-dir": "Root directory",
       "base-url": "Base Url",
-      "handler": {
-        "label": "Handler",
-        "tooltip": "Requires a restart"
-      },
-      "log-level": "Level",
-      "cache-type": {
+      "cache": {
         "label": "Cache type",
-        "tooltip": "Redis allows requests to be cached between restarts"
+        "subTitle": "Redis allows requests to be cached between restarts",
+        "tooltip": "",
+        "memory": "In-memory",
+        "redis": "Redis"
       },
       "redis-address": "Redis address",
       "downloader": "Downloader",
       "max-torrents": {
         "label": "Max torrents",
-        "tooltip": "Global max torrents"
+        "subTitle": "Global max torrents",
+        "tooltip": ""
       },
       "max-images": {
         "label": "Max Images",
-        "tooltip": "Amount of images(/chapter) downloaded at once, not shared between providers"
+        "subTitle": "Amount of images(/chapter) downloaded at once, not shared between providers",
+        "tooltip": ""
+      },
+      "oidc": {
+        "title": "OpenID Connect",
+        "authority": {
+          "label": "Authority",
+          "subTitle": "Must have the discovery endpoint accessible",
+          "tooltip": ""
+        },
+        "clientId": {
+          "label": "ClientID",
+          "subTitle": "Can be anything",
+          "toolTip": ""
+        },
+        "disablePasswordLogin": {
+          "label": "Disable password login",
+          "subTitle": "",
+          "toolTip": ""
+        },
+        "autoLogin": {
+          "label": "Auto redirect to your OIDC login page",
+          "subTitle": "",
+          "toolTip": ""
+        }
       },
       "save": "Save",
       "toasts": {
@@ -666,6 +695,62 @@
           "title": "Failed to update {{name}}",
           "summary": "{{msg}}"
         }
+      }
+    }
+  },
+
+  "input": {
+    "errors": {
+      "required": "This field is required.",
+      "email": "Please enter a valid email address.",
+      "minlength": "Minimum length is {{ error.value.requiredLength }} characters.",
+      "maxlength": "Maximum length is {{ error.value.requiredLength }} characters.",
+      "min": "Minimum value is {{ error.value.min }}.",
+      "max": "Maximum value is {{ error.value.max }}.",
+      "sameAs": "Value must be the same as {{error.value.other}}"
+    }
+  },
+
+  "account": {
+    "title": "Account",
+    "save": "{{shared.save}}",
+    "username": {
+      "label": "Username",
+      "subTitle": "Can be anything, but must be unique"
+    },
+    "email": {
+      "label": "Email",
+      "subTitle": "Used to match with OIDC"
+    },
+    "password": {
+      "title": "Authentication",
+      "save": "{{shared.save}}",
+      "label": "Password"
+    },
+    "oldPassword": {
+      "label": "Old password"
+    },
+    "confirm": {
+      "label": "Confirm password"
+    },
+    "errors": {
+      "update": {
+        "title": "Failed to update your account",
+        "summary": "{{error}}"
+      },
+      "password": {
+        "title": "Failed to update your password",
+        "summary": "{{error}}"
+      }
+    },
+    "success": {
+      "update": {
+        "title": "Updated your account",
+        "summary": ""
+      },
+      "password": {
+        "title": "Updated your password",
+        "summary": ""
       }
     }
   }

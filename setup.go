@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/api"
-	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/contrib/fiberzerolog"
@@ -31,7 +31,7 @@ type appParams struct {
 
 	Cfg       *config.Config
 	Container *dig.Container
-	Auth      auth.Provider `name:"api-key-auth"`
+	Auth      services.AuthService `name:"api-key-auth"`
 	Log       zerolog.Logger
 }
 
@@ -91,7 +91,9 @@ func ApplicationProvider(params appParams) *fiber.App {
 		},
 	}))
 
-	api.Setup(app.Group(baseUrl), c, params.Cfg, params.Log)
+	scope := c.Scope("init::api")
+	utils.Must(scope.Provide(utils.Identity(app.Group(baseUrl))))
+	utils.Must(scope.Invoke(api.Setup))
 
 	app.Static(baseUrl, "./public", fiber.Static{
 		Compress: true,

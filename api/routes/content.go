@@ -3,7 +3,6 @@ package routes
 import (
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
@@ -17,8 +16,8 @@ type contentRoutes struct {
 	dig.In
 
 	Router fiber.Router
-	Cache  fiber.Handler `name:"cache"`
-	Auth   auth.Provider `name:"jwt-auth"`
+	Cache  fiber.Handler        `name:"cache"`
+	Auth   services.AuthService `name:"jwt-auth"`
 	YS     yoitsu.Yoitsu
 	PS     core.Client
 	Log    zerolog.Logger

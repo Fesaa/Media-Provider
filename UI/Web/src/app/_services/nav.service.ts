@@ -1,11 +1,16 @@
-import {Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {ReplaySubject} from "rxjs";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
+import {AuthGuard} from "../_guards/auth.guard";
+import {PageService} from "./page.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class NavService {
+
+  private pageService = inject(PageService);
+  private router = inject(Router);
 
   private showNavSource = new ReplaySubject<Boolean>(1);
   public showNav$ = this.showNavSource.asObservable();
@@ -33,5 +38,19 @@ export class NavService {
 
   setNavVisibility(show: Boolean) {
     this.showNavSource.next(show);
+  }
+
+  handleLogin() {
+    this.pageService.refreshPages().subscribe(() => {
+      this.setNavVisibility(true);
+
+      const pageResume = localStorage.getItem(AuthGuard.urlKey);
+      localStorage.setItem(AuthGuard.urlKey, '');
+      if (pageResume && pageResume != '/login') {
+        this.router.navigateByUrl(pageResume);
+      } else {
+        this.router.navigateByUrl('/home');
+      }
+    });
   }
 }

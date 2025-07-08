@@ -23,25 +23,6 @@ func Clamp(val, minV, maxV int) int {
 	return max(minV, min(maxV, val))
 }
 
-// TryCatch will return the consumed value if the error returned by the producer was nil. Other returns the fallback
-// value and calls the first errorHandler if present
-func TryCatch[T, U any](
-	producer func() (T, error),
-	mapper func(T) U,
-	fallback U,
-	errorHandlers ...func(error),
-) U {
-	t, err := producer()
-	if err != nil {
-		if len(errorHandlers) > 0 {
-			errorHandlers[0](err)
-		}
-		return fallback
-	}
-
-	return mapper(t)
-}
-
 func GenerateSecret(length int) (string, error) {
 	secret := make([]byte, length)
 	_, err := rand.Read(secret)
@@ -96,19 +77,13 @@ func BytesToSize(bytes float64) string {
 	return fmt.Sprintf("%.2f %s", bytes/math.Pow(1024, i), sizes[int(i)])
 }
 
-// MustInvoke tries construction T with the given scope
-// Ensure the needed method has been Provider to the scope
-func MustInvoke[T any](c *dig.Scope) T {
-	var t T
-	Must(c.Invoke(func(myT T) {
-		t = myT
-	}))
-	return t
+type Invoker interface {
+	Invoke(function interface{}, opts ...dig.InvokeOption) (err error)
 }
 
-// MustInvokeCont tries construction T with the given Container
+// MustInvoke tries construction T with the given Container
 // Ensure the needed method has been Provider to the Container
-func MustInvokeCont[T any](c *dig.Container) T {
+func MustInvoke[T any](c Invoker) T {
 	var t T
 	Must(c.Invoke(func(myT T) {
 		t = myT

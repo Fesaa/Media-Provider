@@ -39,7 +39,7 @@ export class SignalRService {
   startConnection(user: User) {
     this.hubConnection = new HubConnectionBuilder()
       .withUrl(this.baseUrl.substring(0, this.baseUrl.length - "api/".length) + "ws", {
-        accessTokenFactory: () => user.token
+        accessTokenFactory: () => user.oidcToken ?? user.token
       })
       .withAutomaticReconnect()
       .build()

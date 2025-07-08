@@ -54,6 +54,8 @@ type Users interface {
 	ExistsAny() (bool, error)
 
 	GetById(id uint) (*User, error)
+	GetByExternalId(ExternalId string) (*User, error)
+	GetByEmail(email string) (*User, error)
 	GetByName(name string) (*User, error)
 	GetByApiKey(key string) (*User, error)
 
@@ -74,6 +76,12 @@ type Metadata interface {
 	GetRow(key MetadataKey) (*MetadataRow, error)
 	UpdateRow(metadata MetadataRow) error
 	Update([]MetadataRow) error
+}
+
+type Settings interface {
+	All() ([]ServerSetting, error)
+	GetById(SettingKey) (ServerSetting, error)
+	Update([]ServerSetting) error
 }
 
 type Option[T any] func(T) T

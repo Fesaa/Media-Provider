@@ -6,7 +6,7 @@ import {HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi} from "@ang
 import {AuthInterceptor} from "./_interceptors/auth-headers.interceptor";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {AuthRedirectInterceptor} from "./_interceptors/auth-redirect.interceptor";
-import {CommonModule} from "@angular/common";
+import {APP_BASE_HREF, CommonModule, PlatformLocation} from "@angular/common";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {providePrimeNG} from "primeng/config";
@@ -16,6 +16,11 @@ import {MessageService} from "primeng/api";
 import {SubscriptionExternalUrlPipe} from "./_pipes/subscription-external-url.pipe";
 import {provideTransloco} from "@jsverse/transloco";
 import {TranslocoLoaderImpl} from "./_services/transloco-loader";
+import {provideOAuthClient} from "angular-oauth2-oidc";
+
+function getBaseHref(platformLocation: PlatformLocation): string {
+  return platformLocation.getBaseHrefFromDOM();
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,6 +28,7 @@ export const appConfig: ApplicationConfig = {
     ContentTitlePipe,
     ProviderNamePipe,
     SubscriptionExternalUrlPipe,
+    provideOAuthClient(),
     provideZoneChangeDetection({eventCoalescing: true}),
     provideRouter(routes),
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true},
@@ -47,6 +53,11 @@ export const appConfig: ApplicationConfig = {
         prodMode: !isDevMode(),
       },
       loader: TranslocoLoaderImpl,
-    })
+    }),
+    {
+      provide: APP_BASE_HREF,
+      useFactory: getBaseHref,
+      deps: [PlatformLocation]
+    },
   ]
 };

@@ -1,22 +1,23 @@
-import {Component, Input} from '@angular/core';
-import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {Component, computed, input, Input, model} from '@angular/core';
+import {AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
+import {Tooltip} from "primeng/tooltip";
+import {FormItemComponent} from "../form-item/form-item.component";
+import {KeyValuePipe} from "@angular/common";
 
 @Component({
   selector: 'app-form-input',
   imports: [
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    Tooltip,
+    KeyValuePipe,
+    TranslocoDirective
   ],
   templateUrl: './form-input.component.html',
   styleUrl: './form-input.component.css'
 })
-export class FormInputComponent {
+export class FormInputComponent extends FormItemComponent {
 
-  @Input({required: true}) formGroup!: FormGroup;
-  @Input({required: true}) controlName!: string;
-  @Input({required: true}) label!: string;
-  @Input() type: string = "text";
-  @Input() formGroupName: string | undefined;
-
-
+  type = input('text');
 }

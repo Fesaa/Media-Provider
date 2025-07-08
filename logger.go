@@ -16,6 +16,15 @@ import (
 func LogProvider(cfg *config.Config) zerolog.Logger {
 	zerolog.DurationFieldUnit = time.Second
 	zerolog.CallerMarshalFunc = callerMarshal
+	zerolog.FormattedLevels = map[zerolog.Level]string{
+		zerolog.TraceLevel: "TRACE",
+		zerolog.DebugLevel: "DEBUG",
+		zerolog.InfoLevel:  "INFO",
+		zerolog.WarnLevel:  "WARN",
+		zerolog.ErrorLevel: "ERROR",
+		zerolog.FatalLevel: "FATAL",
+		zerolog.PanicLevel: "PANIC",
+	}
 
 	writer := func() io.Writer {
 		switch cfg.Logging.Handler {

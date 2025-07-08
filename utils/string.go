@@ -8,6 +8,7 @@ import (
 
 var re = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
+// OrElse returns s if len(s) > 0 otherwise def
 func OrElse(s string, def string) string {
 	if len(s) == 0 {
 		return def
@@ -15,15 +16,17 @@ func OrElse(s string, def string) string {
 	return s
 }
 
+// NonEmpty returns the first string not empty string
 func NonEmpty(s ...string) string {
 	for _, v := range s {
-		if v != "" {
+		if strings.TrimSpace(v) != "" {
 			return v
 		}
 	}
 	return ""
 }
 
+// Normalize removes all non-alphanumerical numbers, and then lowercases the result
 func Normalize(s string) string {
 	return strings.ToLower(re.ReplaceAllString(s, ""))
 }

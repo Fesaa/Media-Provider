@@ -22,17 +22,10 @@ func DefaultConfig() *Config {
 		RootDir: orDefault(os.Getenv("CONFIG_DIR"), pwd),
 		BaseUrl: "",
 		Secret:  secret,
-		Cache: CacheConfig{
-			Type: MEMORY,
-		},
 		Logging: Logging{
 			Level:   zerolog.InfoLevel,
 			Source:  true,
 			Handler: LogHandlerText,
-		},
-		Downloader: Downloader{
-			MaxConcurrentTorrents:       5,
-			MaxConcurrentMangadexImages: 4,
 		},
 	}
 }

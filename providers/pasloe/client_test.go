@@ -20,6 +20,36 @@ import (
 	"time"
 )
 
+type SettingsService struct {
+	settings *payload.Settings
+}
+
+func (s *SettingsService) GetSettingsDto() (payload.Settings, error) {
+	if s.settings == nil {
+		return payload.Settings{
+			BaseUrl:               "",
+			CacheType:             config.MEMORY,
+			RedisAddr:             "",
+			MaxConcurrentTorrents: 5,
+			MaxConcurrentImages:   5,
+			DisableIpv6:           false,
+			RootDir:               "temp",
+			Oidc: payload.OidcSettings{
+				Authority:            "",
+				ClientID:             "",
+				DisablePasswordLogin: false,
+				AutoLogin:            false,
+			},
+		}, nil
+	}
+	return *s.settings, nil
+}
+
+func (s *SettingsService) UpdateSettingsDto(settings payload.Settings) error {
+	s.settings = &settings
+	return nil
+}
+
 func must(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
@@ -42,6 +72,7 @@ func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 	must(t, cont.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(t, cont.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 	must(t, cont.Provide(func() services.CacheService { return &mock.Cache{} }))
+	must(t, cont.Provide(func() services.SettingsService { return &SettingsService{} }))
 	must(t, cont.Provide(mangadex.NewRepository))
 	must(t, cont.Provide(dynasty.NewRepository))
 	must(t, cont.Provide(webtoon.NewRepository))
@@ -50,7 +81,7 @@ func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 	must(t, cont.Provide(services.ImageServiceProvider))
 	must(t, cont.Provide(services.ArchiveServiceProvider))
 	must(t, cont.Provide(New))
-	c := utils.MustInvokeCont[core.Client](cont).(*client)
+	c := utils.MustInvoke[core.Client](cont).(*client)
 
 	c.registry = &mockRegistry{
 		cont: cont,

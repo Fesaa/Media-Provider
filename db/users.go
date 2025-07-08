@@ -45,6 +45,30 @@ func (u *userImpl) GetById(id uint) (*models.User, error) {
 	return &user, nil
 }
 
+func (u *userImpl) GetByExternalId(externalId string) (*models.User, error) {
+	var user models.User
+	res := u.db.Where("external_id = ?", externalId).First(&user)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return &user, nil
+}
+
+func (u *userImpl) GetByEmail(email string) (*models.User, error) {
+	var user models.User
+	res := u.db.Where("email = ?", email).First(&user)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return &user, nil
+}
+
 func (u *userImpl) GetByName(name string) (*models.User, error) {
 	var user models.User
 	res := u.db.Where(&models.User{Name: name}).First(&user)

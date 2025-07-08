@@ -14,6 +14,5 @@ type Client interface {
 	services.Client
 	GetBaseDir() string
 	GetCurrentDownloads() []Downloadable
-	GetConfig() Config
 	CanStart(models.Provider) bool
 }

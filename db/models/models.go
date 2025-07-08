@@ -14,4 +14,5 @@ var MODELS = []any{
 	&Tag{},
 	&MetadataRow{},
 	&TagMap{},
+	&ServerSetting{},
 }

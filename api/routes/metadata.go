@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"github.com/Fesaa/Media-Provider/api/auth"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +12,7 @@ type metadataRoutes struct {
 	dig.In
 
 	Router          fiber.Router
-	Auth            auth.Provider `name:"jwt-auth"`
+	Auth            services.AuthService `name:"jwt-auth"`
 	MetadataService services.MetadataService
 	Log             zerolog.Logger
 }

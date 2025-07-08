@@ -67,7 +67,7 @@ export class PagesSettingsComponent {
     this.pageService.removePage(page.ID).subscribe({
       next: () => {
         this.toastService.successLoco("settings.pages.toasts.delete.success", {}, {title: page.title});
-        this.pageService.refreshPages();
+        this.pageService.refreshPages().subscribe();
       },
       error: (err) => {
         this.toastService.genericError(err.error.message);
@@ -83,7 +83,7 @@ export class PagesSettingsComponent {
     moveItemInArray(this.pages, $event.previousIndex, $event.currentIndex);
     this.pageService.swapPages(page1.ID, page2.ID).subscribe({
       next: () => {
-        this.pageService.refreshPages();
+        this.pageService.refreshPages().subscribe();
       },
       error: (err) => {
         // Could not move, set back

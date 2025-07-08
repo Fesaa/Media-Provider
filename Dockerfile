@@ -3,7 +3,7 @@ FROM node:18 AS npm-stage
 WORKDIR /app
 
 COPY UI/Web/package.json UI/Web/package-lock.json ./
-RUN npm install
+RUN npm install --force
 
 COPY UI/Web ./
 
