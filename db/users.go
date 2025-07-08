@@ -45,9 +45,9 @@ func (u *userImpl) GetById(id uint) (*models.User, error) {
 	return &user, nil
 }
 
-func (u *userImpl) GetByExternalId(ExternalId string) (*models.User, error) {
+func (u *userImpl) GetByExternalId(externalId string) (*models.User, error) {
 	var user models.User
-	res := u.db.Where("external_id = ?", ExternalId).First(&user)
+	res := u.db.Where("external_id = ?", externalId).First(&user)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

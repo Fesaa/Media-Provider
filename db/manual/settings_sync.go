@@ -54,7 +54,7 @@ var defaults = []models.ServerSetting{
 func SyncSettings(db *gorm.DB, log zerolog.Logger) error {
 	var ext []models.ServerSetting
 	if err := db.Find(&ext).Error; err != nil {
-		return nil
+		return err
 	}
 
 	return db.Transaction(func(tx *gorm.DB) error {

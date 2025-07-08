@@ -16,7 +16,7 @@ func validateConfig(cfg *config.Config, log zerolog.Logger, val *validator.Valid
 		return err
 	}
 
-	if err := validateRootConfig(cfg, log, fs); err != nil {
+	if err := validateRootConfig(cfg, log); err != nil {
 		return err
 	}
 
@@ -24,7 +24,7 @@ func validateConfig(cfg *config.Config, log zerolog.Logger, val *validator.Valid
 	return nil
 }
 
-func validateRootConfig(c *config.Config, log zerolog.Logger, fs afero.Afero) error {
+func validateRootConfig(c *config.Config, log zerolog.Logger) error {
 	log.Debug().Msg("Validating root config")
 
 	// User can easily forget to add a / to the base url, so we add it for them

@@ -24,7 +24,7 @@ func New(s services.SettingsService, container *dig.Container, log zerolog.Logge
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &client{
 		registry:   newRegistry(container),
 		log:        log.With().Str("handler", "pasloe").Logger(),
