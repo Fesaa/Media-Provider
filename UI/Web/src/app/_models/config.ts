@@ -22,3 +22,11 @@ export enum CacheType {
   MEMORY = "MEMORY",
   REDIS = "REDIS",
 }
+
+export const CacheTypes = [{
+  value: CacheType.MEMORY,
+  key: 'memory',
+}, {
+  value: CacheType.REDIS,
+  key: 'redis',
+}];

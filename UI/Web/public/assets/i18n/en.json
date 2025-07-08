@@ -484,19 +484,24 @@
       "general": "General",
       "root-dir": "Root directory",
       "base-url": "Base Url",
-      "cache-type": {
+      "cache": {
         "label": "Cache type",
-        "tooltip": "Redis allows requests to be cached between restarts"
+        "subTitle": "Redis allows requests to be cached between restarts",
+        "tooltip": "",
+        "memory": "In-memory",
+        "redis": "Redis"
       },
       "redis-address": "Redis address",
       "downloader": "Downloader",
       "max-torrents": {
         "label": "Max torrents",
-        "tooltip": "Global max torrents"
+        "subTitle": "Global max torrents",
+        "tooltip": ""
       },
       "max-images": {
         "label": "Max Images",
-        "tooltip": "Amount of images(/chapter) downloaded at once, not shared between providers"
+        "subTitle": "Amount of images(/chapter) downloaded at once, not shared between providers",
+        "tooltip": ""
       },
       "oidc": {
         "title": "OpenID Connect",

@@ -1,7 +1,8 @@
-import {Component, computed, input, Input} from '@angular/core';
-import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {Component, computed, input, Input, model} from '@angular/core';
+import {AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {translate} from "@jsverse/transloco";
 import {Tooltip} from "primeng/tooltip";
+import {FormItemComponent} from "../form-item/form-item.component";
 
 @Component({
   selector: 'app-form-input',
@@ -13,30 +14,7 @@ import {Tooltip} from "primeng/tooltip";
   templateUrl: './form-input.component.html',
   styleUrl: './form-input.component.css'
 })
-export class FormInputComponent {
+export class FormInputComponent extends FormItemComponent {
 
-  @Input({required: true}) formGroup!: FormGroup;
-  @Input({required: true}) controlName!: string;
-  @Input() label: string = '';
-  @Input() type: string = "text";
-  @Input() formGroupName: string | undefined = undefined;
-
-  translationKey = input('');
-
-  toolTip = computed(() => {
-    const key = this.translationKey();
-    if (!key || key === '' ) {
-      return undefined;
-    }
-
-    const toolTipKey = key + '.tooltip';
-    const translation = translate(toolTipKey);
-    if (translation && translation !== toolTipKey) {
-      return translation;
-    }
-
-    return undefined;
-  })
-
-  protected readonly translate = translate;
+  type = input('text');
 }

@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, OnInit} from '@angular/core';
-import {CacheType} from '../../../../_models/config';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {CacheType, CacheTypes} from '../../../../_models/config';
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {Tooltip} from "primeng/tooltip";
@@ -14,10 +14,9 @@ import {SettingsService} from "../../../../_services/settings.service";
   imports: [
     ReactiveFormsModule,
     FormInputComponent,
-    FormSelectComponent,
-    Tooltip,
     TranslocoDirective,
-    Button
+    Button,
+    FormSelectComponent
   ],
   templateUrl: './server-settings.component.html',
   styleUrl: './server-settings.component.css',
@@ -30,9 +29,6 @@ export class ServerSettingsComponent {
   config = this.settingsService.config;
 
   settingsForm: FormGroup | undefined;
-
-  protected readonly Object = Object;
-  protected readonly CacheType = CacheType;
 
   constructor(private fb: FormBuilder,
               protected cdRef: ChangeDetectorRef,
@@ -63,7 +59,13 @@ export class ServerSettingsComponent {
       });
       this.cdRef.detectChanges();
     });
+  }
 
+  getFormControl(path: string): FormControl | null {
+    if (!this.settingsForm) return null;
+
+    const control = this.settingsForm.get(path);
+    return control instanceof FormControl ? control : null;
   }
 
   save() {
@@ -109,4 +111,7 @@ export class ServerSettingsComponent {
 
     return count
   }
+
+  protected readonly CacheType = CacheType;
+  protected readonly CacheTypes = CacheTypes;
 }

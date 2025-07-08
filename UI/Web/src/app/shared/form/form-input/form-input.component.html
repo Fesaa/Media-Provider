@@ -1,72 +1,37 @@
-<div [formGroup]="formGroup">
-  <label
-    [for]="controlName"
-    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-  >
-    @if (translationKey() != '') {
-      {{ translate(translationKey() + '.label') }}
-    } @else {
-      {{ label }}
-    }
+
+<div>
+
+  <label [for]="id()" class="mb-2 block text-sm font-medium text-gray-900">
+    {{title()}}
   </label>
 
-  @if (formGroupName) {
-    <div class="flex items-center space-x-2" [formGroupName]="formGroupName">
-      @if (type === 'switch') {
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            [id]="controlName"
-            [formControlName]="controlName"
-            [pTooltip]="toolTip()"
-            class="sr-only peer"
-          />
-          <div
-            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"
-          ></div>
-        </label>
-      } @else {
+  <div>
+    @if (type() === 'switch') {
+      <label class="relative inline-flex items-center cursor-pointer">
         <input
-          [type]="type"
-          [name]="controlName"
-          [id]="controlName"
-          class="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-          [formControlName]="controlName"
+          type="checkbox"
+          [id]="id()"
+          [formControl]="control()"
           [pTooltip]="toolTip()"
+          class="sr-only peer"
         />
-      }
-    </div>
-  } @else {
-    <div class="flex items-center space-x-2">
-      @if (type === 'switch') {
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            [id]="controlName"
-            [formControlName]="controlName"
-            [pTooltip]="toolTip()"
-            class="sr-only peer"
-          />
-          <div
-            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"
-          ></div>
-        </label>
-      } @else {
-        <input
-          [type]="type"
-          [name]="controlName"
-          [id]="controlName"
-          class="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-          [formControlName]="controlName"
-          [pTooltip]="toolTip()"
-        />
-      }
-    </div>
-  }
-
-  @if (translationKey() != '') {
-    @if (translate(translationKey() + '.subTitle'); as subTitle) {
-      <div class="text-muted">{{ subTitle }}</div>
+        <div
+          class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"
+        ></div>
+      </label>
+    } @else {
+      <input
+        [type]="type()"
+        [id]="id()"
+        [formControl]="control()"
+        [pTooltip]="toolTip()"
+        class="focus:ring-primary-600 focus:border-primary-600 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-gray-900 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+      />
     }
+  </div>
+
+  @if (subTitle(); as subTitle) {
+    <div class="text-muted">{{ subTitle }}</div>
   }
 </div>
+
