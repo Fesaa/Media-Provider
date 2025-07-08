@@ -29,7 +29,12 @@
           </div>
         </th>
         <th style="width:10%">{{ t('frequency') }}</th>
-        <th style="width:15%">{{ t('actions.label') }}</th>
+        <th style="width:15%">
+          <div class="flex flex-row space-x-2 justify-center items-center">
+            <span>{{ t('actions.label') }}</span>
+            <p-button severity="secondary" (onClick)="runAll()" [disabled]="hasRanAll()">{{t('actions.run-all')}}</p-button>
+          </div>
+        </th>
       </tr>
       <tr>
         <th>

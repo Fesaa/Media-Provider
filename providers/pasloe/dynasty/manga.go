@@ -47,6 +47,10 @@ type manga struct {
 }
 
 func (m *manga) Title() string {
+	if titleOverride, ok := m.Req.GetString(core.TitleOverride); ok {
+		return titleOverride
+	}
+
 	if m.SeriesInfo == nil {
 		return utils.NonEmpty(m.Req.TempTitle, m.Req.Id)
 	}

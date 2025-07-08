@@ -186,7 +186,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
-	ci.Series = m.SeriesInfo.Attributes.LangTitle(m.language)
+	ci.Series = utils.NonEmpty(m.Req.GetStringOrDefault(core.TitleOverride, ""), m.SeriesInfo.Attributes.LangTitle(m.language))
 	ci.Year = m.SeriesInfo.Attributes.Year
 	ci.Summary = m.markdownService.MdToSafeHtml(m.SeriesInfo.Attributes.LangDescription(m.language))
 	ci.Manga = comicinfo.MangaYes

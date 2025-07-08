@@ -32,7 +32,7 @@ func (m *manga) writeCover(ctx context.Context, chapter Chapter) error {
 func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
-	ci.Series = m.SeriesInfo.Title
+	ci.Series = utils.NonEmpty(m.Req.GetStringOrDefault(core.TitleOverride, ""), m.SeriesInfo.Title)
 	ci.AlternateSeries = m.SeriesInfo.OriginalTitle
 	ci.Summary = m.SeriesInfo.Summary
 	ci.Manga = comicinfo.MangaYes

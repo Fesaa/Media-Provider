@@ -39,10 +39,34 @@ func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
 	group.Post("/new", sr.New)
 	group.Delete("/:id", sr.Delete)
 	group.Post("/run-once/:id", sr.RunOnce)
+	group.Post("/run-all", sr.RunAll)
 }
 
 func (sr *subscriptionRoutes) Providers(ctx *fiber.Ctx) error {
 	return ctx.JSON(allowedProviders)
+}
+
+func (sr *subscriptionRoutes) RunAll(ctx *fiber.Ctx) error {
+	subs, err := sr.SubscriptionService.All()
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	for _, sub := range subs {
+		err = sr.ContentService.DownloadSubscription(&sub, false) // This was manually triggered
+		if err != nil {
+			sr.Log.Error().Err(err).Msg("Failed to download subscription")
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"sub-id":  sub.ID,
+				"message": sr.Transloco.GetTranslation("failed-to-run-once", err),
+			})
+		}
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
 func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {

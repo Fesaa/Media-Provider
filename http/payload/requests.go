@@ -60,6 +60,14 @@ func (r DownloadRequest) GetString(key string, fallback ...string) (string, bool
 	return values[0], true
 }
 
+func (r DownloadRequest) GetStringOrDefault(key string, fallback string) string {
+	s, ok := r.GetString(key)
+	if !ok {
+		return fallback
+	}
+	return s
+}
+
 // GetInt returns the metadata associated with the key as an int,
 // zero is returned if the value is not present or if conversion failed
 func (r DownloadRequest) GetInt(key string, fallback ...int) (int, error) {

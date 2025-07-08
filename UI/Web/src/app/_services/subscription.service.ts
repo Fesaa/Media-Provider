@@ -23,6 +23,10 @@ export class SubscriptionService {
     return this.httpClient.post(`${this.baseUrl}/run-once/${id}`, {}, {responseType: 'text'})
   }
 
+  runAll() {
+    return this.httpClient.post(`${this.baseUrl}/run-all`, {});
+  }
+
   delete(id: number) {
     return this.httpClient.delete(`${this.baseUrl}/${id}`, {responseType: 'text'});
   }

@@ -131,6 +131,11 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Advanced: true,
 				FormType: payload.SWITCH,
 			},
+			{
+				Key:      core.TitleOverride,
+				Advanced: true,
+				FormType: payload.TEXT,
+			},
 		},
 	}
 }

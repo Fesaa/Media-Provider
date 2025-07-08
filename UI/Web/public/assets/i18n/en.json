@@ -194,6 +194,10 @@
         "no-sub-dir": {
           "title": "Download into parent",
           "tooltip": "Content will be copied in your selected dir, instead of creating child directory first"
+        },
+        "title_override": {
+          "title": "Override title",
+          "tooltip": "Set a specific title"
         }
       },
       "cancel": "{{shared.cancel}}",
@@ -653,6 +657,11 @@
       "label": "Actions",
       "edit": "Edit",
       "run-once": "Run Once",
+      "run-all": "Run All",
+      "run-all-success": {
+        "title": "Successfully",
+        "summary": "Ran all subscriptions"
+      },
       "delete": "Delete"
     },
     "confirm-delete": "Are you sure you want to remove your subscription on {{title}}?",
