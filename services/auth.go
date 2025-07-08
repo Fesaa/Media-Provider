@@ -15,7 +15,6 @@ import (
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
 	"time"
 )
 
@@ -51,6 +50,7 @@ type jwtAuthService struct {
 	cfg   *config.Config
 	log   zerolog.Logger
 
+	iss      string
 	verifier *oidc.IDTokenVerifier
 }
 
@@ -72,6 +72,7 @@ func JwtAuthServiceProvider(service SettingsService, users models.Users, cfg *co
 	}
 
 	s.verifier = verifier
+	s.iss = settings.Oidc.Authority
 	return s, nil
 }
 
@@ -81,6 +82,25 @@ func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthService {
 		jwt:   params.JWT,
 		log:   params.Log.With().Str("handler", "api-key-auth-service").Logger(),
 	}
+}
+
+func GetIssuerFromToken(tokenString string) (string, error) {
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
+	if err != nil {
+		return "", fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid token claims")
+	}
+
+	issuer, ok := claims["iss"].(string)
+	if !ok {
+		return "", errors.New("issuer claim not found or not a string")
+	}
+
+	return issuer, nil
 }
 
 func (jwtAuth *jwtAuthService) Middleware(ctx *fiber.Ctx) error {
@@ -119,14 +139,13 @@ func (jwtAuth *jwtAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	if jwtAuth.verifier != nil {
-		ok, err := jwtAuth.OidcJWT(ctx, key)
-		if err != nil && !strings.HasPrefix(err.Error(), "oidc: id token issued by a different provider") {
-			jwtAuth.log.Debug().Err(err).Msg("error while checking OIDC JWT")
-		}
-		if err == nil && ok {
-			return ok, err
-		}
+	iss, err := GetIssuerFromToken(key)
+	if err != nil {
+		return false, err
+	}
+
+	if jwtAuth.verifier != nil && iss == jwtAuth.iss {
+		return jwtAuth.OidcJWT(ctx, key)
 	}
 
 	return jwtAuth.LocalJWT(ctx, key)
@@ -252,6 +271,7 @@ func (jwtAuth *jwtAuthService) Login(loginRequest payload.LoginRequest) (*payloa
 				}
 				return time.Now().Add(24 * time.Hour)
 			}()),
+			Issuer: "Media-Provider",
 		},
 	}
 
@@ -264,6 +284,7 @@ func (jwtAuth *jwtAuthService) Login(loginRequest payload.LoginRequest) (*payloa
 	return &payload.LoginResponse{
 		Id:          user.ID,
 		Name:        user.Name,
+		Email:       user.Email.String,
 		Token:       t,
 		ApiKey:      user.ApiKey,
 		Permissions: user.Permission,

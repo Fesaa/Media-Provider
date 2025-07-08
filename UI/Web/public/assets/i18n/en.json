@@ -706,7 +706,52 @@
       "minlength": "Minimum length is {{ error.value.requiredLength }} characters.",
       "maxlength": "Maximum length is {{ error.value.requiredLength }} characters.",
       "min": "Minimum value is {{ error.value.min }}.",
-      "max": "Maximum value is {{ error.value.max }}."
+      "max": "Maximum value is {{ error.value.max }}.",
+      "sameAs": "Value must be the same as {{error.value.other}}"
+    }
+  },
+
+  "account": {
+    "title": "Account",
+    "save": "{{shared.save}}",
+    "username": {
+      "label": "Username",
+      "subTitle": "Can be anything, but must be unique"
+    },
+    "email": {
+      "label": "Email",
+      "subTitle": "Used to match with OIDC"
+    },
+    "password": {
+      "title": "Authentication",
+      "save": "{{shared.save}}",
+      "label": "Password"
+    },
+    "oldPassword": {
+      "label": "Old password"
+    },
+    "confirm": {
+      "label": "Confirm password"
+    },
+    "errors": {
+      "update": {
+        "title": "Failed to update your account",
+        "summary": "{{error}}"
+      },
+      "password": {
+        "title": "Failed to update your password",
+        "summary": "{{error}}"
+      }
+    },
+    "success": {
+      "update": {
+        "title": "Updated your account",
+        "summary": ""
+      },
+      "password": {
+        "title": "Updated your password",
+        "summary": ""
+      }
     }
   }
 

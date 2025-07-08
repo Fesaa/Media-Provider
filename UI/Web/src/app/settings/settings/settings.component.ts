@@ -1,19 +1,28 @@
-import { Component, effect, inject, signal, computed } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { NavService } from '../../_services/nav.service';
-import { AccountService } from '../../_services/account.service';
-import { hasPermission, Perm, User } from '../../_models/user';
+import {Component, computed, effect, inject, signal} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {NavService} from '../../_services/nav.service';
+import {AccountService} from '../../_services/account.service';
+import {hasPermission, Perm, User} from '../../_models/user';
 import {PreferenceSettingsComponent} from "./_components/preference-settings/preference-settings.component";
 import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
 import {ServerSettingsComponent} from "./_components/server-settings/server-settings.component";
 import {UserSettingsComponent} from "./_components/user-settings/user-settings.component";
 import {TranslocoDirective} from "@jsverse/transloco";
+import {AccountSettingsComponent} from "./_components/account-settings/account-settings.component";
 
 export enum SettingsID {
+  Account = "account",
   Server = "server",
   Preferences = "preferences",
   Pages = "pages",
   User = "user"
+}
+
+interface SettingsTab {
+  id: SettingsID,
+  title: string,
+  icon: string,
+  perm: Perm,
 }
 
 @Component({
@@ -24,7 +33,8 @@ export enum SettingsID {
     PagesSettingsComponent,
     ServerSettingsComponent,
     UserSettingsComponent,
-    TranslocoDirective
+    TranslocoDirective,
+    AccountSettingsComponent
 
   ],
   templateUrl: './settings.component.html',
@@ -39,19 +49,22 @@ export class SettingsComponent {
   readonly SettingsID = SettingsID;
 
   user = signal<User | null>(null);
-  selected = signal<SettingsID>(SettingsID.Preferences);
+  selected = signal<SettingsID>(SettingsID.Account);
   showMobileConfig = signal(false);
 
-  readonly settings = signal([
+  readonly settings: SettingsTab[] = [
+    { id: SettingsID.Account, title: "Account", icon: 'pi pi-user', perm: Perm.All },
     { id: SettingsID.Preferences, title: "Preferences", icon: 'pi pi-ethereum', perm: Perm.WriteConfig },
     { id: SettingsID.Pages, title: 'Pages', icon: 'pi pi-thumbtack', perm: Perm.All },
     { id: SettingsID.Server, title: 'Server', icon: 'pi pi-server', perm: Perm.WriteConfig },
     { id: SettingsID.User, title: 'Users', icon: 'pi pi-users', perm: Perm.WriteUser },
-  ]);
+  ];
 
-  readonly visibleSettings = computed(() =>
-    this.settings().filter(setting => this.canSee(setting.id))
-  );
+  readonly visibleSettings = computed(() => {
+    this.user(); // Compute when user changes
+
+    return this.settings.filter(setting => this.canSee(setting.id));
+  });
 
   constructor() {
     this.navService.setNavVisibility(true);
@@ -64,10 +77,7 @@ export class SettingsComponent {
       this.user.set(user);
 
       if (!this.canSee(this.selected())) {
-        const firstVisible = this.settings().find(s => this.canSee(s.id));
-        if (firstVisible) {
-          this.selected.set(firstVisible.id);
-        }
+        this.selected.set(this.visibleSettings()[0].id);
       }
     });
 
@@ -95,7 +105,7 @@ export class SettingsComponent {
     const user = this.user();
     if (!user) return false;
 
-    const setting = this.settings().find(s => s.id === id);
+    const setting = this.settings.find(s => s.id === id);
     if (!setting) return false;
 
     return hasPermission(user, setting.perm);

@@ -8,6 +8,7 @@ export interface UserDto {
 export interface User {
   id: number;
   name: string;
+  email: string;
   oidcToken?: string;
   token: string;
   apiKey: string;

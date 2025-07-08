@@ -57,6 +57,23 @@ export class AccountService {
     );
   }
 
+  updateMe(model: {username: string, email: string}) {
+    return this.httpClient.post<User>(`${this.baseUrl}user/me`, model).pipe(
+      tap(() => {
+        if (!this.currentUser) return;
+
+        const user = {...this.currentUser};
+        user.name = model.username;
+        user.email = model.email;
+        this.setCurrentUser(user);
+      })
+    );
+  }
+
+  updatePassword(model: {oldPassword: string, newPassword: string}) {
+    return this.httpClient.post(`${this.baseUrl}user/password`, model)
+  }
+
   register(model: { username: string, password: string, remember: boolean }): Observable<User> {
     return this.httpClient.post<User>(this.baseUrl + 'register', model).pipe(
       tap((user: User) => {

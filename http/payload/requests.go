@@ -121,13 +121,19 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Id          uint   `json:"id" validate:"required"`
 	Name        string `json:"name" validate:"required"`
+	Email       string `json:"email" validate:"required"`
 	Token       string `json:"token" validate:"required"`
 	ApiKey      string `json:"apiKey,omitempty"`
 	Permissions int    `json:"permissions" validate:"gte=0"`
 }
+type UpdateUserRequest struct {
+	Name  string `json:"username" validate:"required"`
+	Email string `json:"email"`
+}
 
 type UpdatePasswordRequest struct {
-	Password string `json:"password" validate:"required"`
+	OldPassword string `json:"oldPassword" validate:"required"`
+	NewPassword string `json:"newPassword" validate:"required"`
 }
 
 type SwapPageRequest struct {

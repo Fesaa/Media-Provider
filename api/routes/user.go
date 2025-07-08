@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -12,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type userRoutes struct {
@@ -42,6 +45,116 @@ func RegisterUserRoutes(ur userRoutes) {
 	user.Delete("/:userId", ur.DeleteUser)
 	user.Post("/reset/:userId", ur.GenerateResetPassword)
 	user.Get("/me", ur.Me)
+	user.Post("/me", ur.UpdateMe)
+	user.Post("/password", ur.UpdatePassword)
+}
+
+func (ur *userRoutes) UpdatePassword(ctx *fiber.Ctx) error {
+	var updatePasswordRequest payload.UpdatePasswordRequest
+	if err := ur.Val.ValidateCtx(ctx, &updatePasswordRequest); err != nil {
+		ur.Log.Error().Err(err).Msg("failed to parse update password request")
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	user := ctx.Locals("user").(models.User)
+
+	decodeString, err := base64.StdEncoding.DecodeString(user.PasswordHash)
+	if err != nil {
+		ur.Log.Error().Err(err).Str("user", user.Name).Msg("failed to decode password")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
+	}
+
+	if err = bcrypt.CompareHashAndPassword(decodeString, []byte(updatePasswordRequest.OldPassword)); err != nil {
+		ur.Log.Error().Err(err).Str("user", user.Name).Msg("invalid password")
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   "invalid password",
+		})
+	}
+
+	password, err := bcrypt.GenerateFromPassword([]byte(updatePasswordRequest.NewPassword), bcrypt.MinCost)
+	if err != nil {
+		ur.Log.Error().Err(err).Msg("failed to generate password")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	user.PasswordHash = base64.StdEncoding.EncodeToString(password)
+
+	if _, err = ur.DB.Users.Update(user); err != nil {
+		ur.Log.Error().Err(err).Str("user", user.Name).Msg("failed to update user")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+}
+
+func (ur *userRoutes) UpdateMe(ctx *fiber.Ctx) error {
+	var updateUserReq payload.UpdateUserRequest
+	if err := ur.Val.ValidateCtx(ctx, &updateUserReq); err != nil {
+		ur.Log.Error().Err(err).Msg("failed to parse update request")
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	user := ctx.Locals("user").(models.User)
+
+	if user.Name != updateUserReq.Name {
+		other, err := ur.DB.Users.GetByName(updateUserReq.Name)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+			})
+		}
+
+		if other != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"error":   "user already exists",
+			})
+		}
+	}
+
+	user.Name = updateUserReq.Name
+
+	if user.Email.String != updateUserReq.Email {
+		other, err := ur.DB.Users.GetByEmail(updateUserReq.Email)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+			})
+		}
+
+		if other != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"error":   "user already exists",
+			})
+		}
+	}
+
+	user.Email = sql.NullString{String: updateUserReq.Email, Valid: true}
+
+	if _, err := ur.DB.Users.Update(user); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
 func (ur *userRoutes) Me(ctx *fiber.Ctx) error {
@@ -55,6 +168,7 @@ func (ur *userRoutes) Me(ctx *fiber.Ctx) error {
 	return ctx.JSON(payload.LoginResponse{
 		Id:          user.ID,
 		Name:        user.Name,
+		Email:       user.Email.String,
 		ApiKey:      user.ApiKey,
 		Permissions: user.Permission,
 	})
