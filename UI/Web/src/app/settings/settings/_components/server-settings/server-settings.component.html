@@ -17,7 +17,7 @@
               <app-form-input [control]="baseUrl" [title]="t('base-url')"></app-form-input>
             }
 
-            @if (getFormControl('cache.cacheType'); as cacheType) {
+            @if (getFormControl('cacheType'); as cacheType) {
               <app-form-select [title]="t('cache.label')" [subTitle]="t('cache.subTitle')" [control]="cacheType">
                 <ng-template #options>
                   @for (ct of CacheTypes; track ct.key) {
@@ -27,9 +27,9 @@
               </app-form-select>
             }
 
-            @switch (settingsForm.value.cache?.cacheType) {
+            @switch (settingsForm.value.cacheType) {
               @case (CacheType.REDIS) {
-                @if (getFormControl('cache.redisAddr'); as redisAddr) {
+                @if (getFormControl('redisAddr'); as redisAddr) {
                   <app-form-input
                     [control]="redisAddr"
                     [title]="t('redis-address')"
@@ -48,11 +48,11 @@
           </h2>
 
           <div class="flex flex-col space-y-5">
-            @if (getFormControl('downloader.maxConcurrentTorrents'); as maxTorrents) {
+            @if (getFormControl('maxConcurrentTorrents'); as maxTorrents) {
               <app-form-input [control]="maxTorrents" [title]="t('max-torrents.label')" [subTitle]="t('max-torrents.subTitle')" type="number"/>
             }
 
-            @if (getFormControl('downloader.maxConcurrentImages'); as maxImages) {
+            @if (getFormControl('maxConcurrentImages'); as maxImages) {
               <app-form-input [control]="maxImages" [title]="t('max-images.label')" [subTitle]="t('max-images.subTitle')" type="number"/>
             }
           </div>

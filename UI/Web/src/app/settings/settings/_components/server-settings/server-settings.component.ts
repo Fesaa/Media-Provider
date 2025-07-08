@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, OnInit} from '@angular/core';
-import {CacheType, CacheTypes} from '../../../../_models/config';
+import {CacheType, CacheTypes, Config} from '../../../../_models/config';
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
@@ -40,16 +40,12 @@ export class ServerSettingsComponent {
       if (config == undefined) return
 
       this.settingsForm = this.fb.group({
-        rootDir: this.fb.control(config.rootDir, Validators.required),
+        rootDir: this.fb.control(config.rootDir, [Validators.required]),
         baseUrl: this.fb.control(config.baseUrl),
-        cache: this.fb.group({
-          cacheType: this.fb.control(config.cacheType),
-          redisAddr: this.fb.control(config.redisAddr),
-        }),
-        downloader: this.fb.group({
-          maxConcurrentImages: this.fb.control(config.maxConcurrentImages),
-          maxConcurrentTorrents: this.fb.control(config.maxConcurrentTorrents),
-        }),
+        cacheType: this.fb.control(config.cacheType, [Validators.required]),
+        redisAddr: this.fb.control(config.redisAddr),
+        maxConcurrentImages: this.fb.control(config.maxConcurrentImages, [Validators.required, Validators.min(1), Validators.max(5)]),
+        maxConcurrentTorrents: this.fb.control(config.maxConcurrentTorrents, [Validators.required, Validators.min(1), Validators.max(10)]),
         oidc: this.fb.group({
           authority: this.fb.control(config.oidc.authority),
           clientId: this.fb.control(config.oidc.clientId),
@@ -84,11 +80,15 @@ export class ServerSettingsComponent {
       return;
     }
 
-    if (this.settingsForm.value.cache.type != CacheType.REDIS) {
-      this.settingsForm.value.cache.redis = ""
+    const dto: Config = this.settingsForm.getRawValue();
+    dto.maxConcurrentImages = parseInt(String(dto.maxConcurrentImages))
+    dto.maxConcurrentTorrents = parseInt(String(dto.maxConcurrentTorrents))
+
+    if (dto.cacheType != CacheType.REDIS) {
+      dto.redisAddr = ""
     }
 
-    this.settingsService.updateConfig(this.settingsForm.value).subscribe({
+    this.settingsService.updateConfig(dto).subscribe({
       next: () => {
         this.toastService.successLoco("settings.server.toasts.save.success");
       },
