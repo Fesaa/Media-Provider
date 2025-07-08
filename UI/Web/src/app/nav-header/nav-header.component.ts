@@ -73,12 +73,12 @@ export class NavHeaderComponent implements OnInit {
 
         this.setPageItems()
         this.setAccountItems(user)
-      })
-    })
+      });
 
-    this.notificationService.amount().subscribe(amount => {
-      this.notifications = amount;
-    })
+      this.notificationService.amount().subscribe(amount => {
+        this.notifications = amount;
+      });
+    });
 
     this.signalR.events$.subscribe(event => {
       if (event.type == EventType.NotificationAdd) {

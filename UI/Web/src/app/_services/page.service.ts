@@ -3,15 +3,18 @@ import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {DownloadMetadata, Page, Provider} from "../_models/page";
 import {Observable, of, ReplaySubject, tap} from "rxjs";
+import {AccountService} from "./account.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class PageService {
 
+  private readonly accountService = inject(AccountService);
+
   public static readonly DEFAULT_PAGE_SORT = 9999;
   baseUrl = environment.apiUrl + "pages/";
-  private readonly destroyRef = inject(DestroyRef);
+
   private pages: Page[] | undefined = undefined;
   private pagesSource = new ReplaySubject<Page[]>(1);
   public pages$ = this.pagesSource.asObservable();
@@ -19,6 +22,9 @@ export class PageService {
   private metadataCache: { [key: number]: DownloadMetadata } = {};
 
   constructor(private httpClient: HttpClient,) {
+    const user = this.accountService.currentUserSignal();
+    if (!user) return;
+
     this.refreshPages().subscribe();
   }
 
