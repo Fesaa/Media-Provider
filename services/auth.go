@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -164,7 +165,10 @@ func (jwtAuth *jwtAuthService) OidcJWT(ctx *fiber.Ctx, key string) (bool, error)
 		return false, err
 	}
 	if user != nil {
-		user.ExternalId = token.Subject
+		user.ExternalId = sql.NullString{
+			String: token.Subject,
+			Valid:  true,
+		}
 		if _, err = jwtAuth.users.Update(*user); err != nil {
 			jwtAuth.log.Error().Err(err).
 				Str("email", claims.Email).

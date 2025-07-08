@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -17,6 +18,36 @@ import (
 
 type PasloeClient struct {
 	BaseDir string
+}
+
+type SettingsService struct {
+	settings *payload.Settings
+}
+
+func (s *SettingsService) GetSettingsDto() (payload.Settings, error) {
+	if s.settings == nil {
+		return payload.Settings{
+			BaseUrl:               "",
+			CacheType:             config.MEMORY,
+			RedisAddr:             "",
+			MaxConcurrentTorrents: 5,
+			MaxConcurrentImages:   5,
+			DisableIpv6:           false,
+			RootDir:               "temp",
+			Oidc: payload.OidcSettings{
+				Authority:            "",
+				ClientID:             "",
+				DisablePasswordLogin: false,
+				AutoLogin:            false,
+			},
+		}, nil
+	}
+	return *s.settings, nil
+}
+
+func (s *SettingsService) UpdateSettingsDto(settings payload.Settings) error {
+	s.settings = &settings
+	return nil
 }
 
 func (m PasloeClient) GetRootDir() string {
@@ -124,6 +155,7 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider P
 	must(scope.Provide(func() services.NotificationService { return nil }))
 	must(scope.Provide(func() services.TranslocoService { return nil }))
 	must(scope.Provide(func() models.Preferences { return nil }))
+	must(scope.Provide(func() services.SettingsService { return &SettingsService{} }))
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(scope.Provide(services.ArchiveServiceProvider))
 	must(scope.Provide(services.ImageServiceProvider))
@@ -144,13 +176,13 @@ func TestContentList_EmptyChapters(t *testing.T) {
 }
 
 func TestContentList_SingleChapterNoVolume(t *testing.T) {
+	chpt := ChapterMock{Id: "1", Title: "MockSeries", LabelStr: "Ch 1", Volume: "", Chapter: "1"}
 	core := &Core[ChapterMock, SeriesMock]{
 		SeriesInfo: SeriesMock{
-			chapters: []ChapterMock{
-				{Id: "1", Title: "", LabelStr: "Ch 1", Volume: "", Chapter: "1"},
-			},
+			chapters: []ChapterMock{chpt},
 		},
-		impl: ProviderMock{title: "MockSeries"},
+		ToDownload: []ChapterMock{chpt},
+		impl:       ProviderMock{title: "MockSeries"},
 	}
 
 	got := core.ContentList()
@@ -173,7 +205,7 @@ func TestContentList_SingleChapterWithVolume(t *testing.T) {
 	core := &Core[ChapterMock, SeriesMock]{
 		SeriesInfo: SeriesMock{
 			chapters: []ChapterMock{
-				{Id: "1", Title: "T", LabelStr: "Ch 1", Volume: "1", Chapter: "1"},
+				{Id: "1", Title: "", LabelStr: "Ch 1", Volume: "1", Chapter: "1"},
 			},
 		},
 		impl: ProviderMock{title: "MockSeries"},
