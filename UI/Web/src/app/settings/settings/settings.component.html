@@ -1,6 +1,5 @@
 <div class="settings-container" *transloco="let t; prefix: 'settings'">
 
-  <!-- Header -->
   <header class="settings-header">
     <h1>{{ t('settings') }}</h1>
     <button
@@ -10,13 +9,11 @@
       (click)="toggleMobile()"
     >
       <span class="pi pi-sliders-h" aria-hidden="true"></span>
-      <span class="visually-hidden">{{ t('toggleMenu') }}</span>
     </button>
   </header>
 
   <main class="settings-main">
 
-    <!-- Sidebar / Menu -->
     <nav
       id="settings-menu"
       class="settings-sidebar"
@@ -36,7 +33,6 @@
       }
     </nav>
 
-    <!-- Content Area -->
     <section class="settings-content" role="region" aria-live="polite">
       @defer (when selected() === SettingsID.Preferences; prefetch on idle) {
         @if (selected() === SettingsID.Preferences && canSee(SettingsID.Preferences)) {
