@@ -5,7 +5,7 @@
         <div class="login-split__branding">
           <h1 class="login-split__app">{{ t('application-name') }}</h1>
           <p class="login-split__tagline">{{ t('welcome-tagline') }}</p>
-          @if (oidcService.settings()?.authority !== '') {
+          @if (oidcService.inUse()) {
             <button
               type="button"
               (click)="oidcService.login()"
@@ -17,7 +17,7 @@
         </div>
       </section>
 
-      @if (!oidcService.settings()?.disablePasswordLogin || forceShowPasswordLogin()) {
+      @if (showPasswordLogin()) {
         <section class="login-split__form">
           <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-form">
             <h2 class="login-form__title">
