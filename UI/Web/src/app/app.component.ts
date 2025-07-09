@@ -8,7 +8,7 @@ import {EventType, SignalRService} from "./_services/signal-r.service";
 import {Toast} from "primeng/toast";
 import {MessageService} from "primeng/api";
 import {Notification} from "./_models/notifications";
-import {OidcService} from "./_services/oidc.service";
+import {OidcEvents, OidcService} from "./_services/oidc.service";
 import {NavService} from "./_services/nav.service";
 
 @Component({
@@ -35,11 +35,14 @@ export class AppComponent implements OnInit {
     this.titleService.setTitle(this.title);
     this.ds.viewContainerRef = this.vcr;
 
-    // Login automatically when a token is available
-    effect(() => {
-      const inUse = this.oidcService.inUse();
+    this.oidcService.events$.subscribe(event => {
+      if (event.type !== OidcEvents.TokenRefreshed) return;
+
       const user = this.accountService.currentUserSignal();
-      if (!inUse || !this.oidcService.token || user) return;
+      if (user) {
+        user.oidcToken = this.oidcService.token;
+        return;
+      }
 
       this.accountService.loginByToken(this.oidcService.token).subscribe({
         next: () => {
@@ -53,7 +56,6 @@ export class AppComponent implements OnInit {
         }
       });
     });
-
   }
 
   ngOnInit(): void {

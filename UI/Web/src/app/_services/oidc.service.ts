@@ -1,4 +1,4 @@
-import {computed, DestroyRef, inject, Injectable, Signal, signal} from '@angular/core';
+import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
 import {OAuthErrorEvent, OAuthService} from "angular-oauth2-oidc";
 import {from} from "rxjs";
 import {HttpClient} from "@angular/common/http";
@@ -7,6 +7,16 @@ import {takeUntilDestroyed, toObservable} from "@angular/core/rxjs-interop";
 import {APP_BASE_HREF} from "@angular/common";
 import {ToastService} from "./toast.service";
 import {Oidc} from "../_models/config";
+
+/**
+ * Enum mirror of angular-oauth2-oidc events which are used in Kavita
+ */
+export enum OidcEvents {
+  /**
+   * Fired on token refresh, and when the first token is recieved
+   */
+  TokenRefreshed = "token_refreshed"
+}
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +30,8 @@ export class OidcService {
 
   protected readonly baseUrl = inject(APP_BASE_HREF);
   apiBaseUrl = environment.apiUrl;
+
+  public events$ = this.oauth2.events;
 
   /**
    * True when the OIDC discovery document has been loaded, and login tried. Or no OIDC has been set up
@@ -47,9 +59,9 @@ export class OidcService {
     if (!environment.production) {
       this.oauth2.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
         if (event instanceof OAuthErrorEvent) {
-          console.error('OAuthErrorEvent Object:', event);
+          console.error('OAuthErrorEvent:', event);
         } else {
-          console.debug('OAuthEvent Object:', event);
+          console.debug('OAuthEvent:', event);
         }
       });
     }
@@ -80,6 +92,10 @@ export class OidcService {
       from(this.oauth2.loadDiscoveryDocumentAndTryLogin()).subscribe({
         next: _ => {
           this._loaded.set(true);
+
+          if (!this.hasValidAccessToken() && this.oauth2.getRefreshToken()) {
+            this.oauth2.refreshToken().catch(e => console.error(e));
+          }
         },
         error: error => {
           console.log(error);
@@ -96,7 +112,7 @@ export class OidcService {
 
   logout() {
     if (this.token) {
-      this.oauth2.logOut();
+      this.oauth2.logOut(true,);
     }
   }
 

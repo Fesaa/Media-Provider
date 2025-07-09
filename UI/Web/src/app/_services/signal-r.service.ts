@@ -47,7 +47,7 @@ export class SignalRService {
         accessTokenFactory: () => user.oidcToken ?? user.token
       })
       .withAutomaticReconnect()
-      .build()
+      .build();
 
     this.hubConnection
       .start()
