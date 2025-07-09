@@ -53,6 +53,8 @@ export class OidcService {
   public readonly settings = this._settings.asReadonly();
 
   constructor() {
+    window.addEventListener('online', this.tryRefreshOnOnline)
+
     this.oauth2.setStorage(localStorage);
 
     // log events in dev
@@ -103,6 +105,14 @@ export class OidcService {
         }
       });
     })
+  }
+
+  tryRefreshOnOnline() {
+    if (this.oauth2.hasValidAccessToken()) return;
+
+    if (!this.oauth2.getRefreshToken()) return;
+
+    this.oauth2.refreshToken().catch(e => console.error(e));
   }
 
 
