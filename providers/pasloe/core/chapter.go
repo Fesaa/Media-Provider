@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"path"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strconv"
@@ -149,8 +150,6 @@ var (
 	contentVolumeAndChapterRegex = regexp.MustCompile(".* (?:Vol\\. ([\\d\\.]+)) (?:Ch)\\. ([\\d\\.]+).cbz")
 	contentChapterRegex          = regexp.MustCompile(".* Ch\\. ([\\d\\.]+).cbz")
 	contentVolumeRegex           = regexp.MustCompile(".* Vol\\. ([\\d\\.]+).cbz")
-	oneShotRegexOld              = regexp.MustCompile(".+ One ?Shot .+\\.cbz")
-	oneShotRegex                 = regexp.MustCompile(".+ \\(One ?Shot\\).cbz")
 )
 
 func (c *Core[C, S]) IsContent(name string) (Content, bool) {
@@ -176,13 +175,6 @@ func (c *Core[C, S]) IsContent(name string) (Content, bool) {
 		}, true
 	}
 
-	if oneShotRegex.MatchString(name) {
-		return Content{}, true
-	}
-
-	if oneShotRegexOld.MatchString(name) {
-		return Content{}, true
-	}
-
-	return Content{}, false
+	// Fallback to simple ext check
+	return Content{}, filepath.Ext(name) == ".cbz"
 }
