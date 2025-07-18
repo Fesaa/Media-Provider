@@ -60,6 +60,27 @@ func TestRepository_Search(t *testing.T) {
 
 }
 
+func TestRepository_SeriesInfo2(t *testing.T) {
+	repo := tempRepository(io.Discard)
+
+	series, err := repo.SeriesInfo(t.Context(), "139300-see-you-in-my-19th-life")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if series.Id != "139300-see-you-in-my-19th-life" {
+		t.Errorf("got %s, want %s", series.Id, series.Id)
+	}
+
+	empty := utils.Find(series.Chapters, func(c Chapter) bool {
+		return c.Chapter == "" && c.Volume == "" && c.Title == ""
+	})
+
+	if empty != nil {
+		t.Errorf("found an empty chapter")
+	}
+}
+
 func TestRepository_SeriesInfo(t *testing.T) {
 	repo := tempRepository(io.Discard)
 

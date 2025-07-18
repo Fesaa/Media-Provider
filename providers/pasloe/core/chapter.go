@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"path"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strconv"
@@ -17,11 +18,22 @@ import (
 // A chapter is considered standalone/OneShot if GetChapter returns an empty string
 type Chapter interface {
 	GetId() string
-	Label() string
 
 	GetChapter() string
 	GetVolume() string
 	GetTitle() string
+}
+
+func ChapterLabel(c Chapter) string {
+	if c.GetChapter() != "" && c.GetVolume() != "" {
+		return fmt.Sprintf("Volume %s Chapter %s: %s", c.GetChapter(), c.GetVolume(), c.GetTitle())
+	}
+
+	if c.GetChapter() != "" {
+		return fmt.Sprintf("Chapter %s: %s", c.GetChapter(), c.GetTitle())
+	}
+
+	return fmt.Sprintf("OneShot: %s", c.GetTitle())
 }
 
 func (c *Core[C, S]) ContentLogger(chapter C) zerolog.Logger {
@@ -149,8 +161,6 @@ var (
 	contentVolumeAndChapterRegex = regexp.MustCompile(".* (?:Vol\\. ([\\d\\.]+)) (?:Ch)\\. ([\\d\\.]+).cbz")
 	contentChapterRegex          = regexp.MustCompile(".* Ch\\. ([\\d\\.]+).cbz")
 	contentVolumeRegex           = regexp.MustCompile(".* Vol\\. ([\\d\\.]+).cbz")
-	oneShotRegexOld              = regexp.MustCompile(".+ One ?Shot .+\\.cbz")
-	oneShotRegex                 = regexp.MustCompile(".+ \\(One ?Shot\\).cbz")
 )
 
 func (c *Core[C, S]) IsContent(name string) (Content, bool) {
@@ -176,13 +186,6 @@ func (c *Core[C, S]) IsContent(name string) (Content, bool) {
 		}, true
 	}
 
-	if oneShotRegex.MatchString(name) {
-		return Content{}, true
-	}
-
-	if oneShotRegexOld.MatchString(name) {
-		return Content{}, true
-	}
-
-	return Content{}, false
+	// Fallback to simple ext check
+	return Content{}, filepath.Ext(name) == ".cbz"
 }

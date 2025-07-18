@@ -65,10 +65,6 @@ func (i ID) GetId() string {
 	return string(i)
 }
 
-func (i ID) Label() string {
-	return string(i)
-}
-
 type MockContent struct {
 	*core.Core[ID, ID]
 	mockTitle               string

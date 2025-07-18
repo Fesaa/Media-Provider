@@ -209,7 +209,7 @@ func (c *Core[C, S]) GetContentByVolumeAndChapter(volume string, chapter string)
 
 func (c *Core[C, S]) GetNewContentNamed() []string {
 	return utils.Map(c.ToDownload, func(t C) string {
-		return t.Label()
+		return ChapterLabel(t)
 	})
 }
 
@@ -253,7 +253,7 @@ func (c *Core[C, S]) ContentList() []payload.ListContentData {
 			return payload.ListContentData{
 				SubContentId: chapter.GetId(),
 				Selected:     c.WillBeDownloaded(chapter),
-				Label:        strings.TrimSpace(chapter.GetTitle() + " " + chapter.Label()),
+				Label:        strings.TrimSpace(chapter.GetTitle() + " " + ChapterLabel(chapter)),
 			}
 		})
 	}

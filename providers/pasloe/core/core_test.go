@@ -189,7 +189,7 @@ func TestContentList_SingleChapterNoVolume(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("Expected 1 item, got %d", len(got))
 	}
-	expectedLabel := "MockSeries Ch 1"
+	expectedLabel := "MockSeries Chapter 1: MockSeries"
 	if got[0].Label != expectedLabel {
 		t.Errorf("Expected label %q, got %q", expectedLabel, got[0].Label)
 	}
@@ -221,7 +221,7 @@ func TestContentList_SingleChapterWithVolume(t *testing.T) {
 	if len(got[0].Children) != 1 {
 		t.Fatalf("Expected 1 child, got %d", len(got[0].Children))
 	}
-	if got[0].Children[0].Label != "Ch 1" {
+	if got[0].Children[0].Label != "Volume 1 Chapter 1:" {
 		t.Errorf("Expected child label 'Ch 1', got %q", got[0].Children[0].Label)
 	}
 }
