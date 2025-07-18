@@ -18,11 +18,22 @@ import (
 // A chapter is considered standalone/OneShot if GetChapter returns an empty string
 type Chapter interface {
 	GetId() string
-	Label() string
 
 	GetChapter() string
 	GetVolume() string
 	GetTitle() string
+}
+
+func ChapterLabel(c Chapter) string {
+	if c.GetChapter() != "" && c.GetVolume() != "" {
+		return fmt.Sprintf("Volume %s Chapter %s: %s", c.GetChapter(), c.GetVolume(), c.GetTitle())
+	}
+
+	if c.GetChapter() != "" {
+		return fmt.Sprintf("Chapter %s: %s", c.GetChapter(), c.GetTitle())
+	}
+
+	return fmt.Sprintf("OneShot: %s", c.GetTitle())
 }
 
 func (c *Core[C, S]) ContentLogger(chapter C) zerolog.Logger {

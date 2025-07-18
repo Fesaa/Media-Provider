@@ -33,10 +33,6 @@ func (c ChapterMock) GetId() string {
 	return c.Id
 }
 
-func (c ChapterMock) Label() string {
-	return c.LabelStr
-}
-
 func (c ChapterMock) GetChapter() string {
 	return c.Chapter
 }

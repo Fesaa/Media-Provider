@@ -1,7 +1,6 @@
 package mangadex
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -28,17 +27,6 @@ func (chapter ChapterSearchData) GetTitle() string {
 
 func (chapter ChapterSearchData) GetId() string {
 	return chapter.Id
-}
-
-func (chapter ChapterSearchData) Label() string {
-	if chapter.Attributes.Chapter == "" && chapter.Attributes.Volume == "" {
-		return fmt.Sprintf("%s (OneShot)", chapter.Attributes.Title)
-	}
-	if chapter.Attributes.Volume == "" {
-		return fmt.Sprintf("%s (Ch. %s)", chapter.Attributes.Title, chapter.Attributes.Chapter)
-	}
-
-	return fmt.Sprintf("%s (Vol. %s - Ch. %s)", chapter.Attributes.Title, chapter.Attributes.Volume, chapter.Attributes.Chapter)
 }
 
 func (chapter ChapterSearchData) Volume() float64 {

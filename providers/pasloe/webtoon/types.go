@@ -89,10 +89,6 @@ func (c Chapter) GetTitle() string {
 	return c.Title
 }
 
-func (c Chapter) Label() string {
-	return fmt.Sprintf("%s (%s)", c.Title, c.Number)
-}
-
 func (c Chapter) GetId() string {
 	return c.Number
 }

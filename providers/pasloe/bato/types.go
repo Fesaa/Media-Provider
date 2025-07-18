@@ -129,15 +129,3 @@ func (c Chapter) ChapterFloat() float64 {
 func (c Chapter) GetId() string {
 	return c.Id
 }
-
-func (c Chapter) Label() string {
-	if c.Chapter != "" && c.Volume != "" {
-		return fmt.Sprintf("%s (%s - %s)", c.Title, c.Volume, c.Chapter)
-	}
-
-	if c.Chapter != "" {
-		return fmt.Sprintf("%s (%s)", c.Title, c.Chapter)
-	}
-
-	return c.Title
-}

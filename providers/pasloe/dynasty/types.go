@@ -1,7 +1,6 @@
 package dynasty
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -116,18 +115,6 @@ func (c Chapter) ChapterFloat() float64 {
 		return v
 	}
 	return -1
-}
-
-func (c Chapter) Label() string {
-	if c.Volume == "" && c.Chapter == "" {
-		return fmt.Sprintf("%s (OneShot)", c.Title)
-	}
-
-	if c.Volume == "" {
-		return fmt.Sprintf("%s (Ch. %s)", c.Title, c.Chapter)
-	}
-
-	return fmt.Sprintf("%s (Vol. %s - Ch. %s)", c.Title, c.Volume, c.Chapter)
 }
 
 type SeriesStatus string
