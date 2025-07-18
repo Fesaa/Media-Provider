@@ -219,7 +219,7 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 		titleText := s.Find("div > span.opacity-80").First().Text()
 		chpt.Title = strings.TrimSpace(strings.TrimPrefix(titleText, ": "))
 	}
-	if chpt.Title == "" {
+	if chpt.Title == "" && chpt.Chapter == "" && chpt.Volume == "" {
 		chpt.Title = strings.TrimSpace(uriEl.Text())
 	}
 

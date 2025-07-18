@@ -26,7 +26,7 @@ type Chapter interface {
 
 func ChapterLabel(c Chapter) string {
 	if c.GetChapter() != "" && c.GetVolume() != "" {
-		return fmt.Sprintf("Volume %s Chapter %s: %s", c.GetChapter(), c.GetVolume(), c.GetTitle())
+		return fmt.Sprintf("Volume %s Chapter %s: %s", c.GetVolume(), c.GetChapter(), c.GetTitle())
 	}
 
 	if c.GetChapter() != "" {
