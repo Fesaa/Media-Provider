@@ -253,7 +253,7 @@ func (c *Core[C, S]) ContentList() []payload.ListContentData {
 			return payload.ListContentData{
 				SubContentId: chapter.GetId(),
 				Selected:     c.WillBeDownloaded(chapter),
-				Label:        strings.TrimSpace(chapter.GetTitle() + " " + ChapterLabel(chapter)),
+				Label:        strings.TrimSpace(ChapterLabel(chapter)),
 			}
 		})
 	}
