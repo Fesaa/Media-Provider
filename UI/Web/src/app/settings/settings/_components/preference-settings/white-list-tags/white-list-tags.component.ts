@@ -25,7 +25,7 @@ import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
     VirtualScrollerModule
   ],
   templateUrl: './white-list-tags.component.html',
-  styleUrl: './white-list-tags.component.css'
+  styleUrl: './white-list-tags.component.scss'
 })
 export class WhiteListTagsComponent {
 

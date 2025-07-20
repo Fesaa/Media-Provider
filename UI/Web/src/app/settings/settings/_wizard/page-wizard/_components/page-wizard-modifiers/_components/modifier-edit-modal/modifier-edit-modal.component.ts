@@ -33,7 +33,7 @@ import {Checkbox} from "primeng/checkbox";
     Checkbox
   ],
   templateUrl: './modifier-edit-modal.component.html',
-  styleUrl: './modifier-edit-modal.component.css'
+  styleUrl: './modifier-edit-modal.component.scss'
 })
 export class ModifierEditModalComponent {
 

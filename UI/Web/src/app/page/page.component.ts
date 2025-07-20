@@ -42,7 +42,7 @@ import {Button} from "primeng/button";
     Button
   ],
   templateUrl: './page.component.html',
-  styleUrl: './page.component.css',
+  styleUrl: './page.component.scss',
   animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
 })
 export class PageComponent implements OnInit {

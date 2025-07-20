@@ -38,7 +38,7 @@ interface SettingsTab {
 
   ],
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.css']
+  styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent {
   private navService = inject(NavService);

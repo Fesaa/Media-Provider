@@ -34,7 +34,7 @@ import {TagMappingsComponent} from "./tag-mappings/tag-mappings.component";
     TagMappingsComponent,
   ],
   templateUrl: './preference-settings.component.html',
-  styleUrl: './preference-settings.component.css'
+  styleUrl: './preference-settings.component.scss'
 })
 export class PreferenceSettingsComponent implements OnInit {
 

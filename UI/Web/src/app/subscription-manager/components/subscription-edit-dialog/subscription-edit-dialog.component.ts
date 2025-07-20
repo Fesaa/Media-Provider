@@ -48,7 +48,7 @@ enum TabId {
     TabPanel,
   ],
   templateUrl: './subscription-edit-dialog.component.html',
-  styleUrl: './subscription-edit-dialog.component.css'
+  styleUrl: './subscription-edit-dialog.component.scss'
 })
 export class SubscriptionEditDialogComponent {
 

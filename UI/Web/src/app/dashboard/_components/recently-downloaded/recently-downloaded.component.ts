@@ -14,7 +14,7 @@ import {ToastService} from "../../../_services/toast.service";
     Dialog
   ],
   templateUrl: './recently-downloaded.component.html',
-  styleUrl: './recently-downloaded.component.css'
+  styleUrl: './recently-downloaded.component.scss'
 })
 export class RecentlyDownloadedComponent implements OnInit{
 

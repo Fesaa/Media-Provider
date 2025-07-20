@@ -33,7 +33,7 @@ import {AccountService} from "../../../../_services/account.service";
     TitleCasePipe
   ],
   templateUrl: './account-settings.component.html',
-  styleUrl: './account-settings.component.css',
+  styleUrl: './account-settings.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccountSettingsComponent {

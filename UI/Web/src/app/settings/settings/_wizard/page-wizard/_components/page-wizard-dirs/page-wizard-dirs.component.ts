@@ -32,7 +32,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     TitleCasePipe
   ],
   templateUrl: './page-wizard-dirs.component.html',
-  styleUrl: './page-wizard-dirs.component.css'
+  styleUrl: './page-wizard-dirs.component.scss'
 })
 export class PageWizardDirsComponent {
 

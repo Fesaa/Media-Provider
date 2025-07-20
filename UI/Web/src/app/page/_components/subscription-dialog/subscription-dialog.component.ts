@@ -40,7 +40,7 @@ enum TabId {
     Tabs
   ],
   templateUrl: './subscription-dialog.component.html',
-  styleUrl: './subscription-dialog.component.css'
+  styleUrl: './subscription-dialog.component.scss'
 })
 export class SubscriptionDialogComponent implements OnInit {
 

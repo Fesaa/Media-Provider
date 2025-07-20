@@ -13,7 +13,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     TranslocoDirective,
   ],
   templateUrl: './suggestion-dashboard.component.html',
-  styleUrl: './suggestion-dashboard.component.css',
+  styleUrl: './suggestion-dashboard.component.scss',
   animations: [dropAnimation]
 })
 export class SuggestionDashboardComponent {

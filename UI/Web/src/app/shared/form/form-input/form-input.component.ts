@@ -15,7 +15,7 @@ import {KeyValuePipe} from "@angular/common";
     TranslocoDirective
   ],
   templateUrl: './form-input.component.html',
-  styleUrl: './form-input.component.css'
+  styleUrl: './form-input.component.scss'
 })
 export class FormInputComponent extends FormItemComponent {
 

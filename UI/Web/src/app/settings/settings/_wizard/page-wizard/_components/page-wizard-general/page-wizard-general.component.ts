@@ -25,7 +25,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     TranslocoDirective
   ],
   templateUrl: './page-wizard-general.component.html',
-  styleUrl: './page-wizard-general.component.css'
+  styleUrl: './page-wizard-general.component.scss'
 })
 export class PageWizardGeneralComponent {
 

@@ -22,7 +22,7 @@ import {NgStyle} from "@angular/common";
     NgStyle,
   ],
   templateUrl: './search-result.component.html',
-  styleUrl: './search-result.component.css',
+  styleUrl: './search-result.component.scss',
   animations: [bounceIn200ms, dropAnimation]
 })
 export class SearchResultComponent implements OnInit{

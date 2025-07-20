@@ -27,7 +27,7 @@ import {ModifierEditModalComponent} from "./_components/modifier-edit-modal/modi
     ModifierEditModalComponent,
   ],
   templateUrl: './page-wizard-modifiers.component.html',
-  styleUrl: './page-wizard-modifiers.component.css'
+  styleUrl: './page-wizard-modifiers.component.scss'
 })
 export class PageWizardModifiersComponent {
 

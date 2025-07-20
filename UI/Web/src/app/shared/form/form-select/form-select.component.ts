@@ -14,7 +14,7 @@ import {NgTemplateOutlet} from "@angular/common";
     NgTemplateOutlet
   ],
   templateUrl: './form-select.component.html',
-  styleUrl: './form-select.component.css'
+  styleUrl: './form-select.component.scss'
 })
 export class FormSelectComponent extends FormItemComponent{
 

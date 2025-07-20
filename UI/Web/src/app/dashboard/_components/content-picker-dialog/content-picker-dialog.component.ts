@@ -22,7 +22,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     TranslocoDirective
   ],
   templateUrl: './content-picker-dialog.component.html',
-  styleUrl: './content-picker-dialog.component.css'
+  styleUrl: './content-picker-dialog.component.scss'
 })
 export class ContentPickerDialogComponent {
 

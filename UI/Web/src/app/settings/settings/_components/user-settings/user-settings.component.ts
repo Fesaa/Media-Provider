@@ -30,7 +30,7 @@ import {TitleCasePipe} from "@angular/common";
     TitleCasePipe
   ],
   templateUrl: './user-settings.component.html',
-  styleUrl: './user-settings.component.css'
+  styleUrl: './user-settings.component.scss'
 })
 export class UserSettingsComponent {
 

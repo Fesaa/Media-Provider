@@ -25,7 +25,7 @@ import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
     VirtualScrollerModule
   ],
   templateUrl: './tag-mappings.component.html',
-  styleUrl: './tag-mappings.component.css'
+  styleUrl: './tag-mappings.component.scss'
 })
 export class TagMappingsComponent {
 

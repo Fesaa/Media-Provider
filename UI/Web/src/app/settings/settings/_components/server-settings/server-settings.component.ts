@@ -19,7 +19,7 @@ import {SettingsService} from "../../../../_services/settings.service";
     FormSelectComponent
   ],
   templateUrl: './server-settings.component.html',
-  styleUrl: './server-settings.component.css',
+  styleUrl: './server-settings.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServerSettingsComponent {

@@ -32,7 +32,7 @@ import {NgForOf} from "@angular/common";
     CdkDrag,
   ],
   templateUrl: './pages-settings.component.html',
-  styleUrl: './pages-settings.component.css',
+  styleUrl: './pages-settings.component.scss',
   animations: [dropAnimation]
 })
 export class PagesSettingsComponent {

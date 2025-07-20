@@ -20,7 +20,7 @@ import {OidcService} from "../../_services/oidc.service";
     TitleCasePipe
   ],
   templateUrl: './user-login.component.html',
-  styleUrl: './user-login.component.css'
+  styleUrl: './user-login.component.scss'
 })
 export class UserLoginComponent implements OnInit {
 

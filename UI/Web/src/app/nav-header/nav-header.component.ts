@@ -24,7 +24,7 @@ import {OidcService} from "../_services/oidc.service";
     TranslocoDirective
   ],
   templateUrl: './nav-header.component.html',
-  styleUrl: './nav-header.component.css',
+  styleUrl: './nav-header.component.scss',
   animations: [dropAnimation]
 })
 export class NavHeaderComponent implements OnInit {

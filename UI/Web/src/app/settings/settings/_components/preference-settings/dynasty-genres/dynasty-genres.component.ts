@@ -25,7 +25,7 @@ import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
     VirtualScrollerModule
   ],
   templateUrl: './dynasty-genres.component.html',
-  styleUrl: './dynasty-genres.component.css'
+  styleUrl: './dynasty-genres.component.scss'
 })
 export class DynastyGenresComponent {
 

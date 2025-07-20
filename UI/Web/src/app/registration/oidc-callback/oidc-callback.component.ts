@@ -8,7 +8,7 @@ import {take} from "rxjs";
   selector: 'app-oidc-callback',
   imports: [],
   templateUrl: './oidc-callback.component.html',
-  styleUrl: './oidc-callback.component.css'
+  styleUrl: './oidc-callback.component.scss'
 })
 export class OidcCallbackComponent implements OnInit {
 

@@ -23,7 +23,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     TranslocoDirective
   ],
   templateUrl: './provider-metadata-options.component.html',
-  styleUrl: './provider-metadata-options.component.css'
+  styleUrl: './provider-metadata-options.component.scss'
 })
 export class ProviderMetadataOptionsComponent {
 

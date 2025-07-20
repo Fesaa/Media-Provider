@@ -33,7 +33,7 @@ import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
     UtcToLocalTimePipe,
   ],
   templateUrl: './notifications.component.html',
-  styleUrl: './notifications.component.css'
+  styleUrl: './notifications.component.scss'
 })
 export class NotificationsComponent implements OnInit {
 

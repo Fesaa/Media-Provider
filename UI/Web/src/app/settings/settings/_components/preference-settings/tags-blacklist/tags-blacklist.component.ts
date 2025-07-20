@@ -25,7 +25,7 @@ import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
     VirtualScrollerModule
   ],
   templateUrl: './tags-blacklist.component.html',
-  styleUrl: './tags-blacklist.component.css'
+  styleUrl: './tags-blacklist.component.scss'
 })
 export class TagsBlacklistComponent {
 

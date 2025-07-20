@@ -23,7 +23,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
     TitleCasePipe,
   ],
   templateUrl: './page-wizard-save.component.html',
-  styleUrl: './page-wizard-save.component.css'
+  styleUrl: './page-wizard-save.component.scss'
 })
 export class PageWizardSaveComponent {
 

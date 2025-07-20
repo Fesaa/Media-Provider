@@ -34,7 +34,7 @@ import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
     UtcToLocalTimePipe,
   ],
   templateUrl: './subscription-manager.component.html',
-  styleUrl: './subscription-manager.component.css',
+  styleUrl: './subscription-manager.component.scss',
   animations: [dropAnimation]
 })
 export class SubscriptionManagerComponent implements OnInit {

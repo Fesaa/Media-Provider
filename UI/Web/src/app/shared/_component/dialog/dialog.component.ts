@@ -14,7 +14,7 @@ import {TitleCasePipe} from "@angular/common";
     TitleCasePipe
   ],
   templateUrl: './dialog.component.html',
-  styleUrl: './dialog.component.css'
+  styleUrl: './dialog.component.scss'
 })
 export class DialogComponent implements OnInit {
 

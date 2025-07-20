@@ -15,7 +15,7 @@ import {NavService} from "./_services/nav.service";
   selector: 'app-root',
   imports: [RouterOutlet, NavHeaderComponent, Toast],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
   title = 'Media Provider';

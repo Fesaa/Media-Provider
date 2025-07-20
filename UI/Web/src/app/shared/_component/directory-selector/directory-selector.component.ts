@@ -21,7 +21,7 @@ import {TitleCasePipe} from "@angular/common";
     TitleCasePipe
   ],
   templateUrl: './directory-selector.component.html',
-  styleUrl: './directory-selector.component.css'
+  styleUrl: './directory-selector.component.scss'
 })
 export class DirectorySelectorComponent {
 

@@ -31,7 +31,7 @@ export enum PageWizardID {
     PageWizardSaveComponent
   ],
   templateUrl: './page-wizard.component.html',
-  styleUrl: './page-wizard.component.css'
+  styleUrl: './page-wizard.component.scss'
 })
 export class PageWizardComponent {
 

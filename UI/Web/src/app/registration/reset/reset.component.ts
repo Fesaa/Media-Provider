@@ -13,7 +13,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
         TranslocoDirective
     ],
   templateUrl: './reset.component.html',
-  styleUrl: './reset.component.css'
+  styleUrl: './reset.component.scss'
 })
 export class ResetComponent implements OnInit {
 

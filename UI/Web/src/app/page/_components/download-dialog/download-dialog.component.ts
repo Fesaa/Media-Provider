@@ -49,7 +49,7 @@ enum TabId {
     NgTemplateOutlet
   ],
   templateUrl: './download-dialog.component.html',
-  styleUrl: './download-dialog.component.css'
+  styleUrl: './download-dialog.component.scss'
 })
 export class DownloadDialogComponent implements OnInit {
 

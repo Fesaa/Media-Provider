@@ -33,7 +33,7 @@ import {VirtualScrollerModule} from "@iharbeck/ngx-virtual-scroller";
     VirtualScrollerModule
   ],
   templateUrl: './age-rating-mappings.component.html',
-  styleUrl: './age-rating-mappings.component.css'
+  styleUrl: './age-rating-mappings.component.scss'
 })
 export class AgeRatingMappingsComponent {
 
