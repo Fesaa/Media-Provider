@@ -10,19 +10,15 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    return this.accountService.currentUser$.pipe(
-      take(1),
-      switchMap(user => {
-        if (user) {
-          const authReq = req.clone({
-            setHeaders: {
-              Authorization: `Bearer ${user.oidcToken ?? user.token}`
-            }
-          });
-          return next.handle(authReq);
+    const user = this.accountService.currentUserSignal();
+    if (user) {
+      req = req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${user.oidcToken ?? user.token}`
         }
-        return next.handle(req);
-      })
-    );
+      });
+    }
+
+    return next.handle(req);
   }
 }

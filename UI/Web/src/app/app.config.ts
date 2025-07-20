@@ -1,4 +1,11 @@
-import {ApplicationConfig, importProvidersFrom, isDevMode, provideZoneChangeDetection} from '@angular/core';
+import {
+  ApplicationConfig,
+  importProvidersFrom,
+  inject,
+  isDevMode,
+  provideAppInitializer,
+  provideZoneChangeDetection
+} from '@angular/core';
 import {provideRouter} from '@angular/router';
 
 import {routes} from './app.routes';
@@ -14,12 +21,79 @@ import Aura from '@primeng/themes/aura';
 import {ProviderNamePipe} from "./_pipes/provider-name.pipe";
 import {MessageService} from "primeng/api";
 import {SubscriptionExternalUrlPipe} from "./_pipes/subscription-external-url.pipe";
-import {provideTransloco} from "@jsverse/transloco";
+import {provideTransloco, TranslocoService} from "@jsverse/transloco";
 import {TranslocoLoaderImpl} from "./_services/transloco-loader";
 import {provideOAuthClient} from "angular-oauth2-oidc";
+import {OidcEvents, OidcService} from "./_services/oidc.service";
+import {ToastService} from "./_services/toast.service";
+import { AccountService } from './_services/account.service';
+import {NavService} from "./_services/nav.service";
+import {catchError, filter, firstValueFrom, Observable, of, switchMap, tap, timeout} from "rxjs";
+import { User } from './_models/user';
 
 function getBaseHref(platformLocation: PlatformLocation): string {
   return platformLocation.getBaseHrefFromDOM();
+}
+
+function setupOidcListener(oidcService: OidcService, accountService: AccountService, navService: NavService) {
+  return oidcService.events$.pipe(
+    filter(event => event.type === OidcEvents.TokenRefreshed),
+    switchMap(() => syncOidcUser(oidcService, accountService, navService))
+  ).subscribe();
+}
+
+
+function syncOidcUser(oidcService: OidcService, accountService: AccountService, navService: NavService): Observable<User> {
+  const currentUser = accountService.currentUserSignal();
+
+  return accountService.loginByToken(oidcService.token).pipe(
+    tap(() => {
+      // Only trigger navigation if we weren't already logged in
+      if (!currentUser) {
+        navService.handleLogin();
+      }
+    }),
+    catchError(err => {
+      console.error("Failed to sync OIDC user:", err);
+      throw err;
+    })
+  );
+}
+
+function preLoadOidcAndUser() {
+  const oidc = inject(OidcService);
+  const toastr = inject(ToastService);
+  const accountService = inject(AccountService);
+  const navService = inject(NavService);
+
+  return firstValueFrom(oidc.setupOidc().pipe(
+    switchMap((isConfigured) => {
+      if (!isConfigured) return of(null);
+
+      return oidc.refreshTokenIfAvailable().pipe(
+        switchMap(tokenRefreshed => {
+          if (!tokenRefreshed) return of(null);
+
+          return syncOidcUser(oidc, accountService, navService);
+        })
+      );
+    }),
+    tap(user => {
+      if (!user) accountService.setCurrentUser(accountService.getUserFromLocalStorage());
+    }),
+    tap(() => setupOidcListener(oidc, accountService, navService)),
+    timeout(2000),
+    catchError(err => {
+      console.error("OIDC setup failed:", err);
+      if (err.name === 'TimeoutError') {
+        toastr.errorLoco('errors.oidc.timeout');
+      } else {
+        toastr.errorLoco('errors.generic');
+      }
+
+      return of(null);
+    }),
+  )).then(() => void 0);
 }
 
 export const appConfig: ApplicationConfig = {
@@ -59,5 +133,6 @@ export const appConfig: ApplicationConfig = {
       useFactory: getBaseHref,
       deps: [PlatformLocation]
     },
+    provideAppInitializer(() => preLoadOidcAndUser()),
   ]
 };

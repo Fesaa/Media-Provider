@@ -26,14 +26,11 @@ export class AccountService {
   private currentUser: User | undefined;
 
   constructor(private httpClient: HttpClient, private router: Router) {
+  }
+
+  getUserFromLocalStorage() {
     const user = localStorage.getItem(this.userKey);
-    if (user) {
-      this.currentUser = JSON.parse(user);
-      this.currentUserSource.next(this.currentUser);
-    } else {
-      this.currentUser = undefined;
-      this.currentUserSource.next(undefined);
-    }
+    return user ? JSON.parse(user) as User : undefined;
   }
 
   login(model: { username: string, password: string, remember: boolean }): Observable<User> {
