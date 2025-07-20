@@ -1,0 +1,76 @@
+@import "primeicons/primeicons.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --text: #050a0f;
+  --background: #f8fbfc;
+  --primary: #4a89c4;
+  --secondary: #c19adf;
+  --accent: #cd74d2;
+  --error-color: #BD362F;
+  --warning-color: #FFECB5;
+  --text-muted-color: hsla(0,0%,100%,.45);
+
+  --text-50: #ecf2f9;
+  --text-100: #d9e6f2;
+  --text-200: #b3cce6;
+  --text-300: #8cb2d9;
+  --text-400: #6699cc;
+  --text-500: #407fbf;
+  --text-600: #336699;
+  --text-700: #264c73;
+  --text-800: #19334d;
+  --text-900: #0d1926;
+  --text-950: #060d13;
+
+  --background-50: #edf5f7;
+  --background-100: #dbebf0;
+  --background-200: #b8d6e0;
+  --background-300: #94c2d1;
+  --background-400: #70adc2;
+  --background-500: #4d99b3;
+  --background-600: #3d7a8f;
+  --background-700: #2e5c6b;
+  --background-800: #1f3d47;
+  --background-900: #0f1f24;
+  --background-950: #080f12;
+
+  --primary-50: #ecf2f9;
+  --primary-100: #d8e6f3;
+  --primary-200: #b2cde6;
+  --primary-300: #8bb4da;
+  --primary-400: #659bcd;
+  --primary-500: #3e82c1;
+  --primary-600: #32689a;
+  --primary-700: #254e74;
+  --primary-800: #19344d;
+  --primary-900: #0c1a27;
+  --primary-950: #060d13;
+
+  --secondary-50: #f3ecf9;
+  --secondary-100: #e7d8f3;
+  --secondary-200: #d0b1e7;
+  --secondary-300: #b88bda;
+  --secondary-400: #a064ce;
+  --secondary-500: #883dc2;
+  --secondary-600: #6d319b;
+  --secondary-700: #522574;
+  --secondary-800: #37184e;
+  --secondary-900: #1b0c27;
+  --secondary-950: #0e0613;
+
+  --accent-50: #f8ecf9;
+  --accent-100: #f1d8f3;
+  --accent-200: #e3b2e6;
+  --accent-300: #d68bda;
+  --accent-400: #c865cd;
+  --accent-500: #ba3ec1;
+  --accent-600: #95329a;
+  --accent-700: #702574;
+  --accent-800: #4a194d;
+  --accent-900: #250c27;
+  --accent-950: #130613;
+}
