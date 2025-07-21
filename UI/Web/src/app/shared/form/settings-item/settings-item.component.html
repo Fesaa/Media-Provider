@@ -32,7 +32,7 @@
       </span>
     }
 
-    @if (subtitle(); as subtitle) {
+    @if (tooltip(); as subtitle) {
       <div class="text-muted mt-2" [innerHTML]="subtitle | safeHtml"></div>
     }
   </div>

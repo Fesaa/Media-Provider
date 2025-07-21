@@ -3,6 +3,7 @@ import {NgbModal, NgbModalOptions, NgbModalRef} from '@ng-bootstrap/ng-bootstrap
 import {DefaultModalOptions} from '../_models/default-modal-options';
 import {firstValueFrom, take} from 'rxjs';
 import {ConfirmModalComponent} from "../shared/_component/confirm-modal/confirm-modal.component";
+import {DirectorySelectorComponent} from "../shared/_component/directory-selector/directory-selector.component";
 
 
 @Injectable({
@@ -27,6 +28,35 @@ export class ModalService {
 
   dismissAll(reason?: any) {
     this.modal.dismissAll(reason);
+  }
+
+  getDirectory(
+    root: string,
+    options: Partial<{ create: boolean; copy: boolean; filter: boolean; showFiles: boolean, width: string }> = {}
+  ) {
+    const defaultOptions = {create: false, copy: false, filter: true, showFiles: false, width: '50vw'};
+    const finalOptions = {...defaultOptions, ...options};
+
+    const [modal, component] = this.open(DirectorySelectorComponent, DefaultModalOptions);
+    component.root = root;
+    component.filter = finalOptions.filter;
+    component.copy = finalOptions.copy;
+    component.create = finalOptions.create;
+    component.showFiles = finalOptions.showFiles;
+    component.customWidth = finalOptions.width
+
+    return new Promise<string | undefined>((resolve, reject) => {
+
+      let hasResolved = false;
+      component.getResult().subscribe(result => {
+        resolve(result);
+        hasResolved = true;
+      });
+
+      modal.result.finally(() => {
+        if (!hasResolved) resolve(undefined)
+      });
+    });
   }
 
   confirm(options: {

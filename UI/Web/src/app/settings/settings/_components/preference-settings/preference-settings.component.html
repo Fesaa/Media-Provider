@@ -65,7 +65,7 @@
           <app-settings-item
             [control]="formControl"
             [title]="t('tags-blacklist-label')"
-            [subtitle]="t('tags-blacklist-tooltip')"
+            [tooltip]="t('tags-blacklist-tooltip')"
           >
             <ng-template #view>
               @let val = breakString(formControl.value);
@@ -93,7 +93,7 @@
           <app-settings-item
             [control]="formControl"
             [title]="t('tags-whitelist-label')"
-            [subtitle]="t('tags-whitelist-tooltip')"
+            [tooltip]="t('tags-whitelist-tooltip')"
           >
             <ng-template #view>
               @let val = breakString(formControl.value);
@@ -121,7 +121,7 @@
           <app-settings-item
             [control]="formControl"
             [title]="t('tags-to-genre-label')"
-            [subtitle]="t('tags-to-genre-tooltip')"
+            [tooltip]="t('tags-to-genre-tooltip')"
           >
             <ng-template #view>
               @let val = breakString(formControl.value);

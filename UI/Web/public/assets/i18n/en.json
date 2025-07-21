@@ -37,6 +37,55 @@
     }
   },
 
+  "download-modal": {
+    "title": "Download {{name}}",
+    "close": "{{common.close}}",
+    "cancel": "{{common.cancel}}",
+    "download": "{{shared.download}}",
+    "general": "General",
+    "advanced": "Advanced",
+
+    "dir-label": "Download directory",
+
+    "title-label": "Title override",
+    "title-tooltip": "Leave empty to use the title given by the provider",
+
+    "extra-metadata": {
+      "tl-lang": {
+        "label": "Language",
+        "tooltip": ""
+      },
+      "scanlation_group": {
+        "label": "Scanlation group",
+        "tooltip": ""
+      },
+      "download_one_shot": {
+        "label": "Download one shots",
+        "tooltip": ""
+      },
+      "include_cover": {
+        "label": "Include cover",
+        "tooltip": "Adds a cover image, can be nice to turn off for webtoons"
+      },
+      "update_cover": {
+        "label": "Update cover",
+        "tooltip": "Checks if the currently downloaded cover is outdated"
+      },
+      "include_not_matched_tags": {
+        "label": "Add not matched tags to comicinfo",
+        "tooltip": "Tags not configured to be a genre, will be added as tags instead"
+      },
+      "no-sub-dir": {
+        "label": "Download into parent",
+        "tooltip": "Content will be copied in your selected dir, instead of creating child directory first"
+      },
+      "title_override": {
+        "label": "Override title",
+        "tooltip": "Set a specific title"
+      }
+    }
+  },
+
   "confirm-modal": {
     "title": "Confirm your next action",
     "cancel": "{{common.cancel}}",

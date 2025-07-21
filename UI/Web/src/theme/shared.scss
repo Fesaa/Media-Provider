@@ -19,7 +19,7 @@
 }
 
 a {
-  color: var(--primary-color);
+  color: var(--primary-color) !important;
   text-decoration: none;
 }
 
@@ -154,3 +154,22 @@ a:hover {
   cursor: grab;
 }
 
+.d-flex.flex-column[style*="overflow-y: auto"] {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--surface-border);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--text-secondary);
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import {Component, computed, ContentChild, input, signal, TemplateRef} from '@angular/core';
+import {Component, computed, ContentChild, effect, input, signal, TemplateRef} from '@angular/core';
 import {NgTemplateOutlet} from "@angular/common";
 import {TranslocoDirective} from "@jsverse/transloco";
 
@@ -19,14 +19,21 @@ export class PaginatorComponent<T> {
   pageSize = input(10);
 
   currentPage = signal(1);
-  totalPages = computed(() => Math.floor(this.items().length / this.pageSize())+1);
+  totalPages = computed(() => Math.ceil(this.items().length / this.pageSize()));
   visibleItems = computed(() => {
     const page = this.currentPage();
     const pageSize = this.pageSize();
     const items = this.items();
 
-    return items.slice(page * pageSize, (page+1) * pageSize);
+    return items.slice((page-1) * pageSize, page * pageSize);
   })
+
+  constructor() {
+    effect(() => {
+      this.items();
+      this.currentPage.set(1);
+    });
+  }
 
   range = (n: number) => Array.from({ length: n}, (_, i) => i);
 

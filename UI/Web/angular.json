@@ -5,7 +5,19 @@
   "projects": {
     "Web": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss",
+          "changeDetection": "OnPush",
+          "standalone": true,
+          "type": "component",
+          "skipTests": true
+        },
+        "@schematics/angular:service": {
+          "type": "service",
+          "skipTests": true
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",

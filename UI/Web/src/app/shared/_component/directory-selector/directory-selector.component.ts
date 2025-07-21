@@ -124,7 +124,7 @@ export class DirectorySelectorComponent implements OnInit {
     return this.result.asObservable();
   }
 
-  closeDialog() {
+  closeModal() {
     this.result.next(undefined);
     this.resultDir.emit(undefined);
     this.result.complete();
@@ -141,6 +141,7 @@ export class DirectorySelectorComponent implements OnInit {
     this.resultDir.emit(path);
     this.result.complete();
     this.visibleChange.emit(false);
+    this.modal.close();
   }
 
   private loadChildren(dir: string) {

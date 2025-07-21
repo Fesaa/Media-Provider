@@ -75,7 +75,7 @@ export class PageComponent implements OnInit {
   }
 
   getDownloadMetadata(provider: Provider) {
-    return this.metadata().get(provider)
+    return this.metadata().get(provider) ?? {definitions: []}
   }
 
   search(req: SearchRequest) {
@@ -85,7 +85,7 @@ export class PageComponent implements OnInit {
 
     this.showForm.set(false);
 
-    req.provider = this.providers();
+    req.provider = this.page()?.providers ?? [];
     this.loading.set(true)
     this.contentService.search(req).subscribe({
       next: info => {

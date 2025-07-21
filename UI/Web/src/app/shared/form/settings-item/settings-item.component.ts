@@ -42,7 +42,7 @@ export class SettingsItemComponent implements OnChanges {
   control = input.required<AbstractControl>();
 
   title = input<string>();
-  subtitle = input<string>();
+  tooltip = input<string>();
   labelId = input<string>();
 
   editLabel = input<string>();

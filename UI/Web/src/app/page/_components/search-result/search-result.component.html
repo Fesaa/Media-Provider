@@ -1,15 +1,15 @@
 <div class="search-card" [@bounceIn200ms] *transloco="let t; prefix: 'page.search-result'">
-  <div class="card-image" [ngStyle]="{ 'background-image': 'url(' + imageSource + ')' }">
+  <div class="card-image" [ngStyle]="{ 'background-image': 'url(' + imageSource() + ')' }">
 
     <div class="card-overlay">
       <div class="card-title-group">
-        <a [href]="searchResult.RefUrl" target="_blank" rel="noopener noreferrer" class="card-title">{{ searchResult.Name }}</a>
+        <a [href]="searchResult().RefUrl" target="_blank" rel="noopener noreferrer" class="card-title">{{ searchResult().Name }}</a>
       </div>
     </div>
 
-    @if (searchResult.Size) {
+    @if (searchResult().Size) {
       <div class="card-size-badge">
-        <span class="card-size">{{ searchResult.Size }}</span>
+        <span class="card-size">{{ searchResult().Size }}</span>
       </div>
     }
 
@@ -22,7 +22,7 @@
         <span class="fa fa-download"></span>
       </button>
 
-      @if (providers.includes(searchResult.Provider)) {
+      @if (providers().includes(searchResult().Provider)) {
         <button
           class="icon-btn"
           (click)="addAsSub()"
@@ -34,21 +34,15 @@
     </div>
   </div>
 
-  @if (searchResult.Tags.length > 0) {
+  @if (searchResult().Tags.length > 0) {
     <div class="card-info">
       <div class="card-tags">
-        @for (tag of searchResult.Tags; track $index) {
+        @for (tag of searchResult().Tags; track $index) {
           <span class="card-tag">
           {{ tag.Name }}: {{ tag.Value }}
         </span>
         }
       </div>
     </div>
-  }
-
-  <!-- TODO: New download -->
-
-  @if (providers.includes(searchResult.Provider)) {
-    <!-- TODO: New sub -->
   }
 </div>

@@ -39,7 +39,7 @@
                 <app-settings-item
                   [control]="control"
                   [title]="t('cache.label')"
-                  [subtitle]="t('cache.subTitle')"
+                  [tooltip]="t('cache.subTitle')"
                 >
                   <ng-template #view>
                     {{ t('cache.' + control.value.toLowerCase()) }}
@@ -90,7 +90,7 @@
               <app-settings-item
                 [control]="control"
                 [title]="t('max-torrents.label')"
-                [subtitle]="t('max-torrents.subTitle')"
+                [tooltip]="t('max-torrents.subTitle')"
               >
                 <ng-template #view>{{ control.value }}</ng-template>
 
@@ -108,7 +108,7 @@
               <app-settings-item
                 [control]="control"
                 [title]="t('max-images.label')"
-                [subtitle]="t('max-images.subTitle')"
+                [tooltip]="t('max-images.subTitle')"
               >
                 <ng-template #view>{{ control.value }}</ng-template>
 
@@ -135,7 +135,7 @@
               <app-settings-item
                 [control]="control"
                 [title]="t('oidc.authority.label')"
-                [subtitle]="t('oidc.authority.subTitle')"
+                [tooltip]="t('oidc.authority.subTitle')"
               >
                 <ng-template #view>{{ control.value }}</ng-template>
                 <ng-template #edit>
@@ -152,7 +152,7 @@
               <app-settings-item
                 [control]="control"
                 [title]="t('oidc.clientId.label')"
-                [subtitle]="t('oidc.clientId.subTitle')"
+                [tooltip]="t('oidc.clientId.subTitle')"
               >
                 <ng-template #view>{{ control.value }}</ng-template>
                 <ng-template #edit>
@@ -169,7 +169,7 @@
               <app-settings-item
                 [control]="control"
                 [title]="t('oidc.autoLogin.label')"
-                [subtitle]="t('oidc.autoLogin.subTitle')"
+                [tooltip]="t('oidc.autoLogin.subTitle')"
               >
                 <ng-template #view>{{ control.value ? translate('common.enabled') : translate('common.disabled') }}</ng-template>
                 <ng-template #edit>
@@ -188,7 +188,7 @@
               <app-settings-item
                 [control]="control"
                 [title]="t('oidc.disablePasswordLogin.label')"
-                [subtitle]="t('oidc.disablePasswordLogin.subTitle')"
+                [tooltip]="t('oidc.disablePasswordLogin.subTitle')"
               >
                 <ng-template #view>{{ control.value ? translate('common.enabled') : translate('common.disabled') }}</ng-template>
                 <ng-template #edit>

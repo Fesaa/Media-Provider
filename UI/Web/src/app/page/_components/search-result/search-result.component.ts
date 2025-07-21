@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, Input, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, inject, input, Input, OnInit, signal} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {DownloadMetadata, Page, Provider} from "../../../_models/page";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
@@ -7,6 +7,9 @@ import {ImageService} from "../../../_services/image.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {NgStyle} from "@angular/common";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {ModalService} from "../../../_services/modal.service";
+import {DownloadModalComponent} from "../download-modal/download-modal.component";
+import {DefaultModalOptions} from "../../../_models/default-modal-options";
 
 @Component({
   selector: 'app-search-result',
@@ -21,64 +24,48 @@ import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 })
 export class SearchResultComponent implements OnInit{
 
-  @Input({required: true}) page!: Page;
-  @Input({required: true}) searchResult!: SearchInfo;
-  @Input({required: true}) dir!: string;
-  @Input({required: true}) providers!: Provider[];
-  @Input({required: true}) metadata!: DownloadMetadata | undefined;
+  private readonly imageService = inject(ImageService);
+  private readonly modalService = inject(ModalService);
 
-  showExtra: boolean = false;
-  showDownloadDialog: boolean = false;
-  showSubscriptionDialog: boolean = false;
+  page = input.required<Page>();
+  searchResult = input.required<SearchInfo>();
+  dir = input.required<string>();
+  providers = input.required<Provider[]>();
+  metadata = input.required<DownloadMetadata>();
 
-  colours = [
-    "bg-blue-200 dark:bg-blue-800",
-    "bg-green-200 dark:bg-green-800",
-    "bg-yellow-200 dark:bg-yellow-700",
-    "bg-red-200 dark:bg-red-800",
-    "bg-purple-200 dark:bg-purple-800",
-    "bg-pink-200 dark:bg-pink-800",
-    "bg-indigo-200 dark:bg-indigo-800",
-    "bg-gray-200 dark:bg-gray-700"
-  ];
+  imageSource = signal<string | null>(null);
 
-  imageSource: string | null = null;
-
-
-  constructor(private cdRef: ChangeDetectorRef,
-              private imageService: ImageService,
-  ) {
-  }
 
   ngOnInit(): void {
     this.loadImage();
-    this.cdRef.markForCheck();
   }
 
   addAsSub() {
-    this.showSubscriptionDialog = true;
-  }
 
-  loadImage() {
-    if (this.searchResult.ImageUrl === "") {
-      return;
-    }
-
-    if (this.searchResult.ImageUrl.startsWith("proxy")) {
-      this.imageService.getImage(this.searchResult.ImageUrl).subscribe(src => {
-        this.imageSource = src;
-      })
-    } else {
-      this.imageSource = this.searchResult.ImageUrl;
-    }
   }
 
   download() {
-    this.showDownloadDialog = true;
+    const metadata = this.metadata();
+    if (!metadata) return
+
+    const [_, component] = this.modalService.open(DownloadModalComponent, DefaultModalOptions);
+    component.metadata.set(metadata);
+    component.page.set(this.page());
+    component.info.set(this.searchResult());
   }
 
-  getColour(idx: number): string {
-    return this.colours[idx % this.colours.length];
+  loadImage() {
+    if (this.searchResult().ImageUrl === "") {
+      return;
+    }
+
+    if (this.searchResult().ImageUrl.startsWith("proxy")) {
+      this.imageService.getImage(this.searchResult().ImageUrl).subscribe(src => {
+        this.imageSource.set(src);
+      })
+    } else {
+      this.imageSource.set(this.searchResult().ImageUrl);
+    }
   }
 
 }
