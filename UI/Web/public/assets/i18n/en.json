@@ -2,6 +2,10 @@
   "application": {
     "name": "Media-Provider"
   },
+  "common": {
+    "edit": "Edit",
+    "close": "Close"
+  },
 
   "shared": {
     "username": "username",
@@ -412,36 +416,12 @@
       }
     },
     "preferences": {
-      "dynasty-genres": {
-        "label": "Tags to save as genre",
-        "header": "Tags to Genre mapper",
-        "explanation": "The following tags will be added as a genre when downloading from Dynasty or Bato, add or remove as wanted.",
-        "add-new": "Add new genre",
-        "filter": "{{shared.filter}}",
-        "empty": "No genres have been configured yet."
-      },
-      "tags-blacklist": {
-        "label": "Tags blacklist",
-        "header": "Tags blacklist",
-        "explanation": {
-          "p1": "Any tags configured here will ",
-          "not": "NOT",
-          "p2": " be used as either a Genre or Tag. Check documentation for how matching happens."
-        },
-        "new": "Add new tag",
-        "filter": "{{shared.filter}}",
-        "empty": "No tags have been configured yet."
-      },
-      "tags-whitelist": {
-        "label": "Tags whitelist",
-        "header": "Tags whitelist",
-        "explanation": {
-          "p1": "Any tags configured here will be used as tag, if it's not in the blacklist or configured to be used as a genre. Check documentation for how matching happens."
-        },
-        "new": "Add new tag",
-        "filter": "{{shared.filter}}",
-        "empty": "No tags have been configured yet."
-      },
+      "tags-to-genre-label": "Tags to save as genre",
+      "tags-to-genre-tooltip": "The following tags will be added as a genre when downloading from Dynasty or Bato, add or remove as wanted.",
+      "tags-blacklist-label": "Tags blacklist",
+      "tags-blacklist-tooltip": "Any tags configured here will not be used as either a Genre or Tag. Check documentation for how matching happens.",
+      "tags-whitelist-label": "Tags whitelist",
+      "tags-whitelist-tooltip": "Any tags configured here will be used as tag, if it's not in the blacklist or configured to be used as a genre. Check documentation for how matching happens.",
       "age-rating-mappings": {
         "label": "Age ratings mappings",
         "header": "Age rating mappings",

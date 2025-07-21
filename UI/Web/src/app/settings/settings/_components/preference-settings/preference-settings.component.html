@@ -1,80 +1,112 @@
-<div class="flex w-full flex-grow" *transloco="let t;prefix:'settings.preferences'">
-
-  @if (preferences !== undefined) {
-
-    <div class="flex flex-col flex-grow gap-4 gap-y-8 md:gap-y-4">
+<div class="flex w-full flex-grow" *transloco="let t; prefix: 'settings.preferences'">
+  @let pref = preferences();
+  @if (preferencesForm && pref) {
+    <form class="flex flex-col flex-grow gap-4 gap-y-8 md:gap-y-4" [formGroup]="preferencesForm">
 
       <div class="preference-item">
-        <label for="subscriptionRefreshHour" [pTooltip]="t('sub-refresh.tooltip')" tooltipPosition="right">
-          {{t('sub-refresh.label')}}
+        <label for="subscriptionRefreshHour">
+          {{ t('sub-refresh.label') }}
         </label>
-        <p-inputNumber suffix=" h"
-                       id="subscriptionRefreshHour"
-                       [(ngModel)]="preferences.subscriptionRefreshHour"
-                       showButtons="true"
-                       min="0"
-                       max="23"
-        />
+        <input class="form-control" type="number" id="subscriptionRefreshHour" formControlName="subscriptionRefreshHour" [max]="23" [min]="0">
       </div>
 
       <div class="preference-item">
         <label class="flex-grow" for="logEmptyDownloads">{{ t('empty-download-notification') }}</label>
-        <p-toggle-switch id="logEmptyDownloads" [(ngModel)]="preferences.logEmptyDownloads" />
+        <input class="form-control form-check form-switch" type="checkbox" id="logEmptyDownloads" formControlName="logEmptyDownloads">
       </div>
 
       <div class="preference-item">
         <label class="flex-grow" for="convertToWebp">{{ t('convertToWebp') }}</label>
-        <p-toggle-switch id="convertToWebp" [(ngModel)]="preferences.convertToWebp" />
+        <input class="form-control form-check form-switch" type="checkbox" id="convertToWebp" formControlName="convertToWebp">
       </div>
 
       <div class="preference-item">
-        <label class="flex-grow" for="coverFallbackMethod">{{t('cover-fallback-method')}}</label>
-        <p-select id="coverFallbackMethod" [options]="CoverFallbackMethods" [(ngModel)]="preferences.coverFallbackMethod" />
+        <label class="flex-grow" for="coverFallbackMethod">{{ t('cover-fallback-method') }}</label>
+        <select class="form-select" id="coverFallbackMethod" formControlName="coverFallbackMethod">
+          @for (opt of CoverFallbackMethods; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
       </div>
 
       <div class="preference-item">
-        <label class="flex-grow">{{ t('dynasty-genres.label') }}</label>
-        <p-button severity="help" (onClick)="displayDynastyGenresDialog=true">{{ t('configure') }}</p-button>
+        @if (preferencesForm.get('blackList'); as formControl) {
+          <app-settings-item [control]="formControl" [title]="t('tags-blacklist-label')" [subtitle]="t('tags-blacklist-tooltip')">
+            <ng-template #view>
+              @let val = breakString(formControl.value);
 
-        <app-dynasty-genres [(showDialog)]="displayDynastyGenresDialog" [(preferences)]="preferences" />
+              @for(opt of val; track opt) {
+                <app-tag-badge>{{opt.trim()}}</app-tag-badge>
+              } @empty {
+                -
+              }
+            </ng-template>
 
+            <ng-template #edit>
+              <textarea rows="3" id="blacklist" class="form-control"  formControlName="blackList"></textarea>
+            </ng-template>
+
+          </app-settings-item>
+        }
       </div>
 
       <div class="preference-item">
-        <label class="flex-grow">{{ t('tags-blacklist.label') }}</label>
-        <p-button severity="help" (onClick)="displayBlackListTagDialog=true">{{ t('configure') }}</p-button>
+        @if (preferencesForm.get('whiteList'); as formControl) {
+          <app-settings-item [control]="formControl" [title]="t('tags-whitelist-label')" [subtitle]="t('tags-whitelist-tooltip')">
+            <ng-template #view>
+              @let val = breakString(formControl.value);
 
-        <app-tags-blacklist [(showDialog)]="displayBlackListTagDialog" [(preferences)]="preferences" />
+              @for(opt of val; track opt) {
+                <app-tag-badge>{{opt.trim()}}</app-tag-badge>
+              } @empty {
+                -
+              }
+            </ng-template>
 
+            <ng-template #edit>
+              <textarea rows="3" id="whiteList" class="form-control"  formControlName="whiteList"></textarea>
+            </ng-template>
+
+          </app-settings-item>
+        }
       </div>
 
       <div class="preference-item">
-        <label class="flex-grow">{{ t('tags-whitelist.label') }}</label>
-        <p-button severity="help" (onClick)="displayWhiteListTagDialog=true">{{ t('configure') }}</p-button>
+        @if (preferencesForm.get('tagToGenre'); as formControl) {
+          <app-settings-item [control]="formControl" [title]="t('tags-to-genre-label')" [subtitle]="t('tags-to-genre-tooltip')">
+            <ng-template #view>
+              @let val = breakString(formControl.value);
 
-        <app-white-list-tags [(showDialog)]="displayWhiteListTagDialog" [(preferences)]="preferences" />
+              @for(opt of val; track opt) {
+                <app-tag-badge>{{opt.trim()}}</app-tag-badge>
+              } @empty {
+                -
+              }
+            </ng-template>
 
+            <ng-template #edit>
+              <textarea rows="3" id="tagToGenre" class="form-control"  formControlName="tagToGenre"></textarea>
+            </ng-template>
+
+          </app-settings-item>
+        }
       </div>
 
       <div class="preference-item">
         <label class="flex-grow">{{ t('age-rating-mappings.label') }}</label>
-        <p-button severity="help" (onClick)="displayAgeRatingMappingDialog=true">{{ t('configure') }}</p-button>
-
-        <app-age-rating-mappings [(showDialog)]="displayAgeRatingMappingDialog" [(preferences)]="preferences" />
+        <button class="btn btn-secondary" (click)="displayAgeRatingMappingDialog = true">
+          {{ t('configure') }}
+        </button>
+        <app-age-rating-mappings [(showDialog)]="displayAgeRatingMappingDialog" [preferences]="pref" />
       </div>
 
       <div class="preference-item">
         <label class="flex-grow">{{ t('tags-mappings.label') }}</label>
-        <p-button severity="help" (onClick)="displayTagMappingDialog=true">{{ t('configure') }}</p-button>
-
-        <app-tag-mappings [(showDialog)]="displayTagMappingDialog" [(preferences)]="preferences" />
+        <button class="btn btn-secondary" (click)="displayTagMappingDialog = true">
+          {{ t('configure') }}
+        </button>
+        <app-tag-mappings [(showDialog)]="displayTagMappingDialog" [preferences]="pref" />
       </div>
-
-      <div class="flex justify-center md:justify-end mt-10">
-        <p-button severity="primary" (onClick)="save()" >{{ t('save') }}</p-button>
-      </div>
-
-    </div>
+    </form>
   }
-
 </div>
