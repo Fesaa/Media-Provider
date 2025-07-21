@@ -45,13 +45,11 @@ function setupOidcListener(oidcService: OidcService, accountService: AccountServ
 
 function syncOidcUser(oidcService: OidcService, accountService: AccountService, navService: NavService): Observable<User> {
   const currentUser = accountService.currentUserSignal();
+  const inStorage = accountService.getUserFromLocalStorage() !== undefined;
 
   return accountService.loginByToken(oidcService.token).pipe(
     tap(() => {
-      // Only trigger navigation if we weren't already logged in
-      if (!currentUser) {
-        navService.handleLogin();
-      }
+      navService.handleLogin(!currentUser && !inStorage);
     }),
     catchError(err => {
       console.error("Failed to sync OIDC user:", err);

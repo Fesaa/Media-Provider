@@ -3,9 +3,7 @@ import {FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/
 import {AccountService} from "../../_services/account.service";
 import {ActivatedRoute, Router} from "@angular/router";
 import {Observable, take} from "rxjs";
-import {AuthGuard} from "../../_guards/auth.guard";
 import {NavService} from "../../_services/nav.service";
-import {PageService} from "../../_services/page.service";
 import {User} from "../../_models/user";
 import {ToastService} from "../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";

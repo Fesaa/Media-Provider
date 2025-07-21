@@ -1,4 +1,4 @@
-import {Component, DestroyRef, OnInit} from '@angular/core';
+import {Component, DestroyRef, OnInit, signal} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {ContentService} from "../_services/content.service";
@@ -23,6 +23,8 @@ import {TitleCasePipe} from "@angular/common";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {SortedList} from "../shared/data-structures/sorted-list";
 import {RecentlyDownloadedComponent} from "./_components/recently-downloaded/recently-downloaded.component";
+import {TableComponent} from "../shared/_component/table/table.component";
+import {LoadingSpinnerComponent} from "../shared/_component/loading-spinner/loading-spinner.component";
 
 @Component({
   selector: 'app-dashboard',
@@ -31,7 +33,6 @@ import {RecentlyDownloadedComponent} from "./_components/recently-downloaded/rec
     TableModule,
     ContentTitlePipe,
     Tag,
-    Button,
     Tooltip,
     SpeedPipe,
     SpeedTypePipe,
@@ -40,14 +41,16 @@ import {RecentlyDownloadedComponent} from "./_components/recently-downloaded/rec
     ContentPickerDialogComponent,
     TranslocoDirective,
     TitleCasePipe,
-    RecentlyDownloadedComponent
+    RecentlyDownloadedComponent,
+    TableComponent,
+    LoadingSpinnerComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
 
-  loading = true;
+  loading = signal(true);
   dashboardItems: SortedList<InfoStat> = new SortedList((a, b) => {
     if (a.contentState == b.contentState) {
       return a.id.localeCompare(b.id)
@@ -73,7 +76,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.contentService.infoStats().subscribe(info => {
-      this.loading = false;
+      this.loading.set(false);
       this.dashboardItems.set(info.running || []);
     })
 
@@ -187,6 +190,10 @@ export class DashboardComponent implements OnInit {
   pickContent(info: InfoStat) {
     this.displayContentPicker = {} // Close others
     this.displayContentPicker[info.id] = true;
+  }
+
+  itemTrackBy(idx: number, item: InfoStat): string {
+    return `${item.id}`
   }
 
   getSeverity(info: InfoStat): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {

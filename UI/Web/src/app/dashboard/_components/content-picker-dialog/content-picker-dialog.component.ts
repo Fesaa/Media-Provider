@@ -15,10 +15,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
   selector: 'app-content-picker-dialog',
   imports: [
     Tree,
-    Button,
     Dialog,
-    Skeleton,
-    NgForOf,
     TranslocoDirective
   ],
   templateUrl: './content-picker-dialog.component.html',

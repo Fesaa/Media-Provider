@@ -1,25 +1,16 @@
-@if (this.loading) {
-  <div class='flex space-x-2 justify-center items-center mt-10' *transloco="let t;prefix:'dashboard'">
-    <span class='sr-only'>{{ t('loading') | titlecase }}</span>
-    <div class='h-4 w-4 bg-black rounded-full animate-bounce [animation-delay:-0.3s]'></div>
-    <div class='h-4 w-4 bg-black rounded-full animate-bounce [animation-delay:-0.15s]'></div>
-    <div class='h-4 w-4 bg-black rounded-full animate-bounce'></div>
-  </div>
+@if (this.loading()) {
+  <app-loading-spinner [centered]="true" size="large"></app-loading-spinner>
 } @else {
   <div class="w-full" *transloco="let t;prefix:'dashboard'">
-    @if (dashboardItems.length() === 0 && !this.loading) {
+    @if (dashboardItems.length() === 0) {
       <app-suggestion-dashboard></app-suggestion-dashboard>
       <app-recently-downloaded></app-recently-downloaded>
-    }
-
-    @if (dashboardItems.length() > 0) {
+    } @else {
       <div class="pt-1 md:pt-5 m-5">
-        <p-table
-          [value]="dashboardItems.items()"
-          [rows]="10"
-          [paginator]="true"
-          stripedRows
-          [rowsPerPageOptions]="[5, 10, 20]"
+        <app-table
+          [items]="dashboardItems.items()"
+          [trackByIdFunc]="itemTrackBy"
+          [noHoverColour]="true"
           *transloco="let t;prefix:'dashboard.table'"
         >
           <ng-template #header>
@@ -31,68 +22,70 @@
               <th style="width:15%">{{ t('actions.label') }}</th>
             </tr>
           </ng-template>
-          <ng-template #body let-info>
-            <tr>
-              <th>
-                @if (info.ref_url === "") {
-                  <h2 class="text-lg font-semibold">{{ info.name | contentTitle }}</h2>
-                } @else {
-                  <a class="text-lg font-semibold hover:underline" target="_blank" rel="noopener noreferrer"
-                     [href]="info.ref_url">{{ info.name | contentTitle }}</a>
+
+          <ng-template #cell let-info>
+            <th>
+              @if (info.ref_url === "") {
+                <h2 class="text-lg font-semibold">{{ info.name | contentTitle }}</h2>
+              } @else {
+                <a class="text-lg font-semibold hover:underline" target="_blank" rel="noopener noreferrer"
+                   [href]="info.ref_url">{{ info.name | contentTitle }}</a>
+              }
+            </th>
+            <th>
+              <span class="font-semibold">{{ info.size }}</span>
+            </th>
+            <th>
+              <div class="relative pt-1 m-2">
+                <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                  <div
+                    class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 dark:bg-blue-400"
+                    [style.width.%]="info.progress"
+                  ></div>
+                </div>
+                <div class="flex flex-col md:flex-row justify-between text-sm text-gray-500 dark:text-white mt-1">
+                  <span>{{ info.speed | speed:info.speed_type }} {{ info.speed_type | speedType }}</span>
+                  @if (info.estimated) {
+                    <span class="hidden md:inline">{{ info.estimated | time }}</span>
+                  }
+                  <span>{{ info.progress }}%</span>
+                </div>
+              </div>
+            </th>
+            <th>
+              <p-tag [value]="info.contentState | contentState" [severity]="getSeverity(info)"/>
+            </th>
+            <th>
+              <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
+
+                <app-content-picker-dialog [info]="info" [(visible)]="displayContentPicker[info.id]"/>
+
+                @if (info.contentState == ContentState.Downloading) {
+                  <button (click)="browse(info)" class="btn btn-primary" [pTooltip]="t('actions.browse')">
+                    <span class="pi pi-folder"></span>
+                  </button>
                 }
-              </th>
-              <th>
-                <span class="font-semibold">{{ info.size }}</span>
-              </th>
-              <th>
-                <div class="relative pt-1 m-2">
-                  <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
-                    <div
-                      class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 dark:bg-blue-400"
-                      [style.width.%]="info.progress"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col md:flex-row justify-between text-sm text-gray-500 dark:text-white mt-1">
-                    <span>{{ info.speed | speed:info.speed_type }} {{ info.speed_type | speedType }}</span>
-                    @if (info.estimated) {
-                      <span class="hidden md:inline">{{ info.estimated | time }}</span>
-                    }
-                    <span>{{ info.progress }}%</span>
-                  </div>
-                </div>
-              </th>
-              <th>
-                <p-tag [value]="info.contentState | contentState" [severity]="getSeverity(info)"/>
-              </th>
-              <th>
-                <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
 
-                  <app-content-picker-dialog [info]="info" [(visible)]="displayContentPicker[info.id]"/>
+                @if (info.contentState == ContentState.Waiting) {
+                  <button (click)="pickContent(info)" class="btn btn-primary" [pTooltip]="t('actions.set-content')" tooltipPosition="bottom">
+                    <span class="pi pi-cart-arrow-down"></span>
+                  </button>
 
-                  @if (info.contentState == ContentState.Downloading) {
-                    <p-button (click)="browse(info)" [rounded]="true" [text]="true"
-                              [pTooltip]="t('actions.browse')" tooltipPosition="bottom" icon="pi pi-folder" severity="info"/>
-                  }
+                  <button (click)="markReady(info)" class="btn btn-secondary" [pTooltip]="t('actions.mark-ready')" tooltipPosition="bottom">
+                    <span class="pi pi-check"></span>
+                  </button>
+                }
 
-                  @if (info.contentState == ContentState.Waiting) {
-                    <p-button (click)="pickContent(info)" [rounded]="true" [text]="true"
-                              [pTooltip]="t('actions.set-content')" tooltipPosition="bottom" icon="pi pi-cart-arrow-down"
-                              severity="info"/>
+                @if (info.contentState !== ContentState.Cleanup) {
+                  <button (click)="stop(info)" class="btn btn-error" [pTooltip]="t('actions.stop')" tooltipPosition="bottom">
+                    <span class="pi pi-trash"></span>
+                  </button>
+                }
 
-                    <p-button (click)="markReady(info)" [rounded]="true" [text]="true"
-                              [pTooltip]="t('actions.mark-ready')" tooltipPosition="bottom" icon="pi pi-check" severity="success"/>
-                  }
-
-                  @if (info.contentState !== ContentState.Cleanup) {
-                    <p-button (click)="stop(info)" [rounded]="true" [text]="true"
-                              [pTooltip]="t('actions.stop')" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
-                  }
-
-                </div>
-              </th>
-            </tr>
+              </div>
+            </th>
           </ng-template>
-        </p-table>
+        </app-table>
       </div>
     }
   </div>

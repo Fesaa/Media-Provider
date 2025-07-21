@@ -1,99 +1,78 @@
 <div class="pt-1 md:pt-5 mx-16">
-  <p-table
-    #subTable
-    [value]="subscriptions"
-    [(rows)]="size"
-    [paginator]="subscriptions.length > size || size != 10"
-    stripedRows
-    [rowsPerPageOptions]="[5, 10, 20]"
+
+  <app-table
+    [items]="subscriptions"
+    [trackByIdFunc]="trackBy"
     *transloco="let t;prefix:'subscriptions'"
   >
+
     <ng-template #header>
       <tr>
-        <th pSortableColumn="info.title">
-          <div class="flex flex-row justify-between">
-            <span>{{ t('title') }}</span>
-            <p-sortIcon field="info.title"/>
-          </div>
-        </th>
-        <th pSortableColumn="info.nextExecution">
-          <div class="flex flex-row justify-between">
-            <span>{{t('next-exec')}}</span>
-            <p-sortIcon field="info.nextExecution"/>
-          </div>
-        </th>
-        <th pSortableColumn="info.lastCheck" style="width:10%">
-          <div class="flex flex-row justify-between">
-            <span>{{ t('last') }}</span>
-            <p-sortIcon field="info.lastCheck"/>
-          </div>
-        </th>
-        <th style="width:10%">{{ t('frequency') }}</th>
-        <th style="width:15%">
+        <th>{{ t('title') }}</th>
+        <th>{{t('next-exec')}}</th>
+        <th>{{ t('last') }}</th>
+        <th>{{ t('frequency') }}</th>
+        <th>
           <div class="flex flex-row space-x-2 justify-center items-center">
             <span>{{ t('actions.label') }}</span>
-            <p-button severity="secondary" (onClick)="runAll()" [disabled]="hasRanAll()">{{t('actions.run-all')}}</p-button>
+            <button class="btn btn-secondary" (click)="runAll()" [disabled]="hasRanAll()">
+              {{ t('actions.run-all') }}
+            </button>
           </div>
         </th>
       </tr>
-      <tr>
-        <th>
-          <p-columnFilter
-            type="text"
-            field="info.title"
-            [placeholder]="t('search')"
-            showMenu="false"
-            matchMode="contains"
-          />
-        </th>
-        <th></th>
-        <th></th>
-        <th></th>
-      </tr>
     </ng-template>
 
-    <ng-template #body let-sub>
-      <tr>
-        <th>
-          <a
-            class="hover:text-blue-800 hover:underline text-lg font-semibold"
-            href="{{sub.contentId | subscriptionExternalUrl:sub.provider}}"
-            target="_blank"
+    <ng-template #cell let-sub>
+      <th>
+        <a href="{{sub.contentId | subscriptionExternalUrl:sub.provider}}" target="_blank" rel="noopener noreferrer">
+          {{ sub.info.title }}
+        </a>
+      </th>
+      <th>{{sub.info.nextExecution | utcToLocalTime:'short'}}</th>
+      <th>
+
+        <app-badge [colour]="sub.info.lastCheckSuccess ? 'primary' : 'error'"
+                   [pTooltip]="(sub.info.lastCheck | date:'yyyy-MM-dd HH:mm:ss') ?? t('unknown')"
+                   tooltipPosition="top"
+        >
+          {{sub.info.lastCheckSuccess ? t('success') : t('failing')}}
+        </app-badge>
+      </th>
+      <th>
+        <app-badge [colour]="getSeverity(sub)">
+          {{sub.refreshFrequency | refreshFrequency}}
+        </app-badge>
+      </th>
+      <th>
+        <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
+
+          <app-subscription-edit-dialog (update)="update($event)" [sub]="sub" [providers]="allowedProviders" [(visible)]="displayEditSubscription[sub.ID]" />
+
+          <button class="btn btn-primary btn-small" (click)="edit(sub)"
+            [pTooltip]="t('actions.edit')"
+            tooltipPosition="bottom"
           >
-            {{ sub.info.title }}
-          </a>
-        </th>
-        <th>
-          {{sub.info.nextExecution | utcToLocalTime:'short'}}
-        </th>
-        <th>
+            <span class="pi pi-pencil"></span>
+          </button>
 
-          <p-tag [value]="sub.info.lastCheckSuccess ? t('success') : t('failing')"
-                 [pTooltip]="(sub.info.lastCheck | date:'yyyy-MM-dd HH:mm:ss') ?? t('unknown')"
-                 tooltipPosition="top"
-                 [severity]="sub.info.lastCheckSuccess ? 'success' : 'danger'"
-          />
-        </th>
-        <th>
-          <p-tag [value]="sub.refreshFrequency | refreshFrequency" [severity]="getSeverity(sub)"/>
-        </th>
-        <th>
-          <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
+          <button class="btn btn-success btn-small" (click)="runOnce(sub)"
+            [pTooltip]="t('actions.run-once')"
+            tooltipPosition="bottom"
+          >
+            <span class="pi pi-download"></span>
+          </button>
 
-            <app-subscription-edit-dialog (update)="update($event)" [sub]="sub" [providers]="allowedProviders" [(visible)]="displayEditSubscription[sub.ID]" />
+          <button class="btn btn-error btn-small" (click)="delete(sub)"
+            [pTooltip]="t('actions.delete')"
+            tooltipPosition="bottom"
+          >
+            <span class="pi pi-trash"></span>
+          </button>
 
-            <p-button (click)="edit(sub)" [rounded]="true" [text]="true"
-                      [pTooltip]="t('actions.edit')" tooltipPosition="bottom" icon="pi pi-pencil" severity="info"/>
-
-            <p-button (click)="runOnce(sub)" [rounded]="true" [text]="true"
-                      [pTooltip]="t('actions.run-once')" tooltipPosition="bottom" icon="pi pi-download" severity="success"/>
-
-            <p-button (click)="delete(sub)" [rounded]="true" [text]="true"
-                      [pTooltip]="t('actions.delete')" tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
-          </div>
-        </th>
-      </tr>
+        </div>
+      </th>
     </ng-template>
 
-  </p-table>
+  </app-table>
 </div>

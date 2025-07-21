@@ -1,20 +1,96 @@
 @if (navService.showNav$ | async) {
+  <div class="nav-wrapper">
+    <nav class="nav-header">
+      <div class="nav-left">
+        <button class="hamburger" (click)="toggleMobileMenu()">
+          &#9776;
+        </button>
 
-  <div class="card flex flex-row justify-between bg-gray-50 dark:bg-gray-700 p-5 items-center" *transloco="let t;prefix:'nav-bar'">
+        <div class="nav-links desktop-only">
+          @for (page of pageItems(); track page.ID) {
+            <a
+              class="nav-link"
+              [routerLink]="page.ID === -1 ? '/home' : '/page'"
+              [queryParams]="page.ID === -1 ? {} : { index: page.ID }"
+            >
+              @if (page.icon) {
+                <i class="pi {{ page.icon }}"></i>
+              }
+              {{ page.title }}
+            </a>
+          }
+        </div>
+      </div>
 
-    <div class="flex flex-row space-x-2 items-center">
-      <img
-        class="mr-2 h-8 w-8 hidden md:block"
-        src="media_logo.svg"
-        alt="logo"
-      />
-      <p-menubar class="min-w-32 md:min-w-0 " [model]="pageItems"/>
-    </div>
+      <div class="nav-right">
+        @if (notifications() > 0) {
+          <span class="notification-badge" [class]="severity()">
+            {{ notifications() }}
+          </span>
+        }
 
-    @if (notifications > 0) {
-      <p-menubar pBadge [value]="notifications" [severity]="severity()" class="min-w-48 md:min-w-0" [model]="accountItems"/>
-    } @else {
-      <p-menubar class="min-w-48 md:min-w-0" [model]="accountItems"/>
+        <div class="dropdown">
+          @if (currentUser()) {
+            <button class="account-toggle btn btn-secondary" (click)="toggleAccountDropdown()">
+              {{ currentUser()?.name }}
+            </button>
+
+            @if (isAccountDropdownOpen()) {
+              <ul class="account-dropdown dropdown-menu" @dropdownAnimation>
+                @for (item of accountItems(); track item.label) {
+                  <li>
+                    @if (item.routerLink) {
+                      <a
+                        [routerLink]="item.routerLink"
+                        (click)="isAccountDropdownOpen.set(false)"
+                      >
+                        @if (item.icon) {
+                          <i class="pi {{ item.icon }}"></i>
+                        }
+                        {{ item.label }}
+                      </a>
+                    } @else if (item.command) {
+                      <a
+                        (click)="item.command(); isAccountDropdownOpen.set(false)"
+                      >
+                        @if (item.icon) {
+                          <i class="pi {{ item.icon }}"></i>
+                        }
+                        {{ item.label }}
+                      </a>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+
+          }
+        </div>
+      </div>
+    </nav>
+
+    @if (isMobileMenuOpen()) {
+      <div class="mobile-drawer" @drawerAnimation>
+        <div class="drawer-header">
+          <button (click)="toggleMobileMenu()">✕</button>
+        </div>
+        <div class="drawer-links">
+          @for (page of pageItems(); track page.ID) {
+            <a
+              class="nav-link"
+              [routerLink]="page.ID === -1 ? '/home' : '/page'"
+              [queryParams]="page.ID === -1 ? {} : { index: page.ID }"
+              (click)="toggleMobileMenu()"
+            >
+              @if (page.icon) {
+                <i class="pi {{ page.icon }}"></i>
+              }
+              {{ page.title }}
+            </a>
+          }
+        </div>
+      </div>
     }
+
   </div>
 }

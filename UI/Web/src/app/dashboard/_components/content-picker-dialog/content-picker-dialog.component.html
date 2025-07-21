@@ -6,9 +6,15 @@
     <h1>{{ info.name }}</h1>
 
     <div class="flex w-full flex-grow justify-start gap-4">
-      <p-button (click)="reverse()" icon="pi pi-arrows-v" severity="secondary"/>
-      <p-button (click)="unselectAll()" icon="pi pi-times" severity="secondary"/>
-      <p-button (click)="selectAll()" icon="pi pi-check" severity="primary"/>
+      <button class="btn btn-secondary" (click)="reverse()">
+        <span class="pi pi-arrows-v"></span>
+      </button>
+      <button class="btn btn-secondary" (click)="unselectAll()">
+        <span class="pi pi-times"></span>
+      </button>
+      <button class="btn btn-primary" (click)="selectAll()">
+        <span class="pi pi-check"></span>
+      </button>
     </div>
 
     @if (!loading) {
@@ -19,15 +25,15 @@
                 styleClass="w-full"
         />
       </div>
-    } @else {
-      <div class="max-h-80 overflow-auto flex flex-col space-y-5 px-5 mt-5">
-        <p-skeleton width="66%" height="25px" *ngFor="let _ of [].constructor(10)" />
-      </div>
     }
 
     <div class="flex w-full flex-grow justify-end gap-4 mt-10">
-      <p-button (click)="close()" label="Cancel" severity="secondary"/>
-      <p-button (click)="submit()" label="Set filter"/>
+      <button class="btn btn-primary" (click)="close()">
+        {{t('cancel')}}
+      </button>
+      <button class="btn btn-secondary" (click)="submit()">
+        {{t('set-filter')}}
+      </button>
     </div>
   </div>
 

@@ -18,6 +18,8 @@ import {
 } from "./components/subscription-edit-dialog/subscription-edit-dialog.component";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
+import {TableComponent} from "../shared/_component/table/table.component";
+import {BadgeComponent} from "../shared/_component/badge/badge.component";
 
 @Component({
   selector: 'app-subscription-manager',
@@ -32,6 +34,8 @@ import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
     SubscriptionEditDialogComponent,
     TranslocoDirective,
     UtcToLocalTimePipe,
+    TableComponent,
+    BadgeComponent,
   ],
   templateUrl: './subscription-manager.component.html',
   styleUrl: './subscription-manager.component.scss',
@@ -127,15 +131,19 @@ export class SubscriptionManagerComponent implements OnInit {
     })
   }
 
-  getSeverity(sub: Subscription): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
+  getSeverity(sub: Subscription): "primary" | "secondary" | "error" | "warning" {
     switch (sub.refreshFrequency) {
       case RefreshFrequency.Day:
-        return "info"
+        return "primary"
       case RefreshFrequency.Week:
-        return "warn"
+        return "warning"
       case RefreshFrequency.Month:
-        return "danger"
+        return "error"
     }
+  }
+
+  trackBy(idx: number, sub: Subscription) {
+    return `${sub.ID}`
   }
 
 }

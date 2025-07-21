@@ -29,7 +29,13 @@
   },
 
   "oidc": {
-    "timeout": "Timed out loading oidc info"
+    "timeout": "Timed out loading oidc info",
+    "callback": {
+      "title": "Authenticating...",
+      "message": "Please wait while we complete your sign-in.",
+      "info": "This should only take a moment",
+      "failed": "Authentication failed. Redirecting to login..."
+    }
   },
 
   "recently-downloaded": {
