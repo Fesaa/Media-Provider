@@ -1,48 +1,71 @@
-@if (user) {
-
-  <div *transloco="let t;prefix:'settings.pages'" class="flex flex-row w-full items-end justify-end mb-5">
+@if (pages.length > 0 && user) {
+  <div class="mt-4" *transloco="let t; prefix: 'settings.pages'">
     @if (hasPermission(user, Perm.WritePage)) {
-      <p-button [pTooltip]="t('actions.new')"
-                tooltipPosition="bottom" icon="pi pi-plus" severity="primary"
-                routerLink="/settings/wizard/page"
-      />
+      <div class="flex justify-end mb-4">
+        <button class="btn btn-primary" routerLink="/settings/wizard/page">
+          <i class="fa fa-plus"></i>
+        </button>
+      </div>
     }
-  </div>
 
-  <div cdkDropList
-       *transloco="let t;prefix:'settings.pages'"
-       class="flex flex-col space-y-5"
-       (cdkDropListDropped)="drop($event)"
-  >
+    <app-table
+      [pagination]="false"
+      [dragAble]="true"
+      (onDrop)="drop($event)"
+      [items]="pages"
+      [trackByIdFunc]="trackBy"
+    >
+      <ng-template #header>
+        <tr>
+          <th class="table-header-cell"></th>
+          <th class="table-header-cell">{{ t('header.icon') }}</th>
+          <th class="table-header-cell">{{ t('header.title') }}</th>
+          <th class="table-header-cell">{{ t('header.actions') }}</th>
+        </tr>
+      </ng-template>
 
-    <p-card *ngFor="let page of pages" cdkDrag>
-      <div class="flex flex-row justify-between items-center">
+      <ng-template #cell let-item>
+        <td class="table-cell">
+          <span class="fas fa-grip-lines drag-handle" cdkDragHandle></span>
+        </td>
 
-        <div class="flex flex-row space-x-5">
-          <span class="pi pi-arrows-alt hover:cursor-pointer" cdkDragHandle></span>
-          <span [class]="'pi ' + page.icon + ' w-16'"></span>
-        </div>
+        <td class="table-cell w-16 text-center">
+          <span [class]="'pi ' + item.icon"></span>
+        </td>
 
-        <a routerLink="/page" [queryParams]="{index: page.ID}" class="hover:cursor-pointer">{{ page.title }}</a>
+        <td class="table-cell">
+          <a
+            [routerLink]="'/page'"
+            [queryParams]="{ index: item.ID }"
+            class="hover:cursor-pointer"
+          >
+            {{ item.title }}
+          </a>
+        </td>
 
-        <div class="flex-grow flex flex-row justify-end space-x-5">
+        <td class="table-cell d-flex align-items-center gap-2 justify-end">
           @if (hasPermission(user, Perm.WritePage)) {
-            <p-button routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}"
-                      [pTooltip]="t('actions.edit')" variant="outlined"
-                      tooltipPosition="bottom" icon="pi pi-file-edit" severity="info"/>
+            <button
+              type="button"
+              class="btn btn-small"
+              routerLink="/settings/wizard/page"
+              [queryParams]="{ pageId: item.ID }"
+            >
+              <i class="fa fa-edit"></i>
+            </button>
           }
 
           @if (hasPermission(user, Perm.DeletePage)) {
-            <p-button (click)="remove(page)"
-                      [pTooltip]="t('actions.delete')" variant="outlined"
-                      tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
+            <button
+              type="button"
+              class="btn btn-small text-danger"
+              (click)="remove(item)"
+            >
+              <i class="fa fa-trash"></i>
+            </button>
           }
-        </div>
-
-      </div>
-    </p-card>
-
+        </td>
+      </ng-template>
+    </app-table>
   </div>
-
-
 }

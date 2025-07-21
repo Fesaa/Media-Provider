@@ -3,7 +3,6 @@ import {CacheType, CacheTypes, Config} from '../../../../_models/config';
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
-import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {Button} from "primeng/button";

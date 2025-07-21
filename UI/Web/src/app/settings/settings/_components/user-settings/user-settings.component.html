@@ -1,91 +1,97 @@
 @if (authUser) {
+  <div *transloco="let t; prefix: 'settings.users'">
 
-  <p-table
-    [value]="users"
-    dataKey="id"
-    [rows]="10"
-    [paginator]="true"
-    *transloco="let t;prefix:'settings.users'"
-  >
+    @if (hasPermission(authUser, Perm.WriteUser) && !emptyUserPresent()) {
+      <div class="flex justify-end mb-5">
+        <button
+          type="button"
+          class="btn btn-primary"
+        >
+          <i class="fa fa-plus"></i>
+        </button>
+      </div>
+    }
 
-    <ng-template #header>
-      <tr>
-        <th style="width:10%"></th>
-        <th style="width:45%">{{ t('name') }}</th>
-        <th style="width:45%">{{ t('actions.label') }}</th>
-      </tr>
-    </ng-template>
+    <app-table
+      [pagination]="true"
+      [items]="users"
+      [trackByIdFunc]="trackBy"
+    >
+      <ng-template #header>
+        <tr>
+          <th class="table-header-cell"></th>
+          <th class="table-header-cell">{{ t('name') }}</th>
+          <th class="table-header-cell">{{ t('actions.label') }}</th>
+        </tr>
+      </ng-template>
 
-    <ng-template #body let-user>
-      <tr>
-        <td><span class="pi pi-user"></span></td>
-        <td>
+      <ng-template #cell let-user>
+        <td class="table-cell">
+          <span class="pi pi-user"></span>
+        </td>
+
+        <td class="table-cell">
           {{ user.name }}
         </td>
-        <td class="flex flex-row space-x-5">
-          @if (user.id == authUser.id) {
-            <p-button (click)="resetApiKey()"
-                      [pTooltip]="t('actions.api-key.regen')" tooltipPosition="bottom" icon="pi pi-key" severity="info"/>
-            <p-button (click)="copyApiKey()"
-                      [pTooltip]="t('actions.api-key.copy')" tooltipPosition="bottom" icon="pi pi-copy" severity="secondary"/>
+
+        <td class="table-cell flex-wrap items-center gap-2">
+          @if (user.id === authUser.id) {
+            <button
+              type="button"
+              class="btn btn-small"
+              [pTooltip]="t('actions.api-key.regen')"
+              tooltipPosition="bottom"
+              (click)="resetApiKey()"
+            >
+              <i class="pi pi-key"></i>
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-small"
+              [pTooltip]="t('actions.api-key.copy')"
+              tooltipPosition="bottom"
+              (click)="copyApiKey()"
+            >
+              <i class="pi pi-copy"></i>
+            </button>
           }
 
-          <p-button (click)="editUser(user)"
-                    [pTooltip]="t('actions.edit')" tooltipPosition="bottom" icon="pi pi-user-edit"/>
+          <button
+            type="button"
+            class="btn btn-small"
+            [pTooltip]="t('actions.edit')"
+            tooltipPosition="bottom"
+
+          >
+            <i class="pi pi-user-edit"></i>
+          </button>
 
           @if (user.canDelete) {
-            <p-button (click)="deleteUser(user)"
-                      [pTooltip]="t('actions.delete')" tooltipPosition="bottom" icon="pi pi-user-minus" severity="danger"/>
+            <button
+              type="button"
+              class="btn btn-small text-danger"
+              [pTooltip]="t('actions.delete')"
+              tooltipPosition="bottom"
+              (click)="deleteUser(user)"
+            >
+              <i class="pi pi-user-minus"></i>
+            </button>
           }
 
           @if (hasPermission(authUser, Perm.WriteUser)) {
-            <p-button (click)="resetPassword(user)"
-                      [pTooltip]="t('actions.reset-password')" tooltipPosition="bottom" icon="pi pi-refresh" severity="warn"/>
+            <button
+              type="button"
+              class="btn btn-small text-warning"
+              [pTooltip]="t('actions.reset-password')"
+              tooltipPosition="bottom"
+              (click)="resetPassword(user)"
+            >
+              <i class="pi pi-refresh"></i>
+            </button>
           }
-
         </td>
-      </tr>
-    </ng-template>
-
-    <ng-template #caption>
-      @if (hasPermission(authUser, Perm.WriteUser) && !emptyUserPresent()) {
-        <div class="flex flex-grow justify-end">
-          <p-button (click)="newUser()"
-                    [pTooltip]="t('actions.new')" icon="pi pi-user-plus"/>
-        </div>
-      }
-    </ng-template>
-  </p-table>
-
-  <p-dialog [(visible)]="showEditUserModal" [style]="{ width: '25rem'}">
-
-    <ng-template #headless *transloco="let t;prefix:'settings.users'">
-      <div class="p-5">
-
-        <h1 class="mb-5">{{ t('actions.edit') }}</h1>
-
-        @if (editingUser !== null) {
-          <div class="flex items-center mb-6">
-            <p-floatlabel variant="on">
-              <label for="username" class="font-semibold">{{ t('username') | titlecase }}</label>
-              <input pInputText [(ngModel)]="editingUser.name" id="username" class="flex-auto" autocomplete="off"/>
-            </p-floatlabel>
-          </div>
-
-          <p-floatlabel>
-            <label for="permissions" class="font-semibold">{{ t('permissions') }}</label>
-            <p-multiSelect id="permissions" [(ngModel)]="editPermissions" [options]="possiblePermissions"
-                           styleClass="w-full md:w-80"/>
-          </p-floatlabel>
-        }
-
-        <div class="my-5 flex flex-row justify-end space-x-5">
-          <p-button [label]="t('cancel') | titlecase" [text]="true" severity="secondary" (click)="showEditUserModal = false"/>
-          <p-button [label]="t('save')" [outlined]="true" severity="secondary" (click)="saveEdit()"/>
-        </div>
-
-      </div>
-    </ng-template>
-  </p-dialog>
-
+      </ng-template>
+    </app-table>
+  </div>
 }

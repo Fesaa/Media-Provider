@@ -7,29 +7,19 @@ import {DialogService} from "../../../../_services/dialog.service";
 import {ReactiveFormsModule} from "@angular/forms";
 import {hasPermission, Perm, User} from "../../../../_models/user";
 import {AccountService} from "../../../../_services/account.service";
-import {Button} from "primeng/button";
-import {TableModule} from "primeng/table";
-import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray} from "@angular/cdk/drag-drop";
-import {Card} from "primeng/card";
-import {NgForOf} from "@angular/common";
+import {CdkDragDrop, CdkDragHandle, moveItemInArray} from "@angular/cdk/drag-drop";
+import {TableComponent} from "../../../../shared/_component/table/table.component";
 
 @Component({
   selector: 'app-pages-settings',
   imports: [
     RouterLink,
     ReactiveFormsModule,
-    Button,
-    TableModule,
-    Tooltip,
     TranslocoDirective,
-    CdkDropList,
-    Card,
-    NgForOf,
     CdkDragHandle,
-    CdkDrag,
+    TableComponent,
   ],
   templateUrl: './pages-settings.component.html',
   styleUrl: './pages-settings.component.scss',
@@ -91,5 +81,9 @@ export class PagesSettingsComponent {
         this.toastService.genericError(err.error.message);
       }
     });
+  }
+
+  trackBy(idx: number, page: Page) {
+    return `${page.ID}`
   }
 }

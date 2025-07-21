@@ -7,6 +7,8 @@
     "username": "username",
     "password": "password",
     "loading": "loading...",
+    "edit": "Edit",
+    "close": "Close",
     "cancel": "cancel",
     "confirm": "confirm",
     "download": "Download",
@@ -264,11 +266,10 @@
     "pages": {
       "icon": "Icon",
       "name": "Name",
-      "actions": {
-        "label": "Actions",
-        "edit": "Edit page",
-        "delete": "Delete page",
-        "new": "New page"
+      "header": {
+        "icon": "Icon",
+        "title": "Title",
+        "actions": "Actions"
       },
       "wizard": {
         "directories": {

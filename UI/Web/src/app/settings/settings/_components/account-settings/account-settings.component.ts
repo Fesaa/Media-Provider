@@ -2,9 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component, computed,
-  effect,
   inject,
-  signal
 } from '@angular/core';
 import {
   FormBuilder,
@@ -17,7 +15,6 @@ import {
 } from "@angular/forms";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
-import {Button} from "primeng/button";
 import {ToastService} from "../../../../_services/toast.service";
 import {TitleCasePipe} from "@angular/common";
 import {AccountService} from "../../../../_services/account.service";
@@ -29,8 +26,7 @@ import {AccountService} from "../../../../_services/account.service";
     ReactiveFormsModule,
     FormInputComponent,
     TranslocoDirective,
-    Button,
-    TitleCasePipe
+    TitleCasePipe,
   ],
   templateUrl: './account-settings.component.html',
   styleUrl: './account-settings.component.scss',

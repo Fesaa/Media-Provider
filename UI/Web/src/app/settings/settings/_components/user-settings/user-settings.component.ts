@@ -1,33 +1,23 @@
 import {Component} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
-import {hasPermission, Perm, roles, User, UserDto} from "../../../../_models/user";
+import {hasPermission, Perm, User, UserDto} from "../../../../_models/user";
 import {TableModule} from "primeng/table";
-import {Button} from "primeng/button";
 import {DialogService} from "../../../../_services/dialog.service";
 import {Tooltip} from "primeng/tooltip";
 import {Clipboard} from "@angular/cdk/clipboard";
-import {Dialog} from "primeng/dialog";
-import {InputText} from "primeng/inputtext";
 import {FormsModule} from "@angular/forms";
-import {MultiSelect} from "primeng/multiselect";
-import {FloatLabel} from "primeng/floatlabel";
 import {ToastService} from '../../../../_services/toast.service';
 import {TranslocoDirective} from "@jsverse/transloco";
-import {TitleCasePipe} from "@angular/common";
+import {TableComponent} from "../../../../shared/_component/table/table.component";
 
 @Component({
   selector: 'app-user-settings',
   imports: [
     TableModule,
-    Button,
     Tooltip,
-    Dialog,
-    InputText,
     FormsModule,
-    MultiSelect,
-    FloatLabel,
     TranslocoDirective,
-    TitleCasePipe
+    TableComponent
   ],
   templateUrl: './user-settings.component.html',
   styleUrl: './user-settings.component.scss'
@@ -37,17 +27,6 @@ export class UserSettingsComponent {
   users: UserDto[] = []
   authUser: User | null = null;
 
-  showEditUserModal: boolean = false;
-  editingUser: UserDto | null = null;
-  editPermissions: Perm[] = [];
-
-  possiblePermissions: { label: string, value: Perm }[] = [
-    {value: Perm.WriteUser, label: 'Write User'},
-    {value: Perm.DeleteUser, label: 'Delete User'},
-    {value: Perm.WritePage, label: 'Write Page'},
-    {value: Perm.DeletePage, label: 'Delete User'},
-    {value: Perm.WriteConfig, label: 'Write Config'},
-  ];
   protected readonly hasPermission = hasPermission;
   protected readonly Perm = Perm;
 
@@ -70,54 +49,6 @@ export class UserSettingsComponent {
         this.toastService.genericError(err.error.message);
       }
     })
-  }
-
-  permissionsToValue() {
-    let val = 0;
-    for (const perm of (this.editPermissions as Perm[])) {
-      val |= perm;
-    }
-    return val;
-  }
-
-  saveEdit() {
-    this.showEditUserModal = false;
-    if (this.editingUser == null) {
-      return;
-    }
-
-    if (this.editingUser.name.length === 0) {
-      this.toastService.errorLoco("settings.users.toasts.empty-name");
-      return;
-    }
-
-    this.editingUser.permissions = this.permissionsToValue()
-    this.accountService.updateOrCreate(this.editingUser).subscribe({
-      next: dto => {
-        this.users = this.users.filter(user => user.id !== dto.id)
-        this.users.push(dto)
-        this.toastService.infoLoco("settings.users.toasts.updated.success", {name: dto.name});
-      },
-      error: err => {
-        this.toastService.errorLoco("settings.users.toasts.update.error",
-          {name: this.editingUser?.name}, {msg: err.error.message});
-      }
-    })
-  }
-
-  editUser(user: UserDto) {
-    this.editPermissions = roles(user);
-    this.editingUser = user;
-    this.showEditUserModal = true;
-  }
-
-  newUser() {
-    this.editUser({
-      id: 0,
-      name: '',
-      canDelete: true,
-      permissions: -1,
-    });
   }
 
   copyApiKey() {
@@ -175,5 +106,9 @@ export class UserSettingsComponent {
 
   emptyUserPresent() {
     return this.users.find(user => user.id === 0) !== undefined;
+  }
+
+  trackBy(idx: number, user: UserDto) {
+    return `${user.id}`
   }
 }
