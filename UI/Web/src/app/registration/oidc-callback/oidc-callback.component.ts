@@ -1,6 +1,6 @@
 import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {AccountService} from "../../_services/account.service";
-import {Router } from '@angular/router';
+import {Router} from '@angular/router';
 import {NavService} from "../../_services/nav.service";
 import {take} from "rxjs";
 import {LoadingSpinnerComponent} from "../../shared/_component/loading-spinner/loading-spinner.component";

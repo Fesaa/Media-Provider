@@ -44,9 +44,9 @@
             }
 
             <p-iconfield>
-              <p-inputicon class="pi pi-folder hover:cursor-pointer" (click)="selectCustomDir()" />
+              <p-inputicon class="fa fa-folder hover:cursor-pointer" (click)="selectCustomDir()" />
               <input pInputText class="w-full" [(ngModel)]="dirs.custom">
-              <p-inputicon class="pi pi-times hover:cursor-pointer" (click)="clearCustomDir()" />
+              <p-inputicon class="fa fa-x hover:cursor-pointer" (click)="clearCustomDir()" />
             </p-iconfield>
 
             <p-button styleClass="mt-3 md:mt-6 w-full rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-4" (onClick)="search()">

@@ -4,11 +4,8 @@ import {ContentService} from "../../../_services/content.service";
 import {ListContentData} from "../../../_models/messages";
 import {TreeNode} from "primeng/api";
 import {Tree} from "primeng/tree";
-import {Button} from "primeng/button";
 import {ToastService} from "../../../_services/toast.service";
 import {Dialog} from "primeng/dialog";
-import {Skeleton} from "primeng/skeleton";
-import {NgForOf} from "@angular/common";
 import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({

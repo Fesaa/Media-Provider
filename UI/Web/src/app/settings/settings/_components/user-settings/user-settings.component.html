@@ -27,7 +27,7 @@
 
       <ng-template #cell let-user>
         <td class="table-cell">
-          <span class="pi pi-user"></span>
+          <span class="fa fa-user"></span>
         </td>
 
         <td class="table-cell">
@@ -43,7 +43,7 @@
               tooltipPosition="bottom"
               (click)="resetApiKey()"
             >
-              <i class="pi pi-key"></i>
+              <i class="fa fa-key"></i>
             </button>
 
             <button
@@ -53,7 +53,7 @@
               tooltipPosition="bottom"
               (click)="copyApiKey()"
             >
-              <i class="pi pi-copy"></i>
+              <i class="fa fa-copy"></i>
             </button>
           }
 
@@ -64,7 +64,7 @@
             tooltipPosition="bottom"
 
           >
-            <i class="pi pi-user-edit"></i>
+            <i class="fa fa-user-edit"></i>
           </button>
 
           @if (user.canDelete) {
@@ -75,7 +75,7 @@
               tooltipPosition="bottom"
               (click)="deleteUser(user)"
             >
-              <i class="pi pi-user-minus"></i>
+              <i class="fa fa-user-minus"></i>
             </button>
           }
 
@@ -87,7 +87,7 @@
               tooltipPosition="bottom"
               (click)="resetPassword(user)"
             >
-              <i class="pi pi-refresh"></i>
+              <i class="fa fa-refresh"></i>
             </button>
           }
         </td>

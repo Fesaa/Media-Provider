@@ -14,7 +14,7 @@
   <div class="mb-5 flex flex-col md:flex-row justify-between space-y-2 md:space-y-0">
     <p-floatlabel variant="on">
       <p-iconfield>
-        <p-inputicon class="pi pi-plus hover:cursor-pointer" (click)="addTagMap()" />
+        <p-inputicon class="fa fa-plus hover:cursor-pointer" (click)="addTagMap()" />
         <input id="newGenre" type="text" pInputText [(ngModel)]="newTag" (keydown.enter)="addTagMap()">
       </p-iconfield>
       <label for="newGenre">{{ t('new') }}</label>
@@ -39,7 +39,7 @@
           <input id="filter" type="text" pInputText [(ngModel)]="tm.origin.name">
           <input id="filter" type="text" pInputText [(ngModel)]="tm.dest.name">
 
-          <span class="pi pi-trash hover:cursor-pointer" (click)="removeTagMap(tm)"></span>
+          <span class="fa fa-trash hover:cursor-pointer" (click)="removeTagMap(tm)"></span>
         </div>
       }
     </virtual-scroller>

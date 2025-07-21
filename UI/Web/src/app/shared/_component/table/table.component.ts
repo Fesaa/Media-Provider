@@ -2,13 +2,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  ContentChild, effect, EventEmitter,
+  ContentChild,
+  EventEmitter,
   input,
-  OnInit, Output,
+  OnInit,
+  Output,
   signal,
   TemplateRef
 } from '@angular/core';
-import {NgTemplateOutlet, TitleCasePipe} from '@angular/common';
+import {NgTemplateOutlet} from '@angular/common';
 import {CdkDrag, CdkDragDrop, CdkDropList} from '@angular/cdk/drag-drop';
 
 

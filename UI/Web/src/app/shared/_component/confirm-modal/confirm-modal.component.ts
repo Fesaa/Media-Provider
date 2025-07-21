@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, ContentChild, inject, model, TemplateRef} from '@angular/core';
+import {ChangeDetectionStrategy, Component, model, TemplateRef} from '@angular/core';
 import {translate, TranslocoDirective} from '@jsverse/transloco';
 import {Subject} from 'rxjs';
 //import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';

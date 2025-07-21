@@ -1,11 +1,10 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject} from '@angular/core';
 import {CacheType, CacheTypes, Config} from '../../../../_models/config';
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {ToastService} from "../../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {Button} from "primeng/button";
 import {SettingsService} from "../../../../_services/settings.service";
 
 @Component({
@@ -14,7 +13,6 @@ import {SettingsService} from "../../../../_services/settings.service";
     ReactiveFormsModule,
     FormInputComponent,
     TranslocoDirective,
-    Button,
     FormSelectComponent
   ],
   templateUrl: './server-settings.component.html',

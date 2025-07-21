@@ -6,7 +6,6 @@ import {ContentState, InfoStat} from "../_models/stats";
 import {TableModule} from "primeng/table";
 import {Tag} from 'primeng/tag';
 import {ContentTitlePipe} from "../_pipes/content-title.pipe";
-import {Button} from "primeng/button";
 import {Tooltip} from "primeng/tooltip";
 import {SpeedPipe} from "../_pipes/speed.pipe";
 import {SpeedTypePipe} from "../_pipes/speed-type.pipe";
@@ -19,7 +18,6 @@ import {ToastService} from "../_services/toast.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
 import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteContent} from "../_models/signalr";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {TitleCasePipe} from "@angular/common";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {SortedList} from "../shared/data-structures/sorted-list";
 import {RecentlyDownloadedComponent} from "./_components/recently-downloaded/recently-downloaded.component";
@@ -40,7 +38,6 @@ import {LoadingSpinnerComponent} from "../shared/_component/loading-spinner/load
     ContentStatePipe,
     ContentPickerDialogComponent,
     TranslocoDirective,
-    TitleCasePipe,
     RecentlyDownloadedComponent,
     TableComponent,
     LoadingSpinnerComponent

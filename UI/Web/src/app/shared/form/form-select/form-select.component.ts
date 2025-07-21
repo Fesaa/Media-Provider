@@ -1,6 +1,5 @@
-import {Component, computed, ContentChild, EventEmitter, input, Input, model, Output, TemplateRef} from '@angular/core';
-import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {translate} from "@jsverse/transloco";
+import {Component, ContentChild, TemplateRef} from '@angular/core';
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {Tooltip} from "primeng/tooltip";
 import {FormItemComponent} from "../form-item/form-item.component";
 import {NgTemplateOutlet} from "@angular/common";

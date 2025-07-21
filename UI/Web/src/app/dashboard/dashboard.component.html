@@ -62,23 +62,23 @@
 
                 @if (info.contentState == ContentState.Downloading) {
                   <button (click)="browse(info)" class="btn btn-primary" [pTooltip]="t('actions.browse')">
-                    <span class="pi pi-folder"></span>
+                    <span class="fa fa-folder"></span>
                   </button>
                 }
 
                 @if (info.contentState == ContentState.Waiting) {
                   <button (click)="pickContent(info)" class="btn btn-primary" [pTooltip]="t('actions.set-content')" tooltipPosition="bottom">
-                    <span class="pi pi-cart-arrow-down"></span>
+                    <span class="fa fa-cart-plus"></span>
                   </button>
 
                   <button (click)="markReady(info)" class="btn btn-secondary" [pTooltip]="t('actions.mark-ready')" tooltipPosition="bottom">
-                    <span class="pi pi-check"></span>
+                    <span class="fa fa-check"></span>
                   </button>
                 }
 
                 @if (info.contentState !== ContentState.Cleanup) {
                   <button (click)="stop(info)" class="btn btn-error" [pTooltip]="t('actions.stop')" tooltipPosition="bottom">
-                    <span class="pi pi-trash"></span>
+                    <span class="fa fa-trash"></span>
                   </button>
                 }
 

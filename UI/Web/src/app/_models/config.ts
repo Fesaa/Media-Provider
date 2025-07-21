@@ -1,5 +1,3 @@
-import {Page} from "./page";
-
 export type Config = {
   baseUrl: string;
   cacheType: CacheType;

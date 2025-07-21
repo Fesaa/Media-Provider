@@ -21,15 +21,15 @@ import Aura from '@primeng/themes/aura';
 import {ProviderNamePipe} from "./_pipes/provider-name.pipe";
 import {MessageService} from "primeng/api";
 import {SubscriptionExternalUrlPipe} from "./_pipes/subscription-external-url.pipe";
-import {provideTransloco, TranslocoService} from "@jsverse/transloco";
+import {provideTransloco} from "@jsverse/transloco";
 import {TranslocoLoaderImpl} from "./_services/transloco-loader";
 import {provideOAuthClient} from "angular-oauth2-oidc";
 import {OidcEvents, OidcService} from "./_services/oidc.service";
 import {ToastService} from "./_services/toast.service";
-import { AccountService } from './_services/account.service';
+import {AccountService} from './_services/account.service';
 import {NavService} from "./_services/nav.service";
 import {catchError, filter, firstValueFrom, Observable, of, switchMap, tap, timeout} from "rxjs";
-import { User } from './_models/user';
+import {User} from './_models/user';
 
 function getBaseHref(platformLocation: PlatformLocation): string {
   return platformLocation.getBaseHrefFromDOM();

@@ -2,17 +2,18 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
+  HostListener,
   OnInit,
-  signal,
-  computed, HostListener
+  signal
 } from '@angular/core';
 import {PageService} from "../_services/page.service";
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {AccountService} from "../_services/account.service";
 import {NavService} from "../_services/nav.service";
 import {NotificationService} from "../_services/notification.service";
-import {SignalRService, EventType} from "../_services/signal-r.service";
-import {TranslocoPipe, TranslocoService} from "@jsverse/transloco";
+import {EventType, SignalRService} from "../_services/signal-r.service";
+import {TranslocoService} from "@jsverse/transloco";
 import {OidcService} from "../_services/oidc.service";
 import {User} from "../_models/user";
 import {Page} from "../_models/page";

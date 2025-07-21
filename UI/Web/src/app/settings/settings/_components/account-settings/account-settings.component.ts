@@ -1,17 +1,13 @@
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject,} from '@angular/core';
 import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component, computed,
-  inject,
-} from '@angular/core';
-import {
+  AbstractControl,
   FormBuilder,
   FormControl,
   FormGroup,
-  Validators,
   ReactiveFormsModule,
+  ValidationErrors,
   ValidatorFn,
-  AbstractControl, ValidationErrors
+  Validators
 } from "@angular/forms";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";

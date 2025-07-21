@@ -13,7 +13,7 @@
   <div class="mb-5 flex flex-col md:flex-row justify-between space-y-2 md:space-y-0">
     <p-floatlabel variant="on">
       <p-iconfield>
-        <p-inputicon class="pi pi-plus hover:cursor-pointer" (click)="addAgeRatingMap()" />
+        <p-inputicon class="fa fa-plus hover:cursor-pointer" (click)="addAgeRatingMap()" />
         <input id="newGenre" type="text" pInputText [(ngModel)]="newAgeRating" (keydown.enter)="addAgeRatingMap()">
       </p-iconfield>
       <label for="newGenre">{{ t('new') }}</label>
@@ -37,7 +37,7 @@
         <div class="flex flex-row flex-grow justify-between items-center p-2 mr-3 overflow-clip" style="height: 50px; width: 100%">
           <span>{{arm.tag.name}}</span>
           <p-select [options]="ComicInfoAgeRatings" [(ngModel)]="arm.comicInfoAgeRating" appendTo="body"  />
-          <span class="pi pi-trash hover:cursor-pointer" (click)="removeAgeRatingMap(arm)"></span>
+          <span class="fa fa-trash hover:cursor-pointer" (click)="removeAgeRatingMap(arm)"></span>
         </div>
       }
 

@@ -9,10 +9,8 @@ import {SubscriptionExternalUrlPipe} from "../_pipes/subscription-external-url.p
 import {DatePipe} from "@angular/common";
 import {Tooltip} from "primeng/tooltip";
 import {RefreshFrequencyPipe} from "../_pipes/refresh-frequency.pipe";
-import {Button} from "primeng/button";
 import {DialogService} from '../_services/dialog.service';
 import {ToastService} from "../_services/toast.service";
-import {Tag} from "primeng/tag";
 import {
   SubscriptionEditDialogComponent
 } from "./components/subscription-edit-dialog/subscription-edit-dialog.component";
@@ -29,8 +27,6 @@ import {BadgeComponent} from "../shared/_component/badge/badge.component";
     DatePipe,
     Tooltip,
     RefreshFrequencyPipe,
-    Button,
-    Tag,
     SubscriptionEditDialogComponent,
     TranslocoDirective,
     UtcToLocalTimePipe,

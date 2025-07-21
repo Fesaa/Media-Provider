@@ -1,5 +1,5 @@
 import {Component, inject, OnInit} from '@angular/core';
-import { NotificationService } from '../../../_services/notification.service';
+import {NotificationService} from '../../../_services/notification.service';
 import {Notification} from "../../../_models/notifications";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {UtcToLocalTimePipe} from "../../../_pipes/utc-to-local.pipe";

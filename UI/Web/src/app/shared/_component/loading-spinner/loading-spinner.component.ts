@@ -1,5 +1,5 @@
 import {Component, input} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {CommonModule} from '@angular/common';
 
 type SpinnerSize = 'small' | 'medium' | 'large';
 type SpinnerColour = 'primary' | 'secondary' | 'white';

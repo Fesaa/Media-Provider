@@ -53,11 +53,11 @@ export class SettingsComponent {
   showMobileConfig = signal(false);
 
   readonly settings: SettingsTab[] = [
-    { id: SettingsID.Account, title: "Account", icon: 'pi pi-user', perm: Perm.All },
-    { id: SettingsID.Preferences, title: "Preferences", icon: 'pi pi-ethereum', perm: Perm.WriteConfig },
-    { id: SettingsID.Pages, title: 'Pages', icon: 'pi pi-thumbtack', perm: Perm.All },
-    { id: SettingsID.Server, title: 'Server', icon: 'pi pi-server', perm: Perm.WriteConfig },
-    { id: SettingsID.User, title: 'Users', icon: 'pi pi-users', perm: Perm.WriteUser },
+    { id: SettingsID.Account, title: "Account", icon: 'fa fa-user', perm: Perm.All },
+    { id: SettingsID.Preferences, title: "Preferences", icon: 'fa fa-heart', perm: Perm.WriteConfig },
+    { id: SettingsID.Pages, title: 'Pages', icon: 'fa fa-thumbtack', perm: Perm.All },
+    { id: SettingsID.Server, title: 'Server', icon: 'fa fa-server', perm: Perm.WriteConfig },
+    { id: SettingsID.User, title: 'Users', icon: 'fa fa-users', perm: Perm.WriteUser },
   ];
 
   readonly visibleSettings = computed(() => {

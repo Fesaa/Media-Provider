@@ -1,6 +1,6 @@
-import {Component, computed, input, Input, model} from '@angular/core';
-import {AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {translate, TranslocoDirective} from "@jsverse/transloco";
+import {Component, input} from '@angular/core';
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {TranslocoDirective} from "@jsverse/transloco";
 import {Tooltip} from "primeng/tooltip";
 import {FormItemComponent} from "../form-item/form-item.component";
 import {KeyValuePipe} from "@angular/common";

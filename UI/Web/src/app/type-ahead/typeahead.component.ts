@@ -1,12 +1,18 @@
 import {
   ChangeDetectionStrategy,
-  Component, computed,
-  ContentChild, DestroyRef, effect, ElementRef,
+  Component,
+  computed,
+  ContentChild,
+  DestroyRef,
+  effect,
+  ElementRef,
   EventEmitter,
   inject,
   input,
   OnInit,
-  Output, signal, TemplateRef,
+  Output,
+  signal,
+  TemplateRef,
   ViewChild
 } from '@angular/core';
 import {catchError, debounceTime, distinctUntilChanged, Observable, of, startWith, Subject, switchMap} from 'rxjs';

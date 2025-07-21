@@ -1,7 +1,6 @@
 import {Component} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
 import {hasPermission, Perm, User, UserDto} from "../../../../_models/user";
-import {TableModule} from "primeng/table";
 import {DialogService} from "../../../../_services/dialog.service";
 import {Tooltip} from "primeng/tooltip";
 import {Clipboard} from "@angular/cdk/clipboard";
@@ -13,7 +12,6 @@ import {TableComponent} from "../../../../shared/_component/table/table.componen
 @Component({
   selector: 'app-user-settings',
   imports: [
-    TableModule,
     Tooltip,
     FormsModule,
     TranslocoDirective,

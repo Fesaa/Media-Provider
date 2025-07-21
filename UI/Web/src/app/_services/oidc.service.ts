@@ -3,7 +3,7 @@ import {OAuthErrorEvent, OAuthService} from "angular-oauth2-oidc";
 import {catchError, from, map, Observable, of} from "rxjs";
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
-import {takeUntilDestroyed, toObservable} from "@angular/core/rxjs-interop";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {APP_BASE_HREF} from "@angular/common";
 import {ToastService} from "./toast.service";
 import {Oidc} from "../_models/config";

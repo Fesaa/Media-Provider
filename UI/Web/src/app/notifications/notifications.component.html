@@ -52,20 +52,20 @@
           <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
             @if (notification.read) {
               <button class="btn btn-primary btn-small" (click)="markUnRead(notification)" [pTooltip]="t('actions.mark-unread')" tooltipPosition="bottom" aria-label="Mark unread">
-                <span class="pi pi-check-circle"></span>
+                <span class="fa fa-circle-check"></span>
               </button>
             } @else {
               <button class="btn btn-warning btn-small" (click)="markRead(notification)" [pTooltip]="t('actions.mark-read')" tooltipPosition="bottom" aria-label="Mark read">
-                <span class="pi pi-circle"></span>
+                <span class="fa fa-circle"></span>
               </button>
             }
 
             <button class="btn btn-primary btn-small" (click)="show(notification.ID)" [pTooltip]="t('extra-info')" tooltipPosition="bottom" aria-label="Show info">
-              <span class="pi pi-info-circle"></span>
+              <span class="fa fa-circle-info"></span>
             </button>
 
             <button class="btn btn-error btn-small" (click)="delete(notification)" aria-label="Delete notification">
-              <span class="pi pi-trash"></span>
+              <span class="fa fa-trash"></span>
             </button>
 
             <p-dialog [(visible)]="infoVisibility[notification.ID]" [header]="notification.title">
