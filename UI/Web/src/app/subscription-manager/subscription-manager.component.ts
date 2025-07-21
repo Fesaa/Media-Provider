@@ -1,8 +1,8 @@
-import {ChangeDetectorRef, Component, inject, OnInit, signal} from '@angular/core';
+import {ChangeDetectorRef, Component, effect, inject, OnInit, signal} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SubscriptionService} from '../_services/subscription.service';
 import {RefreshFrequency, Subscription} from "../_models/subscription";
-import {Provider} from "../_models/page";
+import {DownloadMetadata, Provider} from "../_models/page";
 import {dropAnimation} from "../_animations/drop-animation";
 import {SubscriptionExternalUrlPipe} from "../_pipes/subscription-external-url.pipe";
 import {DatePipe} from "@angular/common";
@@ -15,6 +15,10 @@ import {BadgeComponent} from "../shared/_component/badge/badge.component";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {ModalService} from "../_services/modal.service";
 import {forkJoin} from "rxjs";
+import {EditSubscriptionModalComponent} from "./_components/edit-subscription-modal/edit-subscription-modal.component";
+import {DefaultModalOptions} from "../_models/default-modal-options";
+import {PageService} from "../_services/page.service";
+import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
 
 @Component({
   selector: 'app-subscription-manager',
@@ -38,10 +42,34 @@ export class SubscriptionManagerComponent implements OnInit {
   private readonly navService = inject(NavService);
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly toastService = inject(ToastService);
+  private readonly pageService = inject(PageService);
+  private readonly providerNamePipe = inject(ProviderNamePipe);
 
+  metadata = signal<Map<Provider, DownloadMetadata>>(new Map());
   allowedProviders = signal<Provider[]>([]);
   subscriptions = signal<Subscription[]>([]);
   hasRanAll = signal(false);
+
+  constructor() {
+    effect(() => {
+      const providers = this.allowedProviders();
+      for (const provider of providers) {
+        this.pageService.metadata(provider).subscribe({
+          next: metadata => {
+            this.metadata.update(m => {
+              m.set(provider, metadata);
+              return m;
+            })
+          },
+          error: error => {
+            this.toastService.errorLoco("page.toasts.metadata-failed",
+              {provider: this.providerNamePipe.transform(provider)}, {msg: error.error.message});
+          }
+        })
+      }
+    });
+
+  }
 
   ngOnInit(): void {
     this.navService.setNavVisibility(true);
@@ -119,4 +147,14 @@ export class SubscriptionManagerComponent implements OnInit {
     return `${sub.ID}`
   }
 
+  edit(sub: Subscription) {
+    const [modal, component] = this.modalService.open(EditSubscriptionModalComponent, DefaultModalOptions);
+    component.subscription.set(sub);
+    component.providers.set(this.allowedProviders());
+    component.metadata.set(this.metadata().get(sub.provider) ?? {definitions: []});
+
+    modal.result.then(() => this.subscriptionService.all().subscribe(subs => {
+      this.subscriptions.set(subs);
+    }));
+  }
 }

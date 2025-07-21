@@ -1,4 +1,4 @@
-import {Component, inject, OnInit, ViewContainerRef} from '@angular/core';
+import {Component, HostListener, inject, OnInit, ViewContainerRef} from '@angular/core';
 import {Router, RouterOutlet} from '@angular/router';
 import {AccountService} from "./_services/account.service";
 import {NavHeaderComponent} from "./nav-header/nav-header.component";
@@ -54,6 +54,8 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.updateVh();
+
     this.signalR.events$.subscribe(event => {
       switch (event.type) {
         case EventType.Notification:
@@ -72,5 +74,17 @@ export class AppComponent implements OnInit {
 
       this.signalR.startConnection(user);
     })
+  }
+
+  @HostListener('window:resize')
+  @HostListener('window:orientationchange')
+  setDocHeight() {
+    this.updateVh();
+  }
+
+  private updateVh(): void {
+    // Sets a CSS variable for the actual device viewport height. Needed for mobile dev.
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
   }
 }

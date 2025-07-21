@@ -112,7 +112,7 @@ export class DownloadModalComponent implements OnInit {
       .forEach(key => {
         const val = (data.downloadMetadata as any)[key];
         extras[key] = Array.isArray(val) ? val.map(v => v+'') : [val+''];
-      })
+      });
 
     data.downloadMetadata = {
       startImmediately: data.downloadMetadata.startImmediately,
