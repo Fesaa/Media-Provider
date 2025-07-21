@@ -148,6 +148,8 @@ func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription
 		return nil, err
 	}
 	sub.Normalize(pref.SubscriptionRefreshHour)
+	sub.Info.LastCheck = time.Now()
+	sub.Info.LastCheckSuccess = true
 	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
 
 	newSub, err := s.db.Subscriptions.New(sub)

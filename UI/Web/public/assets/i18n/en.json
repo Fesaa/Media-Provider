@@ -88,9 +88,11 @@
   },
 
   "edit-subscription-modal": {
+    "new-sub-title": "Subscribe to: {{name}}",
     "title": "Edit your subscription on: {{name}}",
     "cancel": "{{common.cancel}}",
     "save": "{{common.save}}",
+    "create": "Subscribe",
     "general": "General",
     "extra": "Extra",
 
@@ -277,78 +279,10 @@
   },
 
   "page": {
-    "download-dialog": {
-      "general": "General",
-      "advanced": "Advanced",
-      "directory": "Download directory",
-      "start-now": "Start download immediately",
-      "extra-metadata": {
-        "title": "Extra metadata",
-        "tl-lang": {
-          "title": "Language",
-          "tooltip": ""
-        },
-        "scanlation_group": {
-          "title": "Scanlation group",
-          "tooltip": ""
-        },
-        "download_one_shot": {
-          "title": "Download one shots",
-          "tooltip": ""
-        },
-        "include_cover": {
-          "title": "Include cover",
-          "tooltip": "Adds a cover image, can be nice to turn off for webtoons"
-        },
-        "update_cover": {
-          "title": "Update cover",
-          "tooltip": "Checks if the currently downloaded cover is outdated"
-        },
-        "include_not_matched_tags": {
-          "title": "Add not matched tags to comicinfo",
-          "tooltip": "Tags not configured to be a genre, will be added as tags instead"
-        },
-        "no-sub-dir": {
-          "title": "Download into parent",
-          "tooltip": "Content will be copied in your selected dir, instead of creating child directory first"
-        },
-        "title_override": {
-          "title": "Override title",
-          "tooltip": "Set a specific title"
-        }
-      },
-      "cancel": "{{shared.cancel}}",
-      "download": "{{shared.download}}",
-      "toasts": {
-        "download-success": {
-          "title": "Success",
-          "summary": "Download started for {{name}}"
-        },
-        "not-found": {
-          "title": "Page not found",
-          "summary": ""
-        }
-      }
-    },
     "search-result": {
       "download": "{{shared.download}}: {{name}}",
       "add-as-sub": "Add as a subscription",
       "sub-header": "Subscribe to: {{name}}"
-    },
-    "subscription-dialog": {
-      "general": "General",
-      "metadata": "Extra",
-      "title": "Title",
-      "directory": "{{page.download-dialog.directory}}",
-      "refresh-frequency": "Refresh frequency",
-      "cancel": "{{shared.cancel}}",
-      "subscribe": "Subscribe",
-      "toasts": {
-        "success": {
-          "title": "Success",
-          "summary": "Added {{name}} as a subscription"
-        }
-      }
     },
 
     "query":"Query",
@@ -737,16 +671,6 @@
   },
 
   "subscriptions": {
-    "dialog": {
-      "general": "General",
-      "metadata": "Extra",
-      "header": "Edit subscription",
-      "title": "Title",
-      "content-id": "Content Id",
-      "content-dir": "Content Dir",
-      "cancel": "{{shared.cancel}}",
-      "save": "{{shared.save}}"
-    },
     "title": "Title",
     "last": "Last ran",
     "next-exec": "Next run",
@@ -795,6 +719,16 @@
         },
         "error": {
           "title": "Failed to update {{name}}",
+          "summary": "{{msg}}"
+        }
+      },
+      "new": {
+        "success": {
+          "title": "Created subscription on {{name}}",
+          "summary": ""
+        },
+        "error": {
+          "title": "Failed to subscribe to {{name}}",
           "summary": "{{msg}}"
         }
       }

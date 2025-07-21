@@ -3,7 +3,13 @@
   <div class="modal-container">
 
     <div class="modal-header">
-      <h5 class="modal-title fw-semibold">{{t('title', {name: subscription().info.title})}}</h5>
+      <h5 class="modal-title fw-semibold">
+        @if (subscription().ID === -1) {
+          {{t('new-sub-title', {name: subscription().info.title})}}
+        } @else {
+          {{t('title', {name: subscription().info.title})}}
+        }
+      </h5>
       <button type="button" class="btn-close" [attr.aria-label]="t('close')" (click)="close()">
       </button>
     </div>
@@ -188,7 +194,7 @@
         {{t('cancel')}}
       </button>
       <button type="button" class="btn btn-primary" (click)="save()">
-        <span>{{ t('save')}}</span>
+        <span>{{ subscription().ID === -1 ? t('create') : t('save')}}</span>
       </button>
     </div>
 

@@ -13,8 +13,8 @@ export class ToastService {
 
   infoLoco(key: string, titleValues?: any, summaryValues?: any) {
     this.info(
-      this.loco.translate(key+".title", titleValues),
       this.loco.translate(key+".summary", summaryValues),
+      this.loco.translate(key+".title", titleValues),
     )
   }
 
@@ -24,8 +24,8 @@ export class ToastService {
 
   successLoco(key: string, titleValues?: any, summaryValues?: any) {
     this.success(
-      this.loco.translate(key+".title", titleValues),
       this.loco.translate(key+".summary", summaryValues),
+      this.loco.translate(key+".title", titleValues),
     )
   }
 
@@ -35,8 +35,8 @@ export class ToastService {
 
   warningLoco(key: string, titleValues?: any, summaryValues?: any) {
     this.warning(
-      this.loco.translate(key+".title", titleValues),
       this.loco.translate(key+".summary", summaryValues),
+      this.loco.translate(key+".title", titleValues),
     )
   }
 
@@ -50,8 +50,8 @@ export class ToastService {
 
   errorLoco(key: string, titleValues?: any, summaryValues?: any) {
     this.error(
-      this.loco.translate(key+".title", titleValues),
       this.loco.translate(key+".summary", summaryValues),
+      this.loco.translate(key+".title", titleValues),
     )
   }
 

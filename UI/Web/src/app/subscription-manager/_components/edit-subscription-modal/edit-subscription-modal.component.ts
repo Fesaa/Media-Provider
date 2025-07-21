@@ -140,12 +140,17 @@ export class EditSubscriptionModalComponent implements OnInit {
   save() {
     const sub = this.packData();
 
-    this.subscriptionService.update(sub).subscribe({
+    const actions$ = this.subscription().ID === -1
+      ? this.subscriptionService.new(sub)
+      : this.subscriptionService.update(sub);
+    const kind = this.subscription().ID === -1 ? 'new' : 'update';
+
+    actions$.subscribe({
       next: () => {
-        this.toastService.successLoco("subscriptions.toasts.update.success", {name: sub.info.title});
+        this.toastService.successLoco(`subscriptions.toasts.${kind}.success`, {name: sub.info.title});
       },
       error: err => {
-        this.toastService.errorLoco("subscriptions.toasts.update.error", {name: sub.info.title}, {msg: err.error.message});
+        this.toastService.errorLoco(`subscriptions.toasts.${kind}.error`, {name: sub.info.title}, {msg: err.error.message});
       }
     }).add(() => this.close())
   }

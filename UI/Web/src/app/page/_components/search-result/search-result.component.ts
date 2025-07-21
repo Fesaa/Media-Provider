@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, inject, input, Input, OnInit, signal} from '@angular/core';
+import {Component, inject, input, OnInit, signal} from '@angular/core';
 import {SearchInfo} from "../../../_models/Info";
 import {DownloadMetadata, Page, Provider} from "../../../_models/page";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
@@ -10,6 +10,10 @@ import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {ModalService} from "../../../_services/modal.service";
 import {DownloadModalComponent} from "../download-modal/download-modal.component";
 import {DefaultModalOptions} from "../../../_models/default-modal-options";
+import {
+  EditSubscriptionModalComponent
+} from "../../../subscription-manager/_components/edit-subscription-modal/edit-subscription-modal.component";
+import {RefreshFrequency, Subscription} from "../../../_models/subscription";
 
 @Component({
   selector: 'app-search-result',
@@ -41,7 +45,29 @@ export class SearchResultComponent implements OnInit{
   }
 
   addAsSub() {
+    const [_, component] = this.modalService.open(EditSubscriptionModalComponent, DefaultModalOptions);
 
+    const newSub: Subscription = {
+      ID: -1,
+      contentId: this.searchResult().InfoHash,
+      provider: this.searchResult().Provider,
+      refreshFrequency: RefreshFrequency.Week,
+      info: {
+        title: this.searchResult().Name,
+        baseDir: this.dir(),
+        lastCheck: null!,
+        lastCheckSuccess: null!,
+        nextExecution: null!,
+      },
+      metadata: {
+        startImmediately: true,
+        extra: {}
+      }
+    };
+
+    component.subscription.set(newSub);
+    component.metadata.set(this.metadata());
+    component.providers.set(this.providers());
   }
 
   download() {
