@@ -178,7 +178,7 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 		Title:   "Download finished",
 		Summary: utils.Shorten(text, services.SummarySize),
 		Body:    text,
-		Colour:  models.Green,
+		Colour:  models.Secondary,
 		Group:   models.GroupContent,
 	})
 
@@ -340,7 +340,7 @@ func (y *yoitsu) notifyCleanUpError(content Torrent, cleanupErrs ...error) {
 		y.transLoco.GetTranslation("cleanup-errors-title"),
 		y.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
 		errors.Join(cleanupErrs...).Error(),
-		models.Red)
+		models.Error)
 }
 
 func (y *yoitsu) cleaner() {

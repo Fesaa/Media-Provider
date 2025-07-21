@@ -198,7 +198,7 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 		if err != nil {
 			s.log.Error().Err(err).Msg("failed to get subscriptions")
 			s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-to-run-subscriptions"),
-				s.transloco.GetTranslation("failed-to-run-subscriptions-body", err), models.Red)
+				s.transloco.GetTranslation("failed-to-run-subscriptions-body", err), models.Error)
 			return
 		}
 

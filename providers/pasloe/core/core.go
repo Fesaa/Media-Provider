@@ -360,7 +360,7 @@ func (c *Core[C, S]) handleLongDiskCheck(elapsed time.Duration) {
 				c.TransLoco.GetTranslation("warn"),
 				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
 				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
-				models.Orange)
+				models.Warning)
 		}
 	}
 }

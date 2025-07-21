@@ -11,7 +11,8 @@
     "create": "Create",
     "update": "Update",
     "confirm": "Confirm",
-    "actions": "Actions"
+    "actions": "Actions",
+    "dismiss": "Dismiss"
   },
 
   "paginator": {

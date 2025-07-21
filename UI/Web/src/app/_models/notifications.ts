@@ -13,12 +13,8 @@ export interface Notification {
 export enum NotificationColour {
   Primary = "primary",
   Secondary = "secondary",
-  Success = "success",
-  Info = "info",
-  Warn = "warn",
-  Help = "help",
-  Danger = "danger",
-  Contrast = "contrast",
+  Warn = "warning",
+  Error = "error"
 }
 
 export enum NotificationGroup {

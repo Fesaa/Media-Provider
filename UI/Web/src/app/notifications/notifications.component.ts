@@ -10,6 +10,8 @@ import {TableComponent} from "../shared/_component/table/table.component";
 import {BadgeComponent} from "../shared/_component/badge/badge.component";
 import {ModalService} from "../_services/modal.service";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {NotificationInfoModalComponent} from "./_components/notification-info-modal/notification-info-modal.component";
+import {DefaultModalOptions} from "../_models/default-modal-options";
 
 @Component({
   selector: 'app-notifications',
@@ -103,9 +105,9 @@ export class NotificationsComponent implements OnInit {
     })
   }
 
-  show(id: number) {
-    this.infoVisibility = {} // close others
-    this.infoVisibility[id] = true;
+  show(n: Notification) {
+    const [_, component] = this.modalService.open(NotificationInfoModalComponent, DefaultModalOptions);
+    component.notification.set(n);
   }
 
   markRead(notification: Notification) {

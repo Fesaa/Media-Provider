@@ -17,7 +17,7 @@ import {TranslocoService} from "@jsverse/transloco";
 import {OidcService} from "../_services/oidc.service";
 import {User} from "../_models/user";
 import {Page} from "../_models/page";
-import {AsyncPipe} from "@angular/common";
+import {AsyncPipe, TitleCasePipe} from "@angular/common";
 import {animate, style, transition, trigger} from "@angular/animations";
 
 interface NavItem {
@@ -56,7 +56,8 @@ const dropdownAnimation = trigger('dropdownAnimation', [
   styleUrls: ['./nav-header.component.scss'],
   imports: [
     RouterLink,
-    AsyncPipe
+    AsyncPipe,
+    TitleCasePipe
   ],
   animations: [drawerAnimation, dropdownAnimation],
   changeDetection: ChangeDetectionStrategy.OnPush

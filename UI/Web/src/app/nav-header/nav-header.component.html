@@ -32,7 +32,7 @@
         <div class="dropdown">
           @if (currentUser()) {
             <button class="account-toggle btn btn-secondary" (click)="toggleAccountDropdown()">
-              {{ currentUser()?.name }}
+              {{ currentUser()?.name | titlecase }}
             </button>
 
             @if (isAccountDropdownOpen()) {

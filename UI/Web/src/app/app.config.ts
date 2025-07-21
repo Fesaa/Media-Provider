@@ -29,6 +29,7 @@ import {NavService} from "./_services/nav.service";
 import {catchError, filter, firstValueFrom, Observable, of, switchMap, tap, timeout} from "rxjs";
 import {User} from './_models/user';
 import {provideToastr} from "ngx-toastr";
+import {PageService} from "./_services/page.service";
 
 function getBaseHref(platformLocation: PlatformLocation): string {
   return platformLocation.getBaseHrefFromDOM();
@@ -44,11 +45,10 @@ function setupOidcListener(oidcService: OidcService, accountService: AccountServ
 
 function syncOidcUser(oidcService: OidcService, accountService: AccountService, navService: NavService): Observable<User> {
   const currentUser = accountService.currentUserSignal();
-  const inStorage = accountService.getUserFromLocalStorage() !== undefined;
 
   return accountService.loginByToken(oidcService.token).pipe(
     tap(() => {
-      navService.handleLogin(!currentUser && !inStorage);
+      navService.handleLogin(!currentUser);
     }),
     catchError(err => {
       console.error("Failed to sync OIDC user:", err);
@@ -62,6 +62,7 @@ function preLoadOidcAndUser() {
   const toastr = inject(ToastService);
   const accountService = inject(AccountService);
   const navService = inject(NavService);
+  const pageService = inject(PageService);
 
   return firstValueFrom(oidc.setupOidc().pipe(
     switchMap((isConfigured) => {
@@ -71,7 +72,7 @@ function preLoadOidcAndUser() {
         switchMap(tokenRefreshed => {
           if (!tokenRefreshed) return of(null);
 
-          return syncOidcUser(oidc, accountService, navService);
+          return accountService.loginByToken(oidc.token);
         })
       );
     }),
@@ -89,6 +90,13 @@ function preLoadOidcAndUser() {
       }
 
       return of(null);
+    }),
+    switchMap((user) => {
+      if (!user) return of(null);
+
+      return pageService.refreshPages().pipe(tap(() => {
+        navService.setNavVisibility(true);
+      }));
     }),
   )).then(() => void 0);
 }

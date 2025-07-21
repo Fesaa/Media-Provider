@@ -1,37 +1,46 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject, OnInit, signal} from '@angular/core';
 import {NotificationService} from '../../../_services/notification.service';
 import {Notification} from "../../../_models/notifications";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {UtcToLocalTimePipe} from "../../../_pipes/utc-to-local.pipe";
 import {ToastService} from "../../../_services/toast.service";
+import {BadgeComponent} from "../../../shared/_component/badge/badge.component";
+import {SafeHtmlPipe} from "../../../_pipes/safe-html-pipe";
+import {ModalService} from "../../../_services/modal.service";
+import {
+  NotificationInfoModalComponent
+} from "../../../notifications/_components/notification-info-modal/notification-info-modal.component";
+import {DefaultModalOptions} from "../../../_models/default-modal-options";
 
 @Component({
   selector: 'app-recently-downloaded',
   imports: [
     TranslocoDirective,
     UtcToLocalTimePipe,
+    BadgeComponent,
+    SafeHtmlPipe,
   ],
   templateUrl: './recently-downloaded.component.html',
   styleUrl: './recently-downloaded.component.scss'
 })
 export class RecentlyDownloadedComponent implements OnInit{
 
+  private readonly modalService = inject(ModalService);
   private readonly notificationService = inject(NotificationService);
   private readonly toastService = inject(ToastService);
 
-  downloads: Notification[] = [];
-  infoVisibility: {[key: number]: boolean} = {};
+  downloads = signal<Notification[]>([]);
 
   ngOnInit(): void {
     this.notificationService.recent().subscribe((recent) => {
-      this.downloads = recent;
+      this.downloads.set(recent);
     });
   }
 
   markRead(download: Notification) {
     this.notificationService.markAsRead(download.ID).subscribe({
       next: () => {
-        this.downloads = this.downloads.filter(d => d.ID !== download.ID);
+        this.downloads.update(x => x.filter(d => d.ID !== download.ID));
       },
       error: err => {
         this.toastService.genericError(err.error.message);
@@ -39,9 +48,9 @@ export class RecentlyDownloadedComponent implements OnInit{
     })
   }
 
-  show(id: number) {
-    this.infoVisibility = {} // close others
-    this.infoVisibility[id] = true;
+  show(n: Notification) {
+    const [_, component] = this.modalService.open(NotificationInfoModalComponent, DefaultModalOptions);
+    component.notification.set(n);
   }
 
   formattedBody(notification: Notification) {

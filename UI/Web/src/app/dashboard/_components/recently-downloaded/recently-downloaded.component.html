@@ -1,38 +1,35 @@
-<div class="flex flex-col items-center justify-center pt-5" *transloco="let t; prefix:'recently-downloaded'">
-
-  @if (downloads.length > 0) {
-    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+<div class="recently-downloaded-container" *transloco="let t; prefix:'recently-downloaded'">
+  @if (downloads().length > 0) {
+    <h3 class="section-title">
       {{ t('title') }}
     </h3>
   }
 
-
-  @for (download of downloads; track download.ID) {
+  @for (download of downloads(); track download.ID) {
     <div
-      class="relative w-full max-w-xl bg-white shadow-sm rounded-xl p-5 mb-4 hover:shadow-md transition-shadow duration-200 cursor-pointer"
-      (click)="show(download.ID)"
+      class="download-item"
+      (click)="show(download)"
     >
-      <div class="flex flex-row justify-between">
-        <div class="text-lg font-semibold text-gray-800">
+      <div class="download-header">
+        <h6 class="download-title">
           {{ download.title }}
-        </div>
-        <div class="text-xs text-gray-400 absolute top-3 right-4 flex flex-row justify-between space-x-2 items-center">
-          <span>{{ download.CreatedAt.toString() | utcToLocalTime }}</span>
+        </h6>
+
+        <div class="download-actions">
+          <app-badge>
+            <span class="p-2">{{ download.CreatedAt.toString() | utcToLocalTime }}</span>
+          </app-badge>
           <button
-            class="text-gray-300 hover:text-red-500 transition-colors"
+            type="button"
+            class="btn btn-primary btn-small"
             (click)="markRead(download); $event.stopPropagation();"
-            title="Mark as read"
           >
-            <span class="fa fa-x"></span>
+            <i class="fa fa-x"></i>
           </button>
         </div>
       </div>
 
-      <div class="text-sm text-gray-600 mt-1" [innerHtml]="download.summary">
-      </div>
-
-      <!-- TODO: Info modal -->
+      <div class="download-summary" [innerHtml]="download.summary | safeHtml"></div>
     </div>
   }
-
 </div>
