@@ -31,9 +31,7 @@
       <div class="text-sm text-gray-600 mt-1" [innerHtml]="download.summary">
       </div>
 
-      <p-dialog [(visible)]="infoVisibility[download.ID]" [header]="download.title">
-        <span [innerHTML]="formattedBody(download)"></span>
-      </p-dialog>
+      <!-- TODO: Info modal -->
     </div>
   }
 

@@ -1,26 +1,16 @@
 import {Component, Input} from '@angular/core';
 import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType} from "../../../_models/page";
-import {NgIf} from "@angular/common";
-import {Tooltip} from "primeng/tooltip";
-import {ToggleSwitch} from "primeng/toggleswitch";
-import {Select} from "primeng/select";
-import {MultiSelect} from "primeng/multiselect";
 import {FormsModule} from "@angular/forms";
-import {InputText} from "primeng/inputtext";
 import {Subscription} from '../../../_models/subscription';
 import {TranslocoDirective} from "@jsverse/transloco";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-provider-metadata-options',
   imports: [
-    NgIf,
-    Tooltip,
-    ToggleSwitch,
-    Select,
-    MultiSelect,
     FormsModule,
-    InputText,
-    TranslocoDirective
+    TranslocoDirective,
+    NgbTooltip
   ],
   templateUrl: './provider-metadata-options.component.html',
   styleUrl: './provider-metadata-options.component.scss'

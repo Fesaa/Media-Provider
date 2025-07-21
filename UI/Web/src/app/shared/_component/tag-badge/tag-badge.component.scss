@@ -41,13 +41,13 @@
 }
 
 .filled {
-    border: 1px solid var(--tagbadge-filled-border-color);
-    color: var(--tagbadge-filled-text-color);
-    background-color: var(--tagbadge-filled-bg-color);
+    border: 1px solid var(--primary-color);
+    color: var(--text-primary);
+    background-color: var(--primary-color-lighter);
 }
 
 .outline {
-    border: 1px solid var(--tagbadge-border-color);
-    color: var(--tagbadge-text-color);
-    background-color: var(--tagbadge-bg-color);
+    border: 1px solid var(--secondary-color);
+    color: var(--text-primary);
+    background-color: var(--secondary-color-lighter);
 }

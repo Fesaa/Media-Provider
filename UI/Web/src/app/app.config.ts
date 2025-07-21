@@ -16,10 +16,8 @@ import {AuthRedirectInterceptor} from "./_interceptors/auth-redirect.interceptor
 import {APP_BASE_HREF, CommonModule, PlatformLocation} from "@angular/common";
 import {ContentTitlePipe} from "./_pipes/content-title.pipe";
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
-import {providePrimeNG} from "primeng/config";
 import Aura from '@primeng/themes/aura';
 import {ProviderNamePipe} from "./_pipes/provider-name.pipe";
-import {MessageService} from "primeng/api";
 import {SubscriptionExternalUrlPipe} from "./_pipes/subscription-external-url.pipe";
 import {provideTransloco} from "@jsverse/transloco";
 import {TranslocoLoaderImpl} from "./_services/transloco-loader";
@@ -30,6 +28,7 @@ import {AccountService} from './_services/account.service';
 import {NavService} from "./_services/nav.service";
 import {catchError, filter, firstValueFrom, Observable, of, switchMap, tap, timeout} from "rxjs";
 import {User} from './_models/user';
+import {provideToastr} from "ngx-toastr";
 
 function getBaseHref(platformLocation: PlatformLocation): string {
   return platformLocation.getBaseHrefFromDOM();
@@ -107,12 +106,7 @@ export const appConfig: ApplicationConfig = {
     {provide: HTTP_INTERCEPTORS, useClass: AuthRedirectInterceptor, multi: true},
     provideHttpClient(withInterceptorsFromDi()),
     importProvidersFrom(BrowserAnimationsModule), provideAnimationsAsync(),
-    providePrimeNG({
-      theme: {
-        preset: Aura
-      }
-    }),
-    MessageService,
+    provideToastr(),
     provideTransloco({
       config: {
         availableLangs: ['en'],

@@ -1,108 +1,112 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {InfoStat} from "../../../_models/stats";
-import {ContentService} from "../../../_services/content.service";
-import {ListContentData} from "../../../_models/messages";
-import {TreeNode} from "primeng/api";
-import {Tree} from "primeng/tree";
-import {ToastService} from "../../../_services/toast.service";
-import {Dialog} from "primeng/dialog";
-import {TranslocoDirective} from "@jsverse/transloco";
+import {
+  Component,
+  OnInit,
+  ChangeDetectionStrategy,
+  signal,
+  computed,
+  inject,
+  input
+} from '@angular/core';
+import { InfoStat } from '../../../_models/stats';
+import { ContentService } from '../../../_services/content.service';
+import { ListContentData } from '../../../_models/messages';
+import { ToastService } from '../../../_services/toast.service';
+import { TranslocoDirective } from '@jsverse/transloco';
+import {NgbActiveModal} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-content-picker-dialog',
-  imports: [
-    Tree,
-    Dialog,
-    TranslocoDirective
-  ],
+  standalone: true,
+  imports: [TranslocoDirective],
   templateUrl: './content-picker-dialog.component.html',
-  styleUrl: './content-picker-dialog.component.scss'
+  styleUrls: ['./content-picker-dialog.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ContentPickerDialogComponent {
+export class ContentPickerDialogComponent implements OnInit {
 
-  @Input({required: true}) visible!: boolean;
-  @Output() visibleChange: EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Input({required: true}) info!: InfoStat;
+  private readonly contentService = inject(ContentService);
+  private readonly toastService = inject(ToastService);
+  private readonly modal = inject(NgbActiveModal);
 
-  content: ListContentData[] = [];
-  selection: ListContentData[] = [];
-  loading: boolean = true;
+  info = input.required<InfoStat>();
 
+  content = signal<ListContentData[]>([]);
+  selection = signal<ListContentData[]>([]);
+  loading = signal(true);
 
-  constructor(
-    private contentService: ContentService,
-    private toastService: ToastService,
-  ) {
+  // Derived state for selection count (example of computed usage)
+  selectionCount = computed(() => this.selection().length);
+
+  ngOnInit(): void {
+    this.loading.set(true);
+    this.contentService.listContent(this.info().provider, this.info().id).subscribe({
+      next: contents => {
+        this.content.set(contents);
+        this.selection.set(this.flatten(contents));
+        this.loading.set(false);
+      },
+      error: err => {
+        this.toastService.genericError(err?.error?.message ?? 'Unknown error');
+        this.loading.set(false);
+      }
+    });
   }
 
-  loadContent() {
-    this.loading = true;
-    this.contentService.listContent(this.info.provider, this.info.id).subscribe(contents => {
-      this.content = contents;
-      this.selection = this.flatten(contents);
-      this.loading = false;
-    })
+  unselectAll(): void {
+    this.selection.set([]);
   }
 
-  unselectAll() {
-    this.selection = [];
+  selectAll(): void {
+    this.selection.set(this.flatten(this.content()));
   }
 
-  selectAll() {
-    this.selection = this.flatten(this.content)
+  reverse(): void {
+    this.content.update(c => [...c].reverse());
   }
 
-  reverse() {
-    this.content = this.content.reverse();
+  close(): void {
+    this.modal.close();
   }
 
-  close() {
-    this.visibleChange.emit(false);
-  }
+  submit(): void {
+    const ids = this.getAllSubContentIds(this.selection());
 
-  submit() {
-    const ids = this.getAllSubContentIds(this.selection);
-
-    if (ids.length == 0) {
-      this.toastService.warningLoco("dashboard.content-picker.toasts.no-changes");
+    if (ids.length === 0) {
+      this.toastService.warningLoco('dashboard.content-picker.toasts.no-changes');
       return;
     }
 
-    this.contentService.setFilter(this.info.provider, this.info.id, ids).subscribe({
+    this.contentService.setFilter(this.info().provider, this.info().id, ids).subscribe({
       next: () => {
-        this.toastService.successLoco("dashboard.content-picker.toasts.success", {}, {
-          amount: ids.length,
-          title: this.info.name,
-        })
+        this.toastService.successLoco(
+          'dashboard.content-picker.toasts.success',
+          {},
+          { amount: ids.length, title: this.info.name }
+        );
       },
-      error: (err) => {
-        this.toastService.genericError(err.error.message);
-      }
-    }).add(() => (
-      this.close()
-    ))
+      error: err => {
+        this.toastService.genericError(err?.error?.message ?? 'Unknown error');
+      },
+    }).add(() => {
+      this.close();
+    });
   }
 
   private flatten(list: ListContentData[]): ListContentData[] {
     const result: ListContentData[] = [];
 
-    function isFullySelected(data: ListContentData & TreeNode): boolean {
+    function isFullySelected(data: ListContentData): boolean {
       if (data.subContentId && !data.selected) {
         return false;
       }
-
       if (data.subContentId && data.selected) {
         return true;
       }
-
-      if (!data.children) {
-        // Empty directory?
+      if (!data.children?.length) {
         return false;
       }
-
       let allSelected = true;
       let atLeastOne = false;
-
       for (const child of data.children) {
         if (isFullySelected(child)) {
           atLeastOne = true;
@@ -110,22 +114,16 @@ export class ContentPickerDialogComponent {
           allSelected = false;
         }
       }
-
-      if (atLeastOne && !allSelected) {
-        data.partialSelected = true;
-      }
-
+      data.partialSelected = atLeastOne && !allSelected;
       return allSelected || atLeastOne;
     }
 
-    function traverse(items: ListContentData[]) {
+    function traverse(items: ListContentData[]): void {
       for (const item of items) {
-
         if (isFullySelected(item)) {
           result.push(item);
         }
-
-        if (item.children && item.children.length > 0) {
+        if (item.children?.length) {
           traverse(item.children);
         }
       }
@@ -134,17 +132,16 @@ export class ContentPickerDialogComponent {
     traverse(list);
     return result;
   }
-
 
   private getAllSubContentIds(list: ListContentData[]): string[] {
     const result: string[] = [];
 
-    function traverse(items: ListContentData[]) {
+    function traverse(items: ListContentData[]): void {
       for (const item of items) {
-        if (item.subContentId !== undefined && !result.includes(item.subContentId)) {
+        if (item.subContentId && !result.includes(item.subContentId)) {
           result.push(item.subContentId);
         }
-        if (item.children && item.children.length > 0) {
+        if (item.children?.length) {
           traverse(item.children);
         }
       }
@@ -153,6 +150,4 @@ export class ContentPickerDialogComponent {
     traverse(list);
     return result;
   }
-
-
 }

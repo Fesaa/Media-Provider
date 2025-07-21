@@ -1,32 +1,32 @@
-import {Component, computed, OnInit, signal} from '@angular/core';
+import {Component, computed, inject, OnInit, signal} from '@angular/core';
 import {NotificationService} from "../_services/notification.service";
 import {GroupWeight, Notification} from "../_models/notifications";
-import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../_services/toast.service";
-import {Dialog} from "primeng/dialog";
-import {DialogService} from "../_services/dialog.service";
 import {FormsModule} from "@angular/forms";
 import {NavService} from "../_services/nav.service";
-import {TranslocoDirective} from "@jsverse/transloco";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
 import {TableComponent} from "../shared/_component/table/table.component";
 import {BadgeComponent} from "../shared/_component/badge/badge.component";
+import {ModalService} from "../_services/modal.service";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-notifications',
   imports: [
-    Tooltip,
-    Dialog,
     FormsModule,
     TranslocoDirective,
     UtcToLocalTimePipe,
     TableComponent,
     BadgeComponent,
+    NgbTooltip,
   ],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss'
 })
 export class NotificationsComponent implements OnInit {
+
+  private readonly modalService = inject(ModalService);
 
   notifications = signal<Notification[]>([]);
 
@@ -67,7 +67,6 @@ export class NotificationsComponent implements OnInit {
   constructor(
     private notificationService: NotificationService,
     private toastService: ToastService,
-    private dialogService: DialogService,
     private navService: NavService,
   ) {
   }
@@ -153,8 +152,9 @@ export class NotificationsComponent implements OnInit {
       return;
     }
 
-    if (!await this.dialogService.openDialog("notifications.confirm-read-many",
-      {amount: this.selectedNotifications.length})) {
+    if (!await this.modalService.confirm({
+      question: translate('notifications.confirm-read-many', {amount: this.selectedNotifications.length})
+    })) {
       return;
     }
 
@@ -181,8 +181,9 @@ export class NotificationsComponent implements OnInit {
       return;
     }
 
-    if (!await this.dialogService.openDialog("notifications.confirm-delete-many",
-      {amount: this.selectedNotifications.length})) {
+    if (!await this.modalService.confirm({
+      question: translate('notifications.confirm-delete-many', {amount: this.selectedNotifications.length})
+    })) {
       return;
     }
 
@@ -200,7 +201,9 @@ export class NotificationsComponent implements OnInit {
   }
 
   async delete(notification: Notification) {
-    if (!await this.dialogService.openDialog("notifications.confirm-delete", {title: notification.title})) {
+    if (!await this.modalService.confirm({
+      question: translate('notifications.confirm-delete', {title: notification.title})
+    })) {
       return;
     }
 

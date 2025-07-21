@@ -131,7 +131,7 @@ export class NavHeaderComponent implements OnInit {
         {
           title: this.transLoco.translate("nav-bar.home"),
           ID: -1,
-          icon: "pi-home",
+          icon: "fa-home",
           dirs: [],
           custom_root_dir: '',
           modifiers: [],
@@ -148,22 +148,22 @@ export class NavHeaderComponent implements OnInit {
     const items: NavItem[] = [
       {
         label: this.transLoco.translate("nav-bar.subscriptions"),
-        icon: "pi-wave-pulse",
+        icon: "fa-bell",
         routerLink: "/subscriptions"
       },
       {
         label: this.transLoco.translate("nav-bar.notifications"),
-        icon: "pi-inbox",
+        icon: "fa-inbox",
         routerLink: "/notifications"
       },
       {
         label: this.transLoco.translate("nav-bar.settings"),
-        icon: "pi-cog",
+        icon: "fa-cog",
         routerLink: "/settings"
       },
       {
         label: this.transLoco.translate("nav-bar.sign-out"),
-        icon: "pi-sign-out",
+        icon: "fa-user-minus",
         command: () => this.logout()
       }
     ];

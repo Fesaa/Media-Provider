@@ -1,11 +1,12 @@
 @if (pages.length > 0 && user) {
   <div class="mt-4" *transloco="let t; prefix: 'settings.pages'">
     @if (hasPermission(user, Perm.WritePage)) {
-      <div class="flex justify-end mb-4">
-        <button class="btn btn-primary" routerLink="/settings/wizard/page">
+      <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-primary" routerLink="/settings/wizard/page">
           <i class="fa fa-plus"></i>
         </button>
       </div>
+
     }
 
     <app-table
@@ -17,8 +18,8 @@
     >
       <ng-template #header>
         <tr>
-          <th class="table-header-cell"></th>
-          <th class="table-header-cell">{{ t('header.icon') }}</th>
+          <th class="table-header-cell" style="width: 10%"></th>
+          <th class="table-header-cell" style="width: 10%">{{ t('header.icon') }}</th>
           <th class="table-header-cell">{{ t('header.title') }}</th>
           <th class="table-header-cell">{{ t('header.actions') }}</th>
         </tr>
@@ -30,7 +31,7 @@
         </td>
 
         <td class="table-cell w-16 text-center">
-          <span [class]="'pi ' + item.icon"></span>
+          <span [class]="'fa ' + item.icon"></span>
         </td>
 
         <td class="table-cell">

@@ -1,9 +1,7 @@
-<p-dialog resizable="false" *transloco="let t;prefix:'dashboard'" [header]="t('content-picker.header')" [(visible)]="visible"
-          [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [style]="{ width: '50vw' }"
-          [contentStyle]="{ 'overflow-y': 'visible' }" (onShow)="loadContent()">
+<ng-container *transloco="let t;prefix:'dashboard'">
   <div class="flex flex-col mb-2">
 
-    <h1>{{ info.name }}</h1>
+    <h1>{{ info().name }}</h1>
 
     <div class="flex w-full flex-grow justify-start gap-4">
       <button class="btn btn-secondary" (click)="reverse()">
@@ -19,11 +17,7 @@
 
     @if (!loading) {
       <div class="max-h-80 overflow-auto">
-        <p-tree [(selection)]="selection"
-                [value]="content"
-                selectionMode="checkbox"
-                styleClass="w-full"
-        />
+        <!-- TODO: Display items -->
       </div>
     }
 
@@ -37,4 +31,4 @@
     </div>
   </div>
 
-</p-dialog>
+</ng-container>

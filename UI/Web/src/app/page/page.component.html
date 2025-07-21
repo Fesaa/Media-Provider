@@ -1,68 +1,7 @@
 @if (page !== undefined) {
   <div class="justify-items-center" *transloco="let t;prefix:'page'">
-    @if ((searchResult.length == 0 || showSearchForm) && !hideSearchForm) {
-      <div class="flex flex-row justify-center px-6 py-8 lg:py-0" [@dropDown]>
-        <div
-          class="w-full rounded-lg bg-white shadow sm:max-w-md xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800 mt-10">
-          <div class="space-y-4 p-6 sm:p-8 md:space-y-6 dropdown-item">
-            <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-              {{ page.title }}
-            </h1>
 
-            <p-floatlabel variant="on">
-              <input class="w-full" id="query" pInputText type="text" [(ngModel)]="searchRequest.query" (keydown.enter)="search()">
-              <label for="query">{{ t('query') }}</label>
-            </p-floatlabel>
-
-            @for (mod of page.modifiers; track mod.ID) {
-              @switch (mod.type) {
-                @case (ModifierType.DROPDOWN) {
-                  <p-floatlabel variant="on">
-                    <p-select class="w-full" id="mod_{{mod.ID}}"
-                              [ngModel]="searchRequest.modifiers![mod.key][0]"
-                              [options]="mod.values" optionValue="key" optionLabel="value"
-                              (onChange)="updateDropdownModifier(mod, $event.value)"
-                    />
-                    <label for="mod_{{mod.ID}}">{{mod.title}}</label>
-                  </p-floatlabel>
-                }
-                @case (ModifierType.MULTI) {
-                  <p-floatlabel variant="on">
-                    <p-multiSelect class="w-full" id="mod_{{mod.ID}}" [options]="mod.values"
-                                   optionValue="key" optionLabel="value" [(ngModel)]="searchRequest.modifiers![mod.key]" />
-                    <label for="mod_{{mod.ID}}">{{mod.title}}</label>
-                  </p-floatlabel>
-                }
-              }
-            }
-
-            @if (page.dirs.length > 1) {
-              <p-floatlabel variant="on">
-                <p-select class="w-full" id="dirs" [options]="page.dirs" [(ngModel)]="dirs.dir" />
-                <label for="dirs">{{ t('directory') }}</label>
-              </p-floatlabel>
-            }
-
-            <p-iconfield>
-              <p-inputicon class="fa fa-folder hover:cursor-pointer" (click)="selectCustomDir()" />
-              <input pInputText class="w-full" [(ngModel)]="dirs.custom">
-              <p-inputicon class="fa fa-x hover:cursor-pointer" (click)="clearCustomDir()" />
-            </p-iconfield>
-
-            <p-button styleClass="mt-3 md:mt-6 w-full rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-4" (onClick)="search()">
-              {{ t('search') }}
-            </p-button>
-          </div>
-        </div>
-      </div>
-    } @else if (!hideSearchForm) {
-      <div class="flex flex-row flex-grow justify-center" [@bounceIn500ms]>
-        <p-button styleClass="mt-3 md:mt-6 w-full rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-4" (onClick)="toggleSearchForm()">
-          {{ t('search') }}
-        </p-button>
-      </div>
-
-    }
+    <!-- TODO: Search form -->
 
     <section id="search-results" class="flex flex-col space-y-2 pt-5 mb-10">
       @if (searchResult.length > 0) {
@@ -72,10 +11,6 @@
                                [searchResult]="res" [providers]="providers" [@fadeAnimation]></app-search-result>
           }
         </div>
-        <p-paginator (onPageChange)="onPageChange($event.page!)" [rows]="10"
-                     [totalRecords]="searchResult.length" [showFirstLastIcon]="false" [showPageLinks]="true" />
-      } @else {
-
       }
     </section>
   </div>

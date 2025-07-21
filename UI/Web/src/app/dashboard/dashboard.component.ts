@@ -1,51 +1,50 @@
-import {Component, DestroyRef, OnInit, signal} from '@angular/core';
+import {Component, DestroyRef, inject, OnInit, signal} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {ContentService} from "../_services/content.service";
 import {ContentState, InfoStat} from "../_models/stats";
-import {TableModule} from "primeng/table";
-import {Tag} from 'primeng/tag';
 import {ContentTitlePipe} from "../_pipes/content-title.pipe";
-import {Tooltip} from "primeng/tooltip";
 import {SpeedPipe} from "../_pipes/speed.pipe";
 import {SpeedTypePipe} from "../_pipes/speed-type.pipe";
 import {TimePipe} from "../_pipes/time.pipe";
 import {StopRequest} from "../_models/search";
-import {DialogService} from "../_services/dialog.service";
 import {ContentStatePipe} from "../_pipes/content-state.pipe";
 import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
 import {ToastService} from "../_services/toast.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
 import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteContent} from "../_models/signalr";
-import {TranslocoDirective} from "@jsverse/transloco";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {SortedList} from "../shared/data-structures/sorted-list";
 import {RecentlyDownloadedComponent} from "./_components/recently-downloaded/recently-downloaded.component";
 import {TableComponent} from "../shared/_component/table/table.component";
 import {LoadingSpinnerComponent} from "../shared/_component/loading-spinner/loading-spinner.component";
+import {ModalService} from "../_services/modal.service";
+import {BadgeComponent} from "../shared/_component/badge/badge.component";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-dashboard',
   imports: [
     SuggestionDashboardComponent,
-    TableModule,
     ContentTitlePipe,
-    Tag,
-    Tooltip,
     SpeedPipe,
     SpeedTypePipe,
     TimePipe,
     ContentStatePipe,
-    ContentPickerDialogComponent,
     TranslocoDirective,
     RecentlyDownloadedComponent,
     TableComponent,
-    LoadingSpinnerComponent
+    LoadingSpinnerComponent,
+    BadgeComponent,
+    NgbTooltip
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
+
+  private readonly modalService = inject(ModalService);
 
   loading = signal(true);
   dashboardItems: SortedList<InfoStat> = new SortedList((a, b) => {
@@ -64,7 +63,6 @@ export class DashboardComponent implements OnInit {
               private contentService: ContentService,
               private toastService: ToastService,
               private contentTitle: ContentTitlePipe,
-              private dialogService: DialogService,
               private signalR: SignalRService,
               private destroyRef: DestroyRef,
   ) {
@@ -149,7 +147,9 @@ export class DashboardComponent implements OnInit {
   }
 
   async stop(info: InfoStat) {
-    if (!await this.dialogService.openDialog("dashboard.confirm-stop", {name: this.contentTitle.transform(info.name)})) {
+    if (!await this.modalService.confirm({
+      question: translate("dashboard.confirm-stop", {name: this.contentTitle.transform(info.name)})
+    })) {
       return;
     }
 
@@ -170,7 +170,8 @@ export class DashboardComponent implements OnInit {
   }
 
   async browse(info: InfoStat) {
-    await this.dialogService.openDirBrowser(info.download_dir, {showFiles: true, width: '40rem',})
+    //await this.dialogService.openDirBrowser(info.download_dir, {showFiles: true, width: '40rem',})
+    return Promise.resolve("");
   }
 
   markReady(info: InfoStat) {

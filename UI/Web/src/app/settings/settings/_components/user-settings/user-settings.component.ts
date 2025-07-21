@@ -1,26 +1,28 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
 import {hasPermission, Perm, User, UserDto} from "../../../../_models/user";
-import {DialogService} from "../../../../_services/dialog.service";
-import {Tooltip} from "primeng/tooltip";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {FormsModule} from "@angular/forms";
 import {ToastService} from '../../../../_services/toast.service';
-import {TranslocoDirective} from "@jsverse/transloco";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {TableComponent} from "../../../../shared/_component/table/table.component";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {ModalService} from "../../../../_services/modal.service";
 
 @Component({
   selector: 'app-user-settings',
   imports: [
-    Tooltip,
     FormsModule,
     TranslocoDirective,
-    TableComponent
+    TableComponent,
+    NgbTooltip
   ],
   templateUrl: './user-settings.component.html',
   styleUrl: './user-settings.component.scss'
 })
 export class UserSettingsComponent {
+
+  private readonly modalService = inject(ModalService);
 
   users: UserDto[] = []
   authUser: User | null = null;
@@ -30,7 +32,6 @@ export class UserSettingsComponent {
 
   constructor(private accountService: AccountService,
               private toastService: ToastService,
-              private dialogService: DialogService,
               private clipBoard: Clipboard,
   ) {
     this.accountService.currentUser$.subscribe(user => {
@@ -54,7 +55,9 @@ export class UserSettingsComponent {
   }
 
   async resetApiKey() {
-    if (!await this.dialogService.openDialog("settings.users.confirm-reset-api-key")) {
+    if (!await this.modalService.confirm({
+      question: translate("settings.users.confirm-reset-api-key")
+    })) {
       return;
     }
 
@@ -70,7 +73,9 @@ export class UserSettingsComponent {
   }
 
   async resetPassword(user: UserDto) {
-    if (!await this.dialogService.openDialog("settings.users.confirm-reset-password-password", {name: user.name})) {
+    if (!await this.modalService.confirm({
+      question: translate("settings.users.confirm-reset-password-password", {name: user.name})
+    })) {
       return;
     }
 
@@ -86,7 +91,9 @@ export class UserSettingsComponent {
   }
 
   async deleteUser(user: UserDto) {
-    if (!await this.dialogService.openDialog("settings.user.confirm-delete", {name: user.name})) {
+    if (!await this.modalService.confirm({
+      question: translate("settings.user.confirm-delete", {name: user.name})
+    })) {
       return;
     }
 

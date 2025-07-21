@@ -1,86 +1,63 @@
-import {Injectable} from '@angular/core';
-import {MessageService, ToastMessageOptions} from "primeng/api";
+import {inject, Injectable} from '@angular/core';
 import {TranslocoService} from "@jsverse/transloco";
+import {ToastrService} from "ngx-toastr";
 
 @Injectable({
   providedIn: 'root'
 })
 export class ToastService {
 
-  constructor(private msgService: MessageService, private loco: TranslocoService) {
-  }
+  private readonly loco = inject(TranslocoService);
+  private readonly toastr = inject(ToastrService);
 
-  infoLoco(key: string, titleValues?: any, summaryValues?: any, opts?: ToastMessageOptions) {
+
+  infoLoco(key: string, titleValues?: any, summaryValues?: any) {
     this.info(
       this.loco.translate(key+".title", titleValues),
       this.loco.translate(key+".summary", summaryValues),
-      opts
     )
   }
 
-  private info(title: string, message?: string, opts?: ToastMessageOptions) {
-    this.msgService.add({
-      summary: title,
-      detail: message,
-      severity: 'info',
-      ...opts
-    })
+  private info(title: string, message?: string) {
+    this.toastr.info(title, message);
   }
 
-  successLoco(key: string, titleValues?: any, summaryValues?: any, opts?: ToastMessageOptions) {
+  successLoco(key: string, titleValues?: any, summaryValues?: any) {
     this.success(
       this.loco.translate(key+".title", titleValues),
       this.loco.translate(key+".summary", summaryValues),
-      opts
     )
   }
 
-  private success(title: string, message?: string, opts?: ToastMessageOptions) {
-    this.msgService.add({
-      summary: title,
-      detail: message,
-      severity: 'success',
-      ...opts
-    })
+  private success(title: string, message?: string) {
+    this.toastr.success(title, message);
   }
 
-  warningLoco(key: string, titleValues?: any, summaryValues?: any, opts?: ToastMessageOptions) {
+  warningLoco(key: string, titleValues?: any, summaryValues?: any) {
     this.warning(
       this.loco.translate(key+".title", titleValues),
       this.loco.translate(key+".summary", summaryValues),
-      opts
     )
   }
 
-  private warning(title: string, message?: string, opts?: ToastMessageOptions) {
-    this.msgService.add({
-      summary: title,
-      detail: message,
-      severity: 'warn',
-      ...opts
-    })
+  private warning(title: string, message?: string) {
+    this.toastr.warning(title, message);
   }
 
-  genericError(msg: string, opts?: ToastMessageOptions) {
-    this.errorLoco("shared.toasts.generic-error", {}, {msg: msg}, opts);
+  genericError(msg: string) {
+    this.errorLoco("shared.toasts.generic-error", {}, {msg: msg});
   }
 
-  errorLoco(key: string, titleValues?: any, summaryValues?: any, opts?: ToastMessageOptions) {
+  errorLoco(key: string, titleValues?: any, summaryValues?: any) {
     this.error(
       this.loco.translate(key+".title", titleValues),
       this.loco.translate(key+".summary", summaryValues),
-      opts
     )
   }
 
-  private error(title: string, message?: string, opts?: ToastMessageOptions) {
+  private error(title: string, message?: string) {
     console.debug(`An error occurred${title}:\n ${message}`);
-    this.msgService.add({
-      summary: title,
-      detail: message,
-      severity: 'error',
-      ...opts
-    })
+    this.toastr.error(title, message);
   }
 
 }

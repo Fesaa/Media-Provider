@@ -4,22 +4,16 @@ import {DownloadMetadata, Page, Provider} from "../../../_models/page";
 import {bounceIn200ms} from "../../../_animations/bounce-in";
 import {dropAnimation} from "../../../_animations/drop-animation";
 import {ImageService} from "../../../_services/image.service";
-import {Tooltip} from "primeng/tooltip";
-import {Dialog} from "primeng/dialog";
-import {DownloadDialogComponent} from "../download-dialog/download-dialog.component";
-import {SubscriptionDialogComponent} from "../subscription-dialog/subscription-dialog.component";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {NgStyle} from "@angular/common";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-search-result',
   imports: [
-    Tooltip,
-    Dialog,
-    DownloadDialogComponent,
-    SubscriptionDialogComponent,
     TranslocoDirective,
     NgStyle,
+    NgbTooltip,
   ],
   templateUrl: './search-result.component.html',
   styleUrl: './search-result.component.scss',

@@ -4,8 +4,6 @@ import {PreferencesService} from '../../../../_services/preferences.service';
 import {CoverFallbackMethods, normalize, Preferences, Tag} from '../../../../_models/preferences';
 import {ToastService} from '../../../../_services/toast.service';
 import {TranslocoDirective} from '@jsverse/transloco';
-import {AgeRatingMappingsComponent} from './age-rating-mappings/age-rating-mappings.component';
-import {TagMappingsComponent} from './tag-mappings/tag-mappings.component';
 import {debounceTime, distinctUntilChanged, map, switchMap} from 'rxjs';
 import {SettingsItemComponent} from "../../../../shared/form/settings-item/settings-item.component";
 import {TagBadgeComponent} from "../../../../shared/_component/tag-badge/tag-badge.component";
@@ -17,8 +15,6 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
   imports: [
     ReactiveFormsModule,
     TranslocoDirective,
-    AgeRatingMappingsComponent,
-    TagMappingsComponent,
     SettingsItemComponent,
     TagBadgeComponent
   ],
@@ -35,9 +31,6 @@ export class PreferenceSettingsComponent implements OnInit {
   preferences = signal<Preferences | undefined>(undefined);
 
   preferencesForm!: FormGroup;
-
-  displayAgeRatingMappingDialog = false;
-  displayTagMappingDialog = false;
 
   protected readonly CoverFallbackMethods = CoverFallbackMethods;
 

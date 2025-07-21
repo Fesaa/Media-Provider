@@ -1,10 +1,4 @@
-<p-dialog
-  [(visible)]="visible"
-  [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
-  [style]="{ width: customWidth }" header="Directory picker"
-  (onShow)="initialLoad()"
-  *transloco="let t;prefix:'directory-selector'"
->
+<ng-container *transloco="let t;prefix:'directory-selector'">
 
   <div class="flex flex-col py-5">
     <h1 class="text-xl text-black dark:text-white mb-2">
@@ -69,9 +63,12 @@
   </div>
 
   <div class="flex justify-end gap-2">
-    <p-button (click)="closeDialog()" [label]="t('cancel') | titlecase" severity="secondary"/>
-    <p-button (click)="confirm()" [label]="t('confirm') | titlecase" severity="primary"/>
+    <button class="btn btn-secondary" (click)="closeDialog()">
+      {{t('cancel') | titlecase}}
+    </button>
+    <button class="btn btn-primary" (click)="confirm()">
+      {{t('confirm') | titlecase}}
+    </button>
   </div>
 
-</p-dialog>
-
+</ng-container>

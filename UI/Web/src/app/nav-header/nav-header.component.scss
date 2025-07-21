@@ -97,7 +97,7 @@
         border-radius: 12px;
         padding: 0.5rem 0;
         min-width: 200px;
-        z-index: 1000;
+        z-index: 1500;
 
         li {
           list-style: none;
@@ -108,6 +108,8 @@
             gap: 8px;
             border-radius: 12px;
             padding: 10px 16px;
+            margin-right: 0.1rem;
+            margin-left: 0.1rem;
             color: var(--text-primary);
             text-decoration: none;
             font-weight: 500;
@@ -119,7 +121,7 @@
             }
 
             &:hover {
-              background-color: var(--background-accent);
+              background-color: var(--secondary-color-lighter);
               color: var(--text-secondary);
             }
           }
@@ -140,7 +142,7 @@
   background: var(--surface-card);
   box-shadow: 2px 0 8px var(--shadow-medium);
   padding: 1rem;
-  z-index: 100;
+  z-index: 2000;
   display: flex;
   flex-direction: column;
 

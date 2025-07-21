@@ -4,7 +4,9 @@
   },
   "common": {
     "edit": "Edit",
-    "close": "Close"
+    "close": "Close",
+    "disabled": "Disabled",
+    "enabled": "Enabled"
   },
 
   "shared": {

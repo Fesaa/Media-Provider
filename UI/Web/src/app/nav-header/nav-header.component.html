@@ -14,7 +14,7 @@
               [queryParams]="page.ID === -1 ? {} : { index: page.ID }"
             >
               @if (page.icon) {
-                <i class="pi {{ page.icon }}"></i>
+                <i class="fa {{ page.icon }}"></i>
               }
               {{ page.title }}
             </a>
@@ -36,7 +36,7 @@
             </button>
 
             @if (isAccountDropdownOpen()) {
-              <ul class="account-dropdown dropdown-menu" @dropdownAnimation>
+              <ul class="account-dropdown" @dropdownAnimation>
                 @for (item of accountItems(); track item.label) {
                   <li>
                     @if (item.routerLink) {
@@ -45,7 +45,7 @@
                         (click)="isAccountDropdownOpen.set(false)"
                       >
                         @if (item.icon) {
-                          <i class="pi {{ item.icon }}"></i>
+                          <i class="fa {{ item.icon }}"></i>
                         }
                         {{ item.label }}
                       </a>
@@ -54,7 +54,7 @@
                         (click)="item.command(); isAccountDropdownOpen.set(false)"
                       >
                         @if (item.icon) {
-                          <i class="pi {{ item.icon }}"></i>
+                          <i class="fa {{ item.icon }}"></i>
                         }
                         {{ item.label }}
                       </a>

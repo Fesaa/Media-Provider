@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, inject, OnInit} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {PageService} from "../_services/page.service";
 import {DownloadMetadata, Modifier, ModifierType, Page, Provider} from "../_models/page";
@@ -9,43 +9,29 @@ import {SearchResultComponent} from "./_components/search-result/search-result.c
 import {dropAnimation} from "../_animations/drop-animation";
 import {bounceIn500ms} from "../_animations/bounce-in";
 import {flyInOutAnimation} from "../_animations/fly-animation";
-import {DialogService} from "../_services/dialog.service";
 import {fadeOut} from "../_animations/fade-out";
 import {SubscriptionService} from "../_services/subscription.service";
 import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
 import {ToastService} from "../_services/toast.service";
-import {IconField} from "primeng/iconfield";
-import {InputText} from "primeng/inputtext";
-import {InputIcon} from "primeng/inputicon";
-import {Select} from "primeng/select";
-import {MultiSelect} from "primeng/multiselect";
-import {FloatLabel} from "primeng/floatlabel";
 import {ContentService} from "../_services/content.service";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {Paginator} from "primeng/paginator";
-import {Button} from "primeng/button";
+import {ModalService} from "../_services/modal.service";
 
 @Component({
   selector: 'app-page',
   imports: [
     ReactiveFormsModule,
     SearchResultComponent,
-    IconField,
-    InputText,
-    InputIcon,
-    Select,
     FormsModule,
-    MultiSelect,
-    FloatLabel,
     TranslocoDirective,
-    Paginator,
-    Button
   ],
   templateUrl: './page.component.html',
   styleUrl: './page.component.scss',
   animations: [dropAnimation, bounceIn500ms, flyInOutAnimation, fadeOut]
 })
 export class PageComponent implements OnInit {
+
+  private readonly modalService = inject(ModalService);
 
   page: Page | undefined = undefined;
   providers: Provider[] = [];
@@ -67,7 +53,6 @@ export class PageComponent implements OnInit {
               private contentService: ContentService,
               private cdRef: ChangeDetectorRef,
               private toastService: ToastService,
-              private dialogService: DialogService,
               private subscriptionService: SubscriptionService,
               private providerNamePipe: ProviderNamePipe,
   ) {
@@ -168,10 +153,11 @@ export class PageComponent implements OnInit {
       return;
     }
 
-    const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir, {create: true,});
+    // TODO: Dir selector
+    /*const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir, {create: true,});
     if (dir) {
       this.dirs.custom = dir;
-    }
+    }*/
   }
 
   clearCustomDir() {

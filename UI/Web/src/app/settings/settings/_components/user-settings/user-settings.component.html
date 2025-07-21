@@ -2,11 +2,8 @@
   <div *transloco="let t; prefix: 'settings.users'">
 
     @if (hasPermission(authUser, Perm.WriteUser) && !emptyUserPresent()) {
-      <div class="flex justify-end mb-5">
-        <button
-          type="button"
-          class="btn btn-primary"
-        >
+      <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-primary">
           <i class="fa fa-plus"></i>
         </button>
       </div>
@@ -39,8 +36,7 @@
             <button
               type="button"
               class="btn btn-small"
-              [pTooltip]="t('actions.api-key.regen')"
-              tooltipPosition="bottom"
+              [ngbTooltip]="t('actions.api-key.regen')"
               (click)="resetApiKey()"
             >
               <i class="fa fa-key"></i>
@@ -49,8 +45,7 @@
             <button
               type="button"
               class="btn btn-small"
-              [pTooltip]="t('actions.api-key.copy')"
-              tooltipPosition="bottom"
+              [ngbTooltip]="t('actions.api-key.copy')"
               (click)="copyApiKey()"
             >
               <i class="fa fa-copy"></i>
@@ -60,8 +55,7 @@
           <button
             type="button"
             class="btn btn-small"
-            [pTooltip]="t('actions.edit')"
-            tooltipPosition="bottom"
+            [ngbTooltip]="t('actions.edit')"
 
           >
             <i class="fa fa-user-edit"></i>
@@ -71,8 +65,7 @@
             <button
               type="button"
               class="btn btn-small text-danger"
-              [pTooltip]="t('actions.delete')"
-              tooltipPosition="bottom"
+              [ngbTooltip]="t('actions.delete')"
               (click)="deleteUser(user)"
             >
               <i class="fa fa-user-minus"></i>
@@ -83,8 +76,7 @@
             <button
               type="button"
               class="btn btn-small text-warning"
-              [pTooltip]="t('actions.reset-password')"
-              tooltipPosition="bottom"
+              [ngbTooltip]="t('actions.reset-password')"
               (click)="resetPassword(user)"
             >
               <i class="fa fa-refresh"></i>

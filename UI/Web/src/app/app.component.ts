@@ -3,17 +3,15 @@ import {Router, RouterOutlet} from '@angular/router';
 import {AccountService} from "./_services/account.service";
 import {NavHeaderComponent} from "./nav-header/nav-header.component";
 import {Title} from "@angular/platform-browser";
-import {DialogService} from "./_services/dialog.service";
 import {EventType, SignalRService} from "./_services/signal-r.service";
-import {Toast} from "primeng/toast";
-import {MessageService} from "primeng/api";
 import {Notification} from "./_models/notifications";
 import {OidcEvents, OidcService} from "./_services/oidc.service";
 import {NavService} from "./_services/nav.service";
+import {ToastrService} from "ngx-toastr";
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavHeaderComponent, Toast],
+  imports: [RouterOutlet, NavHeaderComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -21,19 +19,16 @@ export class AppComponent implements OnInit {
   title = 'Media Provider';
 
   private readonly oidcService = inject(OidcService);
+  private readonly toastr = inject(ToastrService);
 
   constructor(
     protected accountService: AccountService,
     private titleService: Title,
-    private vcr: ViewContainerRef,
-    private ds: DialogService,
     private signalR: SignalRService,
-    private messageService: MessageService,
     private navService: NavService,
     private router: Router,
   ) {
     this.titleService.setTitle(this.title);
-    this.ds.viewContainerRef = this.vcr;
 
     this.oidcService.events$.subscribe(event => {
       if (event.type !== OidcEvents.TokenRefreshed) return;
@@ -63,11 +58,8 @@ export class AppComponent implements OnInit {
       switch (event.type) {
         case EventType.Notification:
           const notification = event.data as Notification;
-          this.messageService.add({
-            severity: notification.colour,
-            summary: notification.title,
-            detail: notification.summary, // I know they're switched here
-          });
+          // TODO: Correct level
+          this.toastr.info(notification.title, notification.summary);
       }
     });
 

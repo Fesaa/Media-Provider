@@ -3,7 +3,6 @@ import {NotificationService} from '../../../_services/notification.service';
 import {Notification} from "../../../_models/notifications";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {UtcToLocalTimePipe} from "../../../_pipes/utc-to-local.pipe";
-import {Dialog} from "primeng/dialog";
 import {ToastService} from "../../../_services/toast.service";
 
 @Component({
@@ -11,7 +10,6 @@ import {ToastService} from "../../../_services/toast.service";
   imports: [
     TranslocoDirective,
     UtcToLocalTimePipe,
-    Dialog
   ],
   templateUrl: './recently-downloaded.component.html',
   styleUrl: './recently-downloaded.component.scss'

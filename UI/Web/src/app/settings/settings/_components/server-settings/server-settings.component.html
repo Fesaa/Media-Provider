@@ -1,91 +1,213 @@
-<div class="flex w-full flex-grow" *transloco="let t;prefix:'settings.server'">
+<div class="d-flex w-100 flex-grow-1 flex-column" *transloco="let t; prefix: 'settings.server'">
   @if (settingsForm !== undefined && config() !== undefined) {
-    <form [formGroup]="settingsForm" class="w-full px-2" (ngSubmit)="save()">
-      <div class="flex flex-col items-center space-y-4 md:space-y-0">
+    <form [formGroup]="settingsForm" class="w-100 px-2" (ngSubmit)="save()">
+      <div class="d-flex flex-column align-items-center gap-4">
 
-        <div class="w-full">
-          <h2 class="text-2xl font-bold mt-4 mb-4">
-            {{ t('general') }}
-          </h2>
+        <div class="w-100">
+          <h2 class="h2 fw-bold mt-4 mb-4">{{ t('general') }}</h2>
 
-          <div class="flex flex-col space-y-5">
+          <div class="d-flex flex-column gap-3">
             @if (getFormControl('rootDir'); as rootDir) {
-              <app-form-input [control]="rootDir" [title]="t('root-dir')"></app-form-input>
+              <app-settings-item [control]="rootDir" [title]="t('root-dir')">
+                <ng-template #view>{{ rootDir.value }}</ng-template>
+                <ng-template #edit>
+                  <input
+                    type="text"
+                    class="form-control"
+                    formControlName="rootDir"
+                  />
+                </ng-template>
+              </app-settings-item>
             }
 
             @if (getFormControl('baseUrl'); as baseUrl) {
-              <app-form-input [control]="baseUrl" [title]="t('base-url')"></app-form-input>
+              <app-settings-item [control]="baseUrl" [title]="t('base-url')">
+                <ng-template #view>{{ baseUrl.value }}</ng-template>
+                <ng-template #edit>
+                  <input
+                    type="text"
+                    class="form-control"
+                    formControlName="baseUrl"
+                  />
+                </ng-template>
+              </app-settings-item>
             }
 
+
             @if (getFormControl('cacheType'); as cacheType) {
-              <app-form-select [title]="t('cache.label')" [subTitle]="t('cache.subTitle')" [control]="cacheType">
-                <ng-template #options>
-                  @for (ct of CacheTypes; track ct.key) {
-                    <option [value]="ct.value">{{t('cache.'+ct.key)}}</option>
-                  }
-                </ng-template>
-              </app-form-select>
+              @if (cacheType; as control) {
+                <app-settings-item
+                  [control]="control"
+                  [title]="t('cache.label')"
+                  [subtitle]="t('cache.subTitle')"
+                >
+                  <ng-template #view>
+                    {{ t('cache.' + control.value.toLowerCase()) }}
+                  </ng-template>
+
+                  <ng-template #edit>
+                    <select class="form-control" formControlName="cacheType">
+                      @for (ct of CacheTypes; track ct.key) {
+                        <option [value]="ct.value">{{ t('cache.' + ct.key) }}</option>
+                      }
+                    </select>
+                  </ng-template>
+                </app-settings-item>
+              }
+
             }
 
             @switch (settingsForm.value.cacheType) {
               @case (CacheType.REDIS) {
-                @if (getFormControl('redisAddr'); as redisAddr) {
-                  <app-form-input
-                    [control]="redisAddr"
+                @if (getFormControl('redisAddr'); as control) {
+                  <app-settings-item
+                    [control]="control"
                     [title]="t('redis-address')"
-                    type="text"
-                  />
+                  >
+                    <ng-template #view>{{ control.value }}</ng-template>
+
+                    <ng-template #edit>
+                      <input
+                        type="text"
+                        class="form-control"
+                        formControlName="redisAddr"
+                      />
+                    </ng-template>
+                  </app-settings-item>
                 }
+
               }
             }
           </div>
         </div>
 
-        <div class="w-full">
-          <div class="border-t border-black dark:border-white mt-10"></div>
-          <h2 class="text-2xl font-bold mt-4 mb-4">
-            {{ t('downloader') }}
-          </h2>
+        <div class="w-100">
+          <hr class="border mt-5" />
+          <h2 class="h2 fw-bold mt-4 mb-4">{{ t('downloader') }}</h2>
 
-          <div class="flex flex-col space-y-5">
-            @if (getFormControl('maxConcurrentTorrents'); as maxTorrents) {
-              <app-form-input [control]="maxTorrents" [title]="t('max-torrents.label')" [subTitle]="t('max-torrents.subTitle')" type="number"/>
+          <div class="d-flex flex-column gap-3">
+            @if (getFormControl('maxConcurrentTorrents'); as control) {
+              <app-settings-item
+                [control]="control"
+                [title]="t('max-torrents.label')"
+                [subtitle]="t('max-torrents.subTitle')"
+              >
+                <ng-template #view>{{ control.value }}</ng-template>
+
+                <ng-template #edit>
+                  <input
+                    type="number"
+                    class="form-control"
+                    formControlName="maxConcurrentTorrents"
+                  />
+                </ng-template>
+              </app-settings-item>
             }
 
-            @if (getFormControl('maxConcurrentImages'); as maxImages) {
-              <app-form-input [control]="maxImages" [title]="t('max-images.label')" [subTitle]="t('max-images.subTitle')" type="number"/>
+            @if (getFormControl('maxConcurrentImages'); as control) {
+              <app-settings-item
+                [control]="control"
+                [title]="t('max-images.label')"
+                [subtitle]="t('max-images.subTitle')"
+              >
+                <ng-template #view>{{ control.value }}</ng-template>
+
+                <ng-template #edit>
+                  <input
+                    type="number"
+                    class="form-control"
+                    formControlName="maxConcurrentImages"
+                  />
+                </ng-template>
+              </app-settings-item>
             }
+
+
           </div>
         </div>
 
-        <div class="w-full">
-          <div class="border-t border-black dark:border-white mt-10"></div>
-          <h2 class="text-2xl font-bold mt-4 mb-4">
-            {{ t('oidc.title') }}
-          </h2>
+        <div class="w-100">
+          <hr class="border mt-5" />
+          <h2 class="h2 fw-bold mt-4 mb-4">{{ t('oidc.title') }}</h2>
 
-          <div class="flex flex-col space-y-5">
-            @if (getFormControl('oidc.authority'); as authority) {
-              <app-form-input [control]="authority" [title]="t('oidc.authority.label')" [subTitle]="t('oidc.authority.subTitle')" />
+          <div class="d-flex flex-column gap-3">
+            @if (getFormControl('oidc.authority'); as control) {
+              <app-settings-item
+                [control]="control"
+                [title]="t('oidc.authority.label')"
+                [subtitle]="t('oidc.authority.subTitle')"
+              >
+                <ng-template #view>{{ control.value }}</ng-template>
+                <ng-template #edit>
+                  <input
+                    type="text"
+                    class="form-control"
+                    formControlName="oidc.authority"
+                  />
+                </ng-template>
+              </app-settings-item>
             }
 
-            @if (getFormControl('oidc.clientId'); as clientId) {
-              <app-form-input [control]="clientId" [title]="t('oidc.clientId.label')" [subTitle]="t('oidc.clientId.subTitle')" />
+            @if (getFormControl('oidc.clientId'); as control) {
+              <app-settings-item
+                [control]="control"
+                [title]="t('oidc.clientId.label')"
+                [subtitle]="t('oidc.clientId.subTitle')"
+              >
+                <ng-template #view>{{ control.value }}</ng-template>
+                <ng-template #edit>
+                  <input
+                    type="text"
+                    class="form-control"
+                    formControlName="oidc.clientId"
+                  />
+                </ng-template>
+              </app-settings-item>
             }
 
-            <div class="flex flex-row w-full justify-around">
-              @if (getFormControl('oidc.autoLogin'); as autoLogin) {
-                <app-form-input [control]="autoLogin" [title]="t('oidc.autoLogin.label')" type="switch" [subTitle]="t('oidc.autoLogin.subTitle')" />
-              }
+            @if (getFormControl('oidc.autoLogin'); as control) {
+              <app-settings-item
+                [control]="control"
+                [title]="t('oidc.autoLogin.label')"
+                [subtitle]="t('oidc.autoLogin.subTitle')"
+              >
+                <ng-template #view>{{ control.value ? translate('common.enabled') : translate('common.disabled') }}</ng-template>
+                <ng-template #edit>
+                  <div class="form-check form-switch">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      formControlName="oidc.autoLogin"
+                    />
+                  </div>
+                </ng-template>
+              </app-settings-item>
+            }
 
-              @if (getFormControl('oidc.disablePasswordLogin'); as disablePasswordLogin) {
-                <app-form-input [control]="disablePasswordLogin" [title]="t('oidc.disablePasswordLogin.label')" type="switch" [subTitle]="t('oidc.disablePasswordLogin.subTitle')" />
-              }
-            </div>
+            @if (getFormControl('oidc.disablePasswordLogin'); as control) {
+              <app-settings-item
+                [control]="control"
+                [title]="t('oidc.disablePasswordLogin.label')"
+                [subtitle]="t('oidc.disablePasswordLogin.subTitle')"
+              >
+                <ng-template #view>{{ control.value ? translate('common.enabled') : translate('common.disabled') }}</ng-template>
+                <ng-template #edit>
+                  <div class="form-check form-switch">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      formControlName="oidc.disablePasswordLogin"
+                    />
+                  </div>
+
+                </ng-template>
+              </app-settings-item>
+            }
           </div>
+
         </div>
 
-        <div class="flex w-full justify-center md:justify-end mt-10">
+        <div class="d-flex w-100 justify-content-center justify-content-md-end mt-4">
           <button type="submit" class="btn btn-primary">{{ t('save') }}</button>
         </div>
       </div>

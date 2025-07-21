@@ -17,8 +17,7 @@
       <button
         (click)="download()"
         class="icon-btn"
-        [pTooltip]="t('download')"
-        tooltipPosition="left"
+        [ngbTooltip]="t('download')"
       >
         <span class="fa fa-download"></span>
       </button>
@@ -27,8 +26,7 @@
         <button
           class="icon-btn"
           (click)="addAsSub()"
-          [pTooltip]="t('add-as-sub')"
-          tooltipPosition="left"
+          [ngbTooltip]="t('add-as-sub')"
         >
           <span class="fa fa-bell"></span>
         </button>
@@ -48,39 +46,9 @@
     </div>
   }
 
-  <p-dialog
-    [(visible)]="showDownloadDialog"
-    [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
-    [style]="{ width: '50vw' }"
-    [contentStyle]="{ 'overflow-y': 'visible' }"
-    [header]="t('download', {name: searchResult.Name})"
-    resizable="false"
-    appendTo="body"
-  >
-    <app-download-dialog
-      [(visible)]="showDownloadDialog"
-      [downloadDir]="dir"
-      [metadata]="metadata"
-      [searchResult]="searchResult"
-    />
-  </p-dialog>
+  <!-- TODO: New download -->
 
   @if (providers.includes(searchResult.Provider)) {
-    <p-dialog
-      resizable="false"
-      [(visible)]="showSubscriptionDialog"
-      [header]="t('sub-header', {name: searchResult.Name})"
-      [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }"
-      [style]="{ width: '50vw' }"
-      [contentStyle]="{ 'overflow-y': 'visible' }"
-      appendTo="body"
-    >
-      <app-subscription-dialog
-        [(visible)]="showSubscriptionDialog"
-        [downloadDir]="dir"
-        [searchResult]="searchResult"
-        [metadata]="metadata"
-      />
-    </p-dialog>
+    <!-- TODO: New sub -->
   }
 </div>

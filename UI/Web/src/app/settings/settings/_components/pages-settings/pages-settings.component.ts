@@ -1,16 +1,16 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {Page} from "../../../../_models/page";
 import {PageService} from "../../../../_services/page.service";
 import {RouterLink} from "@angular/router";
 import {dropAnimation} from "../../../../_animations/drop-animation";
-import {DialogService} from "../../../../_services/dialog.service";
 import {ReactiveFormsModule} from "@angular/forms";
 import {hasPermission, Perm, User} from "../../../../_models/user";
 import {AccountService} from "../../../../_services/account.service";
 import {ToastService} from "../../../../_services/toast.service";
-import {TranslocoDirective} from "@jsverse/transloco";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {CdkDragDrop, CdkDragHandle, moveItemInArray} from "@angular/cdk/drag-drop";
 import {TableComponent} from "../../../../shared/_component/table/table.component";
+import {ModalService} from "../../../../_services/modal.service";
 
 @Component({
   selector: 'app-pages-settings',
@@ -27,6 +27,8 @@ import {TableComponent} from "../../../../shared/_component/table/table.componen
 })
 export class PagesSettingsComponent {
 
+  private readonly modalService = inject(ModalService);
+
   user: User | null = null;
   pages: Page[] = []
   loading: boolean = true;
@@ -35,7 +37,6 @@ export class PagesSettingsComponent {
 
   constructor(private toastService: ToastService,
               private pageService: PageService,
-              private dialogService: DialogService,
               private accountService: AccountService,
   ) {
     this.pageService.pages$.subscribe(pages => {
@@ -50,7 +51,9 @@ export class PagesSettingsComponent {
   }
 
   async remove(page: Page) {
-    if (!await this.dialogService.openDialog("settings.pages.confirm-delete", {title: page.title})) {
+    if (!await this.modalService.confirm({
+      question: translate("settings.pages.confirm-delete", {title: page.title})
+    })) {
       return;
     }
 

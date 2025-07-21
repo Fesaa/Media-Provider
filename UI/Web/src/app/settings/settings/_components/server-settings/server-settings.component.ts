@@ -4,8 +4,9 @@ import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} fr
 import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
 import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
 import {ToastService} from "../../../../_services/toast.service";
-import {TranslocoDirective} from "@jsverse/transloco";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {SettingsService} from "../../../../_services/settings.service";
+import {SettingsItemComponent} from "../../../../shared/form/settings-item/settings-item.component";
 
 @Component({
   selector: 'app-server-settings',
@@ -13,7 +14,8 @@ import {SettingsService} from "../../../../_services/settings.service";
     ReactiveFormsModule,
     FormInputComponent,
     TranslocoDirective,
-    FormSelectComponent
+    FormSelectComponent,
+    SettingsItemComponent
   ],
   templateUrl: './server-settings.component.html',
   styleUrl: './server-settings.component.scss',
@@ -111,4 +113,5 @@ export class ServerSettingsComponent {
 
   protected readonly CacheType = CacheType;
   protected readonly CacheTypes = CacheTypes;
+  protected readonly translate = translate;
 }

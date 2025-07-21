@@ -12,6 +12,7 @@ export type ListContentData = {
   label: string;
   selected: boolean;
   children: ListContentData[];
+  partialSelected: boolean;
 }
 
 export enum MessageType {
