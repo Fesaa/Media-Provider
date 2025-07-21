@@ -45,11 +45,6 @@ export class TypeaheadSettings<T>  {
    */
   savedData!: T[] | T;
   /**
-   * Function to compare the elements. Should return all elements that fit the matching criteria.
-   * This is only used with non-Observable based fetchFn, but must be defined for all uses of typeahead.
-   */
-  compareFn!: ((optionList: T[], filter: string)  => T[]);
-  /**
    * Must be defined when addIfNonExisting is true. Used to ensure no duplicates exist when adding.
    */
   compareFnForAdd!: ((optionList: T[], filter: string)  => T[]);
@@ -161,7 +156,7 @@ export class TypeaheadComponent<T> implements OnInit {
           debounceTime(settings.debounce),
           distinctUntilChanged(),
           switchMap(term => {
-            if (!term || term.length < settings.minCharacters) {
+            if ((!term && settings.minCharacters !== 0 )|| term.length < settings.minCharacters) {
               return of([]);
             }
 
@@ -297,6 +292,7 @@ export class TypeaheadComponent<T> implements OnInit {
       const current = this.selectedItems();
       if (!this.isSelected(option) || !settings.unique) {
         const updated = [...current, option];
+
         this.selectedItems.set(updated);
         this.emitSelection(updated);
       }
@@ -304,6 +300,7 @@ export class TypeaheadComponent<T> implements OnInit {
     } else {
       this.selectedItems.set([option]);
       this.emitSelection(option);
+
       this.hasFocus.set(false);
       this.searchControl.setValue(this.getDisplayText(option));
     }
@@ -390,6 +387,9 @@ export class TypeaheadComponent<T> implements OnInit {
     if (typeof item === 'string') return item;
     if (typeof item === 'object' && item !== null && 'name' in item) {
       return (item as any).name;
+    }
+    if (typeof item === 'object' && item !== null && 'value' in item) {
+      return (item as any).value;
     }
     return String(item);
   }

@@ -1,8 +1,9 @@
-import {ChangeDetectionStrategy, Component, model, TemplateRef} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, model, TemplateRef} from '@angular/core';
 import {translate, TranslocoDirective} from '@jsverse/transloco';
 import {Subject} from 'rxjs';
 //import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
 import {NgTemplateOutlet} from '@angular/common';
+import {NgbActiveModal} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-confirm-modal',
@@ -16,7 +17,7 @@ import {NgTemplateOutlet} from '@angular/common';
 })
 export class ConfirmModalComponent {
 
-  //private readonly modal = inject(NgbActiveModal);
+  private readonly modal = inject(NgbActiveModal);
 
   title = model<string>(translate('confirm-modal.title'));
   question = model.required<string>();
@@ -28,12 +29,12 @@ export class ConfirmModalComponent {
 
   confirm() {
     this.result.next(true);
-    //this.modal.close();
+    this.modal.close();
   }
 
   close() {
     this.result.next(false);
-    //this.modal.close();
+    this.modal.close();
   }
 
 }

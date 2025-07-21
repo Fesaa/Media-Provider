@@ -71,8 +71,4 @@ export class TableComponent<T> implements OnInit {
     this.goToPage(this.currentPage() - 1);
   }
 
-  getObjectKeys(obj: any): string[] {
-    return Object.keys(obj);
-  }
-
 }

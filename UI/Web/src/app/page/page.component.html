@@ -1,17 +1,35 @@
-@if (page !== undefined) {
-  <div class="justify-items-center" *transloco="let t;prefix:'page'">
+@if (page() !== undefined) {
+  <div class="" *transloco="let t;prefix:'page'">
 
-    <!-- TODO: Search form -->
+    <div [class.hidden]="!showForm()">
+      <app-search-form
+        [modifiers]="page()!.modifiers"
+        (searchSubmitted)="search($event)"
+      />
+    </div>
 
-    <section id="search-results" class="flex flex-col space-y-2 pt-5 mb-10">
-      @if (searchResult.length > 0) {
-        <div class="results-grid">
-          @for (res of toShowResults(); track res.InfoHash) {
-            <app-search-result [dir]="getDir()" [metadata]="getDownloadMetadata(res.Provider)" [page]="page"
-                               [searchResult]="res" [providers]="providers" [@fadeAnimation]></app-search-result>
-          }
-        </div>
+    @if (!showForm()) {
+      <div class="d-flex justify-content-center align-items-center">
+        <button class="btn btn-secondary" (click)="showForm.set(true)">{{t('search')}}</button>
+      </div>
+    }
+
+    <section id="search-results" class="d-flex flex-column gap-2 pt-5 d-mx-5">
+
+      @if (loading()) {
+        <app-loading-spinner size="large"></app-loading-spinner>
       }
+
+      <app-paginator [items]="searchResults()" [pageSize]="10">
+        <ng-template #items let-results>
+          <div class="results-grid">
+            @for (res of results; track res.InfoHash) {
+              <app-search-result [dir]="getDir()" [metadata]="getDownloadMetadata(res.Provider)" [page]="page()!"
+                                 [searchResult]="res" [providers]="providers()" [@fadeAnimation]></app-search-result>
+            }
+          </div>
+        </ng-template>
+      </app-paginator>
     </section>
   </div>
 }

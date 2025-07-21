@@ -2,11 +2,46 @@
   "application": {
     "name": "Media-Provider"
   },
+
   "common": {
     "edit": "Edit",
     "close": "Close",
-    "disabled": "Disabled",
-    "enabled": "Enabled"
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "update": "Update",
+    "confirm": "Confirm",
+    "actions": "Actions"
+  },
+
+  "paginator": {
+    "pages": "Page {{currentPage}} of {{totalPages}}",
+    "prev": "Previous",
+    "next": "Next"
+  },
+
+  "typeahead": {
+    "placeholder": "Search...",
+    "aria": {
+      "clear": "Clear selection",
+      "lock": "Lock field",
+      "unlock": "Unlock field",
+      "removeItem": "Remove {{value}}",
+      "results": "Search results"
+    },
+    "button": {
+      "add": "Add \"{{value}}\""
+    },
+    "text": {
+      "noResults": "No results found"
+    }
+  },
+
+  "confirm-modal": {
+    "title": "Confirm your next action",
+    "cancel": "{{common.cancel}}",
+    "confirm": "{{common.confirm}}",
+    "close": "{{common.close}}"
   },
 
   "shared": {
@@ -265,6 +300,16 @@
         "summary": ""
       }
     }
+  },
+
+  "search-form": {
+    "search-query-label": "Search Query",
+    "search-query-placeholder": "Enter your search query...",
+    "search-filters-title": "Search Filters",
+    "select-placeholder": "Select {{ title }}",
+    "button-reset": "Reset",
+    "button-search": "Search",
+    "button-searching": "Searching..."
   },
 
   "settings": {

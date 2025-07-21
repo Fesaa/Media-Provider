@@ -131,9 +131,9 @@ func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, erro
 			continue
 		}
 
-		s.log.Debug().Dur("elapsed", searchDuration).Str("request", fmt.Sprintf("%+v", req)).Msg("search done")
+		s.log.Debug().Any("provider", provider).Dur("elapsed", searchDuration).Str("request", fmt.Sprintf("%+v", req)).Msg("search done")
 		if searchDuration > time.Second*1 {
-			s.log.Warn().Dur("elapsed", searchDuration).Msg("searching took more than one second")
+			s.log.Warn().Any("provider", provider).Dur("elapsed", searchDuration).Msg("searching took more than one second")
 		}
 
 		results = append(results, search...)
