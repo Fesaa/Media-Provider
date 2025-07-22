@@ -1,4 +1,0 @@
-
-.preference-item {
-  @apply flex flex-col md:flex-row items-center justify-between border-b-2 border-gray-200 md:border-0 pb-2 md:pb-0;
-}

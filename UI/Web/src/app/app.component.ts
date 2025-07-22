@@ -1,39 +1,34 @@
-import {Component, effect, inject, OnInit, ViewContainerRef} from '@angular/core';
+import {Component, HostListener, inject, OnInit} from '@angular/core';
 import {Router, RouterOutlet} from '@angular/router';
 import {AccountService} from "./_services/account.service";
 import {NavHeaderComponent} from "./nav-header/nav-header.component";
 import {Title} from "@angular/platform-browser";
-import {DialogService} from "./_services/dialog.service";
 import {EventType, SignalRService} from "./_services/signal-r.service";
-import {Toast} from "primeng/toast";
-import {MessageService} from "primeng/api";
-import {Notification} from "./_models/notifications";
+import {Notification, NotificationColour} from "./_models/notifications";
 import {OidcEvents, OidcService} from "./_services/oidc.service";
 import {NavService} from "./_services/nav.service";
+import {ToastrService} from "ngx-toastr";
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavHeaderComponent, Toast],
+  imports: [RouterOutlet, NavHeaderComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
   title = 'Media Provider';
 
   private readonly oidcService = inject(OidcService);
+  private readonly toastr = inject(ToastrService);
 
   constructor(
     protected accountService: AccountService,
     private titleService: Title,
-    private vcr: ViewContainerRef,
-    private ds: DialogService,
     private signalR: SignalRService,
-    private messageService: MessageService,
     private navService: NavService,
     private router: Router,
   ) {
     this.titleService.setTitle(this.title);
-    this.ds.viewContainerRef = this.vcr;
 
     this.oidcService.events$.subscribe(event => {
       if (event.type !== OidcEvents.TokenRefreshed) return;
@@ -59,15 +54,27 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.updateVh();
+
     this.signalR.events$.subscribe(event => {
       switch (event.type) {
         case EventType.Notification:
           const notification = event.data as Notification;
-          this.messageService.add({
-            severity: notification.colour,
-            summary: notification.title,
-            detail: notification.summary, // I know they're switched here
-          });
+
+          switch (notification.colour) {
+            case NotificationColour.Primary:
+              this.toastr.success(notification.title, notification.summary);
+              break;
+            case NotificationColour.Secondary:
+              this.toastr.info(notification.title, notification.summary);
+              break;
+            case NotificationColour.Error:
+              this.toastr.error(notification.title, notification.summary);
+              break;
+            case NotificationColour.Warn:
+              this.toastr.warning(notification.title, notification.summary);
+              break;
+          }
       }
     });
 
@@ -80,5 +87,17 @@ export class AppComponent implements OnInit {
 
       this.signalR.startConnection(user);
     })
+  }
+
+  @HostListener('window:resize')
+  @HostListener('window:orientationchange')
+  setDocHeight() {
+    this.updateVh();
+  }
+
+  private updateVh(): void {
+    // Sets a CSS variable for the actual device viewport height. Needed for mobile dev.
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
   }
 }

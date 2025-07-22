@@ -52,7 +52,7 @@ type Page struct {
 	Providers     pq.Int64Array  `gorm:"type:integer[]" json:"providers"`
 	Modifiers     []Modifier     `json:"modifiers"`
 	Dirs          pq.StringArray `gorm:"type:string[]" json:"dirs"`
-	CustomRootDir string         `json:"custom_root_dir"`
+	CustomRootDir string         `json:"customRootDir"`
 }
 
 type ModifierType int

@@ -103,7 +103,7 @@ func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
 			c.Notifier.NotifyContentQ(
 				c.TransLoco.GetTranslation("blacklist-failed-to-load-title", c.impl.Title()),
 				c.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
-				models.Orange)
+				models.Warning)
 		}
 	} else {
 		genres = p.DynastyGenreTags

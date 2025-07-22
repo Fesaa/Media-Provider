@@ -5,7 +5,7 @@ import {FormControl} from "@angular/forms";
   selector: 'app-form-item',
   imports: [],
   templateUrl: './form-item.component.html',
-  styleUrl: './form-item.component.css'
+  styleUrl: './form-item.component.scss'
 })
 export abstract class FormItemComponent {
 

@@ -1,48 +1,74 @@
-@if (user) {
+@if (pages().length > 0 && user()) {
+  <div class="mt-4" *transloco="let t; prefix: 'settings.pages'">
 
-  <div *transloco="let t;prefix:'settings.pages'" class="flex flex-row w-full items-end justify-end mb-5">
-    @if (hasPermission(user, Perm.WritePage)) {
-      <p-button [pTooltip]="t('actions.new')"
-                tooltipPosition="bottom" icon="pi pi-plus" severity="primary"
-                routerLink="/settings/wizard/page"
-      />
-    }
-  </div>
+    <h2 class="h2 fw-bold mt-4 mb-3">{{ t('title') }}</h2>
 
-  <div cdkDropList
-       *transloco="let t;prefix:'settings.pages'"
-       class="flex flex-col space-y-5"
-       (cdkDropListDropped)="drop($event)"
-  >
-
-    <p-card *ngFor="let page of pages" cdkDrag>
-      <div class="flex flex-row justify-between items-center">
-
-        <div class="flex flex-row space-x-5">
-          <span class="pi pi-arrows-alt hover:cursor-pointer" cdkDragHandle></span>
-          <span [class]="'pi ' + page.icon + ' w-16'"></span>
-        </div>
-
-        <a routerLink="/page" [queryParams]="{index: page.ID}" class="hover:cursor-pointer">{{ page.title }}</a>
-
-        <div class="flex-grow flex flex-row justify-end space-x-5">
-          @if (hasPermission(user, Perm.WritePage)) {
-            <p-button routerLink="/settings/wizard/page" [queryParams]="{pageId: page.ID}"
-                      [pTooltip]="t('actions.edit')" variant="outlined"
-                      tooltipPosition="bottom" icon="pi pi-file-edit" severity="info"/>
-          }
-
-          @if (hasPermission(user, Perm.DeletePage)) {
-            <p-button (click)="remove(page)"
-                      [pTooltip]="t('actions.delete')" variant="outlined"
-                      tooltipPosition="bottom" icon="pi pi-trash" severity="danger"/>
-          }
-        </div>
-
+    @if (hasPermission(user()!, Perm.WritePage)) {
+      <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-primary" (click)="edit(null)">
+          <i class="fa fa-plus"></i>
+        </button>
       </div>
-    </p-card>
 
+    }
+
+    <app-table
+      [pagination]="false"
+      [dragAble]="true"
+      (onDrop)="drop($event)"
+      [items]="pages()"
+      [trackByIdFunc]="trackBy"
+    >
+      <ng-template #header>
+        <tr>
+          <th class="table-header-cell" style="width: 10%"></th>
+          <th class="table-header-cell" style="width: 10%">{{ t('header.icon') }}</th>
+          <th class="table-header-cell">{{ t('header.title') }}</th>
+          <th class="table-header-cell">{{ t('header.actions') }}</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #cell let-item>
+        <td class="table-cell">
+          <span class="fas fa-grip-lines drag-handle" cdkDragHandle></span>
+        </td>
+
+        <td class="table-cell w-16 text-center">
+          <span [class]="'fa ' + item.icon"></span>
+        </td>
+
+        <td class="table-cell">
+          <a
+            [routerLink]="'/page'"
+            [queryParams]="{ index: item.ID }"
+            class="hover:cursor-pointer"
+          >
+            {{ item.title }}
+          </a>
+        </td>
+
+        <td class="table-cell d-flex align-items-center gap-2 justify-end">
+          @if (hasPermission(user()!, Perm.WritePage)) {
+            <button
+              type="button"
+              class="btn btn-small"
+              (click)="edit(item)"
+            >
+              <i class="fa fa-edit"></i>
+            </button>
+          }
+
+          @if (hasPermission(user()!, Perm.DeletePage)) {
+            <button
+              type="button"
+              class="btn btn-small text-danger"
+              (click)="remove(item)"
+            >
+              <i class="fa fa-trash"></i>
+            </button>
+          }
+        </td>
+      </ng-template>
+    </app-table>
   </div>
-
-
 }

@@ -1,70 +1,68 @@
-import {Component, DestroyRef, OnInit} from '@angular/core';
+import {Component, computed, DestroyRef, inject, OnInit, signal} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SuggestionDashboardComponent} from "./_components/suggestion-dashboard/suggestion-dashboard.component";
 import {ContentService} from "../_services/content.service";
 import {ContentState, InfoStat} from "../_models/stats";
-import {TableModule} from "primeng/table";
-import {Tag} from 'primeng/tag';
 import {ContentTitlePipe} from "../_pipes/content-title.pipe";
-import {Button} from "primeng/button";
-import {Tooltip} from "primeng/tooltip";
 import {SpeedPipe} from "../_pipes/speed.pipe";
 import {SpeedTypePipe} from "../_pipes/speed-type.pipe";
 import {TimePipe} from "../_pipes/time.pipe";
 import {StopRequest} from "../_models/search";
-import {DialogService} from "../_services/dialog.service";
 import {ContentStatePipe} from "../_pipes/content-state.pipe";
-import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
 import {ToastService} from "../_services/toast.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
 import {ContentProgressUpdate, ContentSizeUpdate, ContentStateUpdate, DeleteContent} from "../_models/signalr";
-import {TranslocoDirective} from "@jsverse/transloco";
-import {TitleCasePipe} from "@angular/common";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {SortedList} from "../shared/data-structures/sorted-list";
 import {RecentlyDownloadedComponent} from "./_components/recently-downloaded/recently-downloaded.component";
+import {TableComponent} from "../shared/_component/table/table.component";
+import {LoadingSpinnerComponent} from "../shared/_component/loading-spinner/loading-spinner.component";
+import {ModalService} from "../_services/modal.service";
+import {BadgeComponent} from "../shared/_component/badge/badge.component";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
+import {DefaultModalOptions} from "../_models/default-modal-options";
 
 @Component({
   selector: 'app-dashboard',
   imports: [
     SuggestionDashboardComponent,
-    TableModule,
     ContentTitlePipe,
-    Tag,
-    Button,
-    Tooltip,
     SpeedPipe,
     SpeedTypePipe,
     TimePipe,
     ContentStatePipe,
-    ContentPickerDialogComponent,
     TranslocoDirective,
-    TitleCasePipe,
-    RecentlyDownloadedComponent
+    RecentlyDownloadedComponent,
+    TableComponent,
+    LoadingSpinnerComponent,
+    BadgeComponent,
+    NgbTooltip
   ],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+  styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
 
-  loading = true;
-  dashboardItems: SortedList<InfoStat> = new SortedList((a, b) => {
+  private readonly modalService = inject(ModalService);
+
+  loading = signal(true);
+  items = signal<InfoStat[]>([]);
+  dashboardItems = computed(() => this.items().sort((a, b) => {
     if (a.contentState == b.contentState) {
       return a.id.localeCompare(b.id)
     }
 
     // Bigger first
     return b.contentState - a.contentState;
-  });
+  }));
 
-  displayContentPicker: { [key: string]: boolean } = {};
   protected readonly ContentState = ContentState;
 
   constructor(private navService: NavService,
               private contentService: ContentService,
               private toastService: ToastService,
               private contentTitle: ContentTitlePipe,
-              private dialogService: DialogService,
               private signalR: SignalRService,
               private destroyRef: DestroyRef,
   ) {
@@ -73,8 +71,8 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.contentService.infoStats().subscribe(info => {
-      this.loading = false;
-      this.dashboardItems.set(info.running || []);
+      this.loading.set(false);
+      this.items.set(info.running || []);
     })
 
     this.signalR.events$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
@@ -86,7 +84,7 @@ export class DashboardComponent implements OnInit {
           this.updateSize(event.data as ContentSizeUpdate);
           break;
         case EventType.DeleteContent:
-          this.dashboardItems.removeFunc(item => item.id === (event.data as DeleteContent).contentId);
+          this.items.update(x => x.filter(item => item.id !== (event.data as DeleteContent).contentId))
           break;
         case EventType.ContentProgressUpdate:
           this.updateProgress(event.data as ContentProgressUpdate);
@@ -98,58 +96,68 @@ export class DashboardComponent implements OnInit {
           this.updateInfo(event.data as InfoStat);
           break;
       }
-      this.dashboardItems.sort();
     })
   }
 
   private updateInfo(info: InfoStat) {
-    this.dashboardItems.setFunc(i => {
+    this.items.update(x => x.map(i => {
       if (i.id !== info.id) {
         return i;
       }
       return info;
-    });
+    }))
   }
 
   private addContent(event: InfoStat) {
-    if (this.dashboardItems.getFunc(is => is.id == event.id)) {
+    if (this.items().filter(item => item.id !== event.id)) {
       return;
     }
 
-    this.dashboardItems.add(event);
+    this.items.update(x => {
+      x.push(event);
+      return x;
+    })
   }
 
   private updateSize(event: ContentSizeUpdate) {
-    const content = this.dashboardItems.getFunc(is => is.id == event.contentId)
-    if (!content) {
-      return;
-    }
-    content.size = event.size;
+    this.items.update(x => x.map(item => {
+      if (item.id == event.contentId) {
+        item.size = event.size;
+      }
+
+      return item;
+    }));
   }
 
   private updateProgress(event: ContentProgressUpdate) {
-    const content = this.dashboardItems.getFunc(is => is.id == event.contentId)
-    if (!content) {
-      return;
-    }
-    content.progress = event.progress;
-    content.estimated = event.estimated;
-    content.speed = event.speed;
-    content.speed_type = event.speed_type;
-    // Sometimes the updateState seems to get out of sync, if content is sending progress updates, it's downloading
-    content.contentState = ContentState.Downloading;
+    this.items.update(x => x.map(item => {
+      if (item.id == event.contentId) {
+        item.progress = event.progress;
+        item.estimated = event.estimated;
+        item.speed = event.speed;
+        item.speed_type = event.speed_type;
+        // Sometimes the updateState seems to get out of sync, if content is sending progress updates, it's downloading
+        item.contentState = ContentState.Downloading;
+      }
+
+      return item;
+    }));
   }
 
   private updateState(event: ContentStateUpdate) {
-    const content = this.dashboardItems.getFunc(is => is.id == event.contentId)
-    if (!content) {
-      return;
-    }
-    content.contentState = event.contentState;
+    this.items.update(x => x.map(item => {
+      if (item.id == event.contentId) {
+        item.contentState = event.contentState;
+      }
+
+      return item;
+    }));
   }
 
   async stop(info: InfoStat) {
-    if (!await this.dialogService.openDialog("dashboard.confirm-stop", {name: this.contentTitle.transform(info.name)})) {
+    if (!await this.modalService.confirm({
+      question: translate("dashboard.confirm-stop", {name: this.contentTitle.transform(info.name)})
+    })) {
       return;
     }
 
@@ -170,7 +178,7 @@ export class DashboardComponent implements OnInit {
   }
 
   async browse(info: InfoStat) {
-    await this.dialogService.openDirBrowser(info.download_dir, {showFiles: true, width: '40rem',})
+    await this.modalService.getDirectory(info.download_dir, {showFiles: true});
   }
 
   markReady(info: InfoStat) {
@@ -185,22 +193,11 @@ export class DashboardComponent implements OnInit {
   }
 
   pickContent(info: InfoStat) {
-    this.displayContentPicker = {} // Close others
-    this.displayContentPicker[info.id] = true;
+    const [_, component] = this.modalService.open(ContentPickerDialogComponent, DefaultModalOptions);
+    component.info.set(info);
   }
 
-  getSeverity(info: InfoStat): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
-    switch (info.contentState) {
-      case ContentState.Cleanup:
-      case ContentState.Downloading:
-        return "success";
-      case ContentState.Ready:
-      case ContentState.Waiting:
-        return "info";
-      case ContentState.Queued:
-      case ContentState.Loading:
-      default:
-        return "secondary"
-    }
+  itemTrackBy(idx: number, item: InfoStat): string {
+    return `${item.id}`
   }
 }

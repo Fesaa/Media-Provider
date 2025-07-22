@@ -80,7 +80,7 @@ func (n *notificationService) NotifyHelper(title, summary, body string, colour m
 }
 
 func (n *notificationService) NotifyContent(title, summary, body string, colours ...models.NotificationColour) {
-	colour := utils.OrDefault(colours, models.Blue)
+	colour := utils.OrDefault(colours, models.Primary)
 	n.NotifyHelper(title, summary, body, colour, models.GroupContent)
 }
 
@@ -89,7 +89,7 @@ func (n *notificationService) NotifyContentQ(title, body string, colours ...mode
 }
 
 func (n *notificationService) NotifySecurity(title, summary, body string, colours ...models.NotificationColour) {
-	colour := utils.OrDefault(colours, models.Orange)
+	colour := utils.OrDefault(colours, models.Warning)
 	n.NotifyHelper(title, summary, body, colour, models.GroupSecurity)
 }
 
@@ -98,7 +98,7 @@ func (n *notificationService) NotifySecurityQ(title, body string, colours ...mod
 }
 
 func (n *notificationService) NotifyGeneral(title, summary, body string, colours ...models.NotificationColour) {
-	colour := utils.OrDefault(colours, models.White)
+	colour := utils.OrDefault(colours, models.Primary)
 	n.NotifyHelper(title, summary, body, colour, models.GroupGeneral)
 }
 

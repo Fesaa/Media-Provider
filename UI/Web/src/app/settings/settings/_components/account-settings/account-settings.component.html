@@ -1,40 +1,54 @@
-<div class="flex w-full flex-col px-2" *transloco="let t; prefix: 'account'">
+<div class="container-fluid px-2" *transloco="let t; prefix: 'account'">
 
-  <form [formGroup]="accountForm" (ngSubmit)="saveAccount()" class="space-y-6">
-    <h2 class="text-2xl font-bold mt-4 mb-2">{{ t('title') }}</h2>
+  <form [formGroup]="accountForm" (ngSubmit)="saveAccount()" class="mb-4">
+    <h2 class="h2 fw-bold mt-4 mb-3">{{ t('title') }}</h2>
 
     @if (getFormControl(accountForm, 'username'); as username) {
-      <app-form-input [control]="username" [title]="t('username.label')" [subTitle]="t('username.subTitle')" />
+      <div class="mb-3">
+        <app-form-input [control]="username" [title]="t('username.label')" [subTitle]="t('username.subTitle')" />
+      </div>
     }
 
     @if (getFormControl(accountForm, 'email'); as email) {
-      <app-form-input [control]="email" type="email" [title]="t('email.label')" [subTitle]="t('email.subTitle')" />
+      <div class="mb-3">
+        <app-form-input [control]="email" type="email" [title]="t('email.label')" [subTitle]="t('email.subTitle')" />
+      </div>
     }
 
-    <div class="flex justify-end pt-4">
-      <p-button type="submit" severity="primary">{{ t('save') | titlecase }}</p-button>
+    <div class="d-flex justify-content-end pt-4">
+      <button type="submit" class="btn btn-primary">
+        {{ t('save') | titlecase }}
+      </button>
     </div>
   </form>
 
-  <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="space-y-6 mt-10">
-    <div class="border-t border-black dark:border-white pt-6"></div>
+  <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="mt-5">
+    <hr class="border-dark mb-4">
 
-    <h3 class="text-xl font-semibold mb-2">{{ t('password.title') }}</h3>
+    <h3 class="h3 fw-semibold mb-3">{{ t('password.title') }}</h3>
 
     @if (getFormControl(passwordForm, 'oldPassword'); as oldPassword) {
-      <app-form-input [control]="oldPassword" type="password" [title]="t('oldPassword.label')" />
+      <div class="mb-3">
+        <app-form-input [control]="oldPassword" type="password" [title]="t('oldPassword.label')" />
+      </div>
     }
 
     @if (getFormControl(passwordForm, 'password'); as password) {
-      <app-form-input [control]="password" type="password" [title]="t('password.label')" />
+      <div class="mb-3">
+        <app-form-input [control]="password" type="password" [title]="t('password.label')" />
+      </div>
     }
 
     @if (getFormControl(passwordForm, 'confirmPassword'); as confirmPassword) {
-      <app-form-input [control]="confirmPassword" type="password" [title]="t('confirm.label')" />
+      <div class="mb-3">
+        <app-form-input [control]="confirmPassword" type="password" [title]="t('confirm.label')" />
+      </div>
     }
 
-    <div class="flex justify-end pt-4">
-      <p-button type="submit" severity="primary">{{ t('password.save') | titlecase }}</p-button>
+    <div class="d-flex justify-content-end pt-4">
+      <button type="submit" class="btn btn-primary">
+        {{ t('password.save') | titlecase }}
+      </button>
     </div>
   </form>
 </div>

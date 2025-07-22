@@ -148,6 +148,8 @@ func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription
 		return nil, err
 	}
 	sub.Normalize(pref.SubscriptionRefreshHour)
+	sub.Info.LastCheck = time.Now()
+	sub.Info.LastCheckSuccess = true
 	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
 
 	newSub, err := s.db.Subscriptions.New(sub)
@@ -173,16 +175,18 @@ func (s *subscriptionService) Update(sub models.Subscription) error {
 		return err
 	}
 
-	// I can't get gorm to update instead of insert a new row. So lets force it to link here.
-	sub.Info.ID = cur.Info.ID
-	sub.Info.SubscriptionId = cur.Info.SubscriptionId
+	cur.Info.Title = sub.Info.Title
+	cur.Info.Description = sub.Info.Description
+	cur.Info.BaseDir = sub.Info.BaseDir
+	cur.RefreshFrequency = sub.RefreshFrequency
+	cur.Provider = sub.Provider
 
-	sub.Normalize(pref.SubscriptionRefreshHour)
-	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
+	cur.Normalize(pref.SubscriptionRefreshHour)
+	cur.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
 	s.log.Debug().Time("nextExecution", sub.Info.NextExecution).
 		Msg("subscription will run next on")
 
-	return s.db.Subscriptions.Update(sub)
+	return s.db.Subscriptions.Update(*cur)
 }
 
 func (s *subscriptionService) Delete(id uint) error {
@@ -198,7 +202,7 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 		if err != nil {
 			s.log.Error().Err(err).Msg("failed to get subscriptions")
 			s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-to-run-subscriptions"),
-				s.transloco.GetTranslation("failed-to-run-subscriptions-body", err), models.Red)
+				s.transloco.GetTranslation("failed-to-run-subscriptions-body", err), models.Error)
 			return
 		}
 

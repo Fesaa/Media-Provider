@@ -253,7 +253,7 @@ func (c *Core[C, S]) ContentList() []payload.ListContentData {
 			return payload.ListContentData{
 				SubContentId: chapter.GetId(),
 				Selected:     c.WillBeDownloaded(chapter),
-				Label:        strings.TrimSpace(chapter.GetTitle() + " " + ChapterLabel(chapter)),
+				Label:        strings.TrimSpace(ChapterLabel(chapter)),
 			}
 		})
 	}
@@ -360,7 +360,7 @@ func (c *Core[C, S]) handleLongDiskCheck(elapsed time.Duration) {
 				c.TransLoco.GetTranslation("warn"),
 				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
 				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
-				models.Orange)
+				models.Warning)
 		}
 	}
 }

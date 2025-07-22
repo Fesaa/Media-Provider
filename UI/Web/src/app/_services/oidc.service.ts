@@ -1,12 +1,13 @@
 import {computed, DestroyRef, inject, Injectable, signal} from '@angular/core';
 import {OAuthErrorEvent, OAuthService} from "angular-oauth2-oidc";
-import {from} from "rxjs";
+import {catchError, from, map, Observable, of} from "rxjs";
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
-import {takeUntilDestroyed, toObservable} from "@angular/core/rxjs-interop";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {APP_BASE_HREF} from "@angular/common";
 import {ToastService} from "./toast.service";
 import {Oidc} from "../_models/config";
+import {switchMap, tap} from "rxjs/operators";
 
 /**
  * Enum mirror of angular-oauth2-oidc events which are used in Kavita
@@ -36,9 +37,7 @@ export class OidcService {
   /**
    * True when the OIDC discovery document has been loaded, and login tried. Or no OIDC has been set up
    */
-  private readonly _loaded = signal(false);
-  public readonly loaded = this._loaded.asReadonly();
-  public readonly loaded$ = toObservable(this.loaded);
+  private readonly loaded = signal(false);
 
   public readonly inUse = computed(() => {
     const loaded = this.loaded();
@@ -67,44 +66,65 @@ export class OidcService {
         }
       });
     }
+  }
 
-    this.config().subscribe(oidcSetting => {
-      this._settings.set(oidcSetting);
-      if (!oidcSetting.authority) {
-        this._loaded.set(true);
-        return
-      }
+  /**
+   * Retrieves OIDC config and sets up OAuth service
+   */
+  setupOidc(): Observable<boolean> {
+    return this.getPublicOidcConfig().pipe(
+      switchMap((oidcSettings) => {
+        this._settings.set(oidcSettings);
 
-      this.oauth2.configure({
-        issuer: oidcSetting.authority,
-        clientId: oidcSetting.clientId,
-        // Require https in production unless localhost
-        requireHttps: environment.production ? 'remoteOnly' : false,
-        redirectUri: window.location.origin + this.baseUrl + "oidc/callback",
-        postLogoutRedirectUri: window.location.origin + this.baseUrl + "login",
-        showDebugInformation: !environment.production,
-        responseType: 'code',
-        scope: "openid profile email roles offline_access",
-        // Not all OIDC providers follow this nicely
-        strictDiscoveryDocumentValidation: false,
-        useSilentRefresh: false,
-      });
-      this.oauth2.setupAutomaticSilentRefresh();
-
-      from(this.oauth2.loadDiscoveryDocumentAndTryLogin()).subscribe({
-        next: _ => {
-          this._loaded.set(true);
-
-          if (!this.hasValidAccessToken() && this.oauth2.getRefreshToken()) {
-            this.oauth2.refreshToken().catch(e => console.error(e));
-          }
-        },
-        error: error => {
-          console.log(error);
-          this.toastR.errorLoco("oidc.error-loading-info")
+        if (!oidcSettings.authority) {
+          this.loaded.set(true);
+          return of(false);
         }
-      });
-    })
+
+        return this.setupOAuthService(oidcSettings);
+      }),
+      tap(() => this.loaded.set(true))
+    );
+  }
+
+  /**
+   * Attempts to refresh the token if available
+   * Returns observable that completes when refresh is done (success or failure)
+   */
+  refreshTokenIfAvailable(): Observable<boolean> {
+    if (!this.oauth2.getRefreshToken()) {
+      return of(false);
+    }
+
+    return from(this.oauth2.refreshToken()).pipe(
+      map(() => true),
+      catchError(err => {
+        console.error("Failed to refresh token on startup", err);
+        return of(false);
+      })
+    );
+  }
+
+  /**
+   * Sets up the OAuthService, and loads the discovery document
+   */
+  setupOAuthService(oidcSettings: Oidc) {
+    this.oauth2.configure({
+      issuer: oidcSettings.authority,
+      clientId: oidcSettings.clientId,
+      // Require https in production unless localhost
+      requireHttps: environment.production ? 'remoteOnly' : false,
+      redirectUri: window.location.origin + this.baseUrl + "oidc/callback",
+      postLogoutRedirectUri: window.location.origin + this.baseUrl + "login",
+      showDebugInformation: !environment.production,
+      responseType: 'code',
+      scope: "openid profile email roles offline_access",
+      // Not all OIDC providers follow this nicely
+      strictDiscoveryDocumentValidation: false,
+    });
+    this.oauth2.setupAutomaticSilentRefresh();
+
+    return from(this.oauth2.loadDiscoveryDocumentAndTryLogin());
   }
 
   tryRefreshOnOnline() {
@@ -126,7 +146,7 @@ export class OidcService {
     }
   }
 
-  config() {
+  getPublicOidcConfig() {
     return this.httpClient.get<Oidc>(this.apiBaseUrl + "config/oidc");
   }
 

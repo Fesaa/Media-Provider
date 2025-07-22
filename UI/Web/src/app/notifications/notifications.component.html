@@ -1,80 +1,102 @@
+<div class="mx-4 mx-md-5 mb-5" *transloco="let t; prefix:'notifications'">
 
-<div class="pt-1 md:pt-5 mx-16" *transloco="let t;prefix:'notifications'">
+  <div class="d-flex flex-row justify-content-end gap-3 mb-4">
 
-  <div class="flex flex-row space-x-5 justify-end">
+    <select class="form-select" (change)="timeAgo = $any($event.target).value; refresh()">
+      @for (opt of timeAgoOptions; track opt.value) {
+        <option [selected]="timeAgo === opt.value" [value]="opt.value">{{opt.label}}</option>
+      }
+    </select>
 
-    <p-select (onChange)="refresh()" [options]="timeAgoOptions" [(ngModel)]="timeAgo" />
+    <button type="button" class="btn btn-warning" (click)="readSelected()">
+      {{ t('actions.read-selected') }}
+    </button>
 
-    <p-button severity="warn" (click)="readSelected()" >{{ t('actions.read-selected') }}</p-button>
-    <p-button severity="danger" (click)="deleteSelected()">{{ t('actions.delete-selected') }}</p-button>
+    <button type="button" class="btn btn-error" (click)="deleteSelected()">
+      {{ t('actions.delete-selected') }}
+    </button>
 
   </div>
 
-  <p-table
-    [value]="notifications.items()"
-    dataKey="ID"
-    [rows]="10"
-    [paginator]="true"
-    *transloco="let t;prefix:'notifications.table'"
+  <app-table
+    [items]="sortedNotifications()"
+    [trackByIdFunc]="trackBy"
+    [noHoverColour]="true"
+    *transloco="let t; prefix:'notifications.table'"
   >
 
     <ng-template #header>
       <tr>
-        <th>{{t('time')}}</th>
-        <th>{{ t('group') }}</th>
-        <th>{{ t('title') }}</th>
-        <th>{{ t('summary') }}</th>
-        <th class="flex flex-row justify-between">
-          <span>{{ t('actions.label') }}</span>
-          <p-checkbox [(ngModel)]="allCheck" [binary]="true" (onChange)="toggleAll()"
-                      [pTooltip]="allCheck ? t('select-none') : t('select-all')"
-                      tooltipPosition="bottom"
-          />
+        <th class="table-header-cell">{{ t('time') }}</th>
+        <th class="table-header-cell">{{ t('group') }}</th>
+        <th class="table-header-cell">{{ t('title') }}</th>
+        <th class="table-header-cell">{{ t('summary') }}</th>
+        <th class="table-header-cell">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>{{ t('actions.label') }}</span>
+            <!-- TODO: Checkbox -->
+          </div>
         </th>
       </tr>
-
     </ng-template>
-    <ng-template #body let-notification>
-      <tr>
-        <td style="width: 10%"
-            [pTooltip]="notification.CreatedAt | utcToLocalTime:'short'" tooltipPosition="top">
-          {{notification.CreatedAt | utcToLocalTime:'shortDate'}}
-        </td>
-        <td style="width: 10%"><p-tag [value]="notification.group" [severity]="notification.colour" /></td>
-        <td style="width: 20%"><div [innerHtml]="notification.title"></div></td>
-        <td style="width: 40%"><div [innerHtml]="notification.summary"></div></td>
-        <td style="width: 20%">
-          <div class="flex flex-col md:flex-row justify-between items-center">
 
-            <div class="flex flex-col md:flex-row space-y-5 md:space-y-0 md:space-x-5 my-2">
-              @if (notification.read) {
-                <p-button icon="pi pi-check-circle" size="small" tooltipPosition="bottom" [pTooltip]="t('actions.mark-unread')" (click)="markUnRead(notification)" />
-              } @else {
-                <p-button icon="pi pi-circle" size="small" severity="warn" tooltipPosition="bottom" [pTooltip]="t('actions.mark-read')" (click)="markRead(notification)" />
-              }
+    <ng-template #cell let-notification>
+      <td class="table-cell">{{ notification.CreatedAt | utcToLocalTime:'shortDate' }}</td>
+      <td class="table-cell"><app-badge [colour]="notification.colour">{{ notification.group }}</app-badge></td>
+      <td class="table-cell"><div [innerHtml]="notification.title"></div></td>
+      <td class="table-cell"><div [innerHtml]="notification.summary"></div></td>
+      <td class="table-cell">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
 
-              <p-button icon="pi pi-info-circle" size="small" severity="info" (click)="show(notification.ID)"
-                        [pTooltip]="t('extra-info')" tooltipPosition="bottom"
-              />
+          <div class="d-flex flex-column flex-md-row gap-3 my-2">
+            @if (notification.read) {
+              <button
+                type="button"
+                class="btn btn-primary btn-small"
+                (click)="markUnRead(notification)"
+                [ngbTooltip]="t('actions.mark-unread')"
+                aria-label="Mark unread"
+              >
+                <span class="fa fa-circle-check"></span>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-warning btn-small"
+                (click)="markRead(notification)"
+                [ngbTooltip]="t('actions.mark-read')"
+                aria-label="Mark read"
+              >
+                <span class="fa fa-circle"></span>
+              </button>
+            }
 
-              <p-button icon="pi pi-trash" size="small" severity="danger" (click)="delete(notification)" />
+            <button
+              type="button"
+              class="btn btn-secondary btn-small"
+              (click)="show(notification)"
+              [ngbTooltip]="t('extra-info')"
+              aria-label="Show info"
+            >
+              <span class="fa fa-circle-info"></span>
+            </button>
 
-              <p-dialog [(visible)]="infoVisibility[notification.ID]" [header]="notification.title">
-                <span [innerHTML]="formattedBody(notification)"></span>
-              </p-dialog>
-            </div>
-
-            <p-checkbox [(ngModel)]="selectedNotifications" [value]="notification.ID" />
-
+            <button
+              type="button"
+              class="btn btn-error btn-small"
+              (click)="delete(notification)"
+              aria-label="Delete notification"
+            >
+              <span class="fa fa-trash"></span>
+            </button>
           </div>
-        </td>
-      </tr>
+
+          <!-- TODO: Checkbox -->
+
+        </div>
+      </td>
     </ng-template>
-    <ng-template #emptymessage>
-      <p-card>
-        {{ t('empty') }}
-      </p-card>
-    </ng-template>
-  </p-table>
+
+  </app-table>
 
 </div>

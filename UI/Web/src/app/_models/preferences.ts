@@ -3,9 +3,9 @@ export type Preferences = {
   logEmptyDownloads: boolean,
   convertToWebp: boolean,
   coverFallbackMethod: CoverFallbackMethod,
-  dynastyGenreTags: Tag[],
-  blackListedTags: Tag[],
-  whiteListedTags: Tag[],
+  dynastyGenreTags: string[],
+  blackListedTags: string[],
+  whiteListedTags: string[],
   ageRatingMappings: AgeRatingMap[],
   tagMappings: TagMap[],
 };
@@ -22,24 +22,13 @@ export const CoverFallbackMethods = [
   {label: "None", value: CoverFallbackMethod.CoverFallbackNone},
 ]
 
-
-export type Tag = {
-  name: string,
-  normalizedName: string,
-}
-
-
-export function normalize(s: string): string {
-  return s.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-}
-
 export type TagMap = {
-  origin: Tag,
-  dest: Tag,
+  origin: string,
+  dest: string,
 }
 
 export type AgeRatingMap = {
-  tag: Tag
+  tag: string
   comicInfoAgeRating: ComicInfoAgeRating
 }
 

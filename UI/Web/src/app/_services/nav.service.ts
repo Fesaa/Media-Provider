@@ -40,9 +40,11 @@ export class NavService {
     this.showNavSource.next(show);
   }
 
-  handleLogin() {
+  handleLogin(redirect: boolean = true) {
     this.pageService.refreshPages().subscribe(() => {
       this.setNavVisibility(true);
+
+      if (!redirect) return;
 
       const pageResume = localStorage.getItem(AuthGuard.urlKey);
       localStorage.setItem(AuthGuard.urlKey, '');

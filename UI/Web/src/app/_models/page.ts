@@ -6,7 +6,7 @@ export type Page = {
   providers: Provider[];
   modifiers: Modifier[];
   dirs: string[];
-  custom_root_dir: string;
+  customRootDir: string;
 }
 
 export type Modifier = {
@@ -70,13 +70,14 @@ export const Providers = [
 ];
 
 
-export const providerNames = Object.keys(Provider).filter(key => isNaN(Number(key))) as string[];
-export const providerValues = Object.values(Provider).filter(value => typeof value === 'number') as number[];
+export const AllProviders = Object.values(Provider).filter(value => typeof value === 'number') as number[];
 
 export enum ModifierType {
   DROPDOWN = 1,
   MULTI,
 }
+
+export const AllModifierTypes = [ModifierType.DROPDOWN, ModifierType.MULTI]
 
 export type DownloadMetadata = {
   definitions: DownloadMetadataDefinition[];

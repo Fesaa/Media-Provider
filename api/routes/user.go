@@ -332,6 +332,7 @@ func (ur *userRoutes) Users(ctx *fiber.Ctx) error {
 		return payload.UserDto{
 			ID:         u.ID,
 			Name:       u.Name,
+			Email:      u.Email.String,
 			Permission: u.Permission,
 			CanDelete:  !u.Original,
 		}
@@ -357,6 +358,7 @@ func (ur *userRoutes) UpdateUser(ctx *fiber.Ctx) error {
 	if userDto.ID != 0 {
 		newUser, err = ur.DB.Users.UpdateById(userDto.ID, func(u models.User) models.User {
 			u.Name = userDto.Name
+			u.Email = sql.NullString{String: userDto.Email, Valid: true}
 			u.Permission = userDto.Permission
 			return u
 		})

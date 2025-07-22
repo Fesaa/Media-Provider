@@ -1,25 +1,24 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject} from '@angular/core';
 import {CacheType, CacheTypes, Config} from '../../../../_models/config';
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {FormInputComponent} from "../../../../shared/form/form-input/form-input.component";
-import {FormSelectComponent} from "../../../../shared/form/form-select/form-select.component";
-import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../../../../_services/toast.service";
-import {TranslocoDirective} from "@jsverse/transloco";
-import {Button} from "primeng/button";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {SettingsService} from "../../../../_services/settings.service";
+import {SettingsItemComponent} from "../../../../shared/form/settings-item/settings-item.component";
+import {SettingsSwitchComponent} from "../../../../shared/form/settings-switch/settings-switch.component";
+import {DefaultValuePipe} from "../../../../_pipes/default-value.pipe";
 
 @Component({
   selector: 'app-server-settings',
   imports: [
     ReactiveFormsModule,
-    FormInputComponent,
     TranslocoDirective,
-    Button,
-    FormSelectComponent
+    SettingsItemComponent,
+    SettingsSwitchComponent,
+    DefaultValuePipe
   ],
   templateUrl: './server-settings.component.html',
-  styleUrl: './server-settings.component.css',
+  styleUrl: './server-settings.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServerSettingsComponent {
@@ -114,4 +113,5 @@ export class ServerSettingsComponent {
 
   protected readonly CacheType = CacheType;
   protected readonly CacheTypes = CacheTypes;
+  protected readonly translate = translate;
 }

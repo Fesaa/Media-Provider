@@ -1,29 +1,28 @@
-import {Component, EventEmitter, HostListener, Input, Output} from '@angular/core';
+import {Component, EventEmitter, HostListener, inject, Input, OnInit, Output} from '@angular/core';
 import {ReplaySubject} from "rxjs";
 import {DirEntry} from "../../../_models/io";
 import {Stack} from "../../data-structures/stack";
 import {IoService} from "../../../_services/io.service";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {FormsModule} from "@angular/forms";
-import {Dialog} from "primeng/dialog";
-import {Button} from "primeng/button";
 import {ToastService} from "../../../_services/toast.service";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TitleCasePipe} from "@angular/common";
+import {NgbActiveModal} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-directory-selector',
   imports: [
     FormsModule,
-    Dialog,
-    Button,
     TranslocoDirective,
     TitleCasePipe
   ],
   templateUrl: './directory-selector.component.html',
-  styleUrl: './directory-selector.component.css'
+  styleUrl: './directory-selector.component.scss'
 })
-export class DirectorySelectorComponent {
+export class DirectorySelectorComponent implements OnInit {
+
+  private readonly modal = inject(NgbActiveModal);
 
   @Input() isMobile = false;
 
@@ -51,13 +50,6 @@ export class DirectorySelectorComponent {
               private toastService: ToastService,
               private clipboard: Clipboard,
   ) {
-  }
-
-  initialLoad(): void {
-    this.currentRoot = this.root;
-    this.routeStack.push(this.root);
-    this.loadChildren(this.root);
-    this.isMobile = window.innerWidth < 768;
   }
 
   getEntries() {
@@ -132,11 +124,12 @@ export class DirectorySelectorComponent {
     return this.result.asObservable();
   }
 
-  closeDialog() {
+  closeModal() {
     this.result.next(undefined);
     this.resultDir.emit(undefined);
     this.result.complete();
     this.visibleChange.emit(false);
+    this.modal.close();
   }
 
   confirm() {
@@ -148,6 +141,7 @@ export class DirectorySelectorComponent {
     this.resultDir.emit(path);
     this.result.complete();
     this.visibleChange.emit(false);
+    this.modal.close();
   }
 
   private loadChildren(dir: string) {
@@ -160,6 +154,13 @@ export class DirectorySelectorComponent {
         this.toastService.genericError(err.error.message);
       }
     })
+  }
+
+  ngOnInit(): void {
+    this.currentRoot = this.root;
+    this.routeStack.push(this.root);
+    this.loadChildren(this.root);
+    this.isMobile = window.innerWidth < 768;
   }
 
 }

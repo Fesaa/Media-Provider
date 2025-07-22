@@ -1,0 +1,140 @@
+.form-control {
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--surface-border);
+  transition: all 0.3s ease;
+  font-family: 'Spectral', serif;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(126, 58, 89, 0.25);
+}
+
+.form-control:hover {
+  border-color: var(--primary-color-light);
+}
+
+.form-check-input {
+  border: 1px solid var(--surface-border);
+}
+
+.form-check-input:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(126, 58, 89, 0.25);
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  font-family: 'Spectral', serif;
+}
+
+.login-visual-section {
+  background: linear-gradient(135deg, var(--primary-color-lighter), var(--background-color));
+  position: relative;
+}
+
+.login-visual-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 80%, rgba(126, 58, 89, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.login-form-section {
+  background-color: var(--surface-card);
+  box-shadow: -2px 0 10px var(--shadow-light);
+}
+
+.display-5 {
+  color: var(--primary-color);
+}
+
+.lead {
+  color: var(--text-secondary);
+}
+
+.h3 {
+  color: var(--text-primary);
+}
+
+@media (max-width: 991.98px) {
+  .login-visual-section {
+    order: 1;
+    min-height: 40vh;
+  }
+
+  .login-form-section {
+    order: 2;
+    box-shadow: 0 -2px 10px var(--shadow-light);
+  }
+
+  .display-5 {
+    font-size: 2rem !important;
+  }
+
+  .lead {
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .display-5 {
+    font-size: 1.75rem !important;
+  }
+
+  .lead {
+    font-size: 0.9rem !important;
+  }
+
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .form-control {
+    padding: 0.875rem;
+    font-size: 1rem;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-form-section > div {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.login-visual-section > div {
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.btn:focus,
+.form-control:focus,
+.form-check-input:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.form-control:hover:not(:focus) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--shadow-light);
+}

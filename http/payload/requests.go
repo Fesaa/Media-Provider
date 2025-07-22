@@ -2,6 +2,7 @@ package payload
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/utils"
 	"strconv"
 	"strings"
 )
@@ -43,6 +44,9 @@ func (r DownloadRequest) IncludesMetadata(keys ...string) bool {
 // An empty slice will return false
 func (r DownloadRequest) GetStrings(key string) ([]string, bool) {
 	values, ok := r.DownloadMetadata.Extra[key]
+	values = utils.Filter(values, func(s string) bool {
+		return len(s) > 0
+	})
 	return values, ok && len(values) > 0
 }
 

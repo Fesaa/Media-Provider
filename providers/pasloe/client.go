@@ -191,7 +191,7 @@ func (c *client) logContentCompletion(content core.Downloadable) {
 		Title:   c.transLoco.GetTranslation("download-finished-title"),
 		Summary: summary,
 		Body:    body,
-		Colour:  models.Green,
+		Colour:  models.Secondary,
 		Group:   models.GroupContent,
 	})
 }
@@ -258,7 +258,7 @@ func (c *client) startNext(provider models.Provider) {
 	c.signalR.Notify(models.Notification{
 		Title:   "Now starting",
 		Summary: next.Title(),
-		Colour:  models.Blue,
+		Colour:  models.Primary,
 		Group:   models.GroupContent,
 	})
 	next.StartDownload()
@@ -405,7 +405,7 @@ func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...er
 		c.transLoco.GetTranslation("cleanup-errors-title"),
 		c.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
 		joinedErr.Error(),
-		models.Red)
+		models.Error)
 }
 
 func (c *client) wrapError(err error) error {

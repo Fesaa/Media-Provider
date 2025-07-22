@@ -1,168 +1,200 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  computed,
+  HostListener,
+  OnInit,
+  signal
+} from '@angular/core';
 import {PageService} from "../_services/page.service";
-import {Page} from "../_models/page";
-import {ActivatedRoute} from "@angular/router";
-import {AsyncPipe} from "@angular/common";
+import {ActivatedRoute, RouterLink} from "@angular/router";
 import {AccountService} from "../_services/account.service";
 import {NavService} from "../_services/nav.service";
-import {dropAnimation} from "../_animations/drop-animation";
-import {MenuItem} from "primeng/api";
-import {Menubar} from "primeng/menubar";
 import {NotificationService} from "../_services/notification.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
-import {BadgeDirective} from "primeng/badge";
-import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
-import {User} from "../_models/user";
+import {TranslocoService} from "@jsverse/transloco";
 import {OidcService} from "../_services/oidc.service";
+import {User} from "../_models/user";
+import {Page} from "../_models/page";
+import {AsyncPipe, TitleCasePipe} from "@angular/common";
+import {animate, style, transition, trigger} from "@angular/animations";
+
+interface NavItem {
+  label: string;
+  icon?: string;
+  routerLink?: string;
+  queryParams?: Record<string, any>;
+  command?: () => void;
+}
+
+const drawerAnimation = trigger('drawerAnimation', [
+  transition(':enter', [
+    style({ transform: 'translateX(-100%)', opacity: 0 }),
+    animate('250ms ease-out', style({ transform: 'translateX(0)', opacity: 1 })),
+  ]),
+  transition(':leave', [
+    animate('200ms ease-in', style({ transform: 'translateX(-100%)', opacity: 0 })),
+  ]),
+]);
+
+const dropdownAnimation = trigger('dropdownAnimation', [
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(-8px)' }),
+    animate('150ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
+  ]),
+  transition(':leave', [
+    animate('100ms ease-in', style({ opacity: 0, transform: 'translateY(-8px)' })),
+  ]),
+]);
+
+
 
 @Component({
   selector: 'app-nav-header',
-  imports: [
-    AsyncPipe,
-    Menubar,
-    BadgeDirective,
-    TranslocoDirective
-  ],
   templateUrl: './nav-header.component.html',
-  styleUrl: './nav-header.component.css',
-  animations: [dropAnimation]
+  styleUrls: ['./nav-header.component.scss'],
+  imports: [
+    RouterLink,
+    AsyncPipe,
+    TitleCasePipe
+  ],
+  animations: [drawerAnimation, dropdownAnimation],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavHeaderComponent implements OnInit {
 
-  isMenuOpen = false;
-  index: number | undefined;
-  path: string | undefined;
+  notifications = signal(0);
+  currentUser = signal<User | null>(null);
+  pageItems = signal<Page[]>([]);
+  accountItems = signal<NavItem[]>([]);
 
-  pages: Page[] = [];
-  accountItems: MenuItem[] | undefined;
-  pageItems: MenuItem[] | undefined;
+  isMobileMenuOpen = signal(false);
+  isAccountDropdownOpen = signal(false);
 
-  notifications: number = 0;
+  severity = computed((): 'info' | 'warn' | 'danger' => {
+    const count = this.notifications();
+    if (count < 4) return 'info';
+    if (count < 10) return 'warn';
+    return 'danger';
+  });
 
-  constructor(private pageService: PageService,
-              private route: ActivatedRoute,
-              private cdRef: ChangeDetectorRef,
-              protected accountService: AccountService,
-              protected navService: NavService,
-              private notificationService: NotificationService,
-              private signalR: SignalRService,
-              private transLoco: TranslocoService,
-              private oidcService: OidcService,
-  ) {
-  }
+  constructor(
+    private pageService: PageService,
+    private route: ActivatedRoute,
+    private cdRef: ChangeDetectorRef,
+    private accountService: AccountService,
+    protected navService: NavService,
+    private notificationService: NotificationService,
+    private signalR: SignalRService,
+    private transLoco: TranslocoService,
+    private oidcService: OidcService
+  ) {}
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       const index = params['index'];
       if (index) {
-        this.index = parseInt(index);
-      } else {
-        this.index = undefined;
+        // Not used here, preserved for logic continuity
       }
-    })
+    });
 
     this.accountService.currentUser$.subscribe(user => {
-      if (!user) {
-        return;
-      }
+      if (!user) return;
+      this.currentUser.set(user);
 
       this.transLoco.events$.subscribe(event => {
-        if (event.type !== "translationLoadSuccess") {
-          return;
+        if (event.type === "translationLoadSuccess") {
+          this.loadPages();
+          this.setAccountItems(user);
         }
-
-        this.setPageItems()
-        this.setAccountItems(user)
       });
 
       this.notificationService.amount().subscribe(amount => {
-        this.notifications = amount;
+        this.notifications.set(amount);
       });
     });
 
     this.signalR.events$.subscribe(event => {
-      if (event.type == EventType.NotificationAdd) {
-        this.notifications++;
+      if (event.type === EventType.NotificationAdd) {
+        this.notifications.update(n => n + 1);
       }
       if (event.type === EventType.NotificationRead) {
         const amount: number = event.data.amount;
-        this.notifications -= amount;
+        this.notifications.update(n => Math.max(0, n - amount));
       }
-    })
-
+    });
   }
 
-  setPageItems() {
+  loadPages() {
     this.pageService.pages$.subscribe(pages => {
-      this.pages = pages;
-
-      this.pageItems = this.pages.map(page => {
-        return {
-          label: page.title,
-          routerLink: 'page',
-          queryParams: {index: page.ID},
-          icon: page.icon === '' ? undefined : 'pi ' + page.icon,
-        }
-      })
-      this.pageItems = [{
-        label: this.transLoco.translate("nav-bar.home"),
-        routerLink: 'home',
-        icon: 'pi pi-home',
-      }, ...this.pageItems]
-
-
-      this.cdRef.detectChanges();
+      this.pageItems.set([
+        {
+          title: this.transLoco.translate("nav-bar.home"),
+          ID: -1,
+          icon: "fa-home",
+          dirs: [],
+          customRootDir: '',
+          modifiers: [],
+          providers: [],
+          sortValue: -100,
+        },
+        ...pages
+      ]);
+      this.cdRef.markForCheck();
     });
   }
 
   setAccountItems(user: User) {
-    this.accountItems = [
+    const items: NavItem[] = [
       {
-        label: user.name,
-        icon: "pi pi-user",
-        items: [
-          {
-            label: this.transLoco.translate("nav-bar.subscriptions"),
-            routerLink: "subscriptions",
-            icon: "pi pi-wave-pulse"
-          },
-          {
-            label: this.transLoco.translate("nav-bar.notifications"),
-            routerLink: "notifications",
-            icon: "pi pi-inbox"
-          },
-          {
-            label: this.transLoco.translate("nav-bar.settings"),
-            routerLink: "settings",
-            icon: "pi pi-cog",
-          },
-          {
-            label: this.transLoco.translate("nav-bar.sign-out"),
-            command: () => {
-              this.oidcService.logout();
-              this.accountService.logout()
-            },
-            icon: "pi pi-sign-out"
-          }
-        ]
+        label: this.transLoco.translate("nav-bar.subscriptions"),
+        icon: "fa-bell",
+        routerLink: "/subscriptions"
+      },
+      {
+        label: this.transLoco.translate("nav-bar.notifications"),
+        icon: "fa-inbox",
+        routerLink: "/notifications"
+      },
+      {
+        label: this.transLoco.translate("nav-bar.settings"),
+        icon: "fa-cog",
+        routerLink: "/settings"
+      },
+      {
+        label: this.transLoco.translate("nav-bar.sign-out"),
+        icon: "fa-user-minus",
+        command: () => this.logout()
       }
     ];
 
-    if (window.innerWidth <= 768) {
-      this.accountItems = this.accountItems[0].items;
-    }
+    this.accountItems.set(items);
   }
 
-  severity(): "success" | "secondary" | "info" | "warn" | "danger" | "contrast" | undefined {
-    if (this.notifications < 4) {
-      return "info"
-    }
+  logout() {
+    this.oidcService.logout();
+    this.accountService.logout();
+  }
 
-    if (this.notifications < 10) {
-      return "warn"
-    }
+  toggleMobileMenu() {
+    this.isMobileMenuOpen.update(v => !v);
+  }
 
-    return "danger"
+  toggleAccountDropdown() {
+    this.isAccountDropdownOpen.update(v => !v);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (
+      this.isAccountDropdownOpen() &&
+      !target.closest('.account-dropdown') &&
+      !target.closest('.account-toggle')
+    ) {
+      this.isAccountDropdownOpen.set(false);
+    }
   }
 
 }

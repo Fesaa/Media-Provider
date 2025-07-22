@@ -14,16 +14,11 @@ type Notification struct {
 
 type NotificationColour string
 
-// These are PrimeNG colours https://primeng.org/button#severity
 const (
-	Black    NotificationColour = "primary"
-	White    NotificationColour = "secondary"
-	Green    NotificationColour = "success"
-	Blue     NotificationColour = "info"
-	Orange   NotificationColour = "warn"
-	Purple   NotificationColour = "help"
-	Red      NotificationColour = "danger"
-	Contrast NotificationColour = "contrast"
+	Primary   NotificationColour = "primary"
+	Secondary NotificationColour = "secondary"
+	Warning   NotificationColour = "warning"
+	Error     NotificationColour = "error"
 )
 
 type NotificationGroup string

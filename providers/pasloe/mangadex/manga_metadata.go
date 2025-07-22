@@ -269,7 +269,7 @@ func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 			m.Notifier.NotifyContentQ(
 				m.TransLoco.GetTranslation("blacklist-failed-to-load-title", m.Title()),
 				m.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
-				models.Orange)
+				models.Warning)
 		}
 		return
 	}

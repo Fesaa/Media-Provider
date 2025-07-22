@@ -3,10 +3,181 @@
     "name": "Media-Provider"
   },
 
+  "common": {
+    "edit": "Edit",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "update": "Update",
+    "confirm": "Confirm",
+    "actions": "Actions",
+    "dismiss": "Dismiss"
+  },
+
+  "paginator": {
+    "pages": "Page {{currentPage}} of {{totalPages}}",
+    "prev": "Previous",
+    "next": "Next"
+  },
+
+  "typeahead": {
+    "placeholder": "Search...",
+    "aria": {
+      "clear": "Clear selection",
+      "lock": "Lock field",
+      "unlock": "Unlock field",
+      "removeItem": "Remove {{value}}",
+      "results": "Search results"
+    },
+    "button": {
+      "add": "Add \"{{value}}\""
+    },
+    "text": {
+      "noResults": "No results found"
+    }
+  },
+
+  "download-modal": {
+    "title": "Download {{name}}",
+    "close": "{{common.close}}",
+    "cancel": "{{common.cancel}}",
+    "download": "{{shared.download}}",
+    "general": "General",
+    "advanced": "Advanced",
+
+    "dir-label": "Download directory",
+
+    "title-label": "Title override",
+    "title-tooltip": "Leave empty to use the title given by the provider",
+
+    "start-immediately-label": "Start download immediately",
+
+    "extra-metadata": {
+      "tl-lang": {
+        "label": "Language",
+        "tooltip": "Will only download chapters in the selected language"
+      },
+      "scanlation_group": {
+        "label": "Scanlation group",
+        "tooltip": "Will always fallback if no chapter of this group can be found"
+      },
+      "download_one_shot": {
+        "label": "Download OneShot",
+        "tooltip": "A chapter is a OneShot if it has no chapter number"
+      },
+      "include_cover": {
+        "label": "Include cover",
+        "tooltip": "Adds a cover image, can be nice to turn off for webtoons"
+      },
+      "update_cover": {
+        "label": "Update cover",
+        "tooltip": "Checks if the currently downloaded cover is outdated"
+      },
+      "include_not_matched_tags": {
+        "label": "Add not matched tags to ComicInfo",
+        "tooltip": "Tags not configured to be a genre, will be added as tags instead"
+      },
+      "no-sub-dir": {
+        "label": "Download into parent",
+        "tooltip": "Content will be copied in your selected dir, instead of creating child directory first"
+      },
+      "title_override": {
+        "label": "Override title",
+        "tooltip": "Set a specific title"
+      }
+    }
+  },
+
+  "edit-subscription-modal": {
+    "new-sub-title": "Subscribe to: {{name}}",
+    "title": "Edit your subscription on: {{name}}",
+    "cancel": "{{common.cancel}}",
+    "save": "{{common.save}}",
+    "create": "Subscribe",
+    "general": "General",
+    "extra": "Extra",
+
+    "title-label": "Title",
+    "title-tooltip": "This title is only visual and does not effect the underlying download",
+    "content-id-label": "Content Id",
+    "content-id-tooltip": "The id from your provider, must be correct",
+    "base-dir-label": "Download directory",
+    "provider-label": "Provider",
+    "provider-tooltip": "Which provider is this subscription using",
+    "refresh-frequency-label": "Refresh frequency",
+    "refresh-frequency-tooltip": "How often should this subscription be downloaded"
+  },
+
+  "confirm-modal": {
+    "title": "Confirm your next action",
+    "cancel": "{{common.cancel}}",
+    "confirm": "{{common.confirm}}",
+    "close": "{{common.close}}"
+  },
+
+  "edit-user-modal": {
+    "title": "Edit {{name}}",
+    "new-user-title": "Invite {{name}} to your server",
+    "someone": "someone",
+    "cancel": "{{common.cancel}}",
+    "save": "{{common.save}}",
+    "close": "{{common.close}}",
+    "user-label": "Username",
+    "user-tooltip": "Changing this without the username knowing may lock them out of their account",
+    "email-label": "Email",
+    "email-tooltip": "Used to match on OIDC logins",
+    "perm-label": "Permissions"
+  },
+
+  "edit-page-modal": {
+    "title": "Edit page {{name}}",
+    "cancel": "{{common.cancel}}",
+    "save": "{{common.save}}",
+    "close": "{{common.close}}",
+    "general": "General",
+    "modifiers": "Modifiers",
+    "wiki": "Pages form the central way to search and download content with Media-Provider, each page will be a tab in the navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which things you can filter while downloading. For more information see the <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://fesaa.github.io/Media-Provider/\">wiki</a>. ",
+    "wiki-modifiers": "Modifiers are an import part of the search experience, you can configure them to help you narrow down results, apart from name. Each provider has different modifiers it can use to narrow down your search. See the wiki for more information. Read the <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://fesaa.github.io/Media-Provider/\">wiki</a> carefully to ensure you use the correct keys for the modifiers. Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search, while the display name is what will be shown on your screen.",
+
+    "title-label": "Title",
+    "title-tooltip": "The title displayed in the navigation bar",
+    "icon-label": "Icon",
+    "icon-tooltip": "Optional icon displayed in the navigation bar",
+    "custom-root-dir-label": "Root directory",
+    "custom-root-dir-tooltip": "Base directory to start the dir picker in",
+    "dirs-label": "Directories",
+    "dirs-tooltip": "Optional list of directories to pick from",
+
+    "delete-modifier": "Are you sure you want to delete {{title}}?"
+  },
+
+  "edit-page-modifier-modal": {
+    "title": "Edit modifier {{title}}",
+    "cancel": "{{common.cancel}}",
+    "save": "{{common.save}}",
+    "close": "{{common.close}}",
+
+    "title-label": "Title",
+    "title-tooltip": "The name of the modifier, displayed in the page form",
+    "key-label": "Key",
+    "key-tooltip": "The key as defined on the wiki, if this is incorrect the modifier will not do anything",
+    "type-label": "Type",
+    "type-tooltip": "Which input type to use",
+    "default": "Default",
+    "values-label": "Values"
+  },
+  "modifier-type-pipe": {
+    "multi": "Multi select",
+    "dropdown": "Dropdown"
+  },
+
   "shared": {
     "username": "username",
     "password": "password",
     "loading": "loading...",
+    "edit": "Edit",
+    "close": "Close",
     "cancel": "cancel",
     "confirm": "confirm",
     "download": "Download",
@@ -29,7 +200,13 @@
   },
 
   "oidc": {
-    "timeout": "Timed out loading oidc info"
+    "timeout": "Timed out loading oidc info",
+    "callback": {
+      "title": "Authenticating...",
+      "message": "Please wait while we complete your sign-in.",
+      "info": "This should only take a moment",
+      "failed": "Authentication failed. Redirecting to login..."
+    }
   },
 
   "recently-downloaded": {
@@ -56,6 +233,8 @@
   "login": {
     "application-name": "{{application.name}}",
     "sign-in": "Sign in",
+    "back-to-sign-in": "Back to Sign in",
+    "placeholder-reset": "Enter your new password",
     "register": "Register",
     "username": "{{shared.username}}",
     "password": "{{shared.password}}",
@@ -73,6 +252,8 @@
   },
 
   "dashboard": {
+    "cancel": "{{common.cancel}}",
+    "set-filter": "set-filter",
     "no-content": {
       "title": "No content found",
       "p": "Add content to get started"
@@ -160,48 +341,8 @@
   },
 
   "page": {
+    "search": "Search",
     "download-dialog": {
-      "general": "General",
-      "advanced": "Advanced",
-      "directory": "Download directory",
-      "start-now": "Start download immediately",
-      "extra-metadata": {
-        "title": "Extra metadata",
-        "tl-lang": {
-          "title": "Language",
-          "tooltip": ""
-        },
-        "scanlation_group": {
-          "title": "Scanlation group",
-          "tooltip": ""
-        },
-        "download_one_shot": {
-          "title": "Download one shots",
-          "tooltip": ""
-        },
-        "include_cover": {
-          "title": "Include cover",
-          "tooltip": "Adds a cover image, can be nice to turn off for webtoons"
-        },
-        "update_cover": {
-          "title": "Update cover",
-          "tooltip": "Checks if the currently downloaded cover is outdated"
-        },
-        "include_not_matched_tags": {
-          "title": "Add not matched tags to comicinfo",
-          "tooltip": "Tags not configured to be a genre, will be added as tags instead"
-        },
-        "no-sub-dir": {
-          "title": "Download into parent",
-          "tooltip": "Content will be copied in your selected dir, instead of creating child directory first"
-        },
-        "title_override": {
-          "title": "Override title",
-          "tooltip": "Set a specific title"
-        }
-      },
-      "cancel": "{{shared.cancel}}",
-      "download": "{{shared.download}}",
       "toasts": {
         "download-success": {
           "title": "Success",
@@ -218,25 +359,6 @@
       "add-as-sub": "Add as a subscription",
       "sub-header": "Subscribe to: {{name}}"
     },
-    "subscription-dialog": {
-      "general": "General",
-      "metadata": "Extra",
-      "title": "Title",
-      "directory": "{{page.download-dialog.directory}}",
-      "refresh-frequency": "Refresh frequency",
-      "cancel": "{{shared.cancel}}",
-      "subscribe": "Subscribe",
-      "toasts": {
-        "success": {
-          "title": "Success",
-          "summary": "Added {{name}} as a subscription"
-        }
-      }
-    },
-
-    "query":"Query",
-    "directory": "Directory",
-    "search": "Search",
     "toasts": {
       "search-success": {
         "title": "Search completed",
@@ -253,100 +375,28 @@
     }
   },
 
+  "search-form": {
+    "search-query-label": "Search Query",
+    "search-query-placeholder": "Enter your search query...",
+    "search-filters-title": "Search Filters",
+    "select-placeholder": "Select {{ title }}",
+    "button-reset": "Reset",
+    "button-search": "Search",
+    "button-searching": "Searching..."
+  },
+
   "settings": {
     "settings": "Settings",
     "pages": {
+      "title": "Pages",
       "icon": "Icon",
       "name": "Name",
-      "actions": {
-        "label": "Actions",
-        "edit": "Edit page",
-        "delete": "Delete page",
-        "new": "New page"
+      "header": {
+        "icon": "Icon",
+        "title": "Title",
+        "actions": "Actions"
       },
-      "wizard": {
-        "directories": {
-          "header": "Directories",
-          "explanation": {
-            "legend": "Information",
-            "p1": "You must provide at least one directory for the page to download into by default, if you provide more than one a dropdown menu with all options will be made available on the page.",
-            "p2": "Each page will also have a directory picker, this will open a browser on the root directory as configured in",
-            "link": "settings",
-            "p3": ", if you wish to use a different root directory to open up in, you may configure so here. ",
-            "p4": "If a directory has been selected with the picker, the content will be download into there instead."
-          },
-          "custom-root-dir": "Custom root directory",
-          "download-dirs": "Download directories",
-          "add": "{{shared.add}}",
-          "next": "{{shared.next}}",
-          "back": "{{shared.back}}"
-        },
-        "general": {
-          "header": "General",
-          "explanation": {
-            "legend": "Information",
-            "p1": "Pages form the central way to search and download content with Media-Provider, each page will be a tab in the navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which things you can filter while downloading. For more information see the",
-            "link": "wiki",
-            "p2": "A page must have a title, at least one provider, and may have an icon. The list of names for the icons can be found",
-            "link-here": "here"
-          },
-          "title": "Title",
-          "icon": "Icon",
-          "providers": "Providers",
-          "next": "{{shared.next}}"
-        },
-        "modifiers": {
-          "header": "Modifiers",
-          "explanation": {
-            "legend": "Information",
-            "p1": "Modifiers are an import part of the search experience, you can configure them to help you narrow down results, apart from name. Each provider has different modifiers it can use to narrow down your search. See the ",
-            "link": "wiki",
-            "p2": "for more information. Read the wiki carefully to ensure you use the correct keys for the modifiers.",
-            "p3": "Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search, while the display name is what will be shown on your screen."
-          },
-          "kinds": {
-            "legend": "Kinds",
-            "dropdown": {
-              "legend": "Dropdown",
-              "desc": "The dropdown modifier always you to select just one value from the list, by default no item is selected."
-            },
-            "multi-select": {
-              "legend": "Multi Select",
-              "desc": "Like the name suggests, the multi select modifier always you to select as many of the values as you want."
-            }
-          },
-          "add-new": "Add new Modifier",
-          "add-new-modifier-value": "Add new option",
-          "title": "Title",
-          "key": "Key",
-          "value": "Display Name",
-          "default": "Default",
-          "check-wiki": "Check wiki!",
-          "next": "{{shared.next}}",
-          "back": "{{shared.back}}",
-          "modifier-needs": {
-            "title": "Not adding new modifier",
-            "summary": "A modifier needs a title, key, and at least one value"
-          }
-        },
-        "save": {
-          "header": "Save",
-          "legend": "Page details",
-          "legend-modifiers": "Modifiers",
-          "title": "Title:",
-          "custom-root-dir": "Custom Root Directory",
-          "dirs": "Directories",
-          "providers": "Providers",
-          "key": "Key:",
-          "values": "Number of Values:",
-          "back": "{{shared.back}}",
-          "save": "Save"
-        },
-        "confirm-delete-modifier": "Are you sure you want to delete {{name}}?",
-        "confirm-delete-modifier-value": "Are you sure you want to delete {{name}} > {{key}}?",
-        "confirm-save": "Are you sure you want to save?"
-      },
-      "confirm-delete": "Are you sure you want to remove page > {{title}}?",
+      "confirm-delete": "Are you sure you want to remove page: {{title}}?",
       "toasts": {
         "delete": {
           "success": {
@@ -405,65 +455,28 @@
       }
     },
     "preferences": {
-      "dynasty-genres": {
-        "label": "Tags to save as genre",
-        "header": "Tags to Genre mapper",
-        "explanation": "The following tags will be added as a genre when downloading from Dynasty or Bato, add or remove as wanted.",
-        "add-new": "Add new genre",
-        "filter": "{{shared.filter}}",
-        "empty": "No genres have been configured yet."
-      },
-      "tags-blacklist": {
-        "label": "Tags blacklist",
-        "header": "Tags blacklist",
-        "explanation": {
-          "p1": "Any tags configured here will ",
-          "not": "NOT",
-          "p2": " be used as either a Genre or Tag. Check documentation for how matching happens."
-        },
-        "new": "Add new tag",
-        "filter": "{{shared.filter}}",
-        "empty": "No tags have been configured yet."
-      },
-      "tags-whitelist": {
-        "label": "Tags whitelist",
-        "header": "Tags whitelist",
-        "explanation": {
-          "p1": "Any tags configured here will be used as tag, if it's not in the blacklist or configured to be used as a genre. Check documentation for how matching happens."
-        },
-        "new": "Add new tag",
-        "filter": "{{shared.filter}}",
-        "empty": "No tags have been configured yet."
-      },
-      "age-rating-mappings": {
-        "label": "Age ratings mappings",
-        "header": "Age rating mappings",
-        "explanation": {
-          "p1": "Configure which tags and/or genre's will be used to determine the downloaded content's AgeRating.",
-          "p2": "If several are present, the highest will be used."
-        },
-        "new": "Add new",
-        "filter": "{{shared.filter}}",
-        "empty": "No mappings have been configured"
-      },
-      "tags-mappings": {
-        "label": "Tag mappings",
-        "header": "Tag mappings",
-        "explanation": {
-          "p1": "Configure how tags are transformed ",
-          "before": "before",
-          "p2": " being processed by anything else."
-        },
-        "new": "Add new",
-        "filter": "{{shared.filter}}",
-        "empty": "No mappings have been configured"
-      },
+      "title": "Preferences",
+      "general-tab": "General",
+      "mappings-tab": "Mappings",
+
+      "tags-to-genre-label": "Tags to save as genre",
+      "tags-to-genre-tooltip": "The following tags will be added as a genre when downloading from Dynasty or Bato, add or remove as wanted.",
+      "tags-blacklist-label": "Tags blacklist",
+      "tags-blacklist-tooltip": "Any tags configured here will not be used as either a Genre or Tag. Check documentation for how matching happens.",
+      "tags-whitelist-label": "Tags whitelist",
+      "tags-whitelist-tooltip": "Any tags configured here will be used as tag, if it's not in the blacklist or configured to be used as a genre. Check documentation for how matching happens.",
+      "age-rating-mappings-label": "Age Ratings Mappings",
+      "age-rating-mappings-tooltip": "Configure which tags and/or genre's will be used to determine the downloaded content's AgeRating. If several are present, the highest will be used.",
+      "tags-mappings-label": "Tags Mappings",
+      "tags-mappings-tooltip": "Configure how tags are transformed before being processed by anything else.",
       "sub-refresh": {
         "label": "Download subscriptions at",
-        "tooltip": "This is the hour"
+        "tooltip": "The hour at which subscriptions should run"
       },
-      "empty-download-notification": "Notification when a subscription downloads 0 items",
-      "convertToWebp": "Convert images to webp before downloading (pasloe)",
+      "logEmptyDownloads-label": "Empty downloads notifications",
+      "logEmptyDownloads-tooltip": "Get a notification when a subscription downloads 0 items",
+      "convertToWebp-label": "Webp conversion",
+      "convertToWebp-tooltip": "Convert images to webp before downloading (pasloe)",
       "cover-fallback-method": "Cover to use as fallback",
       "configure": "Configure",
       "save": "Save",
@@ -485,7 +498,7 @@
       }
     },
     "server": {
-      "general": "General",
+      "title": "Server",
       "root-dir": "Root directory",
       "base-url": "Base Url",
       "cache": {
@@ -545,6 +558,7 @@
       }
     },
     "users": {
+      "title": "Users",
       "name": "Name",
       "actions": {
         "label": "Actions",
@@ -635,16 +649,6 @@
   },
 
   "subscriptions": {
-    "dialog": {
-      "general": "General",
-      "metadata": "Extra",
-      "header": "Edit subscription",
-      "title": "Title",
-      "content-id": "Content Id",
-      "content-dir": "Content Dir",
-      "cancel": "{{shared.cancel}}",
-      "save": "{{shared.save}}"
-    },
     "title": "Title",
     "last": "Last ran",
     "next-exec": "Next run",
@@ -693,6 +697,16 @@
         },
         "error": {
           "title": "Failed to update {{name}}",
+          "summary": "{{msg}}"
+        }
+      },
+      "new": {
+        "success": {
+          "title": "Created subscription on {{name}}",
+          "summary": ""
+        },
+        "error": {
+          "title": "Failed to subscribe to {{name}}",
           "summary": "{{msg}}"
         }
       }

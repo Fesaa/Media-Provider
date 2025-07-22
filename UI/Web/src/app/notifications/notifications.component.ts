@@ -1,44 +1,40 @@
-import {Component, OnInit} from '@angular/core';
-import {TableModule} from "primeng/table";
+import {Component, computed, inject, OnInit, signal} from '@angular/core';
 import {NotificationService} from "../_services/notification.service";
 import {GroupWeight, Notification} from "../_models/notifications";
-import {Tag} from "primeng/tag";
-import {Button} from "primeng/button";
-import {Tooltip} from "primeng/tooltip";
 import {ToastService} from "../_services/toast.service";
-import {Dialog} from "primeng/dialog";
-import {Card} from "primeng/card";
-import {DialogService} from "../_services/dialog.service";
-import {SortedList} from '../shared/data-structures/sorted-list';
-import {Select} from "primeng/select";
 import {FormsModule} from "@angular/forms";
 import {NavService} from "../_services/nav.service";
-import {Checkbox} from "primeng/checkbox";
-import {TranslocoDirective} from "@jsverse/transloco";
+import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
+import {TableComponent} from "../shared/_component/table/table.component";
+import {BadgeComponent} from "../shared/_component/badge/badge.component";
+import {ModalService} from "../_services/modal.service";
+import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {NotificationInfoModalComponent} from "./_components/notification-info-modal/notification-info-modal.component";
+import {DefaultModalOptions} from "../_models/default-modal-options";
 
 @Component({
   selector: 'app-notifications',
   imports: [
-    TableModule,
-    Tag,
-    Button,
-    Tooltip,
-    Dialog,
-    Card,
-    Select,
     FormsModule,
-    Checkbox,
     TranslocoDirective,
     UtcToLocalTimePipe,
+    TableComponent,
+    BadgeComponent,
+    NgbTooltip,
   ],
   templateUrl: './notifications.component.html',
-  styleUrl: './notifications.component.css'
+  styleUrl: './notifications.component.scss'
 })
 export class NotificationsComponent implements OnInit {
 
-  notifications: SortedList<Notification> = new SortedList<Notification>(
-    (n1: Notification, n2: Notification) => {
+  private readonly modalService = inject(ModalService);
+
+  notifications = signal<Notification[]>([]);
+
+  sortedNotifications = computed(() => {
+    const notifications = this.notifications();
+    return notifications.sort((n1: Notification, n2: Notification) => {
       const d1 = new Date(n1.CreatedAt)
       const d2 = new Date(n2.CreatedAt);
 
@@ -47,14 +43,15 @@ export class NotificationsComponent implements OnInit {
       }
 
       return GroupWeight(n2.group) - GroupWeight(n1.group);
-    }
-  );
+    });
+  });
 
   infoVisibility: {[key: number]: boolean} = {};
   selectedNotifications: number[] = [];
   allCheck: boolean = false;
 
-  timeAgoOptions = [{
+  timeAgoOptions = [
+    {
     label: 'Last 24 hours',
     value: 1
   }, {
@@ -72,7 +69,6 @@ export class NotificationsComponent implements OnInit {
   constructor(
     private notificationService: NotificationService,
     private toastService: ToastService,
-    private dialogService: DialogService,
     private navService: NavService,
   ) {
   }
@@ -84,9 +80,17 @@ export class NotificationsComponent implements OnInit {
 
   toggleAll() {
     if (this.allCheck) {
-      this.selectedNotifications = this.notifications.items().map(n => n.ID)
+      this.selectedNotifications = this.notifications().map(n => n.ID)
     } else {
       this.selectedNotifications = []
+    }
+  }
+
+  toggleSelect(id: number) {
+    if (this.selectedNotifications.indexOf(id) === -1) {
+      this.selectedNotifications.push(id);
+    } else {
+      this.selectedNotifications = this.selectedNotifications.filter(i => i !== id);
     }
   }
 
@@ -101,17 +105,20 @@ export class NotificationsComponent implements OnInit {
     })
   }
 
-  show(id: number) {
-    this.infoVisibility = {} // close others
-    this.infoVisibility[id] = true;
+  show(n: Notification) {
+    const [_, component] = this.modalService.open(NotificationInfoModalComponent, DefaultModalOptions);
+    component.notification.set(n);
   }
 
   markRead(notification: Notification) {
     this.notificationService.markAsRead(notification.ID).subscribe({
       next: () => {
-        this.notifications.removeFunc((n: Notification) => n.ID == notification.ID);
-        notification.read = true;
-        this.notifications.add(notification);
+        this.notifications.update(notifications => notifications.map(n => {
+          if (n.ID !== notification.ID) return n;
+
+          n.read = true;
+          return n;
+        }));
       },
       error: err => {
         this.toastService.genericError(err.error.message);
@@ -122,9 +129,12 @@ export class NotificationsComponent implements OnInit {
   markUnRead(notification: Notification) {
     this.notificationService.markAsUnread(notification.ID).subscribe({
       next: () => {
-        this.notifications.removeFunc((n: Notification) => n.ID == notification.ID);
-        notification.read = false;
-        this.notifications.add(notification);
+        this.notifications.update(notifications => notifications.map(n => {
+          if (n.ID !== notification.ID) return n;
+
+          n.read = false;
+          return n;
+        }));
       },
       error: err => {
         this.toastService.genericError(err.error.message);
@@ -135,7 +145,7 @@ export class NotificationsComponent implements OnInit {
   async readSelected() {
     // Filter out read notifications
     this.selectedNotifications = this.selectedNotifications.filter(n => {
-      const not = this.notifications.getFunc((n2: Notification) => n2.ID === n)
+      const not = this.notifications().find(n => n.ID === n.ID);
       return not && !not.read
     })
 
@@ -144,15 +154,16 @@ export class NotificationsComponent implements OnInit {
       return;
     }
 
-    if (!await this.dialogService.openDialog("notifications.confirm-read-many",
-      {amount: this.selectedNotifications.length})) {
+    if (!await this.modalService.confirm({
+      question: translate('notifications.confirm-read-many', {amount: this.selectedNotifications.length})
+    })) {
       return;
     }
 
     this.notificationService.readMany(this.selectedNotifications).subscribe({
       next: () => {
         this.toastService.successLoco("notifications.toasts.read-many-success", {amount: this.selectedNotifications.length})
-        this.notifications.set(this.notifications.items().map(n => {
+        this.notifications.set(this.notifications().map(n => {
           if (this.selectedNotifications.includes(n.ID)) {
             n.read = true;
           }
@@ -172,15 +183,16 @@ export class NotificationsComponent implements OnInit {
       return;
     }
 
-    if (!await this.dialogService.openDialog("notifications.confirm-delete-many",
-      {amount: this.selectedNotifications.length})) {
+    if (!await this.modalService.confirm({
+      question: translate('notifications.confirm-delete-many', {amount: this.selectedNotifications.length})
+    })) {
       return;
     }
 
     this.notificationService.deleteMany(this.selectedNotifications).subscribe({
       next: () => {
         this.toastService.successLoco("notifications.toasts.delete-success", {amount: this.selectedNotifications.length})
-        this.notifications.set(this.notifications.items().
+        this.notifications.set(this.notifications().
         filter(n => !this.selectedNotifications.includes(n.ID)))
         this.selectedNotifications = [];
       },
@@ -191,13 +203,15 @@ export class NotificationsComponent implements OnInit {
   }
 
   async delete(notification: Notification) {
-    if (!await this.dialogService.openDialog("notifications.confirm-delete", {title: notification.title})) {
+    if (!await this.modalService.confirm({
+      question: translate('notifications.confirm-delete', {title: notification.title})
+    })) {
       return;
     }
 
     this.notificationService.deleteNotification(notification.ID).subscribe({
       next: () => {
-        this.notifications.removeFunc((n: Notification) => n.ID == notification.ID);
+        this.notifications.update(notifications => notifications.filter(n => n.ID !== notification.ID))
       },
       error: err => {
         this.toastService.genericError(err.error.message);
@@ -209,6 +223,10 @@ export class NotificationsComponent implements OnInit {
     let body = notification.body;
     body = body ? body.replace(/\n/g, '<br>') : '';
     return body;
+  }
+
+  trackBy(idx: number, notification: Notification): string {
+    return `${notification.ID}`
   }
 
 }
