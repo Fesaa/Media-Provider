@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/Fesaa/Media-Provider/db"
-	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -28,7 +28,7 @@ func RegisterPreferencesRoutes(pr preferencesRoute) {
 }
 
 func (pr *preferencesRoute) Get(ctx *fiber.Ctx) error {
-	pref, err := pr.DB.Preferences.GetComplete()
+	pref, err := pr.Pref.GetDto()
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to get preferences")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -39,7 +39,7 @@ func (pr *preferencesRoute) Get(ctx *fiber.Ctx) error {
 }
 
 func (pr *preferencesRoute) Update(ctx *fiber.Ctx) error {
-	var pref models.Preference
+	var pref payload.PreferencesDto
 	if err := pr.Val.ValidateCtx(ctx, &pref); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse preferences")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
