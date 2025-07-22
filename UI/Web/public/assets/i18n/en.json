@@ -233,6 +233,8 @@
   "login": {
     "application-name": "{{application.name}}",
     "sign-in": "Sign in",
+    "back-to-sign-in": "Back to Sign in",
+    "placeholder-reset": "Enter your new password",
     "register": "Register",
     "username": "{{shared.username}}",
     "password": "{{shared.password}}",

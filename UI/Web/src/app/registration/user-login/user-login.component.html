@@ -1,51 +1,91 @@
 <ng-container *transloco="let t; prefix: 'login'">
   @if (isLoaded()) {
-    <main class="login-split">
-      <section class="login-split__visual">
-        <div class="login-split__branding">
-          <h1 class="login-split__app">{{ t('application-name') }}</h1>
-          <p class="login-split__tagline">{{ t('welcome-tagline') }}</p>
-          @if (oidcService.inUse()) {
-            <button
-              type="button"
-              (click)="oidcService.login()"
-              class="login-split__oidc-btn"
-            >
-              {{ t('sign-in-with-oidc') }}
-            </button>
-          }
-        </div>
-      </section>
-
-      @if (showPasswordLogin()) {
-        <section class="login-split__form">
-          <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-form">
-            <h2 class="login-form__title">
-              {{ !firstTimeFlow() ? t('sign-in') : t('register') | titlecase }}
-            </h2>
-
-            <div class="login-form__field">
-              <label for="username">{{ t('username') | titlecase }}</label>
-              <input id="username" type="text" formControlName="username" required />
-            </div>
-
-            <div class="login-form__field">
-              <label for="password">{{ t('password') | titlecase }}</label>
-              <input id="password" type="password" formControlName="password" required />
-            </div>
-
-            <div class="login-form__checkbox">
-              <input id="remember" type="checkbox" formControlName="remember" />
-              <label for="remember">{{ t('remember-me') }}</label>
-            </div>
-
-            <button type="submit" class="login-form__submit">
-              {{ !firstTimeFlow() ? t('sign-in') : t('register') | titlecase }}
-            </button>
-          </form>
+    <main class="container-fluid vh-100 p-0">
+      <div class="row h-100 g-0">
+        <!-- Visual Section -->
+        <section class="col-lg-6 d-flex align-items-center justify-content-center position-relative"
+                 style="background: linear-gradient(135deg, var(--primary-color-lighter), var(--background-color));">
+          <div class="text-center p-4" style="max-width: 350px;">
+            <h1 class="display-5 fw-bold mb-3" style="color: var(--primary-color); font-family: 'Spectral', serif;">
+              {{ t('application-name') }}
+            </h1>
+            <p class="lead mb-4" style="color: var(--text-secondary); font-family: 'Spectral', serif;">
+              {{ t('welcome-tagline') }}
+            </p>
+            @if (oidcService.inUse()) {
+              <div class="d-flex justify-content-center">
+                <button
+                  type="button"
+                  (click)="oidcService.login()"
+                  class="btn btn-secondary"
+                >
+                  {{ t('sign-in-with-oidc') }}
+                </button>
+              </div>
+            }
+          </div>
         </section>
-      }
 
+        @if (showPasswordLogin()) {
+          <section class="col-lg-6 d-flex align-items-center justify-content-center"
+                   style="background-color: var(--surface-card);">
+            <div class="w-100 p-4" style="max-width: 400px;">
+              <form [formGroup]="loginForm" (ngSubmit)="login()" class="needs-validation" novalidate>
+                <h2 class="h3 mb-4 fw-bold" style="color: var(--text-primary); font-family: 'Spectral', serif;">
+                  {{ !firstTimeFlow() ? t('sign-in') : t('register') | titlecase }}
+                </h2>
+
+                <div class="mb-3">
+                  <label for="username" class="form-label" style="color: var(--text-secondary); font-weight: 500;">
+                    {{ t('username') | titlecase }}
+                  </label>
+                  <input
+                    id="username"
+                    type="text"
+                    formControlName="username"
+                    required
+                    class="form-control"
+                    style="border-color: var(--surface-border); font-family: 'Spectral', serif;"
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <label for="password" class="form-label" style="color: var(--text-secondary); font-weight: 500;">
+                    {{ t('password') | titlecase }}
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    formControlName="password"
+                    required
+                    class="form-control"
+                    style="border-color: var(--surface-border); font-family: 'Spectral', serif;"
+                  />
+                </div>
+
+                <div class="mb-4">
+                  <div class="form-check">
+                    <input
+                      id="remember"
+                      type="checkbox"
+                      formControlName="remember"
+                      class="form-check-input"
+                      style="border-color: var(--surface-border);"
+                    />
+                    <label for="remember" class="form-check-label" style="color: var(--text-secondary);">
+                      {{ t('remember-me') }}
+                    </label>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                  {{ !firstTimeFlow() ? t('sign-in') : t('register') | titlecase }}
+                </button>
+              </form>
+            </div>
+          </section>
+        }
+      </div>
     </main>
   }
 </ng-container>
