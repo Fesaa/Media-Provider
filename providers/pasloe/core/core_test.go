@@ -189,7 +189,7 @@ func TestContentList_SingleChapterNoVolume(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("Expected 1 item, got %d", len(got))
 	}
-	expectedLabel := "MockSeries Chapter 1: MockSeries"
+	expectedLabel := "Chapter 1: MockSeries"
 	if got[0].Label != expectedLabel {
 		t.Errorf("Expected label %q, got %q", expectedLabel, got[0].Label)
 	}

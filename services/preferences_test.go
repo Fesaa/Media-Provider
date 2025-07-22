@@ -131,7 +131,10 @@ func Test_mergeTags(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := mergeTags(tt.args.currentTags, tt.args.newTags); !reflect.DeepEqual(got, tt.want) {
+			newTags := utils.Map(tt.args.newTags, func(t models.Tag) string {
+				return t.Name
+			})
+			if got := mergeTags(tt.args.currentTags, newTags); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("mergeTags() = %v, want %v", got, tt.want)
 			}
 		})
