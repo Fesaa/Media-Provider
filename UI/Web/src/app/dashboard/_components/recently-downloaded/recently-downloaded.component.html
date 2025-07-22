@@ -1,10 +1,4 @@
 <div class="recently-downloaded-container" *transloco="let t; prefix:'recently-downloaded'">
-  @if (downloads().length > 0) {
-    <h3 class="section-title">
-      {{ t('title') }}
-    </h3>
-  }
-
   @for (download of downloads(); track download.ID) {
     <div
       class="download-item"

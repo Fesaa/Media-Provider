@@ -80,14 +80,6 @@
     }
   }
 
-  // Empty state
-  &:empty::after {
-    content: "No recent downloads";
-    color: var(--text-secondary);
-    font-style: italic;
-    font-size: 0.95rem;
-  }
-
   // Responsive design
   @media (max-width: 768px) {
     padding-top: 2rem;

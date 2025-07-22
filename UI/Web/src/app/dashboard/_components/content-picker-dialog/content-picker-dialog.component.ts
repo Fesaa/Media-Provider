@@ -1,15 +1,18 @@
-import {ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, input, model, OnInit, signal} from '@angular/core';
 import {InfoStat} from '../../../_models/stats';
 import {ContentService} from '../../../_services/content.service';
 import {ListContentData} from '../../../_models/messages';
 import {ToastService} from '../../../_services/toast.service';
 import {TranslocoDirective} from '@jsverse/transloco';
 import {NgbActiveModal} from "@ng-bootstrap/ng-bootstrap";
+import {LoadingSpinnerComponent} from "../../../shared/_component/loading-spinner/loading-spinner.component";
+import {NgTemplateOutlet} from "@angular/common";
+import {BadgeComponent} from "../../../shared/_component/badge/badge.component";
 
 @Component({
   selector: 'app-content-picker-dialog',
   standalone: true,
-  imports: [TranslocoDirective],
+  imports: [TranslocoDirective, LoadingSpinnerComponent, NgTemplateOutlet, BadgeComponent],
   templateUrl: './content-picker-dialog.component.html',
   styleUrls: ['./content-picker-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,21 +23,18 @@ export class ContentPickerDialogComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly modal = inject(NgbActiveModal);
 
-  info = input.required<InfoStat>();
+  info = model.required<InfoStat>();
 
   content = signal<ListContentData[]>([]);
-  selection = signal<ListContentData[]>([]);
+  selection = signal<string[]>([]);
   loading = signal(true);
-
-  // Derived state for selection count (example of computed usage)
-  selectionCount = computed(() => this.selection().length);
 
   ngOnInit(): void {
     this.loading.set(true);
     this.contentService.listContent(this.info().provider, this.info().id).subscribe({
       next: contents => {
         this.content.set(contents);
-        this.selection.set(this.flatten(contents));
+        this.selection.set(this.getAllSubContentIds(contents, true));
         this.loading.set(false);
       },
       error: err => {
@@ -44,12 +44,63 @@ export class ContentPickerDialogComponent implements OnInit {
     });
   }
 
+  isSelected(lcd: ListContentData): boolean {
+    if (lcd.subContentId) {
+      return this.selection().includes(lcd.subContentId);
+    }
+
+    return lcd.children.filter(item => this.isSelected(item)).length === lcd.children.length;
+  }
+
   unselectAll(): void {
     this.selection.set([]);
   }
 
   selectAll(): void {
-    this.selection.set(this.flatten(this.content()));
+    this.selection.set(this.getAllSubContentIds(this.content()));
+  }
+
+  /**
+   * Currently assumes only one layer of children
+   * @param lcd
+   */
+  toggle(lcd: ListContentData) {
+    if (lcd.subContentId) {
+      const id = lcd.subContentId;
+
+      this.selection.update(x => {
+        if (x.includes(id)) {
+          return x.filter(item => item !== id);
+        }
+
+        return [...x, id];
+      });
+      return;
+    }
+
+    if (!lcd.children) return;
+
+    const selected = this.isSelected(lcd);
+    let selection = [...this.selection()];
+
+    const toggleChildren = (children: ListContentData[]) => {
+      for (const child of children) {
+        if (child.subContentId) {
+          if (selected) {
+            selection = selection.filter(x => x !== child.subContentId);
+          } else if (!selection.includes(child.subContentId)) {
+            selection.push(child.subContentId);
+          }
+        }
+
+        if (child.children) {
+          toggleChildren(child.children);
+        }
+      }
+    };
+
+    toggleChildren(lcd.children);
+    this.selection.set(selection);
   }
 
   reverse(): void {
@@ -61,7 +112,7 @@ export class ContentPickerDialogComponent implements OnInit {
   }
 
   submit(): void {
-    const ids = this.getAllSubContentIds(this.selection());
+    const ids = this.selection();
 
     if (ids.length === 0) {
       this.toastService.warningLoco('dashboard.content-picker.toasts.no-changes');
@@ -84,55 +135,18 @@ export class ContentPickerDialogComponent implements OnInit {
     });
   }
 
-  private flatten(list: ListContentData[]): ListContentData[] {
-    const result: ListContentData[] = [];
-
-    function isFullySelected(data: ListContentData): boolean {
-      if (data.subContentId && !data.selected) {
-        return false;
-      }
-      if (data.subContentId && data.selected) {
-        return true;
-      }
-      if (!data.children?.length) {
-        return false;
-      }
-      let allSelected = true;
-      let atLeastOne = false;
-      for (const child of data.children) {
-        if (isFullySelected(child)) {
-          atLeastOne = true;
-        } else {
-          allSelected = false;
-        }
-      }
-      data.partialSelected = atLeastOne && !allSelected;
-      return allSelected || atLeastOne;
-    }
-
-    function traverse(items: ListContentData[]): void {
-      for (const item of items) {
-        if (isFullySelected(item)) {
-          result.push(item);
-        }
-        if (item.children?.length) {
-          traverse(item.children);
-        }
-      }
-    }
-
-    traverse(list);
-    return result;
-  }
-
-  private getAllSubContentIds(list: ListContentData[]): string[] {
+  private getAllSubContentIds(list: ListContentData[], requiredSelected: boolean = false): string[] {
     const result: string[] = [];
 
     function traverse(items: ListContentData[]): void {
       for (const item of items) {
         if (item.subContentId && !result.includes(item.subContentId)) {
-          result.push(item.subContentId);
+
+          if (item.selected || !requiredSelected) {
+            result.push(item.subContentId);
+          }
         }
+
         if (item.children?.length) {
           traverse(item.children);
         }
@@ -142,4 +156,12 @@ export class ContentPickerDialogComponent implements OnInit {
     traverse(list);
     return result;
   }
+
+  trackByContent(lcd: ListContentData): string {
+    if (lcd.subContentId) return lcd.subContentId;
+
+    return lcd.children.map(child => this.trackByContent(child)).join('-');
+  }
+
+  protected readonly parseInt = parseInt;
 }

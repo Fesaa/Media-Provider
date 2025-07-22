@@ -250,6 +250,8 @@
   },
 
   "dashboard": {
+    "cancel": "{{common.cancel}}",
+    "set-filter": "set-filter",
     "no-content": {
       "title": "No content found",
       "p": "Add content to get started"

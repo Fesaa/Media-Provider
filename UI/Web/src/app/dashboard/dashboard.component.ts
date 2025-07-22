@@ -20,6 +20,8 @@ import {LoadingSpinnerComponent} from "../shared/_component/loading-spinner/load
 import {ModalService} from "../_services/modal.service";
 import {BadgeComponent} from "../shared/_component/badge/badge.component";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
+import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
+import {DefaultModalOptions} from "../_models/default-modal-options";
 
 @Component({
   selector: 'app-dashboard',
@@ -55,7 +57,6 @@ export class DashboardComponent implements OnInit {
     return b.contentState - a.contentState;
   }));
 
-  displayContentPicker: { [key: string]: boolean } = {};
   protected readonly ContentState = ContentState;
 
   constructor(private navService: NavService,
@@ -192,8 +193,8 @@ export class DashboardComponent implements OnInit {
   }
 
   pickContent(info: InfoStat) {
-    this.displayContentPicker = {} // Close others
-    this.displayContentPicker[info.id] = true;
+    const [_, component] = this.modalService.open(ContentPickerDialogComponent, DefaultModalOptions);
+    component.info.set(info);
   }
 
   itemTrackBy(idx: number, item: InfoStat): string {

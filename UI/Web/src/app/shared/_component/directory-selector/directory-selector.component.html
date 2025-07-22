@@ -85,7 +85,7 @@
             type="button"
             class="btn btn-outline-primary btn-sm px-3"
             (click)="createNew()"
-            [disabled]="!newDirName?.trim()"
+            [disabled]="!newDirName.trim()"
             [attr.aria-label]="'Create new directory: ' + newDirName"
           >
             <i class="fa fa-plus"></i>
