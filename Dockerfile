@@ -1,4 +1,4 @@
-FROM node:18 AS npm-stage
+FROM node:24 AS npm-stage
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY UI/Web ./
 RUN npm run build
 
 
-FROM golang:1.24.1 AS go-stage
+FROM golang:1.24.5 AS go-stage
 
 WORKDIR /app
 
