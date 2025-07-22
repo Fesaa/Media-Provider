@@ -126,7 +126,6 @@ export class AccountService {
         return;
       }
 
-      // TODO: This should be changed to refresh, with a refresh token. I think
       this.setCurrentUser({
         ...this.currentUser,
         name: dto.name,

@@ -4,7 +4,7 @@ import {AccountService} from "./_services/account.service";
 import {NavHeaderComponent} from "./nav-header/nav-header.component";
 import {Title} from "@angular/platform-browser";
 import {EventType, SignalRService} from "./_services/signal-r.service";
-import {Notification} from "./_models/notifications";
+import {Notification, NotificationColour} from "./_models/notifications";
 import {OidcEvents, OidcService} from "./_services/oidc.service";
 import {NavService} from "./_services/nav.service";
 import {ToastrService} from "ngx-toastr";
@@ -60,8 +60,21 @@ export class AppComponent implements OnInit {
       switch (event.type) {
         case EventType.Notification:
           const notification = event.data as Notification;
-          // TODO: Correct level
-          this.toastr.info(notification.title, notification.summary);
+
+          switch (notification.colour) {
+            case NotificationColour.Primary:
+              this.toastr.success(notification.title, notification.summary);
+              break;
+            case NotificationColour.Secondary:
+              this.toastr.info(notification.title, notification.summary);
+              break;
+            case NotificationColour.Error:
+              this.toastr.error(notification.title, notification.summary);
+              break;
+            case NotificationColour.Warn:
+              this.toastr.warning(notification.title, notification.summary);
+              break;
+          }
       }
     });
 
