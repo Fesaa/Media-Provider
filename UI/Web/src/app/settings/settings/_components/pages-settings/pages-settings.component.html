@@ -1,8 +1,8 @@
-@if (pages.length > 0 && user) {
+@if (pages().length > 0 && user()) {
   <div class="mt-4" *transloco="let t; prefix: 'settings.pages'">
-    @if (hasPermission(user, Perm.WritePage)) {
+    @if (hasPermission(user()!, Perm.WritePage)) {
       <div class="d-flex justify-content-end mb-3">
-        <button type="button" class="btn btn-primary" routerLink="/settings/wizard/page">
+        <button type="button" class="btn btn-primary" (click)="edit(null)">
           <i class="fa fa-plus"></i>
         </button>
       </div>
@@ -13,7 +13,7 @@
       [pagination]="false"
       [dragAble]="true"
       (onDrop)="drop($event)"
-      [items]="pages"
+      [items]="pages()"
       [trackByIdFunc]="trackBy"
     >
       <ng-template #header>
@@ -45,18 +45,17 @@
         </td>
 
         <td class="table-cell d-flex align-items-center gap-2 justify-end">
-          @if (hasPermission(user, Perm.WritePage)) {
+          @if (hasPermission(user()!, Perm.WritePage)) {
             <button
               type="button"
               class="btn btn-small"
-              routerLink="/settings/wizard/page"
-              [queryParams]="{ pageId: item.ID }"
+              (click)="edit(item)"
             >
               <i class="fa fa-edit"></i>
             </button>
           }
 
-          @if (hasPermission(user, Perm.DeletePage)) {
+          @if (hasPermission(user()!, Perm.DeletePage)) {
             <button
               type="button"
               class="btn btn-small text-danger"

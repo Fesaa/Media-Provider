@@ -7,17 +7,17 @@
 
       @if (dragAble()) {
         <tbody cdkDropList [cdkDropListData]="paginatedItems()" (cdkDropListDropped)="onDrop.emit($event)" class="table-body" id="drag-and-drop-table">
-          @for (item of paginatedItems(); track trackByIdFunc()($index, item); let index = $index) {
+          @for (item of paginatedItems(); track trackByIdFunc()($index, item); let index = $index; let last = $last; let first = $first) {
             <tr class="table-row" cdkDrag [cdkDragData]="item">
-              <ng-container [ngTemplateOutlet]="cellTemplate" [ngTemplateOutletContext]="{ $implicit: item, idx: index }"></ng-container>
+              <ng-container [ngTemplateOutlet]="cellTemplate" [ngTemplateOutletContext]="{ $implicit: item, idx: index, last: last, first: first }"></ng-container>
             </tr>
           }
         </tbody>
       } @else {
         <tbody class="table-body">
-          @for (item of paginatedItems(); track trackByIdFunc()($index, item); let index = $index) {
+          @for (item of paginatedItems(); track trackByIdFunc()($index, item); let index = $index; let last = $last; let first = $first) {
             <tr class="table-row" [class.no-hover]="noHoverColour()">
-              <ng-container [ngTemplateOutlet]="cellTemplate" [ngTemplateOutletContext]="{ $implicit: item, idx: index }"></ng-container>
+              <ng-container [ngTemplateOutlet]="cellTemplate" [ngTemplateOutletContext]="{ $implicit: item, idx: index, last: last, first: first }"></ng-container>
             </tr>
           }
         </tbody>

@@ -122,7 +122,7 @@ export class DownloadModalComponent implements OnInit {
   }
 
   async pickDirectory() {
-    const dir = await this.modalService.getDirectory(this.page().custom_root_dir, {
+    const dir = await this.modalService.getDirectory(this.page().customRootDir, {
       copy: true,
       filter: true,
       create: true,

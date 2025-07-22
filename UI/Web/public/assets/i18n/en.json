@@ -130,6 +130,48 @@
     "perm-label": "Permissions"
   },
 
+  "edit-page-modal": {
+    "title": "Edit page {{name}}",
+    "cancel": "{{common.cancel}}",
+    "save": "{{common.save}}",
+    "close": "{{common.close}}",
+    "general": "General",
+    "modifiers": "Modifiers",
+    "wiki": "Pages form the central way to search and download content with Media-Provider, each page will be a tab in the navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which things you can filter while downloading. For more information see the <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://fesaa.github.io/Media-Provider/\">wiki</a>. ",
+    "wiki-modifiers": "Modifiers are an import part of the search experience, you can configure them to help you narrow down results, apart from name. Each provider has different modifiers it can use to narrow down your search. See the wiki for more information. Read the <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://fesaa.github.io/Media-Provider/\">wiki</a> carefully to ensure you use the correct keys for the modifiers. Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search, while the display name is what will be shown on your screen.",
+
+    "title-label": "Title",
+    "title-tooltip": "The title displayed in the navigation bar",
+    "icon-label": "Icon",
+    "icon-tooltip": "Optional icon displayed in the navigation bar",
+    "custom-root-dir-label": "Root directory",
+    "custom-root-dir-tooltip": "Base directory to start the dir picker in",
+    "dirs-label": "Directories",
+    "dirs-tooltip": "Optional list of directories to pick from",
+
+    "delete-modifier": "Are you sure you want to delete {{title}}?"
+  },
+
+  "edit-page-modifier-modal": {
+    "title": "Edit modifier {{title}}",
+    "cancel": "{{common.cancel}}",
+    "save": "{{common.save}}",
+    "close": "{{common.close}}",
+
+    "title-label": "Title",
+    "title-tooltip": "The name of the modifier, displayed in the page form",
+    "key-label": "Key",
+    "key-tooltip": "The key as defined on the wiki, if this is incorrect the modifier will not do anything",
+    "type-label": "Type",
+    "type-tooltip": "Which input type to use",
+    "default": "Default",
+    "values-label": "Values"
+  },
+  "modifier-type-pipe": {
+    "multi": "Multi select",
+    "dropdown": "Dropdown"
+  },
+
   "shared": {
     "username": "username",
     "password": "password",
@@ -300,10 +342,6 @@
       "add-as-sub": "Add as a subscription",
       "sub-header": "Subscribe to: {{name}}"
     },
-
-    "query":"Query",
-    "directory": "Directory",
-    "search": "Search",
     "toasts": {
       "search-success": {
         "title": "Search completed",
@@ -340,89 +378,7 @@
         "title": "Title",
         "actions": "Actions"
       },
-      "wizard": {
-        "directories": {
-          "header": "Directories",
-          "explanation": {
-            "legend": "Information",
-            "p1": "You must provide at least one directory for the page to download into by default, if you provide more than one a dropdown menu with all options will be made available on the page.",
-            "p2": "Each page will also have a directory picker, this will open a browser on the root directory as configured in",
-            "link": "settings",
-            "p3": ", if you wish to use a different root directory to open up in, you may configure so here. ",
-            "p4": "If a directory has been selected with the picker, the content will be download into there instead."
-          },
-          "custom-root-dir": "Custom root directory",
-          "download-dirs": "Download directories",
-          "add": "{{shared.add}}",
-          "next": "{{shared.next}}",
-          "back": "{{shared.back}}"
-        },
-        "general": {
-          "header": "General",
-          "explanation": {
-            "legend": "Information",
-            "p1": "Pages form the central way to search and download content with Media-Provider, each page will be a tab in the navigation bar. And allow you to search content from at least one provider. You'll be able to adjust on which things you can filter while downloading. For more information see the",
-            "link": "wiki",
-            "p2": "A page must have a title, at least one provider, and may have an icon. The list of names for the icons can be found",
-            "link-here": "here"
-          },
-          "title": "Title",
-          "icon": "Icon",
-          "providers": "Providers",
-          "next": "{{shared.next}}"
-        },
-        "modifiers": {
-          "header": "Modifiers",
-          "explanation": {
-            "legend": "Information",
-            "p1": "Modifiers are an import part of the search experience, you can configure them to help you narrow down results, apart from name. Each provider has different modifiers it can use to narrow down your search. See the ",
-            "link": "wiki",
-            "p2": "for more information. Read the wiki carefully to ensure you use the correct keys for the modifiers.",
-            "p3": "Modifiers are always configured with a list of key-value pairs. The key is what the provider will use to search, while the display name is what will be shown on your screen."
-          },
-          "kinds": {
-            "legend": "Kinds",
-            "dropdown": {
-              "legend": "Dropdown",
-              "desc": "The dropdown modifier always you to select just one value from the list, by default no item is selected."
-            },
-            "multi-select": {
-              "legend": "Multi Select",
-              "desc": "Like the name suggests, the multi select modifier always you to select as many of the values as you want."
-            }
-          },
-          "add-new": "Add new Modifier",
-          "add-new-modifier-value": "Add new option",
-          "title": "Title",
-          "key": "Key",
-          "value": "Display Name",
-          "default": "Default",
-          "check-wiki": "Check wiki!",
-          "next": "{{shared.next}}",
-          "back": "{{shared.back}}",
-          "modifier-needs": {
-            "title": "Not adding new modifier",
-            "summary": "A modifier needs a title, key, and at least one value"
-          }
-        },
-        "save": {
-          "header": "Save",
-          "legend": "Page details",
-          "legend-modifiers": "Modifiers",
-          "title": "Title:",
-          "custom-root-dir": "Custom Root Directory",
-          "dirs": "Directories",
-          "providers": "Providers",
-          "key": "Key:",
-          "values": "Number of Values:",
-          "back": "{{shared.back}}",
-          "save": "Save"
-        },
-        "confirm-delete-modifier": "Are you sure you want to delete {{name}}?",
-        "confirm-delete-modifier-value": "Are you sure you want to delete {{name}} > {{key}}?",
-        "confirm-save": "Are you sure you want to save?"
-      },
-      "confirm-delete": "Are you sure you want to remove page > {{title}}?",
+      "confirm-delete": "Are you sure you want to remove page: {{title}}?",
       "toasts": {
         "delete": {
           "success": {

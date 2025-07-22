@@ -134,7 +134,7 @@ export class NavHeaderComponent implements OnInit {
           ID: -1,
           icon: "fa-home",
           dirs: [],
-          custom_root_dir: '',
+          customRootDir: '',
           modifiers: [],
           providers: [],
           sortValue: -100,
