@@ -24,7 +24,7 @@
         <ng-template #items let-results>
           <div class="results-grid">
             @for (res of results; track res.InfoHash) {
-              <app-search-result [dir]="getDir()" [metadata]="getDownloadMetadata(res.Provider)" [page]="page()!"
+              <app-search-result [metadata]="getDownloadMetadata(res.Provider)" [page]="page()!"
                                  [searchResult]="res" [providers]="providers()" [@fadeAnimation]></app-search-result>
             }
           </div>

@@ -4,7 +4,7 @@ import {Perm} from "../_models/user";
 @Pipe({
   name: 'permNamePipe'
 })
-export class PermNamePipePipe implements PipeTransform {
+export class PermNamePipe implements PipeTransform {
 
   transform(value: Perm): string {
     switch (value) {

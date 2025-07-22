@@ -5,7 +5,7 @@
 
       <div class="mb-3">
         @if (preferencesForm.get('subscriptionRefreshHour'); as control) {
-          <app-settings-item [control]="control" [title]="t('sub-refresh.label')">
+          <app-settings-item [control]="control" [title]="t('sub-refresh.label')" [tooltip]="t('sub-refresh.tooltip')">
             <ng-template #view>{{control.value}}</ng-template>
             <ng-template #edit>
               <input
@@ -21,43 +21,50 @@
         }
       </div>
 
-      <div class="form-check form-switch mb-3">
-        <input
-          type="checkbox"
-          class="form-check-input"
-          id="logEmptyDownloads"
-          formControlName="logEmptyDownloads"
-        />
-        <label class="form-check-label" for="logEmptyDownloads">
-          {{ t('empty-download-notification') }}
-        </label>
-      </div>
-
-      <div class="form-check form-switch mb-3">
-        <input
-          type="checkbox"
-          class="form-check-input"
-          id="convertToWebp"
-          formControlName="convertToWebp"
-        />
-        <label class="form-check-label" for="convertToWebp">
-          {{ t('convertToWebp') }}
-        </label>
+      <div class="mb-3">
+        @if (preferencesForm.get('logEmptyDownloads'); as control) {
+          <app-settings-switch [control]="control" [title]="t('logEmptyDownloads-label')" [tooltip]="t('logEmptyDownloads-tooltip')" >
+            <ng-template #switch>
+              <div class="form-switch form-check">
+                <input class="form-check-input" type="checkbox" formControlName="logEmptyDownloads">
+              </div>
+            </ng-template>
+          </app-settings-switch>
+        }
       </div>
 
       <div class="mb-3">
-        <label for="coverFallbackMethod" class="form-label">
-          {{ t('cover-fallback-method') }}
-        </label>
-        <select
-          class="form-select"
-          id="coverFallbackMethod"
-          formControlName="coverFallbackMethod"
-        >
-          @for (opt of CoverFallbackMethods; track opt.value) {
-            <option [value]="opt.value">{{ opt.label }}</option>
-          }
-        </select>
+        @if (preferencesForm.get('convertToWebp'); as control) {
+          <app-settings-switch [control]="control" [title]="t('convertToWebp-label')" [tooltip]="t('convertToWebp-tooltip')" >
+            <ng-template #switch>
+              <div class="form-switch form-check">
+                <input class="form-check-input" type="checkbox" formControlName="convertToWebp">
+              </div>
+            </ng-template>
+          </app-settings-switch>
+        }
+      </div>
+
+      <div class="mb-3">
+
+        @if (preferencesForm.get('coverFallbackMethod'); as control) {
+          <app-settings-item [control]="control" [title]="t('cover-fallback-method')">
+            <ng-template #view>{{control.value | coverFallback}}</ng-template>
+            <ng-template #edit>
+              <select
+                class="form-select"
+                id="coverFallbackMethod"
+                formControlName="coverFallbackMethod"
+              >
+                @for (opt of CoverFallbackMethods; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </ng-template>
+
+          </app-settings-item>
+        }
+
       </div>
 
       <div class="mb-3">

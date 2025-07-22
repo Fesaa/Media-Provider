@@ -51,18 +51,20 @@
     "title-label": "Title override",
     "title-tooltip": "Leave empty to use the title given by the provider",
 
+    "start-immediately-label": "Start download immediately",
+
     "extra-metadata": {
       "tl-lang": {
         "label": "Language",
-        "tooltip": ""
+        "tooltip": "Will only download chapters in the selected language"
       },
       "scanlation_group": {
         "label": "Scanlation group",
-        "tooltip": ""
+        "tooltip": "Will always fallback if no chapter of this group can be found"
       },
       "download_one_shot": {
-        "label": "Download one shots",
-        "tooltip": ""
+        "label": "Download OneShot",
+        "tooltip": "A chapter is a OneShot if it has no chapter number"
       },
       "include_cover": {
         "label": "Include cover",
@@ -73,7 +75,7 @@
         "tooltip": "Checks if the currently downloaded cover is outdated"
       },
       "include_not_matched_tags": {
-        "label": "Add not matched tags to comicinfo",
+        "label": "Add not matched tags to ComicInfo",
         "tooltip": "Tags not configured to be a genre, will be added as tags instead"
       },
       "no-sub-dir": {
@@ -112,6 +114,20 @@
     "cancel": "{{common.cancel}}",
     "confirm": "{{common.confirm}}",
     "close": "{{common.close}}"
+  },
+
+  "edit-user-modal": {
+    "title": "Edit {{name}}",
+    "new-user-title": "Invite {{name}} to your server",
+    "someone": "someone",
+    "cancel": "{{common.cancel}}",
+    "save": "{{common.save}}",
+    "close": "{{common.close}}",
+    "user-label": "Username",
+    "user-tooltip": "Changing this without the username knowing may lock them out of their account",
+    "email-label": "Email",
+    "email-tooltip": "Used to match on OIDC logins",
+    "perm-label": "Permissions"
   },
 
   "shared": {
@@ -496,10 +512,12 @@
       },
       "sub-refresh": {
         "label": "Download subscriptions at",
-        "tooltip": "This is the hour"
+        "tooltip": "The hour at which subscriptions should run"
       },
-      "empty-download-notification": "Notification when a subscription downloads 0 items",
-      "convertToWebp": "Convert images to webp before downloading (pasloe)",
+      "logEmptyDownloads-label": "Empty downloads notifications",
+      "logEmptyDownloads-tooltip": "Get a notification when a subscription downloads 0 items",
+      "convertToWebp-label": "Webp conversion",
+      "convertToWebp-tooltip": "Convert images to webp before downloading (pasloe)",
       "cover-fallback-method": "Cover to use as fallback",
       "configure": "Configure",
       "save": "Save",

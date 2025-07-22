@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject, input, model, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, model, OnInit} from '@angular/core';
 import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType, Page} from "../../../_models/page";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {NgbActiveModal, NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavOutlet} from "@ng-bootstrap/ng-bootstrap";
@@ -11,6 +11,7 @@ import {NgTemplateOutlet} from "@angular/common";
 import {DefaultValuePipe} from "../../../_pipes/default-value.pipe";
 import {ContentService} from "../../../_services/content.service";
 import {ToastService} from "../../../_services/toast.service";
+import {SettingsSwitchComponent} from "../../../shared/form/settings-switch/settings-switch.component";
 
 @Component({
   selector: 'app-download-modal',
@@ -24,7 +25,8 @@ import {ToastService} from "../../../_services/toast.service";
     SettingsItemComponent,
     ReactiveFormsModule,
     NgTemplateOutlet,
-    DefaultValuePipe
+    DefaultValuePipe,
+    SettingsSwitchComponent
   ],
   templateUrl: './download-modal.component.html',
   styleUrl: './download-modal.component.scss',
@@ -41,13 +43,10 @@ export class DownloadModalComponent implements OnInit {
   page = model.required<Page>();
   metadata = model.required<DownloadMetadata>();
 
-  get generalDef() {
-    return this.metadata().definitions.filter(d => !d.advanced);
-  }
-
-  get advancedDef() {
-   return this.metadata().definitions.filter(d => d.advanced);
-  }
+  generalDef = computed(() =>
+    this.metadata().definitions.filter(d => !d.advanced))
+  advancedDef = computed(() =>
+    this.metadata().definitions.filter(d => d.advanced))
 
   activeTab: 'general' | 'advanced' = 'general';
 

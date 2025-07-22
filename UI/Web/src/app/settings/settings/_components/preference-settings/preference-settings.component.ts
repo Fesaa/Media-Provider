@@ -8,6 +8,8 @@ import {debounceTime, distinctUntilChanged, map, switchMap} from 'rxjs';
 import {SettingsItemComponent} from "../../../../shared/form/settings-item/settings-item.component";
 import {TagBadgeComponent} from "../../../../shared/_component/tag-badge/tag-badge.component";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {CoverFallbackPipe} from "../../../../_pipes/cover-fallback.pipe";
+import {SettingsSwitchComponent} from "../../../../shared/form/settings-switch/settings-switch.component";
 
 @Component({
   selector: 'app-preference-settings',
@@ -16,7 +18,9 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
     ReactiveFormsModule,
     TranslocoDirective,
     SettingsItemComponent,
-    TagBadgeComponent
+    TagBadgeComponent,
+    CoverFallbackPipe,
+    SettingsSwitchComponent
   ],
   templateUrl: './preference-settings.component.html',
   styleUrl: './preference-settings.component.scss'
@@ -40,8 +44,8 @@ export class PreferenceSettingsComponent implements OnInit {
 
       this.preferencesForm = this.fb.group({
         subscriptionRefreshHour: [preferences.subscriptionRefreshHour, [Validators.required, Validators.min(0), Validators.max(23)]],
-        logEmptyDownloads: [preferences.logEmptyDownloads],
-        convertToWebp: [preferences.convertToWebp],
+        logEmptyDownloads: new FormControl(preferences.logEmptyDownloads),
+        convertToWebp: new FormControl(preferences.convertToWebp),
         coverFallbackMethod: [preferences.coverFallbackMethod],
         blackList: new FormControl(preferences.blackListedTags.map(t => t.name).join(',')),
         whiteList: new FormControl(preferences.whiteListedTags.map(t => t.name).join(',')),

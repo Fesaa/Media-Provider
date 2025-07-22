@@ -2,7 +2,7 @@ import {Component, computed, effect, input, output, signal} from '@angular/core'
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {CommonModule} from '@angular/common';
 import {SearchRequest} from "../../../_models/search";
-import {Modifier, ModifierType, ModifierValue, Provider} from "../../../_models/page";
+import {Modifier, ModifierType, ModifierValue} from "../../../_models/page";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {TypeaheadComponent, TypeaheadSettings} from "../../../type-ahead/typeahead.component";
 import {of} from "rxjs";
@@ -31,6 +31,7 @@ export class SearchFormComponent {
     effect(() => {
       this.setupModifierControls();
       this.setDefaultValues();
+      this.searchForm.get('query')?.setValue('');
     });
   }
 
@@ -145,5 +146,4 @@ export class SearchFormComponent {
   }
 
   trackModifier = (index: number, modifier: Modifier) => modifier.ID;
-  protected readonly Object = Object;
 }

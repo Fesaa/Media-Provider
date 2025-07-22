@@ -1,9 +1,9 @@
 @if (authUser) {
   <div *transloco="let t; prefix: 'settings.users'">
 
-    @if (hasPermission(authUser, Perm.WriteUser) && !emptyUserPresent()) {
+    @if (hasPermission(authUser, Perm.WriteUser)) {
       <div class="d-flex justify-content-end mb-3">
-        <button type="button" class="btn btn-primary">
+        <button type="button" class="btn btn-primary" (click)="edit(null)" [disabled]="emptyUserPresent()">
           <i class="fa fa-plus"></i>
         </button>
       </div>
@@ -56,7 +56,7 @@
             type="button"
             class="btn btn-small"
             [ngbTooltip]="t('actions.edit')"
-
+            (click)="edit(user)"
           >
             <i class="fa fa-user-edit"></i>
           </button>

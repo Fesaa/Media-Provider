@@ -4,7 +4,6 @@ import {DownloadMetadata, DownloadMetadataDefinition, DownloadMetadataFormType, 
 import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {ToastService} from "../../../_services/toast.service";
 import {ModalService} from "../../../_services/modal.service";
-import {ContentService} from "../../../_services/content.service";
 import {NgbActiveModal, NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavOutlet} from "@ng-bootstrap/ng-bootstrap";
 import {SettingsItemComponent} from "../../../shared/form/settings-item/settings-item.component";
 import {DefaultValuePipe} from "../../../_pipes/default-value.pipe";

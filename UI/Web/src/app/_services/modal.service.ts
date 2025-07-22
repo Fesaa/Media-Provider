@@ -1,7 +1,7 @@
 import {inject, Injectable, TemplateRef, Type} from '@angular/core';
 import {NgbModal, NgbModalOptions, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 import {DefaultModalOptions} from '../_models/default-modal-options';
-import {firstValueFrom, take} from 'rxjs';
+import {firstValueFrom} from 'rxjs';
 import {ConfirmModalComponent} from "../shared/_component/confirm-modal/confirm-modal.component";
 import {DirectorySelectorComponent} from "../shared/_component/directory-selector/directory-selector.component";
 

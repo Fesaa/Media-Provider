@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
 import {hasPermission, Perm, User, UserDto} from "../../../../_models/user";
 import {Clipboard} from "@angular/cdk/clipboard";
@@ -8,6 +8,8 @@ import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {TableComponent} from "../../../../shared/_component/table/table.component";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {ModalService} from "../../../../_services/modal.service";
+import {EditUserModalComponent} from "./_components/edit-user-modal/edit-user-modal.component";
+import {DefaultModalOptions} from "../../../../_models/default-modal-options";
 
 @Component({
   selector: 'app-user-settings',
@@ -20,7 +22,7 @@ import {ModalService} from "../../../../_services/modal.service";
   templateUrl: './user-settings.component.html',
   styleUrl: './user-settings.component.scss'
 })
-export class UserSettingsComponent {
+export class UserSettingsComponent implements OnInit {
 
   private readonly modalService = inject(ModalService);
 
@@ -39,7 +41,13 @@ export class UserSettingsComponent {
         this.authUser = user;
       }
     })
+  }
 
+  ngOnInit(): void {
+    this.loadUsers();
+  }
+
+  loadUsers() {
     this.accountService.all().subscribe({
       next: users => {
         this.users = users;
@@ -47,7 +55,7 @@ export class UserSettingsComponent {
       error: err => {
         this.toastService.genericError(err.error.message);
       }
-    })
+    });
   }
 
   copyApiKey() {
@@ -115,5 +123,18 @@ export class UserSettingsComponent {
 
   trackBy(idx: number, user: UserDto) {
     return `${user.id}`
+  }
+
+  edit(user: UserDto | null) {
+    const [modal, component] = this.modalService.open(EditUserModalComponent, DefaultModalOptions);
+    component.user.set(user ?? {
+      id: -1,
+      name: '',
+      email: '',
+      canDelete: false,
+      permissions: 0,
+    });
+
+    modal.result.then(() => this.loadUsers());
   }
 }

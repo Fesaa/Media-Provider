@@ -1,7 +1,7 @@
 import {Component, effect, inject, OnInit, signal} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {PageService} from "../_services/page.service";
-import {DownloadMetadata, Modifier, ModifierType, Page, Provider} from "../_models/page";
+import {DownloadMetadata, Page, Provider} from "../_models/page";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {SearchRequest} from "../_models/search";
 import {SearchInfo} from "../_models/Info";
@@ -34,7 +34,6 @@ import {LoadingSpinnerComponent} from "../shared/_component/loading-spinner/load
 })
 export class PageComponent implements OnInit {
 
-  private readonly modalService = inject(ModalService);
   private readonly navService = inject(NavService);
   private readonly pageService = inject(PageService);
   private readonly contentService = inject(ContentService);
@@ -50,9 +49,6 @@ export class PageComponent implements OnInit {
   showForm = signal(true);
   searchResults = signal<SearchInfo[]>([]);
 
-  searchRequest!: SearchRequest;
-  dirs: {dir: string, custom: string} = {dir: '', custom: ''};
-
   constructor() {
     effect(() => {
       const page = this.page();
@@ -66,6 +62,8 @@ export class PageComponent implements OnInit {
     this.navService.pageIndex$.subscribe(index => {
       this.pageService.getPage(index).subscribe(page => {
         this.page.set(page);
+        this.searchResults.set([]);
+        this.showForm.set(true);
       });
     })
 
@@ -101,29 +99,6 @@ export class PageComponent implements OnInit {
         this.toastService.genericError(error.error.message);
       }
     }).add(() => this.loading.set(false));
-  }
-
-  async selectCustomDir() {
-    if (!this.page()) {
-      return;
-    }
-
-    // TODO: Dir selector
-    /*const dir = await this.dialogService.openDirBrowser(this.page.custom_root_dir, {create: true,});
-    if (dir) {
-      this.dirs.custom = dir;
-    }*/
-  }
-
-  clearCustomDir() {
-    this.dirs.custom = '';
-  }
-
-  getDir() {
-    if (this.dirs.custom && this.dirs.custom !== '') {
-      return this.dirs.custom;
-    }
-    return this.dirs.dir;
   }
 
   private loadMetadata(page: Page) {

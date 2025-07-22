@@ -1,4 +1,4 @@
-import {Component, HostListener, inject, OnInit, ViewContainerRef} from '@angular/core';
+import {Component, HostListener, inject, OnInit} from '@angular/core';
 import {Router, RouterOutlet} from '@angular/router';
 import {AccountService} from "./_services/account.service";
 import {NavHeaderComponent} from "./nav-header/nav-header.component";

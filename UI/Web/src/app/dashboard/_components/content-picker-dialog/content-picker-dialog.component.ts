@@ -1,17 +1,9 @@
-import {
-  Component,
-  OnInit,
-  ChangeDetectionStrategy,
-  signal,
-  computed,
-  inject,
-  input
-} from '@angular/core';
-import { InfoStat } from '../../../_models/stats';
-import { ContentService } from '../../../_services/content.service';
-import { ListContentData } from '../../../_models/messages';
-import { ToastService } from '../../../_services/toast.service';
-import { TranslocoDirective } from '@jsverse/transloco';
+import {ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal} from '@angular/core';
+import {InfoStat} from '../../../_models/stats';
+import {ContentService} from '../../../_services/content.service';
+import {ListContentData} from '../../../_models/messages';
+import {ToastService} from '../../../_services/toast.service';
+import {TranslocoDirective} from '@jsverse/transloco';
 import {NgbActiveModal} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({

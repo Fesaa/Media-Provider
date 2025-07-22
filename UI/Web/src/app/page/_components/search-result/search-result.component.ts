@@ -33,7 +33,6 @@ export class SearchResultComponent implements OnInit{
 
   page = input.required<Page>();
   searchResult = input.required<SearchInfo>();
-  dir = input.required<string>();
   providers = input.required<Provider[]>();
   metadata = input.required<DownloadMetadata>();
 
@@ -54,7 +53,7 @@ export class SearchResultComponent implements OnInit{
       refreshFrequency: RefreshFrequency.Week,
       info: {
         title: this.searchResult().Name,
-        baseDir: this.dir(),
+        baseDir: this.page().dirs[0],
         lastCheck: null!,
         lastCheckSuccess: null!,
         nextExecution: null!,

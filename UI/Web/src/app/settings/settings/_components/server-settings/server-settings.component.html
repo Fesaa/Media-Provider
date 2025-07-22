@@ -22,7 +22,7 @@
 
             @if (getFormControl('baseUrl'); as baseUrl) {
               <app-settings-item [control]="baseUrl" [title]="t('base-url')">
-                <ng-template #view>{{ baseUrl.value }}</ng-template>
+                <ng-template #view>{{ baseUrl.value | defaultValue }}</ng-template>
                 <ng-template #edit>
                   <input
                     type="text"
@@ -64,7 +64,7 @@
                     [control]="control"
                     [title]="t('redis-address')"
                   >
-                    <ng-template #view>{{ control.value }}</ng-template>
+                    <ng-template #view>{{ control.value | defaultValue }}</ng-template>
 
                     <ng-template #edit>
                       <input
@@ -166,42 +166,31 @@
             }
 
             @if (getFormControl('oidc.autoLogin'); as control) {
-              <app-settings-item
-                [control]="control"
-                [title]="t('oidc.autoLogin.label')"
-                [tooltip]="t('oidc.autoLogin.subTitle')"
-              >
-                <ng-template #view>{{ control.value ? translate('common.enabled') : translate('common.disabled') }}</ng-template>
-                <ng-template #edit>
-                  <div class="form-check form-switch">
+              <app-settings-switch [control]="control" [title]="t('oidc.autoLogin.label')" [tooltip]="t('oidc.autoLogin.subTitle')">
+                <ng-template #switch>
+                  <div class="form-check form-switch" formGroupName="oidc">
                     <input
                       type="checkbox"
                       class="form-check-input"
-                      formControlName="oidc.autoLogin"
+                      formControlName="autoLogin"
                     />
                   </div>
                 </ng-template>
-              </app-settings-item>
+              </app-settings-switch>
             }
 
             @if (getFormControl('oidc.disablePasswordLogin'); as control) {
-              <app-settings-item
-                [control]="control"
-                [title]="t('oidc.disablePasswordLogin.label')"
-                [tooltip]="t('oidc.disablePasswordLogin.subTitle')"
-              >
-                <ng-template #view>{{ control.value ? translate('common.enabled') : translate('common.disabled') }}</ng-template>
-                <ng-template #edit>
-                  <div class="form-check form-switch">
+              <app-settings-switch [control]="control" [title]="t('oidc.disablePasswordLogin.label')" [tooltip]="t('oidc.disablePasswordLogin.subTitle')">
+                <ng-template #switch>
+                  <div class="form-check form-switch" formGroupName="oidc">
                     <input
                       type="checkbox"
                       class="form-check-input"
-                      formControlName="oidc.disablePasswordLogin"
+                      formControlName="disablePasswordLogin"
                     />
                   </div>
-
                 </ng-template>
-              </app-settings-item>
+              </app-settings-switch>
             }
           </div>
 

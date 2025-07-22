@@ -1,6 +1,7 @@
 export interface UserDto {
   id: number;
   name: string;
+  email: string;
   permissions: number;
   canDelete: boolean;
 }
@@ -32,13 +33,10 @@ export function hasPermission(user: User | UserDto, perm: Perm): boolean {
 }
 
 export function roles(user: User | UserDto): Perm[] {
-  return permissionValues.filter(val => hasPermission(user, val))
+  return AllPerms.filter(val => hasPermission(user, val))
 }
 
-export const permissionNames = Object.keys(Perm)
-  .filter(key => isNaN(Number(key)))
-  .filter(val => val !== "All") as string[];
-export const permissionValues = Object.values(Perm)
+export const AllPerms = Object.values(Perm)
   .filter(value => typeof value === 'number')
   .filter(val => val !== 0) as number[];
 
