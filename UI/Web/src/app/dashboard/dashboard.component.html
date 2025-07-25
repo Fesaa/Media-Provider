@@ -39,8 +39,9 @@
               <div class="position-relative pt-1 m-2">
                 <div class="progress" style="height: 8px;">
                   <div
-                    class="progress-bar bg-primary"
+                    class="progress-bar"
                     role="progressbar"
+                    [style.background-color]="'var(--secondary-color)'"
                     [style.width.%]="info.progress"
                     [attr.aria-valuenow]="info.progress"
                     aria-valuemin="0"

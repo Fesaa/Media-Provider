@@ -3,7 +3,6 @@ package yoitsu
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -156,52 +155,52 @@ func (t *torrentImpl) SetUserFiltered(data json.RawMessage) error {
 
 func (t *torrentImpl) ContentList() []payload.ListContentData {
 	if t.t.Info() == nil {
-		return nil
+		return []payload.ListContentData{}
 	}
 
-	paths := utils.Map(t.t.Files(), func(file *torrent.File) []string {
-		branch := strings.Split(file.Path(), "/")
-		if len(branch) == 0 {
-			return branch
-		}
-
-		// Append file size at the end of the name
-		fileIdx := len(branch) - 1
-		totalBytes := utils.BytesToSize(float64(file.Length()))
-		branch[fileIdx] = fmt.Sprintf("%s (%s)", branch[fileIdx], totalBytes)
-
-		return branch
-	})
-
-	return t.buildTree(paths)
+	return buildTree(t.userFilter, t.t.Files())
 }
 
-func (t *torrentImpl) buildTree(paths [][]string, depths ...int) []payload.ListContentData {
+type FileEntry interface {
+	Path() string
+	Length() int64
+}
+
+func buildTree[F FileEntry](userFilter []string, files []F, depths ...int) []payload.ListContentData {
 	depth := utils.OrDefault(depths, 0)
 	var tree []payload.ListContentData
-	pathByFirstDir := utils.GroupBy(paths, func(v []string) string {
-		if depth >= len(v) {
+
+	filesByFirstDir := utils.GroupBy(files, func(file F) string {
+		branch := strings.Split(file.Path(), "/")
+		if depth >= len(branch) {
 			return ""
 		}
-		return v[depth]
+		return branch[depth]
 	})
 
-	for dir, subPaths := range pathByFirstDir {
+	for dir, fileGroup := range filesByFirstDir {
 		if dir == "" {
 			continue
 		}
 
-		if len(subPaths[0]) == depth+1 {
-			id := path.Join(subPaths[0]...)
+		// Check if this is a leaf node (file)
+		firstFile := fileGroup[0]
+		branch := strings.Split(firstFile.Path(), "/")
+
+		if len(branch) == depth+1 {
+			// This is a file
+			id := firstFile.Path()
+			totalBytes := utils.BytesToSize(float64(firstFile.Length()))
 			tree = append(tree, payload.ListContentData{
-				Label:        dir,
-				Selected:     len(t.userFilter) == 0 || slices.Contains(t.userFilter, id),
+				Label:        dir + " " + totalBytes,
+				Selected:     len(userFilter) == 0 || slices.Contains(userFilter, id),
 				SubContentId: id,
 			})
 			continue
 		}
 
-		children := t.buildTree(subPaths, depth+1)
+		// This is a directory, recurse
+		children := buildTree(userFilter, fileGroup, depth+1)
 		slices.SortFunc(children, func(a, b payload.ListContentData) int {
 			return strings.Compare(a.Label, b.Label)
 		})
@@ -213,7 +212,11 @@ func (t *torrentImpl) buildTree(paths [][]string, depths ...int) []payload.ListC
 
 	// First, and only start, node is a directory
 	if len(tree) == 1 && tree[0].SubContentId == "" {
-		return tree[0].Children
+		tree = tree[0].Children
+	}
+
+	if tree == nil {
+		return []payload.ListContentData{}
 	}
 
 	return tree
