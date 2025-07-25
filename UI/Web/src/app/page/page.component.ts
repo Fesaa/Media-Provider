@@ -11,7 +11,6 @@ import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
 import {ToastService} from "../_services/toast.service";
 import {ContentService} from "../_services/content.service";
 import {TranslocoDirective} from "@jsverse/transloco";
-import {ModalService} from "../_services/modal.service";
 import {PaginatorComponent} from "../shared/_component/paginator/paginator.component";
 import {SearchFormComponent} from "./_components/search-form/search-form.component";
 import {fadeOut} from "../_animations/fade-out";

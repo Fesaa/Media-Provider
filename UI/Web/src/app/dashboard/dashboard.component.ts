@@ -45,6 +45,12 @@ import {DefaultModalOptions} from "../_models/default-modal-options";
 export class DashboardComponent implements OnInit {
 
   private readonly modalService = inject(ModalService);
+  private readonly navService = inject(NavService);
+  private readonly contentService = inject(ContentService);
+  private readonly toastService = inject(ToastService);
+  private readonly contentTitle = inject(ContentTitlePipe);
+  private readonly signalR = inject(SignalRService);
+  private readonly destroyRef = inject(DestroyRef);
 
   loading = signal(true);
   items = signal<InfoStat[]>([]);
@@ -59,13 +65,7 @@ export class DashboardComponent implements OnInit {
 
   protected readonly ContentState = ContentState;
 
-  constructor(private navService: NavService,
-              private contentService: ContentService,
-              private toastService: ToastService,
-              private contentTitle: ContentTitlePipe,
-              private signalR: SignalRService,
-              private destroyRef: DestroyRef,
-  ) {
+  constructor() {
     this.navService.setNavVisibility(true);
   }
 
@@ -109,14 +109,14 @@ export class DashboardComponent implements OnInit {
   }
 
   private addContent(event: InfoStat) {
-    if (this.items().filter(item => item.id !== event.id)) {
+    if (this.items().filter(item => item.id === event.id) !== undefined) {
       return;
     }
 
     this.items.update(x => {
       x.push(event);
       return x;
-    })
+    });
   }
 
   private updateSize(event: ContentSizeUpdate) {

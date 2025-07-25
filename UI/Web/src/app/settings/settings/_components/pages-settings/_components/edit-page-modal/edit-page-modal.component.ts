@@ -20,7 +20,7 @@ import {BadgeComponent} from "../../../../../../shared/_component/badge/badge.co
 import {TypeaheadComponent, TypeaheadSettings} from "../../../../../../type-ahead/typeahead.component";
 import {ProviderNamePipe} from "../../../../../../_pipes/provider-name.pipe";
 import {of} from "rxjs";
-import {CdkDragDrop, CdkDragHandle, moveItemInArray} from "@angular/cdk/drag-drop";
+import {CdkDragDrop, CdkDragHandle} from "@angular/cdk/drag-drop";
 import {TableComponent} from "../../../../../../shared/_component/table/table.component";
 import {EditPageModifierModalComponent} from "../edit-page-modifier-modal/edit-page-modifier-modal.component";
 import {DefaultModalOptions} from "../../../../../../_models/default-modal-options";

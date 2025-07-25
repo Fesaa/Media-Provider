@@ -46,7 +46,6 @@ export class NotificationsComponent implements OnInit {
     });
   });
 
-  infoVisibility: {[key: number]: boolean} = {};
   selectedNotifications: number[] = [];
   allCheck: boolean = false;
 
@@ -217,12 +216,6 @@ export class NotificationsComponent implements OnInit {
         this.toastService.genericError(err.error.message);
       }
     })
-  }
-
-  formattedBody(notification: Notification) {
-    let body = notification.body;
-    body = body ? body.replace(/\n/g, '<br>') : '';
-    return body;
   }
 
   trackBy(idx: number, notification: Notification): string {

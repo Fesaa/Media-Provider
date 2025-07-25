@@ -1,11 +1,11 @@
-import { Component, OnInit, signal, computed, inject, DestroyRef } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AccountService } from "../../_services/account.service";
-import { NavService } from "../../_services/nav.service";
-import { ToastService } from "../../_services/toast.service";
-import { TranslocoDirective } from "@jsverse/transloco";
+import {Component, computed, DestroyRef, inject, OnInit, signal} from '@angular/core';
+import {FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {ActivatedRoute, Router} from "@angular/router";
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {AccountService} from "../../_services/account.service";
+import {NavService} from "../../_services/nav.service";
+import {ToastService} from "../../_services/toast.service";
+import {TranslocoDirective} from "@jsverse/transloco";
 import {LoadingSpinnerComponent} from "../../shared/_component/loading-spinner/loading-spinner.component";
 
 @Component({

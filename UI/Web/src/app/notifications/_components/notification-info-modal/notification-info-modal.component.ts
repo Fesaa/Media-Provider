@@ -28,5 +28,10 @@ export class NotificationInfoModalComponent {
     this.modal.close();
   }
 
+  get body() {
+    let raw = this.notification().body;
+    return raw ? raw.replace(/\n/g, '<br>') : '';
+  }
+
   protected readonly translate = translate;
 }

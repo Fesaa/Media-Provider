@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject, input, model, OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, model, OnInit, signal} from '@angular/core';
 import {InfoStat} from '../../../_models/stats';
 import {ContentService} from '../../../_services/content.service';
 import {ListContentData} from '../../../_models/messages';

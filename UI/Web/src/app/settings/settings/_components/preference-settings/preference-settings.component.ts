@@ -18,7 +18,7 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {CoverFallbackPipe} from "../../../../_pipes/cover-fallback.pipe";
 import {SettingsSwitchComponent} from "../../../../shared/form/settings-switch/settings-switch.component";
 import {SafeHtmlPipe} from "../../../../_pipes/safe-html-pipe";
-import {NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet} from "@ng-bootstrap/ng-bootstrap";
+import {NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavOutlet} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-preference-settings',

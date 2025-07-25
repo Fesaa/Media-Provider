@@ -1,6 +1,6 @@
-import {ChangeDetectionStrategy, Component, inject, model, OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, model} from '@angular/core';
 import {NgbActiveModal} from "@ng-bootstrap/ng-bootstrap";
-import {AllModifierTypes, Modifier, ModifierType, ModifierValue} from "../../../../../../_models/page";
+import {AllModifierTypes} from "../../../../../../_models/page";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {SettingsItemComponent} from "../../../../../../shared/form/settings-item/settings-item.component";

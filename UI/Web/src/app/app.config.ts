@@ -57,7 +57,7 @@ function syncOidcUser(oidcService: OidcService, accountService: AccountService, 
   );
 }
 
-function preLoadOidcAndUser() {
+function bootstrapUser() {
   const oidc = inject(OidcService);
   const toastr = inject(ToastService);
   const accountService = inject(AccountService);
@@ -137,6 +137,6 @@ export const appConfig: ApplicationConfig = {
       useFactory: getBaseHref,
       deps: [PlatformLocation]
     },
-    provideAppInitializer(() => preLoadOidcAndUser()),
+    provideAppInitializer(() => bootstrapUser()),
   ]
 };
