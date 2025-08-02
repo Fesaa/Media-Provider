@@ -7,6 +7,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/anacrolix/torrent v1.58.1
 	github.com/ansrivas/fiberprometheus/v2 v2.13.0
+	github.com/chai2010/webp v1.4.0
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/fasthttp/websocket v1.5.12
@@ -19,7 +20,6 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
 	github.com/google/uuid v1.6.0
 	github.com/irevenko/go-nyaa v0.0.0-20210412095257-194e1b4cce55
-	github.com/kolesa-team/go-webp v1.0.5
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/philippseith/signalr v0.7.0

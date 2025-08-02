@@ -91,7 +91,8 @@ function bootstrapUser() {
 
       return of(null);
     }),
-    switchMap((user) => {
+    switchMap(() => {
+      const user = accountService.currentUserSignal();
       if (!user) return of(null);
 
       return pageService.refreshPages().pipe(tap(() => {

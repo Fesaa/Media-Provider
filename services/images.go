@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
-	"github.com/kolesa-team/go-webp/encoder"
-	"github.com/kolesa-team/go-webp/webp"
 	"github.com/rs/zerolog"
 	"image"
 )
@@ -16,7 +15,10 @@ const (
 )
 
 var (
-	encodingOptions = utils.MustReturn(encoder.NewLossyEncoderOptions(encoder.PresetDefault, 80))
+	encodingOptions = &webp.Options{
+		Lossless: true,
+		Quality:  80,
+	}
 )
 
 type ImageService interface {

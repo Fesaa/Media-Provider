@@ -18,14 +18,21 @@ func DefaultConfig() *Config {
 	}
 
 	return &Config{
-		SyncId:  0,
-		RootDir: orDefault(os.Getenv("CONFIG_DIR"), pwd),
-		BaseUrl: "",
-		Secret:  secret,
+		RootDir:      orDefault(os.Getenv("CONFIG_DIR"), pwd),
+		Secret:       secret,
+		HasUpdatedDB: false,
 		Logging: Logging{
 			Level:   zerolog.InfoLevel,
 			Source:  true,
 			Handler: LogHandlerText,
+		},
+		Downloader: Downloader{
+			MaxConcurrentTorrents:       5,
+			MaxConcurrentMangadexImages: 5,
+			DisableIpv6:                 false,
+		},
+		Cache: CacheConfig{
+			Type: MEMORY,
 		},
 	}
 }
