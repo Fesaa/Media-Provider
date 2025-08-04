@@ -19,6 +19,7 @@ import {EditSubscriptionModalComponent} from "./_components/edit-subscription-mo
 import {DefaultModalOptions} from "../_models/default-modal-options";
 import {PageService} from "../_services/page.service";
 import {ProviderNamePipe} from "../_pipes/provider-name.pipe";
+import {UtilityService} from "../_services/utility.service";
 
 @Component({
   selector: 'app-subscription-manager',
@@ -44,6 +45,7 @@ export class SubscriptionManagerComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly pageService = inject(PageService);
   private readonly providerNamePipe = inject(ProviderNamePipe);
+  private readonly utilityService = inject(UtilityService);
 
   metadata = signal<Map<Provider, DownloadMetadata>>(new Map());
   allowedProviders = signal<Provider[]>([]);
@@ -56,8 +58,9 @@ export class SubscriptionManagerComponent implements OnInit {
     const subs = this.subscriptions();
 
     if (!filter) return subs;
-
-    return subs.filter(s => s.info.title.includes(filter));
+    
+    const normalizedFilter = this.utilityService.normalize(filter);
+    return subs.filter(s => this.utilityService.normalize(s.info.title).includes(normalizedFilter));
   })
 
   constructor() {
