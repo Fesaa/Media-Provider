@@ -29,6 +29,7 @@ export class TableComponent<T> implements OnInit {
 
   @ContentChild('header') headerTemplate!: TemplateRef<any>;
   @ContentChild('cell') cellTemplate!: TemplateRef<any>;
+  @ContentChild('empty') emptyTemplate!: TemplateRef<any>;
 
   trackByIdFunc = input.required<(index: number, value: T) => string>();
   items = input.required<T[]>();

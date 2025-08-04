@@ -14,8 +14,6 @@ FROM golang:1.24.5 AS go-stage
 
 WORKDIR /app
 
-RUN apt update && apt install -y libwebp-dev
-
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -43,7 +41,7 @@ COPY --from=go-stage /media-provider /app/media-provider
 COPY --from=npm-stage /app/dist/web/browser /app/public
 COPY ./I18N /app/I18N
 
-RUN apk add --no-cache ca-certificates curl tzdata libwebp
+RUN apk add --no-cache ca-certificates curl tzdata
 
 ENV CONFIG_DIR="/mp"
 ENV DOCKER="true"

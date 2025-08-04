@@ -1,4 +1,4 @@
-import {Component, effect, inject, OnInit, signal} from '@angular/core';
+import {Component, computed, effect, inject, OnInit, signal} from '@angular/core';
 import {NavService} from "../_services/nav.service";
 import {SubscriptionService} from '../_services/subscription.service';
 import {RefreshFrequency, Subscription} from "../_models/subscription";
@@ -49,6 +49,16 @@ export class SubscriptionManagerComponent implements OnInit {
   allowedProviders = signal<Provider[]>([]);
   subscriptions = signal<Subscription[]>([]);
   hasRanAll = signal(false);
+  filterText = signal('');
+
+  filteredSubscriptions = computed(() => {
+    const filter = this.filterText();
+    const subs = this.subscriptions();
+
+    if (!filter) return subs;
+
+    return subs.filter(s => s.info.title.includes(filter));
+  })
 
   constructor() {
     effect(() => {
@@ -68,7 +78,6 @@ export class SubscriptionManagerComponent implements OnInit {
         })
       }
     });
-
   }
 
   ngOnInit(): void {
@@ -81,6 +90,11 @@ export class SubscriptionManagerComponent implements OnInit {
       this.subscriptions.set(s ?? [])
       this.allowedProviders.set(providers ?? [])
     });
+  }
+
+  updateFilter(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.filterText.set(target.value);
   }
 
   runAll() {
