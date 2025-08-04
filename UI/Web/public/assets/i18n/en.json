@@ -650,6 +650,7 @@
 
   "subscriptions": {
     "title": "Title",
+    "filter": "Filter...",
     "last": "Last ran",
     "next-exec": "Next run",
     "frequency": "Frequency",

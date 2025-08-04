@@ -22,6 +22,11 @@
           }
         </tbody>
       }
+
+      @if (paginatedItems().length === 0) {
+        <ng-container [ngTemplateOutlet]="emptyTemplate"></ng-container>
+      }
+
     </table>
   </div>
 

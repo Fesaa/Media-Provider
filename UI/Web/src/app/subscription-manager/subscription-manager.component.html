@@ -1,13 +1,17 @@
 <div class="mx-4 mx-md-5" *transloco="let t; prefix: 'subscriptions'">
 
-  <div class="d-flex justify-content-end mb-3">
+  <div class="d-flex justify-content-between mb-3">
+    <div>
+      <input class="form-control" type="text" [placeholder]="t('filter')" (input)="updateFilter($event)">
+    </div>
+
     <button class="btn btn-secondary" (click)="runAll()" [disabled]="hasRanAll()">
       {{ t('actions.run-all') }}
     </button>
   </div>
 
   <app-table
-    [items]="subscriptions()"
+    [items]="filteredSubscriptions()"
     [trackByIdFunc]="trackBy"
   >
     <ng-template #header>
