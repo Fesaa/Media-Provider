@@ -109,7 +109,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private addContent(event: InfoStat) {
-    if (this.items().filter(item => item.id === event.id) !== undefined) {
+    if (this.items().find(item => item.id === event.id) !== undefined ) {
       return;
     }
 
