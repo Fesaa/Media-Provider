@@ -20,6 +20,13 @@ func (c *Core[C, S]) abortDownload(reason error) {
 	}
 
 	c.Log.Error().Err(reason).Msg("error while downloading content; cleaning up")
+
+	if c.cancel != nil {
+		c.cancel()
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
 	req := payload.StopRequest{
 		Provider:    c.Req.Provider,
 		Id:          c.Id(),
@@ -257,6 +264,19 @@ func (d *DownloadContext[C, S]) CancelWithError(err error) {
 	}
 }
 
+// IsCancelled checks if either the global or local context has been cancelled
+// Returns true if cancelled, false otherwise
+func (d *DownloadContext[C, S]) IsCancelled() bool {
+	select {
+	case <-d.GlobalCtx.Done():
+		return true
+	case <-d.Ctx.Done():
+		return true
+	default:
+		return false
+	}
+}
+
 // ProduceUrls queues a DownloadTask for each URL and closes the channel after
 func (d *DownloadContext[C, S]) ProduceUrls() {
 	defer close(d.DownloadCh)
@@ -264,12 +284,16 @@ func (d *DownloadContext[C, S]) ProduceUrls() {
 	d.log.Trace().Int("urls", len(d.Urls)).Msg("queuing urls to download")
 
 	for idx, url := range d.Urls {
+		if d.IsCancelled() {
+			return
+		}
+
 		select {
+		case d.DownloadCh <- DownloadTask{idx + 1, url}:
 		case <-d.GlobalCtx.Done():
 			return
 		case <-d.Ctx.Done():
 			return
-		case d.DownloadCh <- DownloadTask{idx + 1, url}:
 		}
 	}
 }
@@ -305,11 +329,11 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 
 	for task := range d.DownloadCh {
 		select {
-		case <-d.Ctx.Done():
-			return
+		case <-rateLimiter.C:
 		case <-d.GlobalCtx.Done():
 			return
-		case <-rateLimiter.C:
+		case <-d.Ctx.Done():
+			return
 		}
 
 		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("downloading page")
@@ -317,19 +341,29 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 		data, err := d.Core.Download(d.Ctx, task.url)
 		if err == nil {
 			d.Core.ImagesDownloaded++
-			d.IOCh <- IOTask{data, task}
+			if d.IsCancelled() {
+				return
+			}
+			select {
+			case d.IOCh <- IOTask{data, task}:
+			case <-d.GlobalCtx.Done():
+				return
+			case <-d.Ctx.Done():
+				return
+			}
 			continue
 		}
 
+		if d.IsCancelled() {
+			return
+		}
+
 		select {
-		case <-d.GlobalCtx.Done():
-			return
-		case <-d.Ctx.Done():
-			return
 		case failedDownloadCh <- task:
 			d.Core.failedDownloads++
 			log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
 				Msg("download has failed for a page for the first time, trying page again at the end")
+		default:
 		}
 	}
 
@@ -340,33 +374,43 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 	}
 
 	for task := range failedDownloadCh {
-		select {
-		case <-d.Ctx.Done():
+		if d.IsCancelled() {
 			return
+		}
+
+		select {
+		case <-rateLimiter.C:
 		case <-d.GlobalCtx.Done():
 			return
-		case <-rateLimiter.C:
+		case <-d.Ctx.Done():
+			return
 		}
 
 		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("downloading page")
 
 		data, err := d.Core.Download(d.Ctx, task.url)
 		if err == nil {
-			d.IOCh <- IOTask{data, task}
+			if d.IsCancelled() {
+				return
+			}
+			select {
+			case d.IOCh <- IOTask{data, task}:
+			case <-d.GlobalCtx.Done():
+				return
+			case <-d.Ctx.Done():
+				return
+			}
 			continue
 		}
 
-		select {
-		case <-d.GlobalCtx.Done():
-			return
-		case <-d.Ctx.Done():
-			return
-		default:
-			log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
-				Msg("retry download failed, ending content download")
-			d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
+		if d.IsCancelled() {
 			return
 		}
+
+		log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
+			Msg("retry download failed, ending content download")
+		d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
+		return
 	}
 }
 
@@ -377,29 +421,44 @@ func (d *DownloadContext[C, S]) IOWorker(id string) {
 	defer d.IoWg.Done()
 
 	for task := range d.IOCh {
+		if d.IsCancelled() {
+			return
+		}
+
 		data, ok := d.Core.imageService.ConvertToWebp(task.data)
 
 		ext := utils.Ternary(ok, ".webp", utils.Ext(task.dTask.url))
 		filePath := path.Join(d.Core.ContentPath(d.Chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(task.dTask.idx, 4)))
 
+		if d.IsCancelled() {
+			log.Trace().Msg("context cancelled, stopping file write")
+			return
+		}
+
 		if err := d.Core.fs.WriteFile(filePath, data, 0755); err != nil {
+			if d.IsCancelled() {
+				log.Debug().Err(err).Msg("ignoring write error due to cancellation")
+				return
+			}
 			log.Error().Err(err).Msg("error writing file")
 			d.CancelWithError(fmt.Errorf("error writing file %s: %w", filePath, err))
 		}
 	}
-
 }
 
 // startProgressUpdater start a goroutine sending payload.EventTypeContentProgressUpdate every 2s for this chapter
 func (c *Core[C, S]) startProgressUpdater(ctx context.Context, innerCtx context.Context) {
 	go func() {
-		for range time.Tick(2 * time.Second) {
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for {
 			select {
 			case <-innerCtx.Done():
 				return
 			case <-ctx.Done():
 				return
-			default:
+			case <-ticker.C:
 				c.UpdateProgress()
 			}
 		}
