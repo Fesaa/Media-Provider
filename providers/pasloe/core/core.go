@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -115,16 +116,20 @@ type Core[C Chapter, S Series[C]] struct {
 	Preference    *models.Preference
 	hasWarnedTags bool
 
-	// # Chapters downloaded
+	// Amount of chapters downloaded
 	ContentDownloaded int
-	// Total amount of images downloaded
+	// Total amount of images already downloaded in the chapter currently being downloaded
 	ImagesDownloaded int64
-	LastTime         time.Time
-	LastRead         int
+	// Total amount of images in the chapter currently being downloaded
+	TotalChapterImages int
+	LastTime           time.Time
+	LastRead           int64
 
 	failedDownloads int64
 
 	cancel context.CancelFunc
+	// Wait group used to track chapters being downloaded
+	wg *sync.WaitGroup
 }
 
 func (c *Core[C, S]) DisplayInformation() DisplayInformation {
@@ -200,7 +205,14 @@ func (c *Core[C, S]) GetContentByVolumeAndChapter(volume string, chapter string)
 		if content.Volume == volume && content.Chapter == chapter {
 			return content, true
 		}
+
+		// Content has been assigned a volume
 		if content.Volume == "" && content.Chapter == chapter {
+			return content, true
+		}
+
+		// Content has had its volume removed
+		if content.Volume != "" && volume == "" && content.Chapter == chapter {
 			return content, true
 		}
 	}
@@ -298,9 +310,16 @@ func (c *Core[C, S]) GetInfo() payload.InfoStat {
 // Cancel calls d.cancel and send a StopRequest with DeleteFiles=true to the Client
 func (c *Core[C, S]) Cancel() {
 	c.Log.Trace().Msg("calling cancel on content")
+
 	if c.cancel != nil {
 		c.cancel()
 	}
+
+	if c.wg != nil {
+		c.Log.Debug().Msg("Waiting for all download task to complete")
+		c.wg.Wait()
+	}
+
 	if c.Client.Content(c.id) != nil {
 		if err := c.Client.RemoveDownload(payload.StopRequest{
 			Provider:    c.impl.Provider(),
@@ -428,7 +447,16 @@ func (c *Core[C, S]) StartDownload() {
 		return
 	}
 	c.SetState(payload.ContentStateDownloading)
-	go c.startDownload()
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				c.Log.Error().Any("error", err).Msg("a panic occurred while downloading")
+			}
+		}()
+
+		c.startDownload()
+	}()
 }
 
 func (c *Core[C, S]) State() payload.ContentState {
@@ -440,10 +468,10 @@ func (c *Core[C, S]) Speed() int64 {
 	if c.contentState != payload.ContentStateDownloading {
 		return 0
 	}
-	diff := int(c.ImagesDownloaded) - c.LastRead
+	diff := c.ImagesDownloaded - c.LastRead
 	timeDiff := max(time.Since(c.LastTime).Seconds(), 1)
 
-	c.LastRead = int(c.ImagesDownloaded)
+	c.LastRead = c.ImagesDownloaded
 	c.LastTime = time.Now()
 	return int64(math.Ceil(float64(diff) / timeDiff))
 }
@@ -457,9 +485,16 @@ func (c *Core[C, S]) Size() int {
 }
 
 func (c *Core[C, S]) UpdateProgress() {
+	chaptersProgress := utils.Percent(int64(c.ContentDownloaded), int64(len(c.ToDownload)))
+	chapterProgress := utils.Percent(c.ImagesDownloaded, int64(c.TotalChapterImages))
+	totalProgress := chaptersProgress + chapterProgress/int64(len(c.ToDownload))
+
+	// There is a small bug where sometimes the totalProgress goes down when going from one chapter being
+	// downloaded to the next. For now, we'll just live with it being a bug as it's still nicer to have some idea
+	// of progress with bigger chapters instead of seeing everything jump hard
 	c.SignalR.ProgressUpdate(payload.ContentProgressUpdate{
 		ContentId: c.id,
-		Progress:  utils.Percent(int64(c.ContentDownloaded), int64(c.Size())),
+		Progress:  totalProgress,
 		SpeedType: payload.IMAGES,
 		Speed:     utils.Ternary(c.State() != payload.ContentStateCleanup, c.Speed(), 0),
 	})

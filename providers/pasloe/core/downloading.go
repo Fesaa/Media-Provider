@@ -27,7 +27,8 @@ func (c *Core[C, S]) abortDownload(reason error) {
 		c.cancel()
 	}
 
-	time.Sleep(100 * time.Millisecond)
+	// wait for all download tasks to finish
+	c.wg.Wait()
 
 	req := payload.StopRequest{
 		Provider:    c.Req.Provider,
@@ -121,16 +122,18 @@ func (c *Core[C, S]) startDownload() {
 		Msg("downloading content")
 
 	start := time.Now()
-	wg := &sync.WaitGroup{}
+	c.wg = &sync.WaitGroup{}
 
-	if err := c.processDownloads(ctx, wg); err != nil {
+	c.startProgressUpdater(ctx)
+
+	if err := c.processDownloads(ctx, c.wg); err != nil {
 		c.Log.Trace().Err(err).Msg("download failed")
 		return
 	}
 
 	c.Log.Info().Dur("elapsed", time.Since(start)).Msg("Finished downloading content")
 
-	c.cleanupAfterDownload(wg)
+	c.cleanupAfterDownload(c.wg)
 }
 
 // downloadContent handles the full download of one chapter
@@ -161,9 +164,12 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
 	dCtx.log.Debug().Int("size", len(dCtx.Urls)).Msg("downloading images")
 	start := time.Now()
 
-	c.startProgressUpdater(ctx, dCtx.Ctx)
-
 	go dCtx.ProduceUrls()
+
+	// Reset image progress
+	atomic.StoreInt64(&c.ImagesDownloaded, 0)
+	atomic.StoreInt64(&c.LastRead, 0)
+	c.TotalChapterImages = len(dCtx.Urls)
 
 	dCtx.StartDownloadWorkers()
 	dCtx.StartIOWorkers()
@@ -433,7 +439,6 @@ func (d *DownloadContext[C, S]) IOWorker(id string) {
 		filePath := path.Join(d.Core.ContentPath(d.Chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(task.dTask.idx, 4)))
 
 		if d.IsCancelled() {
-			log.Trace().Msg("context cancelled, stopping file write")
 			return
 		}
 
@@ -450,15 +455,13 @@ func (d *DownloadContext[C, S]) IOWorker(id string) {
 }
 
 // startProgressUpdater start a goroutine sending payload.EventTypeContentProgressUpdate every 2s for this chapter
-func (c *Core[C, S]) startProgressUpdater(ctx context.Context, innerCtx context.Context) {
+func (c *Core[C, S]) startProgressUpdater(ctx context.Context) {
 	go func() {
 		ticker := time.NewTicker(2 * time.Second)
 		defer ticker.Stop()
 
 		for {
 			select {
-			case <-innerCtx.Done():
-				return
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
