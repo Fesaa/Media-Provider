@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"path"
 	"slices"
 	"sync"
 	"time"
@@ -110,71 +111,66 @@ func (c *Core[C, S]) startDownload() {
 		Str("into", c.GetDownloadDir()).
 		Msg("downloading content")
 
+	start := time.Now()
 	wg := &sync.WaitGroup{}
+
 	if err := c.processDownloads(ctx, wg); err != nil {
 		c.Log.Trace().Err(err).Msg("download failed")
 		return
 	}
 
+	c.Log.Info().Dur("elapsed", time.Since(start)).Msg("Finished downloading content")
+
 	c.cleanupAfterDownload(wg)
 }
 
-type downloadUrl struct {
-	idx int
-	url string
-}
+// downloadContent handles the full download of one chapter
+func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
+	dCtx, err := c.ConstructDownloadContext(ctx, chapter)
+	if err != nil {
+		return err
+	}
 
-func (c *Core[C, S]) downloadContent(ctx context.Context, t C) error {
-	l := c.ContentLogger(t)
-	l.Trace().Msg("downloading content")
+	if dCtx == nil {
+		return nil
+	}
 
-	contentPath := c.ContentPath(t)
-	if err := c.fs.MkdirAll(contentPath, 0755); err != nil {
+	defer dCtx.Cancel()
+
+	contentPath := c.ContentPath(chapter)
+	if err = c.fs.MkdirAll(contentPath, 0755); err != nil {
 		return err
 	}
 	c.HasDownloaded = append(c.HasDownloaded, contentPath)
 
-	urls, err := c.impl.ContentUrls(ctx, t)
-	if err != nil {
-		return err
-	}
-	if len(urls) == 0 {
-		l.Warn().Msg("content has no downloadable urls? Unexpected? Report this!")
-		return nil
-	}
-
-	if err = c.impl.WriteContentMetaData(ctx, t); err != nil {
+	if err = c.impl.WriteContentMetaData(ctx, chapter); err != nil {
 		c.Log.Warn().Err(err).Msg("error writing meta data")
 	}
 
-	l.Debug().Int("size", len(urls)).Msg("downloading images")
+	dCtx.log.Debug().Int("size", len(dCtx.Urls)).Msg("downloading images")
+	start := time.Now()
 
-	urlCh := make(chan downloadUrl, c.maxImages)
-	errCh := make(chan error, 1)
-	defer close(errCh)
+	c.startProgressUpdater(ctx, dCtx.Ctx)
 
-	wg := &sync.WaitGroup{}
-	innerCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	go dCtx.ProduceUrls()
 
-	c.produceURLs(ctx, innerCtx, urls, urlCh)
+	dCtx.StartDownloadWorkers()
+	dCtx.StartIOWorkers()
 
-	c.startProgressUpdater(ctx, innerCtx)
+	dCtx.DownloadWg.Wait()
+	dCtx.log.Debug().Dur("elapsed", time.Since(start)).Msg("Finished downloading all remote content, waiting for I/O goroutines to finish")
+	close(dCtx.IOCh)
 
-	for range c.maxImages {
-		wg.Add(1)
-		go c.channelConsumer(innerCtx, cancel, ctx, t, len(urls), l, urlCh, errCh, wg)
-	}
-
-	wg.Wait()
+	dCtx.IoWg.Wait()
+	dCtx.log.Debug().Dur("elapsed", time.Since(start)).Msg("All I/O goroutines finished, checking for errors and cleaning up")
 
 	select {
-	case err = <-errCh:
+	case err = <-dCtx.ErrCh:
 		return err
 	default:
 	}
 
-	if len(urls) < 5 {
+	if len(dCtx.Urls) < 5 {
 		time.Sleep(1 * time.Second)
 	}
 
@@ -182,21 +178,219 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, t C) error {
 	return nil
 }
 
-func (c *Core[C, S]) produceURLs(ctx context.Context, innerCtx context.Context, urls []string, urlCh chan<- downloadUrl) {
-	go func() {
-		defer close(urlCh)
-		for i, url := range urls {
-			select {
-			case <-ctx.Done():
-				return
-			case <-innerCtx.Done():
-				return
-			case urlCh <- downloadUrl{url: url, idx: i + 1}:
-			}
-		}
-	}()
+// ConstructDownloadContext load the required information to start downloading the chapter, and then returns the context
+// with all fields set
+func (c *Core[C, S]) ConstructDownloadContext(ctx context.Context, chapter C) (*DownloadContext[C, S], error) {
+	downloadContext, cancel := context.WithCancel(context.Background())
+
+	dCtx := DownloadContext[C, S]{
+		GlobalCtx: ctx,
+		Ctx:       downloadContext,
+		Core:      c,
+		Chapter:   chapter,
+		Cancel:    cancel,
+
+		DownloadWg: &sync.WaitGroup{},
+		DownloadCh: make(chan DownloadTask, c.maxImages),
+
+		IoWg: &sync.WaitGroup{},
+		IOCh: make(chan IOTask, c.maxImages*2), // Allow for some buffer as I/O may be slower than downloading (webp)
+
+		ErrCh: make(chan error, 1),
+
+		log: c.ContentLogger(chapter),
+	}
+
+	dCtx.log.Trace().Msg("loading content info and creating directories")
+
+	urls, err := c.impl.ContentUrls(ctx, chapter)
+	if err != nil {
+		return &dCtx, err
+	}
+	if len(urls) == 0 {
+		dCtx.log.Warn().Msg("content has no downloadable urls? Unexpected? Report this!")
+		return nil, nil
+	}
+
+	dCtx.Urls = urls
+	return &dCtx, nil
 }
 
+// DownloadContext convince wrapper around the download of a chapter
+type DownloadContext[C Chapter, S Series[C]] struct {
+	GlobalCtx context.Context
+	Ctx       context.Context
+	Cancel    context.CancelFunc
+
+	Core    *Core[C, S]
+	Chapter C
+	Urls    []string
+
+	DownloadWg *sync.WaitGroup
+	DownloadCh chan DownloadTask
+
+	IoWg *sync.WaitGroup
+	IOCh chan IOTask
+
+	ErrCh chan error
+
+	log zerolog.Logger
+}
+
+type DownloadTask struct {
+	idx int
+	url string
+}
+
+type IOTask struct {
+	data  []byte
+	dTask DownloadTask
+}
+
+// CancelWithError queue the given error into the ErrCh, and call cancel if it succeeded. Otherwise, do nothing
+// does not block
+func (d *DownloadContext[C, S]) CancelWithError(err error) {
+	select {
+	case d.ErrCh <- err:
+		d.Cancel()
+	default:
+	}
+}
+
+// ProduceUrls queues a DownloadTask for each URL and closes the channel after
+func (d *DownloadContext[C, S]) ProduceUrls() {
+	defer close(d.DownloadCh)
+
+	d.log.Trace().Int("urls", len(d.Urls)).Msg("queuing urls to download")
+
+	for idx, url := range d.Urls {
+		select {
+		case <-d.GlobalCtx.Done():
+			return
+		case <-d.Ctx.Done():
+			return
+		case d.DownloadCh <- DownloadTask{idx + 1, url}:
+		}
+	}
+}
+
+// StartDownloadWorkers starts cap(DownloadCh) DownloadWorker threads
+func (d *DownloadContext[C, S]) StartDownloadWorkers() {
+	d.log.Trace().Int("workers", cap(d.DownloadCh)).Msg("starting download workers")
+
+	for worker := range cap(d.DownloadCh) {
+		d.DownloadWg.Add(1)
+		go d.DownloadWorker(fmt.Sprintf("DownloadWorker#%d", worker))
+	}
+}
+
+// StartIOWorkers starts cap(IOCh) IOWorker threads
+func (d *DownloadContext[C, S]) StartIOWorkers() {
+	for worker := range cap(d.IOCh) {
+		d.IoWg.Add(1)
+		go d.IOWorker(fmt.Sprintf("IOWorker#%d", worker))
+	}
+}
+
+// DownloadWorker reads from DownloadCh; will download the remote content and queue a IO task
+// has its own internal retry system. After one retry fail with stop content download
+func (d *DownloadContext[C, S]) DownloadWorker(id string) {
+	log := d.log.With().Str("worker", id).Logger()
+	defer d.DownloadWg.Done()
+
+	failedDownloadCh := make(chan DownloadTask, len(d.Urls))
+
+	rateLimiter := time.NewTicker(time.Second)
+	defer rateLimiter.Stop()
+
+	for task := range d.DownloadCh {
+		select {
+		case <-d.Ctx.Done():
+			return
+		case <-d.GlobalCtx.Done():
+			return
+		case <-rateLimiter.C:
+		}
+
+		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("downloading page")
+
+		data, err := d.Core.Download(d.Ctx, task.url)
+		if err == nil {
+			d.Core.ImagesDownloaded++
+			d.IOCh <- IOTask{data, task}
+			continue
+		}
+
+		select {
+		case <-d.GlobalCtx.Done():
+			return
+		case <-d.Ctx.Done():
+			return
+		case failedDownloadCh <- task:
+			d.Core.failedDownloads++
+			log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
+				Msg("download has failed for a page for the first time, trying page again at the end")
+		}
+	}
+
+	close(failedDownloadCh)
+
+	if len(failedDownloadCh) == 0 {
+		return
+	}
+
+	for task := range failedDownloadCh {
+		select {
+		case <-d.Ctx.Done():
+			return
+		case <-d.GlobalCtx.Done():
+			return
+		case <-rateLimiter.C:
+		}
+
+		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("downloading page")
+
+		data, err := d.Core.Download(d.Ctx, task.url)
+		if err == nil {
+			d.IOCh <- IOTask{data, task}
+			continue
+		}
+
+		select {
+		case <-d.GlobalCtx.Done():
+			return
+		case <-d.Ctx.Done():
+			return
+		default:
+			log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
+				Msg("retry download failed, ending content download")
+			d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
+			return
+		}
+	}
+}
+
+// IOWorker reads from IOCh; converts to webp and writes to disk
+func (d *DownloadContext[C, S]) IOWorker(id string) {
+	log := d.log.With().Str("worker", id).Logger()
+
+	defer d.IoWg.Done()
+
+	for task := range d.IOCh {
+		data, ok := d.Core.imageService.ConvertToWebp(task.data)
+
+		ext := utils.Ternary(ok, ".webp", utils.Ext(task.dTask.url))
+		filePath := path.Join(d.Core.ContentPath(d.Chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(task.dTask.idx, 4)))
+
+		if err := d.Core.fs.WriteFile(filePath, data, 0755); err != nil {
+			log.Error().Err(err).Msg("error writing file")
+			d.CancelWithError(fmt.Errorf("error writing file %s: %w", filePath, err))
+		}
+	}
+
+}
+
+// startProgressUpdater start a goroutine sending payload.EventTypeContentProgressUpdate every 2s for this chapter
 func (c *Core[C, S]) startProgressUpdater(ctx context.Context, innerCtx context.Context) {
 	go func() {
 		for range time.Tick(2 * time.Second) {
@@ -210,111 +404,4 @@ func (c *Core[C, S]) startProgressUpdater(ctx context.Context, innerCtx context.
 			}
 		}
 	}()
-}
-
-func (c *Core[C, S]) channelConsumer(
-	innerCtx context.Context,
-	cancel context.CancelFunc,
-	ctx context.Context,
-	t C,
-	size int,
-	l zerolog.Logger,
-	urlCh chan downloadUrl,
-	errCh chan error,
-	wg *sync.WaitGroup,
-) {
-	defer wg.Done()
-	failedCh := make(chan downloadUrl, size)
-
-	c.processInitialDownloads(innerCtx, ctx, t, l, urlCh, failedCh)
-
-	select {
-	case <-innerCtx.Done():
-	case <-ctx.Done():
-		return
-	default:
-		c.processFailedDownloads(innerCtx, ctx, t, l, failedCh, errCh, cancel)
-	}
-}
-
-func (c *Core[C, S]) processInitialDownloads(
-	innerCtx context.Context,
-	ctx context.Context,
-	t C,
-	l zerolog.Logger,
-	urlCh chan downloadUrl,
-	failedCh chan downloadUrl,
-) {
-	for urlData := range urlCh {
-		select {
-		case <-innerCtx.Done():
-			return
-		case <-ctx.Done():
-			return
-		default:
-			c.downloadURL(innerCtx, ctx, t, l, urlData, failedCh)
-		}
-	}
-	close(failedCh)
-}
-
-func (c *Core[C, S]) downloadURL(
-	innerCtx context.Context,
-	ctx context.Context,
-	t C,
-	l zerolog.Logger,
-	urlData downloadUrl,
-	failedCh chan downloadUrl,
-) {
-	l.Trace().Int("idx", urlData.idx).Str("url", urlData.url).Msg("downloading page")
-
-	err := c.DownloadContent(innerCtx, urlData.idx, t, urlData.url)
-	if err == nil {
-		time.Sleep(1 * time.Second)
-		return
-	}
-
-	select {
-	case <-innerCtx.Done():
-		return
-	case <-ctx.Done():
-		return
-	case failedCh <- urlData:
-		c.failedDownloads++
-		l.Warn().Err(err).Int("idx", urlData.idx).Str("url", urlData.url).
-			Msg("download has failed for a page for the first time, trying page again at the end")
-	}
-
-	time.Sleep(1 * time.Second)
-}
-
-func (c *Core[C, S]) processFailedDownloads(
-	innerCtx context.Context,
-	ctx context.Context,
-	t C,
-	l zerolog.Logger,
-	failedCh chan downloadUrl,
-	errCh chan error,
-	cancel context.CancelFunc,
-) {
-	for reTry := range failedCh {
-		select {
-		case <-innerCtx.Done():
-			return
-		case <-ctx.Done():
-			return
-		default:
-			if err := c.DownloadContent(innerCtx, reTry.idx, t, reTry.url); err != nil {
-				l.Error().Err(err).Str("url", reTry.url).Msg("Failed final download")
-				select {
-				case errCh <- fmt.Errorf("final download failed %w", err):
-					cancel()
-				default:
-				}
-				return
-			}
-			c.failedDownloads++
-			time.Sleep(1 * time.Second)
-		}
-	}
 }
