@@ -148,10 +148,12 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
 	if err = c.fs.MkdirAll(contentPath, 0755); err != nil {
 		return err
 	}
+
+	// Mark as downloaded as oon as the directory is created as we need to remove it in case of an error
 	c.HasDownloaded = append(c.HasDownloaded, contentPath)
 
 	if err = c.impl.WriteContentMetaData(ctx, chapter); err != nil {
-		c.Log.Warn().Err(err).Msg("error writing meta data")
+		c.Log.Warn().Err(err).Msg("error writing metadata")
 	}
 
 	dCtx.log.Debug().Int("size", len(dCtx.Urls)).Msg("downloading images")
@@ -300,8 +302,6 @@ func (d *DownloadContext[C, S]) ProduceUrls() {
 
 // StartDownloadWorkers starts cap(DownloadCh) DownloadWorker threads
 func (d *DownloadContext[C, S]) StartDownloadWorkers() {
-	d.log.Trace().Int("workers", cap(d.DownloadCh)).Msg("starting download workers")
-
 	for worker := range cap(d.DownloadCh) {
 		d.DownloadWg.Add(1)
 		go d.DownloadWorker(fmt.Sprintf("DownloadWorker#%d", worker))
@@ -323,10 +323,19 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 	defer d.DownloadWg.Done()
 
 	failedDownloadCh := make(chan DownloadTask, len(d.Urls))
-
 	rateLimiter := time.NewTicker(time.Second)
 	defer rateLimiter.Stop()
 
+	d.processInitialDownloads(log, rateLimiter, failedDownloadCh)
+	close(failedDownloadCh)
+
+	if len(failedDownloadCh) > 0 {
+		d.processRetryDownloads(log, rateLimiter, failedDownloadCh)
+	}
+}
+
+// processInitialDownloads handles the first download attempt for all tasks
+func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, rateLimiter *time.Ticker, failedDownloadCh chan<- DownloadTask) {
 	for task := range d.DownloadCh {
 		select {
 		case <-rateLimiter.C:
@@ -339,40 +348,37 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("downloading page")
 
 		data, err := d.Core.Download(d.Ctx, task.url)
-		if err == nil {
-			d.Core.ImagesDownloaded++
+		if err != nil {
 			if d.IsCancelled() {
 				return
 			}
+
 			select {
-			case d.IOCh <- IOTask{data, task}:
-			case <-d.GlobalCtx.Done():
-				return
-			case <-d.Ctx.Done():
-				return
+			case failedDownloadCh <- task:
+				d.Core.failedDownloads++
+				log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
+					Msg("download has failed for a page for the first time, trying page again at the end")
+			default:
 			}
 			continue
 		}
 
+		d.Core.ImagesDownloaded++
 		if d.IsCancelled() {
 			return
 		}
-
 		select {
-		case failedDownloadCh <- task:
-			d.Core.failedDownloads++
-			log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
-				Msg("download has failed for a page for the first time, trying page again at the end")
-		default:
+		case d.IOCh <- IOTask{data, task}:
+		case <-d.GlobalCtx.Done():
+			return
+		case <-d.Ctx.Done():
+			return
 		}
 	}
+}
 
-	close(failedDownloadCh)
-
-	if len(failedDownloadCh) == 0 {
-		return
-	}
-
+// processRetryDownloads handles retry attempts for failed downloads
+func (d *DownloadContext[C, S]) processRetryDownloads(log zerolog.Logger, rateLimiter *time.Ticker, failedDownloadCh <-chan DownloadTask) {
 	for task := range failedDownloadCh {
 		if d.IsCancelled() {
 			return
@@ -386,31 +392,31 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 			return
 		}
 
-		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("downloading page")
+		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("second try at downloading page")
 
 		data, err := d.Core.Download(d.Ctx, task.url)
 		if err == nil {
 			if d.IsCancelled() {
 				return
 			}
-			select {
-			case d.IOCh <- IOTask{data, task}:
-			case <-d.GlobalCtx.Done():
-				return
-			case <-d.Ctx.Done():
-				return
-			}
-			continue
+
+			log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
+				Msg("retry download failed, ending content download")
+			d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
+			return
 		}
 
 		if d.IsCancelled() {
 			return
 		}
 
-		log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
-			Msg("retry download failed, ending content download")
-		d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
-		return
+		select {
+		case d.IOCh <- IOTask{data, task}:
+		case <-d.GlobalCtx.Done():
+			return
+		case <-d.Ctx.Done():
+			return
+		}
 	}
 }
 
