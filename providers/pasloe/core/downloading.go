@@ -8,9 +8,11 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"golang.org/x/time/rate"
 	"path"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -149,7 +151,7 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
 		return err
 	}
 
-	// Mark as downloaded as oon as the directory is created as we need to remove it in case of an error
+	// Mark as downloaded as soon as the directory is created as we need to remove it in case of an error
 	c.HasDownloaded = append(c.HasDownloaded, contentPath)
 
 	if err = c.impl.WriteContentMetaData(ctx, chapter); err != nil {
@@ -190,17 +192,17 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
 // ConstructDownloadContext load the required information to start downloading the chapter, and then returns the context
 // with all fields set
 func (c *Core[C, S]) ConstructDownloadContext(ctx context.Context, chapter C) (*DownloadContext[C, S], error) {
-	downloadContext, cancel := context.WithCancel(context.Background())
+	downloadContext, cancel := context.WithCancel(ctx)
 
 	dCtx := DownloadContext[C, S]{
-		GlobalCtx: ctx,
-		Ctx:       downloadContext,
-		Core:      c,
-		Chapter:   chapter,
-		Cancel:    cancel,
+		Ctx:     downloadContext,
+		Core:    c,
+		Chapter: chapter,
+		Cancel:  cancel,
 
-		DownloadWg: &sync.WaitGroup{},
-		DownloadCh: make(chan DownloadTask, c.maxImages),
+		RateLimiter: rate.NewLimiter(rate.Limit(c.maxImages), c.maxImages),
+		DownloadWg:  &sync.WaitGroup{},
+		DownloadCh:  make(chan DownloadTask, c.maxImages),
 
 		IoWg: &sync.WaitGroup{},
 		IOCh: make(chan IOTask, c.maxImages*2), // Allow for some buffer as I/O may be slower than downloading (webp)
@@ -227,16 +229,16 @@ func (c *Core[C, S]) ConstructDownloadContext(ctx context.Context, chapter C) (*
 
 // DownloadContext convince wrapper around the download of a chapter
 type DownloadContext[C Chapter, S Series[C]] struct {
-	GlobalCtx context.Context
-	Ctx       context.Context
-	Cancel    context.CancelFunc
+	Ctx    context.Context
+	Cancel context.CancelFunc
 
 	Core    *Core[C, S]
 	Chapter C
 	Urls    []string
 
-	DownloadWg *sync.WaitGroup
-	DownloadCh chan DownloadTask
+	RateLimiter *rate.Limiter
+	DownloadWg  *sync.WaitGroup
+	DownloadCh  chan DownloadTask
 
 	IoWg *sync.WaitGroup
 	IOCh chan IOTask
@@ -266,12 +268,10 @@ func (d *DownloadContext[C, S]) CancelWithError(err error) {
 	}
 }
 
-// IsCancelled checks if either the global or local context has been cancelled
+// IsCancelled checks if the context has been cancelled
 // Returns true if cancelled, false otherwise
 func (d *DownloadContext[C, S]) IsCancelled() bool {
 	select {
-	case <-d.GlobalCtx.Done():
-		return true
 	case <-d.Ctx.Done():
 		return true
 	default:
@@ -292,8 +292,6 @@ func (d *DownloadContext[C, S]) ProduceUrls() {
 
 		select {
 		case d.DownloadCh <- DownloadTask{idx + 1, url}:
-		case <-d.GlobalCtx.Done():
-			return
 		case <-d.Ctx.Done():
 			return
 		}
@@ -323,25 +321,27 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 	defer d.DownloadWg.Done()
 
 	failedDownloadCh := make(chan DownloadTask, len(d.Urls))
-	rateLimiter := time.NewTicker(time.Second)
-	defer rateLimiter.Stop()
 
-	d.processInitialDownloads(log, rateLimiter, failedDownloadCh)
+	d.processInitialDownloads(log, failedDownloadCh)
 	close(failedDownloadCh)
 
 	if len(failedDownloadCh) > 0 {
-		d.processRetryDownloads(log, rateLimiter, failedDownloadCh)
+		d.processRetryDownloads(log, failedDownloadCh)
 	}
 }
 
 // processInitialDownloads handles the first download attempt for all tasks
-func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, rateLimiter *time.Ticker, failedDownloadCh chan<- DownloadTask) {
+func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, failedDownloadCh chan<- DownloadTask) {
 	for task := range d.DownloadCh {
-		select {
-		case <-rateLimiter.C:
-		case <-d.GlobalCtx.Done():
+		if d.IsCancelled() {
 			return
-		case <-d.Ctx.Done():
+		}
+
+		if err := d.RateLimiter.Wait(d.Ctx); err != nil {
+			if errors.Is(err, context.Canceled) {
+				return
+			}
+			log.Error().Err(err).Msg("rate limiter wait failed")
 			return
 		}
 
@@ -355,7 +355,7 @@ func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, rate
 
 			select {
 			case failedDownloadCh <- task:
-				d.Core.failedDownloads++
+				atomic.AddInt64(&d.Core.failedDownloads, 1)
 				log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
 					Msg("download has failed for a page for the first time, trying page again at the end")
 			default:
@@ -363,14 +363,14 @@ func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, rate
 			continue
 		}
 
-		d.Core.ImagesDownloaded++
+		atomic.AddInt64(&d.Core.ImagesDownloaded, 1)
+
 		if d.IsCancelled() {
 			return
 		}
+
 		select {
 		case d.IOCh <- IOTask{data, task}:
-		case <-d.GlobalCtx.Done():
-			return
 		case <-d.Ctx.Done():
 			return
 		}
@@ -378,33 +378,31 @@ func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, rate
 }
 
 // processRetryDownloads handles retry attempts for failed downloads
-func (d *DownloadContext[C, S]) processRetryDownloads(log zerolog.Logger, rateLimiter *time.Ticker, failedDownloadCh <-chan DownloadTask) {
+func (d *DownloadContext[C, S]) processRetryDownloads(log zerolog.Logger, failedDownloadCh <-chan DownloadTask) {
 	for task := range failedDownloadCh {
 		if d.IsCancelled() {
 			return
 		}
 
-		select {
-		case <-rateLimiter.C:
-		case <-d.GlobalCtx.Done():
-			return
-		case <-d.Ctx.Done():
+		if err := d.RateLimiter.Wait(d.Ctx); err != nil {
+			if errors.Is(err, context.Canceled) {
+				return
+			}
+			log.Error().Err(err).Msg("rate limiter wait failed on retry")
 			return
 		}
 
 		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("second try at downloading page")
 
 		data, err := d.Core.Download(d.Ctx, task.url)
-		if err == nil {
-			if d.IsCancelled() {
-				return
-			}
-
+		if err != nil {
 			log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
 				Msg("retry download failed, ending content download")
 			d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
 			return
 		}
+
+		atomic.AddInt64(&d.Core.ImagesDownloaded, 1)
 
 		if d.IsCancelled() {
 			return
@@ -412,8 +410,6 @@ func (d *DownloadContext[C, S]) processRetryDownloads(log zerolog.Logger, rateLi
 
 		select {
 		case d.IOCh <- IOTask{data, task}:
-		case <-d.GlobalCtx.Done():
-			return
 		case <-d.Ctx.Done():
 			return
 		}
@@ -448,6 +444,7 @@ func (d *DownloadContext[C, S]) IOWorker(id string) {
 			}
 			log.Error().Err(err).Msg("error writing file")
 			d.CancelWithError(fmt.Errorf("error writing file %s: %w", filePath, err))
+			return
 		}
 	}
 }

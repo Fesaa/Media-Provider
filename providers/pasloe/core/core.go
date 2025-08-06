@@ -118,11 +118,11 @@ type Core[C Chapter, S Series[C]] struct {
 	// # Chapters downloaded
 	ContentDownloaded int
 	// Total amount of images downloaded
-	ImagesDownloaded int
+	ImagesDownloaded int64
 	LastTime         time.Time
 	LastRead         int
 
-	failedDownloads int
+	failedDownloads int64
 
 	cancel context.CancelFunc
 }
@@ -139,7 +139,7 @@ func (c *Core[C, S]) DisplayInformation() DisplayInformation {
 }
 
 func (c *Core[C, S]) FailedDownloads() int {
-	return c.failedDownloads
+	return int(c.failedDownloads)
 }
 
 func (c *Core[C, S]) Request() payload.DownloadRequest {
@@ -440,10 +440,10 @@ func (c *Core[C, S]) Speed() int64 {
 	if c.contentState != payload.ContentStateDownloading {
 		return 0
 	}
-	diff := c.ImagesDownloaded - c.LastRead
+	diff := int(c.ImagesDownloaded) - c.LastRead
 	timeDiff := max(time.Since(c.LastTime).Seconds(), 1)
 
-	c.LastRead = c.ImagesDownloaded
+	c.LastRead = int(c.ImagesDownloaded)
 	c.LastTime = time.Now()
 	return int64(math.Ceil(float64(diff) / timeDiff))
 }
