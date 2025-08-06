@@ -48,8 +48,8 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 }
 
 func (m *manga) SetSeriesStatus() {
-	var maxVolume int64 = -1
-	var maxChapter int64 = -1
+	var maxVolume float64 = -1
+	var maxChapter float64 = -1
 
 	// If there is a last chapter present, but no last volume is given. We assume that the series does not use volumes
 	m.foundLastVolume = m.SeriesInfo.Attributes.LastVolume == "" && m.SeriesInfo.Attributes.LastChapter != ""
@@ -61,23 +61,17 @@ func (m *manga) SetSeriesStatus() {
 			m.foundLastChapter = true
 		}
 
-		if val, err := strconv.ParseInt(ch.Attributes.Volume, 10, 64); err == nil {
+		if val, err := strconv.ParseFloat(ch.Attributes.Volume, 64); err == nil {
 			maxVolume = max(maxVolume, val)
-		} else {
-			m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
-				Msg("not adding chapter, as Volume string isn't an int")
 		}
 
-		if val, err := strconv.ParseInt(ch.Attributes.Chapter, 10, 64); err == nil {
+		if val, err := strconv.ParseFloat(ch.Attributes.Chapter, 64); err == nil {
 			maxChapter = max(maxChapter, val)
-		} else {
-			m.Log.Trace().Str("volume", ch.Attributes.Volume).Str("chapter", ch.Attributes.Chapter).
-				Msg("not adding chapter, as Chapter string isn't an int")
 		}
 	}
 	// We can set these safely as they're only written when found
-	m.lastFoundVolume = int(maxVolume)
-	m.lastFoundChapter = int(maxChapter)
+	m.lastFoundVolume = maxVolume
+	m.lastFoundChapter = maxChapter
 }
 
 func (m *manga) FilterChapters(c *ChapterSearchResponse) ChapterSearchResponse {
