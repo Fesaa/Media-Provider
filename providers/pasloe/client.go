@@ -330,6 +330,20 @@ func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupEr
 			cleanupErrs = append(cleanupErrs, fmt.Errorf("error removing dir %s: %w", entry.Name(), err))
 		}
 	}
+
+	entries, err = c.fs.ReadDir(dir)
+	if err != nil {
+		l.Error().Err(err).Str("dir", dir).Msg("error while reading dir, unable to remove if empty")
+		return append(cleanupErrs, fmt.Errorf("error reading dir %s: %w", dir, err))
+	}
+
+	if len(entries) == 0 {
+		if err = c.fs.Remove(dir); err != nil {
+			l.Error().Err(err).Str("dir", dir).Msg("error while removing empty series dir")
+			cleanupErrs = append(cleanupErrs, fmt.Errorf("error removing dir %s: %w", dir, err))
+		}
+	}
+
 	return cleanupErrs
 }
 
