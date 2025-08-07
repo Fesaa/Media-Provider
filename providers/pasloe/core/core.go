@@ -463,8 +463,8 @@ func (c *Core[C, S]) Size() int {
 
 func (c *Core[C, S]) UpdateProgress() {
 	chaptersProgress := utils.Percent(int64(c.ContentDownloaded), int64(len(c.ToDownload)))
-	//chapterProgress := utils.Percent(c.ImagesDownloaded, int64(c.TotalChapterImages))
-	//totalProgress := chaptersProgress + chapterProgress/int64(len(c.ToDownload))
+	// chapterProgress := utils.Percent(c.ImagesDownloaded, int64(c.TotalChapterImages))
+	// totalProgress := chaptersProgress + chapterProgress/int64(len(c.ToDownload))
 
 	// There is a small bug where sometimes the totalProgress goes down when going from one chapter being
 	// downloaded to the next. For now, we'll just live with it being a bug as it's still nicer to have some idea

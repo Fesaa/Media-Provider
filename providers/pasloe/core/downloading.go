@@ -336,18 +336,20 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 
 // processDownloads tries downloading tasks in the channel and sends them into the IO Ch. If isRetry is false will
 // return failed tasks, otherwise stops download
-func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-chan DownloadTask, isRetry bool) (failedTasks []DownloadTask) {
+func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-chan DownloadTask, isRetry bool) []DownloadTask {
+	failedTasks := make([]DownloadTask, 0)
+
 	for task := range taskCh {
 		if d.IsCancelled() {
-			return
+			return failedTasks
 		}
 
 		if err := d.RateLimiter.Wait(d.Ctx); err != nil {
 			if errors.Is(err, context.Canceled) {
-				return
+				return failedTasks
 			}
 			log.Error().Err(err).Msg("rate limiter wait failed")
-			return
+			return failedTasks
 		}
 
 		log.Trace().Int("idx", task.idx).Str("url", task.url).Bool("isRetry", isRetry).
@@ -356,14 +358,14 @@ func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-ch
 		data, err := d.Core.Download(d.Ctx, task.url)
 		if err != nil {
 			if d.IsCancelled() {
-				return
+				return failedTasks
 			}
 
 			if isRetry {
 				log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
 					Msg("retry download failed, ending content download")
 				d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
-				return
+				return failedTasks
 			}
 
 			failedTasks = append(failedTasks, task)
@@ -375,17 +377,17 @@ func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-ch
 
 		atomic.AddInt64(&d.Core.ImagesDownloaded, 1)
 		if d.IsCancelled() {
-			return
+			return failedTasks
 		}
 
 		select {
 		case d.Core.IOWorkCh <- IOTask{data, d.Core.ContentPath(d.Chapter), task}:
 		case <-d.Ctx.Done():
-			return
+			return failedTasks
 		}
 	}
 
-	return
+	return failedTasks
 }
 
 // startProgressUpdater start a goroutine sending payload.EventTypeContentProgressUpdate every 2s for this chapter
