@@ -336,20 +336,6 @@ func (c *Core[C, S]) Cancel() {
 	}
 }
 
-func (c *Core[C, S]) initializeLoadInfo() (context.Context, bool) {
-	if c.cancel != nil {
-		c.Log.Debug().Msg("content already started")
-		return nil, false
-	}
-
-	c.SetState(payload.ContentStateLoading)
-	ctx, cancel := context.WithCancel(context.Background())
-	c.cancel = cancel
-	c.Log.Debug().Msg("loading content info")
-
-	return ctx, true
-}
-
 func (c *Core[C, S]) loadContentInfo(ctx context.Context) bool {
 	start := time.Now()
 	select {
@@ -365,8 +351,8 @@ func (c *Core[C, S]) loadContentInfo(ctx context.Context) bool {
 	return true
 }
 
-// prepareContentToDownload checks what content exists on disk and filters what needs to be downloaded
-func (c *Core[C, S]) prepareContentToDownload() ([]C, time.Duration) {
+// filterAlreadyDownloadedContent checks what content exists on disk and filters what needs to be downloaded
+func (c *Core[C, S]) filterAlreadyDownloadedContent() ([]C, time.Duration) {
 	start := time.Now()
 	c.loadContentOnDisk()
 
@@ -375,56 +361,19 @@ func (c *Core[C, S]) prepareContentToDownload() ([]C, time.Duration) {
 	return data, time.Since(start)
 }
 
-func (c *Core[C, S]) handleLongDiskCheck(elapsed time.Duration) {
-	if elapsed > time.Second*5 {
-		c.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
-
-		if c.Req.IsSubscription {
-			c.Notifier.NotifyContent(
-				c.TransLoco.GetTranslation("warn"),
-				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
-				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
-				models.Warning)
-		}
-	}
-}
-
-func (c *Core[C, S]) handleNoContentToDownload() bool {
-	if len(c.ToDownload) == 0 {
-		c.Log.Debug().Msg("no chapters to download, stopping")
-
-		c.SetState(payload.ContentStateWaiting)
-
-		req := payload.StopRequest{
-			Provider:    c.Req.Provider,
-			Id:          c.Id(),
-			DeleteFiles: false,
-		}
-		if err := c.Client.RemoveDownload(req); err != nil {
-			c.Log.Error().Err(err).Msg("error while cleaning up")
-		}
-		return true
-	}
-	return false
-}
-
-func (c *Core[C, S]) finalizeLoadInfo(data []C, loadInfoStart time.Time) {
-	c.SetState(utils.Ternary(c.Req.DownloadMetadata.StartImmediately,
-		payload.ContentStateReady,
-		payload.ContentStateWaiting))
-	c.SignalR.UpdateContentInfo(c.GetInfo())
-
-	c.Log.Debug().Int("all", len(data)).Int("filtered", len(c.ToDownload)).
-		Dur("StartLoadInfo#duration", time.Since(loadInfoStart)).Msg("downloaded content filtered")
-}
-
 func (c *Core[C, S]) StartLoadInfo() {
-	ctx, shouldContinue := c.initializeLoadInfo()
-	if !shouldContinue {
+	if c.cancel != nil {
+		c.Log.Debug().Msg("content already started")
 		return
 	}
 
-	loadInfoStart := time.Now()
+	c.Log.Debug().Msg("loading content info")
+	c.SetState(payload.ContentStateLoading)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	c.cancel = cancel
+
+	start := time.Now()
 
 	p, err := c.preferences.GetComplete()
 	if err != nil {
@@ -436,14 +385,37 @@ func (c *Core[C, S]) StartLoadInfo() {
 		return
 	}
 
-	data, elapsed := c.prepareContentToDownload()
-	c.handleLongDiskCheck(elapsed)
+	data, elapsed := c.filterAlreadyDownloadedContent()
+	if elapsed > time.Second*5 {
+		c.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
 
-	if c.handleNoContentToDownload() {
+		if c.Req.IsSubscription {
+			c.Notifier.NotifyContent(
+				c.TransLoco.GetTranslation("warn"),
+				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
+				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
+				models.Warning)
+		}
+	}
+
+	if len(c.ToDownload) == 0 {
+		c.Log.Debug().Msg("no chapters to download, stopping")
+		c.SetState(payload.ContentStateWaiting)
+
+		if err = c.Client.RemoveDownload(payload.StopRequest{Provider: c.Req.Provider, Id: c.Id()}); err != nil {
+			c.Log.Error().Err(err).Msg("error while cleaning up")
+		}
+
 		return
 	}
 
-	c.finalizeLoadInfo(data, loadInfoStart)
+	c.SetState(utils.Ternary(c.Req.DownloadMetadata.StartImmediately,
+		payload.ContentStateReady,
+		payload.ContentStateWaiting))
+	c.SignalR.UpdateContentInfo(c.GetInfo())
+
+	c.Log.Debug().Int("all", len(data)).Int("filtered", len(c.ToDownload)).
+		Dur("elapsed", time.Since(start)).Msg("downloaded content filtered")
 }
 
 func (c *Core[C, S]) StartDownload() {
