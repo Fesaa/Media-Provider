@@ -12,7 +12,7 @@ import (
 type Builder struct {
 	log        zerolog.Logger
 	httpClient *menou.Client
-	ys         yoitsu.Yoitsu
+	ys         yoitsu.Client
 }
 
 func (b *Builder) Provider() models.Provider {
@@ -74,6 +74,6 @@ func (b *Builder) Client() services.Client {
 	return b.ys
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ys yoitsu.Yoitsu) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ys yoitsu.Client) *Builder {
 	return &Builder{log.With().Str("handler", "limetorrents-provider").Logger(), httpClient, ys}
 }

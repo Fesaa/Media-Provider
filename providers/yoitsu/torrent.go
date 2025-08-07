@@ -21,7 +21,7 @@ import (
 type torrentImpl struct {
 	t      *torrent.Torrent
 	log    zerolog.Logger
-	client Yoitsu
+	client Client
 
 	signalR services.SignalRService
 	fs      afero.Afero
@@ -45,7 +45,7 @@ type torrentImpl struct {
 	lastRead int64
 }
 
-func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Logger, client Yoitsu,
+func newTorrent(t *torrent.Torrent, req payload.DownloadRequest, log zerolog.Logger, client Client,
 	signalR services.SignalRService, fs afero.Afero) Torrent {
 	tor := &torrentImpl{
 		t:         t,

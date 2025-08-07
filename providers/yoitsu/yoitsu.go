@@ -44,7 +44,7 @@ type yoitsu struct {
 func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 	dirService services.DirectoryService, notify services.NotificationService,
 	transLoco services.TranslocoService, fs afero.Afero, settingsService services.SettingsService,
-) (Yoitsu, error) {
+) (Client, error) {
 	settings, err := settingsService.GetSettingsDto()
 	if err != nil {
 		return nil, err
@@ -84,6 +84,10 @@ func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 
 	go impl.cleaner()
 	return impl, nil
+}
+
+func (y *yoitsu) Shutdown() error {
+	return nil
 }
 
 func (y *yoitsu) Content(id string) services.Content {

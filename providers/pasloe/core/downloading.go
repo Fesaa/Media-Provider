@@ -104,9 +104,8 @@ func (c *Core[C, S]) cleanupAfterDownload(wg *sync.WaitGroup) {
 	}
 }
 
-func (c *Core[C, S]) startDownload() {
-	// Overwrite cancel, as we're doing something else
-	ctx, cancel := context.WithCancel(context.Background())
+func (c *Core[C, S]) startDownload(parentCtx context.Context) {
+	ctx, cancel := context.WithCancel(parentCtx)
 	c.cancel = cancel
 
 	data := c.GetAllLoadedChapters()
@@ -147,8 +146,8 @@ func (c *Core[C, S]) startDownload() {
 }
 
 // downloadContent handles the full download of one chapter
-func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
-	dCtx, err := c.ConstructDownloadContext(ctx, chapter)
+func (c *Core[C, S]) downloadContent(parentCtx context.Context, chapter C) error {
+	dCtx, err := c.ConstructDownloadContext(parentCtx, chapter)
 	if err != nil || dCtx == nil {
 		return err
 	}
@@ -163,7 +162,7 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
 	// Mark as downloaded as soon as the directory is created as we need to remove it in case of an error
 	c.HasDownloaded = append(c.HasDownloaded, contentPath)
 
-	if err = c.impl.WriteContentMetaData(ctx, chapter); err != nil {
+	if err = c.impl.WriteContentMetaData(dCtx.Ctx, chapter); err != nil {
 		c.Log.Warn().Err(err).Msg("error writing metadata")
 	}
 
@@ -263,6 +262,7 @@ type IOTask struct {
 // CancelWithError queue the given error into the ErrCh, and call cancel if it succeeded. Otherwise, do nothing
 // does not block
 func (d *DownloadContext[C, S]) CancelWithError(err error) {
+	d.log.Trace().Err(err).Msg("Canceling download task")
 	select {
 	case d.ErrCh <- err:
 		d.Cancel()
@@ -303,6 +303,7 @@ func (d *DownloadContext[C, S]) ProduceUrls() {
 // StartDownloadWorkers starts cap(DownloadCh) DownloadWorker threads
 func (d *DownloadContext[C, S]) StartDownloadWorkers() {
 	for worker := range cap(d.DownloadCh) {
+		d.DownloadWg.Add(1)
 		go d.DownloadWorker(fmt.Sprintf("DownloadWorker#%d", worker))
 	}
 }
@@ -310,7 +311,6 @@ func (d *DownloadContext[C, S]) StartDownloadWorkers() {
 // DownloadWorker reads from DownloadCh; will download the remote content and queue a IO task
 // has its own internal retry system. After one retry fail with stop content download
 func (d *DownloadContext[C, S]) DownloadWorker(id string) {
-	d.DownloadWg.Add(1)
 	defer d.DownloadWg.Done()
 
 	log := d.log.With().Str("DownloadWorker#", id).Logger()

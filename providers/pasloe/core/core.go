@@ -136,6 +136,10 @@ type Core[C Chapter, S Series[C]] struct {
 	IOWorkCh chan IOTask
 }
 
+func (c *Core[C, S]) Logger() *zerolog.Logger {
+	return &c.Log
+}
+
 func (c *Core[C, S]) DisplayInformation() DisplayInformation {
 	return DisplayInformation{
 		Name: func() string {
@@ -361,16 +365,16 @@ func (c *Core[C, S]) filterAlreadyDownloadedContent() ([]C, time.Duration) {
 	return data, time.Since(start)
 }
 
-func (c *Core[C, S]) StartLoadInfo() {
+func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 	if c.cancel != nil {
-		c.Log.Debug().Msg("content already started")
+		c.Log.Warn().Msg("content is already loading info, or downloading")
 		return
 	}
 
 	c.Log.Debug().Msg("loading content info")
 	c.SetState(payload.ContentStateLoading)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
 
 	start := time.Now()
@@ -418,22 +422,20 @@ func (c *Core[C, S]) StartLoadInfo() {
 		Dur("elapsed", time.Since(start)).Msg("downloaded content filtered")
 }
 
-func (c *Core[C, S]) StartDownload() {
+func (c *Core[C, S]) DownloadContent(ctx context.Context) {
 	if c.State() != payload.ContentStateReady && c.State() != payload.ContentStateWaiting {
 		c.Log.Warn().Any("state", c.State()).Msg("cannot start download, content not ready")
 		return
 	}
 	c.SetState(payload.ContentStateDownloading)
 
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				c.Log.Error().Any("error", err).Msg("a panic occurred while downloading")
-			}
-		}()
-
-		c.startDownload()
+	defer func() {
+		if err := recover(); err != nil {
+			c.Log.Error().Any("error", err).Msg("a panic occurred while downloading")
+		}
 	}()
+
+	c.startDownload(ctx)
 }
 
 func (c *Core[C, S]) State() payload.ContentState {

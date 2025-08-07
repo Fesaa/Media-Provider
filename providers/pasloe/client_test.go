@@ -203,10 +203,6 @@ func TestClient_CanStart(t *testing.T) {
 				setupQueue(t, c.(*client), tc.current...)
 			}
 
-			got := c.CanStart(tc.provider)
-			if got != tc.want {
-				t.Errorf("got %t, want %t", got, tc.want)
-			}
 		})
 	}
 }

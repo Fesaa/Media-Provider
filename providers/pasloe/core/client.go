@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
 )
 
@@ -14,5 +13,7 @@ type Client interface {
 	services.Client
 	GetBaseDir() string
 	GetCurrentDownloads() []Downloadable
-	CanStart(models.Provider) bool
+	MoveToDownloadQueue(id string) error
+
+	Shutdown() error
 }
