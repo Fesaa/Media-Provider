@@ -138,6 +138,7 @@ func (c *Core[C, S]) startDownload() {
 	c.Log.Debug().Dur("elapsed", time.Since(start)).Msg("All content has been downloaded, waiting for I/O workers to finish")
 
 	close(c.IOWorkCh)
+	c.SetState(payload.ContentStateCleanup)
 	c.IoWg.Wait()
 
 	c.Log.Info().Dur("elapsed", time.Since(start)).Msg("Finished downloading content")
@@ -302,7 +303,6 @@ func (d *DownloadContext[C, S]) ProduceUrls() {
 // StartDownloadWorkers starts cap(DownloadCh) DownloadWorker threads
 func (d *DownloadContext[C, S]) StartDownloadWorkers() {
 	for worker := range cap(d.DownloadCh) {
-		d.DownloadWg.Add(1)
 		go d.DownloadWorker(fmt.Sprintf("DownloadWorker#%d", worker))
 	}
 }
@@ -310,24 +310,34 @@ func (d *DownloadContext[C, S]) StartDownloadWorkers() {
 // DownloadWorker reads from DownloadCh; will download the remote content and queue a IO task
 // has its own internal retry system. After one retry fail with stop content download
 func (d *DownloadContext[C, S]) DownloadWorker(id string) {
-	log := d.log.With().Str("worker", id).Logger()
+	d.DownloadWg.Add(1)
 	defer d.DownloadWg.Done()
 
-	failedDownloadCh := make(chan DownloadTask, len(d.Urls))
+	log := d.log.With().Str("DownloadWorker#", id).Logger()
 
-	d.processInitialDownloads(log, failedDownloadCh)
-	close(failedDownloadCh)
+	failedTasks := d.processDownloads(log, d.DownloadCh, false)
 
-	if len(failedDownloadCh) > 0 {
-		d.log.Debug().Int("failedDownloads", len(failedDownloadCh)).
-			Msg("Some images failed to download, retrying...")
-		d.processRetryDownloads(log, failedDownloadCh)
+	if len(failedTasks) == 0 {
+		return
 	}
+
+	d.log.Debug().Int("failedDownloads", len(failedTasks)).
+		Msg("Some images failed to download, retrying")
+
+	failedCh := make(chan DownloadTask, len(failedTasks))
+	for _, task := range failedTasks {
+		failedCh <- task
+	}
+	close(failedCh)
+
+	// We can ignore the return value, errors on retry stop the download
+	d.processDownloads(log, failedCh, true)
 }
 
-// processInitialDownloads handles the first download attempt for all tasks
-func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, failedDownloadCh chan<- DownloadTask) {
-	for task := range d.DownloadCh {
+// processDownloads tries downloading tasks in the channel and sends them into the IO Ch. If isRetry is false will
+// return failed tasks, otherwise stops download
+func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-chan DownloadTask, isRetry bool) (failedTasks []DownloadTask) {
+	for task := range taskCh {
 		if d.IsCancelled() {
 			return
 		}
@@ -340,7 +350,8 @@ func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, fail
 			return
 		}
 
-		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("downloading page")
+		log.Trace().Int("idx", task.idx).Str("url", task.url).Bool("isRetry", isRetry).
+			Msg("downloading page")
 
 		data, err := d.Core.Download(d.Ctx, task.url)
 		if err != nil {
@@ -348,18 +359,21 @@ func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, fail
 				return
 			}
 
-			select {
-			case failedDownloadCh <- task:
-				atomic.AddInt64(&d.Core.failedDownloads, 1)
-				log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
-					Msg("download has failed for a page for the first time, trying page again at the end")
-			default:
+			if isRetry {
+				log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
+					Msg("retry download failed, ending content download")
+				d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
+				return
 			}
+
+			failedTasks = append(failedTasks, task)
+			atomic.AddInt64(&d.Core.failedDownloads, 1)
+			log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
+				Msg("download has failed for a page for the first time, trying page again at the end")
 			continue
 		}
 
 		atomic.AddInt64(&d.Core.ImagesDownloaded, 1)
-
 		if d.IsCancelled() {
 			return
 		}
@@ -370,45 +384,8 @@ func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, fail
 			return
 		}
 	}
-}
 
-// processRetryDownloads handles retry attempts for failed downloads
-func (d *DownloadContext[C, S]) processRetryDownloads(log zerolog.Logger, failedDownloadCh <-chan DownloadTask) {
-	for task := range failedDownloadCh {
-		if d.IsCancelled() {
-			return
-		}
-
-		if err := d.RateLimiter.Wait(d.Ctx); err != nil {
-			if errors.Is(err, context.Canceled) {
-				return
-			}
-			log.Error().Err(err).Msg("rate limiter wait failed on retry")
-			return
-		}
-
-		log.Trace().Int("idx", task.idx).Str("url", task.url).Msg("second try at downloading page")
-
-		data, err := d.Core.Download(d.Ctx, task.url)
-		if err != nil {
-			log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
-				Msg("retry download failed, ending content download")
-			d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
-			return
-		}
-
-		atomic.AddInt64(&d.Core.ImagesDownloaded, 1)
-
-		if d.IsCancelled() {
-			return
-		}
-
-		select {
-		case d.Core.IOWorkCh <- IOTask{data, d.Core.ContentPath(d.Chapter), task}:
-		case <-d.Ctx.Done():
-			return
-		}
-	}
+	return
 }
 
 // startProgressUpdater start a goroutine sending payload.EventTypeContentProgressUpdate every 2s for this chapter

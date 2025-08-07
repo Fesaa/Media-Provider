@@ -70,16 +70,16 @@ func (c *Core[C, S]) readDirectoryForContent(p string) ([]Content, error) {
 // StartIOWorkers starts cap(IOCh) IOWorker threads
 func (c *Core[C, S]) StartIOWorkers(ctx context.Context) {
 	for worker := range cap(c.IOWorkCh) {
-		c.IoWg.Add(1)
 		go c.IOWorker(ctx, fmt.Sprintf("IOWorker#%d", worker))
 	}
 }
 
 // IOWorker reads from IOCh; converts to webp and writes to disk
 func (c *Core[C, S]) IOWorker(ctx context.Context, id string) {
-	log := c.Log.With().Str("IO-Worker-", id).Logger()
-
+	c.IoWg.Add(1)
 	defer c.IoWg.Done()
+
+	log := c.Log.With().Str("IOWorker#", id).Logger()
 
 	for task := range c.IOWorkCh {
 		select {
