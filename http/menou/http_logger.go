@@ -33,7 +33,7 @@ func (lt *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error)
 		if !errors.Is(err, context.Canceled) {
 			l.Debug().Err(err).Msg("http request returned a non-nil error")
 		}
-		
+
 		return resp, err
 	}
 

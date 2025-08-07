@@ -162,7 +162,7 @@ func (c *Core[C, S]) downloadContent(parentCtx context.Context, chapter C) error
 	// Mark as downloaded as soon as the directory is created as we need to remove it in case of an error
 	c.HasDownloaded = append(c.HasDownloaded, contentPath)
 
-	if err = c.impl.WriteContentMetaData(dCtx.Ctx, chapter); err != nil {
+	if err = c.impl.WriteContentMetaData(dCtx.Ctx, chapter); err != nil { //nolint: contextcheck
 		c.Log.Warn().Err(err).Msg("error writing metadata")
 	}
 
@@ -345,10 +345,10 @@ func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-ch
 		}
 
 		if err := d.RateLimiter.Wait(d.Ctx); err != nil {
-			if errors.Is(err, context.Canceled) {
-				return failedTasks
+			if !errors.Is(err, context.Canceled) {
+				log.Error().Err(err).Msg("rate limiter wait failed")
 			}
-			log.Error().Err(err).Msg("rate limiter wait failed")
+
 			return failedTasks
 		}
 
@@ -364,12 +364,14 @@ func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-ch
 			if isRetry {
 				log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
 					Msg("retry download failed, ending content download")
+
 				d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
 				return failedTasks
 			}
 
 			failedTasks = append(failedTasks, task)
 			atomic.AddInt64(&d.Core.failedDownloads, 1)
+
 			log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
 				Msg("download has failed for a page for the first time, trying page again at the end")
 			continue
