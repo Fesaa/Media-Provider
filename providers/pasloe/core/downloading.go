@@ -9,7 +9,6 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"golang.org/x/time/rate"
-	"path"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -29,6 +28,7 @@ func (c *Core[C, S]) abortDownload(reason error) {
 
 	// wait for all download tasks to finish
 	c.wg.Wait()
+	c.IoWg.Wait()
 
 	req := payload.StopRequest{
 		Provider:    c.Req.Provider,
@@ -122,14 +122,23 @@ func (c *Core[C, S]) startDownload() {
 		Msg("downloading content")
 
 	start := time.Now()
+
 	c.wg = &sync.WaitGroup{}
+	c.IoWg = &sync.WaitGroup{}
+	c.IOWorkCh = make(chan IOTask, c.maxImages*2) // Allow for some buffer as I/O may be slower than downloading (webp)
 
 	c.startProgressUpdater(ctx)
+	c.StartIOWorkers(ctx)
 
 	if err := c.processDownloads(ctx, c.wg); err != nil {
 		c.Log.Trace().Err(err).Msg("download failed")
 		return
 	}
+
+	c.Log.Debug().Dur("elapsed", time.Since(start)).Msg("All content has been downloaded, waiting for I/O workers to finish")
+
+	close(c.IOWorkCh)
+	c.IoWg.Wait()
 
 	c.Log.Info().Dur("elapsed", time.Since(start)).Msg("Finished downloading content")
 
@@ -139,12 +148,8 @@ func (c *Core[C, S]) startDownload() {
 // downloadContent handles the full download of one chapter
 func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
 	dCtx, err := c.ConstructDownloadContext(ctx, chapter)
-	if err != nil {
+	if err != nil || dCtx == nil {
 		return err
-	}
-
-	if dCtx == nil {
-		return nil
 	}
 
 	defer dCtx.Cancel()
@@ -172,14 +177,9 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
 	c.TotalChapterImages = len(dCtx.Urls)
 
 	dCtx.StartDownloadWorkers()
-	dCtx.StartIOWorkers()
 
 	dCtx.DownloadWg.Wait()
-	dCtx.log.Debug().Dur("elapsed", time.Since(start)).Msg("Finished downloading all remote content, waiting for I/O goroutines to finish")
-	close(dCtx.IOCh)
-
-	dCtx.IoWg.Wait()
-	dCtx.log.Debug().Dur("elapsed", time.Since(start)).Msg("All I/O goroutines finished, checking for errors and cleaning up")
+	dCtx.log.Debug().Dur("elapsed", time.Since(start)).Msg("Finished downloading all remote content for chapter")
 
 	select {
 	case err = <-dCtx.ErrCh:
@@ -209,9 +209,6 @@ func (c *Core[C, S]) ConstructDownloadContext(ctx context.Context, chapter C) (*
 		RateLimiter: rate.NewLimiter(rate.Limit(c.maxImages), c.maxImages),
 		DownloadWg:  &sync.WaitGroup{},
 		DownloadCh:  make(chan DownloadTask, c.maxImages),
-
-		IoWg: &sync.WaitGroup{},
-		IOCh: make(chan IOTask, c.maxImages*2), // Allow for some buffer as I/O may be slower than downloading (webp)
 
 		ErrCh: make(chan error, 1),
 
@@ -246,9 +243,6 @@ type DownloadContext[C Chapter, S Series[C]] struct {
 	DownloadWg  *sync.WaitGroup
 	DownloadCh  chan DownloadTask
 
-	IoWg *sync.WaitGroup
-	IOCh chan IOTask
-
 	ErrCh chan error
 
 	log zerolog.Logger
@@ -261,6 +255,7 @@ type DownloadTask struct {
 
 type IOTask struct {
 	data  []byte
+	path  string
 	dTask DownloadTask
 }
 
@@ -312,14 +307,6 @@ func (d *DownloadContext[C, S]) StartDownloadWorkers() {
 	}
 }
 
-// StartIOWorkers starts cap(IOCh) IOWorker threads
-func (d *DownloadContext[C, S]) StartIOWorkers() {
-	for worker := range cap(d.IOCh) {
-		d.IoWg.Add(1)
-		go d.IOWorker(fmt.Sprintf("IOWorker#%d", worker))
-	}
-}
-
 // DownloadWorker reads from DownloadCh; will download the remote content and queue a IO task
 // has its own internal retry system. After one retry fail with stop content download
 func (d *DownloadContext[C, S]) DownloadWorker(id string) {
@@ -332,6 +319,8 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 	close(failedDownloadCh)
 
 	if len(failedDownloadCh) > 0 {
+		d.log.Debug().Int("failedDownloads", len(failedDownloadCh)).
+			Msg("Some images failed to download, retrying...")
 		d.processRetryDownloads(log, failedDownloadCh)
 	}
 }
@@ -376,7 +365,7 @@ func (d *DownloadContext[C, S]) processInitialDownloads(log zerolog.Logger, fail
 		}
 
 		select {
-		case d.IOCh <- IOTask{data, task}:
+		case d.Core.IOWorkCh <- IOTask{data, d.Core.ContentPath(d.Chapter), task}:
 		case <-d.Ctx.Done():
 			return
 		}
@@ -415,40 +404,8 @@ func (d *DownloadContext[C, S]) processRetryDownloads(log zerolog.Logger, failed
 		}
 
 		select {
-		case d.IOCh <- IOTask{data, task}:
+		case d.Core.IOWorkCh <- IOTask{data, d.Core.ContentPath(d.Chapter), task}:
 		case <-d.Ctx.Done():
-			return
-		}
-	}
-}
-
-// IOWorker reads from IOCh; converts to webp and writes to disk
-func (d *DownloadContext[C, S]) IOWorker(id string) {
-	log := d.log.With().Str("worker", id).Logger()
-
-	defer d.IoWg.Done()
-
-	for task := range d.IOCh {
-		if d.IsCancelled() {
-			return
-		}
-
-		data, ok := d.Core.imageService.ConvertToWebp(task.data)
-
-		ext := utils.Ternary(ok, ".webp", utils.Ext(task.dTask.url))
-		filePath := path.Join(d.Core.ContentPath(d.Chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(task.dTask.idx, 4)))
-
-		if d.IsCancelled() {
-			return
-		}
-
-		if err := d.Core.fs.WriteFile(filePath, data, 0755); err != nil {
-			if d.IsCancelled() {
-				log.Debug().Err(err).Msg("ignoring write error due to cancellation")
-				return
-			}
-			log.Error().Err(err).Msg("error writing file")
-			d.CancelWithError(fmt.Errorf("error writing file %s: %w", filePath, err))
 			return
 		}
 	}

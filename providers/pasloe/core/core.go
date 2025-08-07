@@ -130,6 +130,10 @@ type Core[C Chapter, S Series[C]] struct {
 	cancel context.CancelFunc
 	// Wait group used to track chapters being downloaded
 	wg *sync.WaitGroup
+
+	// Wait group for IO workers
+	IoWg     *sync.WaitGroup
+	IOWorkCh chan IOTask
 }
 
 func (c *Core[C, S]) DisplayInformation() DisplayInformation {
@@ -307,7 +311,7 @@ func (c *Core[C, S]) GetInfo() payload.InfoStat {
 	}
 }
 
-// Cancel calls d.cancel and send a StopRequest with DeleteFiles=true to the Client
+// Cancel calls d.cancel and send a StopRequest with DeleteFiles=true to the Client if it is still present
 func (c *Core[C, S]) Cancel() {
 	c.Log.Trace().Msg("calling cancel on content")
 
@@ -318,6 +322,7 @@ func (c *Core[C, S]) Cancel() {
 	if c.wg != nil {
 		c.Log.Debug().Msg("Waiting for all download task to complete")
 		c.wg.Wait()
+		c.IoWg.Wait()
 	}
 
 	if c.Client.Content(c.id) != nil {
@@ -486,15 +491,16 @@ func (c *Core[C, S]) Size() int {
 
 func (c *Core[C, S]) UpdateProgress() {
 	chaptersProgress := utils.Percent(int64(c.ContentDownloaded), int64(len(c.ToDownload)))
-	chapterProgress := utils.Percent(c.ImagesDownloaded, int64(c.TotalChapterImages))
-	totalProgress := chaptersProgress + chapterProgress/int64(len(c.ToDownload))
+	//chapterProgress := utils.Percent(c.ImagesDownloaded, int64(c.TotalChapterImages))
+	//totalProgress := chaptersProgress + chapterProgress/int64(len(c.ToDownload))
 
 	// There is a small bug where sometimes the totalProgress goes down when going from one chapter being
 	// downloaded to the next. For now, we'll just live with it being a bug as it's still nicer to have some idea
 	// of progress with bigger chapters instead of seeing everything jump hard
 	c.SignalR.ProgressUpdate(payload.ContentProgressUpdate{
 		ContentId: c.id,
-		Progress:  totalProgress,
+		// Progress:  totalProgress,
+		Progress:  chaptersProgress,
 		SpeedType: payload.IMAGES,
 		Speed:     utils.Ternary(c.State() != payload.ContentStateCleanup, c.Speed(), 0),
 	})

@@ -1,8 +1,10 @@
 package core
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/Fesaa/Media-Provider/utils"
 	"os"
 	"path"
 	"strings"
@@ -63,4 +65,50 @@ func (c *Core[C, S]) readDirectoryForContent(p string) ([]Content, error) {
 	}
 
 	return out, nil
+}
+
+// StartIOWorkers starts cap(IOCh) IOWorker threads
+func (c *Core[C, S]) StartIOWorkers(ctx context.Context) {
+	for worker := range cap(c.IOWorkCh) {
+		c.IoWg.Add(1)
+		go c.IOWorker(ctx, fmt.Sprintf("IOWorker#%d", worker))
+	}
+}
+
+// IOWorker reads from IOCh; converts to webp and writes to disk
+func (c *Core[C, S]) IOWorker(ctx context.Context, id string) {
+	log := c.Log.With().Str("IO-Worker-", id).Logger()
+
+	defer c.IoWg.Done()
+
+	for task := range c.IOWorkCh {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		data, ok := c.imageService.ConvertToWebp(task.data)
+
+		ext := utils.Ternary(ok, ".webp", utils.Ext(task.dTask.url))
+		filePath := path.Join(task.path, fmt.Sprintf("page %s"+ext, utils.PadInt(task.dTask.idx, 4)))
+
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		if err := c.fs.WriteFile(filePath, data, 0755); err != nil {
+			select {
+			case <-ctx.Done():
+				log.Debug().Err(err).Msg("ignoring write error due to cancellation")
+				return
+			default:
+			}
+			log.Error().Err(err).Msg("error writing file")
+			c.abortDownload(fmt.Errorf("error writing file %s: %w", filePath, err))
+			return
+		}
+	}
 }
