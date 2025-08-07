@@ -3,7 +3,6 @@ package yoitsu
 import (
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -17,6 +16,7 @@ import (
 	"math/rand"
 	"path"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -39,9 +39,11 @@ type yoitsu struct {
 	dirService services.DirectoryService
 	transLoco  services.TranslocoService
 	fs         afero.Afero
+
+	deletionWg *sync.WaitGroup
 }
 
-func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
+func New(log zerolog.Logger, signalR services.SignalRService,
 	dirService services.DirectoryService, notify services.NotificationService,
 	transLoco services.TranslocoService, fs afero.Afero, settingsService services.SettingsService,
 ) (Client, error) {
@@ -65,6 +67,8 @@ func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 		dirService: dirService,
 		transLoco:  transLoco,
 		fs:         fs,
+
+		deletionWg: &sync.WaitGroup{},
 	}
 
 	opts := storage.NewFileClientOpts{
@@ -80,13 +84,28 @@ func New(c *config.Config, log zerolog.Logger, signalR services.SignalRService,
 	if err != nil {
 		return nil, err
 	}
+
 	impl.client = client
 
 	go impl.cleaner()
+
 	return impl, nil
 }
 
 func (y *yoitsu) Shutdown() error {
+	y.log.Debug().Msg("yoitsu shutting down")
+
+	y.torrents.ForEach(func(k string, v Torrent) {
+		if err := y.RemoveDownload(payload.StopRequest{Provider: v.Provider(), Id: k, DeleteFiles: true}); err != nil {
+			y.log.Error().Err(err).Msg("failed to remove download")
+		}
+	})
+
+	y.log.Debug().Msg("Stop requests send out, waiting for all deletion to finish")
+	y.deletionWg.Wait()
+
+	y.log.Debug().Msg("yoitsu shutdown complete")
+
 	return nil
 }
 
@@ -96,14 +115,6 @@ func (y *yoitsu) Content(id string) services.Content {
 		return nil
 	}
 	return content
-}
-
-func (y *yoitsu) GetBackingClient() *torrent.Client {
-	return y.client
-}
-
-func (y *yoitsu) GetBaseDir() string {
-	return y.dir
 }
 
 func (y *yoitsu) CanStartNext() bool {
@@ -153,6 +164,10 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 		return services.ErrContentNotFound
 	}
 
+	defer func() {
+		go y.startNext()
+	}()
+
 	// We may assume that it is present as long as the torrent is present
 	baseDir, _ := y.baseDirs.Get(infoHashString)
 
@@ -171,23 +186,28 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 	y.baseDirs.Delete(infoHashString)
 
 	y.signalR.StateUpdate(tor.Id(), payload.ContentStateCleanup)
-	if req.DeleteFiles {
-		go y.deleteTorrentFiles(tor, baseDir)
-		go y.startNext()
-		return nil
-	}
 
-	text := fmt.Sprintf("%s finished downloading %d files(s)", tor.Title(), tor.Files())
-	y.notifier(tor.Request()).Notify(models.Notification{
-		Title:   "Download finished",
-		Summary: utils.Shorten(text, services.SummarySize),
-		Body:    text,
-		Colour:  models.Secondary,
-		Group:   models.GroupContent,
-	})
+	y.deletionWg.Add(1)
+	go func() {
+		defer y.deletionWg.Done()
 
-	go y.cleanup(tor, baseDir)
-	go y.startNext()
+		if req.DeleteFiles {
+			y.deleteTorrentFiles(tor, baseDir)
+			return
+		}
+
+		text := fmt.Sprintf("%s finished downloading %d files(s)", tor.Title(), tor.Files())
+		y.notifier(tor.Request()).Notify(models.Notification{
+			Title:   "Download finished",
+			Summary: utils.Shorten(text, services.SummarySize),
+			Body:    text,
+			Colour:  models.Secondary,
+			Group:   models.GroupContent,
+		})
+
+		y.cleanup(tor, baseDir)
+	}()
+
 	return nil
 }
 

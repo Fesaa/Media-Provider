@@ -44,6 +44,7 @@ func New(s services.SettingsService, container *dig.Container, log zerolog.Logge
 		rootDir:        settings.RootDir,
 		ctx:            clientCtx,
 		cancel:         cancel,
+		deletionWg:     &sync.WaitGroup{},
 	}, nil
 }
 
@@ -63,6 +64,7 @@ type client struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	mu             sync.RWMutex
+	deletionWg     *sync.WaitGroup
 }
 
 // getOrCreateProviderQueue returns the existing queue for the provider, or creates a new one if none found
@@ -138,7 +140,10 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		Bool("deleteFiles", req.DeleteFiles).
 		Msg("removing content")
 
+	c.deletionWg.Add(1)
 	go func() {
+		defer c.deletionWg.Done()
+
 		content.Cancel()
 		c.signalR.StateUpdate(content.Id(), payload.ContentStateCleanup)
 
@@ -172,6 +177,15 @@ func (c *client) Shutdown() error {
 	c.providerQueues.ForEach(func(k models.Provider, v *ProviderQueue) {
 		v.Shutdown()
 	})
+
+	c.content.ForEach(func(k string, v core.Downloadable) {
+		if err := c.RemoveDownload(payload.StopRequest{Id: k, DeleteFiles: true, Provider: v.Provider()}); err != nil {
+			c.log.Warn().Err(err).Msg("failed to remove download")
+		}
+	})
+
+	c.log.Debug().Msg("Stop requests send out, waiting for all deletion to finish")
+	c.deletionWg.Wait()
 
 	c.log.Debug().Msg("pasloe shutdown complete")
 

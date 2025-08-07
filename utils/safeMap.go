@@ -11,7 +11,11 @@ type SafeMap[K comparable, V any] interface {
 	Clear()
 	Keys() []K
 	Values() []V
+	// ForEach iterates over the map, and unlocks during function call
 	ForEach(f func(k K, v V))
+	// ForEachSafe iterates over the map, does not unlock during function all.
+	//
+	// Use SafeMap.ForEach if you need to modify the map
 	ForEachSafe(f func(k K, v V))
 	Any(f func(k K, v V) bool) bool
 	Count(f func(k K, v V) bool) int
@@ -108,9 +112,6 @@ func (s *safeMap[K, V]) Len() int {
 	return len(s.m)
 }
 
-// ForEachSafe iterates over the map, does not unlock during function all.
-//
-// Use SafeMap.ForEach if you need to modify the map
 func (s *safeMap[K, V]) ForEachSafe(f func(K, V)) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -119,7 +120,6 @@ func (s *safeMap[K, V]) ForEachSafe(f func(K, V)) {
 	}
 }
 
-// ForEach iterates over the map, and unlocks during function call
 func (s *safeMap[K, V]) ForEach(f func(K, V)) {
 	s.lock.Lock()
 	for k, v := range s.m {
