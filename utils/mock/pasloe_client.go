@@ -50,3 +50,11 @@ func (m PasloeClient) Content(id string) services.Content {
 func (m PasloeClient) CanStart(models.Provider) bool {
 	return true
 }
+
+func (m PasloeClient) MoveToDownloadQueue(id string) error {
+	return nil
+}
+
+func (m PasloeClient) Shutdown() error {
+	return nil
+}
