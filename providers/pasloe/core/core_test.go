@@ -20,6 +20,14 @@ type PasloeClient struct {
 	BaseDir string
 }
 
+func (m PasloeClient) MoveToDownloadQueue(id string) error {
+	return nil
+}
+
+func (m PasloeClient) Shutdown() error {
+	return nil
+}
+
 type SettingsService struct {
 	settings *payload.Settings
 }

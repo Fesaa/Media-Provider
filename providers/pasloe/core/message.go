@@ -38,13 +38,8 @@ func (c *Core[C, S]) MarkReady() error {
 		return services.ErrWrongState
 	}
 
-	if c.Client.CanStart(c.Req.Provider) {
-		go c.StartDownload()
-		return nil
-	}
-
 	c.SetState(payload.ContentStateReady)
-	return nil
+	return c.Client.MoveToDownloadQueue(c.id)
 }
 
 func (c *Core[C, S]) SetUserFiltered(msg json.RawMessage) error {

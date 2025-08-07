@@ -1,6 +1,8 @@
 package menou
 
 import (
+	"context"
+	"errors"
 	"github.com/rs/zerolog"
 	"net/http"
 	"time"
@@ -28,7 +30,10 @@ func (lt *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error)
 		Logger()
 
 	if err != nil {
-		l.Debug().Err(err).Msg("http request returned a non-nil error")
+		if !errors.Is(err, context.Canceled) {
+			l.Debug().Err(err).Msg("http request returned a non-nil error")
+		}
+
 		return resp, err
 	}
 

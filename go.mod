@@ -1,6 +1,6 @@
 module github.com/Fesaa/Media-Provider
 
-go 1.24.1
+go 1.24.6
 
 require (
 	github.com/Fesaa/go-metroninfo v0.0.0-20241231131407-ab0e840cd3f7
@@ -8,29 +8,30 @@ require (
 	github.com/anacrolix/torrent v1.58.1
 	github.com/ansrivas/fiberprometheus/v2 v2.13.0
 	github.com/chai2010/webp v1.4.0
-	github.com/coreos/go-oidc/v3 v3.14.1
+	github.com/coreos/go-oidc/v3 v3.15.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/fasthttp/websocket v1.5.12
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-co-op/gocron/v2 v2.16.2
+	github.com/go-co-op/gocron/v2 v2.16.3
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/gofiber/contrib/fiberzerolog v1.0.3
 	github.com/gofiber/fiber/v2 v2.52.9
-	github.com/golang-jwt/jwt/v5 v5.2.3
-	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/gomarkdown/markdown v0.0.0-20250731182530-5d03d1963446
 	github.com/google/uuid v1.6.0
 	github.com/irevenko/go-nyaa v0.0.0-20210412095257-194e1b4cce55
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/philippseith/signalr v0.7.0
-	github.com/redis/go-redis/v9 v9.11.0
+	github.com/redis/go-redis/v9 v9.12.0
 	github.com/rs/zerolog v1.34.0
 	github.com/spf13/afero v1.14.0
 	github.com/valyala/fasthttp v1.64.0
 	go.uber.org/dig v1.19.0
 	golang.org/x/crypto v0.40.0
+	golang.org/x/time v0.11.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	gorm.io/gorm v1.30.0
+	gorm.io/gorm v1.30.1
 )
 
 require (
@@ -171,7 +172,6 @@ require (
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
-	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect

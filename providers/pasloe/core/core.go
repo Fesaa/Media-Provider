@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -115,16 +116,28 @@ type Core[C Chapter, S Series[C]] struct {
 	Preference    *models.Preference
 	hasWarnedTags bool
 
-	// # Chapters downloaded
+	// Amount of chapters downloaded
 	ContentDownloaded int
-	// Total amount of images downloaded
-	ImagesDownloaded int
-	LastTime         time.Time
-	LastRead         int
+	// Total amount of images already downloaded in the chapter currently being downloaded
+	ImagesDownloaded int64
+	// Total amount of images in the chapter currently being downloaded
+	TotalChapterImages int
+	LastTime           time.Time
+	LastRead           int64
 
-	failedDownloads int
+	failedDownloads int64
 
 	cancel context.CancelFunc
+	// Wait group used to track chapters being downloaded
+	wg *sync.WaitGroup
+
+	// Wait group for IO workers
+	IoWg     *sync.WaitGroup
+	IOWorkCh chan IOTask
+}
+
+func (c *Core[C, S]) Logger() *zerolog.Logger {
+	return &c.Log
 }
 
 func (c *Core[C, S]) DisplayInformation() DisplayInformation {
@@ -139,7 +152,7 @@ func (c *Core[C, S]) DisplayInformation() DisplayInformation {
 }
 
 func (c *Core[C, S]) FailedDownloads() int {
-	return c.failedDownloads
+	return int(c.failedDownloads)
 }
 
 func (c *Core[C, S]) Request() payload.DownloadRequest {
@@ -200,7 +213,14 @@ func (c *Core[C, S]) GetContentByVolumeAndChapter(volume string, chapter string)
 		if content.Volume == volume && content.Chapter == chapter {
 			return content, true
 		}
+
+		// Content has been assigned a volume
 		if content.Volume == "" && content.Chapter == chapter {
+			return content, true
+		}
+
+		// Content has had its volume removed
+		if content.Volume != "" && volume == "" && content.Chapter == chapter {
 			return content, true
 		}
 	}
@@ -295,12 +315,20 @@ func (c *Core[C, S]) GetInfo() payload.InfoStat {
 	}
 }
 
-// Cancel calls d.cancel and send a StopRequest with DeleteFiles=true to the Client
+// Cancel calls d.cancel and send a StopRequest with DeleteFiles=true to the Client if it is still present
 func (c *Core[C, S]) Cancel() {
 	c.Log.Trace().Msg("calling cancel on content")
+
 	if c.cancel != nil {
 		c.cancel()
 	}
+
+	if c.wg != nil {
+		c.Log.Debug().Msg("Waiting for all download task to complete")
+		c.wg.Wait()
+		c.IoWg.Wait()
+	}
+
 	if c.Client.Content(c.id) != nil {
 		if err := c.Client.RemoveDownload(payload.StopRequest{
 			Provider:    c.impl.Provider(),
@@ -310,20 +338,6 @@ func (c *Core[C, S]) Cancel() {
 			c.Log.Warn().Err(err).Msg("failed to cancel download")
 		}
 	}
-}
-
-func (c *Core[C, S]) initializeLoadInfo() (context.Context, bool) {
-	if c.cancel != nil {
-		c.Log.Debug().Msg("content already started")
-		return nil, false
-	}
-
-	c.SetState(payload.ContentStateLoading)
-	ctx, cancel := context.WithCancel(context.Background())
-	c.cancel = cancel
-	c.Log.Debug().Msg("loading content info")
-
-	return ctx, true
 }
 
 func (c *Core[C, S]) loadContentInfo(ctx context.Context) bool {
@@ -341,8 +355,8 @@ func (c *Core[C, S]) loadContentInfo(ctx context.Context) bool {
 	return true
 }
 
-// prepareContentToDownload checks what content exists on disk and filters what needs to be downloaded
-func (c *Core[C, S]) prepareContentToDownload() ([]C, time.Duration) {
+// filterAlreadyDownloadedContent checks what content exists on disk and filters what needs to be downloaded
+func (c *Core[C, S]) filterAlreadyDownloadedContent() ([]C, time.Duration) {
 	start := time.Now()
 	c.loadContentOnDisk()
 
@@ -351,56 +365,19 @@ func (c *Core[C, S]) prepareContentToDownload() ([]C, time.Duration) {
 	return data, time.Since(start)
 }
 
-func (c *Core[C, S]) handleLongDiskCheck(elapsed time.Duration) {
-	if elapsed > time.Second*5 {
-		c.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
-
-		if c.Req.IsSubscription {
-			c.Notifier.NotifyContent(
-				c.TransLoco.GetTranslation("warn"),
-				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
-				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
-				models.Warning)
-		}
-	}
-}
-
-func (c *Core[C, S]) handleNoContentToDownload() bool {
-	if len(c.ToDownload) == 0 {
-		c.Log.Debug().Msg("no chapters to download, stopping")
-
-		c.SetState(payload.ContentStateWaiting)
-
-		req := payload.StopRequest{
-			Provider:    c.Req.Provider,
-			Id:          c.Id(),
-			DeleteFiles: false,
-		}
-		if err := c.Client.RemoveDownload(req); err != nil {
-			c.Log.Error().Err(err).Msg("error while cleaning up")
-		}
-		return true
-	}
-	return false
-}
-
-func (c *Core[C, S]) finalizeLoadInfo(data []C, loadInfoStart time.Time) {
-	c.SetState(utils.Ternary(c.Req.DownloadMetadata.StartImmediately,
-		payload.ContentStateReady,
-		payload.ContentStateWaiting))
-	c.SignalR.UpdateContentInfo(c.GetInfo())
-
-	c.Log.Debug().Int("all", len(data)).Int("filtered", len(c.ToDownload)).
-		Dur("StartLoadInfo#duration", time.Since(loadInfoStart)).Msg("downloaded content filtered")
-}
-
-func (c *Core[C, S]) StartLoadInfo() {
-	ctx, shouldContinue := c.initializeLoadInfo()
-	if !shouldContinue {
+func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
+	if c.cancel != nil {
+		c.Log.Warn().Msg("content is already loading info, or downloading")
 		return
 	}
 
-	loadInfoStart := time.Now()
+	c.Log.Debug().Msg("loading content info")
+	c.SetState(payload.ContentStateLoading)
+
+	ctx, cancel := context.WithCancel(ctx)
+	c.cancel = cancel
+
+	start := time.Now()
 
 	p, err := c.preferences.GetComplete()
 	if err != nil {
@@ -412,23 +389,53 @@ func (c *Core[C, S]) StartLoadInfo() {
 		return
 	}
 
-	data, elapsed := c.prepareContentToDownload()
-	c.handleLongDiskCheck(elapsed)
+	data, elapsed := c.filterAlreadyDownloadedContent()
+	if elapsed > time.Second*5 {
+		c.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
 
-	if c.handleNoContentToDownload() {
+		if c.Req.IsSubscription {
+			c.Notifier.NotifyContent(
+				c.TransLoco.GetTranslation("warn"),
+				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
+				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
+				models.Warning)
+		}
+	}
+
+	if len(c.ToDownload) == 0 {
+		c.Log.Debug().Msg("no chapters to download, stopping")
+		c.SetState(payload.ContentStateWaiting)
+
+		if err = c.Client.RemoveDownload(payload.StopRequest{Provider: c.Req.Provider, Id: c.Id()}); err != nil {
+			c.Log.Error().Err(err).Msg("error while cleaning up")
+		}
+
 		return
 	}
 
-	c.finalizeLoadInfo(data, loadInfoStart)
+	c.SetState(utils.Ternary(c.Req.DownloadMetadata.StartImmediately,
+		payload.ContentStateReady,
+		payload.ContentStateWaiting))
+	c.SignalR.UpdateContentInfo(c.GetInfo())
+
+	c.Log.Debug().Int("all", len(data)).Int("filtered", len(c.ToDownload)).
+		Dur("elapsed", time.Since(start)).Msg("downloaded content filtered")
 }
 
-func (c *Core[C, S]) StartDownload() {
+func (c *Core[C, S]) DownloadContent(ctx context.Context) {
 	if c.State() != payload.ContentStateReady && c.State() != payload.ContentStateWaiting {
 		c.Log.Warn().Any("state", c.State()).Msg("cannot start download, content not ready")
 		return
 	}
 	c.SetState(payload.ContentStateDownloading)
-	go c.startDownload()
+
+	defer func() {
+		if err := recover(); err != nil {
+			c.Log.Error().Any("error", err).Msg("a panic occurred while downloading")
+		}
+	}()
+
+	c.startDownload(ctx)
 }
 
 func (c *Core[C, S]) State() payload.ContentState {
@@ -457,9 +464,17 @@ func (c *Core[C, S]) Size() int {
 }
 
 func (c *Core[C, S]) UpdateProgress() {
+	chaptersProgress := utils.Percent(int64(c.ContentDownloaded), int64(len(c.ToDownload)))
+	// chapterProgress := utils.Percent(c.ImagesDownloaded, int64(c.TotalChapterImages))
+	// totalProgress := chaptersProgress + chapterProgress/int64(len(c.ToDownload))
+
+	// There is a small bug where sometimes the totalProgress goes down when going from one chapter being
+	// downloaded to the next. For now, we'll just live with it being a bug as it's still nicer to have some idea
+	// of progress with bigger chapters instead of seeing everything jump hard
 	c.SignalR.ProgressUpdate(payload.ContentProgressUpdate{
 		ContentId: c.id,
-		Progress:  utils.Percent(int64(c.ContentDownloaded), int64(c.Size())),
+		// Progress:  totalProgress,
+		Progress:  chaptersProgress,
 		SpeedType: payload.IMAGES,
 		Speed:     utils.Ternary(c.State() != payload.ContentStateCleanup, c.Speed(), 0),
 	})

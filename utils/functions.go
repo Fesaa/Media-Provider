@@ -5,12 +5,45 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
+
+// WaitFor waits for at most d, and at least until wg has finished
+func WaitFor(wg *sync.WaitGroup, d time.Duration) {
+	select {
+	case <-Wait(wg):
+		return
+	case <-time.After(d):
+		return
+	}
+}
+
+// Wait returns a channel which completes when the WaitGroup has finished
+func Wait(wg *sync.WaitGroup) <-chan struct{} {
+	ch := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+	return ch
+}
+
+// Defer adds 1 to the WaitGroup, then starts a goroutine called f and deferring wg.Done
+func Defer(f func() error, log zerolog.Logger, wg *sync.WaitGroup) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := f(); err != nil {
+			log.Error().Err(err).Msg("Deferred function failed")
+		}
+	}()
+}
 
 // Clamp returns at least minV, and at most maxV
 //

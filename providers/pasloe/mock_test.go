@@ -28,9 +28,8 @@ func (m mockRegistry) Create(c core.Client, req payload.DownloadRequest) (core.D
 	}
 
 	if !m.finishContent {
-		block.mockDownloadContentFunc = func(idx int, t ID, url string) error {
+		block.mockDownloadContentFunc = func(ctx context.Context) {
 			time.Sleep(time.Millisecond * 100)
-			return nil
 		}
 		block.mockContentUrlsFunc = func(ctx context.Context, t ID) ([]string, error) {
 			return []string{"a", "b", "c", "d", "e"}, nil
@@ -80,7 +79,7 @@ type MockContent struct {
 	mockContentLoggerFunc   func(t ID) zerolog.Logger
 	mockContentUrlsFunc     func(ctx context.Context, t ID) ([]string, error)
 	mockWriteMetaDataFunc   func(t ID) error
-	mockDownloadContentFunc func(idx int, t ID, url string) error
+	mockDownloadContentFunc func(ctx context.Context)
 	mockIsContentFunc       func(s string) bool
 	mockShouldDownloadFunc  func(t ID) bool
 	loadInfoFunc            func()
@@ -177,11 +176,10 @@ func (m *MockContent) WriteContentMetaData(ctx context.Context, t ID) error {
 	return nil
 }
 
-func (m *MockContent) DownloadContent(idx int, t ID, url string) error {
+func (m *MockContent) DownloadContent(ctx context.Context) {
 	if m.mockDownloadContentFunc != nil {
-		return m.mockDownloadContentFunc(idx, t, url)
+		m.mockDownloadContentFunc(ctx)
 	}
-	return nil
 }
 
 func (m *MockContent) IsContent(s string) bool {

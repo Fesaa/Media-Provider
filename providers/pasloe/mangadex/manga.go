@@ -56,8 +56,8 @@ type manga struct {
 
 	coverFactory CoverFactory
 
-	lastFoundChapter int
-	lastFoundVolume  int
+	lastFoundChapter float64
+	lastFoundVolume  float64
 	foundLastVolume  bool
 	foundLastChapter bool
 

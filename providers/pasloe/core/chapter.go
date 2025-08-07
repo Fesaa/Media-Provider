@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"fmt"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -50,25 +49,6 @@ func (c *Core[C, S]) ContentLogger(chapter C) zerolog.Logger {
 	}
 
 	return builder.Logger()
-}
-
-func (c *Core[C, S]) DownloadContent(ctx context.Context, idx int, chapter C, url string) error {
-	data, err := c.Download(ctx, url)
-	if err != nil {
-		return err
-	}
-
-	data, ok := c.imageService.ConvertToWebp(data)
-
-	ext := utils.Ternary(ok, ".webp", utils.Ext(url))
-	filePath := path.Join(c.ContentPath(chapter), fmt.Sprintf("page %s"+ext, utils.PadInt(idx, 4)))
-
-	if err = c.fs.WriteFile(filePath, data, 0755); err != nil {
-		return err
-	}
-
-	c.ImagesDownloaded++
-	return nil
 }
 
 // ContentPath returns the full path to the directory where images, and metadata for a chapter

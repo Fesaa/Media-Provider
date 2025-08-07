@@ -98,8 +98,8 @@ func TestManga_AgeRating(t *testing.T) {
 func TestManga_CIStatus(t *testing.T) {
 	type test struct {
 		name        string
-		volumes     int
-		chapters    int
+		volumes     float64
+		chapters    float64
 		LastVolume  string
 		LastChapter string
 		Status      MangaStatus
@@ -146,6 +146,14 @@ func TestManga_CIStatus(t *testing.T) {
 			wantOk:      true,
 			wantCount:   2,
 			wantInLog:   []string{"Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?"},
+		},
+		{
+			name:        "Last chapter is decimal",
+			Status:      StatusCompleted,
+			chapters:    10.5,
+			LastChapter: "10.5",
+			wantOk:      true,
+			wantCount:   10,
 		},
 	}
 

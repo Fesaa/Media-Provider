@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
 	"github.com/rs/zerolog"
+	"math"
 	"path"
 	"slices"
 	"strconv"
@@ -115,9 +116,9 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 	if m.SeriesInfo.Attributes.Status == StatusCompleted {
 		switch {
 		case m.lastFoundVolume == 0 && m.foundLastChapter:
-			mi.Series.VolumeCount = m.lastFoundChapter
+			mi.Series.VolumeCount = int(math.Floor(m.lastFoundChapter))
 		case m.foundLastChapter && m.foundLastVolume:
-			mi.Series.VolumeCount = m.lastFoundVolume
+			mi.Series.VolumeCount = int(math.Floor(m.lastFoundVolume))
 		case !m.hasWarned:
 			m.hasWarned = true
 			m.Log.Warn().
@@ -339,28 +340,29 @@ func (m *manga) getCiStatus() (int, bool) {
 		return 0, false
 	}
 
-	var lastWantedChapter, lastWantedVolume int
+	var lastWantedChapter, lastWantedVolume float64
 	if m.SeriesInfo.Attributes.LastChapter != "" {
-		val, err := strconv.ParseInt(m.SeriesInfo.Attributes.LastChapter, 10, 64)
+		val, err := strconv.ParseFloat(m.SeriesInfo.Attributes.LastChapter, 64)
 		if err != nil {
 			m.Log.Warn().Err(err).Str("chapter", m.SeriesInfo.Attributes.LastChapter).
 				Msg("Series was completed, but we failed to parse the last chapter from mangadex")
 			return 0, false
 		}
-		lastWantedChapter = int(val)
+		lastWantedChapter = val
 	}
 	if m.SeriesInfo.Attributes.LastVolume != "" {
-		val, err := strconv.ParseInt(m.SeriesInfo.Attributes.LastVolume, 10, 64)
+		val, err := strconv.ParseFloat(m.SeriesInfo.Attributes.LastVolume, 64)
 		if err != nil {
 			m.Log.Warn().Err(err).Str("volume", m.SeriesInfo.Attributes.LastVolume).
 				Msg("Series was completed, but we failed to parse the last volume from mangadex")
 			return 0, false
 		}
-		lastWantedVolume = int(val)
+		lastWantedVolume = val
 	}
 
-	var count, found int
+	var count, found float64
 	var content string
+
 	if m.SeriesInfo.Attributes.LastVolume == "" && m.SeriesInfo.Attributes.LastChapter != "" {
 		count = lastWantedChapter
 		found = m.lastFoundChapter
@@ -371,6 +373,8 @@ func (m *manga) getCiStatus() (int, bool) {
 		content = "Volumes"
 	}
 
+	intCount := int(math.Floor(count))
+
 	lastVolumeReachedChaptersMissing := m.SeriesInfo.Attributes.LastVolume != "" && m.SeriesInfo.Attributes.LastChapter != "" &&
 		m.lastFoundChapter < lastWantedChapter
 	if found < count || lastVolumeReachedChaptersMissing {
@@ -378,24 +382,24 @@ func (m *manga) getCiStatus() (int, bool) {
 			m.hasWarned = true
 			m.Log.Warn().
 				Str("lastChapter", m.SeriesInfo.Attributes.LastChapter).
-				Int("lastFoundChapter", m.lastFoundChapter).
+				Float64("lastFoundChapter", m.lastFoundChapter).
 				Str("lastVolume", m.SeriesInfo.Attributes.LastVolume).
-				Int("lastFoundVolume", m.lastFoundVolume).
+				Float64("lastFoundVolume", m.lastFoundVolume).
 				Msg("Series ended, but not all chapters could be downloaded or last volume isn't present. English ones missing?")
 		}
-		return count, true
+		return intCount, true
 	}
 
 	// Series has completed, and everything has been downloaded
 	if !m.Req.IsSubscription || m.hasNotifiedSub {
-		return count, true
+		return intCount, true
 	}
 
 	m.hasNotifiedSub = true
 	m.Log.Debug().Msg("Subscription was completed, consider cancelling it")
 	m.Notifier.NotifyContent(m.TransLoco.GetTranslation("sub-downloaded-all-title"),
-		m.Title(), m.TransLoco.GetTranslation("sub-downloaded-all", m.Title(), count, content))
-	return count, true
+		m.Title(), m.TransLoco.GetTranslation("sub-downloaded-all", m.Title(), intCount, content))
+	return intCount, true
 }
 
 // getChapterCover returns the cover for the chapter, and if it's the first page in the chapter

@@ -23,9 +23,10 @@ type Torrent interface {
 	Files() int
 }
 
-// Yoitsu wrapper around the torrent.Client struct
-type Yoitsu interface {
+// Client wrapper around the torrent.Client struct
+type Client interface {
 	services.Client
 	GetTorrents() utils.SafeMap[string, Torrent]
 	CanStartNext() bool
+	Shutdown() error
 }

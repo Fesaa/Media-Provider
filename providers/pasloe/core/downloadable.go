@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
+	"github.com/rs/zerolog"
 )
 
 type DisplayInformation struct {
@@ -12,6 +13,9 @@ type DisplayInformation struct {
 
 type Downloadable interface {
 	services.Content
+
+	Logger() *zerolog.Logger
+
 	GetBaseDir() string
 	Cancel()
 	GetDownloadDir() string
@@ -26,8 +30,10 @@ type Downloadable interface {
 	// GetToRemoveContent returns the full (relative) path of old content that has to be removed
 	GetToRemoveContent() []string
 
-	StartLoadInfo()
-	StartDownload()
+	// LoadMetadata loads all required metadata to start the download , this method blocks until complete or cancelled
+	LoadMetadata(ctx context.Context)
+	// DownloadContent starts the download process, this method blocks until complete or cancelled
+	DownloadContent(ctx context.Context)
 
 	// GetNewContentNamed returns the names of the downloaded content (chapters)
 	GetNewContentNamed() []string

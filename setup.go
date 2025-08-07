@@ -68,28 +68,30 @@ func ApplicationProvider(params appParams) *fiber.App {
 	prometheus.RegisterAt(app, "/api/metrics", params.Auth.Middleware)
 	app.Use(prometheus.Middleware)
 
-	dontLog := []string{"/", "/api/metrics"}
-	dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2", ".json"}
-	httpLogger := params.Log.With().Str("handler", "http").Logger()
-	app.Use(fiberzerolog.New(fiberzerolog.Config{
-		Logger: &httpLogger,
-		Next: func(c *fiber.Ctx) bool {
-			if slices.Contains(dontLogExt, path.Ext(c.Path())) {
-				return true
-			}
-			return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
-		},
-		Fields: []string{
-			fiberzerolog.FieldUserAgent,
-			fiberzerolog.FieldIP,
-			fiberzerolog.FieldLatency,
-			fiberzerolog.FieldStatus,
-			fiberzerolog.FieldMethod,
-			fiberzerolog.FieldURL,
-			fiberzerolog.FieldError,
-			fiberzerolog.FieldRequestID,
-		},
-	}))
+	if os.Getenv("NO_HTTP_LOG") != "TRUE" {
+		dontLog := []string{"/", "/api/metrics"}
+		dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2", ".json"}
+		httpLogger := params.Log.With().Str("handler", "http").Logger()
+		app.Use(fiberzerolog.New(fiberzerolog.Config{
+			Logger: &httpLogger,
+			Next: func(c *fiber.Ctx) bool {
+				if slices.Contains(dontLogExt, path.Ext(c.Path())) {
+					return true
+				}
+				return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
+			},
+			Fields: []string{
+				fiberzerolog.FieldUserAgent,
+				fiberzerolog.FieldIP,
+				fiberzerolog.FieldLatency,
+				fiberzerolog.FieldStatus,
+				fiberzerolog.FieldMethod,
+				fiberzerolog.FieldURL,
+				fiberzerolog.FieldError,
+				fiberzerolog.FieldRequestID,
+			},
+		}))
+	}
 
 	scope := c.Scope("init::api")
 	utils.Must(scope.Provide(utils.Identity(app.Group(baseUrl))))
