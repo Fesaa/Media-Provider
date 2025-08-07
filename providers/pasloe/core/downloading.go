@@ -109,7 +109,7 @@ func (c *Core[C, S]) startDownload(parentCtx context.Context) {
 	c.cancel = cancel
 
 	data := c.GetAllLoadedChapters()
-	c.Log.Trace().Int("size", len(data)).Msg("downloading content")
+	c.Log.Debug().Int("size", len(data)).Msg("downloading content")
 
 	c.filterContentByUserSelection()
 

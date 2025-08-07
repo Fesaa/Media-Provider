@@ -49,8 +49,9 @@ func New(s services.SettingsService, container *dig.Container, log zerolog.Logge
 }
 
 type client struct {
-	registry   Registry
-	log        zerolog.Logger
+	registry Registry
+	log      zerolog.Logger
+
 	dirService services.DirectoryService
 	signalR    services.SignalRService
 	notify     services.NotificationService
@@ -58,13 +59,15 @@ type client struct {
 	pref       models.Preferences
 	fs         afero.Afero
 
+	rootDir string
+
 	content        utils.SafeMap[string, core.Downloadable]
 	providerQueues utils.SafeMap[models.Provider, *ProviderQueue]
-	rootDir        string
-	ctx            context.Context
-	cancel         context.CancelFunc
 	mu             sync.RWMutex
-	deletionWg     *sync.WaitGroup
+
+	ctx        context.Context
+	cancel     context.CancelFunc
+	deletionWg *sync.WaitGroup
 }
 
 // getOrCreateProviderQueue returns the existing queue for the provider, or creates a new one if none found
@@ -82,7 +85,7 @@ func (c *client) getOrCreateProviderQueue(provider models.Provider) *ProviderQue
 		return pq
 	}
 
-	pq := NewProviderQueue(provider, c.ctx, c)
+	pq := NewProviderQueue(provider, c.ctx, c, c.log)
 	c.providerQueues.Set(provider, pq)
 	return pq
 
@@ -185,7 +188,7 @@ func (c *client) Shutdown() error {
 	})
 
 	c.log.Debug().Msg("Stop requests send out, waiting for all deletion to finish")
-	c.deletionWg.Wait()
+	utils.WaitFor(c.deletionWg, time.Second*45)
 
 	c.log.Debug().Msg("pasloe shutdown complete")
 
@@ -259,17 +262,20 @@ func (c *client) deleteFiles(content core.Downloadable) {
 		c.log.Error().Msg("download dir is empty, not removing any files")
 		return
 	}
-	dir := path.Join(c.GetBaseDir(), downloadDir)
-	l := c.log.With().Str("dir", dir).Str("contentId", content.Id()).Logger()
-	start := time.Now()
 
+	start := time.Now()
+	dir := path.Join(c.GetBaseDir(), downloadDir)
+
+	l := c.log.With().Str("dir", dir).Str("contentId", content.Id()).Logger()
+
+	// Skip if the directory is not found. We're not logging the error as it's safe to assume your logs
+	// will be completely spammed if an error would occur here
 	if ok, err := c.fs.DirExists(dir); ok && err == nil {
+
 		cleanupErrs := c.deleteNewContent(content, l)
 		cleanupErrs = append(cleanupErrs, c.deleteEmptyDirectories(dir, l)...)
 
-		if len(cleanupErrs) > 0 {
-			c.notifyCleanUpError(content, cleanupErrs...)
-		}
+		c.notifyCleanUpError(content, cleanupErrs...)
 	}
 
 	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing newly downloaded files")
@@ -278,11 +284,13 @@ func (c *client) deleteFiles(content core.Downloadable) {
 func (c *client) deleteNewContent(content core.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
 	for _, contentPath := range content.GetNewContent() {
 		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
+
 		if err := c.fs.RemoveAll(contentPath); err != nil {
 			l.Error().Err(err).Str("path", contentPath).Msg("error while removing new content dir")
 			cleanupErrs = append(cleanupErrs, fmt.Errorf("error removing new content dir %s: %w", contentPath, err))
 		}
 	}
+
 	return cleanupErrs
 }
 
@@ -314,6 +322,7 @@ func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupEr
 
 		l.Trace().Str("dir", dir).Str("name", entry.Name()).
 			Msg("Dir has no content, removing entire directory")
+
 		if err := c.fs.Remove(path.Join(dir, entry.Name())); err != nil {
 			l.Error().Err(err).Str("name", entry.Name()).Msg("error while new content dir")
 			cleanupErrs = append(cleanupErrs, fmt.Errorf("error removing dir %s: %w", entry.Name(), err))
@@ -400,6 +409,10 @@ func (c *client) zipAndRemoveNewContent(newContent []string, l zerolog.Logger) (
 }
 
 func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...error) {
+	if len(cleanupErrs) == 0 {
+		return
+	}
+
 	joinedErr := errors.Join(cleanupErrs...)
 	if joinedErr == nil {
 		return

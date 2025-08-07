@@ -14,6 +14,16 @@ import (
 	"time"
 )
 
+// WaitFor waits for at most d, and at least until wg has finished
+func WaitFor(wg *sync.WaitGroup, d time.Duration) {
+	select {
+	case <-Wait(wg):
+		return
+	case <-time.After(d):
+		return
+	}
+}
+
 // Wait returns a channel which completes when the WaitGroup has finished
 func Wait(wg *sync.WaitGroup) <-chan struct{} {
 	ch := make(chan struct{})

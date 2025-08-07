@@ -11,18 +11,29 @@ import (
 	"time"
 )
 
+// ProviderQueue represents the queue for each separate provider. The queue has just one internal worker
+// This worker will always empty out the loadingQueue, then the downloadQueue.
+// Each queue has a max capacity of 100. The worker is started automatically after creation
 type ProviderQueue struct {
+	log    zerolog.Logger
+	client core.Client
+
 	providerName  models.Provider
 	loadingQueue  chan core.Downloadable
 	downloadQueue chan core.Downloadable
-	ctx           context.Context
-	cancel        context.CancelFunc
-	log           zerolog.Logger
-	client        *client
-	wg            sync.WaitGroup
+
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
-func NewProviderQueue(provider models.Provider, parentCtx context.Context, client *client) *ProviderQueue {
+func NewProviderQueue(
+	provider models.Provider,
+	parentCtx context.Context,
+	client core.Client,
+	log zerolog.Logger,
+) *ProviderQueue {
+
 	ctx, cancel := context.WithCancel(parentCtx)
 
 	pq := &ProviderQueue{
@@ -31,7 +42,7 @@ func NewProviderQueue(provider models.Provider, parentCtx context.Context, clien
 		downloadQueue: make(chan core.Downloadable, 100),
 		ctx:           ctx,
 		cancel:        cancel,
-		log:           client.log.With().Any("provider", provider).Logger(),
+		log:           log.With().Any("provider", provider).Logger(),
 		client:        client,
 	}
 
@@ -40,7 +51,7 @@ func NewProviderQueue(provider models.Provider, parentCtx context.Context, clien
 	return pq
 }
 
-// startWorkers starts the loading and download workers
+// startWorkers starts the work, also manages the WaitGroup
 func (pq *ProviderQueue) startWorkers() {
 	pq.wg.Add(1)
 	defer pq.wg.Done()
@@ -50,8 +61,8 @@ func (pq *ProviderQueue) startWorkers() {
 
 // worker processes items with loading priority over downloading
 func (pq *ProviderQueue) worker() {
-	pq.log.Debug().Msg("priority worker started")
-	defer pq.log.Debug().Msg("priority worker stopped")
+	pq.log.Debug().Msg("worker started")
+	defer pq.log.Debug().Msg("worker stopped")
 
 	for {
 		select {
@@ -69,13 +80,13 @@ func (pq *ProviderQueue) worker() {
 		case content := <-pq.loadingQueue: // Safeguard in case of edge cases
 			pq.processLoadInfo(content)
 		case content := <-pq.downloadQueue:
-			content.Logger().Debug().Msg("starting download")
+			content.Logger().Trace().Msg("starting download")
 			content.DownloadContent(pq.ctx)
 		}
 	}
 }
 
-// processLoadInfo handles loading information for content
+// processLoadInfo handles loading information for content, this is a blocking operation
 func (pq *ProviderQueue) processLoadInfo(content core.Downloadable) {
 	if content == nil {
 		return
@@ -126,7 +137,7 @@ func (pq *ProviderQueue) AddToDownloadQueue(content core.Downloadable) error {
 	}
 }
 
-// Shutdown gracefully shuts down the provider queue
+// Shutdown gracefully shuts down the provider queue, has a hard limit of 30s
 func (pq *ProviderQueue) Shutdown() {
 	pq.log.Debug().Msg("shutting down provider queue")
 
