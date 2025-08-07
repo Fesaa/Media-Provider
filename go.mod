@@ -1,6 +1,6 @@
 module github.com/Fesaa/Media-Provider
 
-go 1.24.1
+go 1.24.6
 
 require (
 	github.com/Fesaa/go-metroninfo v0.0.0-20241231131407-ab0e840cd3f7
