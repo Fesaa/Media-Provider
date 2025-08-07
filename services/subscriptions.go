@@ -180,6 +180,7 @@ func (s *subscriptionService) Update(sub models.Subscription) error {
 	cur.Info.BaseDir = sub.Info.BaseDir
 	cur.RefreshFrequency = sub.RefreshFrequency
 	cur.Provider = sub.Provider
+	cur.Payload = sub.Payload
 
 	cur.Normalize(pref.SubscriptionRefreshHour)
 	cur.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)

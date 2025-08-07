@@ -66,20 +66,23 @@ export class EditSubscriptionModalComponent implements OnInit {
     });
 
     for (let definition of metadata.definitions) {
-      metadataFormGroup.addControl(definition.key, new FormControl(this.getDefaultValue(definition)));
+      metadataFormGroup.addControl(definition.key, new FormControl(this.getDefaultValue(subscription, definition)));
     }
 
     this.subscriptionForm.addControl('metadata', metadataFormGroup);
   }
 
-  private getDefaultValue(def: DownloadMetadataDefinition) {
+  private getDefaultValue(sub: Subscription, def: DownloadMetadataDefinition) {
+    const values = sub.metadata.extra[def.key]
+    const value = (values && values.length > 0) ? values[0] : def.defaultOption;
+
     switch (def.formType) {
       case DownloadMetadataFormType.SWITCH:
-        return Boolean(def.defaultOption);
+        return value.toLowerCase() === 'true';
       case DownloadMetadataFormType.TEXT:
-        return def.defaultOption;
+        return value;
       case DownloadMetadataFormType.DROPDOWN:
-        return def.defaultOption;
+        return value;
     }
     return null;
   }
