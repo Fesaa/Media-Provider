@@ -14,6 +14,9 @@
         <button class="btn btn-secondary me-2" (click)="unselectAll()">
           <span class="fa fa-x"></span>
         </button>
+        <button class="btn btn-secondary me-2" (click)="toggleUIAll()">
+          <span class="fa {{allToggled() ? 'fa-eye-slash' : 'fa-eye'}}"></span>
+        </button>
         <button class="btn btn-primary" (click)="selectAll()">
           <span class="fa fa-check"></span>
         </button>
@@ -48,7 +51,19 @@
 
 <ng-template #contentData let-data let-depth='depth'>
   <div class="content-item d-flex align-items-start gap-3 py-2 px-3 mb-1 rounded-2 position-relative"
-       [style.margin-left]="depth*20+16+'px'" [class.item-hover]="true" (click)="toggle(data); $event.stopPropagation()">
+       [style.margin-left]="depth*20+16+'px'" [class.item-hover]="true">
+
+    @let toggled = toggles().has(data.label);
+
+    @if (data.children?.length > 0) {
+      <div>
+        @if (toggled) {
+          <i class="fa fa-eye-slash" (click)="toggleUI(data.label)"></i>
+        } @else {
+          <i class="fa fa-eye" (click)="toggleUI(data.label)"></i>
+        }
+      </div>
+    }
 
     <div class="checkbox-wrapper position-relative">
       <input
@@ -56,6 +71,7 @@
         class="form-check-input position-absolute opacity-0"
         [checked]="isSelected(data)"
         style="z-index: 2; cursor: pointer;"
+        (click)="toggle(data); $event.stopPropagation()"
       />
       <div class="custom-checkbox d-flex align-items-center justify-content-center">
         <i class="fas fa-check check-icon"></i>
@@ -79,14 +95,17 @@
     </label>
   </div>
 
-  @if (data.children?.length > 0) {
-    @for (child of data.children; track trackByContent(child)) {
-      <ng-container
-        [ngTemplateOutlet]="contentData"
-        [ngTemplateOutletContext]="{ $implicit: child, depth: depth+1 }"
-      ></ng-container>
+  @if (!toggled) {
+    @if (data.children?.length > 0) {
+      @for (child of data.children; track trackByContent(child)) {
+        <ng-container
+          [ngTemplateOutlet]="contentData"
+          [ngTemplateOutletContext]="{ $implicit: child, depth: depth+1 }"
+        ></ng-container>
+      }
     }
   }
+
 </ng-template>
 
 

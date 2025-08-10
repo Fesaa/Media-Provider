@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, model, OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, model, OnInit, signal} from '@angular/core';
 import {InfoStat} from '../../../_models/stats';
 import {ContentService} from '../../../_services/content.service';
 import {ListContentData} from '../../../_models/messages';
@@ -29,6 +29,9 @@ export class ContentPickerDialogComponent implements OnInit {
   selection = signal<string[]>([]);
   loading = signal(true);
 
+  toggles = signal<Set<string>>(new Set());
+  allToggled = computed(() => this.content().length === this.toggles().size);
+
   ngOnInit(): void {
     this.loading.set(true);
     this.contentService.listContent(this.info().provider, this.info().id).subscribe({
@@ -41,6 +44,29 @@ export class ContentPickerDialogComponent implements OnInit {
         this.toastService.genericError(err?.error?.message ?? 'Unknown error');
         this.loading.set(false);
       }
+    });
+  }
+
+  toggleUIAll() {
+    const any = this.toggles().size > 0;
+    const set = new Set<string>();
+
+    if (!any) {
+      this.content().forEach(item => set.add(item.label));
+    }
+
+    this.toggles.set(set);
+  }
+
+  toggleUI(id: string) {
+    this.toggles.update(cur => {
+      if (cur.has(id)) {
+        cur.delete(id);
+      } else {
+        cur.add(id);
+      }
+
+      return cur;
     });
   }
 
