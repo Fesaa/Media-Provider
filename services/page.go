@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
+	"slices"
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 
 type PageService interface {
 	UpdateOrCreate(page *models.Page) error
-	SwapPages(uint, uint) error
+	OrderPages([]uint) error
 	LoadDefaultPages() error
 }
 
@@ -69,45 +70,26 @@ func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 	return ps.db.Pages.Update(page)
 }
 
-func (ps *pageService) SwapPages(id1, id2 uint) error {
-	page1, err := ps.db.Pages.Get(id1)
+func (ps *pageService) OrderPages(order []uint) error {
+	pages, err := ps.db.Pages.All()
 	if err != nil {
-		ps.log.Error().Err(err).Uint("id", id1).Msg("Failed to get page1")
-		return ErrPageNotFound
-	}
-	page2, err := ps.db.Pages.Get(id2)
-	if err != nil {
-		ps.log.Error().Err(err).Uint("id", id2).Msg("Failed to get page2")
-		return ErrPageNotFound
+		return err
 	}
 
-	if page1 == nil || page2 == nil {
-		return ErrPageNotFound
-	}
+	newPages := make([]models.Page, len(pages))
 
-	page1.SortValue, page2.SortValue = page2.SortValue, page1.SortValue
-
-	err = ps.db.DB().Transaction(func(tx *gorm.DB) error {
-		if err = tx.Save(page1).Error; err != nil {
-			return err
+	for sliceIdx, page := range pages {
+		idx := slices.Index(order, page.ID)
+		if idx == -1 {
+			return ErrFailedToSortCheck
 		}
 
-		if err = tx.Save(page2).Error; err != nil {
-			return err
-		}
+		page.SortValue = idx
 
-		return nil
-	})
-
-	if err != nil {
-		ps.log.Error().Err(err).
-			Uint("id1", id1).
-			Uint("id2", id2).
-			Msg("Failed to swap pages")
-		return fmt.Errorf("failed to swap pages: %w", err)
+		newPages[sliceIdx] = page
 	}
 
-	return nil
+	return ps.db.Pages.UpdateMany(newPages)
 }
 
 func (ps *pageService) LoadDefaultPages() error {

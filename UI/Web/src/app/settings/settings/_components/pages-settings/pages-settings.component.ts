@@ -88,22 +88,21 @@ export class PagesSettingsComponent implements OnInit {
 
   drop($event: CdkDragDrop<any, any>) {
     const pages = [...this.pages()];
-
-    const page1 = pages[$event.previousIndex];
-    const page2 = pages[$event.currentIndex];
+    const copy = [...pages];
 
     // Assume no error will occur
     moveItemInArray(pages, $event.previousIndex, $event.currentIndex);
-    this.pageService.swapPages(page1.ID, page2.ID).subscribe({
+    this.pages.set(pages);
+
+    this.pageService.orderPages(pages.map(p => p.ID)).subscribe({
       next: () => {
         this.pageService.refreshPages().subscribe();
       },
       error: (err) => {
-        // Could not move, set back
-        moveItemInArray(pages, $event.currentIndex, $event.previousIndex)
         this.toastService.genericError(err.error.message);
+        this.pages.set(copy);
       }
-    }).add(() => this.pages.set(pages));
+    });
   }
 
   trackBy(idx: number, page: Page) {

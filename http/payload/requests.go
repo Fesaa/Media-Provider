@@ -140,11 +140,6 @@ type UpdatePasswordRequest struct {
 	NewPassword string `json:"newPassword" validate:"required"`
 }
 
-type SwapPageRequest struct {
-	Id1 uint `json:"id1" validate:"required"`
-	Id2 uint `json:"id2" validate:"required,diff=Id1"`
-}
-
 type ResetPasswordRequest struct {
 	Key      string `json:"key" validate:"required"`
 	Password string `json:"password" validate:"required"`

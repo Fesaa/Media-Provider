@@ -110,26 +110,6 @@ func TestDiffInvalid(t *testing.T) {
 	}
 }
 
-func TestSwapPage(t *testing.T) {
-	r := payload.SwapPageRequest{
-		Id1: 0,
-		Id2: 0,
-	}
-
-	if err := service.Validate(&r); err == nil {
-		t.Error("Expected error, as id2 is the same ad id1")
-	}
-
-	r = payload.SwapPageRequest{
-		Id1: 1,
-		Id2: 2,
-	}
-
-	if err := service.Validate(&r); err != nil {
-		t.Error(err)
-	}
-}
-
 func TestValidationService_ValidateCtxBadBody(t *testing.T) {
 	app := fiber.New()
 

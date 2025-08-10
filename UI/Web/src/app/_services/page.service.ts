@@ -56,8 +56,8 @@ export class PageService {
     return this.httpClient.post<Page>(this.baseUrl + 'update', page);
   }
 
-  swapPages(id1: number, id2: number) {
-    return this.httpClient.post(this.baseUrl + 'swap', {id1, id2});
+  orderPages(order: number[]) {
+    return this.httpClient.post(this.baseUrl + 'order', order);
   }
 
   loadDefault() {

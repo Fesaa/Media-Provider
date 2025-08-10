@@ -3,7 +3,6 @@ package routes
 import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
@@ -34,7 +33,7 @@ func RegisterPageRoutes(pr pageRoutes) {
 	pages.Post("/new", pr.UpdatePage)
 	pages.Post("/update", pr.UpdatePage)
 	pages.Delete("/:pageId", pr.DeletePage)
-	pages.Post("/swap", pr.SwapPage)
+	pages.Post("/order", pr.OrderPages)
 	pages.Post("/load-default", pr.LoadDefault)
 	pages.Get("/download-metadata", pr.DownloadMetadata)
 	pages.Get("/:pageId", pr.Page)
@@ -148,16 +147,16 @@ func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (pr *pageRoutes) SwapPage(ctx *fiber.Ctx) error {
-	var m payload.SwapPageRequest
-	if err := pr.Val.ValidateCtx(ctx, &m); err != nil {
+func (pr *pageRoutes) OrderPages(ctx *fiber.Ctx) error {
+	var order []uint
+	if err := ctx.BodyParser(&order); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to parse swap page")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	if err := pr.PageService.SwapPages(m.Id1, m.Id2); err != nil {
+	if err := pr.PageService.OrderPages(order); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to swap page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

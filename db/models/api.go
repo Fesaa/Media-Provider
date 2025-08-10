@@ -8,6 +8,7 @@ type Pages interface {
 
 	New(page *Page) error
 	Update(page *Page) error
+	UpdateMany(pages []Page) error
 
 	Delete(id uint) error
 }
