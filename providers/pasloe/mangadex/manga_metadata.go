@@ -26,7 +26,7 @@ func (m *manga) WriteContentMetaData(ctx context.Context, chapter ChapterSearchD
 		return err
 	}
 
-	if m.Req.GetBool(IncludeCover, true) {
+	if m.Req.GetBool(core.IncludeCover, true) {
 		if err = m.writeCover(ctx, l, chapter); err != nil {
 			return err
 		}

@@ -3,6 +3,7 @@ package mangadex
 import (
 	"context"
 	"errors"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"slices"
 	"strconv"
@@ -34,7 +35,7 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 		m.chapters = m.FilterChapters(chapters)
 		m.SetSeriesStatus()
 
-		if m.Req.GetBool(IncludeCover, true) {
+		if m.Req.GetBool(core.IncludeCover, true) {
 			covers, err := m.repository.GetCoverImages(ctx, m.id)
 			if err != nil || covers == nil {
 				m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
@@ -75,34 +76,33 @@ func (m *manga) SetSeriesStatus() {
 }
 
 func (m *manga) FilterChapters(c *ChapterSearchResponse) ChapterSearchResponse {
-	scanlation := func() string {
-		if scanlationGroup, ok := m.Req.GetString(ScanlationGroupKey); ok {
-			m.Log.Debug().Str("scanlationGroup", scanlationGroup).
-				Msg("loading manga info, prioritizing chapters from a specific Scanlation group or user")
-			return scanlationGroup
-		}
+	scanlation := m.Req.GetStringOrDefault(ScanlationGroupKey, "")
+	allowNonMatching := m.Req.GetBool(AllowNonMatchingScanlationGroupKey, true)
 
-		return ""
-	}()
 	chaptersMap := utils.GroupBy(c.Data, func(v ChapterSearchData) string {
 		return v.Attributes.Chapter
 	})
 
 	newData := make([]ChapterSearchData, 0)
-	for _, chapters := range chaptersMap {
-		chapter := utils.Find(chapters, m.chapterSearchFunc(scanlation, true))
-
-		// Retry by skipping scanlation check
-		if chapter == nil && scanlation != "" {
-			chapter = utils.Find(chapters, m.chapterSearchFunc("", true))
+	for chapterMarker, chapters := range chaptersMap {
+		// OneShots are handled later
+		if chapterMarker == "" {
+			continue
 		}
 
-		if chapter != nil {
-			newData = append(newData, *chapter)
+		chapter, ok := utils.FindOk(chapters, m.chapterSearchFunc(scanlation, true))
+
+		// Retry by skipping scanlation check
+		if !ok && scanlation != "" && allowNonMatching {
+			chapter, ok = utils.FindOk(chapters, m.chapterSearchFunc("", true))
+		}
+
+		if ok {
+			newData = append(newData, chapter)
 		}
 	}
 
-	if m.Req.GetBool(DownloadOneShotKey) {
+	if m.Req.GetBool(core.DownloadOneShotKey) {
 		// OneShots do not have a chapter, so will be mapped under the empty string
 		if chapters, ok := chaptersMap[""]; ok {
 			newData = append(newData, utils.Filter(chapters, m.chapterSearchFunc(scanlation, false))...)
