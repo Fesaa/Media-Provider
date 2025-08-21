@@ -86,7 +86,7 @@ func (m *manga) processCovers(coverResp *MangaCoverResponse) (map[string]*Cover,
 
 		// Cover is too small for Kavita. Looks weird
 		if !m.imageService.IsCover(coverBytes) {
-			m.Log.Trace().Str("id", cover.Id).Str("volume", cover.Attributes.Volume).
+			m.Log.Debug().Str("id", cover.Id).Str("volume", cover.Attributes.Volume).
 				Str("desc", cover.Attributes.Description).Msg("cover failed the ImageService.IsCover check. not using")
 			continue
 		}

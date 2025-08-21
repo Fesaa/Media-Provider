@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"slices"
@@ -12,6 +13,7 @@ const (
 	DownloadOneShotKey       string = "download_one_shot"
 	IncludeNotMatchedTagsKey string = "include_not_matched_tags"
 	IncludeCover             string = "include_cover"
+	UpdateCover              string = "update_cover"
 	TitleOverride            string = "title_override"
 )
 
@@ -98,12 +100,10 @@ func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
 	p, err := c.preferences.GetComplete()
 	if err != nil {
 		c.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
-		if !c.hasWarnedTags {
-			c.hasWarnedTags = true
-			c.Notifier.NotifyContentQ(
-				c.TransLoco.GetTranslation("blacklist-failed-to-load-title", c.impl.Title()),
-				c.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
-				models.Warning)
+		c.WarnPreferencesFailedToLoad()
+
+		if config.SkipTagsOnFailure {
+			return "", ""
 		}
 	} else {
 		genres = p.DynastyGenreTags

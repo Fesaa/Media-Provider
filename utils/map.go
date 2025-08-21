@@ -69,6 +69,17 @@ func Find[T any](in []T, f func(T) bool) *T {
 	return nil
 }
 
+func FindOk[T any](in []T, f func(T) bool) (T, bool) {
+	for _, t := range in {
+		if f(t) {
+			return t, true
+		}
+	}
+
+	var zero T
+	return zero, false
+}
+
 func Any[T any](in []T, f func(T) bool) bool {
 	return Find(in, f) != nil
 }

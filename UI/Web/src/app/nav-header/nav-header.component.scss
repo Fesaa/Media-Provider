@@ -42,6 +42,12 @@
         &:hover {
           color: var(--primary-color);
         }
+
+        &.selected {
+          span {
+            text-decoration: underline;
+          }
+        }
       }
     }
   }

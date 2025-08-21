@@ -60,7 +60,7 @@
       },
       "scanlation_group": {
         "label": "Scanlation group",
-        "tooltip": "Will always fallback if no chapter of this group can be found"
+        "tooltip": "Prioritise chapters from this group, fallback is controlled in the advanced section"
       },
       "download_one_shot": {
         "label": "Download OneShot",
@@ -85,6 +85,10 @@
       "title_override": {
         "label": "Override title",
         "tooltip": "Set a specific title"
+      },
+      "allow_non_matching_scanlation_group": {
+        "label": "Scanlation group fallback",
+        "tooltip": "Use chapters from different scanlation groups, default to true"
       }
     }
   },
@@ -377,7 +381,7 @@
 
   "search-form": {
     "search-query-label": "Search Query",
-    "search-query-placeholder": "Enter your search query...",
+    "search-query-placeholder": "Search {{name}}...",
     "search-filters-title": "Search Filters",
     "select-placeholder": "Select {{ title }}",
     "button-reset": "Reset",

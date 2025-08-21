@@ -10,13 +10,14 @@
           @for (page of pageItems(); track page.ID) {
             <a
               class="nav-link"
+              [class.selected]="navService.pageIndex() === page.ID"
               [routerLink]="page.ID === -1 ? '/home' : '/page'"
               [queryParams]="page.ID === -1 ? {} : { index: page.ID }"
             >
               @if (page.icon) {
                 <i class="fa {{ page.icon }}"></i>
               }
-              {{ page.title }}
+              <span>{{ page.title }}</span>
             </a>
           }
         </div>
@@ -24,7 +25,7 @@
 
       <div class="nav-right">
         @if (notifications() > 0) {
-          <span class="notification-badge" [class]="severity()">
+          <span routerLink="/notifications" class="notification-badge clickable" [class]="severity()">
             {{ notifications() }}
           </span>
         }

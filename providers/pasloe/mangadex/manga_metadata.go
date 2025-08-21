@@ -2,6 +2,7 @@ package mangadex
 
 import (
 	"context"
+	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
@@ -26,7 +27,7 @@ func (m *manga) WriteContentMetaData(ctx context.Context, chapter ChapterSearchD
 		return err
 	}
 
-	if m.Req.GetBool(IncludeCover, true) {
+	if m.Req.GetBool(core.IncludeCover, true) {
 		if err = m.writeCover(ctx, l, chapter); err != nil {
 			return err
 		}
@@ -265,13 +266,7 @@ func (m *manga) getAgeRating() comicinfo.AgeRating {
 func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 	if m.Preference == nil {
 		m.Log.Warn().Msg("No genres or tags will be set, blacklist couldn't be loaded")
-		if !m.hasWarnedBlacklist {
-			m.hasWarnedBlacklist = true
-			m.Notifier.NotifyContentQ(
-				m.TransLoco.GetTranslation("blacklist-failed-to-load-title", m.Title()),
-				m.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
-				models.Warning)
-		}
+		m.WarnPreferencesFailedToLoad()
 		return
 	}
 
@@ -361,16 +356,13 @@ func (m *manga) getCiStatus() (int, bool) {
 	}
 
 	var count, found float64
-	var content string
 
 	if m.SeriesInfo.Attributes.LastVolume == "" && m.SeriesInfo.Attributes.LastChapter != "" {
 		count = lastWantedChapter
 		found = m.lastFoundChapter
-		content = "Chapters"
 	} else {
 		count = lastWantedVolume
 		found = m.lastFoundVolume
-		content = "Volumes"
 	}
 
 	intCount := int(math.Floor(count))
@@ -390,15 +382,8 @@ func (m *manga) getCiStatus() (int, bool) {
 		return intCount, true
 	}
 
-	// Series has completed, and everything has been downloaded
-	if !m.Req.IsSubscription || m.hasNotifiedSub {
-		return intCount, true
-	}
-
-	m.hasNotifiedSub = true
-	m.Log.Debug().Msg("Subscription was completed, consider cancelling it")
-	m.Notifier.NotifyContent(m.TransLoco.GetTranslation("sub-downloaded-all-title"),
-		m.Title(), m.TransLoco.GetTranslation("sub-downloaded-all", m.Title(), intCount, content))
+	total := fmt.Sprintf("%s Volumes, %s Chapters", m.SeriesInfo.Attributes.LastVolume, m.SeriesInfo.Attributes.LastChapter)
+	m.NotifySubscriptionExhausted(total)
 	return intCount, true
 }
 

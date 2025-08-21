@@ -118,16 +118,16 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				FormType: payload.TEXT,
 			},
 			{
-				Key:      DownloadOneShotKey,
+				Key:      core.DownloadOneShotKey,
 				FormType: payload.SWITCH,
 			},
 			{
-				Key:           IncludeCover,
+				Key:           core.IncludeCover,
 				FormType:      payload.SWITCH,
 				DefaultOption: "true",
 			},
 			{
-				Key:      UpdateCover,
+				Key:      core.UpdateCover,
 				Advanced: true,
 				FormType: payload.SWITCH,
 			},
@@ -135,6 +135,12 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Key:      core.TitleOverride,
 				Advanced: true,
 				FormType: payload.TEXT,
+			},
+			{
+				Key:           AllowNonMatchingScanlationGroupKey,
+				Advanced:      true,
+				FormType:      payload.SWITCH,
+				DefaultOption: "true",
 			},
 		},
 	}
