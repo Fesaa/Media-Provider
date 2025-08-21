@@ -3,6 +3,7 @@ import {ReplaySubject} from "rxjs";
 import {ActivatedRoute, Router} from "@angular/router";
 import {AuthGuard} from "../_guards/auth.guard";
 import {PageService} from "./page.service";
+import {toSignal} from "@angular/core/rxjs-interop";
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +18,7 @@ export class NavService {
 
   private pageIndexSource = new ReplaySubject<number>(1);
   public pageIndex$ = this.pageIndexSource.asObservable();
+  public readonly pageIndex = toSignal(this.pageIndex$);
 
   constructor(private route: ActivatedRoute) {
     this.showNavSource.next(false);
