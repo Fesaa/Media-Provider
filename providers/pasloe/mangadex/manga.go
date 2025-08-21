@@ -61,9 +61,7 @@ type manga struct {
 	foundLastVolume  bool
 	foundLastChapter bool
 
-	hasWarned          bool
-	hasWarnedBlacklist bool
-	hasNotifiedSub     bool
+	hasWarned bool
 
 	language string
 }

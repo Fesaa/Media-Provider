@@ -16,6 +16,9 @@ var (
 
 	// DisableOneShotInFileName removed the (OneShot) in the filename
 	DisableOneShotInFileName = boolFeature("DISABLE_ONE_SHOT_IN_FILE_NAME")
+
+	// SkipTagsOnFailure will skip tag writing if preferences fail to load
+	SkipTagsOnFailure = boolFeature("SKIP_TAGS_ON_FAILURE")
 )
 
 func arrayFeature[T any](key string, f func(string, ...string) T) []T {

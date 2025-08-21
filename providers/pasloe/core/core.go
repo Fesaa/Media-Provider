@@ -22,6 +22,7 @@ import (
 
 const (
 	toggleSubscriptionExhausted = "toggle_subscription_exhausted"
+	togglePreferencesFailed     = "toggle_blacklist_failed"
 )
 
 func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider DownloadInfoProvider[C]) *Core[C, S] {
@@ -53,7 +54,7 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 			Log:            log.With().Str("handler", handler).Str("id", req.Id).Logger(),
 			id:             req.Id,
 			baseDir:        req.BaseDir,
-			toggles:        utils.NewToggles[string](),
+			Toggles:        utils.NewToggles[string](),
 			maxImages:      utils.Clamp(settings.MaxConcurrentImages, 1, 5),
 			Req:            req,
 			LastTime:       time.Now(),
@@ -101,7 +102,7 @@ type Core[C Chapter, S Series[C]] struct {
 	maxImages int
 	Req       payload.DownloadRequest
 
-	toggles *utils.Toggles[string]
+	Toggles *utils.Toggles[string]
 
 	SeriesInfo S
 	// hasDuplicatedChapters is true if the same chapter number is used across different volumes
@@ -119,9 +120,8 @@ type Core[C Chapter, S Series[C]] struct {
 	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
 	ToDownloadUserSelected []string
 
-	preferences   models.Preferences
-	Preference    *models.Preference
-	hasWarnedTags bool
+	preferences models.Preferences
+	Preference  *models.Preference
 
 	// Amount of chapters downloaded
 	ContentDownloaded int

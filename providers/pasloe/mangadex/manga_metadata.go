@@ -266,13 +266,7 @@ func (m *manga) getAgeRating() comicinfo.AgeRating {
 func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 	if m.Preference == nil {
 		m.Log.Warn().Msg("No genres or tags will be set, blacklist couldn't be loaded")
-		if !m.hasWarnedBlacklist {
-			m.hasWarnedBlacklist = true
-			m.Notifier.NotifyContentQ(
-				m.TransLoco.GetTranslation("blacklist-failed-to-load-title", m.Title()),
-				m.TransLoco.GetTranslation("blacklist-failed-to-load-summary"),
-				models.Warning)
-		}
+		m.WarnPreferencesFailedToLoad()
 		return
 	}
 
