@@ -73,7 +73,7 @@ export class EditSubscriptionModalComponent implements OnInit {
   }
 
   private getDefaultValue(sub: Subscription, def: DownloadMetadataDefinition) {
-    const values = sub.metadata.extra[def.key]
+    const values = (sub.metadata.extra || {})[def.key]
     const value = (values && values.length > 0) ? values[0] : def.defaultOption;
 
     switch (def.formType) {
