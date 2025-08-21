@@ -152,6 +152,7 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 	if w.SeriesInfo.Completed {
 		ci.Count = len(w.SeriesInfo.Chapters)
+		w.NotifySubscriptionExhausted(fmt.Sprintf("%d Chapters", ci.Count))
 	}
 
 	return ci

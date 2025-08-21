@@ -2,6 +2,7 @@ package bato
 
 import (
 	"context"
+	"fmt"
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -74,6 +75,7 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 	if m.SeriesInfo.PublicationStatus == PublicationCompleted && m.SeriesInfo.BatoUploadStatus == PublicationCompleted {
 		ci.Count = m.ChapterCount()
+		m.NotifySubscriptionExhausted(fmt.Sprintf("%d Chapters", ci.Count))
 	}
 
 	return ci

@@ -20,6 +20,10 @@ import (
 	"time"
 )
 
+const (
+	toggleSubscriptionExhausted = "toggle_subscription_exhausted"
+)
+
 func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider DownloadInfoProvider[C]) *Core[C, S] {
 	var base *Core[C, S]
 
@@ -49,6 +53,7 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 			Log:            log.With().Str("handler", handler).Str("id", req.Id).Logger(),
 			id:             req.Id,
 			baseDir:        req.BaseDir,
+			toggles:        utils.NewToggles[string](),
 			maxImages:      utils.Clamp(settings.MaxConcurrentImages, 1, 5),
 			Req:            req,
 			LastTime:       time.Now(),
@@ -95,6 +100,8 @@ type Core[C Chapter, S Series[C]] struct {
 	baseDir   string
 	maxImages int
 	Req       payload.DownloadRequest
+
+	toggles *utils.Toggles[string]
 
 	SeriesInfo S
 	// hasDuplicatedChapters is true if the same chapter number is used across different volumes
