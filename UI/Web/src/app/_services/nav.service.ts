@@ -16,7 +16,7 @@ export class NavService {
   private showNavSource = new ReplaySubject<Boolean>(1);
   public showNav$ = this.showNavSource.asObservable();
 
-  private pageIndexSource = new ReplaySubject<number>(1);
+  private pageIndexSource = new ReplaySubject<number | null>(1);
   public pageIndex$ = this.pageIndexSource.asObservable();
   public readonly pageIndex = toSignal(this.pageIndex$);
 
@@ -34,6 +34,8 @@ export class NavService {
         } catch (e) {
           console.error(e);
         }
+      } else {
+        this.pageIndexSource.next(null);
       }
     })
   }
