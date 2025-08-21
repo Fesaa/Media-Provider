@@ -8,7 +8,7 @@
         id="query"
         class="form-control form-control-lg search-input"
         formControlName="query"
-        [placeholder]="t('search-query-placeholder')"
+        [placeholder]="t('search-query-placeholder', {name: title()})"
         autocomplete="off"
         [class.is-invalid]="searchForm.get('query')?.touched && searchForm.get('query')?.errors">
     </div>

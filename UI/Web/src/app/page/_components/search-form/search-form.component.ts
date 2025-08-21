@@ -15,6 +15,8 @@ import {of} from "rxjs";
   styleUrls: ['./search-form.component.scss']
 })
 export class SearchFormComponent {
+
+  title = input.required<string>();
   modifiers = input<Modifier[]>([]);
   loading = input<boolean>(false);
 

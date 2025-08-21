@@ -381,7 +381,7 @@
 
   "search-form": {
     "search-query-label": "Search Query",
-    "search-query-placeholder": "Enter your search query...",
+    "search-query-placeholder": "Search {{name}}...",
     "search-filters-title": "Search Filters",
     "select-placeholder": "Select {{ title }}",
     "button-reset": "Reset",

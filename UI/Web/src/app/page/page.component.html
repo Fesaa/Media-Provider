@@ -3,6 +3,7 @@
 
     <div [class.hidden]="!showForm()">
       <app-search-form
+        [title]="page()!.title"
         [modifiers]="page()!.modifiers"
         (searchSubmitted)="search($event)"
       />
