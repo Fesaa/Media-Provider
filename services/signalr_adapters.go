@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/rs/zerolog"
 	"github.com/valyala/fasthttp"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -125,6 +126,10 @@ type wsFastHttpConn struct {
 }
 
 func (w *wsFastHttpConn) Read(p []byte) (n int, err error) {
+	if w.conn == nil {
+		return 0, io.EOF
+	}
+
 	w.rlock.Lock()
 	defer w.rlock.Unlock()
 	_, data, err := w.conn.ReadMessage()
@@ -135,6 +140,10 @@ func (w *wsFastHttpConn) Read(p []byte) (n int, err error) {
 }
 
 func (w *wsFastHttpConn) Write(p []byte) (n int, err error) {
+	if w.conn == nil {
+		return 0, io.EOF
+	}
+
 	w.wlock.Lock()
 	defer w.wlock.Unlock()
 	if err = w.conn.WriteMessage(websocket.TextMessage, p); err != nil {
