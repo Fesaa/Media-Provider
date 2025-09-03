@@ -2,6 +2,8 @@ package pasloe
 
 import (
 	"errors"
+	"sync"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/bato"
@@ -11,7 +13,6 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/utils"
 	"go.uber.org/dig"
-	"sync"
 )
 
 type Registry interface {

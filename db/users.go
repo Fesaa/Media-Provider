@@ -2,10 +2,11 @@ package db
 
 import (
 	"errors"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
-	"time"
 )
 
 type userImpl struct {

@@ -3,9 +3,10 @@ package menou
 import (
 	"context"
 	"errors"
-	"github.com/rs/zerolog"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 type loggingTransport struct {

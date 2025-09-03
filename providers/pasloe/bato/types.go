@@ -2,8 +2,9 @@ package bato
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"strconv"
+
+	"github.com/Fesaa/Media-Provider/comicinfo"
 )
 
 type SearchOptions struct {

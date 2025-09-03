@@ -3,9 +3,10 @@ package mangadex
 import (
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/db/models"
 	"io"
 	"net/http"
+
+	"github.com/Fesaa/Media-Provider/db/models"
 )
 
 type MangaCoverResponse Response[[]MangaCoverData]

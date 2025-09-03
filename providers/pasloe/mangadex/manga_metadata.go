@@ -3,18 +3,19 @@ package mangadex
 import (
 	"context"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
-	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/Fesaa/go-metroninfo"
-	"github.com/rs/zerolog"
 	"math"
 	"path"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/go-metroninfo"
+	"github.com/rs/zerolog"
 )
 
 func (m *manga) WriteContentMetaData(ctx context.Context, chapter ChapterSearchData) error {

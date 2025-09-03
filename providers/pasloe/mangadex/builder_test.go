@@ -1,14 +1,15 @@
 package mangadex
 
 import (
+	"io"
+	"reflect"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
-	"io"
-	"reflect"
-	"testing"
 )
 
 const (

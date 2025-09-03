@@ -3,6 +3,12 @@ package yoitsu
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -13,11 +19,6 @@ import (
 	"github.com/anacrolix/torrent/types/infohash"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"math/rand"
-	"path"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (

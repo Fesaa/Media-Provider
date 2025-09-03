@@ -2,10 +2,11 @@ package services
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"testing"
 )
 
 func TestArchiveService_GetComicInfo(t *testing.T) {

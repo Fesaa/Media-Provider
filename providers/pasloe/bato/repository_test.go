@@ -1,13 +1,14 @@
 package bato
 
 import (
+	"io"
+	"strings"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"io"
-	"strings"
-	"testing"
 )
 
 func tempRepository(w io.Writer) Repository {

@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/rs/zerolog"
-	"github.com/spf13/afero"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 )
 
 var (

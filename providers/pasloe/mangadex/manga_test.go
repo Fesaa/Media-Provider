@@ -4,6 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"os"
+	"path"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -16,12 +23,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"io"
-	"os"
-	"path"
-	"strings"
-	"testing"
-	"time"
 )
 
 type SettingsService struct {

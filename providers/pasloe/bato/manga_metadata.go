@@ -3,12 +3,13 @@ package bato
 import (
 	"context"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
-	"github.com/Fesaa/Media-Provider/utils"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 func (m *manga) WriteContentMetaData(ctx context.Context, chapter Chapter) error {

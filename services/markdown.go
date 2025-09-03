@@ -1,12 +1,13 @@
 package services
 
 import (
+	"strings"
+
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/rs/zerolog"
-	"strings"
 )
 
 type MarkdownService interface {

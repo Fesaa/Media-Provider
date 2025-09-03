@@ -2,13 +2,14 @@ package services
 
 import (
 	"errors"
+	"strconv"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"strconv"
-	"time"
 )
 
 type SettingsService interface {

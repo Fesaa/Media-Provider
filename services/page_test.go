@@ -1,11 +1,12 @@
 package services
 
 import (
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/rs/zerolog"
-	"testing"
 )
 
 func tempPageService(t *testing.T) PageService {

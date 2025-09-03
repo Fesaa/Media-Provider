@@ -4,11 +4,12 @@ import (
 	"archive/zip"
 	"bytes"
 	"errors"
+	"io"
+	"strings"
+
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"io"
-	"strings"
 )
 
 var ErrNoMatch = errors.New("zip file does not the wanted content")

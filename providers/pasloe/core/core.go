@@ -3,6 +3,14 @@ package core
 import (
 	"context"
 	"fmt"
+	"math"
+	"path"
+	"slices"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -11,13 +19,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"math"
-	"path"
-	"slices"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (

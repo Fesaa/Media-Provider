@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
@@ -12,10 +17,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"path"
-	"strings"
-	"sync"
-	"time"
 )
 
 func New(s services.SettingsService, container *dig.Container, log zerolog.Logger,

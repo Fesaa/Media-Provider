@@ -33,9 +33,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/spf13/afero"
 	"io"
 	"strings"
+
+	"github.com/spf13/afero"
 )
 
 var ErrNoComicInfo = errors.New("zip file does not contain comic info")

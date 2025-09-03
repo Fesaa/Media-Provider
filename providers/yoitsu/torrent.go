@@ -3,6 +3,11 @@ package yoitsu
 import (
 	"context"
 	"encoding/json"
+	"path"
+	"slices"
+	"strings"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -10,10 +15,6 @@ import (
 	"github.com/anacrolix/torrent"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"path"
-	"slices"
-	"strings"
-	"time"
 )
 
 // torrentImpl wrapper around the torrent.Torrent struct

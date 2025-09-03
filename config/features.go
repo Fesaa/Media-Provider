@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/Fesaa/Media-Provider/utils"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 var (

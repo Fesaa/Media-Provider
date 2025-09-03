@@ -1,10 +1,11 @@
 package services
 
 import (
-	"github.com/rs/zerolog"
-	"github.com/spf13/afero"
 	"slices"
 	"testing"
+
+	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 )
 
 func tempTransloco(t *testing.T) TranslocoService {

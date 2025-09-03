@@ -1,6 +1,9 @@
 package db
 
 import (
+	"os"
+	"path"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/manual"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -9,8 +12,6 @@ import (
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
-	"os"
-	"path"
 )
 
 type Database struct {

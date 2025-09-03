@@ -2,10 +2,11 @@ package mangadex
 
 import (
 	"context"
-	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/payload"
 	"io"
 	"testing"
+
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
 )
 
 var coverReq = payload.DownloadRequest{

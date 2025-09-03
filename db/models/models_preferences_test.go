@@ -1,9 +1,10 @@
 package models
 
 import (
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"gorm.io/gorm"
-	"testing"
 )
 
 func TestTags_ContainsTag(t *testing.T) {

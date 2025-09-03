@@ -1,9 +1,10 @@
 package services
 
 import (
+	"reflect"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/go-playground/validator/v10"
-	"reflect"
 )
 
 func isValidProvider(fl validator.FieldLevel) bool {

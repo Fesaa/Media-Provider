@@ -2,13 +2,14 @@ package pasloe
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/rs/zerolog"
-	"sync"
-	"time"
 )
 
 // ProviderQueue represents the queue for each separate provider. The queue has just one internal worker

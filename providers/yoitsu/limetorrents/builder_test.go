@@ -1,15 +1,16 @@
 package limetorrents
 
 import (
+	"io"
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"io"
-	"reflect"
-	"strings"
-	"testing"
 )
 
 func tempBuilder(w io.Writer) *Builder {

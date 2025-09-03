@@ -1,6 +1,9 @@
 package api
 
 import (
+	"strings"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -11,8 +14,6 @@ import (
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
-	"strings"
-	"time"
 )
 
 func Setup(router fiber.Router, container *dig.Container, settingsService services.SettingsService, log zerolog.Logger) error {

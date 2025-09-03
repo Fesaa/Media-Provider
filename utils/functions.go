@@ -5,13 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"github.com/rs/zerolog"
-	"go.uber.org/dig"
 	"math"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 )
 
 // WaitFor waits for at most d, and at least until wg has finished

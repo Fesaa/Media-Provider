@@ -2,9 +2,10 @@ package core
 
 import (
 	"encoding/json"
+	"strconv"
+
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
-	"strconv"
 )
 
 func (c *Core[C, S]) Message(msg payload.Message) (payload.Message, error) {

@@ -2,18 +2,19 @@ package services
 
 import (
 	"context"
-	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/fasthttp/websocket"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/adaptor"
-	"github.com/rs/zerolog"
-	"github.com/valyala/fasthttp"
 	"io"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/fasthttp/websocket"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/rs/zerolog"
+	"github.com/valyala/fasthttp"
 )
 
 type kitLoggerAdapter struct {

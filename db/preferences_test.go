@@ -1,9 +1,10 @@
 package db
 
 import (
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"testing"
 )
 
 func seedPreferences(t *testing.T, p models.Preferences) {

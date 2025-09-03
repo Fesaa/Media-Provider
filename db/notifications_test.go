@@ -2,11 +2,12 @@ package db
 
 import (
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
-	"testing"
-	"time"
 )
 
 func TestNotifications_All(t *testing.T) {

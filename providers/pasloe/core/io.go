@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/utils"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 func (c *Core[C, S]) loadContentOnDisk() {

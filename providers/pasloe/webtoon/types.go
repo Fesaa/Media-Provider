@@ -2,9 +2,10 @@ package webtoon
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"net/url"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/comicinfo"
 )
 
 type SearchOptions struct {

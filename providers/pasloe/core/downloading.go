@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"golang.org/x/time/rate"
-	"slices"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 func (c *Core[C, S]) abortDownload(reason error) {

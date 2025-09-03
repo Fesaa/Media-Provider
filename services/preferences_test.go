@@ -1,10 +1,11 @@
 package services
 
 import (
-	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/utils"
 	"reflect"
 	"testing"
+
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 func Test_mergeTags(t *testing.T) {

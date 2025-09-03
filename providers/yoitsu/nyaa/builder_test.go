@@ -1,11 +1,12 @@
 package nyaa
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/irevenko/go-nyaa/nyaa"
-	"reflect"
-	"testing"
 )
 
 func TestBuilder_Transform(t *testing.T) {

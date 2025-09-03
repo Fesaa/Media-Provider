@@ -1,9 +1,10 @@
 package config
 
 import (
+	"os"
+
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"os"
 )
 
 func DefaultConfig() *Config {

@@ -3,13 +3,14 @@ package services
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 var service = ValidationServiceProvider(ValidatorProvider(), zerolog.New(zerolog.ConsoleWriter{}))

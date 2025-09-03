@@ -2,9 +2,10 @@ package db
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"gorm.io/gorm"
-	"testing"
 )
 
 func TestUsers_All(t *testing.T) {

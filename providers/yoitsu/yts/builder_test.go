@@ -1,10 +1,11 @@
 package yts
 
 import (
-	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/payload"
 	"reflect"
 	"testing"
+
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
 )
 
 func TestBuilder_Transform(t *testing.T) {

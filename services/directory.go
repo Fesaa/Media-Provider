@@ -2,11 +2,12 @@ package services
 
 import (
 	"archive/zip"
-	"github.com/rs/zerolog"
-	"github.com/spf13/afero"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 )
 
 type DirectoryService interface {

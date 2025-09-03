@@ -1,8 +1,9 @@
 package webtoon
 
 import (
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"testing"
+
+	"github.com/Fesaa/Media-Provider/comicinfo"
 )
 
 func TestSearchData_Url(t *testing.T) {

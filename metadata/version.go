@@ -1,9 +1,10 @@
 package metadata
 
 import (
-	"github.com/Fesaa/Media-Provider/utils"
 	"strconv"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 const (

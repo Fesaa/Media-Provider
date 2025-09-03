@@ -1,11 +1,12 @@
 package mangadex
 
 import (
+	"io"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
-	"io"
-	"testing"
 )
 
 // Note: Sleeping quite a bit during test, to ensure we do not send
