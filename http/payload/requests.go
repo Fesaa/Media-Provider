@@ -1,10 +1,11 @@
 package payload
 
 import (
-	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/utils"
 	"strconv"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 type SearchRequest struct {
@@ -123,12 +124,12 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Id          uint   `json:"id" validate:"required"`
-	Name        string `json:"name" validate:"required"`
-	Email       string `json:"email" validate:"required"`
-	Token       string `json:"token" validate:"required"`
-	ApiKey      string `json:"apiKey,omitempty"`
-	Permissions int    `json:"permissions" validate:"gte=0"`
+	Id     uint          `json:"id" validate:"required"`
+	Name   string        `json:"name" validate:"required"`
+	Email  string        `json:"email" validate:"required"`
+	Token  string        `json:"token" validate:"required"`
+	ApiKey string        `json:"apiKey,omitempty"`
+	Roles  []models.Role `json:"roles,omitempty"`
 }
 type UpdateUserRequest struct {
 	Name  string `json:"username" validate:"required"`

@@ -3,6 +3,8 @@ package routes
 import (
 	"errors"
 	"fmt"
+
+	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
@@ -29,21 +31,14 @@ type contentRoutes struct {
 
 func RegisterContentRoutes(cr contentRoutes) {
 	router := cr.Router.Group("/content", cr.Auth.Middleware)
-	router.Post("/search", cr.Cache, cr.Search)
-	router.Post("/download", cr.Download)
-	router.Post("/stop", cr.Stop)
+	router.Post("/search", cr.Cache, middleware.WithBodyValidation(cr.Search))
+	router.Post("/download", middleware.WithBodyValidation(cr.Download))
+	router.Post("/stop", middleware.WithBodyValidation(cr.Stop))
 	router.Get("/stats", cr.Stats)
-	router.Post("/message", cr.Message)
+	router.Post("/message", middleware.WithBody(cr.Message))
 }
 
-func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
-	var msg payload.Message
-	if err := ctx.BodyParser(&msg); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (cr *contentRoutes) Message(ctx *fiber.Ctx, msg payload.Message) error {
 	resp, err := cr.ContentService.Message(msg)
 	if err != nil {
 		if errors.Is(err, services.ErrContentNotFound) {
@@ -73,14 +68,7 @@ func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
-func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
-	var searchRequest payload.SearchRequest
-	if err := cr.Val.ValidateCtx(ctx, &searchRequest); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (cr *contentRoutes) Search(ctx *fiber.Ctx, searchRequest payload.SearchRequest) error {
 	search, err := cr.ContentService.Search(searchRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -95,15 +83,7 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
 	return ctx.JSON(search)
 }
 
-func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
-	var req payload.DownloadRequest
-	if err := cr.Val.ValidateCtx(ctx, &req); err != nil {
-		cr.Log.Error().Err(err).Msg("error while parsing body")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) error {
 	if req.BaseDir == "" {
 		cr.Log.Warn().Msg("trying to download Torrent to empty baseDir, returning error.")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -124,14 +104,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (cr *contentRoutes) Stop(ctx *fiber.Ctx) error {
-	var req payload.StopRequest
-	if err := cr.Val.ValidateCtx(ctx, &req); err != nil {
-		cr.Log.Error().Err(err).Msg("error while parsing body")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
+func (cr *contentRoutes) Stop(ctx *fiber.Ctx, req payload.StopRequest) error {
 	if err := cr.ContentService.Stop(req); err != nil {
 		cr.Log.Error().Str("id", req.Id).Msg("error while stopping download")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

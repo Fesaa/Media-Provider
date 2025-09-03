@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/db"
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
@@ -23,11 +25,11 @@ type preferencesRoute struct {
 func RegisterPreferencesRoutes(pr preferencesRoute) {
 	group := pr.Router.Group("/preferences", pr.Auth.Middleware)
 
-	group.Get("/", pr.Get)
-	group.Post("/save", pr.Update)
+	group.Get("/", pr.get)
+	group.Post("/save", middleware.HasRole(models.ManagePreferences), middleware.WithBody(pr.update))
 }
 
-func (pr *preferencesRoute) Get(ctx *fiber.Ctx) error {
+func (pr *preferencesRoute) get(ctx *fiber.Ctx) error {
 	pref, err := pr.Pref.GetDto()
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to get preferences")
@@ -38,15 +40,7 @@ func (pr *preferencesRoute) Get(ctx *fiber.Ctx) error {
 	return ctx.JSON(pref)
 }
 
-func (pr *preferencesRoute) Update(ctx *fiber.Ctx) error {
-	var pref payload.PreferencesDto
-	if err := pr.Val.ValidateCtx(ctx, &pref); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to parse preferences")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (pr *preferencesRoute) update(ctx *fiber.Ctx, pref payload.PreferencesDto) error {
 	if err := pr.Pref.Update(pref); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to update preferences")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

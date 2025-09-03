@@ -2,14 +2,15 @@ package routes
 
 import (
 	"errors"
+	"path"
+	"slices"
+
+	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
-	"path"
-	"slices"
 )
 
 var (
@@ -32,21 +33,23 @@ type subscriptionRoutes struct {
 
 func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
 	group := sr.Router.Group("/subscriptions", sr.Auth.Middleware)
-	group.Get("/providers", sr.Providers)
-	group.Get("/all", sr.All)
-	group.Get("/:id", sr.Get)
-	group.Post("/update", sr.Update)
-	group.Post("/new", sr.New)
-	group.Delete("/:id", sr.Delete)
-	group.Post("/run-once/:id", sr.RunOnce)
-	group.Post("/run-all", sr.RunAll)
+	group.Get("/providers", sr.providers)
+	group.Get("/all", sr.all)
+	group.Get("/:id", middleware.WithParams(middleware.IdParamsOption(), sr.get))
+
+	group.Use(middleware.HasRole(models.ManageSubscriptions)).
+		Post("/update", middleware.WithBody(sr.update)).
+		Post("/new", middleware.WithBody(sr.new)).
+		Delete("/:id", middleware.WithParams(middleware.IdParamsOption(), sr.delete)).
+		Post("/run-once/:id", middleware.WithParams(middleware.IdParamsOption(), sr.runOnce)).
+		Post("/run-all", sr.runAll)
 }
 
-func (sr *subscriptionRoutes) Providers(ctx *fiber.Ctx) error {
+func (sr *subscriptionRoutes) providers(ctx *fiber.Ctx) error {
 	return ctx.JSON(allowedProviders)
 }
 
-func (sr *subscriptionRoutes) RunAll(ctx *fiber.Ctx) error {
+func (sr *subscriptionRoutes) runAll(ctx *fiber.Ctx) error {
 	subs, err := sr.SubscriptionService.All()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -69,15 +72,7 @@ func (sr *subscriptionRoutes) RunAll(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
-	id, err := ParamsUInt(ctx, "id")
-	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{
-			"message": "Invalid id",
-			"id":      utils.CopyString(ctx.Params("id", "")),
-		})
-	}
-
+func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id uint) error {
 	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscription")
@@ -97,7 +92,7 @@ func (sr *subscriptionRoutes) RunOnce(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusAccepted).JSON(fiber.Map{})
 }
 
-func (sr *subscriptionRoutes) All(ctx *fiber.Ctx) error {
+func (sr *subscriptionRoutes) all(ctx *fiber.Ctx) error {
 	subs, err := sr.SubscriptionService.All()
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscriptions")
@@ -109,15 +104,7 @@ func (sr *subscriptionRoutes) All(ctx *fiber.Ctx) error {
 	return ctx.JSON(subs)
 }
 
-func (sr *subscriptionRoutes) Get(ctx *fiber.Ctx) error {
-	id, err := ParamsUInt(ctx, "id")
-	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{
-			"message": "Invalid id",
-			"id":      utils.CopyString(ctx.Params("id", "")),
-		})
-	}
-
+func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id uint) error {
 	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to get subscription")
@@ -129,21 +116,7 @@ func (sr *subscriptionRoutes) Get(ctx *fiber.Ctx) error {
 	return ctx.JSON(sub)
 }
 
-func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
-	user := ctx.Locals("user").(models.User)
-	if !user.HasPermission(models.PermWriteConfig) {
-		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to edit subscriptions")
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
-	}
-
-	var sub models.Subscription
-	if err := ctx.BodyParser(&sub); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to parse subscription")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) error {
 	if err := sr.validatorSubscription(sub); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to validate subscription")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -161,21 +134,7 @@ func (sr *subscriptionRoutes) Update(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(sub)
 }
 
-func (sr *subscriptionRoutes) New(ctx *fiber.Ctx) error {
-	user := ctx.Locals("user").(models.User)
-	if !user.HasPermission(models.PermWriteConfig) {
-		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to create subscriptions")
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
-	}
-
-	var sub models.Subscription
-	if err := ctx.BodyParser(&sub); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to parse subscription")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error {
 	sub.Info.BaseDir = path.Clean(sub.Info.BaseDir)
 
 	if err := sr.validatorSubscription(sub); err != nil {
@@ -214,22 +173,8 @@ func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) err
 	return nil
 }
 
-func (sr *subscriptionRoutes) Delete(ctx *fiber.Ctx) error {
-	user := ctx.Locals("user").(models.User)
-	if !user.HasPermission(models.PermWriteConfig) {
-		sr.Log.Warn().Str("user", user.Name).Msg("user does not have permission to delete subscriptions")
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
-	}
-
-	id, err := ParamsUInt(ctx, "id")
-	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{
-			"message": "Invalid id",
-			"id":      utils.CopyString(ctx.Params("id", "")),
-		})
-	}
-
-	if err = sr.SubscriptionService.Delete(id); err != nil {
+func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id uint) error {
+	if err := sr.SubscriptionService.Delete(id); err != nil {
 		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),

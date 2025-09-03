@@ -1,11 +1,12 @@
 package services
 
 import (
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/rs/zerolog"
-	"time"
 )
 
 type MetadataService interface {
@@ -26,22 +27,22 @@ func MetadataServiceProvider(db models.Metadata, log zerolog.Logger) MetadataSer
 }
 
 func (m *metadataService) Get() (payload.Metadata, error) {
-	metadata, err := m.db.All()
+	md, err := m.db.All()
 	if err != nil {
 		return payload.Metadata{}, err
 	}
 
-	return m.metadataFromRows(metadata), nil
+	return m.metadataFromRows(md), nil
 }
 
 func (m *metadataService) Update(pl payload.Metadata) error {
-	metadata, err := m.db.All()
+	md, err := m.db.All()
 	if err != nil {
 		return err
 	}
 
-	metadata = m.metadataUpdateRows(pl, metadata)
-	return m.db.Update(metadata)
+	md = m.metadataUpdateRows(pl, md)
+	return m.db.Update(md)
 }
 
 func (m *metadataService) metadataUpdateRows(pl payload.Metadata, rows []models.MetadataRow) []models.MetadataRow {

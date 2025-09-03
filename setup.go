@@ -3,6 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"slices"
+
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/metadata"
@@ -20,10 +25,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"os"
-	"path"
-	"path/filepath"
-	"slices"
 )
 
 type appParams struct {
@@ -92,6 +93,11 @@ func ApplicationProvider(params appParams) *fiber.App {
 			},
 		}))
 	}
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals(services.ServiceProviderKey, params.Container)
+		return c.Next()
+	})
 
 	scope := c.Scope("init::api")
 	utils.Must(scope.Provide(utils.Identity(app.Group(baseUrl))))

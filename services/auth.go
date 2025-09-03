@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -15,7 +17,6 @@ import (
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
 
 const (
@@ -163,7 +164,7 @@ func (jwtAuth *jwtAuthService) OidcJWT(ctx *fiber.Ctx, key string) (bool, error)
 	}
 
 	if user != nil {
-		ctx.Locals("user", *user)
+		ctx.Locals(UserKey, *user)
 		return true, nil
 	}
 
@@ -195,7 +196,7 @@ func (jwtAuth *jwtAuthService) OidcJWT(ctx *fiber.Ctx, key string) (bool, error)
 			return false, err
 		}
 
-		ctx.Locals("user", *user)
+		ctx.Locals(UserKey, *user)
 		return true, nil
 	}
 
@@ -228,9 +229,9 @@ func (jwtAuth *jwtAuthService) LocalJWT(ctx *fiber.Ctx, key string) (bool, error
 		if user == nil {
 			return false, ErrMissingOrMalformedAPIKey
 		}
-		ctx.Locals("user", *user)
+		ctx.Locals(UserKey, *user)
 	} else {
-		ctx.Locals("user", mpClaims.User)
+		ctx.Locals(UserKey, mpClaims.User)
 	}
 
 	return token.Valid, nil
@@ -282,12 +283,12 @@ func (jwtAuth *jwtAuthService) Login(loginRequest payload.LoginRequest) (*payloa
 	}
 
 	return &payload.LoginResponse{
-		Id:          user.ID,
-		Name:        user.Name,
-		Email:       user.Email.String,
-		Token:       t,
-		ApiKey:      user.ApiKey,
-		Permissions: user.Permission,
+		Id:     user.ID,
+		Name:   user.Name,
+		Email:  user.Email.String,
+		Token:  t,
+		ApiKey: user.ApiKey,
+		Roles:  user.Roles,
 	}, nil
 }
 
@@ -344,7 +345,7 @@ func (a *apiKeyAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	ctx.Locals("user", user)
+	ctx.Locals(UserKey, user)
 	return true, nil
 }
 

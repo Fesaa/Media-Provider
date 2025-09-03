@@ -1,6 +1,10 @@
 package routes
 
 import (
+	"slices"
+	"strings"
+
+	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
@@ -8,8 +12,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
-	"slices"
-	"strings"
 )
 
 type pageRoutes struct {
@@ -29,17 +31,22 @@ type pageRoutes struct {
 func RegisterPageRoutes(pr pageRoutes) {
 
 	pages := pr.Router.Group("/pages", pr.Auth.Middleware)
-	pages.Get("/", pr.Pages)
-	pages.Post("/new", pr.UpdatePage)
-	pages.Post("/update", pr.UpdatePage)
-	pages.Delete("/:pageId", pr.DeletePage)
-	pages.Post("/order", pr.OrderPages)
-	pages.Post("/load-default", pr.LoadDefault)
-	pages.Get("/download-metadata", pr.DownloadMetadata)
-	pages.Get("/:pageId", pr.Page)
+	pages.Get("/", pr.pages)
+	pages.Use(middleware.HasRole(models.ManagePages)).
+		Post("/new", middleware.WithBodyValidation(pr.updatePage))
+	pages.Use(middleware.HasRole(models.ManagePages)).
+		Post("/update", middleware.WithBodyValidation(pr.updatePage))
+	pages.Use(middleware.HasRole(models.ManagePages)).
+		Post("/:pageId", middleware.WithParams(middleware.WithQueryName[uint]("pageId"), pr.deletePage))
+
+	pages.Post("/order", middleware.WithBody(pr.orderPages))
+	pages.Post("/load-default", pr.loadDefault)
+	pages.Get("/download-metadata", middleware.WithQueryParams(
+		middleware.WithMessage[int]("provider", pr.Transloco.GetTranslation("no-provider")), pr.DownloadMetadata))
+	pages.Get("/:pageId", middleware.WithParams(middleware.WithQueryName[uint]("pageId"), pr.page))
 }
 
-func (pr *pageRoutes) Pages(ctx *fiber.Ctx) error {
+func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 	pages, err := pr.DB.Pages.All()
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to get pages")
@@ -59,14 +66,7 @@ func (pr *pageRoutes) Pages(ctx *fiber.Ctx) error {
 	return ctx.JSON(pages)
 }
 
-func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
-	id, err := ParamsUInt(ctx, "pageId")
-	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
 	page, err := pr.DB.Pages.Get(id)
 	if err != nil {
 		pr.Log.Error().Err(err).Uint("pageId", id).Msg("Failed to get page")
@@ -82,32 +82,19 @@ func (pr *pageRoutes) Page(ctx *fiber.Ctx) error {
 	return ctx.JSON(page)
 }
 
-func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
-	user := ctx.Locals("user").(models.User)
-	if !user.HasPermission(models.PermWritePage) {
-		pr.Log.Warn().Str("user", user.Name).Msg("user does not have page edit permission")
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
-	}
-
-	var page models.Page
-	if err := pr.Val.ValidateCtx(ctx, &page); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to parse page")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 	page.Modifiers = utils.MapWithIdx(page.Modifiers, func(i int, mod models.Modifier) models.Modifier {
 		mod.Sort = i
 
 		// Ensure only one modifier value has the default state
 		if mod.Type == models.DROPDOWN {
-			mod.Values = utils.MapWithState(mod.Values, false, func(m models.ModifierValue, foundDefault bool) (models.ModifierValue, bool) {
-				if foundDefault {
-					m.Default = false
-				}
-				return m, foundDefault || m.Default
-			})
+			mod.Values = utils.MapWithState(mod.Values, false,
+				func(m models.ModifierValue, foundDefault bool) (models.ModifierValue, bool) {
+					if foundDefault {
+						m.Default = false
+					}
+					return m, foundDefault || m.Default
+				})
 		}
 
 		return mod
@@ -123,20 +110,7 @@ func (pr *pageRoutes) UpdatePage(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(page)
 }
 
-func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
-	id, err := ParamsUInt(ctx, "pageId")
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	user := ctx.Locals("user").(models.User)
-	if !user.HasPermission(models.PermDeletePage) {
-		pr.Log.Warn().Str("user", user.Name).Msg("user does not have page delete permission")
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
-	}
-
+func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id uint) error {
 	if err := pr.DB.Pages.Delete(id); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to delete page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -147,15 +121,7 @@ func (pr *pageRoutes) DeletePage(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (pr *pageRoutes) OrderPages(ctx *fiber.Ctx) error {
-	var order []uint
-	if err := ctx.BodyParser(&order); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to parse swap page")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
+func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []uint) error {
 	if err := pr.PageService.OrderPages(order); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to swap page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -166,8 +132,7 @@ func (pr *pageRoutes) OrderPages(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (pr *pageRoutes) LoadDefault(ctx *fiber.Ctx) error {
-
+func (pr *pageRoutes) loadDefault(ctx *fiber.Ctx) error {
 	if err := pr.PageService.LoadDefaultPages(); err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to load default pages")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -178,15 +143,8 @@ func (pr *pageRoutes) LoadDefault(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (pr *pageRoutes) DownloadMetadata(ctx *fiber.Ctx) error {
-	id := ctx.QueryInt("provider", -1)
-	if id == -1 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("no-provider"),
-		})
-	}
-
-	metadata, err := pr.ContentService.DownloadMetadata(models.Provider(id))
+func (pr *pageRoutes) DownloadMetadata(ctx *fiber.Ctx, provider int) error {
+	metadata, err := pr.ContentService.DownloadMetadata(models.Provider(provider))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),

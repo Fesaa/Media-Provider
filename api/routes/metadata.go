@@ -36,15 +36,7 @@ func (mr *metadataRoutes) Get(c *fiber.Ctx) error {
 	return c.JSON(m)
 }
 
-func (mr *metadataRoutes) Update(c *fiber.Ctx) error {
-	var m payload.Metadata
-	if err := c.BodyParser(&m); err != nil {
-		mr.Log.Error().Err(err).Msg("failed to parse metadata from body")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
+func (mr *metadataRoutes) Update(c *fiber.Ctx, m payload.Metadata) error {
 	if err := mr.MetadataService.Update(m); err != nil {
 		mr.Log.Error().Err(err).Msg("failed to update metadata")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

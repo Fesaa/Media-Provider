@@ -2,12 +2,13 @@ package db
 
 import (
 	"errors"
+	"slices"
+
 	"github.com/Fesaa/Media-Provider/db/manual"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
-	"slices"
 )
 
 type migration struct {
@@ -43,6 +44,10 @@ var manualMigrations = []migration{
 	{
 		name: "20250329_MigrateSettings",
 		f:    manual.MigrateSettings,
+	},
+	{
+		name: "20250903_UserRoles",
+		f:    manual.UpdateUserRoles,
 	},
 }
 

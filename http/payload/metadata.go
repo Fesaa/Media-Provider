@@ -1,8 +1,9 @@
 package payload
 
 import (
-	"github.com/Fesaa/Media-Provider/metadata"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/metadata"
 )
 
 type Metadata struct {

@@ -1,9 +1,11 @@
 package payload
 
+import "github.com/Fesaa/Media-Provider/db/models"
+
 type UserDto struct {
-	ID         uint   `json:"id"`
-	Name       string `json:"name"`
-	Email      string `json:"email"`
-	Permission int    `json:"permissions"`
-	CanDelete  bool   `json:"canDelete"`
+	ID        uint         `json:"id"`
+	Name      string       `json:"name"`
+	Email     string       `json:"email"`
+	Roles     models.Roles `json:"roles"`
+	CanDelete bool         `json:"canDelete"`
 }

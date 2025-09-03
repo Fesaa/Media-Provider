@@ -2,6 +2,13 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"runtime"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
@@ -16,12 +23,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"os"
-	"os/signal"
-	"runtime"
-	"sync"
-	"syscall"
-	"time"
 )
 
 func main() {

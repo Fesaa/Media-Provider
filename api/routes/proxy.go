@@ -2,6 +2,11 @@ package routes
 
 import (
 	"fmt"
+	"io"
+	"mime"
+	"net/http"
+	"path/filepath"
+
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/services"
@@ -9,10 +14,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
-	"io"
-	"mime"
-	"net/http"
-	"path/filepath"
 )
 
 type proxyRoutes struct {
