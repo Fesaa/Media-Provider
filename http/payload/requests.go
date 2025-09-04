@@ -20,6 +20,7 @@ type DownloadRequest struct {
 	BaseDir          string                         `json:"dir" validate:"required"`
 	TempTitle        string                         `json:"title" validate:"required"`
 	DownloadMetadata models.DownloadRequestMetadata `json:"downloadMetadata,omitempty"`
+	OwnerId          uint                           `json:"-"` // Set by MP
 
 	// Internal communication
 	IsSubscription bool `json:"-"`

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
@@ -33,7 +34,7 @@ func RegisterContentRoutes(cr contentRoutes) {
 	router.Post("/search", cr.Cache, withBodyValidation(cr.Search))
 	router.Post("/download", withBodyValidation(cr.Download))
 	router.Post("/stop", withBodyValidation(cr.Stop))
-	router.Get("/stats", cr.Stats)
+	router.Get("/stats", withParam(newQueryParam("all", withAllowEmpty(false)), cr.Stats))
 	router.Post("/message", withBody(cr.Message))
 }
 
@@ -83,12 +84,16 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx, searchRequest payload.SearchRequ
 }
 
 func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+
 	if req.BaseDir == "" {
 		cr.Log.Warn().Msg("trying to download Torrent to empty baseDir, returning error.")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": cr.Transloco.GetTranslation("base-dir-not-empty"),
 		})
 	}
+
+	req.OwnerId = user.ID
 
 	if err := cr.ContentService.Download(req); err != nil {
 		cr.Log.Error().
@@ -114,15 +119,27 @@ func (cr *contentRoutes) Stop(ctx *fiber.Ctx, req payload.StopRequest) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (cr *contentRoutes) Stats(ctx *fiber.Ctx) error {
+func (cr *contentRoutes) Stats(ctx *fiber.Ctx, allDownloads bool) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+	allDownloads = allDownloads && user.HasRole(models.ViewAllDownloads)
+
 	statsResponse := payload.StatsResponse{
-		Running: []payload.InfoStat{},
+		Running:      []payload.InfoStat{},
+		TotalRunning: map[models.Provider]int{},
 	}
 	cr.YS.GetTorrents().ForEachSafe(func(_ string, torrent yoitsu.Torrent) {
-		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
+		if allDownloads || torrent.Request().OwnerId == user.ID {
+			statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
+		}
+
+		statsResponse.TotalRunning[torrent.Provider()]++
 	})
 	for _, download := range cr.PS.GetCurrentDownloads() {
-		statsResponse.Running = append(statsResponse.Running, download.GetInfo())
+		if allDownloads || download.Request().OwnerId == user.ID {
+			statsResponse.Running = append(statsResponse.Running, download.GetInfo())
+		}
+
+		statsResponse.TotalRunning[download.Provider()]++
 	}
 
 	return ctx.JSON(statsResponse)
