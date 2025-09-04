@@ -32,6 +32,10 @@ export class RecentlyDownloadedComponent implements OnInit{
   downloads = signal<Notification[]>([]);
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  private load() {
     this.notificationService.recent().subscribe((recent) => {
       this.downloads.set(recent);
     });
@@ -41,6 +45,7 @@ export class RecentlyDownloadedComponent implements OnInit{
     this.notificationService.markAsRead(download.ID).subscribe({
       next: () => {
         this.downloads.update(x => x.filter(d => d.ID !== download.ID));
+        this.load();
       },
       error: err => {
         this.toastService.genericError(err.error.message);
