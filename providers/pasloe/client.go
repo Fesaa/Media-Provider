@@ -104,7 +104,7 @@ func (c *client) Download(req payload.DownloadRequest) error {
 	}
 
 	c.content.Set(content.Id(), content)
-	c.signalR.AddContent(content.GetInfo())
+	c.signalR.AddContent(content.Request().OwnerId, content.GetInfo())
 
 	pq := c.getOrCreateProviderQueue(content.Provider())
 
@@ -149,7 +149,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		defer c.deletionWg.Done()
 
 		content.Cancel()
-		c.signalR.StateUpdate(content.Id(), payload.ContentStateCleanup)
+		c.signalR.StateUpdate(content.Request().OwnerId, content.Id(), payload.ContentStateCleanup)
 
 		if req.DeleteFiles {
 			c.deleteFiles(content)

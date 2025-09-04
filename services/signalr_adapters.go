@@ -69,12 +69,17 @@ func (s *signalrService) ConnectEndpoint(ctx *fiber.Ctx) error {
 		})
 	}
 
-	user := ctx.Locals("user").(models.User)
-	if err := s.upgrader().Upgrade(ctx.Context(), s.WsInit(connectionID)); err != nil {
+	user := GetFromContext(ctx, UserKey)
+	if err := s.upgrader().Upgrade(ctx.Context(), s.wsInit(user.ID, connectionID)); err != nil {
 		s.log.Error().Err(err).Str("user", user.Name).Msg("Failed to upgrade connection")
 		return ctx.Status(fiber.StatusUpgradeRequired).JSON(fiber.Map{
 			"message": err.Error(),
 		})
+	}
+
+	s.clients.Set(user.ID, connectionID)
+	if user.HasRole(models.ViewAllDownloads) {
+		//s.Groups().AddToGroup(allDownloadInfoGroup, connectionID)
 	}
 
 	return nil
@@ -95,7 +100,7 @@ func (s *signalrService) upgrader() *websocket.FastHTTPUpgrader {
 	return &upgrader
 }
 
-func (s *signalrService) WsInit(id string) func(conn *websocket.Conn) {
+func (s *signalrService) wsInit(userId uint, id string) func(conn *websocket.Conn) {
 	return func(conn *websocket.Conn) {
 		if err := s.server.Serve(newFastHttpConn(conn, id)); err != nil {
 			// 1001 Going Away & 1000 Normal Closure
@@ -109,6 +114,9 @@ func (s *signalrService) WsInit(id string) func(conn *websocket.Conn) {
 		} else {
 			s.log.Debug().Str("id", id).Msg("websocket connection succeeded")
 		}
+
+		s.clients.Delete(userId)
+		//s.Groups().RemoveFromGroup(allDownloadInfoGroup, id)
 	}
 }
 

@@ -55,6 +55,6 @@ func (c *Core[C, S]) SetUserFiltered(msg json.RawMessage) error {
 		return err
 	}
 	c.ToDownloadUserSelected = filter
-	c.SignalR.SizeUpdate(c.Id(), strconv.Itoa(c.Size())+" Chapters")
+	c.SignalR.SizeUpdate(c.Req.OwnerId, c.Id(), strconv.Itoa(c.Size())+" Chapters")
 	return nil
 }

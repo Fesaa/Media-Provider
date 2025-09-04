@@ -96,7 +96,7 @@ func (t *torrentImpl) State() payload.ContentState {
 
 func (t *torrentImpl) SetState(state payload.ContentState) {
 	t.state = state
-	t.signalR.StateUpdate(t.Id(), t.state)
+	t.signalR.StateUpdate(t.req.OwnerId, t.Id(), t.state)
 }
 
 func (t *torrentImpl) Message(msg payload.Message) (payload.Message, error) {
@@ -150,7 +150,7 @@ func (t *torrentImpl) SetUserFiltered(data json.RawMessage) error {
 	}
 
 	t.userFilter = filter
-	t.signalR.SizeUpdate(t.Id(), utils.BytesToSize(float64(t.size())))
+	t.signalR.SizeUpdate(t.req.OwnerId, t.Id(), utils.BytesToSize(float64(t.size())))
 	return nil
 }
 
@@ -250,7 +250,7 @@ func (t *torrentImpl) LoadInfo() {
 	t.SetState(utils.Ternary(t.req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
 		payload.ContentStateWaiting))
-	t.signalR.SizeUpdate(t.Id(), utils.BytesToSize(float64(t.size())))
+	t.signalR.SizeUpdate(t.req.OwnerId, t.Id(), utils.BytesToSize(float64(t.size())))
 }
 
 func (t *torrentImpl) startProgressLoop() {
@@ -264,7 +264,7 @@ func (t *torrentImpl) startProgressLoop() {
 			select {
 			case <-ticker.C:
 				progress, estimated, speed := t.Progress()
-				t.signalR.ProgressUpdate(payload.ContentProgressUpdate{
+				t.signalR.ProgressUpdate(t.req.OwnerId, payload.ContentProgressUpdate{
 					ContentId: t.Id(),
 					Progress:  progress,
 					Estimated: estimated,
