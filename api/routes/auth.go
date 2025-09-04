@@ -1,4 +1,4 @@
-package middleware
+package routes
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func HasRole(role models.Role) fiber.Handler {
+func hasRole(role models.Role) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		user, ok := c.Locals(services.UserKey).(models.User)
 		if !ok {

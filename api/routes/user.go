@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -34,24 +33,24 @@ type userRoutes struct {
 }
 
 func RegisterUserRoutes(ur userRoutes) {
-
-	ur.Router.Post("/login", middleware.WithBodyValidation(ur.loginUser))
-	ur.Router.Post("/register", middleware.WithBodyValidation(ur.registerUser))
+	ur.Router.Post("/login", withBodyValidation(ur.loginUser))
+	ur.Router.Post("/register", withBodyValidation(ur.registerUser))
 	ur.Router.Get("/any-user-exists", ur.anyUserExists)
 	ur.Router.Post("/reset-password", ur.resetPassword)
 
 	user := ur.Router.Group("/user", ur.Auth.Middleware)
 
-	user.Use(middleware.HasRole(models.ManageUsers)).
-		Get("/all", ur.users).
-		Post("/update", middleware.WithBodyValidation(ur.updateUser)).
-		Delete("/:id", middleware.WithParams(middleware.IdParamsOption(), ur.deleteUser)).
-		Post("/reset/:id", middleware.WithParams(middleware.IdParamsOption(), ur.generateResetPassword))
+	user.
+		Get("/refresh-api-key", ur.refreshAPIKey).
+		Get("/me", ur.me).
+		Post("/me", withBodyValidation(ur.updateMe)).
+		Post("/password", withBodyValidation(ur.updatePassword))
 
-	user.Get("/refresh-api-key", ur.refreshAPIKey)
-	user.Get("/me", ur.me)
-	user.Post("/me", middleware.WithBodyValidation(ur.updateMe))
-	user.Post("/password", middleware.WithBodyValidation(ur.updatePassword))
+	user.Use(hasRole(models.ManageUsers)).
+		Get("/all", ur.users).
+		Post("/update", withBodyValidation(ur.updateUser)).
+		Delete("/:id", withParam(newIdQueryParam(), ur.deleteUser)).
+		Post("/reset/:id", withParam(newIdQueryParam(), ur.generateResetPassword))
 }
 
 func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest payload.UpdatePasswordRequest) error {

@@ -4,7 +4,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -30,8 +29,8 @@ type ioRoutes struct {
 
 func RegisterIoRoutes(ior ioRoutes) {
 	io := ior.Router.Group("/io", ior.Auth.Middleware)
-	io.Post("/ls", middleware.WithBodyValidation(ior.listDirs))
-	io.Post("/create", middleware.WithBodyValidation(ior.createDir))
+	io.Post("/ls", withBodyValidation(ior.listDirs))
+	io.Post("/create", withBodyValidation(ior.createDir))
 }
 
 func (ior *ioRoutes) listDirs(ctx *fiber.Ctx, req payload.ListDirsRequest) error {

@@ -4,7 +4,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
@@ -29,21 +28,19 @@ type pageRoutes struct {
 }
 
 func RegisterPageRoutes(pr pageRoutes) {
-
 	pages := pr.Router.Group("/pages", pr.Auth.Middleware)
-	pages.Get("/", pr.pages)
-	pages.Use(middleware.HasRole(models.ManagePages)).
-		Post("/new", middleware.WithBodyValidation(pr.updatePage))
-	pages.Use(middleware.HasRole(models.ManagePages)).
-		Post("/update", middleware.WithBodyValidation(pr.updatePage))
-	pages.Use(middleware.HasRole(models.ManagePages)).
-		Post("/:pageId", middleware.WithParams(middleware.WithQueryName[uint]("pageId"), pr.deletePage))
+	pages.
+		Get("/", pr.pages).
+		Get("/download-metadata", withParam(newQueryParam("provider",
+			withMessage[int](pr.Transloco.GetTranslation("no-provider"))), pr.DownloadMetadata)).
+		Get("/:pageId", withParam(newIdQueryParam(), pr.page)).
+		Post("/order", withBody(pr.orderPages)).
+		Post("/load-default", pr.loadDefault)
 
-	pages.Post("/order", middleware.WithBody(pr.orderPages))
-	pages.Post("/load-default", pr.loadDefault)
-	pages.Get("/download-metadata", middleware.WithQueryParams(
-		middleware.WithMessage[int]("provider", pr.Transloco.GetTranslation("no-provider")), pr.DownloadMetadata))
-	pages.Get("/:pageId", middleware.WithParams(middleware.WithQueryName[uint]("pageId"), pr.page))
+	pages.Use(hasRole(models.ManagePages)).
+		Post("/new", withBodyValidation(pr.updatePage)).
+		Post("/update", withBodyValidation(pr.updatePage)).
+		Delete("/:pageId", withParam(newIdQueryParam(), pr.deletePage))
 }
 
 func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {

@@ -3,7 +3,6 @@ package routes
 import (
 	"time"
 
-	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
@@ -27,14 +26,15 @@ type notificationRoutes struct {
 
 func RegisterNotificationRoutes(nr notificationRoutes) {
 	notificationGroup := nr.Router.Group("/notifications", nr.Auth.Middleware)
-	notificationGroup.Get("/all", middleware.WithQueryParams(middleware.WithAllowEmpty[time.Time]("after"), nr.all))
-	notificationGroup.Get("/recent", middleware.WithQueryParams(middleware.WithAllowEmpty("limit", 5), nr.recent))
-	notificationGroup.Get("/amount", nr.amount)
-	notificationGroup.Post("/:id/read", middleware.WithParams(middleware.WithQueryName[uint]("id"), nr.read))
-	notificationGroup.Post("/:id/unread", middleware.WithParams(middleware.WithQueryName[uint]("id"), nr.unread))
-	notificationGroup.Delete("/:id", middleware.WithParams(middleware.WithQueryName[uint]("id"), nr.delete))
-	notificationGroup.Post("/many", middleware.WithBody(nr.readMany))
-	notificationGroup.Post("/many/delete", middleware.WithBody(nr.deleteMany))
+	notificationGroup.
+		Get("/all", withParam(newQueryParam("after", withAllowEmpty(time.Time{})), nr.all)).
+		Get("/recent", withParam(newQueryParam("limit", withAllowEmpty(5)), nr.recent)).
+		Get("/amount", nr.amount).
+		Post("/:id/read", withParam(newIdQueryParam(), nr.read)).
+		Post("/:id/unread", withParam(newIdQueryParam(), nr.unread)).
+		Delete("/:id", withParam(newIdQueryParam(), nr.delete)).
+		Post("/many", withBody(nr.readMany)).
+		Post("/many/delete", withBody(nr.deleteMany))
 }
 
 func (nr *notificationRoutes) all(ctx *fiber.Ctx, after time.Time) error {

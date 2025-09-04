@@ -16,7 +16,12 @@ import (
 	"go.uber.org/dig"
 )
 
-func Setup(router fiber.Router, container *dig.Container, settingsService services.SettingsService, log zerolog.Logger) error {
+func Setup(
+	router fiber.Router,
+	container *dig.Container,
+	settingsService services.SettingsService,
+	log zerolog.Logger,
+) error {
 	log.Debug().Str("handler", "http-routing").Msg("registering api routes")
 
 	settings, err := settingsService.GetSettingsDto()

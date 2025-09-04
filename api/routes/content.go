@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
@@ -31,11 +30,11 @@ type contentRoutes struct {
 
 func RegisterContentRoutes(cr contentRoutes) {
 	router := cr.Router.Group("/content", cr.Auth.Middleware)
-	router.Post("/search", cr.Cache, middleware.WithBodyValidation(cr.Search))
-	router.Post("/download", middleware.WithBodyValidation(cr.Download))
-	router.Post("/stop", middleware.WithBodyValidation(cr.Stop))
+	router.Post("/search", cr.Cache, withBodyValidation(cr.Search))
+	router.Post("/download", withBodyValidation(cr.Download))
+	router.Post("/stop", withBodyValidation(cr.Stop))
 	router.Get("/stats", cr.Stats)
-	router.Post("/message", middleware.WithBody(cr.Message))
+	router.Post("/message", withBody(cr.Message))
 }
 
 func (cr *contentRoutes) Message(ctx *fiber.Ctx, msg payload.Message) error {

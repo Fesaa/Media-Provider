@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -26,7 +25,7 @@ func RegisterConfigRoutes(cr configRoutes) {
 
 	// Auth
 	configGroup.Get("/", cr.Auth.Middleware, cr.getConfig)
-	configGroup.Post("/", cr.Auth.Middleware, middleware.WithBody(cr.updateConfig))
+	configGroup.Post("/", cr.Auth.Middleware, withBody(cr.updateConfig))
 
 	// No Auth
 	configGroup.Get("/oidc", cr.getOidcConfig)

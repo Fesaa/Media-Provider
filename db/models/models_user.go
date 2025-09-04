@@ -17,6 +17,10 @@ func (r Roles) HasRole(role Role) bool {
 	return slices.Contains(r, role)
 }
 
+func (u User) HasRole(role Role) bool {
+	return u.Roles.HasRole(role)
+}
+
 const (
 	ManagePages          Role = "manage-pages"
 	ManageUsers          Role = "manage-users"

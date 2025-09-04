@@ -25,6 +25,19 @@ func (s subscriptionImpl) All() ([]models.Subscription, error) {
 	return subscriptions, nil
 }
 
+func (s subscriptionImpl) AllForUser(userID uint) ([]models.Subscription, error) {
+	var subscriptions []models.Subscription
+	res := s.db.
+		Preload("Info").
+		Where(&models.Subscription{Owner: userID}).
+		Find(&subscriptions)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return subscriptions, nil
+}
+
 func (s subscriptionImpl) Get(i uint) (*models.Subscription, error) {
 	var subscription models.Subscription
 	res := s.db.Preload("Info").First(&subscription, i)
@@ -35,10 +48,37 @@ func (s subscriptionImpl) Get(i uint) (*models.Subscription, error) {
 	return &subscription, nil
 }
 
+func (s subscriptionImpl) GetForUser(subId, userID uint) (models.Subscription, error) {
+	var subscription models.Subscription
+	res := s.db.
+		Preload("Info").
+		Where(&models.Subscription{Owner: userID}).
+		First(&subscription, subId)
+
+	return subscription, res.Error
+}
+
 func (s subscriptionImpl) GetByContentId(contentID string) (*models.Subscription, error) {
 	var subscription models.Subscription
 	res := s.db.Preload("Info").
 		Where(&models.Subscription{ContentId: contentID}).
+		First(&subscription)
+
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &subscription, nil
+}
+
+func (s subscriptionImpl) GetByContentIdForUser(contentID string, userId uint) (*models.Subscription, error) {
+	var subscription models.Subscription
+	res := s.db.Preload("Info").
+		Where(&models.Subscription{ContentId: contentID, Owner: userId}).
 		First(&subscription)
 
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {

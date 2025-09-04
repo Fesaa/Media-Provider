@@ -42,8 +42,11 @@ type Preferences interface {
 
 type Subscriptions interface {
 	All() ([]Subscription, error)
+	AllForUser(uint) ([]Subscription, error)
 	Get(uint) (*Subscription, error)
+	GetForUser(uint, uint) (Subscription, error)
 	GetByContentId(string) (*Subscription, error)
+	GetByContentIdForUser(string, uint) (*Subscription, error)
 
 	New(Subscription) (*Subscription, error)
 	Update(Subscription) error

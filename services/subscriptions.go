@@ -17,6 +17,8 @@ type SubscriptionService interface {
 	Get(uint) (*models.Subscription, error)
 	// All returns all active subscriptions
 	All() ([]models.Subscription, error)
+	// AllForUser returns all active subscriptions for the given user
+	AllForUser(uint) ([]models.Subscription, error)
 	// Add a new subscription, saved to DB and starts the cron job
 	// Subscription is normalized in the process
 	Add(models.Subscription) (*models.Subscription, error)
@@ -128,6 +130,10 @@ func (s *subscriptionService) UpdateTask(hours ...int) error {
 
 func (s *subscriptionService) All() ([]models.Subscription, error) {
 	return s.db.Subscriptions.All()
+}
+
+func (s *subscriptionService) AllForUser(userId uint) ([]models.Subscription, error) {
+	return s.db.Subscriptions.AllForUser(userId)
 }
 
 func (s *subscriptionService) Get(id uint) (*models.Subscription, error) {

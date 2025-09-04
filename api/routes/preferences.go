@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"github.com/Fesaa/Media-Provider/api/middleware"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -26,7 +25,7 @@ func RegisterPreferencesRoutes(pr preferencesRoute) {
 	group := pr.Router.Group("/preferences", pr.Auth.Middleware)
 
 	group.Get("/", pr.get)
-	group.Post("/save", middleware.HasRole(models.ManagePreferences), middleware.WithBody(pr.update))
+	group.Post("/save", hasRole(models.ManagePreferences), withBody(pr.update))
 }
 
 func (pr *preferencesRoute) get(ctx *fiber.Ctx) error {

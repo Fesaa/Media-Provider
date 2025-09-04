@@ -122,7 +122,7 @@ func TestSubscription_ShouldRefresh(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			result := tt.Sub.ShouldRefresh(&tt.OldSub)
+			result := tt.Sub.shouldRefresh(&tt.OldSub)
 			if result != tt.Expected {
 				t.Errorf("ShouldRefresh mismatch: expected %v, got %v", tt.Expected, result)
 			}
