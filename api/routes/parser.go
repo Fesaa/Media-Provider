@@ -32,7 +32,7 @@ func withBodyValidation[T any](handler func(*fiber.Ctx, T) error) fiber.Handler 
 		validator := utils.MustInvoke[services.ValidationService](serviceProvider)
 
 		var body T
-		if err := validator.ValidateCtx(c, body); err != nil {
+		if err := validator.ValidateCtx(c, &body); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
