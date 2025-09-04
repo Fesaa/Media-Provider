@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -50,6 +51,7 @@ type User struct {
 	ExternalId sql.NullString  `gorm:"unique,nullable"`
 	SqlRoles   json.RawMessage `gorm:"roles"`
 	Roles      Roles           `gorm:"-"`
+	Pages      pq.Int32Array   `gorm:"type:integer[]"`
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) (err error) {
@@ -58,6 +60,10 @@ func (u *User) BeforeSave(tx *gorm.DB) (err error) {
 }
 
 func (u *User) AfterFind(tx *gorm.DB) (err error) {
+	if u.Pages == nil {
+		u.Pages = []int32{}
+	}
+
 	if u.SqlRoles == nil {
 		u.Roles = []Role{}
 		return

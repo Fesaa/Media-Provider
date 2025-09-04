@@ -7,5 +7,6 @@ type UserDto struct {
 	Name      string       `json:"name"`
 	Email     string       `json:"email"`
 	Roles     models.Roles `json:"roles"`
+	Pages     []int32      `json:"pages"`
 	CanDelete bool         `json:"canDelete"`
 }

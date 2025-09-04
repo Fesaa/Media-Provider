@@ -230,7 +230,10 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 
 	res, err := ur.Auth.Login(loginRequest)
 	if err != nil {
-		return err
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"error":   err.Error(),
+		})
 	}
 
 	return ctx.JSON(res)
@@ -299,6 +302,7 @@ func (ur *userRoutes) users(ctx *fiber.Ctx) error {
 			Name:      u.Name,
 			Email:     u.Email.String,
 			Roles:     u.Roles,
+			Pages:     u.Pages,
 			CanDelete: !u.Original,
 		}
 	}))
@@ -311,7 +315,11 @@ func (ur *userRoutes) updateUser(ctx *fiber.Ctx, userDto payload.UserDto) error 
 		newUser, err = ur.DB.Users.UpdateById(userDto.ID, func(u models.User) models.User {
 			u.Name = userDto.Name
 			u.Email = sql.NullString{String: userDto.Email, Valid: true}
-			u.Roles = userDto.Roles
+			if !u.Original {
+				u.Roles = userDto.Roles
+				u.Pages = userDto.Pages
+			}
+
 			return u
 		})
 	} else {
@@ -326,6 +334,7 @@ func (ur *userRoutes) updateUser(ctx *fiber.Ctx, userDto payload.UserDto) error 
 			"message": err.Error(),
 		})
 	}
+
 	if newUser == nil {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
 	}
@@ -334,6 +343,7 @@ func (ur *userRoutes) updateUser(ctx *fiber.Ctx, userDto payload.UserDto) error 
 		ID:        newUser.ID,
 		Name:      newUser.Name,
 		Roles:     newUser.Roles,
+		Pages:     newUser.Pages,
 		CanDelete: !newUser.Original,
 	})
 }

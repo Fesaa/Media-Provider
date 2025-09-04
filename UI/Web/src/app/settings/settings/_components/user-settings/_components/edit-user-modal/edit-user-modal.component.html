@@ -41,12 +41,29 @@
           }
         </div>
 
-        <div class="col-md-12 col-sm-12 pt-4 mb-lg-5">
+        <div class="col-md-6 col-sm-12 pt-4 mb-lg-5">
           <app-type-ahead [settings]="rolesTypeaheadSettings()" (selectedData)="updatePerms($event)">
             <ng-template #label>{{t('role-label')}}</ng-template>
             <ng-template #badgeItem let-role>{{role | role}}</ng-template>
             <ng-template #optionItem let-role>{{role | role}}</ng-template>
           </app-type-ahead>
+        </div>
+
+        <div class="col-md-6 col-sm-12 pt-4 mb-lg-5" formArrayName="pages">
+          @if (userForm.get('pages'); as control) {
+            @for (pageControl of pagesFormArray.controls; track $index; let i = $index) {
+              <div class="form-check" [formGroupName]="i">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  formControlName="checked"
+                  [id]="'page-' + pageControl.get('id')?.value">
+                <label class="form-check-label" [for]="'page-' + pageControl.get('id')?.value">
+                  {{ getPageName(pageControl.get('id')?.value || -1) | defaultValue }}
+                </label>
+              </div>
+            }
+          }
         </div>
 
       </form>

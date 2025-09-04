@@ -13,7 +13,7 @@
 
     <app-table
       [pagination]="true"
-      [items]="users"
+      [items]="users()"
       [trackByIdFunc]="trackBy"
     >
       <ng-template #header>

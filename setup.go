@@ -69,10 +69,10 @@ func ApplicationProvider(params appParams) *fiber.App {
 	prometheus.RegisterAt(app, "/api/metrics", params.Auth.Middleware)
 	app.Use(prometheus.Middleware)
 
+	httpLogger := params.Log.With().Str("handler", "http").Logger()
 	if os.Getenv("NO_HTTP_LOG") != "TRUE" {
 		dontLog := []string{"/", "/api/metrics"}
 		dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2", ".json"}
-		httpLogger := params.Log.With().Str("handler", "http").Logger()
 		app.Use(fiberzerolog.New(fiberzerolog.Config{
 			Logger: &httpLogger,
 			Next: func(c *fiber.Ctx) bool {
@@ -96,6 +96,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 
 	app.Use(func(c *fiber.Ctx) error {
 		c.Locals(services.ServiceProviderKey.Value(), params.Container)
+		c.Locals(services.LoggerKey.Value(), httpLogger)
 		return c.Next()
 	})
 

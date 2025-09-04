@@ -44,11 +44,19 @@ func RegisterPageRoutes(pr pageRoutes) {
 }
 
 func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+
 	pages, err := pr.DB.Pages.All()
 	if err != nil {
 		pr.Log.Error().Err(err).Msg("Failed to get pages")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
+		})
+	}
+
+	if len(user.Pages) > 0 {
+		pages = utils.Filter(pages, func(page models.Page) bool {
+			return slices.Contains(user.Pages, int32(page.ID))
 		})
 	}
 
@@ -64,6 +72,12 @@ func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 }
 
 func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+
+	if len(user.Pages) > 0 && !slices.Contains(user.Pages, int32(id)) {
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
+	}
+
 	page, err := pr.DB.Pages.Get(id)
 	if err != nil {
 		pr.Log.Error().Err(err).Uint("pageId", id).Msg("Failed to get page")

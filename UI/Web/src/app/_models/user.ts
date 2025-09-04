@@ -18,6 +18,7 @@ export interface UserDto {
   name: string;
   email: string;
   roles: Role[];
+  pages: number[];
   canDelete: boolean;
 }
 
