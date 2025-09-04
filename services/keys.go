@@ -13,6 +13,12 @@ var (
 	ServiceProviderKey = ContextKey[*dig.Container]("service-provider")
 )
 
+// Value returns the string value of the ContextKey, this should be used when setting or getting
+// from fiber.Ctx locals
+func (ctx ContextKey[T]) Value() string {
+	return string(ctx)
+}
+
 func GetFromContext[T any](ctx *fiber.Ctx, key ContextKey[T]) T {
-	return ctx.Locals(string(key)).(T)
+	return ctx.Locals(key.Value()).(T)
 }

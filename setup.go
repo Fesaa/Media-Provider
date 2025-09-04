@@ -95,7 +95,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 	}
 
 	app.Use(func(c *fiber.Ctx) error {
-		c.Locals(services.ServiceProviderKey, params.Container)
+		c.Locals(services.ServiceProviderKey.Value(), params.Container)
 		return c.Next()
 	})
 

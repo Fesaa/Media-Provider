@@ -164,7 +164,7 @@ func (jwtAuth *jwtAuthService) OidcJWT(ctx *fiber.Ctx, key string) (bool, error)
 	}
 
 	if user != nil {
-		ctx.Locals(UserKey, *user)
+		ctx.Locals(UserKey.Value(), *user)
 		return true, nil
 	}
 
@@ -196,7 +196,7 @@ func (jwtAuth *jwtAuthService) OidcJWT(ctx *fiber.Ctx, key string) (bool, error)
 			return false, err
 		}
 
-		ctx.Locals(UserKey, *user)
+		ctx.Locals(UserKey.Value(), *user)
 		return true, nil
 	}
 
@@ -229,9 +229,9 @@ func (jwtAuth *jwtAuthService) LocalJWT(ctx *fiber.Ctx, key string) (bool, error
 		if user == nil {
 			return false, ErrMissingOrMalformedAPIKey
 		}
-		ctx.Locals(UserKey, *user)
+		ctx.Locals(UserKey.Value(), *user)
 	} else {
-		ctx.Locals(UserKey, mpClaims.User)
+		ctx.Locals(UserKey.Value(), mpClaims.User)
 	}
 
 	return token.Valid, nil
@@ -345,7 +345,7 @@ func (a *apiKeyAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	ctx.Locals(UserKey, user)
+	ctx.Locals(UserKey.Value(), user)
 	return true, nil
 }
 

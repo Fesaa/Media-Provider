@@ -144,12 +144,7 @@ func (ur *userRoutes) updateMe(ctx *fiber.Ctx, updateUserReq payload.UpdateUserR
 }
 
 func (ur *userRoutes) me(ctx *fiber.Ctx) error {
-	user, ok := ctx.Locals("user").(models.User)
-	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "could not find user",
-		})
-	}
+	user := services.GetFromContext(ctx, services.UserKey)
 
 	return ctx.JSON(payload.LoginResponse{
 		Id:     user.ID,
