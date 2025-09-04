@@ -1,6 +1,6 @@
 import {Component, inject, OnInit} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
-import {hasPermission, Perm, User, UserDto} from "../../../../_models/user";
+import {User, UserDto} from "../../../../_models/user";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {FormsModule} from "@angular/forms";
 import {ToastService} from '../../../../_services/toast.service';
@@ -28,9 +28,6 @@ export class UserSettingsComponent implements OnInit {
 
   users: UserDto[] = []
   authUser: User | null = null;
-
-  protected readonly hasPermission = hasPermission;
-  protected readonly Perm = Perm;
 
   constructor(private accountService: AccountService,
               private toastService: ToastService,
@@ -132,7 +129,7 @@ export class UserSettingsComponent implements OnInit {
       name: '',
       email: '',
       canDelete: false,
-      permissions: 0,
+      roles: []
     });
 
     modal.result.then(() => this.loadUsers());

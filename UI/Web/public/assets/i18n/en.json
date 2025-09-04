@@ -131,7 +131,16 @@
     "user-tooltip": "Changing this without the username knowing may lock them out of their account",
     "email-label": "Email",
     "email-tooltip": "Used to match on OIDC logins",
-    "perm-label": "Permissions"
+    "role-label": "Roles"
+  },
+
+  "role-pipe": {
+    "manage-pages":  "Manage Pages",
+    "manage-users": "Manage Users",
+    "manage-server-configs":  "Manage Server Configs",
+    "manage-preferences": "Manage Preferences",
+    "manage-subscriptions":  "Manage Subscriptions",
+    "view-all-downloads": "View all downloads"
   },
 
   "edit-page-modal": {

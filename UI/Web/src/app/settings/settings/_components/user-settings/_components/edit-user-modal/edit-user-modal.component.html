@@ -43,9 +43,9 @@
 
         <div class="col-md-12 col-sm-12 pt-4 mb-lg-5">
           <app-type-ahead [settings]="rolesTypeaheadSettings()" (selectedData)="updatePerms($event)">
-            <ng-template #label>{{t('perm-label')}}</ng-template>
-            <ng-template #badgeItem let-perm>{{perm | permNamePipe}}</ng-template>
-            <ng-template #optionItem let-perm>{{perm | permNamePipe}}</ng-template>
+            <ng-template #label>{{t('role-label')}}</ng-template>
+            <ng-template #badgeItem let-role>{{role | role}}</ng-template>
+            <ng-template #optionItem let-role>{{role | role}}</ng-template>
           </app-type-ahead>
         </div>
 

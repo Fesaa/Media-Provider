@@ -8,7 +8,6 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/dig"
 )
 
 // withBody parser the body in the request for you. Keep in mind that this is a terminal operation, no further next
@@ -29,7 +28,7 @@ func withBody[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
 // withBodyValidation behaves like withBody, but also runs the body through the validator
 func withBodyValidation[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		serviceProvider := c.Locals(services.ServiceProviderKey).(*dig.Container)
+		serviceProvider := services.GetFromContext(c, services.ServiceProviderKey)
 		validator := utils.MustInvoke[services.ValidationService](serviceProvider)
 
 		var body T

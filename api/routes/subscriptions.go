@@ -44,10 +44,10 @@ func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
 }
 
 // getAll returns all subscriptions for the authenticated user. Or globally if allUsers ir true and the
-// authenticated user as the ViewAllSubscriptions role
+// authenticated user as the ManageSubscriptions role
 func (sr *subscriptionRoutes) getAll(ctx *fiber.Ctx, allUsers bool) ([]models.Subscription, error) {
-	user := ctx.Locals(services.UserKey).(models.User)
-	allUsers = allUsers && user.HasRole(models.ViewAllSubscriptions)
+	user := services.GetFromContext(ctx, services.UserKey)
+	allUsers = allUsers && user.HasRole(models.ManageSubscriptions)
 
 	if allUsers {
 		return sr.SubscriptionService.All()
@@ -84,7 +84,7 @@ func (sr *subscriptionRoutes) runAll(ctx *fiber.Ctx, allUsers bool) error {
 }
 
 func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id uint) error {
-	user := ctx.Locals(services.UserKey).(models.User)
+	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
 	sub, err := sr.SubscriptionService.Get(id)
@@ -123,7 +123,7 @@ func (sr *subscriptionRoutes) all(ctx *fiber.Ctx, allUsers bool) error {
 }
 
 func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id uint) error {
-	user := ctx.Locals(services.UserKey).(models.User)
+	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
 	sub, err := sr.SubscriptionService.Get(id)
@@ -149,7 +149,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 		})
 	}
 
-	user := ctx.Locals(services.UserKey).(models.User)
+	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
 	cur, err := sr.SubscriptionService.Get(sub.ID)
@@ -175,7 +175,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 }
 
 func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error {
-	user := ctx.Locals(services.UserKey).(models.User)
+	user := services.GetFromContext(ctx, services.UserKey)
 	sub.Info.BaseDir = path.Clean(sub.Info.BaseDir)
 
 	if err := sr.validatorSubscription(sub); err != nil {
@@ -218,7 +218,7 @@ func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) err
 }
 
 func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id uint) error {
-	user := ctx.Locals(services.UserKey).(models.User)
+	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
 	cur, err := sr.SubscriptionService.Get(id)

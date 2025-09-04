@@ -4,7 +4,6 @@ import {PageService} from "../../../../_services/page.service";
 import {RouterLink} from "@angular/router";
 import {dropAnimation} from "../../../../_animations/drop-animation";
 import {ReactiveFormsModule} from "@angular/forms";
-import {hasPermission, Perm} from "../../../../_models/user";
 import {AccountService} from "../../../../_services/account.service";
 import {ToastService} from "../../../../_services/toast.service";
 import {translate, TranslocoDirective} from "@jsverse/transloco";
@@ -37,9 +36,6 @@ export class PagesSettingsComponent implements OnInit {
   user = computed(() => this.accountService.currentUserSignal());
   pages = signal<Page[]>([]);
   loading = signal(true);
-
-  protected readonly hasPermission = hasPermission;
-  protected readonly Perm = Perm;
 
   ngOnInit(): void {
     this.loadPages();

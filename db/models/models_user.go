@@ -17,18 +17,17 @@ func (r Roles) HasRole(role Role) bool {
 	return slices.Contains(r, role)
 }
 
-func (u User) HasRole(role Role) bool {
+func (u *User) HasRole(role Role) bool {
 	return u.Roles.HasRole(role)
 }
 
 const (
-	ManagePages          Role = "manage-pages"
-	ManageUsers          Role = "manage-users"
-	ManageServerConfigs  Role = "manage-server-configs"
-	ManagePreferences    Role = "manage-preferences"
-	ManageSubscriptions  Role = "manage-subscriptions"
-	ViewAllSubscriptions Role = "view-all-subscriptions"
-	ViewAllDownloads     Role = "view-all-downloads"
+	ManagePages         Role = "manage-pages"
+	ManageUsers         Role = "manage-users"
+	ManageServerConfigs Role = "manage-server-configs"
+	ManagePreferences   Role = "manage-preferences"
+	ManageSubscriptions Role = "manage-subscriptions"
+	ViewAllDownloads    Role = "view-all-downloads"
 )
 
 var AllRoles = []Role{
@@ -37,7 +36,6 @@ var AllRoles = []Role{
 	ManageServerConfigs,
 	ManagePreferences,
 	ManageSubscriptions,
-	ViewAllSubscriptions,
 	ViewAllDownloads,
 }
 

@@ -29,7 +29,7 @@ import {catchError, filter, firstValueFrom, Observable, of, switchMap, tap, time
 import {User} from './_models/user';
 import {provideToastr} from "ngx-toastr";
 import {PageService} from "./_services/page.service";
-import {PermNamePipe} from "./_pipes/perm-name.pipe";
+import {RolePipe} from "./_pipes/role.pipe";
 
 function getBaseHref(platformLocation: PlatformLocation): string {
   return platformLocation.getBaseHrefFromDOM();
@@ -107,7 +107,7 @@ export const appConfig: ApplicationConfig = {
     CommonModule,
     ContentTitlePipe,
     ProviderNamePipe,
-    PermNamePipe,
+    RolePipe,
     SubscriptionExternalUrlPipe,
 
     importProvidersFrom(BrowserAnimationsModule), provideAnimationsAsync(),

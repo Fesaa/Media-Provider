@@ -129,7 +129,7 @@ export class AccountService {
       this.setCurrentUser({
         ...this.currentUser,
         name: dto.name,
-        permissions: dto.permissions,
+        roles: dto.roles,
       })
     }))
   }
