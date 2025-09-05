@@ -1,4 +1,4 @@
-import {inject, Injectable} from '@angular/core';
+import {effect, inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {DownloadMetadata, Page, Provider} from "../_models/page";
@@ -11,6 +11,7 @@ import {AccountService} from "./account.service";
 export class PageService {
 
   private readonly accountService = inject(AccountService);
+  private readonly httpClient = inject( HttpClient);
 
   public static readonly DEFAULT_PAGE_SORT = 9999;
   baseUrl = environment.apiUrl + "pages/";
@@ -21,11 +22,13 @@ export class PageService {
 
   private metadataCache: { [key: number]: DownloadMetadata } = {};
 
-  constructor(private httpClient: HttpClient,) {
-    const user = this.accountService.currentUserSignal();
-    if (!user) return;
+  constructor() {
+    effect(() => {
+      const user = this.accountService.currentUserSignal();
+      if (!user) return;
 
-    this.refreshPages().subscribe();
+      this.refreshPages().subscribe();
+    });
   }
 
   refreshPages() {
