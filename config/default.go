@@ -19,7 +19,7 @@ func DefaultConfig() *Config {
 	}
 
 	return &Config{
-		RootDir:      orDefault(os.Getenv("CONFIG_DIR"), pwd),
+		RootDir:      orDefault(ConfigDir, pwd),
 		Secret:       secret,
 		HasUpdatedDB: false,
 		Logging: Logging{

@@ -20,6 +20,15 @@ var (
 
 	// SkipTagsOnFailure will skip tag writing if preferences fail to load
 	SkipTagsOnFailure = boolFeature("SKIP_TAGS_ON_FAILURE")
+
+	NoHttpLog      = boolFeature("NO_HTTP_LOG")
+	ReducedHttpLog = boolFeature("REDUCED_HTTP_LOG")
+	Development    = boolFeature("DEVELOPMENT") || boolFeature("DEV")
+	Docker         = boolFeature("DOCKER")
+	DatabaseDsn    = stringFeature("DATABASE_DSN")
+	Language       = stringFeature("LANGUAGE")
+	ConfigDir      = stringFeature("CONFIG_DIR")
+	ConfigFile     = stringFeature("CONFIG_FILE")
 )
 
 func arrayFeature[T any](key string, f func(string, ...string) T) []T {

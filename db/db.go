@@ -1,7 +1,6 @@
 package db
 
 import (
-	"os"
 	"path"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -30,7 +29,7 @@ func (db *Database) DB() *gorm.DB {
 }
 
 func DatabaseProvider(log zerolog.Logger) (*Database, error) {
-	dsn := utils.OrElse(os.Getenv("DATABASE_DSN"), path.Join(config.Dir, "media-provider.db"))
+	dsn := utils.OrElse(config.DatabaseDsn, path.Join(config.Dir, "media-provider.db"))
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger:               gormLogger(log),
 		FullSaveAssociations: true,

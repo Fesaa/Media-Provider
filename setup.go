@@ -50,7 +50,7 @@ func ApplicationProvider(params appParams) *fiber.App {
 		DisableStartupMessage: true,
 	})
 
-	if os.Getenv("DEV") == "" {
+	if !config.Development {
 		app.Use(favicon.New(favicon.Config{File: "public/favicon.ico"}))
 	}
 
@@ -85,9 +85,10 @@ func ApplicationProvider(params appParams) *fiber.App {
 	app.Use(prometheus.Middleware)
 
 	httpLogger := params.Log.With().Str("handler", "http").Logger()
-	if os.Getenv("NO_HTTP_LOG") != "TRUE" {
+	if !config.NoHttpLog {
 		dontLog := []string{"/", "/api/metrics"}
 		dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2", ".json"}
+
 		app.Use(fiberzerolog.New(fiberzerolog.Config{
 			Logger: &httpLogger,
 			Next: func(c *fiber.Ctx) bool {
@@ -96,6 +97,12 @@ func ApplicationProvider(params appParams) *fiber.App {
 				}
 				return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
 			},
+			Levels: func() []zerolog.Level {
+				if config.ReducedHttpLog {
+					return []zerolog.Level{zerolog.ErrorLevel, zerolog.WarnLevel, zerolog.TraceLevel}
+				}
+				return []zerolog.Level{zerolog.ErrorLevel, zerolog.WarnLevel, zerolog.InfoLevel}
+			}(),
 			Fields: []string{
 				fiberzerolog.FieldUserAgent,
 				fiberzerolog.FieldIP,
@@ -161,7 +168,7 @@ func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero
 	baseUrl := cfg.BaseUrl
 	log = log.With().Str("handler", "core").Logger()
 
-	if os.Getenv("DEV") != "" {
+	if config.Development {
 		log.Debug().Msg("Skipping base url update in DEV environment")
 		return nil
 	}
@@ -198,7 +205,7 @@ func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero
 	err = fs.WriteFile(indexHtmlPath, []byte(html), 0644)
 	if err != nil {
 		// Ignore errors when running as non-root in docker
-		if os.Getenv("DOCKER") != "true" || !errors.Is(err, os.ErrPermission) {
+		if !config.Docker || !errors.Is(err, os.ErrPermission) {
 			return fmt.Errorf("failed to update index.html: %w", err)
 		}
 	} else {

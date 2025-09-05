@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	Dir              = orDefault(os.Getenv("CONFIG_DIR"), ".")
-	configPath       = path.Join(Dir, orDefault(os.Getenv("CONFIG_FILE"), "config.json"))
+	Dir              = orDefault(ConfigDir, ".")
+	configPath       = path.Join(Dir, orDefault(ConfigFile, "config.json"))
 	cfgLock          = sync.RWMutex{}
 	ErrInvalidSyncID = errors.New("invalid sync id")
 )

@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 )
 
 var (
-	DefaultLanguage = utils.OrElse(os.Getenv("LANGUAGE"), "en")
+	DefaultLanguage = utils.OrElse(config.Language, "en")
 
 	ErrLanguageNotFound = errors.New("language not found")
 	ErrKeyNotFound      = errors.New("key not found")

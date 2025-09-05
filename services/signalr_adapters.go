@@ -4,11 +4,11 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -91,7 +91,7 @@ func (s *signalrService) upgrader() *websocket.FastHTTPUpgrader {
 		HandshakeTimeout:  5 * time.Second,
 	}
 
-	if os.Getenv("DEV") == "TRUE" {
+	if config.Development {
 		upgrader.CheckOrigin = func(ctx *fasthttp.RequestCtx) bool {
 			return true
 		}
