@@ -1,4 +1,4 @@
-import {effect, inject, Injectable} from '@angular/core';
+import {effect, inject, Injectable, signal} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {DownloadMetadata, Page, Provider} from "../_models/page";
@@ -16,9 +16,8 @@ export class PageService {
   public static readonly DEFAULT_PAGE_SORT = 9999;
   baseUrl = environment.apiUrl + "pages/";
 
-  private pages: Page[] | undefined = undefined;
-  private pagesSource = new ReplaySubject<Page[]>(1);
-  public pages$ = this.pagesSource.asObservable();
+  private _pages = signal<Page[]>([]);
+  public readonly pages = this._pages.asReadonly();
 
   private metadataCache: { [key: number]: DownloadMetadata } = {};
 
@@ -32,14 +31,14 @@ export class PageService {
   }
 
   refreshPages() {
-    return this.httpClient.get<Page[]>(this.baseUrl).pipe(tap(pages => {
-      this.pages = pages;
-      this.pagesSource.next(pages);
+    return this.httpClient.get<Page[]>(this.baseUrl).pipe(
+      tap(pages => {
+        this._pages.set(pages);
     }));
   }
 
   getPage(id: number): Observable<Page> {
-    const page = this.pages ? this.pages.find(p => p.ID === id) : undefined;
+    const page = this.pages().find(p => p.ID === id);
     if (page) {
       return of(page);
     }
@@ -48,15 +47,35 @@ export class PageService {
   }
 
   removePage(pageId: number) {
-    return this.httpClient.delete(this.baseUrl + pageId);
+    return this.httpClient.delete(this.baseUrl + pageId).pipe(
+      tap(() => {
+        this._pages.update(x => x.filter(p => p.ID !== pageId))
+      })
+    );
   }
 
   new(page: Page) {
-    return this.httpClient.post<Page>(this.baseUrl + 'new', page);
+    return this.httpClient.post<Page>(this.baseUrl + 'new', page).pipe(
+      tap(page => {
+        this._pages.update(x => {
+          x.push(page);
+          x.sort((a, b) => a.sortValue - b.sortValue)
+          return x;
+        });
+      })
+    );
   }
 
   update(page: Page) {
-    return this.httpClient.post<Page>(this.baseUrl + 'update', page);
+    return this.httpClient.post<Page>(this.baseUrl + 'update', page).pipe(
+      tap(page => {
+        this._pages.update(x => x.map(p => {
+          if (p.ID === page.ID) return page;
+
+          return p;
+        }));
+      })
+    );
   }
 
   orderPages(order: number[]) {
@@ -64,7 +83,7 @@ export class PageService {
   }
 
   loadDefault() {
-    if (this.pages != undefined && this.pages.length !== 0) {
+    if (this.pages().length !== 0) {
       throw "Cannot load default while pages are available"
     }
 

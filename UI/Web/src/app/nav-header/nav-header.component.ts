@@ -103,6 +103,9 @@ export class NavHeaderComponent implements OnInit {
         this.notifications.set(amount);
       });
     });
+    effect(() => {
+      this.loadPages(); // Calls the pages effect
+    });
   }
 
   ngOnInit(): void {
@@ -125,22 +128,20 @@ export class NavHeaderComponent implements OnInit {
   }
 
   loadPages() {
-    this.pageService.pages$.subscribe(pages => {
-      this.pageItems.set([
-        {
-          title: this.transLoco.translate("nav-bar.home"),
-          ID: -1,
-          icon: "fa-home",
-          dirs: [],
-          customRootDir: '',
-          modifiers: [],
-          providers: [],
-          sortValue: -100,
-        },
-        ...pages
-      ]);
-      this.cdRef.markForCheck();
-    });
+    const pages = this.pageService.pages();
+    this.pageItems.set([
+      {
+        title: this.transLoco.translate("nav-bar.home"),
+        ID: -1,
+        icon: "fa-home",
+        dirs: [],
+        customRootDir: '',
+        modifiers: [],
+        providers: [],
+        sortValue: -100,
+      },
+      ...pages
+    ]);
   }
 
   setAccountItems(user: User) {

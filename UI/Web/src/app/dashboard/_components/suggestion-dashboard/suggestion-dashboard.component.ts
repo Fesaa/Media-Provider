@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {PageService} from "../../../_services/page.service";
 import {RouterLink} from "@angular/router";
 import {dropAnimation} from "../../../_animations/drop-animation";
@@ -18,15 +18,8 @@ import {TranslocoDirective} from "@jsverse/transloco";
 })
 export class SuggestionDashboardComponent {
 
-  pages: Page[] = []
-
-  constructor(protected pageService: PageService,
-              private toastService: ToastService,
-  ) {
-    this.pageService.pages$.subscribe(pages => {
-      this.pages = pages;
-    });
-  }
+  protected readonly pageService = inject(PageService);
+  private readonly toastService = inject(ToastService);
 
   loadDefault() {
     this.pageService.loadDefault().subscribe({

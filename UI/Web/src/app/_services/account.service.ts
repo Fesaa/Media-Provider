@@ -28,11 +28,6 @@ export class AccountService {
   constructor(private httpClient: HttpClient, private router: Router) {
   }
 
-  getUserFromLocalStorage() {
-    const user = localStorage.getItem(this.userKey);
-    return user ? JSON.parse(user) as User : undefined;
-  }
-
   login(model: { username: string, password: string, remember: boolean }): Observable<User> {
     return this.httpClient.post<User>(this.baseUrl + 'login', model).pipe(
       tap((user: User) => {

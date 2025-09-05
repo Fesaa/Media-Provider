@@ -10,7 +10,6 @@ import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {ModalService} from "../../../../_services/modal.service";
 import {EditUserModalComponent} from "./_components/edit-user-modal/edit-user-modal.component";
 import {DefaultModalOptions} from "../../../../_models/default-modal-options";
-import {Page} from "../../../../_models/page";
 import {PageService} from "../../../../_services/page.service";
 
 @Component({
@@ -33,16 +32,11 @@ export class UserSettingsComponent implements OnInit {
   private readonly clipBoard = inject(Clipboard);
 
   users = signal<UserDto[]>([]);
-  pages = signal<Page[]>([]);
+  pages = this.pageService.pages;
   authUser = this.accountService.currentUserSignal();
 
   ngOnInit(): void {
     this.loadUsers();
-    this.loadPages();
-  }
-
-  private loadPages() {
-    this.pageService.pages$.subscribe(pages => this.pages.set(pages));
   }
 
   loadUsers() {

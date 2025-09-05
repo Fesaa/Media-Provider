@@ -1,4 +1,4 @@
-import {Component, computed, inject, OnInit, signal} from '@angular/core';
+import {Component, computed, effect, inject, OnInit, signal} from '@angular/core';
 import {Page} from "../../../../_models/page";
 import {PageService} from "../../../../_services/page.service";
 import {RouterLink} from "@angular/router";
@@ -26,7 +26,7 @@ import {DefaultModalOptions} from "../../../../_models/default-modal-options";
   styleUrl: './pages-settings.component.scss',
   animations: [dropAnimation]
 })
-export class PagesSettingsComponent implements OnInit {
+export class PagesSettingsComponent {
 
   private readonly modalService = inject(ModalService);
   private readonly toastService = inject(ToastService);
@@ -37,14 +37,9 @@ export class PagesSettingsComponent implements OnInit {
   pages = signal<Page[]>([]);
   loading = signal(true);
 
-  ngOnInit(): void {
-    this.loadPages();
-  }
-
-  loadPages() {
-    this.pageService.pages$.subscribe(pages => {
-      this.pages.set(pages)
-      this.loading.set(false);
+  constructor() {
+    effect(() => {
+      this.pages.set(this.pageService.pages());
     });
   }
 
@@ -60,8 +55,6 @@ export class PagesSettingsComponent implements OnInit {
       icon: '',
       sortValue: 0,
     });
-
-    modal.result.then(() => this.loadPages());
   }
 
   async remove(page: Page) {
