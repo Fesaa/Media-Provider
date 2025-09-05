@@ -25,8 +25,7 @@ type notificationRoutes struct {
 }
 
 func RegisterNotificationRoutes(nr notificationRoutes) {
-	notificationGroup := nr.Router.Group("/notifications", nr.Auth.Middleware)
-	notificationGroup.
+	nr.Router.Group("/notifications", nr.Auth.Middleware).
 		Get("/all", withParam(newQueryParam("after", withAllowEmpty(time.Time{})), nr.all)).
 		Get("/recent", withParam(newQueryParam("limit", withAllowEmpty(5)), nr.recent)).
 		Get("/amount", nr.amount).

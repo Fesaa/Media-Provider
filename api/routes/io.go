@@ -28,9 +28,9 @@ type ioRoutes struct {
 }
 
 func RegisterIoRoutes(ior ioRoutes) {
-	io := ior.Router.Group("/io", ior.Auth.Middleware)
-	io.Post("/ls", withBodyValidation(ior.listDirs))
-	io.Post("/create", withBodyValidation(ior.createDir))
+	ior.Router.Group("/io", ior.Auth.Middleware).
+		Post("/ls", withBodyValidation(ior.listDirs)).
+		Post("/create", withBodyValidation(ior.createDir))
 }
 
 func (ior *ioRoutes) listDirs(ctx *fiber.Ctx, req payload.ListDirsRequest) error {

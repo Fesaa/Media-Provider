@@ -22,10 +22,9 @@ type preferencesRoute struct {
 }
 
 func RegisterPreferencesRoutes(pr preferencesRoute) {
-	group := pr.Router.Group("/preferences", pr.Auth.Middleware)
-
-	group.Get("/", pr.get)
-	group.Post("/save", hasRole(models.ManagePreferences), withBody(pr.update))
+	pr.Router.Group("/preferences", pr.Auth.Middleware).
+		Get("/", pr.get).
+		Post("/save", hasRole(models.ManagePreferences), withBody(pr.update))
 }
 
 func (pr *preferencesRoute) get(ctx *fiber.Ctx) error {

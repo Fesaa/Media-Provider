@@ -30,12 +30,12 @@ type contentRoutes struct {
 }
 
 func RegisterContentRoutes(cr contentRoutes) {
-	router := cr.Router.Group("/content", cr.Auth.Middleware)
-	router.Post("/search", cr.Cache, withBodyValidation(cr.Search))
-	router.Post("/download", withBodyValidation(cr.Download))
-	router.Post("/stop", withBodyValidation(cr.Stop))
-	router.Get("/stats", withParam(newQueryParam("all", withAllowEmpty(false)), cr.Stats))
-	router.Post("/message", withBody(cr.Message))
+	cr.Router.Group("/content", cr.Auth.Middleware).
+		Post("/search", cr.Cache, withBodyValidation(cr.Search)).
+		Post("/download", withBodyValidation(cr.Download)).
+		Post("/stop", withBodyValidation(cr.Stop)).
+		Get("/stats", withParam(newQueryParam("all", withAllowEmpty(false)), cr.Stats)).
+		Post("/message", withBody(cr.Message))
 }
 
 func (cr *contentRoutes) Message(ctx *fiber.Ctx, msg payload.Message) error {

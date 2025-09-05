@@ -31,8 +31,7 @@ type subscriptionRoutes struct {
 }
 
 func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
-	group := sr.Router.Group("/subscriptions", sr.Auth.Middleware)
-	group.
+	sr.Router.Group("/subscriptions", sr.Auth.Middleware).
 		Get("/providers", sr.providers).
 		Get("/all", withParam(newQueryParam("allUsers", withAllowEmpty(false)), sr.all)).
 		Get("/:id", withParam(newIdQueryParam(), sr.get)).
