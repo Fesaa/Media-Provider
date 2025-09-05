@@ -408,6 +408,8 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 				WithBody(c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed)).
 				WithGroup(models.GroupContent).
 				WithColour(models.Warning).
+				WithOwner(c.Request().OwnerId).
+				WithRequiredRoles(models.ViewAllDownloads).
 				Build())
 		}
 	}

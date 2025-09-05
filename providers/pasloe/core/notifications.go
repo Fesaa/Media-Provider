@@ -35,5 +35,7 @@ func (c *Core[C, S]) WarnPreferencesFailedToLoad() {
 		WithBody(c.TransLoco.GetTranslation("blacklist-failed-to-load-summary")).
 		WithGroup(models.GroupContent).
 		WithColour(models.Warning).
+		WithOwner(c.Request().OwnerId).
+		WithRequiredRoles(models.ViewAllDownloads).
 		Build())
 }

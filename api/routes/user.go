@@ -458,6 +458,7 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId uint) error {
 		WithBody(ur.Transloco.GetTranslation("generate-reset-link-summary", user.Name, resetUser.Name)).
 		WithGroup(models.GroupSecurity).
 		WithColour(models.Warning).
+		WithRequiredRoles(models.ManageUsers).
 		Build())
 	return ctx.Status(fiber.StatusOK).JSON(reset)
 }

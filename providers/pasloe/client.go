@@ -231,13 +231,15 @@ func (c *client) logContentCompletion(content core.Downloadable) {
 		body += c.transLoco.GetTranslation("content-line", path.Base(newContent))
 	}
 
-	c.notifier(content.Request()).Notify(models.Notification{
-		Title:   c.transLoco.GetTranslation("download-finished-title"),
-		Summary: summary,
-		Body:    body,
-		Colour:  models.Secondary,
-		Group:   models.GroupContent,
-	})
+	c.notifier(content.Request()).Notify(models.NewNotification().
+		WithTitle(c.transLoco.GetTranslation("download-finished-title")).
+		WithSummary(summary).
+		WithBody(body).
+		WithColour(models.Secondary).
+		WithGroup(models.GroupContent).
+		WithOwner(content.Request().OwnerId).
+		WithRequiredRoles(models.ViewAllDownloads).
+		Build())
 }
 
 func (c *client) GetCurrentDownloads() []core.Downloadable {
@@ -422,8 +424,10 @@ func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...er
 		WithTitle(c.transLoco.GetTranslation("cleanup-errors-title")).
 		WithSummary(c.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
 		WithBody(joinedErr.Error()).
-		WithGroup(models.GroupContent).
+		WithGroup(models.GroupError).
 		WithColour(models.Error).
+		WithOwner(content.Request().OwnerId).
+		WithRequiredRoles(models.ViewAllDownloads).
 		Build())
 }
 

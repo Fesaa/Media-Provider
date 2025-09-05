@@ -203,6 +203,8 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 			WithBody(text).
 			WithColour(models.Secondary).
 			WithGroup(models.GroupContent).
+			WithOwner(tor.Request().OwnerId).
+			WithRequiredRoles(models.ViewAllDownloads).
 			Build())
 		y.cleanup(tor, baseDir)
 	}()
@@ -368,8 +370,10 @@ func (y *yoitsu) notifyCleanUpError(content Torrent, cleanupErrs ...error) {
 		WithTitle(y.transLoco.GetTranslation("cleanup-errors-title")).
 		WithSummary(y.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
 		WithBody(joined.Error()).
-		WithGroup(models.GroupContent).
+		WithGroup(models.GroupError).
 		WithColour(models.Error).
+		WithOwner(content.Request().OwnerId).
+		WithRequiredRoles(models.ViewAllDownloads).
 		Build())
 }
 

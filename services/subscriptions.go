@@ -212,8 +212,9 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 			s.notifier.Notify(models.NewNotification().
 				WithTitle(s.transloco.GetTranslation("failed-to-run-subscriptions")).
 				WithBody(s.transloco.GetTranslation("failed-to-run-subscriptions-body", err)).
-				WithGroup(models.GroupContent).
+				WithGroup(models.GroupError).
 				WithColour(models.Error).
+				WithRequiredRoles(models.ManageSubscriptions).
 				Build())
 			return
 		}
@@ -251,8 +252,9 @@ func (s *subscriptionService) handleSub(sub models.Subscription, hour int) {
 		s.notifier.Notify(models.NewNotification().
 			WithTitle(s.transloco.GetTranslation("failed-sub")).
 			WithBody(s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err)).
-			WithGroup(models.GroupContent).
+			WithGroup(models.GroupError).
 			WithColour(models.Error).
+			WithRequiredRoles(models.ManageSubscriptions).
 			Build())
 		return
 	}
