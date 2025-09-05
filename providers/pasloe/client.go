@@ -418,11 +418,13 @@ func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...er
 	if joinedErr == nil {
 		return
 	}
-	c.notify.NotifyContent(
-		c.transLoco.GetTranslation("cleanup-errors-title"),
-		c.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
-		joinedErr.Error(),
-		models.Error)
+	c.notify.Notify(models.NewNotification().
+		WithTitle(c.transLoco.GetTranslation("cleanup-errors-title")).
+		WithSummary(c.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
+		WithBody(joinedErr.Error()).
+		WithGroup(models.GroupContent).
+		WithColour(models.Error).
+		Build())
 }
 
 func (c *client) wrapError(err error) error {

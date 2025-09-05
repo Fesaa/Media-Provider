@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
@@ -78,9 +77,9 @@ func (s *signalrService) ConnectEndpoint(ctx *fiber.Ctx) error {
 	}
 
 	s.clients.Set(user.ID, connectionID)
-	if user.HasRole(models.ViewAllDownloads) { //nolint:staticcheck
-		// s.Groups().AddToGroup(allDownloadInfoGroup, connectionID)
-	}
+	/*for _, role := range user.Roles { //nolint:staticcheck
+		s.Groups().AddToGroup(string(role), connectionID)
+	}*/
 
 	return nil
 }
@@ -116,7 +115,9 @@ func (s *signalrService) wsInit(userId uint, id string) func(conn *websocket.Con
 		}
 
 		s.clients.Delete(userId)
-		// s.Groups().RemoveFromGroup(allDownloadInfoGroup, id)
+		/*for _, role := range user.Roles { //nolint:staticcheck
+			s.Groups().RemoveFromGroup(string(role), connectionID)
+		}*/
 	}
 }
 

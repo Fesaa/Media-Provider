@@ -198,14 +198,12 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 		}
 
 		text := fmt.Sprintf("%s finished downloading %d files(s)", tor.Title(), tor.Files())
-		y.notifier(tor.Request()).Notify(models.Notification{
-			Title:   "Download finished",
-			Summary: utils.Shorten(text, services.SummarySize),
-			Body:    text,
-			Colour:  models.Secondary,
-			Group:   models.GroupContent,
-		})
-
+		y.notifier(tor.Request()).Notify(models.NewNotification().
+			WithTitle("Download finished").
+			WithBody(text).
+			WithColour(models.Secondary).
+			WithGroup(models.GroupContent).
+			Build())
 		y.cleanup(tor, baseDir)
 	}()
 
@@ -366,11 +364,13 @@ func (y *yoitsu) notifyCleanUpError(content Torrent, cleanupErrs ...error) {
 		return
 	}
 
-	y.notify.NotifyContent(
-		y.transLoco.GetTranslation("cleanup-errors-title"),
-		y.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
-		joined.Error(),
-		models.Error)
+	y.notify.Notify(models.NewNotification().
+		WithTitle(y.transLoco.GetTranslation("cleanup-errors-title")).
+		WithSummary(y.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
+		WithBody(joined.Error()).
+		WithGroup(models.GroupContent).
+		WithColour(models.Error).
+		Build())
 }
 
 func (y *yoitsu) cleaner() {

@@ -402,11 +402,13 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 		c.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
 
 		if c.Req.IsSubscription {
-			c.Notifier.NotifyContent(
-				c.TransLoco.GetTranslation("warn"),
-				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
-				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
-				models.Warning)
+			c.Notifier.Notify(models.NewNotification().
+				WithTitle(c.TransLoco.GetTranslation("warn")).
+				WithSummary(c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title())).
+				WithBody(c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed)).
+				WithGroup(models.GroupContent).
+				WithColour(models.Warning).
+				Build())
 		}
 	}
 

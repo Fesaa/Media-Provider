@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	allDownloadInfoGroup = "AllDownloadInfoGroup"
+	allDownloadInfoGroup = string(models.ViewAllDownloads)
 )
 
 type SignalRService interface {
@@ -123,7 +123,35 @@ func (s *signalrService) DeleteContent(id string) {
 }
 
 func (s *signalrService) Notify(notification models.Notification) {
+	if !s.connectionHappened {
+		return
+	}
+
+	if notification.Owner.Valid {
+		s.sendToUser(uint(notification.Owner.Int32), notification)
+		return
+	}
+
+	if len(notification.RequiredRoles) > 0 {
+		for _, role := range notification.RequiredRoles {
+			s.Clients().Group(role).Send(string(payload.EventTypeNotification), notification)
+			s.Clients().Group(role).Send(string(payload.EvenTypeNotificationAdd), fiber.Map{})
+		}
+		return
+	}
+
 	s.Broadcast(payload.EventTypeNotification, notification)
+	s.Broadcast(payload.EvenTypeNotificationAdd, fiber.Map{})
+}
+
+func (s *signalrService) sendToUser(userId uint, n models.Notification) {
+	connId, ok := s.clients.Get(userId)
+	if !ok {
+		return
+	}
+
+	s.Clients().Client(connId).Send(string(payload.EventTypeNotification), n)
+	s.Clients().Group(connId).Send(string(payload.EvenTypeNotificationAdd), fiber.Map{})
 }
 
 func (s *signalrService) setup(app *fiber.App) error {

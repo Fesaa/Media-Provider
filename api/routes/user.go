@@ -453,9 +453,12 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId uint) error {
 		})
 	}
 	fmt.Printf("A reset link has been generated for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.\n", reset.UserId, reset.Key, reset.Key)
-	ur.Notify.NotifySecurityQ(
-		ur.Transloco.GetTranslation("generate-reset-link-title"),
-		ur.Transloco.GetTranslation("generate-reset-link-summary", user.Name, resetUser.Name))
+	ur.Notify.Notify(models.NewNotification().
+		WithTitle(ur.Transloco.GetTranslation("generate-reset-link-title")).
+		WithBody(ur.Transloco.GetTranslation("generate-reset-link-summary", user.Name, resetUser.Name)).
+		WithGroup(models.GroupSecurity).
+		WithColour(models.Warning).
+		Build())
 	return ctx.Status(fiber.StatusOK).JSON(reset)
 }
 
