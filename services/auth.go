@@ -218,7 +218,7 @@ func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
 
-	s.log.Info().
+	s.log.Debug().
 		Str("authority", settings.Oidc.Authority).
 		Str("client_id", settings.Oidc.ClientID).
 		Str("redirect_url", settings.Oidc.RedirectURL).

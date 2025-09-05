@@ -53,6 +53,10 @@ var manualMigrations = []migration{
 		name: "20250904_SubscriptionUserOwned",
 		f:    manual.AssignSubscriptionsToUser,
 	},
+	{
+		name: "20250905_NotificationsUserOwned",
+		f:    manual.AssignNotificationsToDefaultUser,
+	},
 }
 
 func manualMigration(db *gorm.DB, log zerolog.Logger) error {

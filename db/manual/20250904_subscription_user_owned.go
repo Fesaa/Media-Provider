@@ -7,8 +7,8 @@ import (
 )
 
 func AssignSubscriptionsToUser(db *gorm.DB, log zerolog.Logger) error {
-	var defaultUser models.User
-	if err := db.Find(&defaultUser, "original = ?", true).Error; err != nil {
+	defaultUser, err := getDefaultUser(db)
+	if err != nil {
 		return err
 	}
 
