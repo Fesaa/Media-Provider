@@ -2,11 +2,15 @@
 
   <div class="d-flex flex-row justify-content-end gap-3 mb-4">
 
-    <select class="form-select" (change)="timeAgo = $any($event.target).value; refresh()">
-      @for (opt of timeAgoOptions; track opt.value) {
-        <option [selected]="timeAgo === opt.value" [value]="opt.value">{{opt.label}}</option>
-      }
-    </select>
+    @if (timeAgoForm.get('timeAgo'); as control) {
+      <form [formGroup]="timeAgoForm" class="d-flex flex-grow-1">
+        <select class="form-select" formControlName="timeAgo">
+          @for (opt of timeAgoOptions; track opt.value) {
+            <option [selected]="control.value === opt.value" [ngValue]="opt.value">{{opt.label}}</option>
+          }
+        </select>
+      </form>
+    }
 
     <button type="button" class="btn btn-warning" (click)="readSelected()">
       {{ t('actions.read-selected') }}

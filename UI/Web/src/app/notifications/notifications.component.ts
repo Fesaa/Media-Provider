@@ -2,7 +2,7 @@ import {Component, computed, inject, OnInit, signal} from '@angular/core';
 import {NotificationService} from "../_services/notification.service";
 import {GroupWeight, Notification} from "../_models/notifications";
 import {ToastService} from "../_services/toast.service";
-import {FormsModule} from "@angular/forms";
+import {FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule} from "@angular/forms";
 import {NavService} from "../_services/nav.service";
 import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {UtcToLocalTimePipe} from "../_pipes/utc-to-local.pipe";
@@ -12,6 +12,7 @@ import {ModalService} from "../_services/modal.service";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {NotificationInfoModalComponent} from "./_components/notification-info-modal/notification-info-modal.component";
 import {DefaultModalOptions} from "../_models/default-modal-options";
+import {debounce, debounceTime, distinctUntilChanged, map, switchMap, tap} from "rxjs";
 
 @Component({
   selector: 'app-notifications',
@@ -22,6 +23,7 @@ import {DefaultModalOptions} from "../_models/default-modal-options";
     TableComponent,
     BadgeComponent,
     NgbTooltip,
+    ReactiveFormsModule,
   ],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss'
@@ -29,6 +31,7 @@ import {DefaultModalOptions} from "../_models/default-modal-options";
 export class NotificationsComponent implements OnInit {
 
   private readonly modalService = inject(ModalService);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   notifications = signal<Notification[]>([]);
 
@@ -44,6 +47,10 @@ export class NotificationsComponent implements OnInit {
 
       return GroupWeight(n2.group) - GroupWeight(n1.group);
     });
+  });
+
+  timeAgoForm = this.fb.group({
+    timeAgo: this.fb.control<number>(999_999_999),
   });
 
   selectedNotifications: number[] = [];
@@ -63,18 +70,33 @@ export class NotificationsComponent implements OnInit {
     label: "All",
     value: -1
   }]
-  timeAgo: number = 30;
 
   constructor(
     private notificationService: NotificationService,
     private toastService: ToastService,
     private navService: NavService,
   ) {
+
+    this.timeAgoForm.valueChanges.pipe(
+      distinctUntilChanged(),
+      debounceTime(100),
+      map(() => this.timeAgoForm.get('timeAgo')!.value),
+      map(timeAgo => {
+        if (timeAgo === -1) return undefined;
+
+        const date = new Date();
+        date.setDate(date.getDate() - timeAgo);
+        return date;
+      }),
+      switchMap(date => this.notificationService.all(date)),
+      tap(notifications => this.notifications.set(notifications))
+    ).subscribe();
+
   }
 
   ngOnInit(): void {
-    this.navService.setNavVisibility(true)
-    this.refresh()
+    this.navService.setNavVisibility(true);
+    this.timeAgoForm.get('timeAgo')!.setValue(30);
   }
 
   toggleAll() {
@@ -91,17 +113,6 @@ export class NotificationsComponent implements OnInit {
     } else {
       this.selectedNotifications = this.selectedNotifications.filter(i => i !== id);
     }
-  }
-
-  refresh() {
-    let date: Date | undefined = undefined;
-    if (this.timeAgo !== -1) {
-      date = new Date();
-      date.setDate(date.getDate() - this.timeAgo);
-    }
-    this.notificationService.all(date).subscribe((notifications) => {
-      this.notifications.set(notifications)
-    })
   }
 
   show(n: Notification) {
