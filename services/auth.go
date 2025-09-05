@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -53,6 +54,7 @@ type mpClaims struct {
 }
 
 type OIDCTokens struct {
+	UserId       uint      `json:"user_id"`
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token,omitempty"`
 	IDToken      string    `json:"id_token"`
@@ -162,7 +164,7 @@ func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequ
 		return nil, err
 	}
 
-	if err = s.setCookies(ctx, &OIDCTokens{AccessToken: t}); err != nil {
+	if err = s.setCookies(ctx, &OIDCTokens{AccessToken: t, UserId: user.ID}); err != nil {
 		return nil, err
 	}
 
@@ -233,22 +235,34 @@ func (s *cookieAuthService) Middleware(ctx *fiber.Ctx) error {
 		if err != nil {
 			s.log.Debug().Err(err).Msg("error while checking authentication status")
 		}
+		s.Logout(ctx)
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	}
 
 	if err != nil {
 		s.log.Debug().Err(err).Msg("error while checking authentication status")
+		s.Logout(ctx)
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	}
 
 	return ctx.Next()
 }
 
-func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
+func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool, err error) {
 	token := ctx.Cookies(tokenCookie)
 	if token == "" {
 		return false, nil
 	}
+
+	defer func() {
+		if success {
+			return
+		}
+
+		if err = s.storage.Delete(token); err != nil {
+			s.log.Warn().Err(err).Str("token", token).Msg("failed to delete token")
+		}
+	}()
 
 	tokens, err := s.getOidcTokens(token)
 	if err != nil {
@@ -269,6 +283,10 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 
 	user, err := s.verifyOIDCToken(ctx.UserContext(), tokens.AccessToken)
 	if err != nil {
+		if strings.Contains(err.Error(), "oidc: token is expired") {
+			return s.refreshToken(ctx, token, tokens)
+		}
+
 		return false, fmt.Errorf("failed to verify token: %w", err)
 	}
 
@@ -287,20 +305,28 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return true, nil
 	}
 
-	s.cookiesRefresh.Set(user.ID, true)
-	defer s.cookiesRefresh.Delete(user.ID)
+	return s.refreshToken(ctx, token, tokens)
+}
 
-	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.RefreshToken)
+func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) (bool, error) {
+	s.cookiesRefresh.Set(tokens.UserId, true)
+	defer s.cookiesRefresh.Delete(tokens.UserId)
+
+	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.UserId, tokens.RefreshToken)
 	if err != nil {
 		s.Logout(ctx)
 		return false, fmt.Errorf("failed to refresh OIDC tokens: %w", err)
+	}
+
+	if err = s.storage.Delete(oldKey); err != nil {
+		s.log.Warn().Err(err).Msg("failed to delete old token")
 	}
 
 	if err = s.setCookies(ctx, newTokens); err != nil {
 		return false, fmt.Errorf("failed to set cookies: %w", err)
 	}
 
-	s.log.Debug().Str("user", user.Name).
+	s.log.Debug().Uint("user", tokens.UserId).
 		Time("expires_at", newTokens.ExpiresIn).
 		Msg("refreshed tokens in background")
 	return true, nil
@@ -369,11 +395,12 @@ func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
 		ExpiresIn:    token.Expiry,
 	}
 
-	_, err = s.verifyOIDCToken(ctx.UserContext(), rawIDToken)
+	user, err := s.verifyOIDCToken(ctx.UserContext(), rawIDToken)
 	if err != nil {
 		return fmt.Errorf("failed to verify ID token: %w", err)
 	}
 
+	tokens.UserId = user.ID
 	if err = s.setCookies(ctx, tokens); err != nil {
 		return err
 	}
@@ -448,7 +475,7 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 	return user, nil
 }
 
-func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, refreshToken string) (*OIDCTokens, error) {
+func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId uint, refreshToken string) (*OIDCTokens, error) {
 	if s.oauth2Config == nil {
 		return nil, errors.New("OIDC not configured")
 	}
@@ -468,6 +495,7 @@ func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, refreshToken s
 	}
 
 	return &OIDCTokens{
+		UserId:       userId,
 		AccessToken:  newToken.AccessToken,
 		RefreshToken: newToken.RefreshToken,
 		IDToken:      rawIDToken,
