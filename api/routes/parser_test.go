@@ -142,6 +142,7 @@ func TestWithBody(t *testing.T) {
 
 			app.Use(func(ctx *fiber.Ctx) error {
 				ctx.Locals(services.ServiceProviderKey.Value(), container)
+				ctx.Locals(services.LoggerKey.Value(), zerolog.Nop())
 				return ctx.Next()
 			}).Post("/test", tt.setupHandler())
 
@@ -180,6 +181,11 @@ func TestWithBody(t *testing.T) {
 
 func TestWithBody_HandlerError(t *testing.T) {
 	app := fiber.New()
+
+	app.Use(func(ctx *fiber.Ctx) error {
+		ctx.Locals(services.LoggerKey.Value(), zerolog.Nop())
+		return ctx.Next()
+	})
 
 	app.Post("/error", withBody(func(c *fiber.Ctx, body TestRequestBody) error {
 		return fiber.NewError(500, "handler error")
