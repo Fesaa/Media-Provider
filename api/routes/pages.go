@@ -9,7 +9,6 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -19,7 +18,6 @@ type pageRoutes struct {
 	Router fiber.Router
 	DB     *db.Database
 	Auth   services.AuthService
-	Log    zerolog.Logger
 
 	Val            services.ValidationService
 	PageService    services.PageService
@@ -44,11 +42,12 @@ func RegisterPageRoutes(pr pageRoutes) {
 }
 
 func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 
 	pages, err := pr.DB.Pages.All()
 	if err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to get pages")
+		log.Error().Err(err).Msg("Failed to get pages")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -72,6 +71,7 @@ func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 }
 
 func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 
 	if len(user.Pages) > 0 && !slices.Contains(user.Pages, int32(id)) {
@@ -80,7 +80,7 @@ func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
 
 	page, err := pr.DB.Pages.Get(id)
 	if err != nil {
-		pr.Log.Error().Err(err).Uint("pageId", id).Msg("Failed to get page")
+		log.Error().Err(err).Uint("pageId", id).Msg("Failed to get page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -94,6 +94,8 @@ func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
 }
 
 func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	page.Modifiers = utils.MapWithIdx(page.Modifiers, func(i int, mod models.Modifier) models.Modifier {
 		mod.Sort = i
 
@@ -112,7 +114,7 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 	})
 
 	if err := pr.PageService.UpdateOrCreate(&page); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to update page")
+		log.Error().Err(err).Msg("Failed to update page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -122,8 +124,10 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 }
 
 func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id uint) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	if err := pr.DB.Pages.Delete(id); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to delete page")
+		log.Error().Err(err).Msg("Failed to delete page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -133,8 +137,10 @@ func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id uint) error {
 }
 
 func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []uint) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	if err := pr.PageService.OrderPages(order); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to swap page")
+		log.Error().Err(err).Msg("Failed to swap page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -144,8 +150,10 @@ func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []uint) error {
 }
 
 func (pr *pageRoutes) loadDefault(ctx *fiber.Ctx) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	if err := pr.PageService.LoadDefaultPages(); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to load default pages")
+		log.Error().Err(err).Msg("Failed to load default pages")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})

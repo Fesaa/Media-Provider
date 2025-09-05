@@ -118,7 +118,8 @@ func ApplicationProvider(params appParams) *fiber.App {
 
 	app.Use(func(c *fiber.Ctx) error {
 		c.Locals(services.ServiceProviderKey.Value(), params.Container)
-		c.Locals(services.LoggerKey.Value(), httpLogger)
+		requestId := services.GetFromContext(c, services.RequestIdKey)
+		c.Locals(services.LoggerKey.Value(), httpLogger.With().Str(services.RequestIdKey.Value(), requestId).Logger())
 		return c.Next()
 	})
 

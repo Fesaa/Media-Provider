@@ -6,7 +6,6 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -16,7 +15,6 @@ type preferencesRoute struct {
 	Router fiber.Router
 	Auth   services.AuthService
 	DB     *db.Database
-	Log    zerolog.Logger
 	Val    services.ValidationService
 	Pref   services.PreferencesService
 }
@@ -28,9 +26,11 @@ func RegisterPreferencesRoutes(pr preferencesRoute) {
 }
 
 func (pr *preferencesRoute) get(ctx *fiber.Ctx) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	pref, err := pr.Pref.GetDto()
 	if err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to get preferences")
+		log.Error().Err(err).Msg("Failed to get preferences")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -39,8 +39,10 @@ func (pr *preferencesRoute) get(ctx *fiber.Ctx) error {
 }
 
 func (pr *preferencesRoute) update(ctx *fiber.Ctx, pref payload.PreferencesDto) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	if err := pr.Pref.Update(pref); err != nil {
-		pr.Log.Error().Err(err).Msg("Failed to update preferences")
+		log.Error().Err(err).Msg("Failed to update preferences")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})

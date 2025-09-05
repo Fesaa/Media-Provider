@@ -8,7 +8,6 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -22,7 +21,6 @@ type subscriptionRoutes struct {
 
 	Router fiber.Router
 	Auth   services.AuthService
-	Log    zerolog.Logger
 
 	Val                 services.ValidationService
 	SubscriptionService services.SubscriptionService
@@ -60,6 +58,8 @@ func (sr *subscriptionRoutes) providers(ctx *fiber.Ctx) error {
 }
 
 func (sr *subscriptionRoutes) runAll(ctx *fiber.Ctx, allUsers bool) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	subs, err := sr.getAll(ctx, allUsers)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -71,7 +71,7 @@ func (sr *subscriptionRoutes) runAll(ctx *fiber.Ctx, allUsers bool) error {
 	for _, sub := range subs {
 		err = sr.ContentService.DownloadSubscription(&sub, false) // This was manually triggered
 		if err != nil {
-			sr.Log.Error().Err(err).Msg("Failed to download subscription")
+			log.Error().Err(err).Msg("Failed to download subscription")
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"sub-id":  sub.ID,
 				"message": sr.Transloco.GetTranslation("failed-to-run-once", err),
@@ -83,12 +83,13 @@ func (sr *subscriptionRoutes) runAll(ctx *fiber.Ctx, allUsers bool) error {
 }
 
 func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id uint) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
 	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to get subscription")
+		log.Error().Err(err).Msg("Failed to get subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -100,7 +101,7 @@ func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id uint) error {
 
 	err = sr.ContentService.DownloadSubscription(sub, false) // This was manually triggered
 	if err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to download subscription")
+		log.Error().Err(err).Msg("Failed to download subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": sr.Transloco.GetTranslation("failed-to-run-once", err),
 		})
@@ -110,9 +111,11 @@ func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id uint) error {
 }
 
 func (sr *subscriptionRoutes) all(ctx *fiber.Ctx, allUsers bool) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	subs, err := sr.getAll(ctx, allUsers)
 	if err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to get subscriptions")
+		log.Error().Err(err).Msg("Failed to get subscriptions")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -122,12 +125,13 @@ func (sr *subscriptionRoutes) all(ctx *fiber.Ctx, allUsers bool) error {
 }
 
 func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id uint) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
 	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to get subscription")
+		log.Error().Err(err).Msg("Failed to get subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -141,8 +145,10 @@ func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id uint) error {
 }
 
 func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	if err := sr.validatorSubscription(sub); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to validate subscription")
+		log.Error().Err(err).Msg("Failed to validate subscription")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -153,7 +159,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 
 	cur, err := sr.SubscriptionService.Get(sub.ID)
 	if err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to get subscription")
+		log.Error().Err(err).Msg("Failed to get subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -164,7 +170,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 	}
 
 	if err := sr.SubscriptionService.Update(sub); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to update subscription")
+		log.Error().Err(err).Msg("Failed to update subscription")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -174,11 +180,12 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 }
 
 func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 	sub.Info.BaseDir = path.Clean(sub.Info.BaseDir)
 
 	if err := sr.validatorSubscription(sub); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to validate subscription")
+		log.Error().Err(err).Msg("Failed to validate subscription")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -189,7 +196,7 @@ func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error
 
 	subscription, err := sr.SubscriptionService.Add(sub)
 	if err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to add subscription")
+		log.Error().Err(err).Msg("Failed to add subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -197,7 +204,7 @@ func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error
 
 	go func() {
 		if err = sr.ContentService.DownloadSubscription(subscription, false); err != nil {
-			sr.Log.Warn().Err(err).Msg("failed to download subscription, will run again as scheduled. May have issues?")
+			log.Warn().Err(err).Msg("failed to download subscription, will run again as scheduled. May have issues?")
 		}
 	}()
 
@@ -217,6 +224,7 @@ func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) err
 }
 
 func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id uint) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
@@ -230,7 +238,7 @@ func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id uint) error {
 	}
 
 	if err := sr.SubscriptionService.Delete(id); err != nil {
-		sr.Log.Error().Err(err).Msg("Failed to delete subscription")
+		log.Error().Err(err).Msg("Failed to delete subscription")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})

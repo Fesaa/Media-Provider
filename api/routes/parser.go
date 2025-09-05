@@ -14,8 +14,11 @@ import (
 // are called
 func withBody[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		log := services.GetFromContext(c, services.LoggerKey)
+
 		var body T
 		if err := c.BodyParser(&body); err != nil {
+			log.Error().Err(err).Str("path", c.Path()).Msg("Failed to parse body")
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
@@ -28,11 +31,13 @@ func withBody[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
 // withBodyValidation behaves like withBody, but also runs the body through the validator
 func withBodyValidation[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		log := services.GetFromContext(c, services.LoggerKey)
 		serviceProvider := services.GetFromContext(c, services.ServiceProviderKey)
 		validator := utils.MustInvoke[services.ValidationService](serviceProvider)
 
 		var body T
 		if err := validator.ValidateCtx(c, &body); err != nil {
+			log.Error().Err(err).Str("path", c.Path()).Msg("Failed to validate body")
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})

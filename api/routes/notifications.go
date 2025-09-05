@@ -9,7 +9,6 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -19,7 +18,6 @@ type notificationRoutes struct {
 	DB     *db.Database
 	Router fiber.Router
 	Auth   services.AuthService
-	Log    zerolog.Logger
 
 	NotificationService services.NotificationService
 	Transloco           services.TranslocoService
@@ -38,11 +36,12 @@ func RegisterNotificationRoutes(nr notificationRoutes) {
 }
 
 func (nr *notificationRoutes) all(ctx *fiber.Ctx, after time.Time) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 	notifications, err := nr.NotificationService.GetNotifications(user, after)
 
 	if err != nil {
-		nr.Log.Error().Err(err).Time("after", after).Msg("failed to fetch notifications")
+		log.Error().Err(err).Time("after", after).Msg("failed to fetch notifications")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -52,9 +51,11 @@ func (nr *notificationRoutes) all(ctx *fiber.Ctx, after time.Time) error {
 }
 
 func (nr *notificationRoutes) recent(ctx *fiber.Ctx, limit int) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	nots, err := nr.DB.Notifications.Recent(utils.Clamp(limit, 1, 10), models.GroupContent)
 	if err != nil {
-		nr.Log.Error().Err(err).Msg("failed to fetch recent notifications")
+		log.Error().Err(err).Msg("failed to fetch recent notifications")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -64,9 +65,11 @@ func (nr *notificationRoutes) recent(ctx *fiber.Ctx, limit int) error {
 }
 
 func (nr *notificationRoutes) amount(ctx *fiber.Ctx) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	size, err := nr.DB.Notifications.Unread()
 	if err != nil {
-		nr.Log.Error().Err(err).Msg("failed to fetch amount of unread notifications")
+		log.Error().Err(err).Msg("failed to fetch amount of unread notifications")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})

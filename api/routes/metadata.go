@@ -4,7 +4,6 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -14,7 +13,6 @@ type metadataRoutes struct {
 	Router          fiber.Router
 	Auth            services.AuthService
 	MetadataService services.MetadataService
-	Log             zerolog.Logger
 }
 
 func RegisterMetadataRoutes(mr metadataRoutes) {
@@ -24,9 +22,11 @@ func RegisterMetadataRoutes(mr metadataRoutes) {
 }
 
 func (mr *metadataRoutes) Get(c *fiber.Ctx) error {
+	log := services.GetFromContext(c, services.LoggerKey)
+
 	m, err := mr.MetadataService.Get()
 	if err != nil {
-		mr.Log.Error().Err(err).Msg("failed to retrieve metadata")
+		log.Error().Err(err).Msg("failed to retrieve metadata")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -36,8 +36,10 @@ func (mr *metadataRoutes) Get(c *fiber.Ctx) error {
 }
 
 func (mr *metadataRoutes) Update(c *fiber.Ctx, m payload.Metadata) error {
+	log := services.GetFromContext(c, services.LoggerKey)
+
 	if err := mr.MetadataService.Update(m); err != nil {
-		mr.Log.Error().Err(err).Msg("failed to update metadata")
+		log.Error().Err(err).Msg("failed to update metadata")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})

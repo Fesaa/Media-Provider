@@ -10,7 +10,6 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -22,7 +21,6 @@ type contentRoutes struct {
 	Auth   services.AuthService
 	YS     yoitsu.Client
 	PS     core.Client
-	Log    zerolog.Logger
 
 	Val            services.ValidationService
 	ContentService services.ContentService
@@ -39,6 +37,8 @@ func RegisterContentRoutes(cr contentRoutes) {
 }
 
 func (cr *contentRoutes) Message(ctx *fiber.Ctx, msg payload.Message) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	resp, err := cr.ContentService.Message(msg)
 	if err != nil {
 		if errors.Is(err, services.ErrContentNotFound) {
@@ -59,7 +59,7 @@ func (cr *contentRoutes) Message(ctx *fiber.Ctx, msg payload.Message) error {
 			})
 		}
 
-		cr.Log.Error().Err(err).Msg("An error occurred while sending a message down to Content")
+		log.Error().Err(err).Msg("An error occurred while sending a message down to Content")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -84,10 +84,11 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx, searchRequest payload.SearchRequ
 }
 
 func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 
 	if req.BaseDir == "" {
-		cr.Log.Warn().Msg("trying to download Torrent to empty baseDir, returning error.")
+		log.Warn().Msg("trying to download Torrent to empty baseDir, returning error.")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": cr.Transloco.GetTranslation("base-dir-not-empty"),
 		})
@@ -96,7 +97,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) e
 	req.OwnerId = user.ID
 
 	if err := cr.ContentService.Download(req); err != nil {
-		cr.Log.Error().
+		log.Error().
 			Err(err).
 			Str("debug_info", fmt.Sprintf("%#v", req)).
 			Msg("error while downloading torrent")
@@ -109,8 +110,10 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) e
 }
 
 func (cr *contentRoutes) Stop(ctx *fiber.Ctx, req payload.StopRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	if err := cr.ContentService.Stop(req); err != nil {
-		cr.Log.Error().Str("id", req.Id).Msg("error while stopping download")
+		log.Error().Str("id", req.Id).Msg("error while stopping download")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})

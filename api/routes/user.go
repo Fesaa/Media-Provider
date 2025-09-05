@@ -14,7 +14,6 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -27,7 +26,6 @@ type userRoutes struct {
 	RootRouter fiber.Router `name:"root-router"`
 	Auth       services.AuthService
 	DB         *db.Database
-	Log        zerolog.Logger
 
 	Val             services.ValidationService
 	Notify          services.NotificationService
@@ -69,16 +67,17 @@ func RegisterUserRoutes(ur userRoutes) {
 }
 
 func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest payload.UpdatePasswordRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := ctx.Locals("user").(models.User)
 
 	decodeString, err := base64.StdEncoding.DecodeString(user.PasswordHash)
 	if err != nil {
-		ur.Log.Error().Err(err).Str("user", user.Name).Msg("failed to decode password")
+		log.Error().Err(err).Str("user", user.Name).Msg("failed to decode password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
 	if err = bcrypt.CompareHashAndPassword(decodeString, []byte(updatePasswordRequest.OldPassword)); err != nil {
-		ur.Log.Error().Err(err).Str("user", user.Name).Msg("invalid password")
+		log.Error().Err(err).Str("user", user.Name).Msg("invalid password")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"error":   "invalid password",
@@ -87,7 +86,7 @@ func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest paylo
 
 	password, err := bcrypt.GenerateFromPassword([]byte(updatePasswordRequest.NewPassword), bcrypt.MinCost)
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to generate password")
+		log.Error().Err(err).Msg("failed to generate password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
@@ -97,7 +96,7 @@ func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest paylo
 	user.PasswordHash = base64.StdEncoding.EncodeToString(password)
 
 	if _, err = ur.DB.Users.Update(user); err != nil {
-		ur.Log.Error().Err(err).Str("user", user.Name).Msg("failed to update user")
+		log.Error().Err(err).Str("user", user.Name).Msg("failed to update user")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"error":   err.Error(),
@@ -171,9 +170,11 @@ func (ur *userRoutes) me(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) anyUserExists(ctx *fiber.Ctx) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	ok, err := ur.DB.Users.ExistsAny()
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to check if user exists")
+		log.Error().Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
@@ -188,9 +189,11 @@ func (ur *userRoutes) anyUserExists(ctx *fiber.Ctx) error {
 //
 //nolint:funlen
 func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	ok, err := ur.DB.Users.ExistsAny()
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to check if user exists")
+		log.Error().Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
@@ -200,13 +203,13 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 
 	password, err := bcrypt.GenerateFromPassword([]byte(register.Password), bcrypt.MinCost)
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to generate password")
+		log.Error().Err(err).Msg("failed to generate password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
 	apiKey, err := utils.GenerateApiKey()
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to generate api key")
+		log.Error().Err(err).Msg("failed to generate api key")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
@@ -220,7 +223,7 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 			var ok bool
 			ok, err = ur.DB.Users.ExistsAny()
 			if err != nil {
-				ur.Log.Warn().Err(err).Msg("failed to check existence of user, not setting all perms")
+				log.Warn().Err(err).Msg("failed to check existence of user, not setting all perms")
 				return u
 			}
 			if ok {
@@ -233,7 +236,7 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 		})
 
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to register user")
+		log.Error().Err(err).Msg("failed to register user")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
@@ -255,9 +258,11 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 }
 
 func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	settings, err := ur.SettingsService.GetSettingsDto()
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to get settings")
+		log.Error().Err(err).Msg("failed to get settings")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
@@ -267,7 +272,7 @@ func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) erro
 
 	res, err := ur.Auth.Login(ctx, login)
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to login")
+		log.Error().Err(err).Msg("failed to login")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Check your credentials",
 		})
@@ -307,11 +312,12 @@ func (ur *userRoutes) oidcCallback(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) refreshAPIKey(ctx *fiber.Ctx) error {
-	user := ctx.Locals("user").(models.User)
+	log := services.GetFromContext(ctx, services.LoggerKey)
+	user := services.GetFromContext(ctx, services.UserKey)
 
 	key, err := utils.GenerateApiKey()
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to generate api key")
+		log.Error().Err(err).Msg("failed to generate api key")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -323,7 +329,7 @@ func (ur *userRoutes) refreshAPIKey(ctx *fiber.Ctx) error {
 	})
 
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to refresh api key")
+		log.Error().Err(err).Msg("failed to refresh api key")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -394,9 +400,11 @@ func (ur *userRoutes) updateUser(ctx *fiber.Ctx, userDto payload.UserDto) error 
 }
 
 func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID uint) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	toDelete, err := ur.DB.Users.GetById(userID)
 	if err != nil {
-		ur.Log.Error().Uint("id", userID).Err(err).Msg("failed to check if user exists")
+		log.Error().Uint("id", userID).Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": ur.Transloco.GetTranslation("user-not-found", userID),
 		})
@@ -410,7 +418,7 @@ func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID uint) error {
 
 	err = ur.DB.Users.Delete(toDelete.ID)
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to delete user")
+		log.Error().Err(err).Msg("failed to delete user")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -420,18 +428,19 @@ func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID uint) error {
 }
 
 func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId uint) error {
-	user := ctx.Locals("user").(models.User)
+	log := services.GetFromContext(ctx, services.LoggerKey)
+	user := services.GetFromContext(ctx, services.UserKey)
 
 	resetUser, err := ur.DB.Users.GetById(userId)
 	if err != nil {
-		ur.Log.Error().Uint("id", userId).Err(err).Msg("failed to check if user exists")
+		log.Error().Uint("id", userId).Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}
 
 	if resetUser == nil {
-		ur.Log.Error().Str("user", user.Name).Uint("id", userId).Err(err).Msg("user does not exist")
+		log.Error().Str("user", user.Name).Uint("id", userId).Err(err).Msg("user does not exist")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": ur.Transloco.GetTranslation("user-doesnt-exist"),
 		})
@@ -442,12 +451,12 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId uint) error {
 		fmt.Printf("A reset link has been found for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.\n", reset.UserId, reset.Key, reset.Key)
 		return ctx.Status(fiber.StatusOK).JSON(reset)
 	} else if err != nil {
-		ur.Log.Warn().Err(err).Msg("failed to check for existing reset key")
+		log.Warn().Err(err).Msg("failed to check for existing reset key")
 	}
 
 	reset, err = ur.DB.Users.GenerateReset(userId)
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to generate reset password")
+		log.Error().Err(err).Msg("failed to generate reset password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -464,9 +473,11 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId uint) error {
 }
 
 func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	reset, err := ur.DB.Users.GetReset(pl.Key)
 	if err != nil {
-		ur.Log.Error().Err(err).Str("key", pl.Key).Msg("failed to check if user exists")
+		log.Error().Err(err).Str("key", pl.Key).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
 	}
 
@@ -488,7 +499,7 @@ func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequ
 
 	password, err := bcrypt.GenerateFromPassword([]byte(pl.Password), bcrypt.MinCost)
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to generate password")
+		log.Error().Err(err).Msg("failed to generate password")
 		return fiber.ErrInternalServerError
 	}
 
@@ -498,12 +509,12 @@ func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequ
 	})
 
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to update user password")
+		log.Error().Err(err).Msg("failed to update user password")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
 	if err = ur.DB.Users.DeleteReset(pl.Key); err != nil {
-		ur.Log.Warn().Err(err).Msg("failed to delete reset key")
+		log.Warn().Err(err).Msg("failed to delete reset key")
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})

@@ -7,7 +7,6 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -19,7 +18,6 @@ type configRoutes struct {
 	Auth            services.AuthService
 	Val             services.ValidationService
 	SettingsService services.SettingsService
-	Log             zerolog.Logger
 }
 
 func RegisterConfigRoutes(cr configRoutes) {
@@ -47,9 +45,11 @@ func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {
 }
 
 func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	dto, err := cr.SettingsService.GetSettingsDto()
 	if err != nil {
-		cr.Log.Error().Err(err).Msg("Failed to get oidc config")
+		log.Error().Err(err).Msg("Failed to get oidc config")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 		})
@@ -62,8 +62,10 @@ func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
 }
 
 func (cr *configRoutes) updateConfig(ctx *fiber.Ctx, c payload.Settings) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	if err := cr.SettingsService.UpdateSettingsDto(c); err != nil {
-		cr.Log.Error().Err(err).Msg("failed to update config")
+		log.Error().Err(err).Msg("failed to update config")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
