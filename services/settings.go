@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -104,7 +105,9 @@ func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto pa
 	case models.OidcDisablePasswordLogin:
 		setting.Value = strconv.FormatBool(dto.Oidc.DisablePasswordLogin)
 	case models.OidcClientSecret:
-		setting.Value = dto.Oidc.ClientSecret
+		if dto.Oidc.ClientSecret != strings.Repeat("*", len(setting.Value)) {
+			setting.Value = dto.Oidc.ClientSecret
+		}
 	case models.OidcRedirectUrl:
 		setting.Value = dto.Oidc.RedirectURL
 	}

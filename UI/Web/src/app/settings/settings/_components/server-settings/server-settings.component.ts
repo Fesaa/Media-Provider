@@ -1,6 +1,13 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject} from '@angular/core';
 import {CacheType, CacheTypes, Config} from '../../../../_models/config';
-import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators
+} from "@angular/forms";
 import {ToastService} from "../../../../_services/toast.service";
 import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {SettingsService} from "../../../../_services/settings.service";
@@ -24,16 +31,31 @@ import {DefaultValuePipe} from "../../../../_pipes/default-value.pipe";
 export class ServerSettingsComponent {
 
   private readonly settingsService = inject(SettingsService);
+  private readonly fb = inject(NonNullableFormBuilder);
+  protected readonly cdRef = inject(ChangeDetectorRef);
+  private readonly toastService = inject(ToastService);
 
   config = this.settingsService.config;
 
-  settingsForm: FormGroup | undefined;
+  settingsForm: FormGroup<{
+    rootDir: FormControl<string>
+    baseUrl: FormControl<string>
+    cacheType: FormControl<CacheType>
+    redisAddr: FormControl<string>
+    maxConcurrentImages: FormControl<number>
+    maxConcurrentTorrents: FormControl<number>
+    disableIpv6: FormControl<boolean>
+    oidc: FormGroup<{
+      authority: FormControl<string>;
+      clientId: FormControl<string>;
+      clientSecret: FormControl<string>;
+      redirectUrl: FormControl<string>;
+      disablePasswordLogin: FormControl<boolean>;
+      autoLogin:FormControl <boolean>;
+    }>
+  }> | undefined;
 
-  constructor(private fb: FormBuilder,
-              protected cdRef: ChangeDetectorRef,
-              private toastService: ToastService,
-  ) {
-
+  constructor() {
     effect(() => {
       const config = this.settingsService.config();
       if (config == undefined) return
@@ -45,11 +67,14 @@ export class ServerSettingsComponent {
         redisAddr: this.fb.control(config.redisAddr),
         maxConcurrentImages: this.fb.control(config.maxConcurrentImages, [Validators.required, Validators.min(1), Validators.max(5)]),
         maxConcurrentTorrents: this.fb.control(config.maxConcurrentTorrents, [Validators.required, Validators.min(1), Validators.max(10)]),
+        disableIpv6: this.fb.control(config.disableIpv6),
         oidc: this.fb.group({
           authority: this.fb.control(config.oidc.authority),
           clientId: this.fb.control(config.oidc.clientId),
           disablePasswordLogin: this.fb.control(config.oidc.disablePasswordLogin),
           autoLogin: this.fb.control(config.oidc.autoLogin),
+          clientSecret: this.fb.control(config.oidc.clientSecret),
+          redirectUrl: this.fb.control(config.oidc.redirectUrl)
         }),
       });
       this.cdRef.detectChanges();

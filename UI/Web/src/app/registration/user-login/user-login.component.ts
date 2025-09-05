@@ -74,7 +74,7 @@ export class UserLoginComponent implements OnInit {
     effect(() => {
       const skipAutoLogin = this.skipAutoLogin();
       const oidcConfig = this.oidcConfig();
-      if (!oidcConfig || skipAutoLogin === undefined) return;
+      if (!oidcConfig || skipAutoLogin === undefined || !oidcConfig.enabled) return;
 
       if (oidcConfig.autoLogin && !skipAutoLogin) {
         window.location.href = '/oidc/login'
