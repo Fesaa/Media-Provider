@@ -84,6 +84,15 @@ func Any[T any](in []T, f func(T) bool) bool {
 	return Find(in, f) != nil
 }
 
+func All[T any](in []T, f func(T) bool) bool {
+	for _, t := range in {
+		if !f(t) {
+			return false
+		}
+	}
+	return true
+}
+
 func Keys[K comparable, V any](m map[K]V) []K {
 	out := make([]K, 0, len(m))
 	for k := range m {

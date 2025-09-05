@@ -20,6 +20,18 @@ type Notification struct {
 	Read          bool               `json:"read"`
 }
 
+func (n Notification) HasAccess(user User) bool {
+	if n.Owner.Valid && n.Owner.Int32 == int32(user.ID) {
+		return true
+	}
+
+	if len(n.RequiredRoles) == 0 {
+		return true
+	}
+
+	return utils.Contains(n.RequiredRoles, utils.MapToString(user.Roles))
+}
+
 type NotificationBuilder struct {
 	title         string
 	summary       string
