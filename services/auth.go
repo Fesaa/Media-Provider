@@ -18,7 +18,6 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
@@ -178,6 +177,12 @@ func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequ
 }
 
 func (s *cookieAuthService) Logout(ctx *fiber.Ctx) {
+	if token := ctx.Cookies(tokenCookie); token != "" {
+		if err := s.storage.Delete(token); err != nil {
+			s.log.Warn().Err(err).Msg("failed to delete token during logout")
+		}
+	}
+
 	ctx.Cookie(&fiber.Cookie{
 		Name:     tokenCookie,
 		Value:    "",
@@ -230,92 +235,91 @@ func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
 }
 
 func (s *cookieAuthService) Middleware(ctx *fiber.Ctx) error {
-	isAuthenticated, err := s.isAuthenticated(ctx)
-	if !isAuthenticated {
-		if err != nil {
-			s.log.Debug().Err(err).Msg("error while checking authentication status")
-		}
+	if !s.isAuthenticated(ctx) {
 		s.Logout(ctx)
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	}
-
-	if err != nil {
-		s.log.Debug().Err(err).Msg("error while checking authentication status")
-		s.Logout(ctx)
-		return ctx.SendStatus(fiber.StatusUnauthorized)
-	}
-
 	return ctx.Next()
 }
 
-func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool, err error) {
-	token := ctx.Cookies(tokenCookie)
-	if token == "" {
-		return false, nil
-	}
-
-	defer func() {
-		if success {
-			return
-		}
-
-		if err = s.storage.Delete(token); err != nil {
+func (s *cookieAuthService) deleteToken(delete bool, token string) {
+	if delete {
+		if err := s.storage.Delete(token); err != nil {
 			s.log.Warn().Err(err).Str("token", token).Msg("failed to delete token")
 		}
-	}()
+	}
+}
+
+func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
+	token := ctx.Cookies(tokenCookie)
+	if token == "" {
+		return false
+	}
+	defer s.deleteToken(success, token)
 
 	tokens, err := s.getOidcTokens(token)
 	if err != nil {
-		if errors.Is(err, ErrKeyNotFound) || errors.Is(err, redis.Nil) {
-			return false, nil
-		}
-		return false, fmt.Errorf("failed to get tokens from storage: %w", err)
+		return false
 	}
 
 	if user, err := s.parseLocalJWT(tokens.AccessToken); err == nil && user != nil {
 		ctx.Locals(UserKey.Value(), *user)
-		return true, nil
+		return true
 	}
 
 	if s.verifier == nil {
-		return false, nil
+		return false
 	}
 
 	user, err := s.verifyOIDCToken(ctx.UserContext(), tokens.AccessToken)
 	if err != nil {
 		if strings.Contains(err.Error(), "oidc: token is expired") {
-			return s.refreshToken(ctx, token, tokens)
+			// Ignore expired OIDC tokens for these race conditions
+			if isRefreshing, ok := s.cookiesRefresh.Get(tokens.UserId); isRefreshing && ok {
+				return true
+			}
+
+			err = s.refreshToken(ctx, token, tokens)
+			if err != nil {
+				s.log.Warn().Err(err).Msg("failed to refresh token")
+			}
+			return err == nil
 		}
 
-		return false, fmt.Errorf("failed to verify token: %w", err)
+		s.log.Warn().Err(err).Msg("failed to verify token")
+		return false
 	}
 
 	if user == nil {
-		return false, nil
+		return false
 	}
 
 	ctx.Locals(UserKey.Value(), *user)
 
 	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
 	if !expiresSoon {
-		return true, nil
+		return true
 	}
 
 	if isRefreshing, ok := s.cookiesRefresh.Get(user.ID); isRefreshing && ok {
-		return true, nil
+		return true
 	}
 
-	return s.refreshToken(ctx, token, tokens)
+	err = s.refreshToken(ctx, token, tokens)
+	if err != nil {
+		s.log.Warn().Err(err).Msg("failed to refresh token")
+	}
+	return false
 }
 
-func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) (bool, error) {
+func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
 	s.cookiesRefresh.Set(tokens.UserId, true)
 	defer s.cookiesRefresh.Delete(tokens.UserId)
 
 	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.UserId, tokens.RefreshToken)
 	if err != nil {
 		s.Logout(ctx)
-		return false, fmt.Errorf("failed to refresh OIDC tokens: %w", err)
+		return fmt.Errorf("failed to refresh OIDC tokens: %w", err)
 	}
 
 	if err = s.storage.Delete(oldKey); err != nil {
@@ -323,13 +327,13 @@ func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *
 	}
 
 	if err = s.setCookies(ctx, newTokens); err != nil {
-		return false, fmt.Errorf("failed to set cookies: %w", err)
+		return fmt.Errorf("failed to set cookies: %w", err)
 	}
 
 	s.log.Debug().Uint("user", tokens.UserId).
 		Time("expires_at", newTokens.ExpiresIn).
 		Msg("refreshed tokens in background")
-	return true, nil
+	return nil
 }
 
 func (s *cookieAuthService) GetOIDCLoginURL(ctx *fiber.Ctx) (string, error) {
@@ -429,6 +433,9 @@ func (s *cookieAuthService) parseLocalJWT(tokenString string) (*models.User, err
 }
 
 func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	token, err := s.verifier.Verify(ctx, tokenString)
 	if err != nil {
 		return nil, err
@@ -476,6 +483,9 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 }
 
 func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId uint, refreshToken string) (*OIDCTokens, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	if s.oauth2Config == nil {
 		return nil, errors.New("OIDC not configured")
 	}
