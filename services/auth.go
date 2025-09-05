@@ -241,8 +241,8 @@ func (s *cookieAuthService) Middleware(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-func (s *cookieAuthService) deleteToken(delete bool, token string) {
-	if delete {
+func (s *cookieAuthService) deleteToken(authenticationFaield bool, token string) {
+	if authenticationFaield {
 		if err := s.storage.Delete(token); err != nil {
 			s.log.Warn().Err(err).Str("token", token).Msg("failed to delete token")
 		}

@@ -1,37 +1,37 @@
 package mock
 
-import "github.com/Fesaa/Media-Provider/db/models"
+import (
+	"time"
+
+	"github.com/Fesaa/Media-Provider/db/models"
+)
 
 type Notifications struct {
-	NotifyFunc       func(models.Notification)
-	MarkReadFunc     func(uint) error
-	MarkReadManyFunc func([]uint) error
-	MarkUnReadFunc   func(uint) error
 }
 
-func (m Notifications) Notify(notification models.Notification) {
-	if m.NotifyFunc != nil {
-		m.NotifyFunc(notification)
-	}
+func (n Notifications) GetNotifications(user models.User, time time.Time) ([]models.Notification, error) {
+	return []models.Notification{}, nil
 }
 
-func (m Notifications) MarkRead(id uint) error {
-	if m.MarkReadFunc != nil {
-		return m.MarkReadFunc(id)
-	}
+func (n Notifications) Notify(notification models.Notification) {
+}
+
+func (n Notifications) MarkRead(user models.User, u uint) error {
 	return nil
 }
 
-func (m Notifications) MarkReadMany(ids []uint) error {
-	if m.MarkReadManyFunc != nil {
-		return m.MarkReadManyFunc(ids)
-	}
+func (n Notifications) MarkReadMany(user models.User, uints []uint) error {
 	return nil
 }
 
-func (m Notifications) MarkUnRead(id uint) error {
-	if m.MarkUnReadFunc != nil {
-		return m.MarkUnReadFunc(id)
-	}
+func (n Notifications) MarkUnRead(user models.User, u uint) error {
+	return nil
+}
+
+func (n Notifications) Delete(user models.User, u uint) error {
+	return nil
+}
+
+func (n Notifications) DeleteMany(user models.User, uints []uint) error {
 	return nil
 }

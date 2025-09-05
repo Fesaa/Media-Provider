@@ -105,6 +105,7 @@ linters:
     gosec:
       excludes:
         - G306
+        - G115
     revive:
       rules:
         - name: var-naming
