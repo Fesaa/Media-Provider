@@ -60,9 +60,9 @@ func TestWithBody(t *testing.T) {
 			expectedStatus: 200,
 			setupHandler: func() fiber.Handler {
 				return withBody(func(c *fiber.Ctx, body TestRequestBody) error {
-					assert.Equal(t, "", body.Name)
-					assert.Equal(t, 0, body.Age)
-					assert.Equal(t, "", body.Email)
+					assert.Empty(t, body.Name)
+					assert.Empty(t, body.Age)
+					assert.Empty(t, body.Email)
 
 					return c.JSON(fiber.Map{"message": "empty body handled"})
 				})
@@ -259,7 +259,7 @@ func TestWithParam(t *testing.T) {
 			name: "Valid query parameter bool",
 			setupRoute: func(app *fiber.App) {
 				app.Get("/test", withParam(newQueryParam[bool]("active"), func(c *fiber.Ctx, active bool) error {
-					assert.Equal(t, true, active)
+					assert.True(t, active)
 					return c.JSON(fiber.Map{"active": active})
 				}))
 			},

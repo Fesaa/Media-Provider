@@ -56,7 +56,7 @@ func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 
 	if len(user.Pages) > 0 {
 		pages = utils.Filter(pages, func(page models.Page) bool {
-			return slices.Contains(user.Pages, int32(page.ID))
+			return slices.Contains(user.Pages, int32(page.ID)) //nolint:gosec
 		})
 	}
 
@@ -74,7 +74,7 @@ func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 
-	if len(user.Pages) > 0 && !slices.Contains(user.Pages, int32(id)) {
+	if len(user.Pages) > 0 && !slices.Contains(user.Pages, int32(id)) { //nolint:gosec
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
 	}
 

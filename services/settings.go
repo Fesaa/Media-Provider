@@ -79,7 +79,7 @@ func (s *settingsService) UpdateSettingsDto(dto payload.Settings) error {
 	return nil
 }
 
-func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto payload.Settings) error {
+func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto payload.Settings) error { //nolint:unparam
 	var err error
 	switch setting.Key {
 	case models.RootDir:

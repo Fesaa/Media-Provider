@@ -78,8 +78,8 @@ func (s *signalrService) ConnectEndpoint(ctx *fiber.Ctx) error {
 	}
 
 	s.clients.Set(user.ID, connectionID)
-	if user.HasRole(models.ViewAllDownloads) {
-		//s.Groups().AddToGroup(allDownloadInfoGroup, connectionID)
+	if user.HasRole(models.ViewAllDownloads) { //nolint:staticcheck
+		// s.Groups().AddToGroup(allDownloadInfoGroup, connectionID)
 	}
 
 	return nil
@@ -116,7 +116,7 @@ func (s *signalrService) wsInit(userId uint, id string) func(conn *websocket.Con
 		}
 
 		s.clients.Delete(userId)
-		//s.Groups().RemoveFromGroup(allDownloadInfoGroup, id)
+		// s.Groups().RemoveFromGroup(allDownloadInfoGroup, id)
 	}
 }
 

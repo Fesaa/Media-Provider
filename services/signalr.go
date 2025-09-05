@@ -77,7 +77,7 @@ func (s *signalrService) Broadcast(eventType payload.EventType, data interface{}
 	s.Clients().All().Send(string(eventType), data)
 }
 
-func (s *signalrService) sendToUserAndGroup(userId uint, group string, eventType payload.EventType, data interface{}) {
+func (s *signalrService) sendToUserAndGroup(userId uint, group string, eventType payload.EventType, data interface{}) { //nolint:unparam
 	if !s.connectionHappened {
 		return
 	}
