@@ -95,10 +95,11 @@ func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, err
 	}
 
 	s := &cookieAuthService{
-		users:   params.Users,
-		storage: params.Storage,
-		cfg:     params.Config,
-		log:     params.Log.With().Str("handler", "cookie-auth-service").Logger(),
+		users:          params.Users,
+		storage:        params.Storage,
+		cfg:            params.Config,
+		cookiesRefresh: utils.NewSafeMap[uint, bool](),
+		log:            params.Log.With().Str("handler", "cookie-auth-service").Logger(),
 	}
 
 	if err = s.setupOIDC(settings); err != nil {
@@ -299,7 +300,9 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, fmt.Errorf("failed to set cookies: %w", err)
 	}
 
-	s.log.Debug().Str("user", user.Name).Msg("refreshed tokens in background")
+	s.log.Debug().Str("user", user.Name).
+		Time("expires_at", newTokens.ExpiresIn).
+		Msg("refreshed tokens in background")
 	return true, nil
 }
 
