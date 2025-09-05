@@ -109,12 +109,38 @@ func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, err
 	return s, nil
 }
 
-func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthMiddleware {
-	return &apiKeyAuthService{
-		users:      params.Users,
-		cookieAuth: params.FallbackAuth,
-		log:        params.Log.With().Str("handler", "api-key-auth-service").Logger(),
+func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
+	if settings.Oidc.Authority == "" || settings.Oidc.ClientID == "" || settings.Oidc.ClientSecret == "" {
+		s.log.Debug().
+			Str("authority", settings.Oidc.Authority).
+			Str("client_id", settings.Oidc.ClientID).
+			Bool("has_secret", settings.Oidc.ClientSecret != "").
+			Msg("OIDC not fully configured, skipping setup")
+		return nil
 	}
+
+	provider, err := oidc.NewProvider(context.Background(), settings.Oidc.Authority)
+	if err != nil {
+		return fmt.Errorf("failed to create OIDC provider: %w", err)
+	}
+
+	s.oidcProvider = provider
+	s.verifier = provider.Verifier(&oidc.Config{ClientID: settings.Oidc.ClientID})
+
+	s.oauth2Config = &oauth2.Config{
+		ClientID:     settings.Oidc.ClientID,
+		ClientSecret: settings.Oidc.ClientSecret,
+		RedirectURL:  settings.Oidc.RedirectURL,
+		Endpoint:     provider.Endpoint(),
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+	}
+
+	s.log.Debug().
+		Str("authority", settings.Oidc.Authority).
+		Str("client_id", settings.Oidc.ClientID).
+		Str("redirect_url", settings.Oidc.RedirectURL).
+		Msg("OIDC configured successfully")
+	return nil
 }
 
 func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
@@ -199,122 +225,12 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) {
 	})
 }
 
-func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
-	if settings.Oidc.Authority == "" || settings.Oidc.ClientID == "" || settings.Oidc.ClientSecret == "" {
-		s.log.Debug().
-			Str("authority", settings.Oidc.Authority).
-			Str("client_id", settings.Oidc.ClientID).
-			Bool("has_secret", settings.Oidc.ClientSecret != "").
-			Msg("OIDC not fully configured, skipping setup")
-		return nil
-	}
-
-	provider, err := oidc.NewProvider(context.Background(), settings.Oidc.Authority)
-	if err != nil {
-		return fmt.Errorf("failed to create OIDC provider: %w", err)
-	}
-
-	s.oidcProvider = provider
-	s.verifier = provider.Verifier(&oidc.Config{ClientID: settings.Oidc.ClientID})
-
-	s.oauth2Config = &oauth2.Config{
-		ClientID:     settings.Oidc.ClientID,
-		ClientSecret: settings.Oidc.ClientSecret,
-		RedirectURL:  settings.Oidc.RedirectURL,
-		Endpoint:     provider.Endpoint(),
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
-	}
-
-	s.log.Debug().
-		Str("authority", settings.Oidc.Authority).
-		Str("client_id", settings.Oidc.ClientID).
-		Str("redirect_url", settings.Oidc.RedirectURL).
-		Msg("OIDC configured successfully")
-	return nil
-}
-
 func (s *cookieAuthService) Middleware(ctx *fiber.Ctx) error {
 	if !s.isAuthenticated(ctx) {
 		s.Logout(ctx)
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	}
 	return ctx.Next()
-}
-
-func (s *cookieAuthService) deleteToken(authenticationFaield bool, token string) {
-	if authenticationFaield {
-		if err := s.storage.Delete(token); err != nil {
-			s.log.Warn().Err(err).Str("token", token).Msg("failed to delete token")
-		}
-	}
-}
-
-func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
-	token := ctx.Cookies(tokenCookie)
-	if token == "" {
-		return false
-	}
-	defer s.deleteToken(success, token)
-
-	tokens, err := s.getOidcTokens(token)
-	if err != nil {
-		return false
-	}
-
-	if user, err := s.parseLocalJWT(tokens.AccessToken); err == nil && user != nil {
-		ctx.Locals(UserKey.Value(), *user)
-		return true
-	}
-
-	if s.verifier == nil {
-		return false
-	}
-
-	user, err := s.users.GetById(tokens.UserId)
-	if user == nil || err != nil {
-		return false
-	}
-
-	ctx.Locals(UserKey.Value(), *user)
-
-	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
-	if !expiresSoon {
-		return true
-	}
-
-	if isRefreshing, ok := s.cookiesRefresh.Get(user.ID); isRefreshing && ok {
-		return true
-	}
-
-	err = s.refreshToken(ctx, token, tokens)
-	if err != nil {
-		s.log.Warn().Err(err).Msg("failed to refresh token")
-	}
-	return err == nil
-}
-
-func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
-	s.cookiesRefresh.Set(tokens.UserId, true)
-	defer s.cookiesRefresh.Delete(tokens.UserId)
-
-	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.UserId, tokens.RefreshToken)
-	if err != nil {
-		s.Logout(ctx)
-		return fmt.Errorf("failed to refresh OIDC tokens: %w", err)
-	}
-
-	if err = s.storage.Delete(oldKey); err != nil {
-		s.log.Warn().Err(err).Msg("failed to delete old token")
-	}
-
-	if err = s.setCookies(ctx, newTokens); err != nil {
-		return fmt.Errorf("failed to set cookies: %w", err)
-	}
-
-	s.log.Debug().Uint("user", tokens.UserId).
-		Time("expires_at", newTokens.ExpiresIn).
-		Msg("refreshed tokens in background")
-	return nil
 }
 
 func (s *cookieAuthService) GetOIDCLoginURL(ctx *fiber.Ctx) (string, error) {
@@ -390,6 +306,82 @@ func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	return nil
+}
+
+func (s *cookieAuthService) deleteToken(authenticationFaield bool, token string) {
+	if authenticationFaield {
+		if err := s.storage.Delete(token); err != nil {
+			s.log.Warn().Err(err).Str("token", token).Msg("failed to delete token")
+		}
+	}
+}
+
+func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
+	token := ctx.Cookies(tokenCookie)
+	if token == "" {
+		return false
+	}
+	defer s.deleteToken(success, token)
+
+	tokens, err := s.getOidcTokens(token)
+	if err != nil {
+		return false
+	}
+
+	if user, err := s.parseLocalJWT(tokens.AccessToken); err == nil && user != nil {
+		ctx.Locals(UserKey.Value(), *user)
+		return true
+	}
+
+	if s.verifier == nil {
+		return false
+	}
+
+	user, err := s.users.GetById(tokens.UserId)
+	if user == nil || err != nil {
+		return false
+	}
+
+	ctx.Locals(UserKey.Value(), *user)
+
+	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
+	if !expiresSoon {
+		return true
+	}
+
+	if isRefreshing, ok := s.cookiesRefresh.Get(user.ID); isRefreshing && ok {
+		return true
+	}
+
+	err = s.refreshToken(ctx, token, tokens)
+	if err != nil {
+		s.log.Warn().Err(err).Msg("failed to refresh token")
+	}
+	return err == nil
+}
+
+func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
+	s.cookiesRefresh.Set(tokens.UserId, true)
+	defer s.cookiesRefresh.Delete(tokens.UserId)
+
+	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.UserId, tokens.RefreshToken)
+	if err != nil {
+		s.Logout(ctx)
+		return fmt.Errorf("failed to refresh OIDC tokens: %w", err)
+	}
+
+	if err = s.storage.Delete(oldKey); err != nil {
+		s.log.Warn().Err(err).Msg("failed to delete old token")
+	}
+
+	if err = s.setCookies(ctx, newTokens); err != nil {
+		return fmt.Errorf("failed to set cookies: %w", err)
+	}
+
+	s.log.Debug().Uint("user", tokens.UserId).
+		Time("expires_at", newTokens.ExpiresIn).
+		Msg("refreshed tokens in background")
 	return nil
 }
 
@@ -541,6 +533,14 @@ func (s *cookieAuthService) storeOidcToken(ctx context.Context, tokens *OIDCToke
 	}
 
 	return token, nil
+}
+
+func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthMiddleware {
+	return &apiKeyAuthService{
+		users:      params.Users,
+		cookieAuth: params.FallbackAuth,
+		log:        params.Log.With().Str("handler", "api-key-auth-service").Logger(),
+	}
 }
 
 type apiKeyAuthServiceParams struct {
