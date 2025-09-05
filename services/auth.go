@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -271,26 +270,8 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 		return false
 	}
 
-	user, err := s.verifyOIDCToken(ctx.UserContext(), tokens.AccessToken)
-	if err != nil {
-		if strings.Contains(err.Error(), "oidc: token is expired") {
-			// Ignore expired OIDC tokens for these race conditions
-			if isRefreshing, ok := s.cookiesRefresh.Get(tokens.UserId); isRefreshing && ok {
-				return true
-			}
-
-			err = s.refreshToken(ctx, token, tokens)
-			if err != nil {
-				s.log.Warn().Err(err).Msg("failed to refresh token")
-			}
-			return err == nil
-		}
-
-		s.log.Warn().Err(err).Msg("failed to verify token")
-		return false
-	}
-
-	if user == nil {
+	user, err := s.users.GetById(tokens.UserId)
+	if user == nil || err != nil {
 		return false
 	}
 
@@ -309,7 +290,7 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 	if err != nil {
 		s.log.Warn().Err(err).Msg("failed to refresh token")
 	}
-	return false
+	return err == nil
 }
 
 func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
