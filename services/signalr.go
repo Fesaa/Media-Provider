@@ -37,7 +37,7 @@ type SignalRService interface {
 type SignalRParams struct {
 	dig.In
 	Log  zerolog.Logger
-	Auth AuthService `name:"jwt-auth"`
+	Auth AuthService
 }
 
 type signalrService struct {

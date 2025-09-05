@@ -103,6 +103,10 @@ func (s *settingsService) SerializeSetting(setting *models.ServerSetting, dto pa
 		setting.Value = strconv.FormatBool(dto.Oidc.AutoLogin)
 	case models.OidcDisablePasswordLogin:
 		setting.Value = strconv.FormatBool(dto.Oidc.DisablePasswordLogin)
+	case models.OidcClientSecret:
+		setting.Value = dto.Oidc.ClientSecret
+	case models.OidcRedirectUrl:
+		setting.Value = dto.Oidc.RedirectURL
 	}
 
 	return err
@@ -133,6 +137,10 @@ func (s *settingsService) ParseSetting(setting models.ServerSetting, dto *payloa
 		dto.Oidc.AutoLogin, err = strconv.ParseBool(setting.Value)
 	case models.OidcDisablePasswordLogin:
 		dto.Oidc.DisablePasswordLogin, err = strconv.ParseBool(setting.Value)
+	case models.OidcClientSecret:
+		dto.Oidc.ClientSecret = setting.Value
+	case models.OidcRedirectUrl:
+		dto.Oidc.RedirectURL = setting.Value
 	}
 
 	return err

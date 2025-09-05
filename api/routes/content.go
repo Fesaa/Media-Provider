@@ -18,8 +18,8 @@ type contentRoutes struct {
 	dig.In
 
 	Router fiber.Router
-	Cache  fiber.Handler        `name:"cache"`
-	Auth   services.AuthService `name:"jwt-auth"`
+	Cache  fiber.Handler `name:"cache"`
+	Auth   services.AuthService
 	YS     yoitsu.Client
 	PS     core.Client
 	Log    zerolog.Logger

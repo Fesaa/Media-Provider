@@ -36,7 +36,7 @@ type appParams struct {
 
 	Cfg       *config.Config
 	Container *dig.Container
-	Auth      services.AuthService `name:"api-key-auth"`
+	Auth      services.AuthMiddleware
 	Log       zerolog.Logger
 }
 
@@ -64,7 +64,9 @@ func ApplicationProvider(params appParams) *fiber.App {
 			ContextKey: services.RequestIdKey.Value(),
 			Generator:  fiberutils.UUIDv4,
 		})).
-		Use(encryptcookie.New()).
+		Use(encryptcookie.New(encryptcookie.Config{
+			Key: params.Cfg.CookieSecret,
+		})).
 		Use(recover.New(recover.Config{
 			EnableStackTrace: true,
 		})).

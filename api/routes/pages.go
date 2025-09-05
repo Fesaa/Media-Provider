@@ -18,7 +18,7 @@ type pageRoutes struct {
 
 	Router fiber.Router
 	DB     *db.Database
-	Auth   services.AuthService `name:"jwt-auth"`
+	Auth   services.AuthService
 	Log    zerolog.Logger
 
 	Val            services.ValidationService

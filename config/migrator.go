@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 type versionMap struct {
@@ -10,7 +12,7 @@ type versionMap struct {
 }
 
 const (
-	currentVersion = 5
+	currentVersion = 6
 )
 
 var (
@@ -26,6 +28,10 @@ func init() {
 	}
 	versionMappers[versionMap{3, 4}] = func(c Config) Config {
 		c.Downloader.DisableIpv6 = false
+		return c
+	}
+	versionMappers[versionMap{5, 6}] = func(c Config) Config {
+		c.CookieSecret = utils.MustReturn(utils.GenerateSecret(32))
 		return c
 	}
 }

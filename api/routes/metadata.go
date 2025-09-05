@@ -12,7 +12,7 @@ type metadataRoutes struct {
 	dig.In
 
 	Router          fiber.Router
-	Auth            services.AuthService `name:"jwt-auth"`
+	Auth            services.AuthService
 	MetadataService services.MetadataService
 	Log             zerolog.Logger
 }

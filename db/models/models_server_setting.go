@@ -14,6 +14,8 @@ const (
 	RootDir
 	OidcAutoLogin
 	OidcDisablePasswordLogin
+	OidcClientSecret
+	OidcRedirectUrl
 )
 
 type ServerSetting struct {

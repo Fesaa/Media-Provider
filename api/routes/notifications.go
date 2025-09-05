@@ -17,7 +17,7 @@ type notificationRoutes struct {
 
 	DB     *db.Database
 	Router fiber.Router
-	Auth   services.AuthService `name:"jwt-auth"`
+	Auth   services.AuthService
 	Log    zerolog.Logger
 
 	NotificationService services.NotificationService

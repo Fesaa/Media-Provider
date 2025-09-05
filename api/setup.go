@@ -58,6 +58,7 @@ func Setup(
 	scope := container.Scope("mp::http::api")
 
 	utils2.Must(scope.Decorate(utils2.Identity(log.With().Str("handler", "api").Logger())))
+	utils2.Must(scope.Provide(utils2.Identity(router), dig.Name("root-router")))
 	utils2.Must(scope.Provide(utils2.Identity(router.Group("/api"))))
 	utils2.Must(scope.Provide(utils2.Identity(cacheHandler), dig.Name("cache")))
 

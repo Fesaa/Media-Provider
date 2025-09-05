@@ -23,10 +23,11 @@ import (
 type userRoutes struct {
 	dig.In
 
-	Router fiber.Router
-	Auth   services.AuthService `name:"jwt-auth"`
-	DB     *db.Database
-	Log    zerolog.Logger
+	Router     fiber.Router
+	RootRouter fiber.Router `name:"root-router"`
+	Auth       services.AuthService
+	DB         *db.Database
+	Log        zerolog.Logger
 
 	Val             services.ValidationService
 	Notify          services.NotificationService
@@ -40,6 +41,10 @@ func RegisterUserRoutes(ur userRoutes) {
 		Expiration:             time.Minute * 5,
 		SkipSuccessfulRequests: true,
 	})
+
+	ur.RootRouter.
+		Get("/oidc/login", ur.oidcLogin).
+		Get("/oidc/callback", ur.oidcCallback)
 
 	ur.Router.
 		Get("/any-user-exists", ur.anyUserExists).
@@ -238,7 +243,7 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 		Remember: register.Remember,
 	}
 
-	res, err := ur.Auth.Login(loginRequest)
+	res, err := ur.Auth.Login(ctx, loginRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
@@ -260,7 +265,7 @@ func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) erro
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
-	res, err := ur.Auth.Login(login)
+	res, err := ur.Auth.Login(ctx, login)
 	if err != nil {
 		ur.Log.Error().Err(err).Str("req", fmt.Sprintf("%+v", login)).Msg("failed to login")
 		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{
@@ -269,6 +274,36 @@ func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) erro
 	}
 
 	return ctx.JSON(res)
+}
+
+func (ur *userRoutes) logoutUser(ctx *fiber.Ctx) error {
+	ur.Auth.Logout(ctx)
+	return ctx.Redirect("/")
+}
+
+func (ur *userRoutes) oidcLogin(ctx *fiber.Ctx) error {
+	url, err := ur.Auth.GetOIDCLoginURL(ctx)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Redirect(url)
+}
+
+func (ur *userRoutes) oidcCallback(ctx *fiber.Ctx) error {
+	if err := ur.Auth.HandleOIDCCallback(ctx); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	redirectURL := ctx.Query("redirect")
+	if redirectURL == "" {
+		redirectURL = "/" // default redirect
+	}
+	return ctx.Redirect(redirectURL)
 }
 
 func (ur *userRoutes) refreshAPIKey(ctx *fiber.Ctx) error {

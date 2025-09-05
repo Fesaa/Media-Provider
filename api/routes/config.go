@@ -14,7 +14,7 @@ type configRoutes struct {
 
 	Cfg             *config.Config
 	Router          fiber.Router
-	Auth            services.AuthService `name:"jwt-auth"`
+	Auth            services.AuthService
 	Val             services.ValidationService
 	SettingsService services.SettingsService
 	Log             zerolog.Logger

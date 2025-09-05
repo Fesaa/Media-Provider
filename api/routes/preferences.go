@@ -14,7 +14,7 @@ type preferencesRoute struct {
 	dig.In
 
 	Router fiber.Router
-	Auth   services.AuthService `name:"jwt-auth"`
+	Auth   services.AuthService
 	DB     *db.Database
 	Log    zerolog.Logger
 	Val    services.ValidationService

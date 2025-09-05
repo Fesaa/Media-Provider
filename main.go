@@ -39,8 +39,8 @@ func main() {
 	utils.Must(c.Provide(db.DatabaseProvider))
 	utils.Must(c.Invoke(db.ModelsProvider))
 
-	utils.Must(c.Provide(services.JwtAuthServiceProvider, dig.Name("jwt-auth")))
-	utils.Must(c.Provide(services.ApiKeyAuthServiceProvider, dig.Name("api-key-auth")))
+	utils.Must(c.Provide(services.CookieAuthServiceProvider))
+	utils.Must(c.Provide(services.ApiKeyAuthServiceProvider))
 
 	utils.Must(c.Provide(menou.New))
 	utils.Must(c.Provide(menou.NewWithRetry, dig.Name("http-retry")))

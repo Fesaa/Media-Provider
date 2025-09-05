@@ -128,7 +128,6 @@ type LoginResponse struct {
 	Id     uint          `json:"id" validate:"required"`
 	Name   string        `json:"name" validate:"required"`
 	Email  string        `json:"email" validate:"required"`
-	Token  string        `json:"token" validate:"required"`
 	ApiKey string        `json:"apiKey,omitempty"`
 	Roles  []models.Role `json:"roles,omitempty"`
 }

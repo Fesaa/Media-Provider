@@ -19,7 +19,7 @@ type ioRoutes struct {
 
 	Router          fiber.Router
 	Cfg             *config.Config
-	Auth            services.AuthService `name:"jwt-auth"`
+	Auth            services.AuthService
 	Log             zerolog.Logger
 	Val             services.ValidationService
 	Transloco       services.TranslocoService

@@ -20,8 +20,8 @@ type proxyRoutes struct {
 	dig.In
 
 	Router       fiber.Router
-	Auth         services.AuthService `name:"api-key-auth"`
-	Cache        fiber.Handler        `name:"cache"`
+	Auth         services.AuthMiddleware
+	Cache        fiber.Handler `name:"cache"`
 	Log          zerolog.Logger
 	HttpClient   *menou.Client
 	Transloco    services.TranslocoService
