@@ -1,4 +1,4 @@
-import {DestroyRef, inject, Injectable} from '@angular/core';
+import {DestroyRef, inject, Injectable, signal} from '@angular/core';
 import {environment} from "../../environments/environment";
 import {Observable, ReplaySubject, tap} from "rxjs";
 import {User, UserDto} from "../_models/user";
@@ -20,9 +20,9 @@ export class AccountService {
   userKey = 'mp-user';
 
 
-  private currentUserSource = new ReplaySubject<User | undefined>(1);
-  public currentUser$ = this.currentUserSource.asObservable();
-  public currentUserSignal = toSignal(this.currentUser$);
+
+  private readonly _currentUser = signal<User | undefined>(undefined);
+  public readonly currentUserSignal = this._currentUser.asReadonly();
   private currentUser: User | undefined;
 
   constructor(private httpClient: HttpClient, private router: Router) {
@@ -44,16 +44,10 @@ export class AccountService {
     );
   }
 
-  loginByToken(token: string): Observable<User> {
-    const headers = new HttpHeaders({
-      "Authorization": `Bearer ${token}`
-    })
-    return this.httpClient.get<User>(`${this.baseUrl}user/me`, {headers}).pipe(
-      tap((user: User) => {
-        if (user) {
-          user.oidcToken = token;
-          this.setCurrentUser(user)
-        }
+  getMe() {
+    return this.httpClient.get<User>(this.baseUrl+"user/me").pipe(
+      tap((user) => {
+        this.setCurrentUser(user);
       }),
       takeUntilDestroyed(this.destroyRef)
     );
@@ -93,7 +87,7 @@ export class AccountService {
     }
 
     this.currentUser = user;
-    this.currentUserSource.next(user);
+    this._currentUser.set(user);
 
     if (user) {
       this.signalR.stopConnection()
@@ -108,7 +102,7 @@ export class AccountService {
 
     localStorage.removeItem(this.userKey);
     this.currentUser = undefined;
-    this.currentUserSource.next(undefined);
+    this._currentUser.set(undefined);
     this.router.navigate(['/login']);
   }
 

@@ -64,8 +64,8 @@ func RegisterUserRoutes(ur userRoutes) {
 	user.Use(hasRole(models.ManageUsers)).
 		Get("/all", ur.users).
 		Post("/update", withBodyValidation(ur.updateUser)).
-		Delete("/:id", withParam(newIdQueryParam(), ur.deleteUser)).
-		Post("/reset/:id", withParam(newIdQueryParam(), ur.generateResetPassword))
+		Delete("/:id", withParam(newIdPathParam(), ur.deleteUser)).
+		Post("/reset/:id", withParam(newIdPathParam(), ur.generateResetPassword))
 }
 
 func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest payload.UpdatePasswordRequest) error {
@@ -267,8 +267,8 @@ func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) erro
 
 	res, err := ur.Auth.Login(ctx, login)
 	if err != nil {
-		ur.Log.Error().Err(err).Str("req", fmt.Sprintf("%+v", login)).Msg("failed to login")
-		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+		ur.Log.Error().Err(err).Msg("failed to login")
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Check your credentials",
 		})
 	}
@@ -462,7 +462,7 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId uint) error {
 func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequest) error {
 	reset, err := ur.DB.Users.GetReset(pl.Key)
 	if err != nil {
-		ur.Log.Error().Err(err).Msg("failed to check if user exists")
+		ur.Log.Error().Err(err).Str("key", pl.Key).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
 	}
 

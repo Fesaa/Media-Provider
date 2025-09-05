@@ -80,7 +80,7 @@ export class UserSettingsComponent implements OnInit {
 
   async resetPassword(user: UserDto) {
     if (!await this.modalService.confirm({
-      question: translate("settings.users.confirm-reset-password-password", {name: user.name})
+      question: translate("settings.users.confirm-reset-password", {name: user.name})
     })) {
       return;
     }

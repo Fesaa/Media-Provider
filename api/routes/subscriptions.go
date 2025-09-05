@@ -34,12 +34,12 @@ func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
 	sr.Router.Group("/subscriptions", sr.Auth.Middleware).
 		Get("/providers", sr.providers).
 		Get("/all", withParam(newQueryParam("allUsers", withAllowEmpty(false)), sr.all)).
-		Get("/:id", withParam(newIdQueryParam(), sr.get)).
-		Post("/run-once/:id", withParam(newIdQueryParam(), sr.runOnce)).
+		Get("/:id", withParam(newIdPathParam(), sr.get)).
+		Post("/run-once/:id", withParam(newIdPathParam(), sr.runOnce)).
 		Post("/update", withBody(sr.update)).
 		Post("/new", withBody(sr.new)).
 		Post("/run-all", withParam(newQueryParam("allUsers", withAllowEmpty(false)), sr.runAll)).
-		Delete("/:id", withParam(newIdQueryParam(), sr.delete))
+		Delete("/:id", withParam(newIdPathParam(), sr.delete))
 }
 
 // getAll returns all subscriptions for the authenticated user. Or globally if allUsers ir true and the

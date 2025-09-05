@@ -13,16 +13,13 @@ export class AuthGuard implements CanActivate {
   }
 
   canActivate() {
-    return this.accountService.currentUser$.pipe(take(1),
-      map((user) => {
-        if (user) {
-          return true;
-        }
+    const user = this.accountService.currentUserSignal();
+    if (user) {
+      return true;
+    }
 
-        localStorage.setItem(AuthGuard.urlKey, window.location.pathname);
-        this.router.navigateByUrl('/login');
-        return false;
-      })
-    );
+    localStorage.setItem(AuthGuard.urlKey, window.location.pathname);
+    this.router.navigateByUrl('/login');
+    return false;
   }
 }

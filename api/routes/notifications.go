@@ -29,9 +29,9 @@ func RegisterNotificationRoutes(nr notificationRoutes) {
 		Get("/all", withParam(newQueryParam("after", withAllowEmpty(time.Time{})), nr.all)).
 		Get("/recent", withParam(newQueryParam("limit", withAllowEmpty(5)), nr.recent)).
 		Get("/amount", nr.amount).
-		Post("/:id/read", withParam(newIdQueryParam(), nr.read)).
-		Post("/:id/unread", withParam(newIdQueryParam(), nr.unread)).
-		Delete("/:id", withParam(newIdQueryParam(), nr.delete)).
+		Post("/:id/read", withParam(newIdPathParam(), nr.read)).
+		Post("/:id/unread", withParam(newIdPathParam(), nr.unread)).
+		Delete("/:id", withParam(newIdPathParam(), nr.delete)).
 		Post("/many", withBody(nr.readMany)).
 		Post("/many/delete", withBody(nr.deleteMany))
 }

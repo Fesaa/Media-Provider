@@ -33,14 +33,14 @@ func RegisterPageRoutes(pr pageRoutes) {
 		Get("/", pr.pages).
 		Get("/download-metadata", withParam(newQueryParam("provider",
 			withMessage[int](pr.Transloco.GetTranslation("no-provider"))), pr.DownloadMetadata)).
-		Get("/:pageId", withParam(newIdQueryParam(), pr.page)).
+		Get("/:id", withParam(newIdPathParam(), pr.page)).
 		Post("/order", withBody(pr.orderPages)).
 		Post("/load-default", pr.loadDefault)
 
 	pages.Use(hasRole(models.ManagePages)).
 		Post("/new", withBodyValidation(pr.updatePage)).
 		Post("/update", withBodyValidation(pr.updatePage)).
-		Delete("/:pageId", withParam(newIdQueryParam(), pr.deletePage))
+		Delete("/:id", withParam(newIdPathParam(), pr.deletePage))
 }
 
 func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {

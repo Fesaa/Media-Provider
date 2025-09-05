@@ -1,8 +1,9 @@
-import {inject, Injectable, signal} from '@angular/core';
+import {effect, inject, Injectable, signal} from '@angular/core';
 import {environment} from "../../environments/environment";
-import {Config} from '../_models/config';
+import {Config, Oidc} from '../_models/config';
 import {HttpClient} from "@angular/common/http";
 import {tap} from "rxjs";
+import {AccountService} from "./account.service";
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ import {tap} from "rxjs";
 export class SettingsService {
 
   private readonly httpClient = inject(HttpClient);
+  private readonly accountService = inject(AccountService);
 
   baseUrl = environment.apiUrl + 'config/';
 
@@ -17,8 +19,12 @@ export class SettingsService {
   public config = this._config.asReadonly();
 
   constructor() {
-    // Load _config
-    this.getConfig().subscribe();
+    effect(() => {
+      const user = this.accountService.currentUserSignal();
+      if (user) {
+        this.getConfig().subscribe();
+      }
+    });
   }
 
   getConfig() {
@@ -31,5 +37,9 @@ export class SettingsService {
     return this.httpClient.post(`${this.baseUrl}`, config).pipe(tap(() => {
       this._config.set(config);
     }));
+  }
+
+  getPublicOidcConfig() {
+    return this.httpClient.get<Oidc>(this.baseUrl + "oidc");
   }
 }

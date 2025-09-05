@@ -21,3 +21,13 @@ type OidcSettings struct {
 	DisablePasswordLogin bool   `json:"disablePasswordLogin"`
 	AutoLogin            bool   `json:"autoLogin"`
 }
+
+func (o OidcSettings) Enabled() bool {
+	return o.Authority != "" && o.ClientID != "" && o.ClientSecret != "" && o.RedirectURL != ""
+}
+
+type PublicOidcSettings struct {
+	DisablePasswordLogin bool `json:"disablePasswordLogin"`
+	AutoLogin            bool `json:"autoLogin"`
+	Enabled              bool `json:"enabled"`
+}

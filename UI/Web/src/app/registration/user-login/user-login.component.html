@@ -12,15 +12,14 @@
             <p class="lead mb-4" style="color: var(--text-secondary); font-family: 'Spectral', serif;">
               {{ t('welcome-tagline') }}
             </p>
-            @if (oidcService.inUse()) {
+            @if (oidcConfig()!.enabled) {
               <div class="d-flex justify-content-center">
-                <button
-                  type="button"
-                  (click)="oidcService.login()"
+                <a
                   class="btn btn-secondary"
+                  href="/oidc/login"
                 >
                   {{ t('sign-in-with-oidc') }}
-                </button>
+                </a>
               </div>
             }
           </div>

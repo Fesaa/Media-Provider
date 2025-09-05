@@ -17,6 +17,7 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
@@ -250,8 +251,8 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 
 	tokens, err := s.getOidcTokens(token)
 	if err != nil {
-		if errors.Is(err, ErrKeyNotFound) {
-			s.log.Warn().Msg("consider setting up a redis store, to ensure authentication survives restarts.")
+		if errors.Is(err, ErrKeyNotFound) || errors.Is(err, redis.Nil) {
+			return false, nil
 		}
 		return false, fmt.Errorf("failed to get tokens from storage: %w", err)
 	}

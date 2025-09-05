@@ -622,7 +622,7 @@
             "summary": "{{msg}}"
           }
         },
-        "password-reset": {
+        "reset-password": {
           "success": {
             "title": "Reset generated",
             "summary": "The reset link has been copied to your clipboard. A copy may be found in your server logs"

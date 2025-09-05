@@ -121,6 +121,10 @@ func newIdQueryParam() param[uint] {
 	return newQueryParam[uint]("id")
 }
 
+func newIdPathParam() param[uint] {
+	return newPathParam[uint]("id")
+}
+
 func withParam[T any](param param[T], handler func(*fiber.Ctx, T) error) fiber.Handler {
 	convFunc := utils.MustReturn(getConvertor[T]())
 

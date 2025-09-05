@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"strings"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -21,14 +23,11 @@ type configRoutes struct {
 }
 
 func RegisterConfigRoutes(cr configRoutes) {
-	configGroup := cr.Router.Group("/config")
-
-	// Auth
-	configGroup.Get("/", cr.Auth.Middleware, cr.getConfig)
-	configGroup.Post("/", cr.Auth.Middleware, withBody(cr.updateConfig))
-
-	// No Auth
-	configGroup.Get("/oidc", cr.getOidcConfig)
+	cr.Router.Group("/config").
+		Get("/oidc", cr.getOidcConfig).
+		Use(cr.Auth.Middleware).
+		Get("/", cr.getConfig).
+		Post("/", withBody(cr.updateConfig))
 }
 
 func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {
@@ -39,6 +38,11 @@ func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
+	if dto.Oidc.ClientSecret != "" {
+		dto.Oidc.ClientSecret = strings.Repeat("*", len(dto.Oidc.ClientSecret))
+	}
+
 	return ctx.JSON(dto)
 }
 
@@ -50,7 +54,11 @@ func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
 			"success": false,
 		})
 	}
-	return ctx.JSON(dto.Oidc)
+	return ctx.JSON(payload.PublicOidcSettings{
+		DisablePasswordLogin: dto.Oidc.DisablePasswordLogin,
+		AutoLogin:            dto.Oidc.AutoLogin,
+		Enabled:              dto.Oidc.Enabled(),
+	})
 }
 
 func (cr *configRoutes) updateConfig(ctx *fiber.Ctx, c payload.Settings) error {

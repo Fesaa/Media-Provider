@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {effect, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {of, Subject} from "rxjs";
@@ -14,11 +14,12 @@ export class ImageService {
   apiKey: string | null = null;
 
   constructor(private httpClient: HttpClient, private toastService: ToastService, private accountService: AccountService) {
-    this.accountService.currentUser$.subscribe(user => {
+    effect(() => {
+      const user = this.accountService.currentUserSignal();
       if (user) {
         this.apiKey = user.apiKey;
       }
-    })
+    });
   }
 
   getImage(imageUrl: string) {
