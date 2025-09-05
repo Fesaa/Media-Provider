@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -23,17 +24,13 @@ import (
 )
 
 const (
-	ApiQueryKey = "api-key"
+	apiQueryKey = "api-key"
 
-	AccessTokenCookie  = "mp_access_token"
-	RefreshTokenCookie = "mp_refresh_token"
-	ExpiresInCookie    = "mp_expires_in"
-	StateCookie        = "mp_oauth_state"
+	tokenCookie = "mp_token"
+	stateCookie = "mp_oauth_state"
+	idToken     = "id_token"
 
-	CookieMaxAge      = 24 * 60 * 60
-	StateCookieMaxAge = 10 * 60
-
-	IdToken = "id_token"
+	stateCookieMaxAge = 10 * 60
 )
 
 type AuthMiddleware interface {
@@ -49,30 +46,29 @@ type AuthService interface {
 	HandleOIDCCallback(ctx *fiber.Ctx) error
 }
 
-type MpClaims struct {
+type mpClaims struct {
 	User models.User `json:"user,omitempty"`
 	jwt.RegisteredClaims
 }
 
 type OIDCTokens struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-	IDToken      string `json:"id_token"`
-	ExpiresIn    int    `json:"expires_in"`
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
+	IDToken      string    `json:"id_token"`
+	ExpiresIn    time.Time `json:"expires_in"`
 }
 
 var (
-	ErrMissingOrMalformedAPIKey = errors.New("missing or malformed API key")
-	ErrEmailNotVerified         = errors.New("email not verified")
-	ErrCouldNotLinkUser         = errors.New("could not link user")
-	ErrInvalidState             = errors.New("invalid OAuth state")
-	ErrNoRefreshToken           = errors.New("no refresh token available")
+	errEmailNotVerified = errors.New("email not verified")
+	errCouldNotLinkUser = errors.New("could not link user")
+	errInvalidState     = errors.New("invalid OAuth state")
 )
 
 type cookieAuthService struct {
-	users models.Users
-	cfg   *config.Config
-	log   zerolog.Logger
+	users   models.Users
+	cfg     *config.Config
+	log     zerolog.Logger
+	storage CacheService
 
 	oidcProvider *oidc.Provider
 	oauth2Config *oauth2.Config
@@ -86,6 +82,7 @@ type cookieAuthServiceParams struct {
 
 	Users   models.Users
 	Service SettingsService
+	Storage CacheService
 	Config  *config.Config
 	Log     zerolog.Logger
 }
@@ -97,9 +94,10 @@ func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, err
 	}
 
 	s := &cookieAuthService{
-		users: params.Users,
-		cfg:   params.Config,
-		log:   params.Log.With().Str("handler", "cookie-auth-service").Logger(),
+		users:   params.Users,
+		storage: params.Storage,
+		cfg:     params.Config,
+		log:     params.Log.With().Str("handler", "cookie-auth-service").Logger(),
 	}
 
 	if err = s.setupOIDC(settings); err != nil {
@@ -142,7 +140,7 @@ func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequ
 		}
 	}
 
-	claims := MpClaims{
+	claims := mpClaims{
 		User: *user,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt: jwt.NewNumericDate(time.Now()),
@@ -162,7 +160,10 @@ func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequ
 		return nil, err
 	}
 
-	s.setCookies(ctx, &OIDCTokens{AccessToken: t})
+	if err = s.setCookies(ctx, &OIDCTokens{AccessToken: t}); err != nil {
+		return nil, err
+	}
+
 	return &payload.LoginResponse{
 		Id:     user.ID,
 		Name:   user.Name,
@@ -174,7 +175,7 @@ func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequ
 
 func (s *cookieAuthService) Logout(ctx *fiber.Ctx) {
 	ctx.Cookie(&fiber.Cookie{
-		Name:     AccessTokenCookie,
+		Name:     tokenCookie,
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
@@ -182,7 +183,7 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) {
 	})
 
 	ctx.Cookie(&fiber.Cookie{
-		Name:     RefreshTokenCookie,
+		Name:     stateCookie,
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
@@ -242,12 +243,20 @@ func (s *cookieAuthService) Middleware(ctx *fiber.Ctx) error {
 }
 
 func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
-	accessToken := ctx.Cookies(AccessTokenCookie)
-	if accessToken == "" {
+	token := ctx.Cookies(tokenCookie)
+	if token == "" {
 		return false, nil
 	}
 
-	if user, err := s.parseLocalJWT(accessToken); err == nil && user != nil {
+	tokens, err := s.getOidcTokens(token)
+	if err != nil {
+		if errors.Is(err, ErrKeyNotFound) {
+			s.log.Warn().Msg("consider setting up a redis store, to ensure authentication survives restarts.")
+		}
+		return false, fmt.Errorf("failed to get tokens from storage: %w", err)
+	}
+
+	if user, err := s.parseLocalJWT(tokens.AccessToken); err == nil && user != nil {
 		ctx.Locals(UserKey.Value(), *user)
 		return true, nil
 	}
@@ -256,9 +265,9 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, nil
 	}
 
-	user, err := s.verifyOIDCToken(ctx.UserContext(), accessToken)
+	user, err := s.verifyOIDCToken(ctx.UserContext(), tokens.AccessToken)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to verify token: %w", err)
 	}
 
 	if user == nil {
@@ -267,12 +276,7 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 
 	ctx.Locals(UserKey.Value(), *user)
 
-	expiresIn := ctx.Cookies(ExpiresInCookie)
-	if expiresIn == "" {
-		return true, nil
-	}
-
-	expiresSoon := utils.MustReturn(time.Parse(time.RFC3339, expiresIn)).Sub(time.Now().UTC()).Seconds() < 30
+	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
 	if !expiresSoon {
 		return true, nil
 	}
@@ -284,20 +288,17 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 	s.cookiesRefresh.Set(user.ID, true)
 	defer s.cookiesRefresh.Delete(user.ID)
 
-	refreshToken := ctx.Cookies(RefreshTokenCookie)
-	if refreshToken == "" {
-		return true, nil
+	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.RefreshToken)
+	if err != nil {
+		s.Logout(ctx)
+		return false, fmt.Errorf("failed to refresh OIDC tokens: %w", err)
 	}
 
-	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), refreshToken)
-	if err != nil {
-		s.log.Error().Err(err).Msg("error while refreshing tokens")
-		s.Logout(ctx)
-		return false, err
+	if err = s.setCookies(ctx, newTokens); err != nil {
+		return false, fmt.Errorf("failed to set cookies: %w", err)
 	}
 
 	s.log.Debug().Str("user", user.Name).Msg("refreshed tokens in background")
-	s.setCookies(ctx, newTokens)
 	return true, nil
 }
 
@@ -313,9 +314,9 @@ func (s *cookieAuthService) GetOIDCLoginURL(ctx *fiber.Ctx) (string, error) {
 	state := base64.URLEncoding.EncodeToString(b)
 
 	ctx.Cookie(&fiber.Cookie{
-		Name:     StateCookie,
+		Name:     stateCookie,
 		Value:    state,
-		MaxAge:   StateCookieMaxAge,
+		MaxAge:   stateCookieMaxAge,
 		HTTPOnly: true,
 		SameSite: "Lax",
 	})
@@ -330,13 +331,13 @@ func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
 	}
 
 	state := ctx.Query("state")
-	storedState := ctx.Cookies(StateCookie)
+	storedState := ctx.Cookies(stateCookie)
 	if state == "" || state != storedState {
-		return ErrInvalidState
+		return errInvalidState
 	}
 
 	ctx.Cookie(&fiber.Cookie{
-		Name:     StateCookie,
+		Name:     stateCookie,
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
@@ -352,7 +353,7 @@ func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
 		return fmt.Errorf("failed to exchange code: %w", err)
 	}
 
-	rawIDToken, ok := token.Extra(IdToken).(string)
+	rawIDToken, ok := token.Extra(idToken).(string)
 	if !ok {
 		return errors.New("missing id_token")
 	}
@@ -361,7 +362,7 @@ func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 		IDToken:      rawIDToken,
-		ExpiresIn:    int(token.Expiry.Sub(time.Now()).Seconds()),
+		ExpiresIn:    token.Expiry,
 	}
 
 	_, err = s.verifyOIDCToken(ctx.UserContext(), rawIDToken)
@@ -369,13 +370,15 @@ func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
 		return fmt.Errorf("failed to verify ID token: %w", err)
 	}
 
-	s.setCookies(ctx, tokens)
+	if err = s.setCookies(ctx, tokens); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (s *cookieAuthService) parseLocalJWT(tokenString string) (*models.User, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &MpClaims{}, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &mpClaims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %s", t.Header["alg"])
 		}
@@ -386,7 +389,7 @@ func (s *cookieAuthService) parseLocalJWT(tokenString string) (*models.User, err
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(*MpClaims)
+	claims, ok := token.Claims.(*mpClaims)
 	if !ok {
 		return nil, errors.New("invalid claims")
 	}
@@ -419,7 +422,7 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 	}
 
 	if !claims.Verified {
-		return nil, ErrEmailNotVerified
+		return nil, errEmailNotVerified
 	}
 
 	user, err = s.users.GetByEmail(claims.Email)
@@ -428,7 +431,7 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 	}
 
 	if user == nil {
-		return nil, ErrCouldNotLinkUser
+		return nil, errCouldNotLinkUser
 	}
 
 	user.ExternalId = sql.NullString{String: token.Subject, Valid: true}
@@ -439,32 +442,6 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 		return nil, err
 	}
 	return user, nil
-}
-
-func (s *cookieAuthService) RefreshToken(ctx *fiber.Ctx) (*payload.LoginResponse, error) {
-	refreshToken := ctx.Cookies(RefreshTokenCookie)
-	if refreshToken == "" {
-		return nil, ErrNoRefreshToken
-	}
-
-	tokens, err := s.refreshOIDCToken(ctx.UserContext(), refreshToken)
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := s.verifyOIDCToken(ctx.UserContext(), tokens.IDToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to verify refreshed ID token: %w", err)
-	}
-
-	s.setCookies(ctx, tokens)
-
-	return &payload.LoginResponse{
-		Id:    user.ID,
-		Name:  user.Name,
-		Email: user.Email.String,
-		Roles: user.Roles,
-	}, nil
 }
 
 func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, refreshToken string) (*OIDCTokens, error) {
@@ -490,38 +467,57 @@ func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, refreshToken s
 		AccessToken:  newToken.AccessToken,
 		RefreshToken: newToken.RefreshToken,
 		IDToken:      rawIDToken,
-		ExpiresIn:    int(newToken.Expiry.Sub(time.Now()).Seconds()),
+		ExpiresIn:    newToken.Expiry,
 	}, nil
 }
 
-func (s *cookieAuthService) setCookies(ctx *fiber.Ctx, tokens *OIDCTokens) {
+func (s *cookieAuthService) setCookies(ctx *fiber.Ctx, tokens *OIDCTokens) error {
+	token, err := s.storeOidcToken(ctx.UserContext(), tokens)
+	if err != nil {
+		return err
+	}
+
 	ctx.Cookie(&fiber.Cookie{
-		Name:     AccessTokenCookie,
-		Value:    tokens.AccessToken,
-		MaxAge:   tokens.ExpiresIn,
+		Name:     tokenCookie,
+		Value:    token,
+		MaxAge:   30 * 24 * 60 * 60, // 30 Days
 		HTTPOnly: true,
 		SameSite: "Lax",
 	})
 
-	if tokens.RefreshToken != "" {
-		ctx.Cookie(&fiber.Cookie{
-			Name:     RefreshTokenCookie,
-			Value:    tokens.RefreshToken,
-			MaxAge:   CookieMaxAge * 30,
-			HTTPOnly: true,
-			SameSite: "Lax",
-		})
+	return nil
+}
+
+func (s *cookieAuthService) getOidcTokens(token string) (*OIDCTokens, error) {
+	data, err := s.storage.Get(token)
+	if err != nil {
+		return nil, err
 	}
 
-	if tokens.ExpiresIn != 0 {
-		ctx.Cookie(&fiber.Cookie{
-			Name:     ExpiresInCookie,
-			Value:    time.Now().UTC().Add(time.Second * time.Duration(tokens.ExpiresIn)).Format(time.RFC3339),
-			MaxAge:   CookieMaxAge * 30,
-			HTTPOnly: true,
-			SameSite: "Lax",
-		})
+	var oidcToken OIDCTokens
+	if err = json.Unmarshal(data, &oidcToken); err != nil {
+		return nil, err
 	}
+
+	return &oidcToken, nil
+}
+
+func (s *cookieAuthService) storeOidcToken(ctx context.Context, tokens *OIDCTokens) (string, error) {
+	token, err := utils.GenerateSecret(32)
+	if err != nil {
+		return "", err
+	}
+
+	data, err := json.Marshal(&tokens)
+	if err != nil {
+		return "", err
+	}
+
+	if err = s.storage.Set(token, data, 30*24*time.Hour); err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 type apiKeyAuthServiceParams struct {
@@ -539,7 +535,7 @@ type apiKeyAuthService struct {
 }
 
 func (a *apiKeyAuthService) Middleware(ctx *fiber.Ctx) error {
-	isAuthenticated, err := a.IsAuthenticated(ctx)
+	isAuthenticated, err := a.isAuthenticated(ctx)
 	if err != nil {
 		a.log.Warn().Err(err).Msg("error while checking api key auth")
 	}
@@ -549,8 +545,8 @@ func (a *apiKeyAuthService) Middleware(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-func (a *apiKeyAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
-	apiKey := ctx.Query(ApiQueryKey)
+func (a *apiKeyAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
+	apiKey := ctx.Query(apiQueryKey)
 	if apiKey == "" {
 		return false, nil
 	}
@@ -562,13 +558,4 @@ func (a *apiKeyAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 
 	ctx.Locals(UserKey.Value(), user)
 	return true, nil
-}
-
-func (a *apiKeyAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
-	a.log.Error().Msg("api key auth does not support login")
-	return nil, errors.New("ApiKeyAuth does not support login")
-}
-
-func (a *apiKeyAuthService) Logout(ctx *fiber.Ctx) error {
-	return errors.New("ApiKeyAuth logout is not implemented")
 }
