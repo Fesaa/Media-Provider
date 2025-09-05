@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"time"
 
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/config"
@@ -20,6 +21,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/rs/zerolog"
@@ -51,6 +53,11 @@ func ApplicationProvider(params appParams) *fiber.App {
 	}
 
 	app.
+		Use(limiter.New(limiter.Config{
+			Max:               1000,
+			Expiration:        time.Minute,
+			LimiterMiddleware: limiter.SlidingWindow{},
+		})).
 		Use(requestid.New()).
 		Use(recover.New(recover.Config{
 			EnableStackTrace: true,
