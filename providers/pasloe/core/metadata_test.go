@@ -1,11 +1,12 @@
 package core
 
 import (
+	"io"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
-	"io"
-	"testing"
 )
 
 type preferences struct {

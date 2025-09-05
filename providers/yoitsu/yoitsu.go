@@ -3,6 +3,12 @@ package yoitsu
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
@@ -13,11 +19,6 @@ import (
 	"github.com/anacrolix/torrent/types/infohash"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"math/rand"
-	"path"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (
@@ -134,7 +135,7 @@ func (y *yoitsu) Download(req payload.DownloadRequest) error {
 	torrentWrapper := newTorrent(torrentInfo, req, y.log, y, y.signalR, y.fs)
 	y.torrents.Set(torrentInfo.InfoHash().String(), torrentWrapper)
 	y.baseDirs.Set(torrentInfo.InfoHash().String(), req.BaseDir)
-	y.signalR.AddContent(torrentWrapper.GetInfo())
+	y.signalR.AddContent(torrentWrapper.Request().OwnerId, torrentWrapper.GetInfo())
 
 	if !y.CanStartNext() {
 		y.log.Debug().Msg("cannot start torrent, too many downloading")
@@ -185,7 +186,7 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 	y.torrents.Delete(infoHashString)
 	y.baseDirs.Delete(infoHashString)
 
-	y.signalR.StateUpdate(tor.Id(), payload.ContentStateCleanup)
+	y.signalR.StateUpdate(tor.Request().OwnerId, tor.Id(), payload.ContentStateCleanup)
 
 	y.deletionWg.Add(1)
 	go func() {
@@ -197,14 +198,14 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 		}
 
 		text := fmt.Sprintf("%s finished downloading %d files(s)", tor.Title(), tor.Files())
-		y.notifier(tor.Request()).Notify(models.Notification{
-			Title:   "Download finished",
-			Summary: utils.Shorten(text, services.SummarySize),
-			Body:    text,
-			Colour:  models.Secondary,
-			Group:   models.GroupContent,
-		})
-
+		y.notifier(tor.Request()).Notify(models.NewNotification().
+			WithTitle("Download finished").
+			WithBody(text).
+			WithColour(models.Secondary).
+			WithGroup(models.GroupContent).
+			WithOwner(tor.Request().OwnerId).
+			WithRequiredRoles(models.ViewAllDownloads).
+			Build())
 		y.cleanup(tor, baseDir)
 	}()
 
@@ -360,11 +361,20 @@ func (y *yoitsu) GetTorrentDirFilePathMaker() storage.TorrentDirFilePathMaker {
 }
 
 func (y *yoitsu) notifyCleanUpError(content Torrent, cleanupErrs ...error) {
-	y.notify.NotifyContent(
-		y.transLoco.GetTranslation("cleanup-errors-title"),
-		y.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
-		errors.Join(cleanupErrs...).Error(),
-		models.Error)
+	joined := errors.Join(cleanupErrs...)
+	if joined == nil {
+		return
+	}
+
+	y.notify.Notify(models.NewNotification().
+		WithTitle(y.transLoco.GetTranslation("cleanup-errors-title")).
+		WithSummary(y.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
+		WithBody(joined.Error()).
+		WithGroup(models.GroupError).
+		WithColour(models.Error).
+		WithOwner(content.Request().OwnerId).
+		WithRequiredRoles(models.ViewAllDownloads).
+		Build())
 }
 
 func (y *yoitsu) cleaner() {

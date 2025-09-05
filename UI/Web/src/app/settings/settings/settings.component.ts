@@ -2,7 +2,7 @@ import {Component, computed, effect, inject, signal} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {NavService} from '../../_services/nav.service';
 import {AccountService} from '../../_services/account.service';
-import {hasPermission, Perm, User} from '../../_models/user';
+import {Role, User} from '../../_models/user';
 import {PreferenceSettingsComponent} from "./_components/preference-settings/preference-settings.component";
 import {PagesSettingsComponent} from "./_components/pages-settings/pages-settings.component";
 import {ServerSettingsComponent} from "./_components/server-settings/server-settings.component";
@@ -22,7 +22,10 @@ interface SettingsTab {
   id: SettingsID,
   title: string,
   icon: string,
-  perm: Perm,
+  /**
+   * Required roles to view this page, if empty everyone can view
+   */
+  roles?: Role[],
 }
 
 @Component({
@@ -53,11 +56,11 @@ export class SettingsComponent {
   showMobileConfig = signal(false);
 
   readonly settings: SettingsTab[] = [
-    { id: SettingsID.Account, title: "Account", icon: 'fa fa-user', perm: Perm.All },
-    { id: SettingsID.Preferences, title: "Preferences", icon: 'fa fa-heart', perm: Perm.WriteConfig },
-    { id: SettingsID.Pages, title: 'Pages', icon: 'fa fa-thumbtack', perm: Perm.All },
-    { id: SettingsID.Server, title: 'Server', icon: 'fa fa-server', perm: Perm.WriteConfig },
-    { id: SettingsID.User, title: 'Users', icon: 'fa fa-users', perm: Perm.WriteUser },
+    { id: SettingsID.Account, title: "Account", icon: 'fa fa-user' },
+    { id: SettingsID.Preferences, title: "Preferences", icon: 'fa fa-heart', roles: [Role.ManagePreferences] },
+    { id: SettingsID.Pages, title: 'Pages', icon: 'fa fa-thumbtack', roles: [Role.ManagePages] },
+    { id: SettingsID.Server, title: 'Server', icon: 'fa fa-server', roles: [Role.ManageServerConfigs] },
+    { id: SettingsID.User, title: 'Users', icon: 'fa fa-users', roles: [Role.ManageUsers] },
   ];
 
   readonly visibleSettings = computed(() => {
@@ -69,7 +72,8 @@ export class SettingsComponent {
   constructor() {
     this.navService.setNavVisibility(true);
 
-    this.accountService.currentUser$.subscribe(user => {
+    effect(() => {
+      const user = this.accountService.currentUserSignal();
       if (!user) {
         this.router.navigateByUrl('/login');
         return;
@@ -108,7 +112,17 @@ export class SettingsComponent {
     const setting = this.settings.find(s => s.id === id);
     if (!setting) return false;
 
-    return hasPermission(user, setting.perm);
+    if (!setting.roles || setting.roles.length === 0) {
+      return true;
+    }
+
+    for (const role of setting.roles) {
+      if (user.roles.includes(role)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   isMobile(): boolean {

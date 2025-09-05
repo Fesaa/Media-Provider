@@ -1,9 +1,10 @@
 package manual
 
 import (
+	"strings"
+
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func RemoveAllDeleted(db *gorm.DB, log zerolog.Logger) error {

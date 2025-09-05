@@ -3,12 +3,13 @@ package routes
 import (
 	"errors"
 	"fmt"
+
+	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -16,11 +17,10 @@ type contentRoutes struct {
 	dig.In
 
 	Router fiber.Router
-	Cache  fiber.Handler        `name:"cache"`
-	Auth   services.AuthService `name:"jwt-auth"`
+	Cache  fiber.Handler `name:"cache"`
+	Auth   services.AuthService
 	YS     yoitsu.Client
 	PS     core.Client
-	Log    zerolog.Logger
 
 	Val            services.ValidationService
 	ContentService services.ContentService
@@ -28,21 +28,16 @@ type contentRoutes struct {
 }
 
 func RegisterContentRoutes(cr contentRoutes) {
-	router := cr.Router.Group("/content", cr.Auth.Middleware)
-	router.Post("/search", cr.Cache, cr.Search)
-	router.Post("/download", cr.Download)
-	router.Post("/stop", cr.Stop)
-	router.Get("/stats", cr.Stats)
-	router.Post("/message", cr.Message)
+	cr.Router.Group("/content", cr.Auth.Middleware).
+		Post("/search", cr.Cache, withBodyValidation(cr.Search)).
+		Post("/download", withBodyValidation(cr.Download)).
+		Post("/stop", withBodyValidation(cr.Stop)).
+		Get("/stats", withParam(newQueryParam("all", withAllowEmpty(false)), cr.Stats)).
+		Post("/message", withBody(cr.Message))
 }
 
-func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
-	var msg payload.Message
-	if err := ctx.BodyParser(&msg); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
+func (cr *contentRoutes) Message(ctx *fiber.Ctx, msg payload.Message) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	resp, err := cr.ContentService.Message(msg)
 	if err != nil {
@@ -64,7 +59,7 @@ func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
 			})
 		}
 
-		cr.Log.Error().Err(err).Msg("An error occurred while sending a message down to Content")
+		log.Error().Err(err).Msg("An error occurred while sending a message down to Content")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -73,14 +68,7 @@ func (cr *contentRoutes) Message(ctx *fiber.Ctx) error {
 	return ctx.JSON(resp)
 }
 
-func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
-	var searchRequest payload.SearchRequest
-	if err := cr.Val.ValidateCtx(ctx, &searchRequest); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
+func (cr *contentRoutes) Search(ctx *fiber.Ctx, searchRequest payload.SearchRequest) error {
 	search, err := cr.ContentService.Search(searchRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -95,24 +83,21 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx) error {
 	return ctx.JSON(search)
 }
 
-func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
-	var req payload.DownloadRequest
-	if err := cr.Val.ValidateCtx(ctx, &req); err != nil {
-		cr.Log.Error().Err(err).Msg("error while parsing body")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
+func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+	user := services.GetFromContext(ctx, services.UserKey)
 
 	if req.BaseDir == "" {
-		cr.Log.Warn().Msg("trying to download Torrent to empty baseDir, returning error.")
+		log.Warn().Msg("trying to download Torrent to empty baseDir, returning error.")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": cr.Transloco.GetTranslation("base-dir-not-empty"),
 		})
 	}
 
+	req.OwnerId = user.ID
+
 	if err := cr.ContentService.Download(req); err != nil {
-		cr.Log.Error().
+		log.Error().
 			Err(err).
 			Str("debug_info", fmt.Sprintf("%#v", req)).
 			Msg("error while downloading torrent")
@@ -124,16 +109,11 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (cr *contentRoutes) Stop(ctx *fiber.Ctx) error {
-	var req payload.StopRequest
-	if err := cr.Val.ValidateCtx(ctx, &req); err != nil {
-		cr.Log.Error().Err(err).Msg("error while parsing body")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
+func (cr *contentRoutes) Stop(ctx *fiber.Ctx, req payload.StopRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	if err := cr.ContentService.Stop(req); err != nil {
-		cr.Log.Error().Str("id", req.Id).Msg("error while stopping download")
+		log.Error().Str("id", req.Id).Msg("error while stopping download")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -142,15 +122,27 @@ func (cr *contentRoutes) Stop(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (cr *contentRoutes) Stats(ctx *fiber.Ctx) error {
+func (cr *contentRoutes) Stats(ctx *fiber.Ctx, allDownloads bool) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+	allDownloads = allDownloads && user.HasRole(models.ViewAllDownloads)
+
 	statsResponse := payload.StatsResponse{
-		Running: []payload.InfoStat{},
+		Running:      []payload.InfoStat{},
+		TotalRunning: map[models.Provider]int{},
 	}
 	cr.YS.GetTorrents().ForEachSafe(func(_ string, torrent yoitsu.Torrent) {
-		statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
+		if allDownloads || torrent.Request().OwnerId == user.ID {
+			statsResponse.Running = append(statsResponse.Running, torrent.GetInfo())
+		}
+
+		statsResponse.TotalRunning[torrent.Provider()]++
 	})
 	for _, download := range cr.PS.GetCurrentDownloads() {
-		statsResponse.Running = append(statsResponse.Running, download.GetInfo())
+		if allDownloads || download.Request().OwnerId == user.ID {
+			statsResponse.Running = append(statsResponse.Running, download.GetInfo())
+		}
+
+		statsResponse.TotalRunning[download.Provider()]++
 	}
 
 	return ctx.JSON(statsResponse)

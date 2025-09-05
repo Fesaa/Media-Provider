@@ -1,11 +1,12 @@
 package manual
 
 import (
+	"strconv"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
-	"strconv"
 )
 
 func MigrateSettings(db *gorm.DB, log zerolog.Logger) error {

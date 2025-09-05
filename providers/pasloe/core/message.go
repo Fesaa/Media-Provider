@@ -2,9 +2,10 @@ package core
 
 import (
 	"encoding/json"
+	"strconv"
+
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
-	"strconv"
 )
 
 func (c *Core[C, S]) Message(msg payload.Message) (payload.Message, error) {
@@ -54,6 +55,6 @@ func (c *Core[C, S]) SetUserFiltered(msg json.RawMessage) error {
 		return err
 	}
 	c.ToDownloadUserSelected = filter
-	c.SignalR.SizeUpdate(c.Id(), strconv.Itoa(c.Size())+" Chapters")
+	c.SignalR.SizeUpdate(c.Req.OwnerId, c.Id(), strconv.Itoa(c.Size())+" Chapters")
 	return nil
 }

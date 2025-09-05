@@ -1,7 +1,10 @@
 package payload
 
+import "github.com/Fesaa/Media-Provider/db/models"
+
 type StatsResponse struct {
-	Running []InfoStat `json:"running"`
+	Running      []InfoStat              `json:"running"`
+	TotalRunning map[models.Provider]int `json:"totalRunning"`
 }
 
 type ListDirResponse []DirEntry

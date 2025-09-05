@@ -137,13 +137,15 @@
                 [title]="t('oidc.authority.label')"
                 [tooltip]="t('oidc.authority.subTitle')"
               >
-                <ng-template #view>{{ control.value }}</ng-template>
+                <ng-template #view>{{ control.value | defaultValue }}</ng-template>
                 <ng-template #edit>
-                  <input
-                    type="text"
-                    class="form-control"
-                    formControlName="oidc.authority"
-                  />
+                  <div formGroupName="oidc">
+                    <input
+                      type="text"
+                      class="form-control"
+                      formControlName="oidc.authority"
+                    />
+                  </div>
                 </ng-template>
               </app-settings-item>
             }
@@ -154,13 +156,45 @@
                 [title]="t('oidc.clientId.label')"
                 [tooltip]="t('oidc.clientId.subTitle')"
               >
-                <ng-template #view>{{ control.value }}</ng-template>
+                <ng-template #view>{{ control.value | defaultValue }}</ng-template>
                 <ng-template #edit>
-                  <input
-                    type="text"
-                    class="form-control"
-                    formControlName="oidc.clientId"
-                  />
+                  <div formGroupName="oidc">
+                    <input
+                      type="text"
+                      class="form-control"
+                      formControlName="oidc.clientId"
+                    />
+                  </div>
+                </ng-template>
+              </app-settings-item>
+            }
+
+            @if (getFormControl('oidc.clientSecret'); as control) {
+              <app-settings-item [control]="control" [title]="t('oidc.clientSecret.label')" [tooltip]="t('oidc.clientSecret.subTitle')">
+                <ng-template #view>{{ control.value | defaultValue }}</ng-template>
+                <ng-template #edit>
+                  <div class="form-check" formGroupName="oidc">
+                    <input
+                      type="text"
+                      class="form-control"
+                      formControlName="clientSecret"
+                    />
+                  </div>
+                </ng-template>
+              </app-settings-item>
+            }
+
+            @if (getFormControl('oidc.redirectUrl'); as control) {
+              <app-settings-item [control]="control" [title]="t('oidc.redirectUrl.label')" [tooltip]="t('oidc.redirectUrl.subTitle')">
+                <ng-template #view>{{ control.value | defaultValue }}</ng-template>
+                <ng-template #edit>
+                  <div class="form-check" formGroupName="oidc">
+                    <input
+                      type="text"
+                      class="form-control"
+                      formControlName="redirectUrl"
+                    />
+                  </div>
                 </ng-template>
               </app-settings-item>
             }

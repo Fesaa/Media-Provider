@@ -1,8 +1,24 @@
+
+export enum Role {
+  ManagePages          = "manage-pages",
+  ManageUsers          = "manage-users",
+  ManageServerConfigs  = "manage-server-configs",
+  ManagePreferences    = "manage-preferences",
+  ManageSubscriptions  = "manage-subscriptions",
+  ViewAllDownloads     = "view-all-downloads",
+}
+
+export const AllRoles = [
+  Role.ManagePages, Role.ManageUsers, Role.ManageServerConfigs, Role.ManagePreferences, Role.ManageSubscriptions,
+  Role.ViewAllDownloads
+]
+
 export interface UserDto {
   id: number;
   name: string;
   email: string;
-  permissions: number;
+  roles: Role[];
+  pages: number[];
   canDelete: boolean;
 }
 
@@ -13,30 +29,10 @@ export interface User {
   oidcToken?: string;
   token: string;
   apiKey: string;
-  permissions: number;
+  roles: Role[];
 }
 
-export enum Perm {
-  All = 0,
-
-  WritePage = 1 << 0,
-  DeletePage = 1 << 1,
-
-  WriteUser = 1 << 2,
-  DeleteUser = 1 << 3,
-
-  WriteConfig = 1 << 4,
+export function hasRole(user: User, role: Role) {
+  return user.roles.includes(role);
 }
-
-export function hasPermission(user: User | UserDto, perm: Perm): boolean {
-  return (user.permissions & perm) === perm
-}
-
-export function roles(user: User | UserDto): Perm[] {
-  return AllPerms.filter(val => hasPermission(user, val))
-}
-
-export const AllPerms = Object.values(Perm)
-  .filter(value => typeof value === 'number')
-  .filter(val => val !== 0) as number[];
 

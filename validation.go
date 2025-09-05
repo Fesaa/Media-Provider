@@ -1,12 +1,13 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"strings"
 )
 
 func validateConfig(cfg *config.Config, log zerolog.Logger, val *validator.Validate, fs afero.Afero) error {

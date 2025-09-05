@@ -2,12 +2,13 @@ package services
 
 import (
 	"bytes"
-	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/rs/zerolog"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/rs/zerolog"
 )
 
 func tempContentService(t *testing.T) ContentService {

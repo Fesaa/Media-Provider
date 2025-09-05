@@ -2,15 +2,16 @@ package services
 
 import (
 	"errors"
+	"os"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"os"
-	"strings"
-	"testing"
-	"time"
 )
 
 func tempDatabase(t *testing.T) *db.Database {

@@ -1,8 +1,9 @@
 package subsplease
 
 import (
-	"github.com/Fesaa/Media-Provider/http/menou"
 	"testing"
+
+	"github.com/Fesaa/Media-Provider/http/menou"
 )
 
 // Subsplease does weird stuff when not having any results.

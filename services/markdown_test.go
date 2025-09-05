@@ -1,8 +1,9 @@
 package services
 
 import (
-	"github.com/rs/zerolog"
 	"testing"
+
+	"github.com/rs/zerolog"
 )
 
 // Note that we are only testing the configuration we've done on top of gomarkdown, we are assuming the lib works

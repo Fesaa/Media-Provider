@@ -1,8 +1,9 @@
 package services
 
 import (
-	"github.com/rs/zerolog"
 	"testing"
+
+	"github.com/rs/zerolog"
 )
 
 func TestCronServiceProvider(t *testing.T) {

@@ -3,9 +3,10 @@ package menou
 import (
 	"context"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"io"
 	"net/http"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func (c *Client) WrapInDoc(ctx context.Context, url string, f ...func(*http.Request) error) (*goquery.Document, error) {

@@ -2,6 +2,13 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"runtime"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
@@ -16,12 +23,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"os"
-	"os/signal"
-	"runtime"
-	"sync"
-	"syscall"
-	"time"
 )
 
 func main() {
@@ -38,8 +39,8 @@ func main() {
 	utils.Must(c.Provide(db.DatabaseProvider))
 	utils.Must(c.Invoke(db.ModelsProvider))
 
-	utils.Must(c.Provide(services.JwtAuthServiceProvider, dig.Name("jwt-auth")))
-	utils.Must(c.Provide(services.ApiKeyAuthServiceProvider, dig.Name("api-key-auth")))
+	utils.Must(c.Provide(services.CookieAuthServiceProvider))
+	utils.Must(c.Provide(services.ApiKeyAuthServiceProvider))
 
 	utils.Must(c.Provide(menou.New))
 	utils.Must(c.Provide(menou.NewWithRetry, dig.Name("http-retry")))

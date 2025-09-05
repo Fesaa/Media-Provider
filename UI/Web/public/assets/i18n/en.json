@@ -131,7 +131,16 @@
     "user-tooltip": "Changing this without the username knowing may lock them out of their account",
     "email-label": "Email",
     "email-tooltip": "Used to match on OIDC logins",
-    "perm-label": "Permissions"
+    "role-label": "Roles"
+  },
+
+  "role-pipe": {
+    "manage-pages":  "Manage Pages",
+    "manage-users": "Manage Users",
+    "manage-server-configs":  "Manage Server Configs",
+    "manage-preferences": "Manage Preferences",
+    "manage-subscriptions":  "Manage Subscriptions",
+    "view-all-downloads": "View all downloads"
   },
 
   "edit-page-modal": {
@@ -545,6 +554,14 @@
           "label": "Auto redirect to your OIDC login page",
           "subTitle": "",
           "toolTip": ""
+        },
+        "clientSecret": {
+          "label": "Client secret",
+          "subTitle": "Once set, won't display the actual value"
+        },
+        "redirectUrl": {
+          "label": "Redirect URL",
+          "subTitle": "Set to your host /oidc/callback"
         }
       },
       "save": "Save",
@@ -613,7 +630,7 @@
             "summary": "{{msg}}"
           }
         },
-        "password-reset": {
+        "reset-password": {
           "success": {
             "title": "Reset generated",
             "summary": "The reset link has been copied to your clipboard. A copy may be found in your server logs"

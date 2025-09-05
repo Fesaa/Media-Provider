@@ -2,12 +2,13 @@ package services
 
 import (
 	"bytes"
+	"image"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
 	"github.com/rs/zerolog"
-	"image"
 )
 
 const (

@@ -1,12 +1,13 @@
 package manual
 
 import (
+	"strings"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
-	"strings"
 )
 
 func InsertDefaultPreferences(db *gorm.DB, log zerolog.Logger) error {

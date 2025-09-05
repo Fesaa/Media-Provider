@@ -2,13 +2,14 @@ package dynasty
 
 import (
 	"bytes"
-	"github.com/Fesaa/Media-Provider/http/menou"
-	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/rs/zerolog"
 	"io"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/rs/zerolog"
 )
 
 const (

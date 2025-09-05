@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"path"
+	"strings"
+
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -13,9 +17,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"net/http"
-	"path"
-	"strings"
 )
 
 func New(scope *dig.Scope) core.Downloadable {

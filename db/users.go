@@ -2,10 +2,11 @@ package db
 
 import (
 	"errors"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
-	"time"
 )
 
 type userImpl struct {
@@ -128,7 +129,7 @@ func (u *userImpl) UpdateById(id uint, opts ...models.Option[models.User]) (*mod
 }
 
 func (u *userImpl) GenerateReset(userId uint) (*models.PasswordReset, error) {
-	key, err := utils.GenerateSecret(32)
+	key, err := utils.GenerateUrlSecret(32)
 	if err != nil {
 		return nil, err
 	}

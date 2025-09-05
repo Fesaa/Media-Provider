@@ -1,11 +1,12 @@
 package routes
 
 import (
+	"strings"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 )
 
@@ -14,24 +15,20 @@ type configRoutes struct {
 
 	Cfg             *config.Config
 	Router          fiber.Router
-	Auth            services.AuthService `name:"jwt-auth"`
+	Auth            services.AuthService
 	Val             services.ValidationService
 	SettingsService services.SettingsService
-	Log             zerolog.Logger
 }
 
 func RegisterConfigRoutes(cr configRoutes) {
-	configGroup := cr.Router.Group("/config")
-
-	// Auth
-	configGroup.Get("/", cr.Auth.Middleware, cr.GetConfig)
-	configGroup.Post("/", cr.Auth.Middleware, cr.UpdateConfig)
-
-	// No Auth
-	configGroup.Get("/oidc", cr.GetOidcConfig)
+	cr.Router.Group("/config").
+		Get("/oidc", cr.getOidcConfig).
+		Use(cr.Auth.Middleware).
+		Get("/", cr.getConfig).
+		Post("/", withBody(cr.updateConfig))
 }
 
-func (cr *configRoutes) GetConfig(ctx *fiber.Ctx) error {
+func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {
 	dto, err := cr.SettingsService.GetSettingsDto()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -39,29 +36,36 @@ func (cr *configRoutes) GetConfig(ctx *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
+
+	if dto.Oidc.ClientSecret != "" {
+		dto.Oidc.ClientSecret = strings.Repeat("*", len(dto.Oidc.ClientSecret))
+	}
+
 	return ctx.JSON(dto)
 }
 
-func (cr *configRoutes) GetOidcConfig(ctx *fiber.Ctx) error {
+func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	dto, err := cr.SettingsService.GetSettingsDto()
 	if err != nil {
-		cr.Log.Error().Err(err).Msg("Failed to get oidc config")
+		log.Error().Err(err).Msg("Failed to get oidc config")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 		})
 	}
-	return ctx.JSON(dto.Oidc)
+	return ctx.JSON(payload.PublicOidcSettings{
+		DisablePasswordLogin: dto.Oidc.DisablePasswordLogin,
+		AutoLogin:            dto.Oidc.AutoLogin,
+		Enabled:              dto.Oidc.Enabled(),
+	})
 }
 
-func (cr *configRoutes) UpdateConfig(ctx *fiber.Ctx) error {
-	var c payload.Settings
-	if err := cr.Val.ValidateCtx(ctx, &c); err != nil {
-		cr.Log.Debug().Err(err).Msg("invalid config")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	}
+func (cr *configRoutes) updateConfig(ctx *fiber.Ctx, c payload.Settings) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	if err := cr.SettingsService.UpdateSettingsDto(c); err != nil {
-		cr.Log.Error().Err(err).Msg("failed to update config")
+		log.Error().Err(err).Msg("failed to update config")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 

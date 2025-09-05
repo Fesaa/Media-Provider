@@ -10,22 +10,22 @@ type SignalR struct {
 	signalr.Hub
 }
 
-func (m *SignalR) UpdateContentInfo(data payload.InfoStat) {
+func (m *SignalR) UpdateContentInfo(userId uint, data payload.InfoStat) {
 }
 
 func (m *SignalR) Broadcast(eventType payload.EventType, data interface{}) {
 }
 
-func (m *SignalR) SizeUpdate(id string, size string) {
+func (m *SignalR) SizeUpdate(userId uint, id string, size string) {
 }
 
-func (m *SignalR) ProgressUpdate(data payload.ContentProgressUpdate) {
+func (m *SignalR) ProgressUpdate(userId uint, data payload.ContentProgressUpdate) {
 }
 
-func (m *SignalR) StateUpdate(id string, state payload.ContentState) {
+func (m *SignalR) StateUpdate(userId uint, id string, state payload.ContentState) {
 }
 
-func (m *SignalR) AddContent(data payload.InfoStat) {
+func (m *SignalR) AddContent(userId uint, data payload.InfoStat) {
 }
 
 func (m *SignalR) DeleteContent(id string) {

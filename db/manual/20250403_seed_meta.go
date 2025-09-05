@@ -1,11 +1,12 @@
 package manual
 
 import (
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
-	"time"
 )
 
 func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {

@@ -29,9 +29,5 @@ export const routes: Routes = [
   {
     path: 'login',
     loadChildren: () => import('./_routes/registration.routes').then(m => m.routes)
-  },
-  {
-    path: 'oidc',
-    loadChildren: () => import('./_routes/oidc.routes').then(m => m.routes)
   }
 ];

@@ -1,6 +1,9 @@
 package api
 
 import (
+	"strings"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -11,11 +14,14 @@ import (
 	"github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
-	"strings"
-	"time"
 )
 
-func Setup(router fiber.Router, container *dig.Container, settingsService services.SettingsService, log zerolog.Logger) error {
+func Setup(
+	router fiber.Router,
+	container *dig.Container,
+	settingsService services.SettingsService,
+	log zerolog.Logger,
+) error {
 	log.Debug().Str("handler", "http-routing").Msg("registering api routes")
 
 	settings, err := settingsService.GetSettingsDto()
@@ -52,6 +58,7 @@ func Setup(router fiber.Router, container *dig.Container, settingsService servic
 	scope := container.Scope("mp::http::api")
 
 	utils2.Must(scope.Decorate(utils2.Identity(log.With().Str("handler", "api").Logger())))
+	utils2.Must(scope.Provide(utils2.Identity(router), dig.Name("root-router")))
 	utils2.Must(scope.Provide(utils2.Identity(router.Group("/api"))))
 	utils2.Must(scope.Provide(utils2.Identity(cacheHandler), dig.Name("cache")))
 

@@ -1,15 +1,24 @@
 import {ChangeDetectionStrategy, Component, computed, effect, inject, model, OnInit, signal} from '@angular/core';
-import {AllPerms, Perm, roles, UserDto} from "../../../../../../_models/user";
+import {AllRoles, Role, UserDto} from "../../../../../../_models/user";
 import {NgbActiveModal} from "@ng-bootstrap/ng-bootstrap";
 import {AccountService} from "../../../../../../_services/account.service";
 import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {SettingsItemComponent} from "../../../../../../shared/form/settings-item/settings-item.component";
-import {FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {
+  Form,
+  FormArray,
+  FormControl,
+  FormGroup,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators
+} from "@angular/forms";
 import {TypeaheadComponent, TypeaheadSettings} from "../../../../../../type-ahead/typeahead.component";
-import {PermNamePipe} from "../../../../../../_pipes/perm-name.pipe";
 import {of} from "rxjs";
 import {DefaultValuePipe} from "../../../../../../_pipes/default-value.pipe";
 import {ToastService} from "../../../../../../_services/toast.service";
+import {RolePipe} from "../../../../../../_pipes/role.pipe";
+import {Page} from "../../../../../../_models/page";
 
 @Component({
   selector: 'app-edit-user-modal',
@@ -18,8 +27,8 @@ import {ToastService} from "../../../../../../_services/toast.service";
     SettingsItemComponent,
     ReactiveFormsModule,
     TypeaheadComponent,
-    PermNamePipe,
-    DefaultValuePipe
+    DefaultValuePipe,
+    RolePipe
   ],
   templateUrl: './edit-user-modal.component.html',
   styleUrl: './edit-user-modal.component.scss',
@@ -30,9 +39,11 @@ export class EditUserModalComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly userService = inject(AccountService);
   private readonly modal = inject(NgbActiveModal);
-  private readonly permPipe = inject(PermNamePipe);
+  private readonly rolePipe = inject(RolePipe);
+  private readonly fb = inject(NonNullableFormBuilder);
 
   user = model.required<UserDto>();
+  pages = model.required<Page[]>();
 
   userName = computed(() => {
     const user = this.user();
@@ -40,40 +51,61 @@ export class EditUserModalComponent implements OnInit {
 
     return translate('edit-user-modal.someone');
   });
-  selectedPerms = signal<Perm[]>([]);
 
 
-  userForm = new FormGroup({});
+  userForm!: FormGroup<{
+    id: FormControl<number>,
+    name: FormControl<string>,
+    email: FormControl<string>,
+    roles: FormArray<FormControl<Role>>
+    pages: FormArray<FormGroup<{
+      id: FormControl<number>;
+      checked: FormControl<boolean>;
+    }>>
+  }>;
 
-  constructor() {
-    effect(() => this.selectedPerms.set(roles(this.user())));
+  get pagesFormArray() {
+    return this.userForm.get('pages') as FormArray<FormGroup<{
+      id: FormControl<number>;
+      checked: FormControl<boolean>;
+    }>>;
+  }
+
+  getPageName(id: number) {
+    return this.pages().find(p => p.ID === id)?.title;
   }
 
   ngOnInit() {
     const user = this.user();
 
-    this.userForm.addControl('id', new FormControl(user.id));
-    this.userForm.addControl('name', new FormControl(user.name, [Validators.required]));
-    this.userForm.addControl('email', new FormControl(user.email));
-
+    this.userForm = this.fb.group({
+      id: this.fb.control(user.id),
+      name: this.fb.control(user.name, [Validators.required]),
+      email: this.fb.control(user.email),
+      roles: this.fb.array(user.roles.map(r => this.fb.control(r))),
+      pages: this.fb.array(this.pages().map(p => this.fb.group({
+        id: this.fb.control(p.ID),
+        checked: this.fb.control(user.pages.length === 0 || user.pages.includes(p.ID))
+      }))),
+    });
   }
 
-  rolesTypeaheadSettings(): TypeaheadSettings<Perm> {
-    const settings = new TypeaheadSettings<Perm>();
+  rolesTypeaheadSettings(): TypeaheadSettings<Role> {
+    const settings = new TypeaheadSettings<Role>();
     settings.multiple = true;
     settings.minCharacters = 0;
     settings.id = 'role-typeahead';
 
     settings.fetchFn = (f) =>
-      of(AllPerms.filter(p => this.permPipe.transform(p).includes(f)));
-    settings.savedData = roles(this.user());
+      of(AllRoles.filter(p => this.rolePipe.transform(p).includes(f)));
+    settings.savedData = this.user().roles;
 
 
     return settings;
   }
 
-  updatePerms(perms: Perm[] | Perm) {
-    this.selectedPerms.set(perms as Perm[]);
+  updatePerms(perms: Role[] | Role) {
+    this.userForm.get('roles')!.setValue(perms as Role[])
   }
 
   close() {
@@ -84,7 +116,9 @@ export class EditUserModalComponent implements OnInit {
     const data = this.userForm.value as UserDto;
 
     data.id = data.id === -1 ? 0 : data.id;
-    data.permissions = this.selectedPerms().reduce((old, cur) => old | cur, 0);
+    data.pages = (data.pages as unknown as {id: number, checked: boolean}[])
+      .filter(x => x.checked)
+      .map(x => x.id);
     return data;
   }
 

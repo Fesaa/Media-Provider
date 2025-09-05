@@ -1,9 +1,10 @@
 package config
 
 import (
+	"os"
+
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"os"
 )
 
 func DefaultConfig() *Config {
@@ -18,7 +19,7 @@ func DefaultConfig() *Config {
 	}
 
 	return &Config{
-		RootDir:      orDefault(os.Getenv("CONFIG_DIR"), pwd),
+		RootDir:      orDefault(ConfigDir, pwd),
 		Secret:       secret,
 		HasUpdatedDB: false,
 		Logging: Logging{

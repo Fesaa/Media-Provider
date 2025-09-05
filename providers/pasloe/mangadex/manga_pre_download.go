@@ -3,10 +3,11 @@ package mangadex
 import (
 	"context"
 	"errors"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
-	"github.com/Fesaa/Media-Provider/utils"
 	"slices"
 	"strconv"
+
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 func (m *manga) LoadInfo(ctx context.Context) chan struct{} {

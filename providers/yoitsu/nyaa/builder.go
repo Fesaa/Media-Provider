@@ -1,6 +1,8 @@
 package nyaa
 
 import (
+	"net/url"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -9,7 +11,6 @@ import (
 	"github.com/irevenko/go-nyaa/nyaa"
 	"github.com/irevenko/go-nyaa/types"
 	"github.com/rs/zerolog"
-	"net/url"
 )
 
 type Builder struct {

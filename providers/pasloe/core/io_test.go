@@ -1,10 +1,11 @@
 package core
 
 import (
-	"github.com/Fesaa/Media-Provider/utils"
 	"io"
 	"path"
 	"testing"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 type testCase struct {

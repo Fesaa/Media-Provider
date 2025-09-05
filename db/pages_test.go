@@ -1,9 +1,10 @@
 package db
 
 import (
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
-	"testing"
 )
 
 func seedPages(t *testing.T, p models.Pages) {

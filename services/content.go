@@ -3,11 +3,12 @@ package services
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"time"
 )
 
 var (

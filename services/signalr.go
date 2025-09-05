@@ -2,12 +2,18 @@ package services
 
 import (
 	"context"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/philippseith/signalr"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
+)
+
+const (
+	allDownloadInfoGroup = string(models.ViewAllDownloads)
 )
 
 type SignalRService interface {
@@ -15,13 +21,13 @@ type SignalRService interface {
 
 	Broadcast(eventType payload.EventType, data interface{})
 
-	SizeUpdate(id string, size string)
-	ProgressUpdate(data payload.ContentProgressUpdate)
-	StateUpdate(id string, state payload.ContentState)
+	SizeUpdate(uint, string, string)
+	ProgressUpdate(uint, payload.ContentProgressUpdate)
+	StateUpdate(uint, string, payload.ContentState)
 
-	AddContent(data payload.InfoStat)
-	UpdateContentInfo(data payload.InfoStat)
-	DeleteContent(id string)
+	AddContent(uint, payload.InfoStat)
+	UpdateContentInfo(uint, payload.InfoStat)
+	DeleteContent(string)
 
 	// Notify may be used directly by anyone to send a quick toast to the frontend.
 	// Use NotificationService for notification that must persist
@@ -31,7 +37,7 @@ type SignalRService interface {
 type SignalRParams struct {
 	dig.In
 	Log  zerolog.Logger
-	Auth AuthService `name:"jwt-auth"`
+	Auth AuthService
 }
 
 type signalrService struct {
@@ -43,12 +49,14 @@ type signalrService struct {
 	log    zerolog.Logger
 
 	connectionHappened bool
+	clients            utils.SafeMap[uint, string]
 }
 
 func SignalRServiceProvider(params SignalRParams) SignalRService {
 	return &signalrService{
-		auth: params.Auth,
-		log:  params.Log.With().Str("handler", "signalR-service").Logger(),
+		auth:    params.Auth,
+		clients: utils.NewSafeMap[uint, string](),
+		log:     params.Log.With().Str("handler", "signalR-service").Logger(),
 	}
 }
 
@@ -69,30 +77,45 @@ func (s *signalrService) Broadcast(eventType payload.EventType, data interface{}
 	s.Clients().All().Send(string(eventType), data)
 }
 
-func (s *signalrService) SizeUpdate(id string, size string) {
-	s.Broadcast(payload.EventTypeContentSizeUpdate, payload.ContentSizeUpdate{
+func (s *signalrService) sendToUserAndGroup(userId uint, group string, eventType payload.EventType, data interface{}) { //nolint:unparam
+	if !s.connectionHappened {
+		return
+	}
+
+	clientId, ok := s.clients.Get(userId)
+	s.log.Debug().Str("id", clientId).Str("group", group).Str("eventType", string(eventType)).
+		Msg("sending to user")
+	if ok {
+		s.Clients().Client(clientId).Send(string(eventType), data)
+	}
+
+	s.Clients().Group(group).Send(string(eventType), data)
+}
+
+func (s *signalrService) SizeUpdate(userId uint, id string, size string) {
+	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentSizeUpdate, payload.ContentSizeUpdate{
 		ContentId: id,
 		Size:      size,
 	})
 }
 
-func (s *signalrService) ProgressUpdate(data payload.ContentProgressUpdate) {
-	s.Broadcast(payload.EventTypeContentProgressUpdate, data)
+func (s *signalrService) ProgressUpdate(userId uint, data payload.ContentProgressUpdate) {
+	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentProgressUpdate, data)
 }
 
-func (s *signalrService) StateUpdate(id string, state payload.ContentState) {
-	s.Broadcast(payload.EventTypeContentStateUpdate, payload.ContentStateUpdate{
+func (s *signalrService) StateUpdate(userId uint, id string, state payload.ContentState) {
+	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentStateUpdate, payload.ContentStateUpdate{
 		ContentId:    id,
 		ContentState: state,
 	})
 }
 
-func (s *signalrService) AddContent(data payload.InfoStat) {
-	s.Broadcast(payload.EventTypeAddContent, data)
+func (s *signalrService) AddContent(userId uint, data payload.InfoStat) {
+	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeAddContent, data)
 }
 
-func (s *signalrService) UpdateContentInfo(data payload.InfoStat) {
-	s.Broadcast(payload.EventTypeContentInfoUpdate, data)
+func (s *signalrService) UpdateContentInfo(userId uint, data payload.InfoStat) {
+	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentInfoUpdate, data)
 }
 
 func (s *signalrService) DeleteContent(id string) {
@@ -100,11 +123,39 @@ func (s *signalrService) DeleteContent(id string) {
 }
 
 func (s *signalrService) Notify(notification models.Notification) {
+	if !s.connectionHappened {
+		return
+	}
+
+	if notification.Owner.Valid {
+		s.sendToUser(uint(notification.Owner.Int32), notification)
+		return
+	}
+
+	if len(notification.RequiredRoles) > 0 {
+		for _, role := range notification.RequiredRoles {
+			s.Clients().Group(role).Send(string(payload.EventTypeNotification), notification)
+			s.Clients().Group(role).Send(string(payload.EvenTypeNotificationAdd), fiber.Map{})
+		}
+		return
+	}
+
 	s.Broadcast(payload.EventTypeNotification, notification)
+	s.Broadcast(payload.EvenTypeNotificationAdd, fiber.Map{})
+}
+
+func (s *signalrService) sendToUser(userId uint, n models.Notification) {
+	connId, ok := s.clients.Get(userId)
+	if !ok {
+		return
+	}
+
+	s.Clients().Client(connId).Send(string(payload.EventTypeNotification), n)
+	s.Clients().Group(connId).Send(string(payload.EvenTypeNotificationAdd), fiber.Map{})
 }
 
 func (s *signalrService) setup(app *fiber.App) error {
-	server, err := signalr.NewServer(context.TODO(), signalr.UseHub(s),
+	server, err := signalr.NewServer(context.Background(), signalr.UseHub(s),
 		signalr.Logger(&kitLoggerAdapter{log: s.log}, false))
 	if err != nil {
 		return err

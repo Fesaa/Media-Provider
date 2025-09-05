@@ -2,14 +2,15 @@ package core
 
 import (
 	"fmt"
-	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/rs/zerolog"
 	"path"
 	"path/filepath"
 	"regexp"
 	"slices"
 	"strconv"
+
+	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/rs/zerolog"
 )
 
 // Chapter represents any downloadable group of images

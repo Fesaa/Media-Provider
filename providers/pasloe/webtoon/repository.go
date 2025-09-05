@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/http/menou"
-	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog"
 )
 
 const (

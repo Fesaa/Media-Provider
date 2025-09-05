@@ -2,6 +2,10 @@ package core
 
 import (
 	"context"
+	"io"
+	"reflect"
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
@@ -11,9 +15,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"io"
-	"reflect"
-	"testing"
 )
 
 type PasloeClient struct {

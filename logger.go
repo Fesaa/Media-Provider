@@ -1,9 +1,6 @@
 package main
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
-	"github.com/rs/zerolog"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
 	"path"
@@ -11,6 +8,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/config"
+	"github.com/rs/zerolog"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func LogProvider(cfg *config.Config) zerolog.Logger {

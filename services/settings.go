@@ -2,13 +2,15 @@ package services
 
 import (
 	"errors"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"strconv"
-	"time"
 )
 
 type SettingsService interface {
@@ -43,7 +45,7 @@ func (s *settingsService) GetSettingsDto() (payload.Settings, error) {
 
 	var dto payload.Settings
 	for _, setting := range settings {
-		if err = s.ParseSetting(setting, &dto); err != nil {
+		if err = s.parseSetting(setting, &dto); err != nil {
 			return payload.Settings{}, err
 		}
 	}
@@ -61,7 +63,7 @@ func (s *settingsService) UpdateSettingsDto(dto payload.Settings) error {
 
 	var errs []error
 	settings = utils.Map(settings, func(t models.ServerSetting) models.ServerSetting {
-		if err = s.SerializeSetting(&t, dto); err != nil {
+		if err = s.serializeSetting(&t, dto); err != nil {
 			errs = append(errs, err)
 		}
 		return t
@@ -77,7 +79,7 @@ func (s *settingsService) UpdateSettingsDto(dto payload.Settings) error {
 	return nil
 }
 
-func (s *settingsService) SerializeSetting(setting *models.ServerSetting, dto payload.Settings) error {
+func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto payload.Settings) error { //nolint:unparam
 	var err error
 	switch setting.Key {
 	case models.RootDir:
@@ -102,12 +104,18 @@ func (s *settingsService) SerializeSetting(setting *models.ServerSetting, dto pa
 		setting.Value = strconv.FormatBool(dto.Oidc.AutoLogin)
 	case models.OidcDisablePasswordLogin:
 		setting.Value = strconv.FormatBool(dto.Oidc.DisablePasswordLogin)
+	case models.OidcClientSecret:
+		if dto.Oidc.ClientSecret != strings.Repeat("*", len(setting.Value)) {
+			setting.Value = dto.Oidc.ClientSecret
+		}
+	case models.OidcRedirectUrl:
+		setting.Value = dto.Oidc.RedirectURL
 	}
 
 	return err
 }
 
-func (s *settingsService) ParseSetting(setting models.ServerSetting, dto *payload.Settings) error {
+func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payload.Settings) error {
 	var err error
 	switch setting.Key {
 	case models.RootDir:
@@ -132,6 +140,10 @@ func (s *settingsService) ParseSetting(setting models.ServerSetting, dto *payloa
 		dto.Oidc.AutoLogin, err = strconv.ParseBool(setting.Value)
 	case models.OidcDisablePasswordLogin:
 		dto.Oidc.DisablePasswordLogin, err = strconv.ParseBool(setting.Value)
+	case models.OidcClientSecret:
+		dto.Oidc.ClientSecret = setting.Value
+	case models.OidcRedirectUrl:
+		dto.Oidc.RedirectURL = setting.Value
 	}
 
 	return err

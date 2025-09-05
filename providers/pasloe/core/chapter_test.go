@@ -1,12 +1,13 @@
 package core
 
 import (
-	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/utils"
 	"io"
 	"path/filepath"
 	"testing"
+
+	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 // SimpleChapter returns a chapter mock, args are

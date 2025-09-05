@@ -1,9 +1,10 @@
 package services
 
 import (
+	"testing"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
-	"testing"
 )
 
 func inMemFs() afero.Afero {

@@ -2,18 +2,18 @@ package services
 
 import (
 	"context"
-	"github.com/Fesaa/Media-Provider/db/models"
+	"io"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/rs/zerolog"
 	"github.com/valyala/fasthttp"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-	"sync"
-	"time"
 )
 
 type kitLoggerAdapter struct {
@@ -68,13 +68,18 @@ func (s *signalrService) ConnectEndpoint(ctx *fiber.Ctx) error {
 		})
 	}
 
-	user := ctx.Locals("user").(models.User)
-	if err := s.upgrader().Upgrade(ctx.Context(), s.WsInit(connectionID)); err != nil {
+	user := GetFromContext(ctx, UserKey)
+	if err := s.upgrader().Upgrade(ctx.Context(), s.wsInit(user.ID, connectionID)); err != nil {
 		s.log.Error().Err(err).Str("user", user.Name).Msg("Failed to upgrade connection")
 		return ctx.Status(fiber.StatusUpgradeRequired).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}
+
+	s.clients.Set(user.ID, connectionID)
+	/*for _, role := range user.Roles { //nolint:staticcheck
+		s.Groups().AddToGroup(string(role), connectionID)
+	}*/
 
 	return nil
 }
@@ -85,7 +90,7 @@ func (s *signalrService) upgrader() *websocket.FastHTTPUpgrader {
 		HandshakeTimeout:  5 * time.Second,
 	}
 
-	if os.Getenv("DEV") == "TRUE" {
+	if config.Development {
 		upgrader.CheckOrigin = func(ctx *fasthttp.RequestCtx) bool {
 			return true
 		}
@@ -94,7 +99,7 @@ func (s *signalrService) upgrader() *websocket.FastHTTPUpgrader {
 	return &upgrader
 }
 
-func (s *signalrService) WsInit(id string) func(conn *websocket.Conn) {
+func (s *signalrService) wsInit(userId uint, id string) func(conn *websocket.Conn) {
 	return func(conn *websocket.Conn) {
 		if err := s.server.Serve(newFastHttpConn(conn, id)); err != nil {
 			// 1001 Going Away & 1000 Normal Closure
@@ -108,6 +113,11 @@ func (s *signalrService) WsInit(id string) func(conn *websocket.Conn) {
 		} else {
 			s.log.Debug().Str("id", id).Msg("websocket connection succeeded")
 		}
+
+		s.clients.Delete(userId)
+		/*for _, role := range user.Roles { //nolint:staticcheck
+			s.Groups().RemoveFromGroup(string(role), connectionID)
+		}*/
 	}
 }
 

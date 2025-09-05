@@ -1,14 +1,15 @@
 package routes
 
 import (
+	"errors"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
 	"go.uber.org/dig"
-	"time"
 )
 
 type notificationRoutes struct {
@@ -16,47 +17,31 @@ type notificationRoutes struct {
 
 	DB     *db.Database
 	Router fiber.Router
-	Auth   services.AuthService `name:"jwt-auth"`
-	Log    zerolog.Logger
+	Auth   services.AuthService
 
 	NotificationService services.NotificationService
 	Transloco           services.TranslocoService
 }
 
 func RegisterNotificationRoutes(nr notificationRoutes) {
-	notificationGroup := nr.Router.Group("/notifications", nr.Auth.Middleware)
-	notificationGroup.Get("/all", nr.All)
-	notificationGroup.Get("/recent", nr.Recent)
-	notificationGroup.Get("/amount", nr.Amount)
-	notificationGroup.Post("/:id/read", nr.Read)
-	notificationGroup.Post("/:id/unread", nr.Unread)
-	notificationGroup.Delete("/:id", nr.Delete)
-	notificationGroup.Post("/many", nr.ReadMany)
-	notificationGroup.Post("/many/delete", nr.DeleteMany)
+	nr.Router.Group("/notifications", nr.Auth.Middleware).
+		Get("/all", withParam(newQueryParam("after", withAllowEmpty(time.Time{})), nr.all)).
+		Get("/recent", withParam(newQueryParam("limit", withAllowEmpty(5)), nr.recent)).
+		Get("/amount", nr.amount).
+		Post("/:id/read", withParam(newIdPathParam(), nr.read)).
+		Post("/:id/unread", withParam(newIdPathParam(), nr.unread)).
+		Delete("/:id", withParam(newIdPathParam(), nr.delete)).
+		Post("/many", withBody(nr.readMany)).
+		Post("/many/delete", withBody(nr.deleteMany))
 }
 
-func (nr *notificationRoutes) All(ctx *fiber.Ctx) error {
-	var notifications []models.Notification
-	var err error
-
-	timeS := ctx.Query("after", "")
-	if timeS != "" {
-		var t time.Time
-		t, err = time.Parse(time.RFC3339, timeS)
-		if err != nil {
-			nr.Log.Error().Err(err).Str("after", timeS).Msg("failed to parse passed time")
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": nr.Transloco.GetTranslation("invalid-time-format", err),
-			})
-		}
-
-		notifications, err = nr.DB.Notifications.AllAfter(t)
-	} else {
-		notifications, err = nr.DB.Notifications.All()
-	}
+func (nr *notificationRoutes) all(ctx *fiber.Ctx, after time.Time) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+	user := services.GetFromContext(ctx, services.UserKey)
+	notifications, err := nr.NotificationService.GetNotifications(user, after)
 
 	if err != nil {
-		nr.Log.Error().Err(err).Str("after", timeS).Msg("failed to fetch notifications")
+		log.Error().Err(err).Time("after", after).Msg("failed to fetch notifications")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -65,11 +50,12 @@ func (nr *notificationRoutes) All(ctx *fiber.Ctx) error {
 	return ctx.JSON(notifications)
 }
 
-func (nr *notificationRoutes) Recent(ctx *fiber.Ctx) error {
-	limit := ctx.QueryInt("limit", 5)
+func (nr *notificationRoutes) recent(ctx *fiber.Ctx, limit int) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	nots, err := nr.DB.Notifications.Recent(utils.Clamp(limit, 1, 10), models.GroupContent)
 	if err != nil {
-		nr.Log.Error().Err(err).Msg("failed to fetch recent notifications")
+		log.Error().Err(err).Msg("failed to fetch recent notifications")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -78,10 +64,12 @@ func (nr *notificationRoutes) Recent(ctx *fiber.Ctx) error {
 	return ctx.JSON(nots)
 }
 
-func (nr *notificationRoutes) Amount(ctx *fiber.Ctx) error {
+func (nr *notificationRoutes) amount(ctx *fiber.Ctx) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
+
 	size, err := nr.DB.Notifications.Unread()
 	if err != nil {
-		nr.Log.Error().Err(err).Msg("failed to fetch amount of unread notifications")
+		log.Error().Err(err).Msg("failed to fetch amount of unread notifications")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -89,91 +77,46 @@ func (nr *notificationRoutes) Amount(ctx *fiber.Ctx) error {
 	return ctx.JSON(size)
 }
 
-func (nr *notificationRoutes) Read(ctx *fiber.Ctx) error {
-	id, err := ParamsUInt(ctx, "id")
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	err = nr.NotificationService.MarkRead(id)
-	if err != nil {
-		nr.Log.Error().Err(err).Msg("failed to mark notification read")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+func (nr *notificationRoutes) read(ctx *fiber.Ctx, id uint) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+	err := nr.NotificationService.MarkRead(user, id)
+	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) ReadMany(ctx *fiber.Ctx) error {
-	var ids []uint
-	if err := ctx.BodyParser(&ids); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	if err := nr.NotificationService.MarkReadMany(ids); err != nil {
-		nr.Log.Error().Err(err).Msg("failed to mark notifications read")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+func (nr *notificationRoutes) readMany(ctx *fiber.Ctx, ids []uint) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+	err := nr.NotificationService.MarkReadMany(user, ids)
+	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) Unread(ctx *fiber.Ctx) error {
-	id, err := ParamsUInt(ctx, "id")
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	err = nr.NotificationService.MarkUnRead(id)
-	if err != nil {
-		nr.Log.Error().Err(err).Msg("failed to mark notification unread")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+func (nr *notificationRoutes) unread(ctx *fiber.Ctx, id uint) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+	err := nr.NotificationService.MarkUnRead(user, id)
+	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) DeleteMany(ctx *fiber.Ctx) error {
-	var ids []uint
-	if err := ctx.BodyParser(&ids); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	if err := nr.DB.Notifications.DeleteMany(ids); err != nil {
-		nr.Log.Error().Err(err).Msg("failed to delete notifications")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+func (nr *notificationRoutes) deleteMany(ctx *fiber.Ctx, ids []uint) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+	err := nr.NotificationService.DeleteMany(user, ids)
+	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) Delete(ctx *fiber.Ctx) error {
-	id, err := ParamsUInt(ctx, "id")
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+func (nr *notificationRoutes) delete(ctx *fiber.Ctx, id uint) error {
+	user := services.GetFromContext(ctx, services.UserKey)
+	err := nr.NotificationService.Delete(user, id)
+	return nr.handleServiceError(ctx, err)
+}
+
+func (nr *notificationRoutes) handleServiceError(ctx *fiber.Ctx, err error) error {
+	if err == nil {
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 	}
 
-	err = nr.DB.Notifications.Delete(id)
-	if err != nil {
-		nr.Log.Error().Err(err).Msg("failed to delete notification")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+	if errors.Is(err, fiber.ErrUnauthorized) {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
+
+	return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		"error": err.Error(),
+	})
 }

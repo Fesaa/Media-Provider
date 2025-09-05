@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/Fesaa/Media-Provider/utils"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 var (
@@ -19,6 +20,15 @@ var (
 
 	// SkipTagsOnFailure will skip tag writing if preferences fail to load
 	SkipTagsOnFailure = boolFeature("SKIP_TAGS_ON_FAILURE")
+
+	NoHttpLog      = boolFeature("NO_HTTP_LOG")
+	ReducedHttpLog = boolFeature("REDUCED_HTTP_LOG")
+	Development    = boolFeature("DEVELOPMENT") || boolFeature("DEV")
+	Docker         = boolFeature("DOCKER")
+	DatabaseDsn    = stringFeature("DATABASE_DSN")
+	Language       = stringFeature("LANGUAGE")
+	ConfigDir      = stringFeature("CONFIG_DIR")
+	ConfigFile     = stringFeature("CONFIG_FILE")
 )
 
 func arrayFeature[T any](key string, f func(string, ...string) T) []T {
@@ -39,7 +49,7 @@ func arrayFeature[T any](key string, f func(string, ...string) T) []T {
 	})
 }
 
-func boolFeature(key string, orValue ...string) bool {
+func boolFeature(key string, orValue ...string) bool { //nolint:unparam
 	val, ok := envOrValue(key, orValue)
 	if !ok {
 		return false
@@ -61,7 +71,7 @@ func intFeature(key string, orValue ...string) int {
 	return valInt
 }
 
-func stringFeature(key string, orValue ...string) string {
+func stringFeature(key string, orValue ...string) string { //nolint:unparam
 	val, ok := envOrValue(key, orValue)
 	if !ok {
 		return ""

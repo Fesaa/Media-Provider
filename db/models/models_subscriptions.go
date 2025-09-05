@@ -2,18 +2,15 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
-	"gorm.io/gorm"
 	"time"
-)
 
-var (
-	ErrFailedToLoadPreferences = errors.New("failed to load preferences")
+	"gorm.io/gorm"
 )
 
 type Subscription struct {
 	Model
 
+	Owner            uint                    `json:"owner"`
 	Provider         Provider                `json:"provider" gorm:"type:int"`
 	ContentId        string                  `json:"contentId"`
 	RefreshFrequency RefreshFrequency        `json:"refreshFrequency" gorm:"type:int"`
@@ -40,7 +37,7 @@ func (s *Subscription) AfterFind(tx *gorm.DB) (err error) {
 	return json.Unmarshal(s.Metadata, &s.Payload.Extra)
 }
 
-func (s *Subscription) ShouldRefresh(old *Subscription) bool {
+func (s *Subscription) shouldRefresh(old *Subscription) bool {
 	return s.RefreshFrequency != old.RefreshFrequency
 }
 
@@ -55,7 +52,7 @@ func (s *Subscription) normalize(t time.Time, hour int) time.Time {
 func (s *Subscription) NextExecution(hour int) time.Time {
 	diff := time.Since(s.Info.LastCheck)
 
-	if diff > s.RefreshFrequency.AsDuration() {
+	if diff > s.RefreshFrequency.asDuration() {
 		next := s.normalize(time.Now(), hour)
 
 		if time.Now().After(next) {
@@ -65,7 +62,7 @@ func (s *Subscription) NextExecution(hour int) time.Time {
 		return next
 	}
 
-	next := time.Now().Add(s.RefreshFrequency.AsDuration() - diff)
+	next := time.Now().Add(s.RefreshFrequency.asDuration() - diff)
 	next = s.normalize(next, hour)
 
 	// Save guard, but should not happen
@@ -97,7 +94,7 @@ const (
 	Month
 )
 
-func (f RefreshFrequency) AsDuration() time.Duration {
+func (f RefreshFrequency) asDuration() time.Duration {
 	switch f {
 	case Day:
 		return time.Hour * 24

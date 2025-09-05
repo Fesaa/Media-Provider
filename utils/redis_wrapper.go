@@ -3,10 +3,11 @@ package utils
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
-	"time"
 )
 
 func NewRedisCacheStorage(log zerolog.Logger, clientName, redisAddr string) fiber.Storage {

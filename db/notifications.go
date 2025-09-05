@@ -1,10 +1,11 @@
 package db
 
 import (
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
-	"time"
 )
 
 func Notifications(db *gorm.DB) models.Notifications {

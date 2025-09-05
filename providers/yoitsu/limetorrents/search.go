@@ -2,11 +2,12 @@ package limetorrents
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 const BaseUrl string = "https://www.limetorrents.lol"

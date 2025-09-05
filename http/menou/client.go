@@ -1,9 +1,10 @@
 package menou
 
 import (
-	"github.com/rs/zerolog"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 var DefaultClient = &Client{

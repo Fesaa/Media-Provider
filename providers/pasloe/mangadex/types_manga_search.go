@@ -2,6 +2,7 @@ package mangadex
 
 import (
 	"fmt"
+
 	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"

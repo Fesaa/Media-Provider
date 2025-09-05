@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Fesaa/Media-Provider/http/menou"
-	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/rs/zerolog"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/rs/zerolog"
 )
 
 const (

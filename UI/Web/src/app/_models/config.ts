@@ -6,14 +6,22 @@ export type Config = {
   maxConcurrentImages: number;
   disableIpv6: boolean;
   rootDir: string;
-  oidc: Oidc
+  oidc: OidcConfig
+}
+
+export type OidcConfig = {
+  authority: string;
+  clientId: string;
+  clientSecret: string;
+  redirectUrl: string;
+  disablePasswordLogin: boolean;
+  autoLogin: boolean;
 }
 
 export type Oidc = {
-  authority: string;
-  clientId: string;
   disablePasswordLogin: boolean;
   autoLogin: boolean;
+  enabled: boolean;
 }
 
 export enum CacheType {

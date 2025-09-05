@@ -2,8 +2,8 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  computed,
-  HostListener,
+  computed, effect,
+  HostListener, inject,
   OnInit,
   signal
 } from '@angular/core';
@@ -14,7 +14,6 @@ import {NavService} from "../_services/nav.service";
 import {NotificationService} from "../_services/notification.service";
 import {EventType, SignalRService} from "../_services/signal-r.service";
 import {TranslocoService} from "@jsverse/transloco";
-import {OidcService} from "../_services/oidc.service";
 import {User} from "../_models/user";
 import {Page} from "../_models/page";
 import {AsyncPipe, TitleCasePipe} from "@angular/common";
@@ -64,8 +63,17 @@ const dropdownAnimation = trigger('dropdownAnimation', [
 })
 export class NavHeaderComponent implements OnInit {
 
+  private readonly pageService = inject(PageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly cdRef = inject(ChangeDetectorRef);
+  private readonly accountService = inject(AccountService);
+  protected readonly navService = inject(NavService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly signalR = inject(SignalRService);
+  private readonly transLoco = inject(TranslocoService);
+
   notifications = signal(0);
-  currentUser = signal<User | null>(null);
+  currentUser = this.accountService.currentUserSignal;
   pageItems = signal<Page[]>([]);
   accountItems = signal<NavItem[]>([]);
 
@@ -79,29 +87,10 @@ export class NavHeaderComponent implements OnInit {
     return 'danger';
   });
 
-  constructor(
-    private pageService: PageService,
-    private route: ActivatedRoute,
-    private cdRef: ChangeDetectorRef,
-    private accountService: AccountService,
-    protected navService: NavService,
-    private notificationService: NotificationService,
-    private signalR: SignalRService,
-    private transLoco: TranslocoService,
-    private oidcService: OidcService
-  ) {}
-
-  ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
-      const index = params['index'];
-      if (index) {
-        // Not used here, preserved for logic continuity
-      }
-    });
-
-    this.accountService.currentUser$.subscribe(user => {
+  constructor() {
+    effect(() => {
+      const user = this.currentUser();
       if (!user) return;
-      this.currentUser.set(user);
 
       this.transLoco.events$.subscribe(event => {
         if (event.type === "translationLoadSuccess") {
@@ -113,6 +102,18 @@ export class NavHeaderComponent implements OnInit {
       this.notificationService.amount().subscribe(amount => {
         this.notifications.set(amount);
       });
+    });
+    effect(() => {
+      this.loadPages(); // Calls the pages effect
+    });
+  }
+
+  ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const index = params['index'];
+      if (index) {
+        // Not used here, preserved for logic continuity
+      }
     });
 
     this.signalR.events$.subscribe(event => {
@@ -127,22 +128,20 @@ export class NavHeaderComponent implements OnInit {
   }
 
   loadPages() {
-    this.pageService.pages$.subscribe(pages => {
-      this.pageItems.set([
-        {
-          title: this.transLoco.translate("nav-bar.home"),
-          ID: -1,
-          icon: "fa-home",
-          dirs: [],
-          customRootDir: '',
-          modifiers: [],
-          providers: [],
-          sortValue: -100,
-        },
-        ...pages
-      ]);
-      this.cdRef.markForCheck();
-    });
+    const pages = this.pageService.pages();
+    this.pageItems.set([
+      {
+        title: this.transLoco.translate("nav-bar.home"),
+        ID: -1,
+        icon: "fa-home",
+        dirs: [],
+        customRootDir: '',
+        modifiers: [],
+        providers: [],
+        sortValue: -100,
+      },
+      ...pages
+    ]);
   }
 
   setAccountItems(user: User) {
@@ -173,7 +172,6 @@ export class NavHeaderComponent implements OnInit {
   }
 
   logout() {
-    this.oidcService.logout();
     this.accountService.logout();
   }
 

@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
@@ -12,10 +17,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"path"
-	"strings"
-	"sync"
-	"time"
 )
 
 func New(s services.SettingsService, container *dig.Container, log zerolog.Logger,
@@ -103,7 +104,7 @@ func (c *client) Download(req payload.DownloadRequest) error {
 	}
 
 	c.content.Set(content.Id(), content)
-	c.signalR.AddContent(content.GetInfo())
+	c.signalR.AddContent(content.Request().OwnerId, content.GetInfo())
 
 	pq := c.getOrCreateProviderQueue(content.Provider())
 
@@ -148,7 +149,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 		defer c.deletionWg.Done()
 
 		content.Cancel()
-		c.signalR.StateUpdate(content.Id(), payload.ContentStateCleanup)
+		c.signalR.StateUpdate(content.Request().OwnerId, content.Id(), payload.ContentStateCleanup)
 
 		if req.DeleteFiles {
 			c.deleteFiles(content)
@@ -230,13 +231,15 @@ func (c *client) logContentCompletion(content core.Downloadable) {
 		body += c.transLoco.GetTranslation("content-line", path.Base(newContent))
 	}
 
-	c.notifier(content.Request()).Notify(models.Notification{
-		Title:   c.transLoco.GetTranslation("download-finished-title"),
-		Summary: summary,
-		Body:    body,
-		Colour:  models.Secondary,
-		Group:   models.GroupContent,
-	})
+	c.notifier(content.Request()).Notify(models.NewNotification().
+		WithTitle(c.transLoco.GetTranslation("download-finished-title")).
+		WithSummary(summary).
+		WithBody(body).
+		WithColour(models.Secondary).
+		WithGroup(models.GroupContent).
+		WithOwner(content.Request().OwnerId).
+		WithRequiredRoles(models.ViewAllDownloads).
+		Build())
 }
 
 func (c *client) GetCurrentDownloads() []core.Downloadable {
@@ -417,11 +420,15 @@ func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...er
 	if joinedErr == nil {
 		return
 	}
-	c.notify.NotifyContent(
-		c.transLoco.GetTranslation("cleanup-errors-title"),
-		c.transLoco.GetTranslation("cleanup-errors-summary", content.Title()),
-		joinedErr.Error(),
-		models.Error)
+	c.notify.Notify(models.NewNotification().
+		WithTitle(c.transLoco.GetTranslation("cleanup-errors-title")).
+		WithSummary(c.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
+		WithBody(joinedErr.Error()).
+		WithGroup(models.GroupError).
+		WithColour(models.Error).
+		WithOwner(content.Request().OwnerId).
+		WithRequiredRoles(models.ViewAllDownloads).
+		Build())
 }
 
 func (c *client) wrapError(err error) error {

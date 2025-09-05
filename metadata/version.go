@@ -1,13 +1,14 @@
 package metadata
 
 import (
-	"github.com/Fesaa/Media-Provider/utils"
 	"strconv"
 	"strings"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 const (
-	Version SemanticVersion = "0.2.4"
+	Version SemanticVersion = "0.3.0"
 )
 
 type SemanticVersion string

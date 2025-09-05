@@ -7,11 +7,12 @@ import (
 // Validate is for API requests, we manually validate stuff on startup
 
 type Config struct {
-	Version int    `json:"version"`
-	SyncId  int    `json:"sync_id"`
-	RootDir string `json:"root_dir"`
-	BaseUrl string `json:"base_url"`
-	Secret  string `json:"secret"`
+	Version      int    `json:"version"`
+	SyncId       int    `json:"sync_id"`
+	RootDir      string `json:"root_dir"`
+	BaseUrl      string `json:"base_url"`
+	Secret       string `json:"secret"`
+	CookieSecret string `json:"cookie_secret"`
 
 	HasUpdatedDB bool `json:"has_updated_db"`
 

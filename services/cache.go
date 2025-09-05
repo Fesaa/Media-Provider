@@ -1,11 +1,12 @@
 package services
 
 import (
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
-	"time"
 )
 
 type CacheService interface {

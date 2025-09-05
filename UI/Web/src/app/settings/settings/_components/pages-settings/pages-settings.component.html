@@ -3,14 +3,11 @@
 
     <h2 class="h2 fw-bold mt-4 mb-3">{{ t('title') }}</h2>
 
-    @if (hasPermission(user()!, Perm.WritePage)) {
-      <div class="d-flex justify-content-end mb-3">
-        <button type="button" class="btn btn-primary" (click)="edit(null)">
-          <i class="fa fa-plus"></i>
-        </button>
-      </div>
-
-    }
+    <div class="d-flex justify-content-end mb-3">
+      <button type="button" class="btn btn-primary" (click)="edit(null)">
+        <i class="fa fa-plus"></i>
+      </button>
+    </div>
 
     <app-table
       [pagination]="false"
@@ -48,25 +45,21 @@
         </td>
 
         <td class="table-cell d-flex align-items-center gap-2 justify-end">
-          @if (hasPermission(user()!, Perm.WritePage)) {
-            <button
-              type="button"
-              class="btn btn-small"
-              (click)="edit(item)"
-            >
-              <i class="fa fa-edit"></i>
-            </button>
-          }
+          <button
+            type="button"
+            class="btn btn-small"
+            (click)="edit(item)"
+          >
+            <i class="fa fa-edit"></i>
+          </button>
 
-          @if (hasPermission(user()!, Perm.DeletePage)) {
-            <button
-              type="button"
-              class="btn btn-small text-danger"
-              (click)="remove(item)"
-            >
-              <i class="fa fa-trash"></i>
-            </button>
-          }
+          <button
+            type="button"
+            class="btn btn-small text-danger"
+            (click)="remove(item)"
+          >
+            <i class="fa fa-trash"></i>
+          </button>
         </td>
       </ng-template>
     </app-table>

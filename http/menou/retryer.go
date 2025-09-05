@@ -1,10 +1,11 @@
 package menou
 
 import (
-	"github.com/rs/zerolog"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 type retryer struct {

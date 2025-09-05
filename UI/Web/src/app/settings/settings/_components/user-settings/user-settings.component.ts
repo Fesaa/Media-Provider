@@ -1,6 +1,6 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject, OnInit, signal} from '@angular/core';
 import {AccountService} from "../../../../_services/account.service";
-import {hasPermission, Perm, User, UserDto} from "../../../../_models/user";
+import {User, UserDto} from "../../../../_models/user";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {FormsModule} from "@angular/forms";
 import {ToastService} from '../../../../_services/toast.service';
@@ -10,6 +10,7 @@ import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {ModalService} from "../../../../_services/modal.service";
 import {EditUserModalComponent} from "./_components/edit-user-modal/edit-user-modal.component";
 import {DefaultModalOptions} from "../../../../_models/default-modal-options";
+import {PageService} from "../../../../_services/page.service";
 
 @Component({
   selector: 'app-user-settings',
@@ -25,23 +26,14 @@ import {DefaultModalOptions} from "../../../../_models/default-modal-options";
 export class UserSettingsComponent implements OnInit {
 
   private readonly modalService = inject(ModalService);
+  private readonly accountService = inject(AccountService);
+  private readonly pageService = inject(PageService);
+  private readonly toastService = inject(ToastService);
+  private readonly clipBoard = inject(Clipboard);
 
-  users: UserDto[] = []
-  authUser: User | null = null;
-
-  protected readonly hasPermission = hasPermission;
-  protected readonly Perm = Perm;
-
-  constructor(private accountService: AccountService,
-              private toastService: ToastService,
-              private clipBoard: Clipboard,
-  ) {
-    this.accountService.currentUser$.subscribe(user => {
-      if (user) {
-        this.authUser = user;
-      }
-    })
-  }
+  users = signal<UserDto[]>([]);
+  pages = this.pageService.pages;
+  authUser = this.accountService.currentUserSignal();
 
   ngOnInit(): void {
     this.loadUsers();
@@ -50,7 +42,7 @@ export class UserSettingsComponent implements OnInit {
   loadUsers() {
     this.accountService.all().subscribe({
       next: users => {
-        this.users = users;
+        this.users.set(users);
       },
       error: err => {
         this.toastService.genericError(err.error.message);
@@ -82,7 +74,7 @@ export class UserSettingsComponent implements OnInit {
 
   async resetPassword(user: UserDto) {
     if (!await this.modalService.confirm({
-      question: translate("settings.users.confirm-reset-password-password", {name: user.name})
+      question: translate("settings.users.confirm-reset-password", {name: user.name})
     })) {
       return;
     }
@@ -107,7 +99,7 @@ export class UserSettingsComponent implements OnInit {
 
     this.accountService.delete(user.id).subscribe({
       next: _ => {
-        this.users = this.users.filter(dto => dto.id !== user.id)
+        this.users.update(users => users.filter(dto => dto.id !== user.id));
         this.toastService.successLoco("settings.users.toasts.delete.success", {name: user.name});
       },
       error: err => {
@@ -118,7 +110,7 @@ export class UserSettingsComponent implements OnInit {
   }
 
   emptyUserPresent() {
-    return this.users.find(user => user.id === 0) !== undefined;
+    return this.users().find(user => user.id === 0) !== undefined;
   }
 
   trackBy(idx: number, user: UserDto) {
@@ -132,8 +124,10 @@ export class UserSettingsComponent implements OnInit {
       name: '',
       email: '',
       canDelete: false,
-      permissions: 0,
+      roles: [],
+      pages: [],
     });
+    component.pages.set(this.pages());
 
     modal.result.then(() => this.loadUsers());
   }

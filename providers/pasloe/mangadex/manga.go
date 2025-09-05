@@ -3,6 +3,7 @@ package mangadex
 import (
 	"context"
 	"fmt"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"

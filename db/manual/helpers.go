@@ -13,3 +13,9 @@ func getCurrentVersion(db *gorm.DB) string {
 	}
 	return row.Value
 }
+
+func getDefaultUser(db *gorm.DB) (models.User, error) {
+	var defaultUser models.User
+	err := db.Find(&defaultUser, "original = ?", true).Error
+	return defaultUser, err
+}

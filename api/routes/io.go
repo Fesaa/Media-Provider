@@ -1,14 +1,14 @@
 package routes
 
 import (
+	"path"
+	"strings"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/services"
-	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"path"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,8 +18,7 @@ type ioRoutes struct {
 
 	Router          fiber.Router
 	Cfg             *config.Config
-	Auth            services.AuthService `name:"jwt-auth"`
-	Log             zerolog.Logger
+	Auth            services.AuthService
 	Val             services.ValidationService
 	Transloco       services.TranslocoService
 	SettingsService services.SettingsService
@@ -27,19 +26,13 @@ type ioRoutes struct {
 }
 
 func RegisterIoRoutes(ior ioRoutes) {
-	io := ior.Router.Group("/io", ior.Auth.Middleware)
-	io.Post("/ls", ior.ListDirs)
-	io.Post("/create", ior.CreateDir)
+	ior.Router.Group("/io", ior.Auth.Middleware).
+		Post("/ls", withBodyValidation(ior.listDirs)).
+		Post("/create", withBodyValidation(ior.createDir))
 }
 
-func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
-	var req payload.ListDirsRequest
-	if err := ior.Val.ValidateCtx(ctx, &req); err != nil {
-		ior.Log.Warn().Err(err).Msg("failed to parse request")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
+func (ior *ioRoutes) listDirs(ctx *fiber.Ctx, req payload.ListDirsRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	settings, err := ior.SettingsService.GetSettingsDto()
 	if err != nil {
@@ -50,7 +43,7 @@ func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
 
 	entries, err := ior.Fs.ReadDir(path.Join(settings.RootDir, path.Clean(req.Dir)))
 	if err != nil {
-		ior.Log.Warn().Err(err).Msg("failed to read dir")
+		log.Warn().Err(err).Msg("failed to read dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -67,22 +60,16 @@ func (ior *ioRoutes) ListDirs(ctx *fiber.Ctx) error {
 	return ctx.JSON(out)
 }
 
-type CreateDirRequest struct {
+type createDirRequest struct {
 	BaseDir string `json:"baseDir"`
 	NewDir  string `json:"newDir"`
 }
 
-func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
-	var req CreateDirRequest
-	if err := ior.Val.ValidateCtx(ctx, &req); err != nil {
-		ior.Log.Warn().Err(err).Msg("failed to parse request")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
-	}
+func (ior *ioRoutes) createDir(ctx *fiber.Ctx, req createDirRequest) error {
+	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	if strings.Contains(req.NewDir, "..") || strings.Contains(req.BaseDir, "..") {
-		ior.Log.Warn().Str("newDir", req.NewDir).Str("baseDir", req.BaseDir).
+		log.Warn().Str("newDir", req.NewDir).Str("baseDir", req.BaseDir).
 			Msg("path contained invalid characters")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": ior.Transloco.GetTranslation("invalid-path"),
@@ -98,7 +85,7 @@ func (ior *ioRoutes) CreateDir(ctx *fiber.Ctx) error {
 
 	p := path.Join(settings.RootDir, req.BaseDir, path.Clean(req.NewDir))
 	if err = ior.Fs.Mkdir(p, 0755); err != nil {
-		ior.Log.Warn().Err(err).Msg("failed to create dir")
+		log.Warn().Err(err).Msg("failed to create dir")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})

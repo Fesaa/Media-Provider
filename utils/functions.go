@@ -5,13 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"github.com/rs/zerolog"
-	"go.uber.org/dig"
 	"math"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
+	"go.uber.org/dig"
 )
 
 // WaitFor waits for at most d, and at least until wg has finished
@@ -57,6 +58,15 @@ func Clamp(val, minV, maxV int) int {
 }
 
 func GenerateSecret(length int) (string, error) {
+	secret := make([]byte, length)
+	_, err := rand.Read(secret)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(secret), nil
+}
+
+func GenerateUrlSecret(length int) (string, error) {
 	secret := make([]byte, length)
 	_, err := rand.Read(secret)
 	if err != nil {

@@ -1,9 +1,10 @@
 package webtoon
 
 import (
+	"io"
+
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/rs/zerolog"
-	"io"
 )
 
 func tempRepository(w io.Writer) Repository {

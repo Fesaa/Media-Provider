@@ -3,12 +3,13 @@ package services
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/zerolog"
-	"time"
 )
 
 type SubscriptionService interface {
@@ -16,6 +17,8 @@ type SubscriptionService interface {
 	Get(uint) (*models.Subscription, error)
 	// All returns all active subscriptions
 	All() ([]models.Subscription, error)
+	// AllForUser returns all active subscriptions for the given user
+	AllForUser(uint) ([]models.Subscription, error)
 	// Add a new subscription, saved to DB and starts the cron job
 	// Subscription is normalized in the process
 	Add(models.Subscription) (*models.Subscription, error)
@@ -129,6 +132,10 @@ func (s *subscriptionService) All() ([]models.Subscription, error) {
 	return s.db.Subscriptions.All()
 }
 
+func (s *subscriptionService) AllForUser(userId uint) ([]models.Subscription, error) {
+	return s.db.Subscriptions.AllForUser(userId)
+}
+
 func (s *subscriptionService) Get(id uint) (*models.Subscription, error) {
 	return s.db.Subscriptions.Get(id)
 }
@@ -202,8 +209,13 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 		subs, err := s.All()
 		if err != nil {
 			s.log.Error().Err(err).Msg("failed to get subscriptions")
-			s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-to-run-subscriptions"),
-				s.transloco.GetTranslation("failed-to-run-subscriptions-body", err), models.Error)
+			s.notifier.Notify(models.NewNotification().
+				WithTitle(s.transloco.GetTranslation("failed-to-run-subscriptions")).
+				WithBody(s.transloco.GetTranslation("failed-to-run-subscriptions-body", err)).
+				WithGroup(models.GroupError).
+				WithColour(models.Error).
+				WithRequiredRoles(models.ManageSubscriptions).
+				Build())
 			return
 		}
 
@@ -237,8 +249,13 @@ func (s *subscriptionService) handleSub(sub models.Subscription, hour int) {
 			Uint("id", sub.ID).
 			Str("contentId", sub.ContentId).
 			Msg("failed to download content")
-		s.notifier.NotifyContentQ(s.transloco.GetTranslation("failed-sub"),
-			s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err))
+		s.notifier.Notify(models.NewNotification().
+			WithTitle(s.transloco.GetTranslation("failed-sub")).
+			WithBody(s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err)).
+			WithGroup(models.GroupError).
+			WithColour(models.Error).
+			WithRequiredRoles(models.ManageSubscriptions).
+			Build())
 		return
 	}
 

@@ -1,10 +1,11 @@
 package db
 
 import (
+	"testing"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
-	"testing"
 )
 
 func databaseHelper(t *testing.T) *gorm.DB {

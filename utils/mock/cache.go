@@ -1,8 +1,9 @@
 package mock
 
 import (
-	"github.com/Fesaa/Media-Provider/config"
 	"time"
+
+	"github.com/Fesaa/Media-Provider/config"
 )
 
 type Cache struct{}

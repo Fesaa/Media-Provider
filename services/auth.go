@@ -2,244 +2,151 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
-	"time"
+	"golang.org/x/oauth2"
 )
 
 const (
-	ApiQueryKey = "api-key"
-	Header      = "Authorization"
-	Scheme      = "Bearer"
+	apiQueryKey = "api-key"
+
+	tokenCookie = "mp_token"
+	stateCookie = "mp_oauth_state"
+	idToken     = "id_token"
+
+	stateCookieMaxAge = 10 * 60
 )
 
-type AuthService interface {
-	// IsAuthenticated checks the current request for authentication. This should be handled by the middleware
-	IsAuthenticated(ctx *fiber.Ctx) (bool, error)
-
-	// Login logs the current user in.
-	Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error)
-
+type AuthMiddleware interface {
 	Middleware(ctx *fiber.Ctx) error
 }
 
-type MpClaims struct {
+type AuthService interface {
+	AuthMiddleware
+
+	Login(ctx *fiber.Ctx, loginRequest payload.LoginRequest) (*payload.LoginResponse, error)
+	Logout(ctx *fiber.Ctx)
+	GetOIDCLoginURL(ctx *fiber.Ctx) (string, error)
+	HandleOIDCCallback(ctx *fiber.Ctx) error
+}
+
+type mpClaims struct {
 	User models.User `json:"user,omitempty"`
 	jwt.RegisteredClaims
 }
 
-var (
-	ErrMissingOrMalformedAPIKey = errors.New("missing or malformed API key")
-	ErrEmailNotVerified         = errors.New("email not verified")
-	ErrCouldNotLinkUser         = errors.New("could not link user")
-)
-
-type jwtAuthService struct {
-	users models.Users
-	cfg   *config.Config
-	log   zerolog.Logger
-
-	iss      string
-	verifier *oidc.IDTokenVerifier
+type OIDCTokens struct {
+	UserId       uint      `json:"user_id"`
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
+	IDToken      string    `json:"id_token"`
+	ExpiresIn    time.Time `json:"expires_in"`
 }
 
-func JwtAuthServiceProvider(service SettingsService, users models.Users, cfg *config.Config, log zerolog.Logger) (AuthService, error) {
-	settings, err := service.GetSettingsDto()
+var (
+	errEmailNotVerified = errors.New("email not verified")
+	errCouldNotLinkUser = errors.New("could not link user")
+	errInvalidState     = errors.New("invalid OAuth state")
+)
+
+type cookieAuthService struct {
+	users   models.Users
+	cfg     *config.Config
+	log     zerolog.Logger
+	storage CacheService
+
+	oidcProvider *oidc.Provider
+	oauth2Config *oauth2.Config
+	verifier     *oidc.IDTokenVerifier
+
+	cookiesRefresh utils.SafeMap[uint, bool]
+}
+
+type cookieAuthServiceParams struct {
+	dig.In
+
+	Users   models.Users
+	Service SettingsService
+	Storage CacheService
+	Config  *config.Config
+	Log     zerolog.Logger
+}
+
+func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, error) {
+	settings, err := params.Service.GetSettingsDto()
 	if err != nil {
 		return nil, err
 	}
 
-	s := &jwtAuthService{
-		users: users,
-		cfg:   cfg,
-		log:   log.With().Str("handler", "jwt-auth-service").Logger(),
+	s := &cookieAuthService{
+		users:          params.Users,
+		storage:        params.Storage,
+		cfg:            params.Config,
+		cookiesRefresh: utils.NewSafeMap[uint, bool](),
+		log:            params.Log.With().Str("handler", "cookie-auth-service").Logger(),
 	}
 
-	verifier, err := s.oidcTokenVerifier(settings)
-	if err != nil {
-		return nil, err
+	if err = s.setupOIDC(settings); err != nil {
+		return nil, fmt.Errorf("failed to setup OIDC: %w", err)
 	}
 
-	s.verifier = verifier
-	s.iss = settings.Oidc.Authority
 	return s, nil
 }
 
-func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthService {
-	return &apiKeyAuthService{
-		users: params.Users,
-		jwt:   params.JWT,
-		log:   params.Log.With().Str("handler", "api-key-auth-service").Logger(),
+func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
+	if settings.Oidc.Authority == "" || settings.Oidc.ClientID == "" || settings.Oidc.ClientSecret == "" {
+		s.log.Debug().
+			Str("authority", settings.Oidc.Authority).
+			Str("client_id", settings.Oidc.ClientID).
+			Bool("has_secret", settings.Oidc.ClientSecret != "").
+			Msg("OIDC not fully configured, skipping setup")
+		return nil
 	}
+
+	provider, err := oidc.NewProvider(context.Background(), settings.Oidc.Authority)
+	if err != nil {
+		return fmt.Errorf("failed to create OIDC provider: %w", err)
+	}
+
+	s.oidcProvider = provider
+	s.verifier = provider.Verifier(&oidc.Config{ClientID: settings.Oidc.ClientID})
+
+	s.oauth2Config = &oauth2.Config{
+		ClientID:     settings.Oidc.ClientID,
+		ClientSecret: settings.Oidc.ClientSecret,
+		RedirectURL:  settings.Oidc.RedirectURL,
+		Endpoint:     provider.Endpoint(),
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+	}
+
+	s.log.Debug().
+		Str("authority", settings.Oidc.Authority).
+		Str("client_id", settings.Oidc.ClientID).
+		Str("redirect_url", settings.Oidc.RedirectURL).
+		Msg("OIDC configured successfully")
+	return nil
 }
 
-func GetIssuerFromToken(tokenString string) (string, error) {
-	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
+func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
+	user, err := s.users.GetByName(loginRequest.UserName)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse token: %w", err)
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", errors.New("invalid token claims")
-	}
-
-	issuer, ok := claims["iss"].(string)
-	if !ok {
-		return "", errors.New("issuer claim not found or not a string")
-	}
-
-	return issuer, nil
-}
-
-func (jwtAuth *jwtAuthService) Middleware(ctx *fiber.Ctx) error {
-	isAuthenticated, err := jwtAuth.IsAuthenticated(ctx)
-	if !isAuthenticated {
-		if err != nil {
-			jwtAuth.log.Debug().Err(err).Msg("error while checking authentication status")
-		}
-
-		return ctx.SendStatus(fiber.StatusUnauthorized)
-	}
-
-	if err != nil {
-		jwtAuth.log.Debug().Err(err).Msg("error while checking authentication status")
-		return ctx.SendStatus(fiber.StatusUnauthorized)
-	}
-
-	return ctx.Next()
-}
-
-func (jwtAuth *jwtAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
-	auth := ctx.Get(Header)
-	l := len(Scheme)
-	key, err := func() (string, error) {
-		if len(auth) > 0 && l == 0 {
-			return auth, nil
-		}
-		if len(auth) > l+1 && auth[:l] == Scheme {
-			return auth[l+1:], nil
-		}
-
-		return "", ErrMissingOrMalformedAPIKey
-	}()
-
-	if err != nil {
-		return false, err
-	}
-
-	iss, err := GetIssuerFromToken(key)
-	if err != nil {
-		return false, err
-	}
-
-	if jwtAuth.verifier != nil && iss == jwtAuth.iss {
-		return jwtAuth.OidcJWT(ctx, key)
-	}
-
-	return jwtAuth.LocalJWT(ctx, key)
-}
-
-func (jwtAuth *jwtAuthService) OidcJWT(ctx *fiber.Ctx, key string) (bool, error) {
-	token, err := jwtAuth.verifier.Verify(ctx.UserContext(), key)
-	if err != nil {
-		return false, err
-	}
-
-	user, err := jwtAuth.users.GetByExternalId(token.Subject)
-	if err != nil {
-		return false, err
-	}
-
-	if user != nil {
-		ctx.Locals("user", *user)
-		return true, nil
-	}
-
-	var claims struct {
-		Email    string `json:"email"`
-		Verified bool   `json:"email_verified"`
-	}
-	if err = token.Claims(&claims); err != nil {
-		return false, err
-	}
-
-	if !claims.Verified {
-		return false, ErrEmailNotVerified
-	}
-
-	user, err = jwtAuth.users.GetByEmail(claims.Email)
-	if err != nil {
-		return false, err
-	}
-	if user != nil {
-		user.ExternalId = sql.NullString{
-			String: token.Subject,
-			Valid:  true,
-		}
-		if _, err = jwtAuth.users.Update(*user); err != nil {
-			jwtAuth.log.Error().Err(err).
-				Str("email", claims.Email).
-				Msg("failed to assign external id to user")
-			return false, err
-		}
-
-		ctx.Locals("user", *user)
-		return true, nil
-	}
-
-	return false, ErrCouldNotLinkUser
-}
-
-func (jwtAuth *jwtAuthService) LocalJWT(ctx *fiber.Ctx, key string) (bool, error) {
-	token, err := jwt.ParseWithClaims(key, &MpClaims{}, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %s", t.Header["alg"])
-		}
-
-		return []byte(jwtAuth.cfg.Secret), nil
-	})
-	if err != nil {
-		return false, err
-	}
-
-	mpClaims, ok := token.Claims.(*MpClaims)
-	if !ok {
-		return false, ErrMissingOrMalformedAPIKey
-	}
-
-	// Load user from theDb in non get requests
-	if ctx.Method() != fiber.MethodGet {
-		user, err := jwtAuth.users.GetById(mpClaims.User.ID)
-		if err != nil {
-			return false, fmt.Errorf("cannot get user: %w", err)
-		}
-		if user == nil {
-			return false, ErrMissingOrMalformedAPIKey
-		}
-		ctx.Locals("user", *user)
-	} else {
-		ctx.Locals("user", mpClaims.User)
-	}
-
-	return token.Valid, nil
-}
-
-func (jwtAuth *jwtAuthService) Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
-	user, err := jwtAuth.users.GetByName(loginRequest.UserName)
-	if err != nil {
-		jwtAuth.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("user not found")
+		s.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("user not found")
 		return nil, err
 	}
 
@@ -249,19 +156,19 @@ func (jwtAuth *jwtAuthService) Login(loginRequest payload.LoginRequest) (*payloa
 
 	decodeString, err := base64.StdEncoding.DecodeString(user.PasswordHash)
 	if err != nil {
-		jwtAuth.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("failed to decode password")
+		s.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("failed to decode password")
 		return nil, fiber.ErrInternalServerError
 	}
 
 	if err = bcrypt.CompareHashAndPassword(decodeString, []byte(loginRequest.Password)); err != nil {
-		jwtAuth.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("invalid password")
+		s.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("invalid password")
 		return nil, &fiber.Error{
 			Code:    fiber.StatusBadRequest,
 			Message: "invalid password",
 		}
 	}
 
-	claims := MpClaims{
+	claims := mpClaims{
 		User: *user,
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt: jwt.NewNumericDate(time.Now()),
@@ -276,65 +183,393 @@ func (jwtAuth *jwtAuthService) Login(loginRequest payload.LoginRequest) (*payloa
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte(jwtAuth.cfg.Secret))
+	t, err := token.SignedString([]byte(s.cfg.Secret))
 	if err != nil {
+		return nil, err
+	}
+
+	if err = s.setCookies(ctx, &OIDCTokens{AccessToken: t, UserId: user.ID}); err != nil {
 		return nil, err
 	}
 
 	return &payload.LoginResponse{
-		Id:          user.ID,
-		Name:        user.Name,
-		Email:       user.Email.String,
-		Token:       t,
-		ApiKey:      user.ApiKey,
-		Permissions: user.Permission,
+		Id:     user.ID,
+		Name:   user.Name,
+		Email:  user.Email.String,
+		ApiKey: user.ApiKey,
+		Roles:  user.Roles,
 	}, nil
 }
 
-func (jwtAuth *jwtAuthService) oidcTokenVerifier(dto payload.Settings) (*oidc.IDTokenVerifier, error) {
-	if dto.Oidc.Authority == "" || dto.Oidc.ClientID == "" {
-		jwtAuth.log.Debug().
-			Str("authority", dto.Oidc.Authority).
-			Str("client_id", dto.Oidc.ClientID).
-			Msg("not setting up OIDC")
-		return nil, nil
+func (s *cookieAuthService) Logout(ctx *fiber.Ctx) {
+	if token := ctx.Cookies(tokenCookie); token != "" {
+		if err := s.storage.Delete(token); err != nil {
+			s.log.Warn().Err(err).Msg("failed to delete token during logout")
+		}
 	}
 
-	provider, err := oidc.NewProvider(context.Background(), dto.Oidc.Authority)
+	ctx.Cookie(&fiber.Cookie{
+		Name:     tokenCookie,
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HTTPOnly: true,
+		SameSite: "Lax",
+	})
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     stateCookie,
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HTTPOnly: true,
+		SameSite: "Lax",
+	})
+}
+
+func (s *cookieAuthService) Middleware(ctx *fiber.Ctx) error {
+	if !s.isAuthenticated(ctx) {
+		s.Logout(ctx)
+		return ctx.SendStatus(fiber.StatusUnauthorized)
+	}
+	return ctx.Next()
+}
+
+func (s *cookieAuthService) GetOIDCLoginURL(ctx *fiber.Ctx) (string, error) {
+	if s.oauth2Config == nil {
+		return "", errors.New("OIDC not configured")
+	}
+
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	state := base64.URLEncoding.EncodeToString(b)
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     stateCookie,
+		Value:    state,
+		MaxAge:   stateCookieMaxAge,
+		HTTPOnly: true,
+		SameSite: "Lax",
+	})
+
+	url := s.oauth2Config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	return url, nil
+}
+
+func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
+	if s.oauth2Config == nil {
+		return errors.New("OIDC not configured")
+	}
+
+	state := ctx.Query("state")
+	storedState := ctx.Cookies(stateCookie)
+	if state == "" || state != storedState {
+		return errInvalidState
+	}
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     stateCookie,
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HTTPOnly: true,
+	})
+
+	code := ctx.Query("code")
+	if code == "" {
+		return errors.New("missing authorization code")
+	}
+
+	token, err := s.oauth2Config.Exchange(ctx.UserContext(), code)
+	if err != nil {
+		return fmt.Errorf("failed to exchange code: %w", err)
+	}
+
+	rawIDToken, ok := token.Extra(idToken).(string)
+	if !ok {
+		return errors.New("missing id_token")
+	}
+
+	tokens := &OIDCTokens{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		IDToken:      rawIDToken,
+		ExpiresIn:    token.Expiry,
+	}
+
+	user, err := s.verifyOIDCToken(ctx.UserContext(), rawIDToken)
+	if err != nil {
+		return fmt.Errorf("failed to verify ID token: %w", err)
+	}
+
+	tokens.UserId = user.ID
+	if err = s.setCookies(ctx, tokens); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *cookieAuthService) deleteToken(authenticationFaield bool, token string) {
+	if authenticationFaield {
+		if err := s.storage.Delete(token); err != nil {
+			s.log.Warn().Err(err).Str("token", token).Msg("failed to delete token")
+		}
+	}
+}
+
+func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
+	token := ctx.Cookies(tokenCookie)
+	if token == "" {
+		return false
+	}
+	defer s.deleteToken(success, token)
+
+	tokens, err := s.getOidcTokens(token)
+	if err != nil {
+		return false
+	}
+
+	if user, err := s.parseLocalJWT(tokens.AccessToken); err == nil && user != nil {
+		ctx.Locals(UserKey.Value(), *user)
+		return true
+	}
+
+	if s.verifier == nil {
+		return false
+	}
+
+	user, err := s.users.GetById(tokens.UserId)
+	if user == nil || err != nil {
+		return false
+	}
+
+	ctx.Locals(UserKey.Value(), *user)
+
+	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
+	if !expiresSoon {
+		return true
+	}
+
+	if isRefreshing, ok := s.cookiesRefresh.Get(user.ID); isRefreshing && ok {
+		return true
+	}
+
+	err = s.refreshToken(ctx, token, tokens)
+	if err != nil {
+		s.log.Warn().Err(err).Msg("failed to refresh token")
+	}
+	return err == nil
+}
+
+func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
+	s.cookiesRefresh.Set(tokens.UserId, true)
+	defer s.cookiesRefresh.Delete(tokens.UserId)
+
+	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.UserId, tokens.RefreshToken)
+	if err != nil {
+		s.Logout(ctx)
+		return fmt.Errorf("failed to refresh OIDC tokens: %w", err)
+	}
+
+	if err = s.storage.Delete(oldKey); err != nil {
+		s.log.Warn().Err(err).Msg("failed to delete old token")
+	}
+
+	if err = s.setCookies(ctx, newTokens); err != nil {
+		return fmt.Errorf("failed to set cookies: %w", err)
+	}
+
+	s.log.Debug().Uint("user", tokens.UserId).
+		Time("expires_at", newTokens.ExpiresIn).
+		Msg("refreshed tokens in background")
+	return nil
+}
+
+func (s *cookieAuthService) parseLocalJWT(tokenString string) (*models.User, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &mpClaims{}, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %s", t.Header["alg"])
+		}
+		return []byte(s.cfg.Secret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(*mpClaims)
+	if !ok {
+		return nil, errors.New("invalid claims")
+	}
+
+	return &claims.User, nil
+}
+
+func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	token, err := s.verifier.Verify(ctx, tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	return provider.Verifier(&oidc.Config{ClientID: dto.Oidc.ClientID}), nil
+	user, err := s.users.GetByExternalId(token.Subject)
+	if err != nil {
+		return nil, err
+	}
+
+	if user != nil {
+		return user, nil
+	}
+
+	var claims struct {
+		Email    string `json:"email"`
+		Verified bool   `json:"email_verified"`
+	}
+
+	if err = token.Claims(&claims); err != nil {
+		return nil, err
+	}
+
+	if !claims.Verified {
+		return nil, errEmailNotVerified
+	}
+
+	user, err = s.users.GetByEmail(claims.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, errCouldNotLinkUser
+	}
+
+	user.ExternalId = sql.NullString{String: token.Subject, Valid: true}
+	if _, err = s.users.Update(*user); err != nil {
+		s.log.Error().Err(err).
+			Str("email", claims.Email).
+			Msg("failed to assign external id to user")
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId uint, refreshToken string) (*OIDCTokens, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	if s.oauth2Config == nil {
+		return nil, errors.New("OIDC not configured")
+	}
+
+	token := &oauth2.Token{
+		RefreshToken: refreshToken,
+	}
+
+	newToken, err := s.oauth2Config.TokenSource(ctx, token).Token()
+	if err != nil {
+		return nil, fmt.Errorf("failed to refresh token: %w", err)
+	}
+
+	rawIDToken, ok := newToken.Extra("id_token").(string)
+	if !ok {
+		return nil, errors.New("missing id_token in refresh response")
+	}
+
+	return &OIDCTokens{
+		UserId:       userId,
+		AccessToken:  newToken.AccessToken,
+		RefreshToken: newToken.RefreshToken,
+		IDToken:      rawIDToken,
+		ExpiresIn:    newToken.Expiry,
+	}, nil
+}
+
+func (s *cookieAuthService) setCookies(ctx *fiber.Ctx, tokens *OIDCTokens) error {
+	token, err := s.storeOidcToken(ctx.UserContext(), tokens)
+	if err != nil {
+		return err
+	}
+
+	ctx.Cookie(&fiber.Cookie{
+		Name:     tokenCookie,
+		Value:    token,
+		MaxAge:   30 * 24 * 60 * 60, // 30 Days
+		HTTPOnly: true,
+		SameSite: "Lax",
+	})
+
+	return nil
+}
+
+func (s *cookieAuthService) getOidcTokens(token string) (*OIDCTokens, error) {
+	data, err := s.storage.Get(token)
+	if err != nil {
+		return nil, err
+	}
+
+	var oidcToken OIDCTokens
+	if err = json.Unmarshal(data, &oidcToken); err != nil {
+		return nil, err
+	}
+
+	return &oidcToken, nil
+}
+
+func (s *cookieAuthService) storeOidcToken(ctx context.Context, tokens *OIDCTokens) (string, error) { //nolint:unparam
+	token, err := utils.GenerateSecret(32)
+	if err != nil {
+		return "", err
+	}
+
+	data, err := json.Marshal(&tokens)
+	if err != nil {
+		return "", err
+	}
+
+	if err = s.storage.Set(token, data, 30*24*time.Hour); err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthMiddleware {
+	return &apiKeyAuthService{
+		users:      params.Users,
+		cookieAuth: params.FallbackAuth,
+		log:        params.Log.With().Str("handler", "api-key-auth-service").Logger(),
+	}
 }
 
 type apiKeyAuthServiceParams struct {
 	dig.In
 
-	Users models.Users
-	JWT   AuthService `name:"jwt-auth"`
-	Log   zerolog.Logger
+	Users        models.Users
+	FallbackAuth AuthService
+	Log          zerolog.Logger
 }
 
 type apiKeyAuthService struct {
-	users models.Users
-	jwt   AuthService
-	log   zerolog.Logger
+	users      models.Users
+	cookieAuth AuthService
+	log        zerolog.Logger
 }
 
 func (a *apiKeyAuthService) Middleware(ctx *fiber.Ctx) error {
-	isAuthenticated, err := a.IsAuthenticated(ctx)
+	isAuthenticated, err := a.isAuthenticated(ctx)
 	if err != nil {
 		a.log.Warn().Err(err).Msg("error while checking api key auth")
 	}
 	if !isAuthenticated {
-		return a.jwt.Middleware(ctx)
+		return a.cookieAuth.Middleware(ctx)
 	}
 	return ctx.Next()
 }
 
-func (a *apiKeyAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
-	apiKey := ctx.Query(ApiQueryKey)
+func (a *apiKeyAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
+	apiKey := ctx.Query(apiQueryKey)
 	if apiKey == "" {
 		return false, nil
 	}
@@ -344,11 +579,6 @@ func (a *apiKeyAuthService) IsAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	ctx.Locals("user", user)
+	ctx.Locals(UserKey.Value(), user)
 	return true, nil
-}
-
-func (a *apiKeyAuthService) Login(loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
-	a.log.Error().Msg("api key auth does not support login")
-	return nil, errors.New("ApiKeyAuth does not support login")
 }

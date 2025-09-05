@@ -2,11 +2,12 @@ package mangadex
 
 import (
 	"bytes"
-	"github.com/Fesaa/Media-Provider/comicinfo"
-	"github.com/Fesaa/Media-Provider/db/models"
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/db/models"
 )
 
 func TestManga_AgeRating(t *testing.T) {

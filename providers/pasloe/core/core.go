@@ -3,6 +3,14 @@ package core
 import (
 	"context"
 	"fmt"
+	"math"
+	"path"
+	"slices"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -11,13 +19,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
-	"math"
-	"path"
-	"slices"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (
@@ -168,7 +169,7 @@ func (c *Core[C, S]) Request() payload.DownloadRequest {
 
 func (c *Core[C, S]) SetState(state payload.ContentState) {
 	c.contentState = state
-	c.SignalR.StateUpdate(c.id, c.contentState)
+	c.SignalR.StateUpdate(c.Req.OwnerId, c.id, c.contentState)
 }
 
 func (c *Core[C, S]) Id() string {
@@ -401,11 +402,15 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 		c.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
 
 		if c.Req.IsSubscription {
-			c.Notifier.NotifyContent(
-				c.TransLoco.GetTranslation("warn"),
-				c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title()),
-				c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed),
-				models.Warning)
+			c.Notifier.Notify(models.NewNotification().
+				WithTitle(c.TransLoco.GetTranslation("warn")).
+				WithSummary(c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title())).
+				WithBody(c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed)).
+				WithGroup(models.GroupContent).
+				WithColour(models.Warning).
+				WithOwner(c.Request().OwnerId).
+				WithRequiredRoles(models.ViewAllDownloads).
+				Build())
 		}
 	}
 
@@ -423,7 +428,7 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 	c.SetState(utils.Ternary(c.Req.DownloadMetadata.StartImmediately,
 		payload.ContentStateReady,
 		payload.ContentStateWaiting))
-	c.SignalR.UpdateContentInfo(c.GetInfo())
+	c.SignalR.UpdateContentInfo(c.Req.OwnerId, c.GetInfo())
 
 	c.Log.Debug().Int("all", len(data)).Int("filtered", len(c.ToDownload)).
 		Dur("elapsed", time.Since(start)).Msg("downloaded content filtered")
@@ -478,7 +483,7 @@ func (c *Core[C, S]) UpdateProgress() {
 	// There is a small bug where sometimes the totalProgress goes down when going from one chapter being
 	// downloaded to the next. For now, we'll just live with it being a bug as it's still nicer to have some idea
 	// of progress with bigger chapters instead of seeing everything jump hard
-	c.SignalR.ProgressUpdate(payload.ContentProgressUpdate{
+	c.SignalR.ProgressUpdate(c.Req.OwnerId, payload.ContentProgressUpdate{
 		ContentId: c.id,
 		// Progress:  totalProgress,
 		Progress:  chaptersProgress,
