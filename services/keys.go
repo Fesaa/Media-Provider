@@ -13,6 +13,7 @@ var (
 	UserKey            = ContextKey[models.User]("user")
 	ServiceProviderKey = ContextKey[*dig.Container]("service-provider")
 	LoggerKey          = ContextKey[zerolog.Logger]("logger")
+	RequestIdKey       = ContextKey[string]("requestid")
 )
 
 // Value returns the string value of the ContextKey, this should be used when setting or getting

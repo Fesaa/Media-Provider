@@ -20,10 +20,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	fiberutils "github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
@@ -58,7 +60,11 @@ func ApplicationProvider(params appParams) *fiber.App {
 			Expiration:        time.Minute,
 			LimiterMiddleware: limiter.SlidingWindow{},
 		})).
-		Use(requestid.New()).
+		Use(requestid.New(requestid.Config{
+			ContextKey: services.RequestIdKey.Value(),
+			Generator:  fiberutils.UUIDv4,
+		})).
+		Use(encryptcookie.New()).
 		Use(recover.New(recover.Config{
 			EnableStackTrace: true,
 		})).
