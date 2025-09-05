@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -12,6 +13,7 @@ import (
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
@@ -33,10 +35,18 @@ type userRoutes struct {
 }
 
 func RegisterUserRoutes(ur userRoutes) {
-	ur.Router.Post("/login", withBodyValidation(ur.loginUser))
-	ur.Router.Post("/register", withBodyValidation(ur.registerUser))
-	ur.Router.Get("/any-user-exists", ur.anyUserExists)
-	ur.Router.Post("/reset-password", ur.resetPassword)
+	publicLimiter := limiter.New(limiter.Config{
+		Max:                    10,
+		Expiration:             time.Minute * 5,
+		SkipSuccessfulRequests: true,
+	})
+
+	ur.Router.
+		Get("/any-user-exists", ur.anyUserExists).
+		Use(publicLimiter).
+		Post("/login", withBodyValidation(ur.loginUser)).
+		Post("/register", withBodyValidation(ur.registerUser)).
+		Post("/reset-password", withBodyValidation(ur.resetPassword))
 
 	user := ur.Router.Group("/user", ur.Auth.Middleware)
 
@@ -243,10 +253,7 @@ func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) erro
 	settings, err := ur.SettingsService.GetSettingsDto()
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to get settings")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to get settings",
-			"error":   err.Error(),
-		})
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 
 	if settings.Oidc.DisablePasswordLogin {
@@ -255,7 +262,10 @@ func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) erro
 
 	res, err := ur.Auth.Login(login)
 	if err != nil {
-		return err
+		ur.Log.Error().Err(err).Str("req", fmt.Sprintf("%+v", login)).Msg("failed to login")
+		return ctx.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+			"message": "Check your credentials",
+		})
 	}
 
 	return ctx.JSON(res)
@@ -414,19 +424,11 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId uint) error {
 	return ctx.Status(fiber.StatusOK).JSON(reset)
 }
 
-func (ur *userRoutes) resetPassword(ctx *fiber.Ctx) error {
-	var pl payload.ResetPasswordRequest
-	if err := ur.Val.ValidateCtx(ctx, &pl); err != nil {
-		ur.Log.Error().Err(err).Msg("failed to parse body")
-		return fiber.ErrBadRequest
-	}
-
+func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequest) error {
 	reset, err := ur.DB.Users.GetReset(pl.Key)
 	if err != nil {
 		ur.Log.Error().Err(err).Msg("failed to check if user exists")
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": ur.Transloco.GetTranslation("failed-find-reset-key"),
-		})
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
 	}
 
 	if reset == nil {
