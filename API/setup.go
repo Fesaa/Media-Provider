@@ -121,9 +121,12 @@ func applicationProvider(params appParams) *fiber.App {
 	}
 
 	app.Use(func(c *fiber.Ctx) error {
-		c.Locals(services.ServiceProviderKey.Value(), params.Container)
+		services.SetInContext(c, services.ServiceProviderKey, params.Container)
+
 		requestId := services.GetFromContext(c, services.RequestIdKey)
-		c.Locals(services.LoggerKey.Value(), httpLogger.With().Str(services.RequestIdKey.Value(), requestId).Logger())
+		log := httpLogger.With().Str(services.RequestIdKey.Value(), requestId).Logger()
+		services.SetInContext(c, services.LoggerKey, log)
+
 		return c.Next()
 	})
 

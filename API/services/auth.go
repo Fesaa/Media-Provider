@@ -360,7 +360,7 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 		return false
 	}
 
-	ctx.Locals(UserKey.Value(), *user)
+	SetInContext(ctx, UserKey, *user)
 
 	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
 	if !expiresSoon {
@@ -585,6 +585,6 @@ func (a *apiKeyAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	ctx.Locals(UserKey.Value(), user)
+	SetInContext(ctx, UserKey, *user)
 	return true, nil
 }
