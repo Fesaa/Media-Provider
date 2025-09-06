@@ -108,8 +108,6 @@ func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto pa
 		if dto.Oidc.ClientSecret != strings.Repeat("*", len(setting.Value)) {
 			setting.Value = dto.Oidc.ClientSecret
 		}
-	case models.OidcRedirectUrl:
-		setting.Value = dto.Oidc.RedirectURL
 	}
 
 	return err
@@ -142,8 +140,6 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 		dto.Oidc.DisablePasswordLogin, err = strconv.ParseBool(setting.Value)
 	case models.OidcClientSecret:
 		dto.Oidc.ClientSecret = setting.Value
-	case models.OidcRedirectUrl:
-		dto.Oidc.RedirectURL = setting.Value
 	}
 
 	return err

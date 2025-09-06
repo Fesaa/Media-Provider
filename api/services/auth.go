@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -16,7 +17,7 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
+	fiberutils "github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
@@ -40,15 +41,14 @@ type AuthMiddleware interface {
 type AuthService interface {
 	AuthMiddleware
 
-	Login(ctx *fiber.Ctx, loginRequest payload.LoginRequest) (*payload.LoginResponse, error)
-	Logout(ctx *fiber.Ctx)
-	GetOIDCLoginURL(ctx *fiber.Ctx) (string, error)
-	HandleOIDCCallback(ctx *fiber.Ctx) error
-}
-
-type mpClaims struct {
-	User models.User `json:"user,omitempty"`
-	jwt.RegisteredClaims
+	// Login perform local Auth login
+	Login(*fiber.Ctx, payload.LoginRequest) (*payload.LoginResponse, error)
+	// Logout deletes the cookies, and return the logout url if applicable (oidc)
+	Logout(*fiber.Ctx) string
+	// GetOIDCLoginURL returns the redirect url of the oidc provider
+	GetOIDCLoginURL(*fiber.Ctx) (string, error)
+	// HandleOIDCCallback authenticates with oidc and sets the correct cookies
+	HandleOIDCCallback(*fiber.Ctx) error
 }
 
 type OIDCTokens struct {
@@ -71,6 +71,7 @@ type cookieAuthService struct {
 	log     zerolog.Logger
 	storage CacheService
 
+	oidcSettings payload.OidcSettings
 	oidcProvider *oidc.Provider
 	oauth2Config *oauth2.Config
 	verifier     *oidc.IDTokenVerifier
@@ -110,12 +111,7 @@ func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, err
 }
 
 func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
-	if settings.Oidc.Authority == "" || settings.Oidc.ClientID == "" || settings.Oidc.ClientSecret == "" {
-		s.log.Debug().
-			Str("authority", settings.Oidc.Authority).
-			Str("client_id", settings.Oidc.ClientID).
-			Bool("has_secret", settings.Oidc.ClientSecret != "").
-			Msg("OIDC not fully configured, skipping setup")
+	if !settings.Oidc.Enabled() {
 		return nil
 	}
 
@@ -125,12 +121,12 @@ func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
 	}
 
 	s.oidcProvider = provider
+	s.oidcSettings = settings.Oidc
 	s.verifier = provider.Verifier(&oidc.Config{ClientID: settings.Oidc.ClientID})
 
 	s.oauth2Config = &oauth2.Config{
 		ClientID:     settings.Oidc.ClientID,
 		ClientSecret: settings.Oidc.ClientSecret,
-		RedirectURL:  settings.Oidc.RedirectURL,
 		Endpoint:     provider.Endpoint(),
 		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "offline_access"},
 	}
@@ -138,7 +134,6 @@ func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
 	s.log.Debug().
 		Str("authority", settings.Oidc.Authority).
 		Str("client_id", settings.Oidc.ClientID).
-		Str("redirect_url", settings.Oidc.RedirectURL).
 		Msg("OIDC configured successfully")
 	return nil
 }
@@ -168,27 +163,7 @@ func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequ
 		}
 	}
 
-	claims := mpClaims{
-		User: *user,
-		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt: jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(func() time.Time {
-				if loginRequest.Remember {
-					return time.Now().Add(7 * 24 * time.Hour)
-				}
-				return time.Now().Add(24 * time.Hour)
-			}()),
-			Issuer: "Media-Provider",
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte(s.cfg.Secret))
-	if err != nil {
-		return nil, err
-	}
-
-	if err = s.setCookies(ctx, &OIDCTokens{AccessToken: t, UserId: user.ID}); err != nil {
+	if err = s.setCookies(ctx, &OIDCTokens{UserId: user.ID}); err != nil {
 		return nil, err
 	}
 
@@ -201,13 +176,7 @@ func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequ
 	}, nil
 }
 
-func (s *cookieAuthService) Logout(ctx *fiber.Ctx) {
-	if token := ctx.Cookies(tokenCookie); token != "" {
-		if err := s.storage.Delete(token); err != nil {
-			s.log.Warn().Err(err).Msg("failed to delete token during logout")
-		}
-	}
-
+func (s *cookieAuthService) Logout(ctx *fiber.Ctx) string {
 	ctx.Cookie(&fiber.Cookie{
 		Name:     tokenCookie,
 		Value:    "",
@@ -223,6 +192,53 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) {
 		HTTPOnly: true,
 		SameSite: "Lax",
 	})
+
+	token := ctx.Cookies(tokenCookie)
+	if token == "" {
+		return ""
+	}
+
+	logoutUrl := s.getSessionLogoutUrl(ctx, token) // Must happen before we delete the tokens
+	if err := s.storage.Delete(token); err != nil {
+		s.log.Warn().Err(err).Msg("failed to delete token during logout")
+	}
+
+	return logoutUrl
+}
+
+func (s *cookieAuthService) getSessionLogoutUrl(ctx *fiber.Ctx, token string) string {
+	if s.oidcProvider == nil {
+		return ""
+	}
+
+	tokens, err := s.getOidcTokens(token)
+	if err != nil {
+		s.log.Error().Err(err).Str("token", token).Msg("failed to get token")
+	}
+
+	if tokens == nil || tokens.IDToken == "" {
+		return ""
+	}
+
+	var claims struct {
+		EndSessionEndpoint string `json:"end_session_endpoint"`
+	}
+
+	if err = s.oidcProvider.Claims(&claims); err != nil {
+		s.log.Error().Err(err).Msg("Discovery document failed parsing")
+		return ""
+	}
+
+	if claims.EndSessionEndpoint == "" {
+		return ""
+	}
+
+	logoutParams := url.Values{}
+	logoutParams.Add("id_token_hint", tokens.IDToken)
+	postLogoutUrl := s.getUrlBase(ctx) + "/login"
+	logoutParams.Add("post_logout_redirect_uri", postLogoutUrl)
+
+	return claims.EndSessionEndpoint + "?" + logoutParams.Encode()
 }
 
 func (s *cookieAuthService) Middleware(ctx *fiber.Ctx) error {
@@ -252,8 +268,9 @@ func (s *cookieAuthService) GetOIDCLoginURL(ctx *fiber.Ctx) (string, error) {
 		SameSite: "Lax",
 	})
 
-	url := s.oauth2Config.AuthCodeURL(state, oauth2.AccessTypeOffline)
-	return url, nil
+	s.oauth2Config.RedirectURL = s.getUrlBase(ctx) + "/oidc/callback"
+	loginUrl := s.oauth2Config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	return loginUrl, nil
 }
 
 func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
@@ -329,17 +346,16 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 		return false
 	}
 
-	if user, err := s.parseLocalJWT(tokens.AccessToken); err == nil && user != nil {
-		ctx.Locals(UserKey.Value(), *user)
+	user, err := s.users.GetById(tokens.UserId)
+	if user == nil || err != nil {
+		return false
+	}
+
+	if tokens.AccessToken == "" { // Local auth only stores user id
 		return true
 	}
 
 	if s.verifier == nil {
-		return false
-	}
-
-	user, err := s.users.GetById(tokens.UserId)
-	if user == nil || err != nil {
 		return false
 	}
 
@@ -383,26 +399,6 @@ func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *
 		Time("expires_at", newTokens.ExpiresIn).
 		Msg("refreshed tokens in background")
 	return nil
-}
-
-func (s *cookieAuthService) parseLocalJWT(tokenString string) (*models.User, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &mpClaims{}, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %s", t.Header["alg"])
-		}
-		return []byte(s.cfg.Secret), nil
-	})
-
-	if err != nil || !token.Valid {
-		return nil, err
-	}
-
-	claims, ok := token.Claims.(*mpClaims)
-	if !ok {
-		return nil, errors.New("invalid claims")
-	}
-
-	return &claims.User, nil
 }
 
 func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString string) (*models.User, error) {
@@ -533,6 +529,14 @@ func (s *cookieAuthService) storeOidcToken(ctx context.Context, tokens *OIDCToke
 	}
 
 	return token, nil
+}
+
+func (s *cookieAuthService) getUrlBase(ctx *fiber.Ctx) string {
+	scheme := "http"
+	if !config.Development {
+		scheme = "https"
+	}
+	return scheme + "://" + fiberutils.CopyString(ctx.Hostname())
 }
 
 func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthMiddleware {
