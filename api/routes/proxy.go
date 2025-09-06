@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -69,9 +70,7 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 		log.Error().Err(err).
 			Str("url", url).
 			Msg("Failed to create request")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("request-failed"),
-		})
+		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
 	req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
@@ -79,16 +78,12 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 	resp, err := pr.HttpClient.Do(req)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send request")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("request-failed"),
-		})
+		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		log.Error().Int("statusCode", resp.StatusCode).Msg("Failed to download cover image from webtoon")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("request-failed"),
-		})
+		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -100,9 +95,7 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download cover image from webtoon")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	c.Set("Content-Type", pr.encoding(fileName))
@@ -122,16 +115,12 @@ func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
 	resp, err := pr.HttpClient.Get(pr.mangadexUrl(id, fileName))
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download cover image from mangadex")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("request-failed"),
-		})
+		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		log.Error().Int("statusCode", resp.StatusCode).Msg("Failed to download cover image from mangadex")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("request-failed"),
-		})
+		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -143,9 +132,7 @@ func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download cover image from mangadex")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	c.Set("Content-Type", pr.encoding(fileName))
@@ -163,32 +150,24 @@ func (pr *proxyRoutes) BatoCoverProxy(c *fiber.Ctx) error {
 	uri, err := pr.CacheService.Get(id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to find uri in cache")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("request-failed"),
-		})
+		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
 	resp, err := pr.HttpClient.Get(string(uri))
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download cover image from bato")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("request-failed"),
-		})
+		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		log.Error().Int("statusCode", resp.StatusCode).Msg("Failed to download cover image from bato")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": pr.Transloco.GetTranslation("request-failed"),
-		})
+		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download cover image from bato")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	c.Set("Content-Type", pr.encoding(utils.Ext(string(uri))))

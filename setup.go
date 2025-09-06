@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/api"
+	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
@@ -41,13 +42,14 @@ type appParams struct {
 }
 
 //nolint:funlen
-func ApplicationProvider(params appParams) *fiber.App {
+func applicationProvider(params appParams) *fiber.App {
 	c := params.Container
 	baseUrl := params.Cfg.BaseUrl
 
 	app := fiber.New(fiber.Config{
 		AppName:               "Media-Provider",
 		DisableStartupMessage: true,
+		ErrorHandler:          errorHandler,
 	})
 
 	if !config.Development {
@@ -135,13 +137,13 @@ func ApplicationProvider(params appParams) *fiber.App {
 	return app
 }
 
-func RegisterCallback(app *fiber.App) {
+func registerCallback(app *fiber.App) {
 	app.Get("*", func(c *fiber.Ctx) error {
 		return c.SendFile("./public/index.html")
 	})
 }
 
-func UpdateInstalledVersion(ms services.MetadataService, log zerolog.Logger) error {
+func updateInstalledVersion(ms services.MetadataService, log zerolog.Logger) error {
 	log = log.With().Str("handler", "core").Logger()
 
 	cur, err := ms.Get()
@@ -165,7 +167,7 @@ func UpdateInstalledVersion(ms services.MetadataService, log zerolog.Logger) err
 	return ms.Update(cur)
 }
 
-func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero) error {
+func updateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero) error {
 	baseUrl := cfg.BaseUrl
 	log = log.With().Str("handler", "core").Logger()
 
@@ -214,4 +216,26 @@ func UpdateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero
 	}
 
 	return nil
+}
+
+func errorHandler(c *fiber.Ctx, err error) error {
+	var e *routes.Error
+	if !errors.As(err, &e) {
+		return fiber.DefaultErrorHandler(c, err)
+	}
+
+	_, ok := services.GetFromContextSafe(c, services.UserKey)
+	if !ok {
+		// Don't include caller for non-authenticated endpoints
+		return c.Status(e.StatusCode).JSON(fiber.Map{
+			"message": e.Error(),
+			"success": false,
+		})
+	}
+
+	return c.Status(e.StatusCode).JSON(fiber.Map{
+		"message": e.Error(),
+		"caller":  e.Caller,
+		"success": false,
+	})
 }

@@ -31,10 +31,7 @@ func RegisterConfigRoutes(cr configRoutes) {
 func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {
 	dto, err := cr.SettingsService.GetSettingsDto()
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	if dto.Oidc.ClientSecret != "" {
@@ -50,9 +47,7 @@ func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
 	dto, err := cr.SettingsService.GetSettingsDto()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get oidc config")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-		})
+		return InternalError(err)
 	}
 	return ctx.JSON(payload.PublicOidcSettings{
 		DisablePasswordLogin: dto.Oidc.DisablePasswordLogin,
@@ -66,7 +61,7 @@ func (cr *configRoutes) updateConfig(ctx *fiber.Ctx, c payload.Settings) error {
 
 	if err := cr.SettingsService.UpdateSettingsDto(c); err != nil {
 		log.Error().Err(err).Msg("failed to update config")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return InternalError(err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"success": true})

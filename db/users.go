@@ -153,6 +153,9 @@ func (u *userImpl) GetReset(key string) (*models.PasswordReset, error) {
 	var reset models.PasswordReset
 	res := u.db.Where(&models.PasswordReset{Key: key}).First(&reset)
 	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, res.Error
 	}
 	return &reset, nil

@@ -62,20 +62,14 @@ func (sr *subscriptionRoutes) runAll(ctx *fiber.Ctx, allUsers bool) error {
 
 	subs, err := sr.getAll(ctx, allUsers)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"success": false,
-			"error":   err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	for _, sub := range subs {
 		err = sr.ContentService.DownloadSubscription(&sub, false) // This was manually triggered
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to download subscription")
-			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"sub-id":  sub.ID,
-				"message": sr.Transloco.GetTranslation("failed-to-run-once", err),
-			})
+			return InternalError(err, fiber.Map{"subscription": sub.ID})
 		}
 	}
 
@@ -90,21 +84,17 @@ func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id int) error {
 	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	if sub.Owner != user.ID && !allowAny {
-		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{})
+		return Forbidden()
 	}
 
 	err = sr.ContentService.DownloadSubscription(sub, false) // This was manually triggered
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download subscription")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": sr.Transloco.GetTranslation("failed-to-run-once", err),
-		})
+		return InternalError(errors.New(sr.Transloco.GetTranslation("failed-to-run-once", err)))
 	}
 
 	return ctx.Status(fiber.StatusAccepted).JSON(fiber.Map{})
@@ -116,9 +106,7 @@ func (sr *subscriptionRoutes) all(ctx *fiber.Ctx, allUsers bool) error {
 	subs, err := sr.getAll(ctx, allUsers)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscriptions")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.JSON(subs)
@@ -132,13 +120,11 @@ func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id int) error {
 	sub, err := sr.SubscriptionService.Get(id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	if sub.Owner != user.ID && !allowAny {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
+		return NotFound()
 	}
 
 	return ctx.JSON(sub)
@@ -149,9 +135,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 
 	if err := sr.validatorSubscription(sub); err != nil {
 		log.Error().Err(err).Msg("Failed to validate subscription")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return BadRequest(err)
 	}
 
 	user := services.GetFromContext(ctx, services.UserKey)
@@ -160,20 +144,16 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 	cur, err := sr.SubscriptionService.Get(sub.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	if cur.Owner != user.ID && !allowAny {
-		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{})
+		return Forbidden()
 	}
 
-	if err := sr.SubscriptionService.Update(sub); err != nil {
+	if err = sr.SubscriptionService.Update(sub); err != nil {
 		log.Error().Err(err).Msg("Failed to update subscription")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(sub)
@@ -186,9 +166,7 @@ func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error
 
 	if err := sr.validatorSubscription(sub); err != nil {
 		log.Error().Err(err).Msg("Failed to validate subscription")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return BadRequest(err)
 	}
 
 	// Force authenticated user
@@ -197,9 +175,7 @@ func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error
 	subscription, err := sr.SubscriptionService.Add(sub)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to add subscription")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	go func() {
@@ -230,18 +206,16 @@ func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id int) error {
 
 	cur, err := sr.SubscriptionService.Get(id)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
+		return InternalError(err)
 	}
 
 	if cur.Owner != user.ID && !allowAny {
-		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{})
+		return Forbidden()
 	}
 
-	if err := sr.SubscriptionService.Delete(id); err != nil {
+	if err = sr.SubscriptionService.Delete(id); err != nil {
 		log.Error().Err(err).Msg("Failed to delete subscription")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.SendStatus(fiber.StatusOK)
