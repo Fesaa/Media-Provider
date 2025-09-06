@@ -266,6 +266,7 @@ func (s *cookieAuthService) GetOIDCLoginURL(ctx *fiber.Ctx) (string, error) {
 		MaxAge:   stateCookieMaxAge,
 		HTTPOnly: true,
 		SameSite: "Lax",
+		Secure:   ctx.Secure(),
 	})
 
 	s.oauth2Config.RedirectURL = s.getUrlBase(ctx) + "/oidc/callback"
@@ -494,6 +495,7 @@ func (s *cookieAuthService) setCookies(ctx *fiber.Ctx, tokens *OIDCTokens) error
 		MaxAge:   30 * 24 * 60 * 60, // 30 Days
 		HTTPOnly: true,
 		SameSite: "Lax",
+		Secure:   ctx.Secure(),
 	})
 
 	return nil
