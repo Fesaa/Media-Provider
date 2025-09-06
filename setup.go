@@ -49,7 +49,7 @@ func applicationProvider(params appParams) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:               "Media-Provider",
 		DisableStartupMessage: true,
-		ErrorHandler:          errorHandler,
+		ErrorHandler:          routes.ErrorHandler,
 	})
 
 	if !config.Development {
@@ -216,26 +216,4 @@ func updateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero
 	}
 
 	return nil
-}
-
-func errorHandler(c *fiber.Ctx, err error) error {
-	var e *routes.Error
-	if !errors.As(err, &e) {
-		return fiber.DefaultErrorHandler(c, err)
-	}
-
-	_, ok := services.GetFromContextSafe(c, services.UserKey)
-	if !ok {
-		// Don't include caller for non-authenticated endpoints
-		return c.Status(e.StatusCode).JSON(fiber.Map{
-			"message": e.Error(),
-			"success": false,
-		})
-	}
-
-	return c.Status(e.StatusCode).JSON(fiber.Map{
-		"message": e.Error(),
-		"caller":  e.Caller,
-		"success": false,
-	})
 }

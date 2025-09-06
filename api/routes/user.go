@@ -20,9 +20,9 @@ import (
 )
 
 var (
-	errUserAlreadyExists  = errors.New("user already exists")
-	passwordLoginDisabled = errors.New("password login disabled")
-	checkYourCredentials  = errors.New("check your credentials")
+	errUserAlreadyExists     = errors.New("user already exists")
+	errPasswordLoginDisabled = errors.New("password login disabled")
+	errInvalidCredentials    = errors.New("invalid username or password")
 )
 
 type userRoutes struct {
@@ -246,13 +246,13 @@ func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) erro
 	}
 
 	if settings.Oidc.DisablePasswordLogin {
-		return BadRequest(passwordLoginDisabled)
+		return BadRequest(errPasswordLoginDisabled)
 	}
 
 	res, err := ur.Auth.Login(ctx, login)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to login")
-		return BadRequest(checkYourCredentials)
+		return BadRequest(errInvalidCredentials)
 	}
 
 	return ctx.JSON(res)

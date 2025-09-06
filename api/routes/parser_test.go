@@ -138,7 +138,9 @@ func TestWithBody(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: ErrorHandler,
+			})
 
 			app.Use(func(ctx *fiber.Ctx) error {
 				ctx.Locals(services.ServiceProviderKey.Value(), container)
@@ -172,15 +174,17 @@ func TestWithBody(t *testing.T) {
 				err = json.NewDecoder(resp.Body).Decode(&errorResp)
 				require.NoError(t, err)
 
-				assert.Contains(t, errorResp, "error")
-				assert.IsType(t, "", errorResp["error"])
+				assert.Contains(t, errorResp, "message")
+				assert.IsType(t, "", errorResp["message"])
 			}
 		})
 	}
 }
 
 func TestWithBody_HandlerError(t *testing.T) {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: ErrorHandler,
+	})
 
 	app.Use(func(ctx *fiber.Ctx) error {
 		ctx.Locals(services.LoggerKey.Value(), zerolog.Nop())
@@ -323,7 +327,9 @@ func TestWithParam(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: ErrorHandler,
+			})
 			tt.setupRoute(app)
 
 			req := httptest.NewRequest(http.MethodGet, tt.url, nil)
@@ -358,7 +364,7 @@ func TestWithParam(t *testing.T) {
 				var errorResp map[string]interface{}
 				err = json.NewDecoder(resp.Body).Decode(&errorResp)
 				require.NoError(t, err)
-				assert.Contains(t, errorResp, "error")
+				assert.Contains(t, errorResp, "message")
 			}
 		})
 	}

@@ -28,7 +28,7 @@ func (m *SignalR) StateUpdate(userId int, id string, state payload.ContentState)
 func (m *SignalR) AddContent(userId int, data payload.InfoStat) {
 }
 
-func (m *SignalR) DeleteContent(id string) {
+func (m *SignalR) DeleteContent(userId int, id string) {
 }
 
 func (m *SignalR) Notify(models.Notification) {}

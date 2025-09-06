@@ -1,9 +1,11 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,7 +26,7 @@ func newError(code int, err error, extra ...fiber.Map) *Error {
 	}
 }
 
-func newErrorWithDepth(code int, err error, depth int, extra ...fiber.Map) *Error {
+func newErrorWithDepth(code int, err error, depth int, extra ...fiber.Map) *Error { //nolint: unparam
 	return &Error{
 		Err:        err,
 		StatusCode: code,
@@ -68,4 +70,26 @@ func (e Error) Error() string {
 		return ""
 	}
 	return e.Err.Error()
+}
+
+func ErrorHandler(c *fiber.Ctx, err error) error {
+	var e *Error
+	if !errors.As(err, &e) {
+		return fiber.DefaultErrorHandler(c, err)
+	}
+
+	_, ok := services.GetFromContextSafe(c, services.UserKey)
+	if !ok {
+		// Don't include caller for non-authenticated endpoints
+		return c.Status(e.StatusCode).JSON(fiber.Map{
+			"message": e.Error(),
+			"success": false,
+		})
+	}
+
+	return c.Status(e.StatusCode).JSON(fiber.Map{
+		"message": e.Error(),
+		"caller":  e.Caller,
+		"success": false,
+	})
 }
