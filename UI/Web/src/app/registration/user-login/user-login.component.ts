@@ -85,7 +85,7 @@ export class UserLoginComponent implements OnInit {
   ngOnInit(): void {
     this.navService.setNavVisibility(false);
 
-    const user = this.accountService.currentUserSignal();
+    const user = this.accountService.currentUser();
     if (user) {
       this.router.navigateByUrl('/home');
       return;

@@ -39,7 +39,7 @@ function bootstrapUser() {
   return firstValueFrom(accountService.getMe().pipe(
     catchError(() => of(null)),
     switchMap(() => {
-      const user = accountService.currentUserSignal();
+      const user = accountService.currentUser();
       if (!user) return of(null);
 
       return pageService.refreshPages().pipe(tap(() => {

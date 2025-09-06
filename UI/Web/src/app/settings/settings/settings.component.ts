@@ -73,7 +73,7 @@ export class SettingsComponent {
     this.navService.setNavVisibility(true);
 
     effect(() => {
-      const user = this.accountService.currentUserSignal();
+      const user = this.accountService.currentUser();
       if (!user) {
         this.router.navigateByUrl('/login');
         return;

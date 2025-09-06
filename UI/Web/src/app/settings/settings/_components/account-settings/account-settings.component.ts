@@ -34,7 +34,7 @@ export class AccountSettingsComponent {
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly accountService = inject(AccountService);
 
-  private readonly user = computed(() => this.accountService.currentUserSignal())
+  private readonly user = computed(() => this.accountService.currentUser())
 
   accountForm: FormGroup = this.fb.group({
     email: this.fb.control(this.user()?.email, [Validators.required, Validators.email]),

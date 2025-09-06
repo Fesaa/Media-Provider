@@ -73,7 +73,7 @@ export class NavHeaderComponent implements OnInit {
   private readonly transLoco = inject(TranslocoService);
 
   notifications = signal(0);
-  currentUser = this.accountService.currentUserSignal;
+  currentUser = this.accountService.currentUser;
   pageItems = signal<Page[]>([]);
   accountItems = signal<NavItem[]>([]);
 

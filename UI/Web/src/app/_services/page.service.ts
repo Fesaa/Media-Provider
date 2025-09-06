@@ -23,7 +23,7 @@ export class PageService {
 
   constructor() {
     effect(() => {
-      const user = this.accountService.currentUserSignal();
+      const user = this.accountService.currentUser();
       if (!user) return;
 
       this.refreshPages().subscribe();

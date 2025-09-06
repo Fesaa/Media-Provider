@@ -49,7 +49,6 @@ export class ServerSettingsComponent {
       authority: FormControl<string>;
       clientId: FormControl<string>;
       clientSecret: FormControl<string>;
-      redirectUrl: FormControl<string>;
       disablePasswordLogin: FormControl<boolean>;
       autoLogin:FormControl <boolean>;
     }>
@@ -74,7 +73,6 @@ export class ServerSettingsComponent {
           disablePasswordLogin: this.fb.control(config.oidc.disablePasswordLogin),
           autoLogin: this.fb.control(config.oidc.autoLogin),
           clientSecret: this.fb.control(config.oidc.clientSecret),
-          redirectUrl: this.fb.control(config.oidc.redirectUrl)
         }),
       });
       this.cdRef.detectChanges();

@@ -13,7 +13,6 @@ export type OidcConfig = {
   authority: string;
   clientId: string;
   clientSecret: string;
-  redirectUrl: string;
   disablePasswordLogin: boolean;
   autoLogin: boolean;
 }

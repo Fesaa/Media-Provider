@@ -184,21 +184,6 @@
               </app-settings-item>
             }
 
-            @if (getFormControl('oidc.redirectUrl'); as control) {
-              <app-settings-item [control]="control" [title]="t('oidc.redirectUrl.label')" [tooltip]="t('oidc.redirectUrl.subTitle')">
-                <ng-template #view>{{ control.value | defaultValue }}</ng-template>
-                <ng-template #edit>
-                  <div class="form-check" formGroupName="oidc">
-                    <input
-                      type="text"
-                      class="form-control"
-                      formControlName="redirectUrl"
-                    />
-                  </div>
-                </ng-template>
-              </app-settings-item>
-            }
-
             @if (getFormControl('oidc.autoLogin'); as control) {
               <app-settings-switch [control]="control" [title]="t('oidc.autoLogin.label')" [tooltip]="t('oidc.autoLogin.subTitle')">
                 <ng-template #switch>

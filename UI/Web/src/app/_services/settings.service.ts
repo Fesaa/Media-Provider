@@ -20,7 +20,7 @@ export class SettingsService {
 
   constructor() {
     effect(() => {
-      const user = this.accountService.currentUserSignal();
+      const user = this.accountService.currentUser();
       if (user) {
         this.getConfig().subscribe();
       }
