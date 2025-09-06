@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"path"
 	"strings"
 
@@ -36,17 +37,13 @@ func (ior *ioRoutes) listDirs(ctx *fiber.Ctx, req payload.ListDirsRequest) error
 
 	settings, err := ior.SettingsService.GetSettingsDto()
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	entries, err := ior.Fs.ReadDir(path.Join(settings.RootDir, path.Clean(req.Dir)))
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to read dir")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	var out payload.ListDirResponse
@@ -71,25 +68,19 @@ func (ior *ioRoutes) createDir(ctx *fiber.Ctx, req createDirRequest) error {
 	if strings.Contains(req.NewDir, "..") || strings.Contains(req.BaseDir, "..") {
 		log.Warn().Str("newDir", req.NewDir).Str("baseDir", req.BaseDir).
 			Msg("path contained invalid characters")
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": ior.Transloco.GetTranslation("invalid-path"),
-		})
+		return BadRequest(errors.New(ior.Transloco.GetTranslation("invalid-path")))
 	}
 
 	settings, err := ior.SettingsService.GetSettingsDto()
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	p := path.Join(settings.RootDir, req.BaseDir, path.Clean(req.NewDir))
 	if err = ior.Fs.Mkdir(p, 0755); err != nil {
 		log.Warn().Err(err).Msg("failed to create dir")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
-	return ctx.SendStatus(fiber.StatusCreated)
+	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{})
 }

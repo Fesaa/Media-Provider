@@ -25,13 +25,13 @@ type NotificationService interface {
 	Notify(models.Notification)
 
 	// MarkRead marks the notification with id as read, and sends the NotificationRead event through SignalR
-	MarkRead(models.User, uint) error
+	MarkRead(models.User, int) error
 	// MarkReadMany marks all the notifications as read, and sends the NotificationRead event through SignalR
-	MarkReadMany(models.User, []uint) error
+	MarkReadMany(models.User, []int) error
 	// MarkUnRead marks the notification with id as unread, and sends the Notification event through SignalR
-	MarkUnRead(models.User, uint) error
-	Delete(models.User, uint) error
-	DeleteMany(models.User, []uint) error
+	MarkUnRead(models.User, int) error
+	Delete(models.User, int) error
+	DeleteMany(models.User, []int) error
 }
 
 func NotificationServiceProvider(log zerolog.Logger, db *db.Database, signalR SignalRService) NotificationService {
@@ -84,7 +84,7 @@ func (n *notificationService) Notify(notification models.Notification) {
 	}
 }
 
-func (n *notificationService) MarkRead(user models.User, id uint) error {
+func (n *notificationService) MarkRead(user models.User, id int) error {
 	notification, err := n.db.Notifications.Get(id)
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func (n *notificationService) MarkRead(user models.User, id uint) error {
 	return nil
 }
 
-func (n *notificationService) MarkReadMany(user models.User, ids []uint) error {
+func (n *notificationService) MarkReadMany(user models.User, ids []int) error {
 	notifications, err := n.db.Notifications.GetMany(ids)
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (n *notificationService) MarkReadMany(user models.User, ids []uint) error {
 	return nil
 }
 
-func (n *notificationService) MarkUnRead(user models.User, id uint) error {
+func (n *notificationService) MarkUnRead(user models.User, id int) error {
 	notification, err := n.db.Notifications.Get(id)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func (n *notificationService) MarkUnRead(user models.User, id uint) error {
 	return n.db.Notifications.MarkUnread(id)
 }
 
-func (n *notificationService) Delete(user models.User, id uint) error {
+func (n *notificationService) Delete(user models.User, id int) error {
 	notification, err := n.db.Notifications.Get(id)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func (n *notificationService) Delete(user models.User, id uint) error {
 	return n.db.Notifications.Delete(id)
 }
 
-func (n *notificationService) DeleteMany(user models.User, ids []uint) error {
+func (n *notificationService) DeleteMany(user models.User, ids []int) error {
 	notifications, err := n.db.Notifications.GetMany(ids)
 	if err != nil {
 		return err

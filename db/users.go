@@ -36,7 +36,7 @@ func (u *userImpl) ExistsAny() (bool, error) {
 	return size > 0, nil
 }
 
-func (u *userImpl) GetById(id uint) (*models.User, error) {
+func (u *userImpl) GetById(id int) (*models.User, error) {
 	var user models.User
 	res := u.db.First(&user, id)
 	if res.Error != nil {
@@ -119,7 +119,7 @@ func (u *userImpl) Update(user models.User, opts ...models.Option[models.User]) 
 	return &user, nil
 }
 
-func (u *userImpl) UpdateById(id uint, opts ...models.Option[models.User]) (*models.User, error) {
+func (u *userImpl) UpdateById(id int, opts ...models.Option[models.User]) (*models.User, error) {
 	var user models.User
 	res := u.db.Where("id = ?", id).First(&user)
 	if res.Error != nil {
@@ -128,7 +128,7 @@ func (u *userImpl) UpdateById(id uint, opts ...models.Option[models.User]) (*mod
 	return u.Update(user, opts...)
 }
 
-func (u *userImpl) GenerateReset(userId uint) (*models.PasswordReset, error) {
+func (u *userImpl) GenerateReset(userId int) (*models.PasswordReset, error) {
 	key, err := utils.GenerateUrlSecret(32)
 	if err != nil {
 		return nil, err
@@ -153,12 +153,15 @@ func (u *userImpl) GetReset(key string) (*models.PasswordReset, error) {
 	var reset models.PasswordReset
 	res := u.db.Where(&models.PasswordReset{Key: key}).First(&reset)
 	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, res.Error
 	}
 	return &reset, nil
 }
 
-func (u *userImpl) GetResetByUserId(userId uint) (*models.PasswordReset, error) {
+func (u *userImpl) GetResetByUserId(userId int) (*models.PasswordReset, error) {
 	var reset models.PasswordReset
 	res := u.db.Where(&models.PasswordReset{UserId: userId}).First(&reset)
 	if res.Error != nil {
@@ -174,6 +177,6 @@ func (u *userImpl) DeleteReset(key string) error {
 	return u.db.Delete(&models.PasswordReset{}, "key = ?", key).Error
 }
 
-func (u *userImpl) Delete(id uint) error {
+func (u *userImpl) Delete(id int) error {
 	return u.db.Unscoped().Delete(&models.User{}, "id = ?", id).Error
 }

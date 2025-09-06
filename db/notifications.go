@@ -33,7 +33,7 @@ func (n notifications) Recent(i int, group models.NotificationGroup) ([]models.N
 	return many, nil
 }
 
-func (n notifications) GetMany(ids []uint) ([]models.Notification, error) {
+func (n notifications) GetMany(ids []int) ([]models.Notification, error) {
 	var many []models.Notification
 	err := n.db.Where("id IN (?)", ids).Find(&many).Error
 	if err != nil {
@@ -42,8 +42,8 @@ func (n notifications) GetMany(ids []uint) ([]models.Notification, error) {
 	return many, nil
 }
 
-func (n notifications) DeleteMany(ids []uint) error {
-	notifs := utils.Map(ids, func(id uint) models.Notification {
+func (n notifications) DeleteMany(ids []int) error {
+	notifs := utils.Map(ids, func(id int) models.Notification {
 		return models.Notification{
 			Model: models.Model{
 				ID: id,
@@ -53,14 +53,14 @@ func (n notifications) DeleteMany(ids []uint) error {
 	return n.db.Delete(notifs).Error
 }
 
-func (n notifications) MarkReadMany(ids []uint) error {
+func (n notifications) MarkReadMany(ids []int) error {
 	return n.db.Model(&models.Notification{}).
 		Where("id IN (?)", ids).
 		Updates(&models.Notification{Read: true}).
 		Error
 }
 
-func (n notifications) Get(id uint) (models.Notification, error) {
+func (n notifications) Get(id int) (models.Notification, error) {
 	var notification models.Notification
 	err := n.db.First(&notification, id).Error
 	if err != nil {
@@ -91,11 +91,11 @@ func (n notifications) New(notification models.Notification) error {
 	return n.db.Create(&notification).Error
 }
 
-func (n notifications) Delete(u uint) error {
+func (n notifications) Delete(u int) error {
 	return n.db.Delete(&models.Notification{}, u).Error
 }
 
-func (n notifications) MarkRead(u uint) error {
+func (n notifications) MarkRead(u int) error {
 	model := models.Notification{
 		Model: models.Model{
 			ID: u,
@@ -104,7 +104,7 @@ func (n notifications) MarkRead(u uint) error {
 	return n.db.Model(&model).Updates(&models.Notification{Read: true}).Error
 }
 
-func (n notifications) MarkUnread(u uint) error {
+func (n notifications) MarkUnread(u int) error {
 	model := models.Notification{
 		Model: models.Model{
 			ID: u,

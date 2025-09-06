@@ -27,7 +27,7 @@ func (p *pages) All() ([]models.Page, error) {
 	return allPages, nil
 }
 
-func (p *pages) Get(id uint) (*models.Page, error) {
+func (p *pages) Get(id int) (*models.Page, error) {
 	var page models.Page
 	result := p.db.Preload("Modifiers", func(db *gorm.DB) *gorm.DB {
 		return db.Order("sort ASC")
@@ -88,6 +88,6 @@ func (p *pages) UpdateMany(pages []models.Page) error {
 	})
 }
 
-func (p *pages) Delete(id uint) error {
+func (p *pages) Delete(id int) error {
 	return p.db.Delete(&models.Page{}, id).Error
 }

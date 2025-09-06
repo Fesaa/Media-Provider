@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
 
@@ -277,10 +278,8 @@ func TestUsers_DeleteReset(t *testing.T) {
 		t.Fatalf("failed to delete password reset: %v", err)
 	}
 
-	_, err = u.GetReset(reset.Key)
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		t.Fatalf("expected record not found error, got %v", err)
-	}
+	reset, _ = u.GetReset(reset.Key)
+	assert.Nil(t, reset)
 }
 
 func TestUsers_Delete(t *testing.T) {

@@ -160,6 +160,7 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription, isSub ..
 		BaseDir:          sub.Info.BaseDir,
 		TempTitle:        sub.Info.Title,
 		DownloadMetadata: sub.Payload,
+		OwnerId:          sub.Owner,
 
 		IsSubscription: utils.OrDefault(isSub, true),
 		Sub:            sub,

@@ -14,18 +14,18 @@ import (
 
 type SubscriptionService interface {
 	// Get the subscription with ID
-	Get(uint) (*models.Subscription, error)
+	Get(int) (*models.Subscription, error)
 	// All returns all active subscriptions
 	All() ([]models.Subscription, error)
 	// AllForUser returns all active subscriptions for the given user
-	AllForUser(uint) ([]models.Subscription, error)
+	AllForUser(int) ([]models.Subscription, error)
 	// Add a new subscription, saved to DB and starts the cron job
 	// Subscription is normalized in the process
 	Add(models.Subscription) (*models.Subscription, error)
 	// Update an existing subscription, updates DB. Subscription is normalized in the process
 	Update(models.Subscription) error
 	// Delete the subscription with ID
-	Delete(uint) error
+	Delete(int) error
 
 	// UpdateTask recreates the underlying cronjob. Generally only called when the hour to run susbcriptions changes
 	UpdateTask(hour ...int) error
@@ -132,11 +132,11 @@ func (s *subscriptionService) All() ([]models.Subscription, error) {
 	return s.db.Subscriptions.All()
 }
 
-func (s *subscriptionService) AllForUser(userId uint) ([]models.Subscription, error) {
+func (s *subscriptionService) AllForUser(userId int) ([]models.Subscription, error) {
 	return s.db.Subscriptions.AllForUser(userId)
 }
 
-func (s *subscriptionService) Get(id uint) (*models.Subscription, error) {
+func (s *subscriptionService) Get(id int) (*models.Subscription, error) {
 	return s.db.Subscriptions.Get(id)
 }
 
@@ -197,7 +197,7 @@ func (s *subscriptionService) Update(sub models.Subscription) error {
 	return s.db.Subscriptions.Update(*cur)
 }
 
-func (s *subscriptionService) Delete(id uint) error {
+func (s *subscriptionService) Delete(id int) error {
 	return s.db.Subscriptions.Delete(id)
 }
 
@@ -246,7 +246,7 @@ func (s *subscriptionService) handleSub(sub models.Subscription, hour int) {
 
 	if err != nil {
 		s.log.Error().Err(err).
-			Uint("id", sub.ID).
+			Int("id", sub.ID).
 			Str("contentId", sub.ContentId).
 			Msg("failed to download content")
 		s.notifier.Notify(models.NewNotification().
@@ -260,8 +260,8 @@ func (s *subscriptionService) handleSub(sub models.Subscription, hour int) {
 	}
 
 	if err = s.db.Subscriptions.Update(sub); err != nil {
-		s.log.Warn().Err(err).Uint("id", sub.ID).Msg("failed to update subscription")
+		s.log.Warn().Err(err).Int("id", sub.ID).Msg("failed to update subscription")
 	} else {
-		s.log.Debug().Uint("id", sub.ID).Msg("updated subscription")
+		s.log.Debug().Int("id", sub.ID).Msg("updated subscription")
 	}
 }

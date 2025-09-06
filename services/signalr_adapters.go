@@ -99,7 +99,7 @@ func (s *signalrService) upgrader() *websocket.FastHTTPUpgrader {
 	return &upgrader
 }
 
-func (s *signalrService) wsInit(userId uint, id string) func(conn *websocket.Conn) {
+func (s *signalrService) wsInit(userId int, id string) func(conn *websocket.Conn) {
 	return func(conn *websocket.Conn) {
 		if err := s.server.Serve(newFastHttpConn(conn, id)); err != nil {
 			// 1001 Going Away & 1000 Normal Closure

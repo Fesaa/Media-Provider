@@ -49,8 +49,8 @@ func (tags Tags) Contains(tag string) bool {
 type Tag struct {
 	Model
 
-	PreferenceID   uint
-	AgeRatingMapID uint
+	PreferenceID   int
+	AgeRatingMapID int
 
 	Name           string `json:"name"`
 	NormalizedName string `json:"normalizedName"`
@@ -99,7 +99,7 @@ func (arm AgeRatingMappings) GetAgeRating(tag string) (comicinfo.AgeRating, bool
 type AgeRatingMap struct {
 	Model
 
-	PreferenceID       uint
+	PreferenceID       int
 	Tag                Tag                 `json:"tag"`
 	ComicInfoAgeRating comicinfo.AgeRating `json:"comicInfoAgeRating"`
 	// MetronAgeRating    metroninfo.AgeRating `json:"metronAgeRating"`
@@ -108,10 +108,10 @@ type AgeRatingMap struct {
 type TagMap struct {
 	Model
 
-	PreferenceID uint
-	OriginID     uint
+	PreferenceID int
+	OriginID     int
 	Origin       Tag `json:"origin" gorm:"foreignKey:OriginID;references:ID"`
-	DestID       uint
+	DestID       int
 	Dest         Tag `json:"dest" gorm:"foreignKey:DestID;references:ID"`
 }
 

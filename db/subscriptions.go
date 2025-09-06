@@ -25,7 +25,7 @@ func (s subscriptionImpl) All() ([]models.Subscription, error) {
 	return subscriptions, nil
 }
 
-func (s subscriptionImpl) AllForUser(userID uint) ([]models.Subscription, error) {
+func (s subscriptionImpl) AllForUser(userID int) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
 	res := s.db.
 		Preload("Info").
@@ -38,7 +38,7 @@ func (s subscriptionImpl) AllForUser(userID uint) ([]models.Subscription, error)
 	return subscriptions, nil
 }
 
-func (s subscriptionImpl) Get(i uint) (*models.Subscription, error) {
+func (s subscriptionImpl) Get(i int) (*models.Subscription, error) {
 	var subscription models.Subscription
 	res := s.db.Preload("Info").First(&subscription, i)
 	if res.Error != nil {
@@ -48,7 +48,7 @@ func (s subscriptionImpl) Get(i uint) (*models.Subscription, error) {
 	return &subscription, nil
 }
 
-func (s subscriptionImpl) GetForUser(subId, userID uint) (models.Subscription, error) {
+func (s subscriptionImpl) GetForUser(subId, userID int) (models.Subscription, error) {
 	var subscription models.Subscription
 	res := s.db.
 		Preload("Info").
@@ -75,7 +75,7 @@ func (s subscriptionImpl) GetByContentId(contentID string) (*models.Subscription
 	return &subscription, nil
 }
 
-func (s subscriptionImpl) GetByContentIdForUser(contentID string, userId uint) (*models.Subscription, error) {
+func (s subscriptionImpl) GetByContentIdForUser(contentID string, userId int) (*models.Subscription, error) {
 	var subscription models.Subscription
 	res := s.db.Preload("Info").
 		Where(&models.Subscription{ContentId: contentID, Owner: userId}).
@@ -104,7 +104,7 @@ func (s subscriptionImpl) Update(subscription models.Subscription) error {
 	return s.db.Session(&gorm.Session{FullSaveAssociations: true}).Save(&subscription).Error
 }
 
-func (s subscriptionImpl) Delete(i uint) error {
+func (s subscriptionImpl) Delete(i int) error {
 	return s.db.Select("Info").Delete(&models.Subscription{
 		Model: models.Model{ID: i},
 	}).Error

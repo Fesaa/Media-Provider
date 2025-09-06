@@ -31,9 +31,7 @@ func (pr *preferencesRoute) get(ctx *fiber.Ctx) error {
 	pref, err := pr.Pref.GetDto()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get preferences")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 	return ctx.JSON(pref)
 }
@@ -43,9 +41,7 @@ func (pr *preferencesRoute) update(ctx *fiber.Ctx, pref payload.PreferencesDto) 
 
 	if err := pr.Pref.Update(pref); err != nil {
 		log.Error().Err(err).Msg("Failed to update preferences")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})

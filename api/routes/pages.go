@@ -32,12 +32,12 @@ func RegisterPageRoutes(pr pageRoutes) {
 		Get("/download-metadata", withParam(newQueryParam("provider",
 			withMessage[int](pr.Transloco.GetTranslation("no-provider"))), pr.DownloadMetadata)).
 		Get("/:id", withParam(newIdPathParam(), pr.page)).
-		Post("/order", withBody(pr.orderPages)).
 		Post("/load-default", pr.loadDefault)
 
 	pages.Use(hasRole(models.ManagePages)).
 		Post("/new", withBodyValidation(pr.updatePage)).
 		Post("/update", withBodyValidation(pr.updatePage)).
+		Post("/order", withBody(pr.orderPages)).
 		Delete("/:id", withParam(newIdPathParam(), pr.deletePage))
 }
 
@@ -70,24 +70,22 @@ func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 	return ctx.JSON(pages)
 }
 
-func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
+func (pr *pageRoutes) page(ctx *fiber.Ctx, id int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 
 	if len(user.Pages) > 0 && !slices.Contains(user.Pages, int32(id)) {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
+		return NotFound()
 	}
 
 	page, err := pr.DB.Pages.Get(id)
 	if err != nil {
-		log.Error().Err(err).Uint("pageId", id).Msg("Failed to get page")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		log.Error().Err(err).Int("pageId", id).Msg("Failed to get page")
+		return InternalError(err)
 	}
 
 	if page == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
+		return NotFound()
 	}
 
 	return ctx.JSON(page)
@@ -113,37 +111,42 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 		return mod
 	})
 
-	if err := pr.PageService.UpdateOrCreate(&page); err != nil {
+	cur, err := pr.DB.Pages.Get(page.ID)
+	if err != nil {
+		log.Error().Err(err).Int("pageId", page.ID).Msg("Failed to get page")
+		return InternalError(err)
+	}
+
+	// Do not allow changing sort value with update, should use /order
+	if cur != nil {
+		page.SortValue = cur.SortValue
+	}
+
+	if err = pr.PageService.UpdateOrCreate(&page); err != nil {
 		log.Error().Err(err).Msg("Failed to update page")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(page)
 }
 
-func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id uint) error {
+func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	if err := pr.DB.Pages.Delete(id); err != nil {
 		log.Error().Err(err).Msg("Failed to delete page")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []uint) error {
+func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	if err := pr.PageService.OrderPages(order); err != nil {
 		log.Error().Err(err).Msg("Failed to swap page")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
@@ -154,9 +157,7 @@ func (pr *pageRoutes) loadDefault(ctx *fiber.Ctx) error {
 
 	if err := pr.PageService.LoadDefaultPages(); err != nil {
 		log.Error().Err(err).Msg("Failed to load default pages")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
@@ -165,9 +166,7 @@ func (pr *pageRoutes) loadDefault(ctx *fiber.Ctx) error {
 func (pr *pageRoutes) DownloadMetadata(ctx *fiber.Ctx, provider int) error {
 	metadata, err := pr.ContentService.DownloadMetadata(models.Provider(provider))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 	return ctx.Status(fiber.StatusOK).JSON(metadata)
 }

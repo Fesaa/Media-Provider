@@ -106,7 +106,7 @@ func TestNotifications_DeleteMany(t *testing.T) {
 		}
 	}
 
-	if err := n.DeleteMany([]uint{1, 2, 3, 4, 5}); err != nil {
+	if err := n.DeleteMany([]int{1, 2, 3, 4, 5}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -175,7 +175,7 @@ func TestNotifications_MarkReadMany(t *testing.T) {
 		}
 	}
 
-	if err := n.MarkReadMany([]uint{1, 2, 3, 4, 5}); err != nil {
+	if err := n.MarkReadMany([]int{1, 2, 3, 4, 5}); err != nil {
 		t.Fatal(err)
 	}
 

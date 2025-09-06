@@ -65,7 +65,7 @@ const (
 type Modifier struct {
 	Model
 
-	PageID uint
+	PageID int
 
 	Title  string          `json:"title"`
 	Type   ModifierType    `json:"type"`
@@ -77,7 +77,7 @@ type Modifier struct {
 type ModifierValue struct {
 	Model
 
-	ModifierID uint
+	ModifierID int
 	Key        string `json:"key"`
 	Value      string `json:"value"`
 	Default    bool   `json:"default"`

@@ -6,7 +6,7 @@ import (
 )
 
 type PreferencesDto struct {
-	Id                      uint                       `json:"id"`
+	Id                      int                        `json:"id"`
 	SubscriptionRefreshHour int                        `json:"subscriptionRefreshHour" validate:"min=0,max=23"`
 	LogEmptyDownloads       bool                       `json:"logEmptyDownloads" validate:"boolean"`
 	ConvertToWebp           bool                       `json:"convertToWebp" validate:"boolean"`
@@ -19,13 +19,13 @@ type PreferencesDto struct {
 }
 
 type AgeRatingMapDto struct {
-	Id                 uint                `json:"id"`
+	Id                 int                 `json:"id"`
 	Tag                string              `json:"tag"`
 	ComicInfoAgeRating comicinfo.AgeRating `json:"comicInfoAgeRating"`
 }
 
 type TagMapDto struct {
-	Id     uint   `json:"id"`
+	Id     int    `json:"id"`
 	Origin string `json:"origin"`
 	Dest   string `json:"dest"`
 }

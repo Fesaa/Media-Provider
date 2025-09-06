@@ -334,6 +334,7 @@ func (c *Core[C, S]) Cancel() {
 	if c.wg != nil {
 		c.Log.Debug().Msg("Waiting for all download task to complete")
 		c.wg.Wait()
+		c.Log.Debug().Msg("Download tasks completed, waiting for I/O")
 		c.IoWg.Wait()
 	}
 

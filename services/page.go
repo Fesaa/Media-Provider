@@ -22,7 +22,7 @@ var (
 
 type PageService interface {
 	UpdateOrCreate(page *models.Page) error
-	OrderPages([]uint) error
+	OrderPages([]int) error
 	LoadDefaultPages() error
 }
 
@@ -71,7 +71,7 @@ func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 	return ps.db.Pages.Update(page)
 }
 
-func (ps *pageService) OrderPages(order []uint) error {
+func (ps *pageService) OrderPages(order []int) error {
 	pages, err := ps.db.Pages.All()
 	if err != nil {
 		return err

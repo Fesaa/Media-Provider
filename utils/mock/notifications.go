@@ -16,22 +16,22 @@ func (n Notifications) GetNotifications(user models.User, time time.Time) ([]mod
 func (n Notifications) Notify(notification models.Notification) {
 }
 
-func (n Notifications) MarkRead(user models.User, u uint) error {
+func (n Notifications) MarkRead(user models.User, u int) error {
 	return nil
 }
 
-func (n Notifications) MarkReadMany(user models.User, uints []uint) error {
+func (n Notifications) MarkReadMany(user models.User, uints []int) error {
 	return nil
 }
 
-func (n Notifications) MarkUnRead(user models.User, u uint) error {
+func (n Notifications) MarkUnRead(user models.User, u int) error {
 	return nil
 }
 
-func (n Notifications) Delete(user models.User, u uint) error {
+func (n Notifications) Delete(user models.User, u int) error {
 	return nil
 }
 
-func (n Notifications) DeleteMany(user models.User, uints []uint) error {
+func (n Notifications) DeleteMany(user models.User, uints []int) error {
 	return nil
 }

@@ -42,9 +42,7 @@ func (nr *notificationRoutes) all(ctx *fiber.Ctx, after time.Time) error {
 
 	if err != nil {
 		log.Error().Err(err).Time("after", after).Msg("failed to fetch notifications")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.JSON(notifications)
@@ -56,9 +54,7 @@ func (nr *notificationRoutes) recent(ctx *fiber.Ctx, limit int) error {
 	nots, err := nr.DB.Notifications.Recent(utils.Clamp(limit, 1, 10), models.GroupContent)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch recent notifications")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return ctx.JSON(nots)
@@ -70,38 +66,36 @@ func (nr *notificationRoutes) amount(ctx *fiber.Ctx) error {
 	size, err := nr.DB.Notifications.Unread()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to fetch amount of unread notifications")
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": err.Error(),
-		})
+		return InternalError(err)
 	}
 	return ctx.JSON(size)
 }
 
-func (nr *notificationRoutes) read(ctx *fiber.Ctx, id uint) error {
+func (nr *notificationRoutes) read(ctx *fiber.Ctx, id int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.MarkRead(user, id)
 	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) readMany(ctx *fiber.Ctx, ids []uint) error {
+func (nr *notificationRoutes) readMany(ctx *fiber.Ctx, ids []int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.MarkReadMany(user, ids)
 	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) unread(ctx *fiber.Ctx, id uint) error {
+func (nr *notificationRoutes) unread(ctx *fiber.Ctx, id int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.MarkUnRead(user, id)
 	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) deleteMany(ctx *fiber.Ctx, ids []uint) error {
+func (nr *notificationRoutes) deleteMany(ctx *fiber.Ctx, ids []int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.DeleteMany(user, ids)
 	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) delete(ctx *fiber.Ctx, id uint) error {
+func (nr *notificationRoutes) delete(ctx *fiber.Ctx, id int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.Delete(user, id)
 	return nr.handleServiceError(ctx, err)
@@ -116,7 +110,5 @@ func (nr *notificationRoutes) handleServiceError(ctx *fiber.Ctx, err error) erro
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{})
 	}
 
-	return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-		"error": err.Error(),
-	})
+	return InternalError(err)
 }

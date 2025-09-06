@@ -27,9 +27,7 @@ func (mr *metadataRoutes) Get(c *fiber.Ctx) error {
 	m, err := mr.MetadataService.Get()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to retrieve metadata")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return c.JSON(m)
@@ -40,9 +38,7 @@ func (mr *metadataRoutes) Update(c *fiber.Ctx, m payload.Metadata) error {
 
 	if err := mr.MetadataService.Update(m); err != nil {
 		log.Error().Err(err).Msg("failed to update metadata")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return InternalError(err)
 	}
 
 	return c.JSON(fiber.Map{})
