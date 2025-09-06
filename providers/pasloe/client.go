@@ -110,7 +110,7 @@ func (c *client) Download(req payload.DownloadRequest) error {
 
 	if err = pq.AddToLoadingQueue(content); err != nil {
 		c.content.Delete(content.Id())
-		c.signalR.DeleteContent(content.Id())
+		c.signalR.DeleteContent(content.Request().OwnerId, content.Id())
 
 		return c.wrapError(err)
 	}
@@ -158,7 +158,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 			c.cleanup(content)
 		}
 
-		c.signalR.DeleteContent(content.Id())
+		c.signalR.DeleteContent(content.Request().OwnerId, content.Id())
 	}()
 
 	return nil
@@ -258,7 +258,7 @@ func (c *client) notifier(req payload.DownloadRequest) services.Notifier {
 }
 
 func (c *client) deleteFiles(content core.Downloadable) {
-	defer c.signalR.DeleteContent(content.Id())
+	defer c.signalR.DeleteContent(content.Request().OwnerId, content.Id())
 
 	downloadDir := strings.TrimSpace(content.GetDownloadDir())
 	if downloadDir == "" {
@@ -349,7 +349,7 @@ func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupEr
 }
 
 func (c *client) cleanup(content core.Downloadable) {
-	defer c.signalR.DeleteContent(content.Id())
+	defer c.signalR.DeleteContent(content.Request().OwnerId, content.Id())
 
 	l := c.log.With().Str("contentId", content.Id()).Logger()
 	newContent := content.GetNewContent()

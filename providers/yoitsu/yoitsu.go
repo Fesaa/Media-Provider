@@ -257,7 +257,7 @@ func (y *yoitsu) startNext() {
 //
 //nolint:funlen
 func (y *yoitsu) cleanup(t Torrent, baseDir string) {
-	defer y.signalR.DeleteContent(t.Id())
+	defer y.signalR.DeleteContent(t.Request().OwnerId, t.Id())
 	tor := t.GetTorrent()
 	if tor == nil {
 		return
@@ -335,7 +335,7 @@ func (y *yoitsu) deleteTorrentFiles(tor Torrent, baseDir string) {
 	}
 
 	infoHash := tor.GetTorrent().InfoHash().HexString()
-	defer y.signalR.DeleteContent(infoHash)
+	defer y.signalR.DeleteContent(tor.Request().OwnerId, infoHash)
 
 	dir := path.Join(y.dir, baseDir, infoHash)
 	y.log.Debug().Str("infoHash", infoHash).Str("dir", dir).Msg("deleting directory")

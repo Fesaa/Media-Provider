@@ -32,12 +32,12 @@ func RegisterPageRoutes(pr pageRoutes) {
 		Get("/download-metadata", withParam(newQueryParam("provider",
 			withMessage[int](pr.Transloco.GetTranslation("no-provider"))), pr.DownloadMetadata)).
 		Get("/:id", withParam(newIdPathParam(), pr.page)).
-		Post("/order", withBody(pr.orderPages)).
 		Post("/load-default", pr.loadDefault)
 
 	pages.Use(hasRole(models.ManagePages)).
 		Post("/new", withBodyValidation(pr.updatePage)).
 		Post("/update", withBodyValidation(pr.updatePage)).
+		Post("/order", withBody(pr.orderPages)).
 		Delete("/:id", withParam(newIdPathParam(), pr.deletePage))
 }
 
@@ -112,6 +112,19 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 
 		return mod
 	})
+
+	cur, err := pr.DB.Pages.Get(page.ID)
+	if err != nil {
+		log.Error().Err(err).Int("pageId", page.ID).Msg("Failed to get page")
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	// Do not allow changing sort value with update, should use /order
+	if cur != nil {
+		page.SortValue = cur.SortValue
+	}
 
 	if err := pr.PageService.UpdateOrCreate(&page); err != nil {
 		log.Error().Err(err).Msg("Failed to update page")

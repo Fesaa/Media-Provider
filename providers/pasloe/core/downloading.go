@@ -76,15 +76,15 @@ func (c *Core[C, S]) processDownloads(ctx context.Context, wg *sync.WaitGroup) e
 	for _, content := range c.ToDownload {
 		select {
 		case <-ctx.Done():
-			wg.Wait()
 			return errors.New("download cancelled")
 		default:
 			wg.Add(1)
-			err := c.downloadContent(ctx, content)
-			wg.Done()
+			err := func() error {
+				defer wg.Done()
+				return c.downloadContent(ctx, content)
+			}()
 			if err != nil {
 				c.abortDownload(err)
-				wg.Wait()
 				return err
 			}
 		}
@@ -132,10 +132,12 @@ func (c *Core[C, S]) startDownload(parentCtx context.Context) {
 
 	if err := c.processDownloads(ctx, c.wg); err != nil {
 		c.Log.Trace().Err(err).Msg("download failed")
+		close(c.IOWorkCh)
 		return
 	}
 
-	c.Log.Debug().Dur("elapsed", time.Since(start)).Msg("All content has been downloaded, waiting for I/O workers to finish")
+	c.Log.Debug().Dur("elapsed", time.Since(start)).
+		Msg("All content has been downloaded, waiting for I/O workers to finish")
 
 	close(c.IOWorkCh)
 	c.SetState(payload.ContentStateCleanup)
@@ -148,7 +150,7 @@ func (c *Core[C, S]) startDownload(parentCtx context.Context) {
 
 // downloadContent handles the full download of one chapter
 func (c *Core[C, S]) downloadContent(parentCtx context.Context, chapter C) error {
-	dCtx, err := c.ConstructDownloadContext(parentCtx, chapter)
+	dCtx, err := c.constructDownloadContext(parentCtx, chapter)
 	if err != nil || dCtx == nil {
 		return err
 	}
@@ -196,9 +198,9 @@ func (c *Core[C, S]) downloadContent(parentCtx context.Context, chapter C) error
 	return nil
 }
 
-// ConstructDownloadContext load the required information to start downloading the chapter, and then returns the context
+// constructDownloadContext load the required information to start downloading the chapter, and then returns the context
 // with all fields set
-func (c *Core[C, S]) ConstructDownloadContext(ctx context.Context, chapter C) (*DownloadContext[C, S], error) {
+func (c *Core[C, S]) constructDownloadContext(ctx context.Context, chapter C) (*DownloadContext[C, S], error) {
 	downloadContext, cancel := context.WithCancel(ctx)
 
 	dCtx := DownloadContext[C, S]{

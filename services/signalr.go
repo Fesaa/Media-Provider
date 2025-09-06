@@ -27,7 +27,7 @@ type SignalRService interface {
 
 	AddContent(int, payload.InfoStat)
 	UpdateContentInfo(int, payload.InfoStat)
-	DeleteContent(string)
+	DeleteContent(int, string)
 
 	// Notify may be used directly by anyone to send a quick toast to the frontend.
 	// Use NotificationService for notification that must persist
@@ -116,8 +116,9 @@ func (s *signalrService) UpdateContentInfo(userId int, data payload.InfoStat) {
 	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentInfoUpdate, data)
 }
 
-func (s *signalrService) DeleteContent(id string) {
-	s.Broadcast(payload.EventTypeDeleteContent, payload.DeleteContent{ContentId: id})
+func (s *signalrService) DeleteContent(userId int, id string) {
+	data := payload.DeleteContent{ContentId: id}
+	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeDeleteContent, data)
 }
 
 func (s *signalrService) Notify(notification models.Notification) {

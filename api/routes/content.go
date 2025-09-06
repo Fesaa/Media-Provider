@@ -113,7 +113,7 @@ func (cr *contentRoutes) Stop(ctx *fiber.Ctx, req payload.StopRequest) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	if err := cr.ContentService.Stop(req); err != nil {
-		log.Error().Str("id", req.Id).Msg("error while stopping download")
+		log.Error().Err(err).Str("id", req.Id).Msg("error while stopping download")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
