@@ -29,6 +29,7 @@ var (
 	Language       = stringFeature("LANGUAGE")
 	ConfigDir      = stringFeature("CONFIG_DIR")
 	ConfigFile     = stringFeature("CONFIG_FILE")
+	TrustedIps     = arrayFeature("TRUSTED_IPS", stringFeature)
 )
 
 func arrayFeature[T any](key string, f func(string, ...string) T) []T {

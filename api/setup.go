@@ -47,9 +47,11 @@ func applicationProvider(params appParams) *fiber.App {
 	baseUrl := params.Cfg.BaseUrl
 
 	app := fiber.New(fiber.Config{
-		AppName:               "Media-Provider",
-		DisableStartupMessage: true,
-		ErrorHandler:          routes.ErrorHandler,
+		AppName:                 "Media-Provider",
+		DisableStartupMessage:   true,
+		ErrorHandler:            routes.ErrorHandler,
+		EnableTrustedProxyCheck: len(config.TrustedIps) > 0,
+		TrustedProxies:          config.TrustedIps,
 	})
 
 	if !config.Development {
