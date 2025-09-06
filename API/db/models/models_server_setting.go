@@ -15,7 +15,6 @@ const (
 	OidcAutoLogin
 	OidcDisablePasswordLogin
 	OidcClientSecret
-	OidcRedirectUrl
 )
 
 type ServerSetting struct {

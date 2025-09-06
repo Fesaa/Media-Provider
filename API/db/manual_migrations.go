@@ -57,6 +57,10 @@ var manualMigrations = []migration{
 		name: "20250905_NotificationsUserOwned",
 		f:    manual.AssignNotificationsToDefaultUser,
 	},
+	{
+		name: "20250906_RemoveRedirectUrl",
+		f:    manual.RemoveRedirectUrl,
+	},
 }
 
 func manualMigration(db *gorm.DB, log zerolog.Logger) error {

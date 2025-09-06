@@ -17,13 +17,12 @@ type OidcSettings struct {
 	Authority            string `json:"authority"`
 	ClientID             string `json:"clientId"`
 	ClientSecret         string `json:"clientSecret"`
-	RedirectURL          string `json:"redirectUrl"`
 	DisablePasswordLogin bool   `json:"disablePasswordLogin"`
 	AutoLogin            bool   `json:"autoLogin"`
 }
 
 func (o OidcSettings) Enabled() bool {
-	return o.Authority != "" && o.ClientID != "" && o.ClientSecret != "" && o.RedirectURL != ""
+	return o.Authority != "" && o.ClientID != "" && o.ClientSecret != ""
 }
 
 type PublicOidcSettings struct {

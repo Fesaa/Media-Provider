@@ -33,7 +33,7 @@ export class UserSettingsComponent implements OnInit {
 
   users = signal<UserDto[]>([]);
   pages = this.pageService.pages;
-  authUser = this.accountService.currentUserSignal();
+  authUser = this.accountService.currentUser();
 
   ngOnInit(): void {
     this.loadUsers();

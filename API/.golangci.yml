@@ -57,7 +57,6 @@ linters:
     - thelper
     - tparallel
     - unconvert
-    - unparam
     - usestdlibvars
     - usetesting
     - wastedassign
@@ -101,6 +100,7 @@ linters:
     - whitespace
     - wrapcheck
     - wsl
+    - unparam
   settings:
     gosec:
       excludes:

@@ -15,7 +15,7 @@ export class ImageService {
 
   constructor(private httpClient: HttpClient, private toastService: ToastService, private accountService: AccountService) {
     effect(() => {
-      const user = this.accountService.currentUserSignal();
+      const user = this.accountService.currentUser();
       if (user) {
         this.apiKey = user.apiKey;
       }

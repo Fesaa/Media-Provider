@@ -33,7 +33,7 @@ export class PagesSettingsComponent {
   private readonly pageService = inject(PageService);
   private readonly accountService = inject(AccountService);
 
-  user = computed(() => this.accountService.currentUserSignal());
+  user = computed(() => this.accountService.currentUser());
   pages = signal<Page[]>([]);
   loading = signal(true);
 

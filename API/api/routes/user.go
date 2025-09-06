@@ -48,7 +48,8 @@ func RegisterUserRoutes(ur userRoutes) {
 
 	ur.RootRouter.
 		Get("/oidc/login", ur.oidcLogin).
-		Get("/oidc/callback", ur.oidcCallback)
+		Get("/oidc/callback", ur.oidcCallback).
+		Get("/logout", ur.logoutUser)
 
 	ur.Router.
 		Get("/any-user-exists", ur.anyUserExists).
@@ -259,8 +260,7 @@ func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) erro
 }
 
 func (ur *userRoutes) logoutUser(ctx *fiber.Ctx) error {
-	ur.Auth.Logout(ctx)
-	return ctx.Redirect("/")
+	return ctx.Redirect(utils.NonEmpty(ur.Auth.Logout(ctx), "/"))
 }
 
 func (ur *userRoutes) oidcLogin(ctx *fiber.Ctx) error {

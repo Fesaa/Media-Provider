@@ -13,7 +13,7 @@ export class AuthGuard implements CanActivate {
   }
 
   canActivate() {
-    const user = this.accountService.currentUserSignal();
+    const user = this.accountService.currentUser();
     if (user) {
       return true;
     }

@@ -13,20 +13,14 @@ import {SignalRService} from "./signal-r.service";
 })
 export class AccountService {
 
+  private readonly httpClient = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly signalR = inject(SignalRService);
 
   baseUrl = environment.apiUrl;
-  userKey = 'mp-user';
-
-
 
   private readonly _currentUser = signal<User | undefined>(undefined);
-  public readonly currentUserSignal = this._currentUser.asReadonly();
-  private currentUser: User | undefined;
-
-  constructor(private httpClient: HttpClient, private router: Router) {
-  }
+  public readonly currentUser = this._currentUser.asReadonly();
 
   login(model: { username: string, password: string, remember: boolean }): Observable<User> {
     return this.httpClient.post<User>(this.baseUrl + 'login', model).pipe(
@@ -51,13 +45,14 @@ export class AccountService {
   updateMe(model: {username: string, email: string}) {
     return this.httpClient.post<User>(`${this.baseUrl}user/me`, model).pipe(
       tap(() => {
-        if (!this.currentUser) return;
+        this._currentUser.update(x => {
+          if (!x) return;
 
-        const user = {...this.currentUser};
-        user.name = model.username;
-        user.email = model.email;
-        this.setCurrentUser(user);
-      })
+          x.name = model.username;
+          x.email = model.email;
+          return x;
+        })
+      }),
     );
   }
 
@@ -69,7 +64,7 @@ export class AccountService {
     return this.httpClient.post<User>(this.baseUrl + 'register', model).pipe(
       tap((user: User) => {
         if (user) {
-          this.setCurrentUser(user)
+          this.setCurrentUser(user);
         }
       }),
       takeUntilDestroyed(this.destroyRef)
@@ -77,11 +72,6 @@ export class AccountService {
   }
 
   setCurrentUser(user?: User) {
-    if (user) {
-      localStorage.setItem(this.userKey, JSON.stringify(user));
-    }
-
-    this.currentUser = user;
     this._currentUser.set(user);
 
     if (user) {
@@ -91,14 +81,12 @@ export class AccountService {
   }
 
   logout() {
-    if (!this.currentUser) {
+    if (!this.currentUser()) {
       return;
     }
 
-    localStorage.removeItem(this.userKey);
-    this.currentUser = undefined;
     this._currentUser.set(undefined);
-    this.router.navigate(['/login']);
+    window.location.href = "/logout"
   }
 
   anyUserExists() {
@@ -111,15 +99,16 @@ export class AccountService {
 
   updateOrCreate(dto: UserDto) {
     return this.httpClient.post<UserDto>(this.baseUrl + 'user/update', dto).pipe(tap(dto => {
-      if (dto.id !== this.currentUser?.id) {
-        return;
-      }
+      this._currentUser.update(user => {
+        if (!user || dto.id !== user.id) {
+          return;
+        }
 
-      this.setCurrentUser({
-        ...this.currentUser,
-        name: dto.name,
-        roles: dto.roles,
-      })
+        user.name = dto.name;
+        user.email = dto.email;
+        user.roles = dto.roles;
+        return user;
+      });
     }))
   }
 
@@ -137,8 +126,12 @@ export class AccountService {
 
   refreshApiKey() {
     return this.httpClient.get<{ ApiKey: string }>(this.baseUrl + 'user/refresh-api-key').pipe(tap(res => {
-      this.currentUser!.apiKey = res.ApiKey
-      this.setCurrentUser(this.currentUser)
+      this._currentUser.update(x => {
+        if (!x) return
+
+        x.apiKey = res.ApiKey;
+        return x;
+      })
     }));
   }
 
