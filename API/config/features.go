@@ -50,7 +50,7 @@ func arrayFeature[T any](key string, f func(string, ...string) T) []T {
 	})
 }
 
-func boolFeature(key string, orValue ...string) bool { //nolint:unparam
+func boolFeature(key string, orValue ...string) bool {
 	val, ok := envOrValue(key, orValue)
 	if !ok {
 		return false
@@ -72,7 +72,7 @@ func intFeature(key string, orValue ...string) int {
 	return valInt
 }
 
-func stringFeature(key string, orValue ...string) string { //nolint:unparam
+func stringFeature(key string, orValue ...string) string {
 	val, ok := envOrValue(key, orValue)
 	if !ok {
 		return ""

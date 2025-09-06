@@ -513,7 +513,7 @@ func (s *cookieAuthService) getOidcTokens(token string) (*OIDCTokens, error) {
 	return &oidcToken, nil
 }
 
-func (s *cookieAuthService) storeOidcToken(ctx context.Context, tokens *OIDCTokens) (string, error) { //nolint:unparam
+func (s *cookieAuthService) storeOidcToken(ctx context.Context, tokens *OIDCTokens) (string, error) {
 	token, err := utils.GenerateSecret(32)
 	if err != nil {
 		return "", err
