@@ -1,89 +1,219 @@
-package api
+package main
 
 import (
-	"strings"
+	"errors"
+	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"slices"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
-	utils2 "github.com/Fesaa/Media-Provider/utils"
+	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/contrib/fiberzerolog"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cache"
-	"github.com/gofiber/fiber/v2/utils"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
+	fiberutils "github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"go.uber.org/dig"
 )
 
-func Setup(
-	router fiber.Router,
-	container *dig.Container,
-	settingsService services.SettingsService,
-	log zerolog.Logger,
-) error {
-	log.Debug().Str("handler", "http-routing").Msg("registering api routes")
+type appParams struct {
+	dig.In
 
-	settings, err := settingsService.GetSettingsDto()
+	Cfg       *config.Config
+	Container *dig.Container
+	Auth      services.AuthMiddleware
+	Log       zerolog.Logger
+}
+
+//nolint:funlen
+func applicationProvider(params appParams) *fiber.App {
+	c := params.Container
+	baseUrl := params.Cfg.BaseUrl
+
+	app := fiber.New(fiber.Config{
+		AppName:               "Media-Provider",
+		DisableStartupMessage: true,
+		ErrorHandler:          routes.ErrorHandler,
+	})
+
+	if !config.Development {
+		app.Use(favicon.New(favicon.Config{File: "public/favicon.ico"}))
+	}
+
+	app.
+		Use(limiter.New(limiter.Config{
+			Max:               1000,
+			Expiration:        time.Minute,
+			LimiterMiddleware: limiter.SlidingWindow{},
+		})).
+		Use(requestid.New(requestid.Config{
+			ContextKey: services.RequestIdKey.Value(),
+			Generator:  fiberutils.UUIDv4,
+		})).
+		Use(encryptcookie.New(encryptcookie.Config{
+			Key: params.Cfg.CookieSecret,
+		})).
+		Use(recover.New(recover.Config{
+			EnableStackTrace: true,
+		})).
+		Use(cors.New(cors.Config{
+			AllowOrigins:     "http://localhost:4400",
+			AllowCredentials: true,
+		})).
+		Use(compress.New())
+
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+
+	prometheus := fiberprometheus.NewWithDefaultRegistry("media-provider")
+	prometheus.RegisterAt(app, "/api/metrics", params.Auth.Middleware)
+	app.Use(prometheus.Middleware)
+
+	httpLogger := params.Log.With().Str("handler", "http").Logger()
+	if !config.NoHttpLog {
+		dontLog := []string{"/", "/api/metrics"}
+		dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2", ".json"}
+
+		app.Use(fiberzerolog.New(fiberzerolog.Config{
+			Logger: &httpLogger,
+			Next: func(c *fiber.Ctx) bool {
+				if slices.Contains(dontLogExt, path.Ext(c.Path())) {
+					return true
+				}
+				return slices.Contains(dontLog, c.Path()) || params.Cfg.Logging.Level > zerolog.InfoLevel
+			},
+			Levels: func() []zerolog.Level {
+				if config.ReducedHttpLog {
+					return []zerolog.Level{zerolog.ErrorLevel, zerolog.WarnLevel, zerolog.TraceLevel}
+				}
+				return []zerolog.Level{zerolog.ErrorLevel, zerolog.WarnLevel, zerolog.InfoLevel}
+			}(),
+			Fields: []string{
+				fiberzerolog.FieldUserAgent,
+				fiberzerolog.FieldIP,
+				fiberzerolog.FieldLatency,
+				fiberzerolog.FieldStatus,
+				fiberzerolog.FieldMethod,
+				fiberzerolog.FieldURL,
+				fiberzerolog.FieldError,
+				fiberzerolog.FieldRequestID,
+			},
+		}))
+	}
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals(services.ServiceProviderKey.Value(), params.Container)
+		requestId := services.GetFromContext(c, services.RequestIdKey)
+		c.Locals(services.LoggerKey.Value(), httpLogger.With().Str(services.RequestIdKey.Value(), requestId).Logger())
+		return c.Next()
+	})
+
+	scope := c.Scope("init::api")
+	utils.Must(scope.Provide(utils.Identity(app.Group(baseUrl))))
+	utils.Must(scope.Invoke(api.Setup))
+
+	app.Static(baseUrl, "./public", fiber.Static{
+		Compress: true,
+		MaxAge:   60 * 60,
+	})
+
+	return app
+}
+
+func registerCallback(app *fiber.App) {
+	app.Get("*", func(c *fiber.Ctx) error {
+		return c.SendFile("./public/index.html")
+	})
+}
+
+func updateInstalledVersion(ms services.MetadataService, log zerolog.Logger) error {
+	log = log.With().Str("handler", "core").Logger()
+
+	cur, err := ms.Get()
 	if err != nil {
 		return err
 	}
 
-	cacheHandler := cache.New(cache.Config{
-		Storage:      cacheStorage(settings, log),
-		CacheControl: true,
-		Next: func(c *fiber.Ctx) bool {
-			return false
-		},
-		KeyGenerator: func(ctx *fiber.Ctx) string {
-			if ctx.Method() == fiber.MethodPost {
-				return utils.CopyString(ctx.Path()) + "_" + string(utils.CopyBytes(ctx.Body()))
-			}
-			return utils.CopyString(ctx.Path())
-		},
-		Methods:    []string{fiber.MethodGet, fiber.MethodPost},
-		Expiration: time.Hour,
-		ExpirationGenerator: func(ctx *fiber.Ctx, c *cache.Config) time.Duration {
-			if strings.HasPrefix(ctx.Route().Path, "/api/proxy") {
-				if settings.CacheType == config.REDIS {
-					return 7 * 24 * time.Hour
-				}
-				return 24 * time.Hour
-			}
-
-			return c.Expiration
-		},
-	})
-
-	scope := container.Scope("mp::http::api")
-
-	utils2.Must(scope.Decorate(utils2.Identity(log.With().Str("handler", "api").Logger())))
-	utils2.Must(scope.Provide(utils2.Identity(router), dig.Name("root-router")))
-	utils2.Must(scope.Provide(utils2.Identity(router.Group("/api"))))
-	utils2.Must(scope.Provide(utils2.Identity(cacheHandler), dig.Name("cache")))
-
-	utils2.Must(scope.Invoke(routes.RegisterUserRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterProxyRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterContentRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterIoRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterConfigRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterPageRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterSubscriptionRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterPreferencesRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterNotificationRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterMetadataRoutes))
-
-	return nil
-}
-
-func cacheStorage(settings payload.Settings, log zerolog.Logger) fiber.Storage {
-	switch settings.CacheType {
-	case config.REDIS:
-		return utils2.NewRedisCacheStorage(log, "go-fiber-http-cache", settings.RedisAddr)
-	case config.MEMORY:
-		return nil
-	default:
-		// the fiber cache config falls back to memory on its own
+	if cur.Version.Equal(metadata.Version) {
+		log.Trace().Msg("no version changes")
 		return nil
 	}
+
+	if cur.Version.Newer(metadata.Version) {
+		log.Warn().
+			Str("installedVersion", cur.Version.String()).
+			Str("actualVersion", metadata.Version.String()).
+			Msg("Installed version is newer, want is going on? Bringing back to sync!")
+	}
+
+	cur.Version = metadata.Version
+	return ms.Update(cur)
+}
+
+func updateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero) error {
+	baseUrl := cfg.BaseUrl
+	log = log.With().Str("handler", "core").Logger()
+
+	if config.Development {
+		log.Debug().Msg("Skipping base url update in DEV environment")
+		return nil
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	indexHtmlPath := filepath.Join(cwd, "public", "index.html")
+
+	file, err := fs.Open(indexHtmlPath)
+	if err != nil {
+		return err
+	}
+	defer func(file afero.File) {
+		if err = file.Close(); err != nil {
+			log.Warn().Err(err).Msg("Failed to close index.html")
+		}
+	}(file)
+
+	doc, err := goquery.NewDocumentFromReader(file)
+	if err != nil {
+		return fmt.Errorf("failed to load index.html: %w", err)
+	}
+
+	doc.Find("head base").Each(func(i int, s *goquery.Selection) {
+		s.SetAttr("href", baseUrl)
+	})
+
+	html, err := doc.Html()
+	if err != nil {
+		return fmt.Errorf("error converting document to HTML: %w", err)
+	}
+
+	err = fs.WriteFile(indexHtmlPath, []byte(html), 0644)
+	if err != nil {
+		// Ignore errors when running as non-root in docker
+		if !config.Docker || !errors.Is(err, os.ErrPermission) {
+			return fmt.Errorf("failed to update index.html: %w", err)
+		}
+	} else {
+		log.Info().Str("baseURL", baseUrl).Msg("Updated base URL in index.html")
+	}
+
+	return nil
 }
