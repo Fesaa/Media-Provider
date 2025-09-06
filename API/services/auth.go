@@ -182,7 +182,7 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) string {
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
-		SameSite: "Lax",
+		SameSite: fiber.CookieSameSiteStrictMode,
 	})
 
 	ctx.Cookie(&fiber.Cookie{
@@ -190,7 +190,7 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) string {
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
-		SameSite: "Lax",
+		SameSite: fiber.CookieSameSiteLaxMode,
 	})
 
 	token := ctx.Cookies(tokenCookie)
@@ -265,7 +265,7 @@ func (s *cookieAuthService) GetOIDCLoginURL(ctx *fiber.Ctx) (string, error) {
 		Value:    state,
 		MaxAge:   stateCookieMaxAge,
 		HTTPOnly: true,
-		SameSite: "Lax",
+		SameSite: fiber.CookieSameSiteLaxMode,
 		Secure:   ctx.Secure(),
 	})
 
@@ -494,7 +494,7 @@ func (s *cookieAuthService) setCookies(ctx *fiber.Ctx, tokens *OIDCTokens) error
 		Value:    token,
 		MaxAge:   30 * 24 * 60 * 60, // 30 Days
 		HTTPOnly: true,
-		SameSite: "Lax",
+		SameSite: fiber.CookieSameSiteStrictMode,
 		Secure:   ctx.Secure(),
 	})
 
