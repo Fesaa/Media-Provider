@@ -3,7 +3,7 @@ FROM node:24 AS npm-stage
 WORKDIR /app
 
 COPY UI/Web/package.json UI/Web/package-lock.json ./
-RUN npm install --force
+RUN npm install
 
 COPY UI/Web ./
 
@@ -14,19 +14,10 @@ FROM golang:1.25.1 AS go-stage
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY API/go.mod API/go.sum ./
 RUN go mod download
 
-COPY ./api ./api
-COPY ./comicinfo ./comicinfo
-COPY ./config ./config
-COPY ./db ./db
-COPY ./http ./http
-COPY ./metadata ./metadata
-COPY ./providers ./providers
-COPY ./services ./services
-COPY ./utils ./utils
-COPY ./*.go ./
+COPY ./API ./
 
 ARG COMMIT_HASH
 ARG BUILD_TIMESTAMP

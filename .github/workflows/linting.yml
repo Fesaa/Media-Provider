@@ -22,3 +22,5 @@ jobs:
 
       - name: 🧹 Lint
         uses: golangci/golangci-lint-action@v7
+        with:
+          working-directory: ./API
