@@ -132,7 +132,7 @@ func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
 		ClientSecret: settings.Oidc.ClientSecret,
 		RedirectURL:  settings.Oidc.RedirectURL,
 		Endpoint:     provider.Endpoint(),
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "offline_access"},
 	}
 
 	s.log.Debug().
