@@ -75,7 +75,7 @@ func (u *User) AfterFind(tx *gorm.DB) (err error) {
 type PasswordReset struct {
 	Model
 
-	UserId uint
+	UserId int
 	Key    string
 	Expiry time.Time
 }

@@ -38,7 +38,7 @@ type NotificationBuilder struct {
 	body          string
 	colour        NotificationColour
 	group         NotificationGroup
-	owner         uint
+	owner         int
 	requiredRoles Roles
 	read          bool
 }
@@ -73,7 +73,7 @@ func (n NotificationBuilder) WithGroup(group NotificationGroup) NotificationBuil
 	return n
 }
 
-func (n NotificationBuilder) WithOwner(owner uint) NotificationBuilder {
+func (n NotificationBuilder) WithOwner(owner int) NotificationBuilder {
 	n.owner = owner
 	return n
 }

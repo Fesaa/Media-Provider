@@ -70,7 +70,7 @@ func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 	return ctx.JSON(pages)
 }
 
-func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
+func (pr *pageRoutes) page(ctx *fiber.Ctx, id int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 
@@ -80,7 +80,7 @@ func (pr *pageRoutes) page(ctx *fiber.Ctx, id uint) error {
 
 	page, err := pr.DB.Pages.Get(id)
 	if err != nil {
-		log.Error().Err(err).Uint("pageId", id).Msg("Failed to get page")
+		log.Error().Err(err).Int("pageId", id).Msg("Failed to get page")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
@@ -123,7 +123,7 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 	return ctx.Status(fiber.StatusOK).JSON(page)
 }
 
-func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id uint) error {
+func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	if err := pr.DB.Pages.Delete(id); err != nil {
@@ -136,7 +136,7 @@ func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id uint) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []uint) error {
+func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	if err := pr.PageService.OrderPages(order); err != nil {

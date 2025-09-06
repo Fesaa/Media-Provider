@@ -122,12 +122,12 @@ func withMessage[T any](msg string) paramOption[T] {
 	}
 }
 
-func newIdQueryParam() param[uint] {
-	return newQueryParam[uint]("id")
+func newIdQueryParam() param[int] {
+	return newQueryParam[int]("id")
 }
 
-func newIdPathParam() param[uint] {
-	return newPathParam[uint]("id")
+func newIdPathParam() param[int] {
+	return newPathParam[int]("id")
 }
 
 func withParam[T any](param param[T], handler func(*fiber.Ctx, T) error) fiber.Handler {
@@ -291,7 +291,7 @@ func getConvertor[T any]() (func(string) (T, error), error) {
 			if err != nil {
 				return zero, err
 			}
-			return any(uint(val)).(T), nil
+			return any(int(val)).(T), nil
 		}, nil
 	case uint64:
 		return func(s string) (T, error) {

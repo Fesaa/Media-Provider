@@ -77,31 +77,31 @@ func (nr *notificationRoutes) amount(ctx *fiber.Ctx) error {
 	return ctx.JSON(size)
 }
 
-func (nr *notificationRoutes) read(ctx *fiber.Ctx, id uint) error {
+func (nr *notificationRoutes) read(ctx *fiber.Ctx, id int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.MarkRead(user, id)
 	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) readMany(ctx *fiber.Ctx, ids []uint) error {
+func (nr *notificationRoutes) readMany(ctx *fiber.Ctx, ids []int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.MarkReadMany(user, ids)
 	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) unread(ctx *fiber.Ctx, id uint) error {
+func (nr *notificationRoutes) unread(ctx *fiber.Ctx, id int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.MarkUnRead(user, id)
 	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) deleteMany(ctx *fiber.Ctx, ids []uint) error {
+func (nr *notificationRoutes) deleteMany(ctx *fiber.Ctx, ids []int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.DeleteMany(user, ids)
 	return nr.handleServiceError(ctx, err)
 }
 
-func (nr *notificationRoutes) delete(ctx *fiber.Ctx, id uint) error {
+func (nr *notificationRoutes) delete(ctx *fiber.Ctx, id int) error {
 	user := services.GetFromContext(ctx, services.UserKey)
 	err := nr.NotificationService.Delete(user, id)
 	return nr.handleServiceError(ctx, err)

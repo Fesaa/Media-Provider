@@ -52,7 +52,7 @@ type mpClaims struct {
 }
 
 type OIDCTokens struct {
-	UserId       uint      `json:"user_id"`
+	UserId       int       `json:"user_id"`
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token,omitempty"`
 	IDToken      string    `json:"id_token"`
@@ -75,7 +75,7 @@ type cookieAuthService struct {
 	oauth2Config *oauth2.Config
 	verifier     *oidc.IDTokenVerifier
 
-	cookiesRefresh utils.SafeMap[uint, bool]
+	cookiesRefresh utils.SafeMap[int, bool]
 }
 
 type cookieAuthServiceParams struct {
@@ -98,7 +98,7 @@ func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, err
 		users:          params.Users,
 		storage:        params.Storage,
 		cfg:            params.Config,
-		cookiesRefresh: utils.NewSafeMap[uint, bool](),
+		cookiesRefresh: utils.NewSafeMap[int, bool](),
 		log:            params.Log.With().Str("handler", "cookie-auth-service").Logger(),
 	}
 
@@ -379,7 +379,7 @@ func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *
 		return fmt.Errorf("failed to set cookies: %w", err)
 	}
 
-	s.log.Debug().Uint("user", tokens.UserId).
+	s.log.Debug().Int("user", tokens.UserId).
 		Time("expires_at", newTokens.ExpiresIn).
 		Msg("refreshed tokens in background")
 	return nil
@@ -455,7 +455,7 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 	return user, nil
 }
 
-func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId uint, refreshToken string) (*OIDCTokens, error) {
+func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId int, refreshToken string) (*OIDCTokens, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 

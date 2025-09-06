@@ -82,7 +82,7 @@ func (sr *subscriptionRoutes) runAll(ctx *fiber.Ctx, allUsers bool) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id uint) error {
+func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
@@ -124,7 +124,7 @@ func (sr *subscriptionRoutes) all(ctx *fiber.Ctx, allUsers bool) error {
 	return ctx.JSON(subs)
 }
 
-func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id uint) error {
+func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)
@@ -223,7 +223,7 @@ func (sr *subscriptionRoutes) validatorSubscription(sub models.Subscription) err
 	return nil
 }
 
-func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id uint) error {
+func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 	allowAny := user.HasRole(models.ManageSubscriptions)

@@ -399,12 +399,12 @@ func (ur *userRoutes) updateUser(ctx *fiber.Ctx, userDto payload.UserDto) error 
 	})
 }
 
-func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID uint) error {
+func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
 	toDelete, err := ur.DB.Users.GetById(userID)
 	if err != nil {
-		log.Error().Uint("id", userID).Err(err).Msg("failed to check if user exists")
+		log.Error().Int("id", userID).Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": ur.Transloco.GetTranslation("user-not-found", userID),
 		})
@@ -427,20 +427,20 @@ func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID uint) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{})
 }
 
-func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId uint) error {
+func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 
 	resetUser, err := ur.DB.Users.GetById(userId)
 	if err != nil {
-		log.Error().Uint("id", userId).Err(err).Msg("failed to check if user exists")
+		log.Error().Int("id", userId).Err(err).Msg("failed to check if user exists")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}
 
 	if resetUser == nil {
-		log.Error().Str("user", user.Name).Uint("id", userId).Err(err).Msg("user does not exist")
+		log.Error().Str("user", user.Name).Int("id", userId).Err(err).Msg("user does not exist")
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": ur.Transloco.GetTranslation("user-doesnt-exist"),
 		})

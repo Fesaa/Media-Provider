@@ -20,7 +20,7 @@ type DownloadRequest struct {
 	BaseDir          string                         `json:"dir" validate:"required"`
 	TempTitle        string                         `json:"title" validate:"required"`
 	DownloadMetadata models.DownloadRequestMetadata `json:"downloadMetadata,omitempty"`
-	OwnerId          uint                           `json:"-"` // Set by MP
+	OwnerId          int                            `json:"-"` // Set by MP
 
 	// Internal communication
 	IsSubscription bool `json:"-"`
@@ -125,7 +125,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Id     uint          `json:"id" validate:"required"`
+	Id     int           `json:"id" validate:"required"`
 	Name   string        `json:"name" validate:"required"`
 	Email  string        `json:"email" validate:"required"`
 	ApiKey string        `json:"apiKey,omitempty"`

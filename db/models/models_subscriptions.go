@@ -10,7 +10,7 @@ import (
 type Subscription struct {
 	Model
 
-	Owner            uint                    `json:"owner"`
+	Owner            int                     `json:"owner"`
 	Provider         Provider                `json:"provider" gorm:"type:int"`
 	ContentId        string                  `json:"contentId"`
 	RefreshFrequency RefreshFrequency        `json:"refreshFrequency" gorm:"type:int"`

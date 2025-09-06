@@ -4,29 +4,29 @@ import "time"
 
 type Pages interface {
 	All() ([]Page, error)
-	Get(id uint) (*Page, error)
+	Get(id int) (*Page, error)
 
 	New(page *Page) error
 	Update(page *Page) error
 	UpdateMany(pages []Page) error
 
-	Delete(id uint) error
+	Delete(id int) error
 }
 
 type Notifications interface {
-	Get(id uint) (Notification, error)
-	GetMany(ids []uint) ([]Notification, error)
+	Get(id int) (Notification, error)
+	GetMany(ids []int) ([]Notification, error)
 	All() ([]Notification, error)
 	AllAfter(time.Time) ([]Notification, error)
 	Recent(int, NotificationGroup) ([]Notification, error)
 
 	New(Notification) error
-	Delete(uint) error
-	DeleteMany([]uint) error
+	Delete(int) error
+	DeleteMany([]int) error
 
-	MarkRead(uint) error
-	MarkReadMany([]uint) error
-	MarkUnread(uint) error
+	MarkRead(int) error
+	MarkReadMany([]int) error
+	MarkUnread(int) error
 	Unread() (int64, error)
 }
 
@@ -42,22 +42,22 @@ type Preferences interface {
 
 type Subscriptions interface {
 	All() ([]Subscription, error)
-	AllForUser(uint) ([]Subscription, error)
-	Get(uint) (*Subscription, error)
-	GetForUser(uint, uint) (Subscription, error)
+	AllForUser(int) ([]Subscription, error)
+	Get(int) (*Subscription, error)
+	GetForUser(int, int) (Subscription, error)
 	GetByContentId(string) (*Subscription, error)
-	GetByContentIdForUser(string, uint) (*Subscription, error)
+	GetByContentIdForUser(string, int) (*Subscription, error)
 
 	New(Subscription) (*Subscription, error)
 	Update(Subscription) error
-	Delete(uint) error
+	Delete(int) error
 }
 
 type Users interface {
 	All() ([]User, error)
 	ExistsAny() (bool, error)
 
-	GetById(id uint) (*User, error)
+	GetById(id int) (*User, error)
 	GetByExternalId(ExternalId string) (*User, error)
 	GetByEmail(email string) (*User, error)
 	GetByName(name string) (*User, error)
@@ -65,14 +65,14 @@ type Users interface {
 
 	Create(name string, opts ...Option[User]) (*User, error)
 	Update(user User, opts ...Option[User]) (*User, error)
-	UpdateById(id uint, opts ...Option[User]) (*User, error)
+	UpdateById(id int, opts ...Option[User]) (*User, error)
 
-	GenerateReset(userId uint) (*PasswordReset, error)
-	GetResetByUserId(userId uint) (*PasswordReset, error)
+	GenerateReset(userId int) (*PasswordReset, error)
+	GetResetByUserId(userId int) (*PasswordReset, error)
 	GetReset(key string) (*PasswordReset, error)
 	DeleteReset(key string) error
 
-	Delete(id uint) error
+	Delete(id int) error
 }
 
 type Metadata interface {

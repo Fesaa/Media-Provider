@@ -21,12 +21,12 @@ type SignalRService interface {
 
 	Broadcast(eventType payload.EventType, data interface{})
 
-	SizeUpdate(uint, string, string)
-	ProgressUpdate(uint, payload.ContentProgressUpdate)
-	StateUpdate(uint, string, payload.ContentState)
+	SizeUpdate(int, string, string)
+	ProgressUpdate(int, payload.ContentProgressUpdate)
+	StateUpdate(int, string, payload.ContentState)
 
-	AddContent(uint, payload.InfoStat)
-	UpdateContentInfo(uint, payload.InfoStat)
+	AddContent(int, payload.InfoStat)
+	UpdateContentInfo(int, payload.InfoStat)
 	DeleteContent(string)
 
 	// Notify may be used directly by anyone to send a quick toast to the frontend.
@@ -49,13 +49,13 @@ type signalrService struct {
 	log    zerolog.Logger
 
 	connectionHappened bool
-	clients            utils.SafeMap[uint, string]
+	clients            utils.SafeMap[int, string]
 }
 
 func SignalRServiceProvider(params SignalRParams) SignalRService {
 	return &signalrService{
 		auth:    params.Auth,
-		clients: utils.NewSafeMap[uint, string](),
+		clients: utils.NewSafeMap[int, string](),
 		log:     params.Log.With().Str("handler", "signalR-service").Logger(),
 	}
 }
@@ -77,14 +77,12 @@ func (s *signalrService) Broadcast(eventType payload.EventType, data interface{}
 	s.Clients().All().Send(string(eventType), data)
 }
 
-func (s *signalrService) sendToUserAndGroup(userId uint, group string, eventType payload.EventType, data interface{}) { //nolint:unparam
+func (s *signalrService) sendToUserAndGroup(userId int, group string, eventType payload.EventType, data interface{}) { //nolint:unparam
 	if !s.connectionHappened {
 		return
 	}
 
 	clientId, ok := s.clients.Get(userId)
-	s.log.Debug().Str("id", clientId).Str("group", group).Str("eventType", string(eventType)).
-		Msg("sending to user")
 	if ok {
 		s.Clients().Client(clientId).Send(string(eventType), data)
 	}
@@ -92,29 +90,29 @@ func (s *signalrService) sendToUserAndGroup(userId uint, group string, eventType
 	s.Clients().Group(group).Send(string(eventType), data)
 }
 
-func (s *signalrService) SizeUpdate(userId uint, id string, size string) {
+func (s *signalrService) SizeUpdate(userId int, id string, size string) {
 	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentSizeUpdate, payload.ContentSizeUpdate{
 		ContentId: id,
 		Size:      size,
 	})
 }
 
-func (s *signalrService) ProgressUpdate(userId uint, data payload.ContentProgressUpdate) {
+func (s *signalrService) ProgressUpdate(userId int, data payload.ContentProgressUpdate) {
 	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentProgressUpdate, data)
 }
 
-func (s *signalrService) StateUpdate(userId uint, id string, state payload.ContentState) {
+func (s *signalrService) StateUpdate(userId int, id string, state payload.ContentState) {
 	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentStateUpdate, payload.ContentStateUpdate{
 		ContentId:    id,
 		ContentState: state,
 	})
 }
 
-func (s *signalrService) AddContent(userId uint, data payload.InfoStat) {
+func (s *signalrService) AddContent(userId int, data payload.InfoStat) {
 	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeAddContent, data)
 }
 
-func (s *signalrService) UpdateContentInfo(userId uint, data payload.InfoStat) {
+func (s *signalrService) UpdateContentInfo(userId int, data payload.InfoStat) {
 	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeContentInfoUpdate, data)
 }
 
@@ -128,7 +126,7 @@ func (s *signalrService) Notify(notification models.Notification) {
 	}
 
 	if notification.Owner.Valid {
-		s.sendToUser(uint(notification.Owner.Int32), notification)
+		s.sendToUser(int(notification.Owner.Int32), notification)
 		return
 	}
 
@@ -144,7 +142,7 @@ func (s *signalrService) Notify(notification models.Notification) {
 	s.Broadcast(payload.EvenTypeNotificationAdd, fiber.Map{})
 }
 
-func (s *signalrService) sendToUser(userId uint, n models.Notification) {
+func (s *signalrService) sendToUser(userId int, n models.Notification) {
 	connId, ok := s.clients.Get(userId)
 	if !ok {
 		return
