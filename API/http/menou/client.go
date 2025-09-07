@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var DefaultClient = &Client{
@@ -18,27 +19,37 @@ type Client struct {
 }
 
 func NewWithRetry(log zerolog.Logger) *Client {
+	baseTransport := &retryer{
+		log: log.With().Str("handler", "httpClient-retryer").Logger(),
+	}
+
+	logging := &loggingTransport{
+		Transport: baseTransport,
+		log:       log.With().Str("handler", "httpClient").Logger(),
+	}
+
+	traced := otelhttp.NewTransport(logging)
+
 	return &Client{
 		&http.Client{
-			Transport: &loggingTransport{
-				Transport: &retryer{
-					log: log.With().Str("handler", "httpClient-retryer").Logger(),
-				},
-				log: log.With().Str("handler", "httpClient").Logger(),
-			},
-			Timeout: time.Second * 30,
+			Transport: traced,
+			Timeout:   time.Second * 30,
 		},
 		log.With().Str("handler", "menou").Logger(),
 	}
 }
 
 func New(log zerolog.Logger) *Client {
+	logging := &loggingTransport{
+		log: log.With().Str("handler", "httpClient").Logger(),
+	}
+
+	traced := otelhttp.NewTransport(logging)
+
 	return &Client{
 		&http.Client{
-			Transport: &loggingTransport{
-				log: log.With().Str("handler", "httpClient").Logger(),
-			},
-			Timeout: time.Second * 30,
+			Transport: traced,
+			Timeout:   time.Second * 30,
 		},
 		log.With().Str("handler", "menou").Logger(),
 	}

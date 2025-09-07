@@ -3,7 +3,7 @@ package models
 import (
 	"testing"
 
-	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/internal/comicinfo"
 	"gorm.io/gorm"
 )
 

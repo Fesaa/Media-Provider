@@ -11,8 +11,11 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/time/rate"
 )
 
@@ -149,8 +152,11 @@ func (c *Core[C, S]) startDownload(parentCtx context.Context) {
 }
 
 // downloadContent handles the full download of one chapter
-func (c *Core[C, S]) downloadContent(parentCtx context.Context, chapter C) error {
-	dCtx, err := c.constructDownloadContext(parentCtx, chapter)
+func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
+	ctx, span := tracing.PasloeTracer().Start(ctx, tracing.SpanPasloeChapter)
+	defer span.End()
+
+	dCtx, err := c.constructDownloadContext(ctx, chapter)
 	if err != nil || dCtx == nil {
 		return err
 	}
@@ -168,6 +174,9 @@ func (c *Core[C, S]) downloadContent(parentCtx context.Context, chapter C) error
 	if err = c.impl.WriteContentMetaData(dCtx.Ctx, chapter); err != nil { //nolint: contextcheck
 		c.Log.Warn().Err(err).Msg("error writing metadata")
 	}
+
+	span.AddEvent("write.metadata")
+	span.SetAttributes(attribute.Int("size", len(c.HasDownloaded)))
 
 	dCtx.log.Debug().Int("size", len(dCtx.Urls)).Msg("downloading images")
 	start := time.Now()
@@ -316,9 +325,14 @@ func (d *DownloadContext[C, S]) StartDownloadWorkers() {
 func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 	defer d.DownloadWg.Done()
 
+	ctx, span := tracing.PasloeTracer().Start(d.Ctx, tracing.SpanPasloeDownloadWorker)
+	defer span.End()
+
+	span.SetAttributes(attribute.String("worker.id", id))
+
 	log := d.log.With().Str("DownloadWorker#", id).Logger()
 
-	failedTasks := d.processDownloads(log, d.DownloadCh, false)
+	failedTasks := d.processDownloads(ctx, log, d.DownloadCh, false)
 
 	if len(failedTasks) == 0 {
 		return
@@ -334,12 +348,13 @@ func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 	close(failedCh)
 
 	// We can ignore the return value, errors on retry stop the download
-	d.processDownloads(log, failedCh, true)
+	d.processDownloads(ctx, log, failedCh, true)
 }
 
 // processDownloads tries downloading tasks in the channel and sends them into the IO Ch. If isRetry is false will
 // return failed tasks, otherwise stops download
-func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-chan DownloadTask, isRetry bool) []DownloadTask {
+func (d *DownloadContext[C, S]) processDownloads(ctx context.Context, log zerolog.Logger, taskCh <-chan DownloadTask, isRetry bool) []DownloadTask {
+	span := trace.SpanFromContext(ctx)
 	failedTasks := make([]DownloadTask, 0)
 
 	for task := range taskCh {
@@ -347,7 +362,7 @@ func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-ch
 			return failedTasks
 		}
 
-		if err := d.RateLimiter.Wait(d.Ctx); err != nil {
+		if err := d.RateLimiter.Wait(ctx); err != nil {
 			if !errors.Is(err, context.Canceled) {
 				log.Error().Err(err).Msg("rate limiter wait failed")
 			}
@@ -358,8 +373,9 @@ func (d *DownloadContext[C, S]) processDownloads(log zerolog.Logger, taskCh <-ch
 		log.Trace().Int("idx", task.idx).Str("url", task.url).Bool("isRetry", isRetry).
 			Msg("downloading page")
 
-		data, err := d.Core.Download(d.Ctx, task.url)
+		data, err := d.Core.Download(ctx, task.url)
 		if err != nil {
+			span.RecordError(err, trace.WithAttributes(attribute.String("url", task.url)))
 			if d.IsCancelled() {
 				return failedTasks
 			}

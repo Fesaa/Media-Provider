@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/internal/comicinfo"
 	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
 )

@@ -3,7 +3,7 @@ package webtoon
 import (
 	"testing"
 
-	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/internal/comicinfo"
 )
 
 func TestSearchData_Url(t *testing.T) {

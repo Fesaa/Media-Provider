@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/internal/comicinfo"
 )
 
 func TestManga_AgeRating(t *testing.T) {

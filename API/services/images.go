@@ -3,13 +3,17 @@ package services
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"image"
 
 	"github.com/Fesaa/Media-Provider/db"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 const (
@@ -47,6 +51,9 @@ func ImageServiceProvider(log zerolog.Logger, unitOfWork *db.UnitOfWork) ImageSe
 }
 
 func (i *imageService) ConvertToWebp(ctx context.Context, data []byte) ([]byte, bool) {
+	ctx, span := tracing.ServicesTracer().Start(ctx, tracing.SpanServicesImagesWebp)
+	defer span.End()
+
 	p, err := i.unitOfWork.Preferences.GetPreferences(ctx)
 	if err != nil {
 		i.log.Warn().Err(err).Msg("pref.Get() failed, not converting to webp")
@@ -59,8 +66,16 @@ func (i *imageService) ConvertToWebp(ctx context.Context, data []byte) ([]byte, 
 
 	img, format, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, fmt.Sprintf("image.Decode() failed: %s", err.Error()))
 		return data, false
 	}
+
+	span.SetAttributes(
+		attribute.Int("input.size", len(data)),
+		attribute.String("image.format", format),
+		attribute.Bool("converted", format != webpFormatKey),
+	)
 
 	if format == webpFormatKey {
 		return data, false
@@ -69,6 +84,8 @@ func (i *imageService) ConvertToWebp(ctx context.Context, data []byte) ([]byte, 
 	buf := new(bytes.Buffer)
 	if err = webp.Encode(buf, img, encodingOptions); err != nil {
 		i.log.Error().Err(err).Msg("webp.Encode() failed")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, fmt.Sprintf("webp.Encode() failed: %s", err.Error()))
 		return data, false
 	}
 

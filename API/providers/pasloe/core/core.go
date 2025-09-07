@@ -15,6 +15,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -448,6 +449,9 @@ func (c *Core[C, S]) DownloadContent(ctx context.Context) {
 			c.Log.Error().Any("error", err).Msg("a panic occurred while downloading")
 		}
 	}()
+
+	ctx, span := tracing.PasloeTracer().Start(ctx, tracing.SpanPasloeDownloadContent)
+	defer span.End()
 
 	c.startDownload(ctx)
 }
