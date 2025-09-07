@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -17,23 +18,15 @@ import (
 	"go.uber.org/dig"
 )
 
-type PasloeClient struct {
-	BaseDir string
-}
-
-func (m PasloeClient) MoveToDownloadQueue(id string) error {
-	return nil
-}
-
-func (m PasloeClient) Shutdown() error {
-	return nil
-}
-
-type SettingsService struct {
+type Settings struct {
 	settings *payload.Settings
 }
 
-func (s *SettingsService) GetSettingsDto() (payload.Settings, error) {
+func (s *Settings) UpdateCurrentVersion(ctx context.Context) error {
+	return nil
+}
+
+func (s *Settings) GetSettingsDto(context.Context) (payload.Settings, error) {
 	if s.settings == nil {
 		return payload.Settings{
 			BaseUrl:               "",
@@ -54,8 +47,20 @@ func (s *SettingsService) GetSettingsDto() (payload.Settings, error) {
 	return *s.settings, nil
 }
 
-func (s *SettingsService) UpdateSettingsDto(settings payload.Settings) error {
+func (s *Settings) UpdateSettingsDto(ctx context.Context, settings payload.Settings) error {
 	s.settings = &settings
+	return nil
+}
+
+type PasloeClient struct {
+	BaseDir string
+}
+
+func (m PasloeClient) MoveToDownloadQueue(id string) error {
+	return nil
+}
+
+func (m PasloeClient) Shutdown() error {
 	return nil
 }
 
@@ -163,11 +168,11 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider P
 	must(scope.Provide(func() services.SignalRService { return nil }))
 	must(scope.Provide(func() services.NotificationService { return nil }))
 	must(scope.Provide(func() services.TranslocoService { return nil }))
-	must(scope.Provide(func() models.Preferences { return nil }))
-	must(scope.Provide(func() services.SettingsService { return &SettingsService{} }))
+	must(scope.Provide(func() services.SettingsService { return &Settings{} }))
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(scope.Provide(services.ArchiveServiceProvider))
 	must(scope.Provide(services.ImageServiceProvider))
+	must(scope.Provide(func() *db.UnitOfWork { return nil }))
 	return New[ChapterMock, *SeriesMock](scope, "test", provider)
 }
 

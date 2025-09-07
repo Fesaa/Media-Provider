@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -22,36 +22,6 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 )
-
-type SettingsService struct {
-	settings *payload.Settings
-}
-
-func (s *SettingsService) GetSettingsDto() (payload.Settings, error) {
-	if s.settings == nil {
-		return payload.Settings{
-			BaseUrl:               "",
-			CacheType:             config.MEMORY,
-			RedisAddr:             "",
-			MaxConcurrentTorrents: 5,
-			MaxConcurrentImages:   5,
-			DisableIpv6:           false,
-			RootDir:               "temp",
-			Oidc: payload.OidcSettings{
-				Authority:            "",
-				ClientID:             "",
-				DisablePasswordLogin: false,
-				AutoLogin:            false,
-			},
-		}, nil
-	}
-	return *s.settings, nil
-}
-
-func (s *SettingsService) UpdateSettingsDto(settings payload.Settings) error {
-	s.settings = &settings
-	return nil
-}
 
 func req() payload.DownloadRequest {
 	return payload.DownloadRequest{
@@ -109,9 +79,9 @@ func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	must(scope.Provide(services.ArchiveServiceProvider))
 	must(scope.Provide(func() services.SignalRService { return &mock.SignalR{} }))
 	must(scope.Provide(func() services.NotificationService { return &mock.Notifications{} }))
-	must(scope.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(scope.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
-	must(scope.Provide(func() services.SettingsService { return &SettingsService{} }))
+	must(scope.Provide(func() services.SettingsService { return &mock.Settings{} }))
+	must(scope.Provide(func() *db.UnitOfWork { return nil }))
 	must(scope.Provide(services.ImageServiceProvider))
 
 	web := New(scope)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -20,36 +21,6 @@ import (
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
 )
-
-type SettingsService struct {
-	settings *payload.Settings
-}
-
-func (s *SettingsService) GetSettingsDto() (payload.Settings, error) {
-	if s.settings == nil {
-		return payload.Settings{
-			BaseUrl:               "",
-			CacheType:             config.MEMORY,
-			RedisAddr:             "",
-			MaxConcurrentTorrents: 5,
-			MaxConcurrentImages:   5,
-			DisableIpv6:           false,
-			RootDir:               "temp",
-			Oidc: payload.OidcSettings{
-				Authority:            "",
-				ClientID:             "",
-				DisablePasswordLogin: false,
-				AutoLogin:            false,
-			},
-		}, nil
-	}
-	return *s.settings, nil
-}
-
-func (s *SettingsService) UpdateSettingsDto(settings payload.Settings) error {
-	s.settings = &settings
-	return nil
-}
 
 func must(t *testing.T, err error) {
 	t.Helper()
@@ -70,10 +41,10 @@ func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 	must(t, cont.Provide(utils.Identity(zerolog.Nop())))
 	must(t, cont.Provide(func() services.SignalRService { return &mock.SignalR{} }))
 	must(t, cont.Provide(func() services.NotificationService { return &mock.Notifications{} }))
-	must(t, cont.Provide(func() models.Preferences { return &mock.Preferences{} }))
 	must(t, cont.Provide(func() services.TranslocoService { return &mock.Transloco{} }))
 	must(t, cont.Provide(func() services.CacheService { return &mock.Cache{} }))
-	must(t, cont.Provide(func() services.SettingsService { return &SettingsService{} }))
+	must(t, cont.Provide(func() services.SettingsService { return &mock.Settings{} }))
+	must(t, cont.Provide(func() *db.UnitOfWork { return nil }))
 	must(t, cont.Provide(mangadex.NewRepository))
 	must(t, cont.Provide(dynasty.NewRepository))
 	must(t, cont.Provide(webtoon.NewRepository))

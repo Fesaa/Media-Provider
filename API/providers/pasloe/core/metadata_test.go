@@ -9,26 +9,6 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 )
 
-type preferences struct {
-	m *models.Preference
-}
-
-func (p preferences) Get() (*models.Preference, error) {
-	return p.m, nil
-}
-
-func (p preferences) GetComplete() (*models.Preference, error) {
-	return p.m, nil
-}
-
-func (p preferences) Update(pref models.Preference) error {
-	return nil
-}
-
-func (p preferences) Flush() error {
-	return nil
-}
-
 func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 	type fields struct {
 		genres     models.Tags
@@ -129,13 +109,11 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 			}
 
 			base := testBase(t, r, io.Discard, ProviderMock{})
-			base.preferences = preferences{
-				m: &models.Preference{
-					DynastyGenreTags: tt.fields.genres,
-					BlackListedTags:  tt.fields.blacklist,
-					WhiteListedTags:  tt.fields.whitelist,
-					TagMappings:      tt.fields.mappings,
-				},
+			base.Preference = &models.Preference{
+				DynastyGenreTags: tt.fields.genres,
+				BlackListedTags:  tt.fields.blacklist,
+				WhiteListedTags:  tt.fields.whitelist,
+				TagMappings:      tt.fields.mappings,
 			}
 
 			gotG, gotT := base.GetGenreAndTags(tt.tags)

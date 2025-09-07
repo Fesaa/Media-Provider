@@ -1,6 +1,7 @@
 package mock
 
 import (
+	"context"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -9,29 +10,29 @@ import (
 type Notifications struct {
 }
 
-func (n Notifications) GetNotifications(user models.User, time time.Time) ([]models.Notification, error) {
+func (n Notifications) GetNotifications(ctx context.Context, user models.User, time time.Time) ([]models.Notification, error) {
 	return []models.Notification{}, nil
 }
 
-func (n Notifications) Notify(notification models.Notification) {
+func (n Notifications) Notify(ctx context.Context, notification models.Notification) {
 }
 
-func (n Notifications) MarkRead(user models.User, u int) error {
+func (n Notifications) MarkRead(ctx context.Context, user models.User, i int) error {
 	return nil
 }
 
-func (n Notifications) MarkReadMany(user models.User, uints []int) error {
+func (n Notifications) MarkReadMany(ctx context.Context, user models.User, ints []int) error {
 	return nil
 }
 
-func (n Notifications) MarkUnRead(user models.User, u int) error {
+func (n Notifications) MarkUnRead(ctx context.Context, user models.User, i int) error {
 	return nil
 }
 
-func (n Notifications) Delete(user models.User, u int) error {
+func (n Notifications) Delete(ctx context.Context, user models.User, i int) error {
 	return nil
 }
 
-func (n Notifications) DeleteMany(user models.User, uints []int) error {
+func (n Notifications) DeleteMany(ctx context.Context, user models.User, ints []int) error {
 	return nil
 }

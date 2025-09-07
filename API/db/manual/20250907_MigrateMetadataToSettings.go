@@ -2,6 +2,7 @@ package manual
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/db/repository"
@@ -19,6 +20,10 @@ func MigrateMetadataToSettings(db *gorm.DB, log zerolog.Logger) error {
 	var rows []row
 	err := db.Table("metadata_rows").Find(&rows).Error
 	if err != nil {
+		if strings.Contains(err.Error(), "no such table: metadata_rows") {
+			return nil
+		}
+
 		log.Error().Err(err).Msg("Failed to fetch metadata rows")
 		return err
 	}
