@@ -67,10 +67,16 @@ func getCaller(depth int) string {
 
 func (e Error) Error() string {
 	if e.Err == nil {
-		return ""
+		return "An unknown error occurred"
 	}
 	return e.Err.Error()
 }
+
+var (
+	successKey = "success"
+	messageKey = "message"
+	callerKey  = "caller"
+)
 
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	var e *Error
@@ -78,18 +84,22 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 		return fiber.DefaultErrorHandler(c, err)
 	}
 
-	_, ok := services.GetFromContextSafe(c, services.UserKey)
-	if !ok {
-		// Don't include caller for non-authenticated endpoints
-		return c.Status(e.StatusCode).JSON(fiber.Map{
-			"message": e.Error(),
-			"success": false,
-		})
+	res := fiber.Map{
+		successKey: false,
+		messageKey: err.Error(),
 	}
 
-	return c.Status(e.StatusCode).JSON(fiber.Map{
-		"message": e.Error(),
-		"caller":  e.Caller,
-		"success": false,
-	})
+	_, ok := services.GetFromContextSafe(c, services.UserKey)
+	if ok {
+		// Don't include caller for non-authenticated endpoints
+		res[callerKey] = e.Caller
+	}
+
+	if e.Extra != nil {
+		for k, v := range e.Extra {
+			res[k] = v
+		}
+	}
+
+	return c.Status(e.StatusCode).JSON(res)
 }

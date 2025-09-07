@@ -29,7 +29,7 @@ func RegisterConfigRoutes(cr configRoutes) {
 }
 
 func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {
-	dto, err := cr.SettingsService.GetSettingsDto()
+	dto, err := cr.SettingsService.GetSettingsDto(ctx.UserContext())
 	if err != nil {
 		return InternalError(err)
 	}
@@ -44,7 +44,7 @@ func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {
 func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	dto, err := cr.SettingsService.GetSettingsDto()
+	dto, err := cr.SettingsService.GetSettingsDto(ctx.UserContext())
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get oidc config")
 		return InternalError(err)
@@ -56,10 +56,10 @@ func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
 	})
 }
 
-func (cr *configRoutes) updateConfig(ctx *fiber.Ctx, c payload.Settings) error {
+func (cr *configRoutes) updateConfig(ctx *fiber.Ctx, settings payload.Settings) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	if err := cr.SettingsService.UpdateSettingsDto(c); err != nil {
+	if err := cr.SettingsService.UpdateSettingsDto(ctx.UserContext(), settings); err != nil {
 		log.Error().Err(err).Msg("failed to update config")
 		return InternalError(err)
 	}

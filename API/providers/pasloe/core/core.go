@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -36,7 +37,7 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 		signalR services.SignalRService,
 		notification services.NotificationService,
 		transLoco services.TranslocoService,
-		preferences models.Preferences,
+		unitOfWork *db.UnitOfWork,
 		archiveService services.ArchiveService,
 		imageService services.ImageService,
 		fs afero.Afero,
@@ -44,7 +45,7 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 		settingsService services.SettingsService,
 	) error {
 
-		settings, err := settingsService.GetSettingsDto()
+		settings, err := settingsService.GetSettingsDto(context.Background())
 		if err != nil {
 			return err
 		}
@@ -65,7 +66,7 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 			TransLoco:      transLoco,
 			archiveService: archiveService,
 			imageService:   imageService,
-			preferences:    preferences,
+			unitOfWork:     unitOfWork,
 			fs:             fs,
 			httpClient:     httpClient,
 		}
@@ -121,8 +122,8 @@ type Core[C Chapter, S Series[C]] struct {
 	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
 	ToDownloadUserSelected []string
 
-	preferences models.Preferences
-	Preference  *models.Preference
+	unitOfWork *db.UnitOfWork
+	Preference *models.Preference
 
 	// Amount of chapters downloaded
 	ContentDownloaded int
@@ -388,7 +389,7 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 
 	start := time.Now()
 
-	p, err := c.preferences.GetComplete()
+	p, err := c.unitOfWork.Preferences.GetPreferencesComplete(ctx)
 	if err != nil {
 		c.Log.Error().Err(err).Msg("unable to get preferences, some features may not work")
 	}
@@ -403,7 +404,7 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 		c.Log.Warn().Dur("elapsed", elapsed).Msg("checking which content must be downloaded took a long time")
 
 		if c.Req.IsSubscription {
-			c.Notifier.Notify(models.NewNotification().
+			c.Notifier.Notify(ctx, models.NewNotification().
 				WithTitle(c.TransLoco.GetTranslation("warn")).
 				WithSummary(c.TransLoco.GetTranslation("long-on-disk-check", c.impl.Title())).
 				WithBody(c.TransLoco.GetTranslation("long-on-disk-check-body", elapsed)).

@@ -31,7 +31,7 @@ type userRoutes struct {
 	Router     fiber.Router
 	RootRouter fiber.Router `name:"root-router"`
 	Auth       services.AuthService
-	DB         *db.Database
+	UnitOfWork *db.UnitOfWork
 
 	Val             services.ValidationService
 	Notify          services.NotificationService
@@ -96,7 +96,7 @@ func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest paylo
 
 	user.PasswordHash = base64.StdEncoding.EncodeToString(password)
 
-	if _, err = ur.DB.Users.Update(user); err != nil {
+	if err = ur.UnitOfWork.Users.Update(ctx.UserContext(), user); err != nil {
 		log.Error().Err(err).Str("user", user.Name).Msg("failed to update user")
 		return InternalError(err)
 	}
@@ -108,7 +108,7 @@ func (ur *userRoutes) updateMe(ctx *fiber.Ctx, updateUserReq payload.UpdateUserR
 	user := ctx.Locals("user").(models.User)
 
 	if user.Name != updateUserReq.Name {
-		other, err := ur.DB.Users.GetByName(updateUserReq.Name)
+		other, err := ur.UnitOfWork.Users.GetByName(ctx.UserContext(), updateUserReq.Name)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return InternalError(err)
 		}
@@ -121,7 +121,7 @@ func (ur *userRoutes) updateMe(ctx *fiber.Ctx, updateUserReq payload.UpdateUserR
 	user.Name = updateUserReq.Name
 
 	if user.Email.String != updateUserReq.Email {
-		other, err := ur.DB.Users.GetByEmail(updateUserReq.Email)
+		other, err := ur.UnitOfWork.Users.GetByEmail(ctx.UserContext(), updateUserReq.Email)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return InternalError(err)
 		}
@@ -133,7 +133,7 @@ func (ur *userRoutes) updateMe(ctx *fiber.Ctx, updateUserReq payload.UpdateUserR
 
 	user.Email = sql.NullString{String: updateUserReq.Email, Valid: true}
 
-	if _, err := ur.DB.Users.Update(user); err != nil {
+	if err := ur.UnitOfWork.Users.Update(ctx.UserContext(), user); err != nil {
 		return InternalError(err)
 	}
 
@@ -155,7 +155,7 @@ func (ur *userRoutes) me(ctx *fiber.Ctx) error {
 func (ur *userRoutes) anyUserExists(ctx *fiber.Ctx) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	ok, err := ur.DB.Users.ExistsAny()
+	ok, err := ur.UnitOfWork.Users.ExistsAny(ctx.UserContext())
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check if user exists")
 		return BadRequest() // Return bad request, unauthenticated endpoint
@@ -174,7 +174,7 @@ func (ur *userRoutes) anyUserExists(ctx *fiber.Ctx) error {
 func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	ok, err := ur.DB.Users.ExistsAny()
+	ok, err := ur.UnitOfWork.Users.ExistsAny(ctx.UserContext())
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check if user exists")
 		return BadRequest() // Return BadRequest as this is a public endpoint
@@ -196,29 +196,15 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 		return InternalError(err)
 	}
 
-	user, err := ur.DB.Users.Create(register.UserName,
-		func(u models.User) models.User {
-			u.PasswordHash = base64.StdEncoding.EncodeToString(password)
-			u.ApiKey = apiKey
-			return u
-		},
-		func(u models.User) models.User {
-			var ok bool
-			ok, err = ur.DB.Users.ExistsAny()
-			if err != nil {
-				log.Warn().Err(err).Msg("failed to check existence of user, not setting all perms")
-				return u
-			}
-			if ok {
-				return u
-			}
+	user := models.User{
+		Name:         register.UserName,
+		PasswordHash: base64.StdEncoding.EncodeToString(password),
+		ApiKey:       apiKey,
+		Original:     !ok,
+		Roles:        utils.Ternary(ok, []models.Role{}, models.AllRoles),
+	}
 
-			u.Roles = models.AllRoles
-			u.Original = true
-			return u
-		})
-
-	if err != nil {
+	if err = ur.UnitOfWork.Users.Create(ctx.UserContext(), user); err != nil {
 		log.Error().Err(err).Msg("failed to register user")
 		return InternalError(err)
 	}
@@ -240,7 +226,7 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	settings, err := ur.SettingsService.GetSettingsDto()
+	settings, err := ur.SettingsService.GetSettingsDto(ctx.UserContext())
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get settings")
 		return InternalError(err)
@@ -294,12 +280,8 @@ func (ur *userRoutes) refreshAPIKey(ctx *fiber.Ctx) error {
 		return InternalError(err)
 	}
 
-	_, err = ur.DB.Users.Update(user, func(u models.User) models.User {
-		u.ApiKey = key
-		return u
-	})
-
-	if err != nil {
+	user.ApiKey = key
+	if err = ur.UnitOfWork.Users.Update(ctx.UserContext(), user); err != nil {
 		log.Error().Err(err).Msg("failed to refresh api key")
 		return InternalError(err)
 	}
@@ -310,7 +292,7 @@ func (ur *userRoutes) refreshAPIKey(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) users(ctx *fiber.Ctx) error {
-	users, err := ur.DB.Users.All()
+	users, err := ur.UnitOfWork.Users.GetAllUsers(ctx.UserContext())
 	if err != nil {
 		return InternalError(err)
 	}
@@ -327,47 +309,43 @@ func (ur *userRoutes) users(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) updateUser(ctx *fiber.Ctx, userDto payload.UserDto) error {
-	var err error
-	var newUser *models.User
-	if userDto.ID != 0 {
-		newUser, err = ur.DB.Users.UpdateById(userDto.ID, func(u models.User) models.User {
-			u.Name = userDto.Name
-			u.Email = sql.NullString{String: userDto.Email, Valid: true}
-			if !u.Original {
-				u.Roles = userDto.Roles
-				u.Pages = userDto.Pages
-			}
-
-			return u
-		})
-	} else {
-		newUser, err = ur.DB.Users.Create(userDto.Name, func(u models.User) models.User {
-			u.Roles = userDto.Roles
-			return u
-		})
-	}
-
+	user, err := ur.UnitOfWork.Users.GetByName(ctx.UserContext(), userDto.Name)
 	if err != nil {
 		return InternalError(err)
 	}
 
-	if newUser == nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{})
+	if userDto.ID != 0 && user != nil {
+		return BadRequest(errUserAlreadyExists)
+	}
+
+	if user == nil {
+		user = &models.User{}
+	}
+
+	user.Name = userDto.Name
+	user.Email = sql.NullString{String: userDto.Email, Valid: true}
+	if !user.Original {
+		user.Roles = userDto.Roles
+		user.Pages = userDto.Pages
+	}
+
+	if err = ur.UnitOfWork.Users.Update(ctx.UserContext(), *user); err != nil {
+		return InternalError(err)
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(payload.UserDto{
-		ID:        newUser.ID,
-		Name:      newUser.Name,
-		Roles:     newUser.Roles,
-		Pages:     newUser.Pages,
-		CanDelete: !newUser.Original,
+		ID:        user.ID,
+		Name:      user.Name,
+		Roles:     user.Roles,
+		Pages:     user.Pages,
+		CanDelete: !user.Original,
 	})
 }
 
 func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	toDelete, err := ur.DB.Users.GetById(userID)
+	toDelete, err := ur.UnitOfWork.Users.GetByID(ctx.UserContext(), userID)
 	if err != nil {
 		log.Error().Int("id", userID).Err(err).Msg("failed to check if user exists")
 		return NotFound(errors.New(ur.Transloco.GetTranslation("user-not-found", userID)))
@@ -377,7 +355,7 @@ func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID int) error {
 		return BadRequest(errors.New(ur.Transloco.GetTranslation("cant-delete-first-user")))
 	}
 
-	err = ur.DB.Users.Delete(toDelete.ID)
+	err = ur.UnitOfWork.Users.Delete(ctx.UserContext(), toDelete.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete user")
 		return InternalError(err)
@@ -390,7 +368,7 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 
-	resetUser, err := ur.DB.Users.GetById(userId)
+	resetUser, err := ur.UnitOfWork.Users.GetByID(ctx.UserContext(), userId)
 	if err != nil {
 		log.Error().Int("id", userId).Err(err).Msg("failed to check if user exists")
 		return InternalError(err)
@@ -401,7 +379,7 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId int) error {
 		return NotFound()
 	}
 
-	reset, err := ur.DB.Users.GetResetByUserId(userId)
+	reset, err := ur.UnitOfWork.Users.GetResetByUserID(ctx.UserContext(), userId)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to check for existing reset key")
 	}
@@ -411,14 +389,14 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId int) error {
 		return ctx.Status(fiber.StatusOK).JSON(reset)
 	}
 
-	reset, err = ur.DB.Users.GenerateReset(userId)
+	reset, err = ur.UnitOfWork.Users.GenerateReset(ctx.UserContext(), userId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate reset password")
 		return InternalError(err)
 	}
 
 	fmt.Printf("A reset link has been generated for %d, with key \"%s\"\nYou can surf to <.../login/reset?key=%s> to reset it.\n", reset.UserId, reset.Key, reset.Key)
-	ur.Notify.Notify(models.NewNotification().
+	ur.Notify.Notify(ctx.UserContext(), models.NewNotification().
 		WithTitle(ur.Transloco.GetTranslation("generate-reset-link-title")).
 		WithBody(ur.Transloco.GetTranslation("generate-reset-link-summary", user.Name, resetUser.Name)).
 		WithGroup(models.GroupSecurity).
@@ -431,7 +409,7 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId int) error {
 func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequest) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	reset, err := ur.DB.Users.GetReset(pl.Key)
+	reset, err := ur.UnitOfWork.Users.GetReset(ctx.UserContext(), pl.Key)
 	if err != nil {
 		log.Error().Err(err).Str("key", pl.Key).Msg("failed to check if user exists")
 		return NotFound()
@@ -442,7 +420,7 @@ func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequ
 		return NotFound()
 	}
 
-	user, err := ur.DB.Users.GetById(reset.UserId)
+	user, err := ur.UnitOfWork.Users.GetByID(ctx.UserContext(), reset.UserId)
 	if err != nil {
 		return NotFound()
 	}
@@ -456,17 +434,13 @@ func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequ
 		return InternalError(err)
 	}
 
-	_, err = ur.DB.Users.Update(*user, func(u models.User) models.User {
-		u.PasswordHash = base64.StdEncoding.EncodeToString(password)
-		return u
-	})
-
-	if err != nil {
+	user.PasswordHash = base64.StdEncoding.EncodeToString(password)
+	if err = ur.UnitOfWork.Users.Update(ctx.UserContext(), *user); err != nil {
 		log.Error().Err(err).Msg("failed to update user password")
 		return InternalError(err)
 	}
 
-	if err = ur.DB.Users.DeleteReset(pl.Key); err != nil {
+	if err = ur.UnitOfWork.Users.DeleteReset(ctx.UserContext(), pl.Key); err != nil {
 		log.Warn().Err(err).Msg("failed to delete reset key")
 	}
 

@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"context"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/philippseith/signalr"
@@ -10,25 +12,26 @@ type SignalR struct {
 	signalr.Hub
 }
 
-func (m *SignalR) UpdateContentInfo(userId int, data payload.InfoStat) {
+func (s *SignalR) Broadcast(eventType payload.EventType, data interface{}) {
 }
 
-func (m *SignalR) Broadcast(eventType payload.EventType, data interface{}) {
+func (s *SignalR) SizeUpdate(i int, s3 string, s2 string) {
 }
 
-func (m *SignalR) SizeUpdate(userId int, id string, size string) {
+func (s *SignalR) ProgressUpdate(i int, update payload.ContentProgressUpdate) {
 }
 
-func (m *SignalR) ProgressUpdate(userId int, data payload.ContentProgressUpdate) {
+func (s *SignalR) StateUpdate(i int, s2 string, state payload.ContentState) {
 }
 
-func (m *SignalR) StateUpdate(userId int, id string, state payload.ContentState) {
+func (s *SignalR) AddContent(i int, stat payload.InfoStat) {
 }
 
-func (m *SignalR) AddContent(userId int, data payload.InfoStat) {
+func (s *SignalR) UpdateContentInfo(i int, stat payload.InfoStat) {
 }
 
-func (m *SignalR) DeleteContent(userId int, id string) {
+func (s *SignalR) DeleteContent(i int, s2 string) {
 }
 
-func (m *SignalR) Notify(models.Notification) {}
+func (s *SignalR) Notify(ctx context.Context, notification models.Notification) {
+}

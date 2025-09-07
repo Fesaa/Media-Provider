@@ -35,7 +35,7 @@ func RegisterIoRoutes(ior ioRoutes) {
 func (ior *ioRoutes) listDirs(ctx *fiber.Ctx, req payload.ListDirsRequest) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	settings, err := ior.SettingsService.GetSettingsDto()
+	settings, err := ior.SettingsService.GetSettingsDto(ctx.UserContext())
 	if err != nil {
 		return InternalError(err)
 	}
@@ -71,7 +71,7 @@ func (ior *ioRoutes) createDir(ctx *fiber.Ctx, req createDirRequest) error {
 		return BadRequest(errors.New(ior.Transloco.GetTranslation("invalid-path")))
 	}
 
-	settings, err := ior.SettingsService.GetSettingsDto()
+	settings, err := ior.SettingsService.GetSettingsDto(ctx.UserContext())
 	if err != nil {
 		return InternalError(err)
 	}

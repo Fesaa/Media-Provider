@@ -143,8 +143,8 @@ func TestWithBody(t *testing.T) {
 			})
 
 			app.Use(func(ctx *fiber.Ctx) error {
-				ctx.Locals(services.ServiceProviderKey.Value(), container)
-				ctx.Locals(services.LoggerKey.Value(), zerolog.Nop())
+				services.SetInContext(ctx, services.ServiceProviderKey, container)
+				services.SetInContext(ctx, services.LoggerKey, zerolog.Nop())
 				return ctx.Next()
 			}).Post("/test", tt.setupHandler())
 
@@ -187,7 +187,7 @@ func TestWithBody_HandlerError(t *testing.T) {
 	})
 
 	app.Use(func(ctx *fiber.Ctx) error {
-		ctx.Locals(services.LoggerKey.Value(), zerolog.Nop())
+		services.SetInContext(ctx, services.LoggerKey, zerolog.Nop())
 		return ctx.Next()
 	})
 

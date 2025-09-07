@@ -31,7 +31,7 @@ type SignalRService interface {
 
 	// Notify may be used directly by anyone to send a quick toast to the frontend.
 	// Use NotificationService for notification that must persist
-	Notify(notification models.Notification)
+	Notify(context.Context, models.Notification)
 }
 
 type SignalRParams struct {
@@ -121,7 +121,7 @@ func (s *signalrService) DeleteContent(userId int, id string) {
 	s.sendToUserAndGroup(userId, allDownloadInfoGroup, payload.EventTypeDeleteContent, data)
 }
 
-func (s *signalrService) Notify(notification models.Notification) {
+func (s *signalrService) Notify(ctx context.Context, notification models.Notification) {
 	if !s.connectionHappened {
 		return
 	}

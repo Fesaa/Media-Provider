@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -25,7 +26,7 @@ func CacheServiceProvider(log zerolog.Logger, service SettingsService) (CacheSer
 		log: log.With().Str("handler", "cache-service").Logger(),
 	}
 
-	settings, err := service.GetSettingsDto()
+	settings, err := service.GetSettingsDto(context.Background())
 	if err != nil {
 		return nil, err
 	}

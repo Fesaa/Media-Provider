@@ -39,7 +39,7 @@ func (c *Core[C, S]) abortDownload(reason error) {
 	if err := c.Client.RemoveDownload(req); err != nil {
 		c.Log.Error().Err(err).Msg("error while cleaning up")
 	}
-	c.Notifier.Notify(models.Notification{
+	c.Notifier.Notify(context.TODO(), models.Notification{
 		Title:   "Failed download",
 		Summary: fmt.Sprintf("%s failed to download", c.impl.Title()),
 		Body:    fmt.Sprintf("Download failed for %s, because %v", c.impl.Title(), reason),

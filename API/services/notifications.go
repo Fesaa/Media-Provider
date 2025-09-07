@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/db"
@@ -11,46 +12,43 @@ import (
 	"github.com/rs/zerolog"
 )
 
-const (
-	SummarySize = 100
-)
-
 type Notifier interface {
-	Notify(models.Notification)
+	Notify(context.Context, models.Notification)
 }
 
 type NotificationService interface {
-	GetNotifications(models.User, time.Time) ([]models.Notification, error)
+	GetNotifications(context.Context, models.User, time.Time) ([]models.Notification, error)
 
-	Notify(models.Notification)
+	Notify(context.Context, models.Notification)
 
 	// MarkRead marks the notification with id as read, and sends the NotificationRead event through SignalR
-	MarkRead(models.User, int) error
+	MarkRead(context.Context, models.User, int) error
 	// MarkReadMany marks all the notifications as read, and sends the NotificationRead event through SignalR
-	MarkReadMany(models.User, []int) error
+	MarkReadMany(context.Context, models.User, []int) error
 	// MarkUnRead marks the notification with id as unread, and sends the Notification event through SignalR
-	MarkUnRead(models.User, int) error
-	Delete(models.User, int) error
-	DeleteMany(models.User, []int) error
+	MarkUnRead(context.Context, models.User, int) error
+	Delete(context.Context, models.User, int) error
+	DeleteMany(context.Context, models.User, []int) error
 }
 
-func NotificationServiceProvider(log zerolog.Logger, db *db.Database, signalR SignalRService) NotificationService {
+func NotificationServiceProvider(log zerolog.Logger, unitOfWork *db.UnitOfWork, signalR SignalRService) NotificationService {
 	return &notificationService{
-		db:      db,
-		log:     log.With().Str("handler", "notification-service").Logger(),
-		signalR: signalR,
+		unitOfWork: unitOfWork,
+		log:        log.With().Str("handler", "notification-service").Logger(),
+		signalR:    signalR,
 	}
 }
 
 type notificationService struct {
-	db      *db.Database
-	log     zerolog.Logger
-	signalR SignalRService
+	unitOfWork *db.UnitOfWork
+	log        zerolog.Logger
+	signalR    SignalRService
 }
 
-func (n *notificationService) GetNotifications(user models.User, after time.Time) ([]models.Notification, error) {
+func (n *notificationService) GetNotifications(ctx context.Context, user models.User, after time.Time) ([]models.Notification, error) {
 	var notifications []models.Notification
-	builder := n.db.DB().
+	builder := n.unitOfWork.DB().
+		WithContext(ctx).
 		Where("owner IS NULL").
 		Or("owner = ?", user.ID)
 
@@ -76,16 +74,16 @@ func (n *notificationService) GetNotifications(user models.User, after time.Time
 	return notifications, nil
 }
 
-func (n *notificationService) Notify(notification models.Notification) {
+func (n *notificationService) Notify(ctx context.Context, notification models.Notification) {
 	n.log.Debug().Any("notification", notification).Msg("adding notification")
-	n.signalR.Notify(notification)
-	if err := n.db.Notifications.New(notification); err != nil {
+	n.signalR.Notify(ctx, notification)
+	if err := n.unitOfWork.Notifications.New(ctx, notification); err != nil {
 		n.log.Error().Err(err).Msg("unable to add notification")
 	}
 }
 
-func (n *notificationService) MarkRead(user models.User, id int) error {
-	notification, err := n.db.Notifications.Get(id)
+func (n *notificationService) MarkRead(ctx context.Context, user models.User, id int) error {
+	notification, err := n.unitOfWork.Notifications.Get(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -94,7 +92,7 @@ func (n *notificationService) MarkRead(user models.User, id int) error {
 		return fiber.ErrUnauthorized
 	}
 
-	if err = n.db.Notifications.MarkRead(id); err != nil {
+	if err = n.unitOfWork.Notifications.MarkRead(ctx, id); err != nil {
 		return err
 	}
 
@@ -107,8 +105,8 @@ func (n *notificationService) MarkRead(user models.User, id int) error {
 	return nil
 }
 
-func (n *notificationService) MarkReadMany(user models.User, ids []int) error {
-	notifications, err := n.db.Notifications.GetMany(ids)
+func (n *notificationService) MarkReadMany(ctx context.Context, user models.User, ids []int) error {
+	notifications, err := n.unitOfWork.Notifications.GetMany(ctx, ids)
 	if err != nil {
 		return err
 	}
@@ -119,7 +117,7 @@ func (n *notificationService) MarkReadMany(user models.User, ids []int) error {
 		return fiber.ErrUnauthorized
 	}
 
-	if err = n.db.Notifications.MarkReadMany(ids); err != nil {
+	if err = n.unitOfWork.Notifications.MarkReadMany(ctx, ids); err != nil {
 		return err
 	}
 
@@ -132,8 +130,8 @@ func (n *notificationService) MarkReadMany(user models.User, ids []int) error {
 	return nil
 }
 
-func (n *notificationService) MarkUnRead(user models.User, id int) error {
-	notification, err := n.db.Notifications.Get(id)
+func (n *notificationService) MarkUnRead(ctx context.Context, user models.User, id int) error {
+	notification, err := n.unitOfWork.Notifications.Get(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -142,11 +140,11 @@ func (n *notificationService) MarkUnRead(user models.User, id int) error {
 		return fiber.ErrUnauthorized
 	}
 
-	return n.db.Notifications.MarkUnread(id)
+	return n.unitOfWork.Notifications.MarkUnread(ctx, id)
 }
 
-func (n *notificationService) Delete(user models.User, id int) error {
-	notification, err := n.db.Notifications.Get(id)
+func (n *notificationService) Delete(ctx context.Context, user models.User, id int) error {
+	notification, err := n.unitOfWork.Notifications.Get(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -155,11 +153,11 @@ func (n *notificationService) Delete(user models.User, id int) error {
 		return fiber.ErrUnauthorized
 	}
 
-	return n.db.Notifications.Delete(id)
+	return n.unitOfWork.Notifications.Delete(ctx, id)
 }
 
-func (n *notificationService) DeleteMany(user models.User, ids []int) error {
-	notifications, err := n.db.Notifications.GetMany(ids)
+func (n *notificationService) DeleteMany(ctx context.Context, user models.User, ids []int) error {
+	notifications, err := n.unitOfWork.Notifications.GetMany(ctx, ids)
 	if err != nil {
 		return err
 	}
@@ -170,5 +168,5 @@ func (n *notificationService) DeleteMany(user models.User, ids []int) error {
 		return fiber.ErrUnauthorized
 	}
 
-	return n.db.Notifications.DeleteMany(ids)
+	return n.unitOfWork.Notifications.DeleteMany(ctx, ids)
 }

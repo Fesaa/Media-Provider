@@ -10,11 +10,12 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/devfeel/mapper"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 )
 
-func tempDatabase(t *testing.T) *db.Database {
+func tempDatabase(t *testing.T) *db.UnitOfWork {
 	t.Helper()
 	config.Dir = t.TempDir()
 	//nolint:usetesting
@@ -27,16 +28,16 @@ func tempDatabase(t *testing.T) *db.Database {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		d, err := database.DB().DB()
+		d, err := database.DB()
 		if err != nil {
 			t.Fatal(err)
 		}
 		d.Close()
 	})
-	return database
+	return db.NewUnitOfWork(database, mapper.NewMapper())
 }
 
-func tempSubscriptionService(t *testing.T, tempdb *db.Database) SubscriptionService {
+func tempSubscriptionService(t *testing.T, tempdb *db.UnitOfWork) SubscriptionService {
 	t.Helper()
 	log := zerolog.Nop()
 

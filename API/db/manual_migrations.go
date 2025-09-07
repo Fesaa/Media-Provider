@@ -61,6 +61,10 @@ var manualMigrations = []migration{
 		name: "20250906_RemoveRedirectUrl",
 		f:    manual.RemoveRedirectUrl,
 	},
+	{
+		name: "20250907_MigrateMetadata",
+		f:    manual.MigrateMetadataToSettings,
+	},
 }
 
 func manualMigration(db *gorm.DB, log zerolog.Logger) error {

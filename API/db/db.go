@@ -9,26 +9,10 @@ import (
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/glebarez/sqlite"
 	"github.com/rs/zerolog"
-	"go.uber.org/dig"
 	"gorm.io/gorm"
 )
 
-type Database struct {
-	db            *gorm.DB
-	Users         models.Users
-	Pages         models.Pages
-	Subscriptions models.Subscriptions
-	Preferences   models.Preferences
-	Notifications models.Notifications
-	Metadata      models.Metadata
-	Settings      models.Settings
-}
-
-func (db *Database) DB() *gorm.DB {
-	return db.db
-}
-
-func DatabaseProvider(log zerolog.Logger) (*Database, error) {
+func DatabaseProvider(log zerolog.Logger) (*gorm.DB, error) {
 	dsn := utils.OrElse(config.DatabaseDsn, path.Join(config.Dir, "media-provider.db"))
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger:               gormLogger(log),
@@ -50,24 +34,5 @@ func DatabaseProvider(log zerolog.Logger) (*Database, error) {
 		return nil, err
 	}
 
-	return &Database{
-		db:            db,
-		Users:         Users(db),
-		Pages:         Pages(db),
-		Subscriptions: Subscriptions(db),
-		Preferences:   Preferences(db),
-		Notifications: Notifications(db),
-		Metadata:      Metadata(db),
-		Settings:      Settings(db),
-	}, nil
-}
-
-func ModelsProvider(db *Database, c *dig.Container) {
-	utils.Must(c.Provide(utils.Identity(db.Users)))
-	utils.Must(c.Provide(utils.Identity(db.Pages)))
-	utils.Must(c.Provide(utils.Identity(db.Subscriptions)))
-	utils.Must(c.Provide(utils.Identity(db.Preferences)))
-	utils.Must(c.Provide(utils.Identity(db.Notifications)))
-	utils.Must(c.Provide(utils.Identity(db.Metadata)))
-	utils.Must(c.Provide(utils.Identity(db.Settings)))
+	return db, nil
 }

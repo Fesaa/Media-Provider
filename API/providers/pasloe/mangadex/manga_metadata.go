@@ -35,7 +35,7 @@ func (m *manga) WriteContentMetaData(ctx context.Context, chapter ChapterSearchD
 	}
 
 	l.Trace().Msg("writing comicinfoxml")
-	if err = comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(metaPath, "comicinfo.xml")); err != nil {
+	if err = comicinfo.Save(m.fs, m.comicInfo(ctx, chapter), path.Join(metaPath, "comicinfo.xml")); err != nil {
 		return err
 	}
 
@@ -186,7 +186,7 @@ func (m *manga) metronInfo(chapter ChapterSearchData) *metroninfo.MetronInfo {
 	return mi
 }
 
-func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
+func (m *manga) comicInfo(ctx context.Context, chapter ChapterSearchData) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
 	ci.Series = utils.NonEmpty(m.Req.GetStringOrDefault(core.TitleOverride, ""), m.SeriesInfo.Attributes.LangTitle(m.language))
@@ -216,7 +216,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 
 	// OneShots do not have status
 	if chapter.Attributes.Chapter != "" {
-		if count, ok := m.getCiStatus(); ok {
+		if count, ok := m.getCiStatus(ctx); ok {
 			ci.Count = count
 		}
 	} else {
@@ -233,7 +233,7 @@ func (m *manga) comicInfo(chapter ChapterSearchData) *comicinfo.ComicInfo {
 		ci.Number = chapter.Attributes.Chapter
 	}
 
-	m.writeTagsAndGenres(ci)
+	m.writeTagsAndGenres(ctx, ci)
 
 	ci.Writer = strings.Join(m.SeriesInfo.Authors(), ",")
 	ci.Colorist = strings.Join(m.SeriesInfo.Artists(), ",")
@@ -264,10 +264,10 @@ func (m *manga) getAgeRating() comicinfo.AgeRating {
 // Mangadex has its own writeTagsAndGenres as they do have a concept of genre's and tag. As opposed to only tags
 
 //nolint:funlen
-func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
+func (m *manga) writeTagsAndGenres(ctx context.Context, ci *comicinfo.ComicInfo) {
 	if m.Preference == nil {
 		m.Log.Warn().Msg("No genres or tags will be set, blacklist couldn't be loaded")
-		m.WarnPreferencesFailedToLoad()
+		m.WarnPreferencesFailedToLoad(ctx)
 		return
 	}
 
@@ -325,7 +325,7 @@ func (m *manga) writeTagsAndGenres(ci *comicinfo.ComicInfo) {
 
 // getCiStatus updates the ComicInfo.Count field according the Mangadex's information
 // and adds a notification in case a subscription has been exhausted
-func (m *manga) getCiStatus() (int, bool) {
+func (m *manga) getCiStatus(ctx context.Context) (int, bool) {
 	if m.SeriesInfo.Attributes.Status != StatusCompleted {
 		m.Log.Trace().Msg("Series not completed, no status to write")
 		return 0, false
@@ -384,7 +384,7 @@ func (m *manga) getCiStatus() (int, bool) {
 	}
 
 	total := fmt.Sprintf("%s Volumes, %s Chapters", m.SeriesInfo.Attributes.LastVolume, m.SeriesInfo.Attributes.LastChapter)
-	m.NotifySubscriptionExhausted(total)
+	m.NotifySubscriptionExhausted(ctx, total)
 	return intCount, true
 }
 

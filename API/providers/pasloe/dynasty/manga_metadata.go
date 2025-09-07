@@ -20,7 +20,7 @@ func (m *manga) WriteContentMetaData(ctx context.Context, chapter Chapter) error
 	}
 
 	m.Log.Trace().Str("chapter", chapter.Chapter).Msg("writing comicinfoxml")
-	return comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
+	return comicinfo.Save(m.fs, m.comicInfo(ctx, chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
 }
 
 func (m *manga) writeCover(ctx context.Context, chapter Chapter) error {
@@ -82,7 +82,7 @@ func (m *manga) tryReplaceCover(ctx context.Context) error {
 	return nil
 }
 
-func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
+func (m *manga) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
 	ci.Series = utils.NonEmpty(m.Req.GetStringOrDefault(core.TitleOverride, ""), m.SeriesInfo.Title)
@@ -112,7 +112,7 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	tags := utils.Map(utils.FlatMapMany(chapter.Tags, m.SeriesInfo.Tags), func(t Tag) core.Tag {
 		return t
 	})
-	ci.Genre, ci.Tags = m.GetGenreAndTags(tags)
+	ci.Genre, ci.Tags = m.GetGenreAndTags(ctx, tags)
 	if ar, ok := m.GetAgeRating(tags); ok {
 		ci.AgeRating = ar
 	}

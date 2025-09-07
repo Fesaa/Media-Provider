@@ -15,9 +15,9 @@ import (
 type pageRoutes struct {
 	dig.In
 
-	Router fiber.Router
-	DB     *db.Database
-	Auth   services.AuthService
+	Router     fiber.Router
+	UnitOfWork *db.UnitOfWork
+	Auth       services.AuthService
 
 	Val            services.ValidationService
 	PageService    services.PageService
@@ -45,7 +45,7 @@ func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 	user := services.GetFromContext(ctx, services.UserKey)
 
-	pages, err := pr.DB.Pages.All()
+	pages, err := pr.UnitOfWork.Pages.GetAllPages(ctx.Context())
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get pages")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -78,7 +78,7 @@ func (pr *pageRoutes) page(ctx *fiber.Ctx, id int) error {
 		return NotFound()
 	}
 
-	page, err := pr.DB.Pages.Get(id)
+	page, err := pr.UnitOfWork.Pages.GetPage(ctx.UserContext(), id)
 	if err != nil {
 		log.Error().Err(err).Int("pageId", id).Msg("Failed to get page")
 		return InternalError(err)
@@ -111,7 +111,7 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 		return mod
 	})
 
-	cur, err := pr.DB.Pages.Get(page.ID)
+	cur, err := pr.UnitOfWork.Pages.GetPage(ctx.UserContext(), page.ID)
 	if err != nil {
 		log.Error().Err(err).Int("pageId", page.ID).Msg("Failed to get page")
 		return InternalError(err)
@@ -122,7 +122,7 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 		page.SortValue = cur.SortValue
 	}
 
-	if err = pr.PageService.UpdateOrCreate(&page); err != nil {
+	if err = pr.PageService.UpdateOrCreate(ctx.UserContext(), &page); err != nil {
 		log.Error().Err(err).Msg("Failed to update page")
 		return InternalError(err)
 	}
@@ -133,7 +133,7 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	if err := pr.DB.Pages.Delete(id); err != nil {
+	if err := pr.UnitOfWork.Pages.Delete(ctx.UserContext(), id); err != nil {
 		log.Error().Err(err).Msg("Failed to delete page")
 		return InternalError(err)
 	}
@@ -144,7 +144,7 @@ func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id int) error {
 func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []int) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	if err := pr.PageService.OrderPages(order); err != nil {
+	if err := pr.PageService.OrderPages(ctx.UserContext(), order); err != nil {
 		log.Error().Err(err).Msg("Failed to swap page")
 		return InternalError(err)
 	}
@@ -155,7 +155,7 @@ func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []int) error {
 func (pr *pageRoutes) loadDefault(ctx *fiber.Ctx) error {
 	log := services.GetFromContext(ctx, services.LoggerKey)
 
-	if err := pr.PageService.LoadDefaultPages(); err != nil {
+	if err := pr.PageService.LoadDefaultPages(ctx.UserContext()); err != nil {
 		log.Error().Err(err).Msg("Failed to load default pages")
 		return InternalError(err)
 	}

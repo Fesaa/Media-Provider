@@ -6,6 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/devfeel/mapper"
 	"github.com/rs/zerolog"
 )
 
@@ -21,19 +22,19 @@ func tempPageService(t *testing.T) PageService {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		d, err := database.DB().DB()
+		d, err := database.DB()
 		if err != nil {
 			t.Fatal(err)
 		}
 		d.Close()
 	})
-	return PageServiceProvider(database, log)
+	return PageServiceProvider(db.NewUnitOfWork(database, mapper.NewMapper()), log)
 }
 
 func TestPageService_LoadDefaultPages(t *testing.T) {
 	ps := tempPageService(t)
 
-	if err := ps.LoadDefaultPages(); err != nil {
+	if err := ps.LoadDefaultPages(t.Context()); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -51,7 +52,7 @@ func TestPageService_UpdateOrCreate(t *testing.T) {
 		CustomRootDir: "",
 	}
 
-	if err := ps.UpdateOrCreate(&page); err != nil {
+	if err := ps.UpdateOrCreate(t.Context(), &page); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -69,7 +70,7 @@ func TestPageService_UpdateOrCreateDefaultSortValue(t *testing.T) {
 		CustomRootDir: "",
 	}
 
-	if err := ps.UpdateOrCreate(&page); err != nil {
+	if err := ps.UpdateOrCreate(t.Context(), &page); err != nil {
 		t.Fatal(err)
 	}
 
@@ -87,7 +88,7 @@ func TestPageService_UpdateOrCreateDefaultSortValue(t *testing.T) {
 		CustomRootDir: "",
 	}
 
-	if err := ps.UpdateOrCreate(&secondPage); err != nil {
+	if err := ps.UpdateOrCreate(t.Context(), &secondPage); err != nil {
 		t.Fatal(err)
 	}
 

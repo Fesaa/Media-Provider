@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -24,7 +25,7 @@ func Setup(
 ) error {
 	log.Debug().Str("handler", "http-routing").Msg("registering api routes")
 
-	settings, err := settingsService.GetSettingsDto()
+	settings, err := settingsService.GetSettingsDto(context.Background())
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,6 @@ func Setup(
 	utils2.Must(scope.Invoke(routes.RegisterSubscriptionRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterPreferencesRoutes))
 	utils2.Must(scope.Invoke(routes.RegisterNotificationRoutes))
-	utils2.Must(scope.Invoke(routes.RegisterMetadataRoutes))
 
 	return nil
 }

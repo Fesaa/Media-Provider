@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -66,10 +67,10 @@ var (
 )
 
 type cookieAuthService struct {
-	users   models.Users
-	cfg     *config.Config
-	log     zerolog.Logger
-	storage CacheService
+	unitOfWork *db.UnitOfWork
+	cfg        *config.Config
+	log        zerolog.Logger
+	storage    CacheService
 
 	oidcSettings payload.OidcSettings
 	oidcProvider *oidc.Provider
@@ -82,21 +83,21 @@ type cookieAuthService struct {
 type cookieAuthServiceParams struct {
 	dig.In
 
-	Users   models.Users
-	Service SettingsService
-	Storage CacheService
-	Config  *config.Config
-	Log     zerolog.Logger
+	UnitOfWork *db.UnitOfWork
+	Service    SettingsService
+	Storage    CacheService
+	Config     *config.Config
+	Log        zerolog.Logger
 }
 
 func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, error) {
-	settings, err := params.Service.GetSettingsDto()
+	settings, err := params.Service.GetSettingsDto(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
 	s := &cookieAuthService{
-		users:          params.Users,
+		unitOfWork:     params.UnitOfWork,
 		storage:        params.Storage,
 		cfg:            params.Config,
 		cookiesRefresh: utils.NewSafeMap[int, bool](),
@@ -128,7 +129,7 @@ func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
 		ClientID:     settings.Oidc.ClientID,
 		ClientSecret: settings.Oidc.ClientSecret,
 		Endpoint:     provider.Endpoint(),
-		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", "offline_access"},
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email", oidc.ScopeOfflineAccess},
 	}
 
 	s.log.Debug().
@@ -139,7 +140,7 @@ func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
 }
 
 func (s *cookieAuthService) Login(ctx *fiber.Ctx, loginRequest payload.LoginRequest) (*payload.LoginResponse, error) {
-	user, err := s.users.GetByName(loginRequest.UserName)
+	user, err := s.unitOfWork.Users.GetByName(ctx.UserContext(), loginRequest.UserName)
 	if err != nil {
 		s.log.Error().Err(err).Str("user", loginRequest.UserName).Msg("user not found")
 		return nil, err
@@ -182,7 +183,7 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) string {
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
-		SameSite: "Lax",
+		SameSite: fiber.CookieSameSiteStrictMode,
 	})
 
 	ctx.Cookie(&fiber.Cookie{
@@ -190,7 +191,7 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) string {
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
-		SameSite: "Lax",
+		SameSite: fiber.CookieSameSiteLaxMode,
 	})
 
 	token := ctx.Cookies(tokenCookie)
@@ -265,7 +266,8 @@ func (s *cookieAuthService) GetOIDCLoginURL(ctx *fiber.Ctx) (string, error) {
 		Value:    state,
 		MaxAge:   stateCookieMaxAge,
 		HTTPOnly: true,
-		SameSite: "Lax",
+		SameSite: fiber.CookieSameSiteLaxMode,
+		Secure:   ctx.Secure(),
 	})
 
 	s.oauth2Config.RedirectURL = s.getUrlBase(ctx) + "/oidc/callback"
@@ -346,7 +348,7 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 		return false
 	}
 
-	user, err := s.users.GetById(tokens.UserId)
+	user, err := s.unitOfWork.Users.GetByID(ctx.UserContext(), tokens.UserId)
 	if user == nil || err != nil {
 		return false
 	}
@@ -359,7 +361,7 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 		return false
 	}
 
-	ctx.Locals(UserKey.Value(), *user)
+	SetInContext(ctx, UserKey, *user)
 
 	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
 	if !expiresSoon {
@@ -410,7 +412,7 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 		return nil, err
 	}
 
-	user, err := s.users.GetByExternalId(token.Subject)
+	user, err := s.unitOfWork.Users.GetByExternalID(ctx, token.Subject)
 	if err != nil {
 		return nil, err
 	}
@@ -432,7 +434,7 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 		return nil, errEmailNotVerified
 	}
 
-	user, err = s.users.GetByEmail(claims.Email)
+	user, err = s.unitOfWork.Users.GetByEmail(ctx, claims.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -442,7 +444,7 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 	}
 
 	user.ExternalId = sql.NullString{String: token.Subject, Valid: true}
-	if _, err = s.users.Update(*user); err != nil {
+	if err = s.unitOfWork.Users.Update(ctx, *user); err != nil {
 		s.log.Error().Err(err).
 			Str("email", claims.Email).
 			Msg("failed to assign external id to user")
@@ -493,7 +495,8 @@ func (s *cookieAuthService) setCookies(ctx *fiber.Ctx, tokens *OIDCTokens) error
 		Value:    token,
 		MaxAge:   30 * 24 * 60 * 60, // 30 Days
 		HTTPOnly: true,
-		SameSite: "Lax",
+		SameSite: fiber.CookieSameSiteStrictMode,
+		Secure:   ctx.Secure(),
 	})
 
 	return nil
@@ -541,7 +544,7 @@ func (s *cookieAuthService) getUrlBase(ctx *fiber.Ctx) string {
 
 func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthMiddleware {
 	return &apiKeyAuthService{
-		users:      params.Users,
+		unitOfWork: params.UnitOfWork,
 		cookieAuth: params.FallbackAuth,
 		log:        params.Log.With().Str("handler", "api-key-auth-service").Logger(),
 	}
@@ -550,13 +553,13 @@ func ApiKeyAuthServiceProvider(params apiKeyAuthServiceParams) AuthMiddleware {
 type apiKeyAuthServiceParams struct {
 	dig.In
 
-	Users        models.Users
+	UnitOfWork   *db.UnitOfWork
 	FallbackAuth AuthService
 	Log          zerolog.Logger
 }
 
 type apiKeyAuthService struct {
-	users      models.Users
+	unitOfWork *db.UnitOfWork
 	cookieAuth AuthService
 	log        zerolog.Logger
 }
@@ -578,11 +581,11 @@ func (a *apiKeyAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, nil
 	}
 
-	user, err := a.users.GetByApiKey(apiKey)
+	user, err := a.unitOfWork.Users.GetByAPIKey(ctx.UserContext(), apiKey)
 	if err != nil {
 		return false, err
 	}
 
-	ctx.Locals(UserKey.Value(), user)
+	SetInContext(ctx, UserKey, *user)
 	return true, nil
 }

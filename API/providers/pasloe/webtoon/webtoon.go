@@ -128,10 +128,10 @@ func (w *webtoon) WriteContentMetaData(ctx context.Context, chapter Chapter) err
 	}
 
 	w.Log.Trace().Str("chapter", chapter.Number).Msg("writing comicinfoxml")
-	return comicinfo.Save(w.fs, w.comicInfo(chapter), path.Join(w.ContentPath(chapter), "ComicInfo.xml"))
+	return comicinfo.Save(w.fs, w.comicInfo(ctx, chapter), path.Join(w.ContentPath(chapter), "ComicInfo.xml"))
 }
 
-func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
+func (w *webtoon) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
 	ci.Series = utils.NonEmpty(w.Req.GetStringOrDefault(core.TitleOverride, ""), w.Title())
@@ -153,7 +153,7 @@ func (w *webtoon) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 
 	if w.SeriesInfo.Completed {
 		ci.Count = len(w.SeriesInfo.Chapters)
-		w.NotifySubscriptionExhausted(fmt.Sprintf("%d Chapters", ci.Count))
+		w.NotifySubscriptionExhausted(ctx, fmt.Sprintf("%d Chapters", ci.Count))
 	}
 
 	return ci
