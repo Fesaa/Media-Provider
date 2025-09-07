@@ -1,6 +1,7 @@
 package yoitsu
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -48,7 +49,7 @@ func New(log zerolog.Logger, signalR services.SignalRService,
 	dirService services.DirectoryService, notify services.NotificationService,
 	transLoco services.TranslocoService, fs afero.Afero, settingsService services.SettingsService,
 ) (Client, error) {
-	settings, err := settingsService.GetSettingsDto()
+	settings, err := settingsService.GetSettingsDto(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +199,7 @@ func (y *yoitsu) RemoveDownload(req payload.StopRequest) error {
 		}
 
 		text := fmt.Sprintf("%s finished downloading %d files(s)", tor.Title(), tor.Files())
-		y.notifier(tor.Request()).Notify(models.NewNotification().
+		y.notifier(tor.Request()).Notify(context.Background(), models.NewNotification().
 			WithTitle("Download finished").
 			WithBody(text).
 			WithColour(models.Secondary).
@@ -366,7 +367,7 @@ func (y *yoitsu) notifyCleanUpError(content Torrent, cleanupErrs ...error) {
 		return
 	}
 
-	y.notify.Notify(models.NewNotification().
+	y.notify.Notify(context.Background(), models.NewNotification().
 		WithTitle(y.transLoco.GetTranslation("cleanup-errors-title")).
 		WithSummary(y.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
 		WithBody(joined.Error()).

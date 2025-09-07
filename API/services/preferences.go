@@ -1,6 +1,9 @@
 package services
 
 import (
+	"context"
+
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -8,26 +11,26 @@ import (
 )
 
 type PreferencesService interface {
-	Update(preference payload.PreferencesDto) error
-	GetDto() (payload.PreferencesDto, error)
+	Update(context.Context, payload.PreferencesDto) error
+	GetDto(context.Context) (payload.PreferencesDto, error)
 }
 
 type preferencesService struct {
 	subscriptionService SubscriptionService
-	pref                models.Preferences
+	unitOfWork          *db.UnitOfWork
 	log                 zerolog.Logger
 }
 
-func PreferenceServiceProvider(subscriptionService SubscriptionService, pref models.Preferences, log zerolog.Logger) PreferencesService {
+func PreferenceServiceProvider(subscriptionService SubscriptionService, unitOfWork *db.UnitOfWork, log zerolog.Logger) PreferencesService {
 	return &preferencesService{
-		pref:                pref,
+		unitOfWork:          unitOfWork,
 		subscriptionService: subscriptionService,
 		log:                 log.With().Str("handler", "preference-service").Logger(),
 	}
 }
 
-func (p *preferencesService) GetDto() (payload.PreferencesDto, error) {
-	pref, err := p.pref.GetComplete()
+func (p *preferencesService) GetDto(ctx context.Context) (payload.PreferencesDto, error) {
+	pref, err := p.unitOfWork.Preferences.GetPreferencesComplete(ctx)
 	if err != nil {
 		return payload.PreferencesDto{}, err
 	}
@@ -62,8 +65,8 @@ func (p *preferencesService) GetDto() (payload.PreferencesDto, error) {
 	}, nil
 }
 
-func (p *preferencesService) Update(preference payload.PreferencesDto) error {
-	cur, err := p.pref.GetComplete()
+func (p *preferencesService) Update(ctx context.Context, preference payload.PreferencesDto) error {
+	cur, err := p.unitOfWork.Preferences.GetPreferencesComplete(ctx)
 	if err != nil {
 		return err
 	}
@@ -104,12 +107,12 @@ func (p *preferencesService) Update(preference payload.PreferencesDto) error {
 		}
 	})
 
-	if err = p.pref.Update(*cur); err != nil {
+	if err = p.unitOfWork.Preferences.Update(ctx, cur); err != nil {
 		return err
 	}
 
 	// Reset preference cache
-	return p.pref.Flush()
+	return p.unitOfWork.Preferences.Flush()
 }
 
 func mergeTags(currentTags []models.Tag, newTags []string) []models.Tag {

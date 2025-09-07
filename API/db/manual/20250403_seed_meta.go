@@ -10,7 +10,7 @@ import (
 )
 
 func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {
-	var rows []models.MetadataRow
+	var rows []models.ServerSetting
 	if err := db.Find(&rows).Error; err != nil {
 		return err
 	}
@@ -20,15 +20,15 @@ func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {
 		return nil
 	}
 
-	rows = append(rows, models.MetadataRow{
+	rows = append(rows, models.ServerSetting{
 		Key:   models.FirstInstalledVersion,
 		Value: metadata.Version.String(),
 	})
-	rows = append(rows, models.MetadataRow{
+	rows = append(rows, models.ServerSetting{
 		Key:   models.InstallDate,
 		Value: time.Now().Format(time.DateTime),
 	})
-	rows = append(rows, models.MetadataRow{
+	rows = append(rows, models.ServerSetting{
 		Key:   models.InstalledVersion,
 		Value: metadata.Version.String(),
 	})

@@ -19,6 +19,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/devfeel/mapper"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
@@ -34,10 +35,11 @@ func main() {
 	utils.Must(c.Provide(config.Load))
 	utils.Must(c.Provide(LogProvider))
 	utils.Must(c.Provide(services.ValidatorProvider))
+	utils.Must(c.Provide(utils.Identity(mapper.NewMapper())))
 	utils.Must(c.Invoke(validateConfig))
 
 	utils.Must(c.Provide(db.DatabaseProvider))
-	utils.Must(c.Invoke(db.ModelsProvider))
+	utils.Must(c.Provide(db.NewUnitOfWork))
 
 	utils.Must(c.Provide(services.CookieAuthServiceProvider))
 	utils.Must(c.Provide(services.ApiKeyAuthServiceProvider))
@@ -61,7 +63,6 @@ func main() {
 	utils.Must(c.Provide(services.DirectoryServiceProvider))
 	utils.Must(c.Provide(services.FileServiceProvider))
 	utils.Must(c.Provide(services.ArchiveServiceProvider))
-	utils.Must(c.Provide(services.MetadataServiceProvider))
 	utils.Must(c.Provide(services.SettingsServiceProvider))
 	utils.Must(c.Provide(applicationProvider))
 

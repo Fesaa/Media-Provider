@@ -1,6 +1,11 @@
 package payload
 
-import "github.com/Fesaa/Media-Provider/config"
+import (
+	"time"
+
+	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/metadata"
+)
 
 type Settings struct {
 	BaseUrl               string           `json:"baseUrl"`
@@ -11,6 +16,13 @@ type Settings struct {
 	DisableIpv6           bool             `json:"disableIpv6"`
 	RootDir               string           `json:"rootDir"`
 	Oidc                  OidcSettings     `json:"oidc"`
+	Metadata              Metadata         `json:"metadata"`
+}
+
+type Metadata struct {
+	Version               metadata.SemanticVersion `json:"version"`
+	FirstInstalledVersion string                   `json:"firstInstalledVersion"`
+	InstallDate           time.Time                `json:"installDate"`
 }
 
 type OidcSettings struct {

@@ -89,7 +89,7 @@ func (c *Core[C, S]) IOWorker(ctx context.Context, id string) {
 		default:
 		}
 
-		data, ok := c.imageService.ConvertToWebp(task.data)
+		data, ok := c.imageService.ConvertToWebp(ctx, task.data)
 
 		ext := utils.Ternary(ok, ".webp", utils.Ext(task.dTask.url))
 		filePath := path.Join(task.path, fmt.Sprintf("page %s"+ext, utils.PadInt(task.dTask.idx, 4)))

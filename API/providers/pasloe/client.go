@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
@@ -21,9 +22,9 @@ import (
 
 func New(s services.SettingsService, container *dig.Container, log zerolog.Logger,
 	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
-	preferences models.Preferences, transLoco services.TranslocoService, fs afero.Afero,
+	unitOfWork *db.UnitOfWork, transLoco services.TranslocoService, fs afero.Afero,
 ) (core.Client, error) {
-	settings, err := s.GetSettingsDto()
+	settings, err := s.GetSettingsDto(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func New(s services.SettingsService, container *dig.Container, log zerolog.Logge
 		dirService: dirService,
 		signalR:    signalR,
 		notify:     notify,
-		pref:       preferences,
+		unitOfWork: unitOfWork,
 		transLoco:  transLoco,
 		fs:         fs,
 
@@ -57,7 +58,7 @@ type client struct {
 	signalR    services.SignalRService
 	notify     services.NotificationService
 	transLoco  services.TranslocoService
-	pref       models.Preferences
+	unitOfWork *db.UnitOfWork
 	fs         afero.Afero
 
 	rootDir string
@@ -197,7 +198,7 @@ func (c *client) Shutdown() error {
 }
 
 func (c *client) alwaysLog() bool {
-	p, err := c.pref.Get()
+	p, err := c.unitOfWork.Preferences.GetPreferences(c.ctx)
 	if err != nil {
 		c.log.Error().Err(err).Msg("failed to retrieve preferences, falling back to default behaviour")
 		return false
@@ -231,7 +232,7 @@ func (c *client) logContentCompletion(content core.Downloadable) {
 		body += c.transLoco.GetTranslation("content-line", path.Base(newContent))
 	}
 
-	c.notifier(content.Request()).Notify(models.NewNotification().
+	c.notifier(content.Request()).Notify(c.ctx, models.NewNotification().
 		WithTitle(c.transLoco.GetTranslation("download-finished-title")).
 		WithSummary(summary).
 		WithBody(body).
@@ -420,7 +421,7 @@ func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...er
 	if joinedErr == nil {
 		return
 	}
-	c.notify.Notify(models.NewNotification().
+	c.notify.Notify(c.ctx, models.NewNotification().
 		WithTitle(c.transLoco.GetTranslation("cleanup-errors-title")).
 		WithSummary(c.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
 		WithBody(joinedErr.Error()).

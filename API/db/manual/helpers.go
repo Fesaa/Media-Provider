@@ -6,7 +6,7 @@ import (
 )
 
 func getCurrentVersion(db *gorm.DB) string {
-	var row models.MetadataRow
+	var row models.ServerSetting
 	err := db.First(&row, "key = ?", models.InstalledVersion).Error
 	if err != nil {
 		return ""

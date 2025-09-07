@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -21,26 +22,28 @@ var (
 )
 
 type PageService interface {
-	UpdateOrCreate(page *models.Page) error
-	OrderPages([]int) error
-	LoadDefaultPages() error
+	UpdateOrCreate(context.Context, *models.Page) error
+	OrderPages(context.Context, []int) error
+	LoadDefaultPages(context.Context) error
 }
 
 type pageService struct {
-	db  *db.Database
-	log zerolog.Logger
+	unitOfWork *db.UnitOfWork
+	log        zerolog.Logger
 }
 
-func PageServiceProvider(db *db.Database, log zerolog.Logger) PageService {
+func PageServiceProvider(unitOfWork *db.UnitOfWork, log zerolog.Logger) PageService {
 	return &pageService{
-		db:  db,
-		log: log.With().Str("handler", "page-service").Logger(),
+		unitOfWork: unitOfWork,
+		log:        log.With().Str("handler", "page-service").Logger(),
 	}
 }
 
-func (ps *pageService) UpdateOrCreate(page *models.Page) error {
+func (ps *pageService) UpdateOrCreate(ctx context.Context, page *models.Page) error {
 	var other models.Page
-	err := ps.db.DB().
+
+	err := ps.unitOfWork.DB().
+		WithContext(ctx).
 		Not(models.Page{Model: models.Model{ID: page.ID}}).
 		Where(map[string]interface{}{"sort_value": 0}). // https://gorm.io/docs/query.html#Struct-amp-Map-Conditions
 		First(&other).
@@ -55,7 +58,11 @@ func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 
 	if page.SortValue == DefaultPageSort {
 		var maxPageSort sql.NullInt64
-		err = ps.db.DB().Model(&models.Page{}).Select("MAX(sort_value) AS maxPageSort").Scan(&maxPageSort).Error
+		err = ps.unitOfWork.DB().
+			WithContext(ctx).
+			Model(&models.Page{}).
+			Select("MAX(sort_value) AS maxPageSort").
+			Scan(&maxPageSort).Error
 		if err != nil {
 			ps.log.Error().Err(err).Msg("Error occurred while getting max page sort")
 			return ErrFailedToSortCheck
@@ -68,11 +75,11 @@ func (ps *pageService) UpdateOrCreate(page *models.Page) error {
 		}
 	}
 
-	return ps.db.Pages.Update(page)
+	return ps.unitOfWork.Pages.Update(ctx, page)
 }
 
-func (ps *pageService) OrderPages(order []int) error {
-	pages, err := ps.db.Pages.All()
+func (ps *pageService) OrderPages(ctx context.Context, order []int) error {
+	pages, err := ps.unitOfWork.Pages.GetAllPages(ctx)
 	if err != nil {
 		return err
 	}
@@ -90,11 +97,11 @@ func (ps *pageService) OrderPages(order []int) error {
 		newPages[sliceIdx] = page
 	}
 
-	return ps.db.Pages.UpdateMany(newPages)
+	return ps.unitOfWork.Pages.UpdateMany(ctx, newPages)
 }
 
-func (ps *pageService) LoadDefaultPages() error {
-	pages, err := ps.db.Pages.All()
+func (ps *pageService) LoadDefaultPages(ctx context.Context) error {
+	pages, err := ps.unitOfWork.Pages.GetAllPages(ctx)
 	if err != nil {
 		ps.log.Error().Err(err).Msg("Failed to load existing pages, not loading default pages")
 		return err
@@ -104,7 +111,7 @@ func (ps *pageService) LoadDefaultPages() error {
 		return ErrExistingPagesFound
 	}
 
-	return ps.db.DB().Transaction(func(tx *gorm.DB) error {
+	return ps.unitOfWork.DB().Transaction(func(tx *gorm.DB) error {
 		for _, page := range models.DefaultPages {
 			if err = tx.Create(&page).Error; err != nil {
 				return err

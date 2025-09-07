@@ -1,44 +1,55 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 )
 
 type SettingsService interface {
-	GetSettingsDto() (payload.Settings, error)
-	UpdateSettingsDto(settings payload.Settings) error
+	GetSettingsDto(context.Context) (payload.Settings, error)
+	UpdateSettingsDto(context.Context, payload.Settings) error
+	UpdateCurrentVersion(ctx context.Context) error
 }
 
 type settingsService struct {
-	settings models.Settings
-	log      zerolog.Logger
+	unitOfWork *db.UnitOfWork
+	log        zerolog.Logger
 
 	cachedSettings utils.CachedItem[payload.Settings]
 }
 
-func SettingsServiceProvider(settings models.Settings, log zerolog.Logger) SettingsService {
+func SettingsServiceProvider(unitOfWork *db.UnitOfWork, log zerolog.Logger) SettingsService {
 	return &settingsService{
-		settings: settings,
-		log:      log.With().Str("handler", "settings-service").Logger(),
+		unitOfWork: unitOfWork,
+		log:        log.With().Str("handler", "settings-service").Logger(),
 	}
 }
 
-func (s *settingsService) GetSettingsDto() (payload.Settings, error) {
+func (s *settingsService) UpdateCurrentVersion(ctx context.Context) error {
+	return s.unitOfWork.Settings.Update(ctx, []models.ServerSetting{{
+		Key:   models.InstalledVersion,
+		Value: metadata.Version.String(),
+	}})
+}
+
+func (s *settingsService) GetSettingsDto(ctx context.Context) (payload.Settings, error) {
 	if s.cachedSettings != nil && !s.cachedSettings.HasExpired() {
 		s.log.Trace().Msg("settings being returned from cache")
 		return s.cachedSettings.Get()
 	}
 
-	settings, err := s.settings.All()
+	settings, err := s.unitOfWork.Settings.GetAll(ctx)
 	if err != nil {
 		return payload.Settings{}, err
 	}
@@ -55,8 +66,8 @@ func (s *settingsService) GetSettingsDto() (payload.Settings, error) {
 	return dto, nil
 }
 
-func (s *settingsService) UpdateSettingsDto(dto payload.Settings) error {
-	settings, err := s.settings.All()
+func (s *settingsService) UpdateSettingsDto(ctx context.Context, dto payload.Settings) error {
+	settings, err := s.unitOfWork.Settings.GetAll(ctx)
 	if err != nil {
 		return err
 	}
@@ -72,7 +83,7 @@ func (s *settingsService) UpdateSettingsDto(dto payload.Settings) error {
 		return errors.Join(errs...)
 	}
 
-	if err = s.settings.Update(settings); err != nil {
+	if err = s.unitOfWork.Settings.Update(ctx, settings); err != nil {
 		return err
 	}
 	s.cachedSettings.SetExpired()
@@ -108,6 +119,10 @@ func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto pa
 		if dto.Oidc.ClientSecret != strings.Repeat("*", len(setting.Value)) {
 			setting.Value = dto.Oidc.ClientSecret
 		}
+	case models.InstalledVersion:
+	case models.FirstInstalledVersion:
+	case models.InstallDate:
+		break // Do not update
 	}
 
 	return err
@@ -140,6 +155,13 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 		dto.Oidc.DisablePasswordLogin, err = strconv.ParseBool(setting.Value)
 	case models.OidcClientSecret:
 		dto.Oidc.ClientSecret = setting.Value
+	case models.InstalledVersion:
+		dto.Metadata.Version = metadata.SemanticVersion(setting.Value)
+	case models.FirstInstalledVersion:
+		dto.Metadata.FirstInstalledVersion = setting.Value
+	case models.InstallDate:
+		dto.Metadata.InstallDate, err = time.Parse(time.DateTime, setting.Value)
+
 	}
 
 	return err

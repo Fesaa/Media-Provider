@@ -15,6 +15,9 @@ const (
 	OidcAutoLogin
 	OidcDisablePasswordLogin
 	OidcClientSecret
+	InstalledVersion
+	FirstInstalledVersion
+	InstallDate
 )
 
 type ServerSetting struct {

@@ -2,9 +2,10 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"image"
 
-	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
@@ -30,23 +31,23 @@ type ImageService interface {
 	MeanSquareError(img1, img2 image.Image) float64
 	IsCover(data []byte) bool
 	ToImage(data []byte) (image.Image, error)
-	ConvertToWebp(data []byte) ([]byte, bool)
+	ConvertToWebp(ctx context.Context, data []byte) ([]byte, bool)
 }
 
 type imageService struct {
-	log  zerolog.Logger
-	pref models.Preferences
+	log        zerolog.Logger
+	unitOfWork *db.UnitOfWork
 }
 
-func ImageServiceProvider(log zerolog.Logger, pref models.Preferences) ImageService {
+func ImageServiceProvider(log zerolog.Logger, unitOfWork *db.UnitOfWork) ImageService {
 	return &imageService{
-		log:  log.With().Str("handler", "image-service").Logger(),
-		pref: pref,
+		log:        log.With().Str("handler", "image-service").Logger(),
+		unitOfWork: unitOfWork,
 	}
 }
 
-func (i *imageService) ConvertToWebp(data []byte) ([]byte, bool) {
-	p, err := i.pref.Get()
+func (i *imageService) ConvertToWebp(ctx context.Context, data []byte) ([]byte, bool) {
+	p, err := i.unitOfWork.Preferences.GetPreferences(ctx)
 	if err != nil {
 		i.log.Warn().Err(err).Msg("pref.Get() failed, not converting to webp")
 		return data, false

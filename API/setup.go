@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -148,13 +149,15 @@ func registerCallback(app *fiber.App) {
 	})
 }
 
-func updateInstalledVersion(ms services.MetadataService, log zerolog.Logger) error {
+func updateInstalledVersion(ss services.SettingsService, log zerolog.Logger) error {
 	log = log.With().Str("handler", "core").Logger()
 
-	cur, err := ms.Get()
+	settings, err := ss.GetSettingsDto(context.Background())
 	if err != nil {
 		return err
 	}
+
+	cur := settings.Metadata
 
 	if cur.Version.Equal(metadata.Version) {
 		log.Trace().Msg("no version changes")
@@ -167,9 +170,7 @@ func updateInstalledVersion(ms services.MetadataService, log zerolog.Logger) err
 			Str("actualVersion", metadata.Version.String()).
 			Msg("Installed version is newer, want is going on? Bringing back to sync!")
 	}
-
-	cur.Version = metadata.Version
-	return ms.Update(cur)
+	return ss.UpdateCurrentVersion(context.Background())
 }
 
 func updateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero) error {

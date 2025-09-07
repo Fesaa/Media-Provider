@@ -97,20 +97,19 @@ func (c *Core[C, S]) MapTags(mappings models.TagMaps, tags []Tag) []Tag {
 func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
 	var genres, blackList, whitelist models.Tags
 	var tagMappings models.TagMaps
+	preferencesLoaded := c.Preference != nil
 
-	p, err := c.preferences.GetComplete()
-	if err != nil {
-		c.Log.Error().Err(err).Msg("failed to get mapped genre tags, not setting any genres")
+	if preferencesLoaded {
+		genres = c.Preference.DynastyGenreTags
+		blackList = c.Preference.BlackListedTags
+		whitelist = c.Preference.WhiteListedTags
+		tagMappings = c.Preference.TagMappings
+	} else {
+		c.Log.Warn().Msg("No genres or tags will be set, blacklist couldn't be loaded")
 		c.WarnPreferencesFailedToLoad()
-
 		if config.SkipTagsOnFailure {
 			return "", ""
 		}
-	} else {
-		genres = p.DynastyGenreTags
-		blackList = p.BlackListedTags
-		whitelist = p.WhiteListedTags
-		tagMappings = p.TagMappings
 	}
 
 	tags = c.MapTags(tagMappings, tags)
@@ -128,13 +127,13 @@ func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
 
 	// Not blacklisted, configured as genre or forced
 	tagAllowedAsGenre := func(tag Tag) bool {
-		return err == nil &&
+		return preferencesLoaded &&
 			!tagContains(blackList, tag) &&
 			(tagContains(genres, tag) || forceGenre(tag))
 	}
 	// not blacklisted, whitelisted or include all, not a genre
 	tagAllowedAsTag := func(tag Tag) bool {
-		return err == nil &&
+		return preferencesLoaded &&
 			!tagContains(blackList, tag) &&
 			(tagContains(whitelist, tag) || c.Req.GetBool(IncludeNotMatchedTagsKey, false)) &&
 			!tagContains(genres, tag) &&

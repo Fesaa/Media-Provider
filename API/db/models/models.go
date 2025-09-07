@@ -12,7 +12,6 @@ var MODELS = []any{
 	&Preference{},
 	&Notification{},
 	&Tag{},
-	&MetadataRow{},
 	&TagMap{},
 	&ServerSetting{},
 }

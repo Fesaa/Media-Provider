@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -37,13 +38,14 @@ type subscriptionService struct {
 	notifier       NotificationService
 	transloco      TranslocoService
 
-	db  *db.Database
-	log zerolog.Logger
+	unitOfWork *db.UnitOfWork
+	log        zerolog.Logger
 
 	job gocron.Job
+	ctx context.Context
 }
 
-func SubscriptionServiceProvider(db *db.Database, provider ContentService,
+func SubscriptionServiceProvider(unitOfWork *db.UnitOfWork, provider ContentService,
 	log zerolog.Logger, cronService CronService, notifier NotificationService,
 	transloco TranslocoService,
 ) (SubscriptionService, error) {
@@ -52,8 +54,9 @@ func SubscriptionServiceProvider(db *db.Database, provider ContentService,
 		contentService: provider,
 		notifier:       notifier,
 		transloco:      transloco,
-		db:             db,
+		unitOfWork:     unitOfWork,
 		log:            log.With().Str("handler", "subscription-service").Logger(),
+		ctx:            context.Background(),
 	}
 
 	if err := service.OnStartUp(); err != nil {
@@ -68,19 +71,19 @@ func SubscriptionServiceProvider(db *db.Database, provider ContentService,
 }
 
 func (s *subscriptionService) OnStartUp() error {
-	subs, err := s.db.Subscriptions.All()
+	subs, err := s.unitOfWork.Subscriptions.All(s.ctx)
 	if err != nil {
 		return err
 	}
 
-	pref, err := s.db.Preferences.Get()
+	pref, err := s.unitOfWork.Preferences.GetPreferences(s.ctx)
 	if err != nil {
 		return err
 	}
 
 	for _, sub := range subs {
 		sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
-		if err = s.db.Subscriptions.Update(sub); err != nil {
+		if err = s.unitOfWork.Subscriptions.Update(s.ctx, sub); err != nil {
 			return err
 		}
 	}
@@ -93,7 +96,7 @@ func (s *subscriptionService) orFromPreferences(hours ...int) (int, error) {
 		return hours[0], nil
 	}
 
-	pref, err := s.db.Preferences.Get()
+	pref, err := s.unitOfWork.Preferences.GetPreferences(s.ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -129,19 +132,19 @@ func (s *subscriptionService) UpdateTask(hours ...int) error {
 }
 
 func (s *subscriptionService) All() ([]models.Subscription, error) {
-	return s.db.Subscriptions.All()
+	return s.unitOfWork.Subscriptions.All(s.ctx)
 }
 
 func (s *subscriptionService) AllForUser(userId int) ([]models.Subscription, error) {
-	return s.db.Subscriptions.AllForUser(userId)
+	return s.unitOfWork.Subscriptions.AllForUser(s.ctx, userId)
 }
 
 func (s *subscriptionService) Get(id int) (*models.Subscription, error) {
-	return s.db.Subscriptions.Get(id)
+	return s.unitOfWork.Subscriptions.Get(s.ctx, id)
 }
 
 func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription, error) {
-	existing, err := s.db.Subscriptions.GetByContentId(sub.ContentId)
+	existing, err := s.unitOfWork.Subscriptions.GetByContentID(s.ctx, sub.ContentId)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +153,7 @@ func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription
 		return nil, errors.New("subscription already exists")
 	}
 
-	pref, err := s.db.Preferences.Get()
+	pref, err := s.unitOfWork.Preferences.GetPreferences(s.ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +162,7 @@ func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription
 	sub.Info.LastCheckSuccess = true
 	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
 
-	newSub, err := s.db.Subscriptions.New(sub)
+	newSub, err := s.unitOfWork.Subscriptions.New(s.ctx, sub)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +171,7 @@ func (s *subscriptionService) Add(sub models.Subscription) (*models.Subscription
 }
 
 func (s *subscriptionService) Update(sub models.Subscription) error {
-	cur, err := s.db.Subscriptions.GetByContentId(sub.ContentId)
+	cur, err := s.unitOfWork.Subscriptions.GetByContentID(s.ctx, sub.ContentId)
 	if err != nil {
 		return err
 	}
@@ -177,7 +180,7 @@ func (s *subscriptionService) Update(sub models.Subscription) error {
 		return errors.New("subscription doesn't exist")
 	}
 
-	pref, err := s.db.Preferences.Get()
+	pref, err := s.unitOfWork.Preferences.GetPreferences(s.ctx)
 	if err != nil {
 		return err
 	}
@@ -194,11 +197,11 @@ func (s *subscriptionService) Update(sub models.Subscription) error {
 	s.log.Debug().Time("nextExecution", sub.Info.NextExecution).
 		Msg("subscription will run next on")
 
-	return s.db.Subscriptions.Update(*cur)
+	return s.unitOfWork.Subscriptions.Update(s.ctx, *cur)
 }
 
 func (s *subscriptionService) Delete(id int) error {
-	return s.db.Subscriptions.Delete(id)
+	return s.unitOfWork.Subscriptions.Delete(s.ctx, id)
 }
 
 func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
@@ -209,7 +212,7 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 		subs, err := s.All()
 		if err != nil {
 			s.log.Error().Err(err).Msg("failed to get subscriptions")
-			s.notifier.Notify(models.NewNotification().
+			s.notifier.Notify(context.Background(), models.NewNotification().
 				WithTitle(s.transloco.GetTranslation("failed-to-run-subscriptions")).
 				WithBody(s.transloco.GetTranslation("failed-to-run-subscriptions-body", err)).
 				WithGroup(models.GroupError).
@@ -249,7 +252,7 @@ func (s *subscriptionService) handleSub(sub models.Subscription, hour int) {
 			Int("id", sub.ID).
 			Str("contentId", sub.ContentId).
 			Msg("failed to download content")
-		s.notifier.Notify(models.NewNotification().
+		s.notifier.Notify(context.Background(), models.NewNotification().
 			WithTitle(s.transloco.GetTranslation("failed-sub")).
 			WithBody(s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err)).
 			WithGroup(models.GroupError).
@@ -259,7 +262,7 @@ func (s *subscriptionService) handleSub(sub models.Subscription, hour int) {
 		return
 	}
 
-	if err = s.db.Subscriptions.Update(sub); err != nil {
+	if err = s.unitOfWork.Subscriptions.Update(s.ctx, sub); err != nil {
 		s.log.Warn().Err(err).Int("id", sub.ID).Msg("failed to update subscription")
 	} else {
 		s.log.Debug().Int("id", sub.ID).Msg("updated subscription")
