@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"slices"
 
 	"github.com/Fesaa/Media-Provider/db"
@@ -45,12 +44,12 @@ func (ps *pageService) UpdateOrCreate(ctx context.Context, page *models.Page) er
 	err := ps.unitOfWork.DB().
 		WithContext(ctx).
 		Not(models.Page{Model: models.Model{ID: page.ID}}).
-		Where(map[string]interface{}{"sort_value": 0}). // https://gorm.io/docs/query.html#Struct-amp-Map-Conditions
+		Where(map[string]interface{}{"sort_value": page.SortValue}). // https://gorm.io/docs/query.html#Struct-amp-Map-Conditions
 		First(&other).
 		Error
 	// Must return gorm.ErrRecordNotFound
 	if err == nil || !errors.Is(err, gorm.ErrRecordNotFound) {
-		ps.log.Error().Str("other", fmt.Sprintf("%+v", other)).Err(err).
+		ps.log.Error().Str("other", other.Title).Err(err).
 			Msg("Unwanted error, or found matching sort value, resetting to default value")
 		// While this should never happen, forcefully reset the sort is better than having the page be un-editable.
 		page.SortValue = DefaultPageSort
