@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"slices"
 	"strings"
 
@@ -94,7 +95,7 @@ func (c *Core[C, S]) MapTags(mappings models.TagMaps, tags []Tag) []Tag {
 //   - It is not in the blocklist.
 //   - It is not mapped as a genre.
 //   - It is either in the whitelist or the request has IncludeNotMatchedTagsKey set to true.
-func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
+func (c *Core[C, S]) GetGenreAndTags(ctx context.Context, tags []Tag) (string, string) {
 	var genres, blackList, whitelist models.Tags
 	var tagMappings models.TagMaps
 	preferencesLoaded := c.Preference != nil
@@ -106,7 +107,7 @@ func (c *Core[C, S]) GetGenreAndTags(tags []Tag) (string, string) {
 		tagMappings = c.Preference.TagMappings
 	} else {
 		c.Log.Warn().Msg("No genres or tags will be set, blacklist couldn't be loaded")
-		c.WarnPreferencesFailedToLoad()
+		c.WarnPreferencesFailedToLoad(ctx)
 		if config.SkipTagsOnFailure {
 			return "", ""
 		}

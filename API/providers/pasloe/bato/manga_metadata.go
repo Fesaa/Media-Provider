@@ -21,7 +21,7 @@ func (m *manga) WriteContentMetaData(ctx context.Context, chapter Chapter) error
 	}
 
 	m.Log.Trace().Str("chapter", chapter.Chapter).Msg("writing comicinfoxml")
-	return comicinfo.Save(m.fs, m.comicInfo(chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
+	return comicinfo.Save(m.fs, m.comicInfo(ctx, chapter), path.Join(m.ContentPath(chapter), "ComicInfo.xml"))
 }
 
 func (m *manga) writeCover(ctx context.Context, chapter Chapter) error {
@@ -31,7 +31,7 @@ func (m *manga) writeCover(ctx context.Context, chapter Chapter) error {
 	return m.DownloadAndWrite(ctx, m.SeriesInfo.CoverUrl, filePath)
 }
 
-func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
+func (m *manga) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.ComicInfo {
 	ci := comicinfo.NewComicInfo()
 
 	ci.Series = utils.NonEmpty(m.Req.GetStringOrDefault(core.TitleOverride, ""), m.SeriesInfo.Title)
@@ -69,14 +69,14 @@ func (m *manga) comicInfo(chapter Chapter) *comicinfo.ComicInfo {
 	ci.Web = m.SeriesInfo.RefUrl()
 
 	tags := utils.Map(m.SeriesInfo.Tags, core.NewStringTag)
-	ci.Genre, ci.Tags = m.GetGenreAndTags(tags)
+	ci.Genre, ci.Tags = m.GetGenreAndTags(ctx, tags)
 	if ar, ok := m.GetAgeRating(tags); ok {
 		ci.AgeRating = ar
 	}
 
 	if m.SeriesInfo.PublicationStatus == PublicationCompleted && m.SeriesInfo.BatoUploadStatus == PublicationCompleted {
 		ci.Count = m.ChapterCount()
-		m.NotifySubscriptionExhausted(fmt.Sprintf("%d Chapters", ci.Count))
+		m.NotifySubscriptionExhausted(ctx, fmt.Sprintf("%d Chapters", ci.Count))
 	}
 
 	return ci

@@ -173,7 +173,7 @@ func TestManga_CIStatus(t *testing.T) {
 			m.lastFoundChapter = tt.chapters
 			m.lastFoundVolume = tt.volumes
 
-			got, ok := m.getCiStatus()
+			got, ok := m.getCiStatus(t.Context())
 			if ok != tt.wantOk {
 				t.Log(buffer.String())
 				t.Errorf("getCiStatus() ok = %v, want %v", ok, tt.wantOk)

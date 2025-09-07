@@ -116,7 +116,7 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 				TagMappings:      tt.fields.mappings,
 			}
 
-			gotG, gotT := base.GetGenreAndTags(tt.tags)
+			gotG, gotT := base.GetGenreAndTags(t.Context(), tt.tags)
 			if gotG != tt.wantG {
 				t.Errorf("Genres got = %q, want %q", gotG, tt.wantG)
 			}

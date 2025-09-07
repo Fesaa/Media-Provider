@@ -701,7 +701,7 @@ func TestTagsBlackList(t *testing.T) {
 
 	m.SeriesInfo = mangaResp()
 
-	ci := m.comicInfo(chpt)
+	ci := m.comicInfo(t.Context(), chpt)
 	genres := strings.Split(ci.Genre, ",")
 	tags := strings.Split(ci.Tags, ",")
 
