@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/services"
 	utils2 "github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
@@ -22,16 +23,20 @@ func Setup(
 	container *dig.Container,
 	settingsService services.SettingsService,
 	log zerolog.Logger,
+	ctx context.Context,
 ) error {
+	ctx, span := tracing.TracerApi.Start(ctx, tracing.SpanRegisterApi)
+	defer span.End()
+
 	log.Debug().Str("handler", "http-routing").Msg("registering api routes")
 
-	settings, err := settingsService.GetSettingsDto(context.Background())
+	settings, err := settingsService.GetSettingsDto(ctx)
 	if err != nil {
 		return err
 	}
 
 	cacheHandler := cache.New(cache.Config{
-		Storage:      cacheStorage(settings, log),
+		Storage:      cacheStorage(ctx, settings, log),
 		CacheControl: true,
 		Next: func(c *fiber.Ctx) bool {
 			return false
@@ -76,10 +81,10 @@ func Setup(
 	return nil
 }
 
-func cacheStorage(settings payload.Settings, log zerolog.Logger) fiber.Storage {
+func cacheStorage(ctx context.Context, settings payload.Settings, log zerolog.Logger) fiber.Storage {
 	switch settings.CacheType {
 	case config.REDIS:
-		return utils2.NewRedisCacheStorage(log, "go-fiber-http-cache", settings.RedisAddr)
+		return utils2.NewRedisCacheStorage(ctx, log, "go-fiber-http-cache", settings.RedisAddr)
 	case config.MEMORY:
 		return nil
 	default:

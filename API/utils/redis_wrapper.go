@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewRedisCacheStorage(log zerolog.Logger, clientName, redisAddr string) fiber.Storage {
+func NewRedisCacheStorage(ctx context.Context, log zerolog.Logger, clientName, redisAddr string) fiber.Storage {
 	log = log.With().Str("handler", "redis-client").Logger()
 
 	rds := redis.NewClient(&redis.Options{
@@ -21,7 +21,7 @@ func NewRedisCacheStorage(log zerolog.Logger, clientName, redisAddr string) fibe
 		IdentitySuffix: "media-provider",
 	})
 
-	if err := rds.Ping(context.Background()).Err(); err != nil {
+	if err := rds.Ping(ctx).Err(); err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to redis")
 	}
 

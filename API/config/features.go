@@ -30,6 +30,7 @@ var (
 	ConfigDir      = stringFeature("CONFIG_DIR")
 	ConfigFile     = stringFeature("CONFIG_FILE")
 	TrustedIps     = arrayFeature("TRUSTED_IPS", stringFeature)
+	OtelEndpoint   = stringFeature("OTEL_ENDPOINT")
 )
 
 func arrayFeature[T any](key string, f func(string, ...string) T) []T {

@@ -18,7 +18,6 @@ const (
 	InstalledVersion
 	FirstInstalledVersion
 	InstallDate
-	OtelEndpoint
 )
 
 type ServerSetting struct {

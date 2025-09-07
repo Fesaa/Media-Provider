@@ -123,8 +123,6 @@ func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto pa
 	case models.FirstInstalledVersion:
 	case models.InstallDate:
 		break // Do not update
-	case models.OtelEndpoint:
-		setting.Value = dto.External.OtelEndpoint
 	}
 
 	return err
@@ -163,8 +161,6 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 		dto.Metadata.FirstInstalledVersion = setting.Value
 	case models.InstallDate:
 		dto.Metadata.InstallDate, err = time.Parse(time.DateTime, setting.Value)
-	case models.OtelEndpoint:
-		dto.External.OtelEndpoint = setting.Value
 	}
 
 	return err

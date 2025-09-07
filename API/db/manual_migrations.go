@@ -1,11 +1,13 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"slices"
 
 	"github.com/Fesaa/Media-Provider/db/manual"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
@@ -13,7 +15,7 @@ import (
 
 type migration struct {
 	name string
-	f    func(db *gorm.DB, log zerolog.Logger) error
+	f    func(ctx context.Context, db *gorm.DB, log zerolog.Logger) error
 }
 
 var manualMigrations = []migration{
@@ -67,9 +69,12 @@ var manualMigrations = []migration{
 	},
 }
 
-func manualMigration(db *gorm.DB, log zerolog.Logger) error {
+func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+	ctx, span := tracing.TracerDb.Start(ctx, tracing.SpanManualMigrations)
+	defer span.End()
+
 	var migrations []models.ManualMigration
-	if err := db.Find(&migrations).Error; err != nil {
+	if err := db.WithContext(ctx).Find(&migrations).Error; err != nil {
 		return err
 	}
 
@@ -89,14 +94,14 @@ func manualMigration(db *gorm.DB, log zerolog.Logger) error {
 	log.Debug().Int("total", len(migrations)).Int("todo", len(toDo)).Msg("migrations to run")
 
 	for _, m := range toDo {
-		err := db.Transaction(func(tx *gorm.DB) error {
+		err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 			migrationLogger := log.With().Str("migration", m.name).Logger()
 
 			migrationLogger.WithLevel(zerolog.FatalLevel).Msg("Running manual migration. This is not an error")
 			var errorTally []error
 
-			err := m.f(tx, migrationLogger)
+			err := m.f(ctx, tx, migrationLogger)
 			if err != nil {
 				errorTally = append(errorTally, err)
 			}

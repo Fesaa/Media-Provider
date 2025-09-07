@@ -8,9 +8,12 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type SubscriptionService interface {
@@ -47,8 +50,12 @@ type subscriptionService struct {
 
 func SubscriptionServiceProvider(unitOfWork *db.UnitOfWork, provider ContentService,
 	log zerolog.Logger, cronService CronService, notifier NotificationService,
-	transloco TranslocoService,
+	transloco TranslocoService, ctx context.Context,
 ) (SubscriptionService, error) {
+	_, span := tracing.TracerServices.Start(ctx, tracing.SpanSetupService,
+		trace.WithAttributes(attribute.String("service.name", "SubscriptionService")))
+	defer span.End()
+
 	service := &subscriptionService{
 		cronService:    cronService,
 		contentService: provider,
@@ -56,7 +63,7 @@ func SubscriptionServiceProvider(unitOfWork *db.UnitOfWork, provider ContentServ
 		transloco:      transloco,
 		unitOfWork:     unitOfWork,
 		log:            log.With().Str("handler", "subscription-service").Logger(),
-		ctx:            context.Background(),
+		ctx:            context.Background(), // subscription-service runs on its own so has its own context
 	}
 
 	if err := service.OnStartUp(); err != nil {
@@ -212,7 +219,7 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 		subs, err := s.All()
 		if err != nil {
 			s.log.Error().Err(err).Msg("failed to get subscriptions")
-			s.notifier.Notify(context.Background(), models.NewNotification().
+			s.notifier.Notify(s.ctx, models.NewNotification().
 				WithTitle(s.transloco.GetTranslation("failed-to-run-subscriptions")).
 				WithBody(s.transloco.GetTranslation("failed-to-run-subscriptions-body", err)).
 				WithGroup(models.GroupError).
@@ -252,7 +259,7 @@ func (s *subscriptionService) handleSub(sub models.Subscription, hour int) {
 			Int("id", sub.ID).
 			Str("contentId", sub.ContentId).
 			Msg("failed to download content")
-		s.notifier.Notify(context.Background(), models.NewNotification().
+		s.notifier.Notify(s.ctx, models.NewNotification().
 			WithTitle(s.transloco.GetTranslation("failed-sub")).
 			WithBody(s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err)).
 			WithGroup(models.GroupError).

@@ -22,13 +22,14 @@ import (
 
 func New(s services.SettingsService, container *dig.Container, log zerolog.Logger,
 	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
-	unitOfWork *db.UnitOfWork, transLoco services.TranslocoService, fs afero.Afero,
+	unitOfWork *db.UnitOfWork, transLoco services.TranslocoService, fs afero.Afero, ctx context.Context,
 ) (core.Client, error) {
-	settings, err := s.GetSettingsDto(context.Background())
+	settings, err := s.GetSettingsDto(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	// The context above is the application start. Create a new one for pasloe
 	clientCtx, cancel := context.WithCancel(context.Background())
 
 	return &client{

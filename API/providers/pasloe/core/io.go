@@ -83,7 +83,7 @@ func (c *Core[C, S]) IOWorker(ctx context.Context, id string) {
 	c.IoWg.Add(1)
 	defer c.IoWg.Done()
 
-	ctx, span := tracing.PasloeTracer().Start(ctx, tracing.SpanPasloeIOWorker,
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeIOWorker,
 		trace.WithAttributes(attribute.String("worker.id", id)))
 	defer span.End()
 

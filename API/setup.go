@@ -13,6 +13,7 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -151,10 +152,13 @@ func registerCallback(app *fiber.App) {
 	})
 }
 
-func updateInstalledVersion(ss services.SettingsService, log zerolog.Logger) error {
+func updateInstalledVersion(ss services.SettingsService, log zerolog.Logger, ctx context.Context) error {
+	ctx, span := tracing.TracerMain.Start(ctx, tracing.SpanUpdateVersion)
+	defer span.End()
+
 	log = log.With().Str("handler", "core").Logger()
 
-	settings, err := ss.GetSettingsDto(context.Background())
+	settings, err := ss.GetSettingsDto(ctx)
 	if err != nil {
 		return err
 	}
@@ -172,7 +176,7 @@ func updateInstalledVersion(ss services.SettingsService, log zerolog.Logger) err
 			Str("actualVersion", metadata.Version.String()).
 			Msg("Installed version is newer, want is going on? Bringing back to sync!")
 	}
-	return ss.UpdateCurrentVersion(context.Background())
+	return ss.UpdateCurrentVersion(ctx)
 }
 
 func updateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero) error {

@@ -1,6 +1,7 @@
 package manual
 
 import (
+	"context"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -9,9 +10,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {
+func InitialMetadata(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 	var rows []models.ServerSetting
-	if err := db.Find(&rows).Error; err != nil {
+	if err := db.WithContext(ctx).Find(&rows).Error; err != nil {
 		return err
 	}
 
@@ -33,5 +34,5 @@ func InitialMetadata(db *gorm.DB, log zerolog.Logger) error {
 		Value: metadata.Version.String(),
 	})
 
-	return db.Create(&rows).Error
+	return db.WithContext(ctx).Create(&rows).Error
 }

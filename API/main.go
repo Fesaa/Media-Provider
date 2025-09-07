@@ -12,6 +12,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
@@ -23,6 +24,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 )
 
@@ -37,6 +39,11 @@ func main() {
 	utils.Must(c.Provide(services.ValidatorProvider))
 	utils.Must(c.Provide(utils.Identity(mapper.NewMapper())))
 	utils.Must(c.Invoke(validateConfig))
+	utils.Must(c.Invoke(setupOtel))
+
+	ctx := context.Background()
+	ctx, _ = tracing.TracerMain.Start(ctx, tracing.SpanApplicationStart)
+	utils.Must(c.Provide(utils.Identity(ctx)))
 
 	utils.Must(c.Provide(db.DatabaseProvider))
 	utils.Must(c.Provide(db.NewUnitOfWork))
@@ -71,12 +78,14 @@ func main() {
 	utils.Must(c.Invoke(providers.RegisterProviders))
 	utils.Must(c.Invoke(updateBaseUrlInIndex))
 	utils.Must(c.Invoke(updateInstalledVersion))
-	utils.Must(c.Invoke(setupOtel))
 
 	utils.Must(c.Invoke(startApp))
 }
 
-func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.Config) {
+func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.Config, ctx context.Context) {
+	span := trace.SpanFromContext(ctx)
+	span.End()
+
 	log.WithLevel(zerolog.NoLevel).Str("handler", "core").
 		Str("Version", metadata.Version.String()).
 		Str("CommitHash", metadata.CommitHash).

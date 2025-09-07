@@ -17,11 +17,6 @@ type Settings struct {
 	RootDir               string           `json:"rootDir"`
 	Oidc                  OidcSettings     `json:"oidc"`
 	Metadata              Metadata         `json:"metadata"`
-	External              External         `json:"external"`
-}
-
-type External struct {
-	OtelEndpoint string `json:"otelEndpoint"`
 }
 
 type Metadata struct {

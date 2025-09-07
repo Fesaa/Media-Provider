@@ -450,7 +450,7 @@ func (c *Core[C, S]) DownloadContent(ctx context.Context) {
 		}
 	}()
 
-	ctx, span := tracing.PasloeTracer().Start(ctx, tracing.SpanPasloeDownloadContent)
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeDownloadContent)
 	defer span.End()
 
 	c.startDownload(ctx)

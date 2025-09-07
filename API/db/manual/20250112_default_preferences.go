@@ -1,6 +1,7 @@
 package manual
 
 import (
+	"context"
 	"strings"
 
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -10,22 +11,22 @@ import (
 	"gorm.io/gorm"
 )
 
-func InsertDefaultPreferences(db *gorm.DB, log zerolog.Logger) error {
+func InsertDefaultPreferences(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 	pref := models.Preference{
 		SubscriptionRefreshHour: 0,
 	}
-	return db.Save(&pref).Error
+	return db.WithContext(ctx).Save(&pref).Error
 }
 
-func MigrateTags(db *gorm.DB, log zerolog.Logger) error {
-	if getCurrentVersion(db) != "" {
+func MigrateTags(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+	if getCurrentVersion(ctx, db) != "" {
 		log.Trace().Msg("Skipping changes, Media-Provider installed after changes are needed")
 		return nil
 	}
 	var blackList pq.StringArray
 	var dynasty pq.StringArray
 
-	err := db.Raw("SELECT dynasty_genre_tags, black_listed_tags FROM preferences").Row().Scan(&dynasty, &blackList)
+	err := db.WithContext(ctx).Raw("SELECT dynasty_genre_tags, black_listed_tags FROM preferences").Row().Scan(&dynasty, &blackList)
 	if err != nil {
 		if strings.Contains(err.Error(), "no such column") {
 			return nil
@@ -35,7 +36,7 @@ func MigrateTags(db *gorm.DB, log zerolog.Logger) error {
 	}
 
 	var p models.Preference
-	if err = db.First(&p).Error; err != nil {
+	if err = db.WithContext(ctx).First(&p).Error; err != nil {
 		return err
 	}
 
@@ -49,16 +50,16 @@ func MigrateTags(db *gorm.DB, log zerolog.Logger) error {
 
 	p.DynastyGenreTags = utils.Map(dynasty, toTag)
 	p.BlackListedTags = utils.Map(blackList, toTag)
-	if err = db.Save(&p).Error; err != nil {
+	if err = db.WithContext(ctx).Save(&p).Error; err != nil {
 		return err
 	}
 
-	err = db.Exec("ALTER TABLE preferences DROP COLUMN black_listed_tags").Error
+	err = db.WithContext(ctx).Exec("ALTER TABLE preferences DROP COLUMN black_listed_tags").Error
 	if err != nil {
 		return err
 	}
 
-	err = db.Exec("ALTER TABLE preferences DROP COLUMN dynasty_genre_tags").Error
+	err = db.WithContext(ctx).Exec("ALTER TABLE preferences DROP COLUMN dynasty_genre_tags").Error
 	if err != nil {
 		return err
 	}

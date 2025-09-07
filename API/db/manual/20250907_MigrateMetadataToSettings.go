@@ -11,14 +11,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func MigrateMetadataToSettings(db *gorm.DB, log zerolog.Logger) error {
+func MigrateMetadataToSettings(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 	type row struct {
 		Key   int
 		Value string
 	}
 
 	var rows []row
-	err := db.Table("metadata_rows").Find(&rows).Error
+	err := db.WithContext(ctx).Table("metadata_rows").Find(&rows).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "no such table: metadata_rows") {
 			return nil
@@ -52,5 +52,5 @@ func MigrateMetadataToSettings(db *gorm.DB, log zerolog.Logger) error {
 
 	repo := repository.NewSettingsRepository(db, mapper.NewMapper())
 
-	return repo.Update(context.Background(), settingRows)
+	return repo.Update(ctx, settingRows)
 }

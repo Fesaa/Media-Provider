@@ -12,7 +12,6 @@ import (
 
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/metadata"
-	"github.com/Fesaa/Media-Provider/services"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -98,25 +97,19 @@ func consoleWriter() zerolog.ConsoleWriter {
 	return cw
 }
 
-func setupOtel(ss services.SettingsService, log zerolog.Logger) error {
+func setupOtel(log zerolog.Logger) error {
+	ctx := context.Background()
 	log = log.With().Str("handler", "otel").Logger()
 
-	ctx := context.Background()
-	settings, err := ss.GetSettingsDto(ctx)
-	if err != nil {
-		return err
-	}
-
-	if settings.External.OtelEndpoint == "" {
+	if config.OtelEndpoint == "" {
 		log.Debug().Msg("No external Otel endpoint configured")
 		return nil
 	}
 
-	log.Debug().Str("endpoint", settings.External.OtelEndpoint).
-		Msg("Setting up Open Telemetry")
+	log.Debug().Str("endpoint", config.OtelEndpoint).Msg("Setting up Open Telemetry")
 
 	exporter, err := otlptracehttp.New(ctx,
-		otlptracehttp.WithEndpointURL(settings.External.OtelEndpoint),
+		otlptracehttp.WithEndpointURL(config.OtelEndpoint),
 		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 		otlptracehttp.WithInsecure(),
 	)

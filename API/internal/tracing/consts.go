@@ -2,21 +2,19 @@ package tracing
 
 import (
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
-	TracerPasloe   = "github.com/Fesaa/Media-Provider/providers/pasloe"
-	TracerServices = "github.com/Fesaa/Media-Provider/services"
+	tracerPrefix = "github.com/Fesaa/Media-Provider/"
 )
 
-func PasloeTracer() trace.Tracer {
-	return otel.Tracer(TracerPasloe)
-}
-
-func ServicesTracer() trace.Tracer {
-	return otel.Tracer(TracerServices)
-}
+var (
+	TracerMain     = otel.Tracer(tracerPrefix + "main")
+	TracerApi      = otel.Tracer(tracerPrefix + "api")
+	TracerDb       = otel.Tracer(tracerPrefix + "db")
+	TracerPasloe   = otel.Tracer(tracerPrefix + "providers/pasloe")
+	TracerServices = otel.Tracer(tracerPrefix + "services")
+)
 
 const (
 	SpanPasloeDownloadContent = "pasloe.download.content"
@@ -24,5 +22,14 @@ const (
 	SpanPasloeDownloadWorker  = "pasloe.download.worker"
 	SpanPasloeChapter         = "pasloe.download.chapter"
 
-	SpanServicesImagesWebp = "services.images.covert.webp"
+	SpanServicesImagesWebp       = "services.images.covert.webp"
+	SpanServicesTranslocoLoading = "services.transloco.loading"
+
+	SpanApplicationStart = "application.start"
+	SpanUpdateVersion    = "application.start.version_update"
+	SpanRegisterApi      = "application.start.register_api"
+	SpanMigrations       = "application.start.migrations"
+	SpanManualMigrations = "application.start.manual_migrations"
+	SpanSetupDb          = "application.start.setup_db"
+	SpanSetupService     = "application.start.setup_service"
 )

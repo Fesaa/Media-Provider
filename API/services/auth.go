@@ -15,11 +15,14 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gofiber/fiber/v2"
 	fiberutils "github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
@@ -83,6 +86,7 @@ type cookieAuthService struct {
 type cookieAuthServiceParams struct {
 	dig.In
 
+	Ctx        context.Context
 	UnitOfWork *db.UnitOfWork
 	Service    SettingsService
 	Storage    CacheService
@@ -91,7 +95,11 @@ type cookieAuthServiceParams struct {
 }
 
 func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, error) {
-	settings, err := params.Service.GetSettingsDto(context.Background())
+	ctx, span := tracing.TracerServices.Start(params.Ctx, tracing.SpanSetupService,
+		trace.WithAttributes(attribute.String("service.name", "CookieAuthService")))
+	defer span.End()
+
+	settings, err := params.Service.GetSettingsDto(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -104,19 +112,19 @@ func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, err
 		log:            params.Log.With().Str("handler", "cookie-auth-service").Logger(),
 	}
 
-	if err = s.setupOIDC(settings); err != nil {
+	if err = s.setupOIDC(ctx, settings); err != nil {
 		return nil, fmt.Errorf("failed to setup OIDC: %w", err)
 	}
 
 	return s, nil
 }
 
-func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
+func (s *cookieAuthService) setupOIDC(ctx context.Context, settings payload.Settings) error {
 	if !settings.Oidc.Enabled() {
 		return nil
 	}
 
-	provider, err := oidc.NewProvider(context.Background(), settings.Oidc.Authority)
+	provider, err := oidc.NewProvider(ctx, settings.Oidc.Authority)
 	if err != nil {
 		return fmt.Errorf("failed to create OIDC provider: %w", err)
 	}

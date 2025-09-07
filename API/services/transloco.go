@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
@@ -38,19 +40,22 @@ type translocoService struct {
 	fs        afero.Afero
 }
 
-func TranslocoServiceProvider(log zerolog.Logger, fs afero.Afero) (TranslocoService, error) {
+func TranslocoServiceProvider(ctx context.Context, log zerolog.Logger, fs afero.Afero) (TranslocoService, error) {
 	transloco := &translocoService{
 		languages: make(map[string]map[string]string),
 		log:       log.With().Str("handler", "transloco-service").Logger(),
 		fs:        fs,
 	}
-	if err := transloco.loadLanguages(); err != nil {
+	if err := transloco.loadLanguages(ctx); err != nil {
 		return nil, err
 	}
 	return transloco, nil
 }
 
-func (t *translocoService) loadLanguages() error {
+func (t *translocoService) loadLanguages(ctx context.Context) error {
+	_, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesTranslocoLoading)
+	defer span.End()
+
 	files, err := filepath.Glob("./I18N/*.json")
 	if err != nil {
 		return err

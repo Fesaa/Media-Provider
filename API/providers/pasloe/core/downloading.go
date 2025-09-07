@@ -153,7 +153,7 @@ func (c *Core[C, S]) startDownload(parentCtx context.Context) {
 
 // downloadContent handles the full download of one chapter
 func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
-	ctx, span := tracing.PasloeTracer().Start(ctx, tracing.SpanPasloeChapter)
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeChapter)
 	defer span.End()
 
 	dCtx, err := c.constructDownloadContext(ctx, chapter)
@@ -325,7 +325,7 @@ func (d *DownloadContext[C, S]) StartDownloadWorkers() {
 func (d *DownloadContext[C, S]) DownloadWorker(id string) {
 	defer d.DownloadWg.Done()
 
-	ctx, span := tracing.PasloeTracer().Start(d.Ctx, tracing.SpanPasloeDownloadWorker)
+	ctx, span := tracing.TracerPasloe.Start(d.Ctx, tracing.SpanPasloeDownloadWorker)
 	defer span.End()
 
 	span.SetAttributes(attribute.String("worker.id", id))

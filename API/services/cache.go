@@ -21,19 +21,19 @@ type cacheService struct {
 	cacheType config.CacheType
 }
 
-func CacheServiceProvider(log zerolog.Logger, service SettingsService) (CacheService, error) {
+func CacheServiceProvider(log zerolog.Logger, service SettingsService, ctx context.Context) (CacheService, error) {
 	cs := &cacheService{
 		log: log.With().Str("handler", "cache-service").Logger(),
 	}
 
-	settings, err := service.GetSettingsDto(context.Background())
+	settings, err := service.GetSettingsDto(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	switch settings.CacheType {
 	case config.REDIS:
-		cs.Storage = utils.NewRedisCacheStorage(log, "cache-service", settings.RedisAddr)
+		cs.Storage = utils.NewRedisCacheStorage(ctx, log, "cache-service", settings.RedisAddr)
 	case config.MEMORY:
 		cs.Storage = newMemoryCache()
 	default:
