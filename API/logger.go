@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"os"
 	"path"
@@ -10,9 +11,18 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/metadata"
+	"github.com/Fesaa/Media-Provider/services"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+var otelShutDown func(context.Context) error
 
 func LogProvider(cfg *config.Config) zerolog.Logger {
 	zerolog.DurationFieldUnit = time.Second
@@ -86,4 +96,45 @@ func consoleWriter() zerolog.ConsoleWriter {
 	cw.NoColor = true
 	cw.Out = io.MultiWriter(os.Stdout, fileWriter())
 	return cw
+}
+
+func setupOtel(ss services.SettingsService, log zerolog.Logger) error {
+	log = log.With().Str("handler", "otel").Logger()
+
+	ctx := context.Background()
+	settings, err := ss.GetSettingsDto(ctx)
+	if err != nil {
+		return err
+	}
+
+	if settings.External.OtelEndpoint == "" {
+		log.Debug().Msg("No external Otel endpoint configured")
+		return nil
+	}
+
+	log.Debug().Str("endpoint", settings.External.OtelEndpoint).
+		Msg("Setting up Open Telemetry")
+
+	exporter, err := otlptracehttp.New(ctx,
+		otlptracehttp.WithEndpointURL(settings.External.OtelEndpoint),
+		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
+		otlptracehttp.WithInsecure(),
+	)
+	if err != nil {
+		return err
+	}
+
+	res, err := resource.New(ctx, resource.WithAttributes(semconv.ServiceName(metadata.Identifier)))
+	if err != nil {
+		return err
+	}
+
+	tp := trace.NewTracerProvider(
+		trace.WithBatcher(exporter),
+		trace.WithResource(res),
+	)
+
+	otel.SetTracerProvider(tp)
+	otelShutDown = tp.Shutdown
+	return nil
 }

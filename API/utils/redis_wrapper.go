@@ -11,6 +11,8 @@ import (
 )
 
 func NewRedisCacheStorage(log zerolog.Logger, clientName, redisAddr string) fiber.Storage {
+	log = log.With().Str("handler", "redis-client").Logger()
+
 	rds := redis.NewClient(&redis.Options{
 		Addr:           redisAddr,
 		Password:       "",
@@ -25,7 +27,7 @@ func NewRedisCacheStorage(log zerolog.Logger, clientName, redisAddr string) fibe
 
 	return &redisWrapper{
 		rdb: rds,
-		log: log.With().Str("handler", "redis-client").Logger(),
+		log: log,
 	}
 }
 

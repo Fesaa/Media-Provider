@@ -19,6 +19,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/contrib/fiberzerolog"
+	"github.com/gofiber/contrib/otelfiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -60,6 +61,7 @@ func applicationProvider(params appParams) *fiber.App {
 	}
 
 	app.
+		Use(otelfiber.Middleware(otelfiber.WithServerName(metadata.Identifier))).
 		Use(limiter.New(limiter.Config{
 			Max:               1000,
 			Expiration:        time.Minute,

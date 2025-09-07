@@ -6,10 +6,13 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/manual"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/glebarez/sqlite"
 	"github.com/rs/zerolog"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"gorm.io/gorm"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 func DatabaseProvider(log zerolog.Logger) (*gorm.DB, error) {
@@ -18,6 +21,16 @@ func DatabaseProvider(log zerolog.Logger) (*gorm.DB, error) {
 		Logger:               gormLogger(log),
 		FullSaveAssociations: true,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Use(tracing.NewPlugin(
+		tracing.WithRecordStackTrace(),
+		tracing.WithoutQueryVariables(),
+		tracing.WithAttributes(semconv.ServiceName(metadata.Identifier)),
+		tracing.WithDBSystem("sqlite"),
+	))
 	if err != nil {
 		return nil, err
 	}

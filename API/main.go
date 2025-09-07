@@ -71,6 +71,7 @@ func main() {
 	utils.Must(c.Invoke(providers.RegisterProviders))
 	utils.Must(c.Invoke(updateBaseUrlInIndex))
 	utils.Must(c.Invoke(updateInstalledVersion))
+	utils.Must(c.Invoke(setupOtel))
 
 	utils.Must(c.Invoke(startApp))
 }
@@ -105,6 +106,12 @@ func graceFullShutdown(app *fiber.App, log zerolog.Logger, pasloe core.Client, y
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
+
+	if otelShutDown != nil {
+		if err := otelShutDown(ctx); err != nil {
+			log.Error().Str("handler", "core").Err(err).Msg("Failed to shut down Open Telemetry")
+		}
+	}
 
 	var wg sync.WaitGroup
 
