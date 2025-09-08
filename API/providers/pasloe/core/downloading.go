@@ -415,7 +415,7 @@ func (d *DownloadContext[C, S]) processDownloads(ctx context.Context, log zerolo
 }
 
 func (d *DownloadContext[C, S]) WaitForRateLimit(ctx context.Context) error {
-	ctx, span := tracing.TracerPasloe.Start(d.Ctx, tracing.SpanPasloeRatelimit)
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeRatelimit)
 	defer span.End()
 	return d.RateLimiter.Wait(ctx)
 }
