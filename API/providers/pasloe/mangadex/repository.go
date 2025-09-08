@@ -171,6 +171,9 @@ func (r *repository) GetCoverImages(ctx context.Context, id string, offset ...in
 }
 
 func (r *repository) do(ctx context.Context, url string, out any, exp ...time.Duration) error {
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeCachedDownload)
+	defer span.End()
+
 	if v, err := r.cache.GetWithContext(ctx, url); err == nil && v != nil {
 		if err = json.Unmarshal(v, out); err == nil {
 			return nil

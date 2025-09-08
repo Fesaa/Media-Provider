@@ -17,10 +17,12 @@ var (
 )
 
 const (
+	SpanPasloeCachedDownload  = "pasloe.download.cached"
 	SpanPasloeDownloadContent = "pasloe.download.content"
 	SpanPasloeIOWorker        = "pasloe.download.io_worker"
 	SpanPasloeDownloadWorker  = "pasloe.download.worker"
 	SpanPasloeChapter         = "pasloe.download.chapter"
+	SpanPasloeRatelimit       = "pasloe.download.ratelimit"
 
 	SpanServicesImagesWebp       = "services.images.covert.webp"
 	SpanServicesTranslocoLoading = "services.transloco.loading"

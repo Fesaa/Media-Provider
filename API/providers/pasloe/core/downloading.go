@@ -362,7 +362,7 @@ func (d *DownloadContext[C, S]) processDownloads(ctx context.Context, log zerolo
 			return failedTasks
 		}
 
-		if err := d.RateLimiter.Wait(ctx); err != nil {
+		if err := d.WaitForRateLimit(ctx); err != nil {
 			if !errors.Is(err, context.Canceled) {
 				log.Error().Err(err).Msg("rate limiter wait failed")
 			}
@@ -409,6 +409,12 @@ func (d *DownloadContext[C, S]) processDownloads(ctx context.Context, log zerolo
 	}
 
 	return failedTasks
+}
+
+func (d *DownloadContext[C, S]) WaitForRateLimit(ctx context.Context) error {
+	ctx, span := tracing.TracerPasloe.Start(d.Ctx, tracing.SpanPasloeRatelimit)
+	defer span.End()
+	return d.RateLimiter.Wait(ctx)
 }
 
 // startProgressUpdater start a goroutine sending payload.EventTypeContentProgressUpdate every 2s for this chapter
