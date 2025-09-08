@@ -66,7 +66,7 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 	}
 
 	url := pr.webToonUrl(date, id, fileName)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(c.UserContext(), http.MethodGet, url, nil)
 	if err != nil {
 		log.Error().Err(err).
 			Str("url", url).
@@ -113,7 +113,7 @@ func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	resp, err := pr.HttpClient.Get(pr.mangadexUrl(id, fileName))
+	resp, err := pr.HttpClient.GetWithContext(c.UserContext(), pr.mangadexUrl(id, fileName))
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download cover image from mangadex")
 		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
@@ -154,7 +154,7 @@ func (pr *proxyRoutes) BatoCoverProxy(c *fiber.Ctx) error {
 		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
 	}
 
-	resp, err := pr.HttpClient.Get(string(uri))
+	resp, err := pr.HttpClient.GetWithContext(c.UserContext(), string(uri))
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to download cover image from bato")
 		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))
