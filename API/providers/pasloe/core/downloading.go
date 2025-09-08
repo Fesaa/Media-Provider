@@ -108,8 +108,11 @@ func (c *Core[C, S]) cleanupAfterDownload(wg *sync.WaitGroup) {
 	}
 }
 
-func (c *Core[C, S]) startDownload(parentCtx context.Context) {
-	ctx, cancel := context.WithCancel(parentCtx)
+func (c *Core[C, S]) startDownload(ctx context.Context) {
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeDownloadContent)
+	defer span.End()
+
+	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
 
 	data := c.GetAllLoadedChapters()
