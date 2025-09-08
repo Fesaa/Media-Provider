@@ -26,11 +26,13 @@ func New(scope *dig.Scope) core.Downloadable {
 		req payload.DownloadRequest, httpClient *menou.Client,
 		repository Repository, markdownService services.MarkdownService,
 		imageService services.ImageService, fs afero.Afero,
+		cache services.CacheService,
 	) {
 		m = &manga{
 			id:              req.Id,
 			httpClient:      httpClient,
 			repository:      repository,
+			cache:           cache,
 			markdownService: markdownService,
 			imageService:    imageService,
 			fs:              fs,
@@ -49,6 +51,7 @@ type manga struct {
 
 	httpClient      *menou.Client
 	repository      Repository
+	cache           services.CacheService
 	markdownService services.MarkdownService
 	imageService    services.ImageService
 	fs              afero.Afero

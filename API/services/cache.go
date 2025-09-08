@@ -12,6 +12,7 @@ import (
 type CacheService interface {
 	utils.Storage
 	Type() config.CacheType
+	DefaultExpiration() time.Duration
 }
 
 type cacheService struct {
@@ -44,6 +45,14 @@ func CacheServiceProvider(log zerolog.Logger, service SettingsService, ctx conte
 
 func (s *cacheService) Type() config.CacheType {
 	return s.cacheType
+}
+
+func (s *cacheService) DefaultExpiration() time.Duration {
+	if s.cacheType == config.REDIS {
+		return 24 * time.Hour
+	}
+
+	return 5 * time.Minute
 }
 
 type item struct {

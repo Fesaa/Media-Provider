@@ -68,7 +68,7 @@ func (r *repository) loadTags(ctx context.Context) error {
 	tagURL := URL + "/manga/tag"
 
 	var tagResponse TagResponse
-	if err := r.do(ctx, tagURL, &tagResponse, 24*time.Hour); err != nil {
+	if err := r.do(ctx, tagURL, &tagResponse, r.cache.DefaultExpiration()); err != nil {
 		return err
 	}
 
