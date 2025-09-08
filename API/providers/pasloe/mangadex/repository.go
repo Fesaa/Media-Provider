@@ -9,9 +9,12 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 )
 
@@ -35,9 +38,14 @@ type repositoryParams struct {
 
 	HttpClient *menou.Client `name:"http-retry"`
 	Cache      services.CacheService
+	Ctx        context.Context
 }
 
 func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
+	ctx, span := tracing.TracerServices.Start(params.Ctx, tracing.SetupRepository,
+		trace.WithAttributes(attribute.String("repository.name", "Mangadex")))
+	defer span.End()
+
 	r := &repository{
 		httpClient: params.HttpClient,
 		cache:      params.Cache,
@@ -46,7 +54,7 @@ func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 	}
 
 	go func() {
-		if err := r.loadTags(); err != nil {
+		if err := r.loadTags(ctx); err != nil {
 			r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
 		} else {
 			r.log.Debug().Int("size", r.tags.Len()).Msg("loaded tags")
@@ -56,10 +64,10 @@ func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 	return r
 }
 
-func (r *repository) loadTags() error {
+func (r *repository) loadTags(ctx context.Context) error {
 	tagURL := URL + "/manga/tag"
 
-	resp, err := r.httpClient.Get(tagURL)
+	resp, err := r.httpClient.GetWithContext(ctx, tagURL)
 	if err != nil {
 		return fmt.Errorf("loadTags Get: %w", err)
 	}

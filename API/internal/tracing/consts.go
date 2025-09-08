@@ -34,4 +34,5 @@ const (
 	SpanManualMigrations = "application.start.manual_migrations"
 	SpanSetupDb          = "application.start.setup_db"
 	SpanSetupService     = "application.start.setup_service"
+	SetupRepository      = "application.start.setup_repository"
 )
