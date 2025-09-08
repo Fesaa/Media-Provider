@@ -23,6 +23,9 @@ type Storage interface {
 }
 
 func NewRedisCacheStorage(ctx context.Context, log zerolog.Logger, clientName, redisAddr string) Storage {
+	ctx, span := tracing.TracerServices.Start(ctx, tracing.SpanSetupService,
+		trace.WithAttributes(tracing.WithServiceName("RedisCacheStorage")))
+	defer span.End()
 	log = log.With().Str("handler", "redis-client").Logger()
 
 	rds := redis.NewClient(&redis.Options{
@@ -34,6 +37,7 @@ func NewRedisCacheStorage(ctx context.Context, log zerolog.Logger, clientName, r
 	})
 
 	if err := rds.Ping(ctx).Err(); err != nil {
+		span.RecordError(err)
 		log.Fatal().Err(err).Msg("failed to connect to redis")
 	}
 
@@ -61,8 +65,15 @@ func (r *redisWrapper) GetWithContext(ctx context.Context, key string) ([]byte, 
 	defer span.End()
 
 	b, err := r.rdb.Get(ctx, key).Bytes()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		r.log.Trace().Err(err).Str("key", key).Msg("failed to get")
+	if err != nil {
+		span.SetAttributes(attribute.String("cache.error", err.Error()))
+		if errors.Is(err, redis.Nil) {
+			span.SetAttributes(attribute.Bool("cache.miss", true))
+		} else {
+			r.log.Trace().Err(err).Str("key", key).Msg("failed to get")
+		}
+	} else {
+		span.SetAttributes(attribute.Int("cache.result_size", len(b)))
 	}
 	return b, err
 }
@@ -81,7 +92,14 @@ func (r *redisWrapper) SetWithContext(ctx context.Context, key string, val []byt
 		))
 	defer span.End()
 
-	return r.logAndReturn(r.rdb.Set(ctx, key, val, exp).Err(), key, "failed to set")
+	err := r.rdb.Set(ctx, key, val, exp).Err()
+	if err != nil {
+		span.SetAttributes(attribute.String("cache.error", err.Error()))
+		r.log.Trace().Err(err).Str("key", key).Msg("failed to set")
+	} else {
+		span.SetAttributes(attribute.Bool("cache.success", true))
+	}
+	return err
 }
 
 func (r *redisWrapper) Delete(key string) error {
@@ -95,7 +113,15 @@ func (r *redisWrapper) DeleteWithContext(ctx context.Context, key string) error 
 			attribute.String("cache.key", key),
 		))
 	defer span.End()
-	return r.logAndReturn(r.rdb.Del(ctx, key).Err(), key, "failed to delete")
+
+	err := r.rdb.Del(ctx, key).Err()
+	if err != nil {
+		span.SetAttributes(attribute.String("cache.error", err.Error()))
+		r.log.Trace().Err(err).Str("key", key).Msg("failed to delete")
+	} else {
+		span.SetAttributes(attribute.Bool("cache.success", true))
+	}
+	return err
 }
 
 func (r *redisWrapper) Reset() error {
@@ -103,16 +129,22 @@ func (r *redisWrapper) Reset() error {
 }
 
 func (r *redisWrapper) ResetWithContext(ctx context.Context) error {
-	return r.logAndReturn(r.rdb.FlushAll(ctx).Err(), "", "failed to reset")
+	ctx, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesCache,
+		trace.WithAttributes(
+			attribute.String("cache.operation", "reset"),
+		))
+	defer span.End()
+
+	err := r.rdb.FlushAll(ctx).Err()
+	if err != nil {
+		span.SetAttributes(attribute.String("cache.error", err.Error()))
+		r.log.Trace().Err(err).Msg("failed to reset")
+	} else {
+		span.SetAttributes(attribute.Bool("cache.success", true))
+	}
+	return err
 }
 
 func (r *redisWrapper) Close() error {
 	return r.rdb.Close()
-}
-
-func (r *redisWrapper) logAndReturn(err error, key, msg string) error {
-	if err != nil && !errors.Is(err, redis.Nil) {
-		r.log.Trace().Err(err).Str("key", key).Msg(msg)
-	}
-	return err
 }
