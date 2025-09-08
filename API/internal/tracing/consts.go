@@ -26,6 +26,7 @@ const (
 	SpanPasloeLoadMetadata    = "pasloe.metadata.load"
 	SpanPasLoadContentInfo    = "pasloe.metadata.load.info"
 	SpanPasloeContentFilter   = "pasloe.metadata.filter.content"
+	SpanPasloeCovers          = "pasloe.metadata.covers"
 
 	SpanServicesImagesWebp       = "services.images.covert.webp"
 	SpanServicesTranslocoLoading = "services.transloco.loading"

@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 )
 
 type MangaCoverResponse Response[[]MangaCoverData]
@@ -65,6 +66,9 @@ func (m *manga) getCoverFactoryLang(ctx context.Context, coverResp *MangaCoverRe
 	if len(coverResp.Data) == 0 {
 		return defaultCoverFactory
 	}
+
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeCovers)
+	defer span.End()
 
 	covers, firstCover, lastCover := m.processCovers(ctx, coverResp)
 	return m.constructCoverFactory(covers, firstCover, lastCover)
