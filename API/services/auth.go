@@ -14,6 +14,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
@@ -93,10 +94,12 @@ type cookieAuthServiceParams struct {
 	Storage    CacheService
 	Config     *config.Config
 	Log        zerolog.Logger
+	HttpClient *menou.Client
 }
 
 func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, error) {
-	ctx, span := tracing.TracerServices.Start(params.Ctx, tracing.SpanSetupService,
+	ctx := oidc.ClientContext(params.Ctx, params.HttpClient.Client)
+	ctx, span := tracing.TracerServices.Start(ctx, tracing.SpanSetupService,
 		trace.WithAttributes(attribute.String("service.name", "CookieAuthService")))
 	defer span.End()
 
