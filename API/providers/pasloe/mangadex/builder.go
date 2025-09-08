@@ -29,7 +29,7 @@ func (b *Builder) Logger() zerolog.Logger {
 	return b.log
 }
 
-func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
+func (b *Builder) Normalize(ctx context.Context, mangas *MangaSearchResponse) []payload.Info {
 	if mangas == nil {
 		return []payload.Info{}
 	}
@@ -64,7 +64,7 @@ func (b *Builder) Normalize(mangas *MangaSearchResponse) []payload.Info {
 	return info
 }
 
-func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
+func (b *Builder) Transform(ctx context.Context, s payload.SearchRequest) SearchOptions {
 	ms := SearchOptions{
 		Query: s.Query,
 	}
@@ -100,8 +100,8 @@ func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
 	return ms
 }
 
-func (b *Builder) Search(s SearchOptions) (*MangaSearchResponse, error) {
-	return b.repository.SearchManga(context.TODO(), s)
+func (b *Builder) Search(ctx context.Context, s SearchOptions) (*MangaSearchResponse, error) {
+	return b.repository.SearchManga(ctx, s)
 }
 
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {

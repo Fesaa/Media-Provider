@@ -1,8 +1,11 @@
 package providers
 
 import (
+	"context"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/bato"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
@@ -45,9 +48,9 @@ func RegisterProviders(s services.ContentService, container *dig.Container) {
 }
 
 type defaultProviderAdapter[T any, S any] struct {
-	transformer func(payload.SearchRequest) S
-	searcher    func(S) (T, error)
-	normalizer  func(T) []payload.Info
+	transformer func(context.Context, payload.SearchRequest) S
+	searcher    func(context.Context, S) (T, error)
+	normalizer  func(context.Context, T) []payload.Info
 	metadata    func() payload.DownloadMetadata
 	client      func() services.Client
 	provider    models.Provider
@@ -73,20 +76,31 @@ func registerProviderAdapter[B builder[T, S], T, S any](s services.ContentServic
 type builder[T, S any] interface {
 	Provider() models.Provider
 	Logger() zerolog.Logger
-	Normalize(T) []payload.Info
-	Transform(payload.SearchRequest) S
-	Search(S) (T, error)
+	Normalize(context.Context, T) []payload.Info
+	Transform(context.Context, payload.SearchRequest) S
+	Search(context.Context, S) (T, error)
 	DownloadMetadata() payload.DownloadMetadata
 	Client() services.Client
 }
 
-func (s *defaultProviderAdapter[T, S]) Search(req payload.SearchRequest) ([]payload.Info, error) {
-	t := s.transformer(req)
-	data, err := s.searcher(t)
+func (s *defaultProviderAdapter[T, S]) Search(ctx context.Context, req payload.SearchRequest) ([]payload.Info, error) {
+	transformCtx, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesContentSearch+".transform")
+	t := s.transformer(transformCtx, req)
+	span.End()
+
+	searchCtx, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesContentSearch+".search")
+	data, err := s.searcher(searchCtx, t)
 	if err != nil {
+		span.RecordError(err)
+		span.End()
 		return nil, err
 	}
-	return s.normalizer(data), nil
+	span.End()
+
+	normalizeCtx, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesContentSearch+".normalize")
+	defer span.End()
+
+	return s.normalizer(normalizeCtx, data), nil
 }
 
 func (s *defaultProviderAdapter[T, S]) DownloadMetadata() payload.DownloadMetadata {

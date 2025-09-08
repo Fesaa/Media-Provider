@@ -30,7 +30,7 @@ func (b *Builder) Logger() zerolog.Logger {
 	return b.log
 }
 
-func (b *Builder) Normalize(t []SearchResult) []payload.Info {
+func (b *Builder) Normalize(ctx context.Context, t []SearchResult) []payload.Info {
 	return utils.Map(t, func(t SearchResult) payload.Info {
 		if err := b.cache.Set(t.Id, []byte(t.ImageUrl), time.Hour*24); err != nil {
 			b.log.Warn().Err(err).Str("id", t.Id).Msg("failed to cache image")
@@ -46,7 +46,7 @@ func (b *Builder) Normalize(t []SearchResult) []payload.Info {
 	})
 }
 
-func (b *Builder) Transform(request payload.SearchRequest) SearchOptions {
+func (b *Builder) Transform(ctx context.Context, request payload.SearchRequest) SearchOptions {
 	so := SearchOptions{}
 
 	so.Query = request.Query
@@ -80,8 +80,8 @@ func (b *Builder) Transform(request payload.SearchRequest) SearchOptions {
 
 }
 
-func (b *Builder) Search(s SearchOptions) ([]SearchResult, error) {
-	return b.repository.Search(context.Background(), s)
+func (b *Builder) Search(ctx context.Context, s SearchOptions) ([]SearchResult, error) {
+	return b.repository.Search(ctx, s)
 }
 
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {

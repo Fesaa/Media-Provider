@@ -1,6 +1,7 @@
 package yts
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -26,7 +27,7 @@ func (b *Builder) Logger() zerolog.Logger {
 	return b.log
 }
 
-func (b *Builder) Normalize(data *SearchResult) []payload.Info {
+func (b *Builder) Normalize(ctx context.Context, data *SearchResult) []payload.Info {
 	movies := data.Data.Movies
 	torrents := make([]payload.Info, 0)
 	for _, movie := range movies {
@@ -56,7 +57,7 @@ func (b *Builder) Normalize(data *SearchResult) []payload.Info {
 	return torrents
 }
 
-func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
+func (b *Builder) Transform(ctx context.Context, s payload.SearchRequest) SearchOptions {
 	y := SearchOptions{}
 	y.Query = s.Query
 	sortBys, ok := s.Modifiers["sortBys"]

@@ -1,6 +1,8 @@
 package limetorrents
 
 import (
+	"context"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -23,7 +25,7 @@ func (b *Builder) Logger() zerolog.Logger {
 	return b.log
 }
 
-func (b *Builder) Normalize(torrents []SearchResult) []payload.Info {
+func (b *Builder) Normalize(ctx context.Context, torrents []SearchResult) []payload.Info {
 	torrentsInfo := make([]payload.Info, len(torrents))
 	for i, t := range torrents {
 		torrentsInfo[i] = payload.Info{
@@ -45,7 +47,7 @@ func (b *Builder) Normalize(torrents []SearchResult) []payload.Info {
 	return torrentsInfo
 }
 
-func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
+func (b *Builder) Transform(ctx context.Context, s payload.SearchRequest) SearchOptions {
 	categories, ok := s.Modifiers["categories"]
 	var category string
 	if ok && len(categories) > 0 {

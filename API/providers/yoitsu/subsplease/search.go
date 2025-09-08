@@ -1,6 +1,7 @@
 package subsplease
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,7 +18,7 @@ func (o SearchOptions) toURL() string {
 	return fmt.Sprintf(URL, url.QueryEscape(o.Query))
 }
 
-func (b *Builder) Search(options SearchOptions) (SearchResult, error) {
+func (b *Builder) Search(ctx context.Context, options SearchOptions) (SearchResult, error) {
 	u := options.toURL()
 	req, err := b.httpClient.Get(u)
 	if err != nil {

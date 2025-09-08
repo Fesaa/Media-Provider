@@ -1,6 +1,7 @@
 package limetorrents
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 const BaseUrl string = "https://www.limetorrents.lol"
 const SearchUrl string = BaseUrl + "/search/%s/%s/%d/"
 
-func (b *Builder) Search(searchOptions SearchOptions) ([]SearchResult, error) {
+func (b *Builder) Search(ctx context.Context, searchOptions SearchOptions) ([]SearchResult, error) {
 	searchUrl := formatUrl(searchOptions)
 
 	doc, err := b.getSearch(searchUrl)

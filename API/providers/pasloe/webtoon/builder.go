@@ -25,7 +25,7 @@ func (b *Builder) Logger() zerolog.Logger {
 	return b.log
 }
 
-func (b *Builder) Normalize(webtoons []SearchData) []payload.Info {
+func (b *Builder) Normalize(ctx context.Context, webtoons []SearchData) []payload.Info {
 	return utils.MaybeMap(webtoons, func(w SearchData) (payload.Info, bool) {
 		return payload.Info{
 			Name: w.Name,
@@ -41,14 +41,14 @@ func (b *Builder) Normalize(webtoons []SearchData) []payload.Info {
 	})
 }
 
-func (b *Builder) Transform(s payload.SearchRequest) SearchOptions {
+func (b *Builder) Transform(ctx context.Context, s payload.SearchRequest) SearchOptions {
 	return SearchOptions{
 		Query: s.Query,
 	}
 }
 
-func (b *Builder) Search(s SearchOptions) ([]SearchData, error) {
-	return b.repository.Search(context.TODO(), s)
+func (b *Builder) Search(ctx context.Context, s SearchOptions) ([]SearchData, error) {
+	return b.repository.Search(ctx, s)
 }
 
 func (b *Builder) DownloadMetadata() payload.DownloadMetadata {

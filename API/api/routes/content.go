@@ -62,7 +62,7 @@ func (cr *contentRoutes) Message(ctx *fiber.Ctx, msg payload.Message) error {
 }
 
 func (cr *contentRoutes) Search(ctx *fiber.Ctx, searchRequest payload.SearchRequest) error {
-	search, err := cr.ContentService.Search(searchRequest)
+	search, err := cr.ContentService.Search(ctx.UserContext(), searchRequest)
 	if err != nil {
 		return InternalError(err)
 	}
