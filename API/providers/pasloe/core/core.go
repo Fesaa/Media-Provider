@@ -15,6 +15,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -351,6 +352,9 @@ func (c *Core[C, S]) Cancel() {
 }
 
 func (c *Core[C, S]) loadContentInfo(ctx context.Context) bool {
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasLoadContentInfo)
+	defer span.End()
+
 	start := time.Now()
 	select {
 	case <-ctx.Done():
@@ -381,6 +385,9 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 		return
 	}
 
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeLoadMetadata)
+	defer span.End()
+
 	c.Log.Debug().Msg("loading content info")
 	c.SetState(payload.ContentStateLoading)
 
@@ -398,6 +405,9 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 	if !c.loadContentInfo(ctx) {
 		return
 	}
+
+	ctx, span = tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeContentFilter)
+	defer span.End()
 
 	data, elapsed := c.filterAlreadyDownloadedContent()
 	if elapsed > time.Second*5 {
