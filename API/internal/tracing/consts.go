@@ -24,6 +24,7 @@ const (
 
 	SpanServicesImagesWebp       = "services.images.covert.webp"
 	SpanServicesTranslocoLoading = "services.transloco.loading"
+	SpanServicesCache            = "services.cache"
 
 	SpanApplicationStart = "application.start"
 	SpanUpdateVersion    = "application.start.version_update"

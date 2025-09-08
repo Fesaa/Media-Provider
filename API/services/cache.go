@@ -6,17 +6,16 @@ import (
 
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 )
 
 type CacheService interface {
-	fiber.Storage
+	utils.Storage
 	Type() config.CacheType
 }
 
 type cacheService struct {
-	fiber.Storage
+	utils.Storage
 	log       zerolog.Logger
 	cacheType config.CacheType
 }
@@ -54,6 +53,22 @@ type item struct {
 
 type memoryCache struct {
 	store utils.SafeMap[string, item]
+}
+
+func (m *memoryCache) GetWithContext(ctx context.Context, s string) ([]byte, error) {
+	return m.Get(s)
+}
+
+func (m *memoryCache) SetWithContext(ctx context.Context, s string, bytes []byte, duration time.Duration) error {
+	return m.Set(s, bytes, duration)
+}
+
+func (m *memoryCache) DeleteWithContext(ctx context.Context, s string) error {
+	return m.Delete(s)
+}
+
+func (m *memoryCache) ResetWithContext(ctx context.Context) error {
+	return m.Reset()
 }
 
 func (m *memoryCache) Get(key string) ([]byte, error) {
@@ -97,7 +112,7 @@ func (m *memoryCache) gc() {
 	}
 }
 
-func newMemoryCache() *memoryCache {
+func newMemoryCache() utils.Storage {
 	mc := &memoryCache{
 		store: utils.NewSafeMap[string, item](),
 	}

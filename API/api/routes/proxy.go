@@ -148,7 +148,7 @@ func (pr *proxyRoutes) BatoCoverProxy(c *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	uri, err := pr.CacheService.Get(id)
+	uri, err := pr.CacheService.GetWithContext(c.UserContext(), id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to find uri in cache")
 		return InternalError(errors.New(pr.Transloco.GetTranslation("request-failed")))

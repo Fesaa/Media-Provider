@@ -33,6 +33,8 @@ import (
 	fiberutils "github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 )
 
@@ -126,7 +128,7 @@ func applicationProvider(params appParams) *fiber.App {
 	}
 
 	app.Use(contextkey.Middleware(params.Container, httpLogger)).
-		Use(tracing.Middleware)
+		Use(MiddlewareTracingSetRequestId)
 
 	scope := c.Scope("init::api")
 	utils.Must(scope.Provide(utils.Identity(app.Group(baseUrl))))
@@ -222,4 +224,13 @@ func updateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero
 	}
 
 	return nil
+}
+
+func MiddlewareTracingSetRequestId(c *fiber.Ctx) error {
+	span := trace.SpanFromContext(c.UserContext())
+	requestId := contextkey.GetFromContext(c, contextkey.RequestId)
+
+	span.SetAttributes(attribute.String("request.id", requestId))
+
+	return c.Next()
 }

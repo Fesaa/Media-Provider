@@ -209,7 +209,7 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) string {
 	}
 
 	logoutUrl := s.getSessionLogoutUrl(ctx, token) // Must happen before we delete the tokens
-	if err := s.storage.Delete(token); err != nil {
+	if err := s.storage.DeleteWithContext(ctx.UserContext(), token); err != nil {
 		s.log.Warn().Err(err).Msg("failed to delete token during logout")
 	}
 
@@ -221,7 +221,7 @@ func (s *cookieAuthService) getSessionLogoutUrl(ctx *fiber.Ctx, token string) st
 		return ""
 	}
 
-	tokens, err := s.getOidcTokens(token)
+	tokens, err := s.getOidcTokens(ctx.UserContext(), token)
 	if err != nil {
 		s.log.Error().Err(err).Str("token", token).Msg("failed to get token")
 	}
@@ -337,9 +337,9 @@ func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func (s *cookieAuthService) deleteToken(authenticationFaield bool, token string) {
-	if authenticationFaield {
-		if err := s.storage.Delete(token); err != nil {
+func (s *cookieAuthService) deleteToken(ctx context.Context, authenticationFailed bool, token string) {
+	if authenticationFailed {
+		if err := s.storage.DeleteWithContext(ctx, token); err != nil {
 			s.log.Warn().Err(err).Str("token", token).Msg("failed to delete token")
 		}
 	}
@@ -350,9 +350,9 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 	if token == "" {
 		return false
 	}
-	defer s.deleteToken(success, token)
+	defer s.deleteToken(ctx.UserContext(), success, token)
 
-	tokens, err := s.getOidcTokens(token)
+	tokens, err := s.getOidcTokens(ctx.UserContext(), token)
 	if err != nil {
 		return false
 	}
@@ -398,7 +398,7 @@ func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *
 		return fmt.Errorf("failed to refresh OIDC tokens: %w", err)
 	}
 
-	if err = s.storage.Delete(oldKey); err != nil {
+	if err = s.storage.DeleteWithContext(ctx.UserContext(), oldKey); err != nil {
 		s.log.Warn().Err(err).Msg("failed to delete old token")
 	}
 
@@ -511,8 +511,8 @@ func (s *cookieAuthService) setCookies(ctx *fiber.Ctx, tokens *OIDCTokens) error
 	return nil
 }
 
-func (s *cookieAuthService) getOidcTokens(token string) (*OIDCTokens, error) {
-	data, err := s.storage.Get(token)
+func (s *cookieAuthService) getOidcTokens(ctx context.Context, token string) (*OIDCTokens, error) {
+	data, err := s.storage.GetWithContext(ctx, token)
 	if err != nil {
 		return nil, err
 	}
@@ -536,7 +536,7 @@ func (s *cookieAuthService) storeOidcToken(ctx context.Context, tokens *OIDCToke
 		return "", err
 	}
 
-	if err = s.storage.Set(token, data, 30*24*time.Hour); err != nil {
+	if err = s.storage.SetWithContext(ctx, token, data, 30*24*time.Hour); err != nil {
 		return "", err
 	}
 

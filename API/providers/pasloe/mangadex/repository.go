@@ -179,7 +179,7 @@ func (r *repository) GetCoverImages(ctx context.Context, id string, offset ...in
 }
 
 func (r *repository) do(ctx context.Context, url string, out any) error {
-	if v, err := r.cache.Get(url); err == nil && v != nil {
+	if v, err := r.cache.GetWithContext(ctx, url); err == nil && v != nil {
 		if err = json.Unmarshal(v, out); err == nil {
 			return nil
 		}
@@ -208,7 +208,7 @@ func (r *repository) do(ctx context.Context, url string, out any) error {
 		return err
 	}
 
-	if err = r.cache.Set(url, data, time.Minute*5); err != nil {
+	if err = r.cache.SetWithContext(ctx, url, data, time.Minute*5); err != nil {
 		r.log.Debug().Err(err).Str("key", url).Msg("failed to set cache for outgoing mangadex request")
 	}
 	return nil
