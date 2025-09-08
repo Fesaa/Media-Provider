@@ -13,6 +13,7 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
@@ -69,7 +70,7 @@ func applicationProvider(params appParams) *fiber.App {
 			LimiterMiddleware: limiter.SlidingWindow{},
 		})).
 		Use(requestid.New(requestid.Config{
-			ContextKey: services.RequestIdKey.Value(),
+			ContextKey: contextkey.RequestId.Value(),
 			Generator:  fiberutils.UUIDv4,
 		})).
 		Use(encryptcookie.New(encryptcookie.Config{
@@ -124,15 +125,8 @@ func applicationProvider(params appParams) *fiber.App {
 		}))
 	}
 
-	app.Use(func(c *fiber.Ctx) error {
-		services.SetInContext(c, services.ServiceProviderKey, params.Container)
-
-		requestId := services.GetFromContext(c, services.RequestIdKey)
-		log := httpLogger.With().Str(services.RequestIdKey.Value(), requestId).Logger()
-		services.SetInContext(c, services.LoggerKey, log)
-
-		return c.Next()
-	})
+	app.Use(contextkey.Middleware(params.Container, httpLogger)).
+		Use(tracing.Middleware)
 
 	scope := c.Scope("init::api")
 	utils.Must(scope.Provide(utils.Identity(app.Group(baseUrl))))

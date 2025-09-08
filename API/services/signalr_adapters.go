@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
@@ -68,7 +69,7 @@ func (s *signalrService) ConnectEndpoint(ctx *fiber.Ctx) error {
 		})
 	}
 
-	user := GetFromContext(ctx, UserKey)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 	if err := s.upgrader().Upgrade(ctx.Context(), s.wsInit(user.ID, connectionID)); err != nil {
 		s.log.Error().Err(err).Str("user", user.Name).Msg("Failed to upgrade connection")
 		return ctx.Status(fiber.StatusUpgradeRequired).JSON(fiber.Map{

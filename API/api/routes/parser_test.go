@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
@@ -143,8 +144,8 @@ func TestWithBody(t *testing.T) {
 			})
 
 			app.Use(func(ctx *fiber.Ctx) error {
-				services.SetInContext(ctx, services.ServiceProviderKey, container)
-				services.SetInContext(ctx, services.LoggerKey, zerolog.Nop())
+				services.SetInContext(ctx, contextkey.ServiceProvider, container)
+				services.SetInContext(ctx, contextkey.Logger, zerolog.Nop())
 				return ctx.Next()
 			}).Post("/test", tt.setupHandler())
 
@@ -187,7 +188,7 @@ func TestWithBody_HandlerError(t *testing.T) {
 	})
 
 	app.Use(func(ctx *fiber.Ctx) error {
-		services.SetInContext(ctx, services.LoggerKey, zerolog.Nop())
+		services.SetInContext(ctx, contextkey.Logger, zerolog.Nop())
 		return ctx.Next()
 	})
 

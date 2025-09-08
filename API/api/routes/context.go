@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/services"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 )
@@ -20,8 +20,8 @@ type Ctx struct {
 
 func InterOp(handler Handler) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		log := services.GetFromContext(c, services.LoggerKey)
-		user, _ := services.GetFromContextSafe(c, services.UserKey)
+		log := contextkey.GetFromContext(c, contextkey.Logger)
+		user, _ := contextkey.GetFromContextSafe(c, contextkey.User)
 
 		ctx := Ctx{
 			Ctx:  c,

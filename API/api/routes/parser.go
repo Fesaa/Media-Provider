@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +15,7 @@ import (
 // are called
 func withBody[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		log := services.GetFromContext(c, services.LoggerKey)
+		log := contextkey.GetFromContext(c, contextkey.Logger)
 
 		var body T
 		if err := c.BodyParser(&body); err != nil {
@@ -29,8 +30,8 @@ func withBody[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
 // withBodyValidation behaves like withBody, but also runs the body through the validator
 func withBodyValidation[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		log := services.GetFromContext(c, services.LoggerKey)
-		serviceProvider := services.GetFromContext(c, services.ServiceProviderKey)
+		log := contextkey.GetFromContext(c, contextkey.Logger)
+		serviceProvider := contextkey.GetFromContext(c, contextkey.ServiceProvider)
 		validator := utils.MustInvoke[services.ValidationService](serviceProvider)
 
 		var body T

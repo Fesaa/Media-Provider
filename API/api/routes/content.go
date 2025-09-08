@@ -6,6 +6,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
@@ -37,7 +38,7 @@ func RegisterContentRoutes(cr contentRoutes) {
 }
 
 func (cr *contentRoutes) Message(ctx *fiber.Ctx, msg payload.Message) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	resp, err := cr.ContentService.Message(msg)
 	if err != nil {
@@ -74,8 +75,8 @@ func (cr *contentRoutes) Search(ctx *fiber.Ctx, searchRequest payload.SearchRequ
 }
 
 func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
-	user := services.GetFromContext(ctx, services.UserKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 
 	if req.BaseDir == "" {
 		log.Warn().Msg("trying to download to empty baseDir, returning error.")
@@ -96,7 +97,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) e
 }
 
 func (cr *contentRoutes) Stop(ctx *fiber.Ctx, req payload.StopRequest) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	if err := cr.ContentService.Stop(req); err != nil {
 		log.Error().Err(err).Str("id", req.Id).Msg("error while stopping download")
@@ -107,7 +108,7 @@ func (cr *contentRoutes) Stop(ctx *fiber.Ctx, req payload.StopRequest) error {
 }
 
 func (cr *contentRoutes) Stats(ctx *fiber.Ctx, allDownloads bool) error {
-	user := services.GetFromContext(ctx, services.UserKey)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allDownloads = allDownloads && user.HasRole(models.ViewAllDownloads)
 
 	statsResponse := payload.StatsResponse{

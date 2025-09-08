@@ -6,6 +6,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
@@ -42,8 +43,8 @@ func RegisterPageRoutes(pr pageRoutes) {
 }
 
 func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
-	user := services.GetFromContext(ctx, services.UserKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 
 	pages, err := pr.UnitOfWork.Pages.GetAllPages(ctx.UserContext())
 	if err != nil {
@@ -71,8 +72,8 @@ func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
 }
 
 func (pr *pageRoutes) page(ctx *fiber.Ctx, id int) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
-	user := services.GetFromContext(ctx, services.UserKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 
 	if len(user.Pages) > 0 && !slices.Contains(user.Pages, int32(id)) {
 		return NotFound()
@@ -92,7 +93,7 @@ func (pr *pageRoutes) page(ctx *fiber.Ctx, id int) error {
 }
 
 func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	page.Modifiers = utils.MapWithIdx(page.Modifiers, func(i int, mod models.Modifier) models.Modifier {
 		mod.Sort = i
@@ -131,7 +132,7 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 }
 
 func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id int) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	if err := pr.UnitOfWork.Pages.Delete(ctx.UserContext(), id); err != nil {
 		log.Error().Err(err).Msg("Failed to delete page")
@@ -142,7 +143,7 @@ func (pr *pageRoutes) deletePage(ctx *fiber.Ctx, id int) error {
 }
 
 func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []int) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	if err := pr.PageService.OrderPages(ctx.UserContext(), order); err != nil {
 		log.Error().Err(err).Msg("Failed to swap page")
@@ -153,7 +154,7 @@ func (pr *pageRoutes) orderPages(ctx *fiber.Ctx, order []int) error {
 }
 
 func (pr *pageRoutes) loadDefault(ctx *fiber.Ctx) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	if err := pr.PageService.LoadDefaultPages(ctx.UserContext()); err != nil {
 		log.Error().Err(err).Msg("Failed to load default pages")

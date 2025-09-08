@@ -15,6 +15,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -369,7 +370,7 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 		return false
 	}
 
-	SetInContext(ctx, UserKey, *user)
+	contextkey.SetInContext(ctx, contextkey.User, *user)
 
 	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
 	if !expiresSoon {
@@ -594,6 +595,6 @@ func (a *apiKeyAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	SetInContext(ctx, UserKey, *user)
+	contextkey.SetInContext(ctx, contextkey.User, *user)
 	return true, nil
 }

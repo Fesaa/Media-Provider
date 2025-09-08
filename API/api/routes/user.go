@@ -10,6 +10,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
@@ -74,7 +75,7 @@ func RegisterUserRoutes(ur userRoutes) {
 }
 
 func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest payload.UpdatePasswordRequest) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 	user := ctx.Locals("user").(models.User)
 
 	decodeString, err := base64.StdEncoding.DecodeString(user.PasswordHash)
@@ -141,7 +142,7 @@ func (ur *userRoutes) updateMe(ctx *fiber.Ctx, updateUserReq payload.UpdateUserR
 }
 
 func (ur *userRoutes) me(ctx *fiber.Ctx) error {
-	user := services.GetFromContext(ctx, services.UserKey)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 
 	return ctx.JSON(payload.LoginResponse{
 		Id:     user.ID,
@@ -153,7 +154,7 @@ func (ur *userRoutes) me(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) anyUserExists(ctx *fiber.Ctx) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	ok, err := ur.UnitOfWork.Users.ExistsAny(ctx.UserContext())
 	if err != nil {
@@ -172,7 +173,7 @@ func (ur *userRoutes) anyUserExists(ctx *fiber.Ctx) error {
 //
 //nolint:funlen
 func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	ok, err := ur.UnitOfWork.Users.ExistsAny(ctx.UserContext())
 	if err != nil {
@@ -224,7 +225,7 @@ func (ur *userRoutes) registerUser(ctx *fiber.Ctx, register payload.LoginRequest
 }
 
 func (ur *userRoutes) loginUser(ctx *fiber.Ctx, login payload.LoginRequest) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	settings, err := ur.SettingsService.GetSettingsDto(ctx.UserContext())
 	if err != nil {
@@ -271,8 +272,8 @@ func (ur *userRoutes) oidcCallback(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) refreshAPIKey(ctx *fiber.Ctx) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
-	user := services.GetFromContext(ctx, services.UserKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 
 	key, err := utils.GenerateApiKey()
 	if err != nil {
@@ -343,7 +344,7 @@ func (ur *userRoutes) updateUser(ctx *fiber.Ctx, userDto payload.UserDto) error 
 }
 
 func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID int) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	toDelete, err := ur.UnitOfWork.Users.GetByID(ctx.UserContext(), userID)
 	if err != nil {
@@ -365,8 +366,8 @@ func (ur *userRoutes) deleteUser(ctx *fiber.Ctx, userID int) error {
 }
 
 func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId int) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
-	user := services.GetFromContext(ctx, services.UserKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 
 	resetUser, err := ur.UnitOfWork.Users.GetByID(ctx.UserContext(), userId)
 	if err != nil {
@@ -407,7 +408,7 @@ func (ur *userRoutes) generateResetPassword(ctx *fiber.Ctx, userId int) error {
 }
 
 func (ur *userRoutes) resetPassword(ctx *fiber.Ctx, pl payload.ResetPasswordRequest) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	reset, err := ur.UnitOfWork.Users.GetReset(ctx.UserContext(), pl.Key)
 	if err != nil {

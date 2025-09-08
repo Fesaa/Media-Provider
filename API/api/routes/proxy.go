@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -54,7 +55,7 @@ func (pr *proxyRoutes) encoding(fileName string) string {
 }
 
 func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
-	log := services.GetFromContext(c, services.LoggerKey)
+	log := contextkey.GetFromContext(c, contextkey.Logger)
 
 	date := c.Params("date")
 	id := c.Params("id")
@@ -103,7 +104,7 @@ func (pr *proxyRoutes) WebToonCoverProxy(c *fiber.Ctx) error {
 }
 
 func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
-	log := services.GetFromContext(c, services.LoggerKey)
+	log := contextkey.GetFromContext(c, contextkey.Logger)
 
 	id := c.Params("id")
 	fileName := c.Params("filename")
@@ -140,7 +141,7 @@ func (pr *proxyRoutes) MangaDexCoverProxy(c *fiber.Ctx) error {
 }
 
 func (pr *proxyRoutes) BatoCoverProxy(c *fiber.Ctx) error {
-	log := services.GetFromContext(c, services.LoggerKey)
+	log := contextkey.GetFromContext(c, contextkey.Logger)
 
 	id := c.Params("id")
 	if id == "" {

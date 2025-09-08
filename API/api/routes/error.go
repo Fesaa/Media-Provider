@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/Fesaa/Media-Provider/services"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -89,7 +89,7 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 		messageKey: err.Error(),
 	}
 
-	_, ok := services.GetFromContextSafe(c, services.UserKey)
+	_, ok := contextkey.GetFromContextSafe(c, contextkey.User)
 	if ok {
 		// Don't include caller for non-authenticated endpoints
 		res[callerKey] = e.Caller
