@@ -93,6 +93,7 @@ func (r notificationsRepository) Recent(ctx context.Context, limit int, group mo
 }
 
 func (r notificationsRepository) New(ctx context.Context, notification models.Notification) error {
+	notification.ID = 0
 	return r.db.WithContext(ctx).Create(&notification).Error
 }
 

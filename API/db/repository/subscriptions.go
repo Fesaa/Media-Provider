@@ -107,6 +107,7 @@ func (r subscriptionsRepository) GetByContentIDForUser(ctx context.Context, cont
 }
 
 func (r subscriptionsRepository) New(ctx context.Context, subscription models.Subscription) (*models.Subscription, error) {
+	subscription.ID = 0
 	result := r.db.WithContext(ctx).Create(&subscription)
 	if result.Error != nil {
 		return nil, result.Error
