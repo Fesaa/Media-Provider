@@ -17,7 +17,7 @@ func tempPageService(t *testing.T) PageService {
 	tempDir := t.TempDir()
 	config.Dir = tempDir
 
-	database, err := db.DatabaseProvider(log)
+	database, err := db.DatabaseProvider(t.Context(), log)
 	if err != nil {
 		t.Fatal(err)
 	}

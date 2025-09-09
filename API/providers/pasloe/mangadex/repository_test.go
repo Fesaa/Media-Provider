@@ -23,6 +23,7 @@ func tempRepo(t *testing.T, w io.Writer) Repository {
 	return NewRepository(repositoryParams{
 		HttpClient: menou.DefaultClient,
 		Cache:      mock.Cache{},
+		Ctx:        t.Context(),
 	}, zerolog.New(w))
 }
 

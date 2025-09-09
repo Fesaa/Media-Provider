@@ -20,7 +20,7 @@ func tempDatabase(t *testing.T) *db.UnitOfWork {
 	config.Dir = t.TempDir()
 	//nolint:usetesting
 	_ = os.Setenv("DATABASE_DSN", "file::memory:")
-	database, err := db.DatabaseProvider(zerolog.Nop())
+	database, err := db.DatabaseProvider(t.Context(), zerolog.Nop())
 	if err != nil {
 		if strings.Contains(err.Error(), "attempt to write a readonly database") {
 			t.Skipf("ReadOnly DB error, I don't have a good way to fix this atm.")
@@ -50,7 +50,7 @@ func tempSubscriptionService(t *testing.T, tempdb *db.UnitOfWork) SubscriptionSe
 		t.Fatal(err)
 	}
 
-	transloco, err := TranslocoServiceProvider(log, afero.Afero{Fs: afero.NewMemMapFs()})
+	transloco, err := TranslocoServiceProvider(t.Context(), log, afero.Afero{Fs: afero.NewMemMapFs()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,8 @@ func tempSubscriptionService(t *testing.T, tempdb *db.UnitOfWork) SubscriptionSe
 		Log: log,
 	})
 
-	ss, err := SubscriptionServiceProvider(tempdb, cs, log, cron, NotificationServiceProvider(log, tempdb, signalR), transloco)
+	ss, err := SubscriptionServiceProvider(tempdb, cs, log, cron,
+		NotificationServiceProvider(log, tempdb, signalR), transloco, t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}

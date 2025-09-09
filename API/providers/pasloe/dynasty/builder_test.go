@@ -11,7 +11,7 @@ import (
 func TestBuilder_Transform(t *testing.T) {
 	b := &Builder{}
 
-	got := b.Transform(payload.SearchRequest{
+	got := b.Transform(t.Context(), payload.SearchRequest{
 		Query: "test",
 	})
 
@@ -27,7 +27,7 @@ func TestBuilder_Transform(t *testing.T) {
 func TestBuilder_NormalizeNil(t *testing.T) {
 	b := &Builder{}
 
-	got := b.Normalize(nil)
+	got := b.Normalize(t.Context(), nil)
 	if got == nil {
 		t.Errorf("got: %v, want: %v", got, []payload.Info{})
 	}
@@ -63,7 +63,7 @@ func TestBuilder_Normalize(t *testing.T) {
 		},
 	}
 
-	got := b.Normalize(in)
+	got := b.Normalize(t.Context(), in)
 
 	want := payload.Info{
 		Name:     "Title1",

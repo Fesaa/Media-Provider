@@ -18,7 +18,7 @@ func TestBuilder_Transform(t *testing.T) {
 		Filter:   "no-filter",
 	}
 
-	got := (&Builder{}).Transform(payload.SearchRequest{
+	got := (&Builder{}).Transform(t.Context(), payload.SearchRequest{
 		Provider: []models.Provider{models.NYAA},
 		Query:    "Spice and Wolf",
 		Modifiers: map[string][]string{

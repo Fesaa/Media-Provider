@@ -32,7 +32,7 @@ func TestManga_CoverSkipWrongFormatAndFirstAsDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	factory := m.getCoverFactoryLang(covers)
+	factory := m.getCoverFactoryLang(t.Context(), covers)
 	if factory == nil {
 		t.Fatal("Cover factory not found")
 	}

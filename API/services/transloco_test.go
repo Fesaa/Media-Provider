@@ -10,7 +10,7 @@ import (
 
 func tempTransloco(t *testing.T) TranslocoService {
 	t.Helper()
-	transloco, err := TranslocoServiceProvider(zerolog.Nop(), afero.Afero{Fs: afero.NewMemMapFs()})
+	transloco, err := TranslocoServiceProvider(t.Context(), zerolog.Nop(), afero.Afero{Fs: afero.NewMemMapFs()})
 	if err != nil {
 		t.Fatalf("error creating transloco %v", err)
 	}

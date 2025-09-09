@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -38,7 +39,7 @@ func TestContentService_Search(t *testing.T) {
 		Modifiers: nil,
 	}
 
-	_, err := cs.Search(req)
+	_, err := cs.Search(t.Context(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +54,7 @@ func TestContentService_SearchInvalidProvider(t *testing.T) {
 		Modifiers: nil,
 	}
 
-	_, err := cs.Search(req)
+	_, err := cs.Search(t.Context(), req)
 	if err == nil {
 		t.Fatal("Should have errored")
 	}
@@ -144,7 +145,7 @@ func TestContentService_SearchVerySlow(t *testing.T) {
 		Modifiers: nil,
 	}
 
-	_, err := cs.Search(req)
+	_, err := cs.Search(t.Context(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +180,7 @@ func (p providerAdapterMock) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{}
 }
 
-func (p providerAdapterMock) Search(request payload.SearchRequest) ([]payload.Info, error) {
+func (p providerAdapterMock) Search(ctx context.Context, request payload.SearchRequest) ([]payload.Info, error) {
 	return []payload.Info{}, nil
 }
 
@@ -193,7 +194,7 @@ func (slowBuilder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{}
 }
 
-func (slowBuilder) Search(request payload.SearchRequest) ([]payload.Info, error) {
+func (slowBuilder) Search(ctx context.Context, request payload.SearchRequest) ([]payload.Info, error) {
 	time.Sleep(3 * time.Second)
 	return []payload.Info{}, nil
 }

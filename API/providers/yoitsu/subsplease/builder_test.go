@@ -8,7 +8,7 @@ import (
 
 // Subsplease does weird stuff when not having any results.
 func TestBuilder_SearchEmpty(t *testing.T) {
-	got, err := (&Builder{httpClient: menou.DefaultClient}).Search(SearchOptions{
+	got, err := (&Builder{httpClient: menou.DefaultClient}).Search(t.Context(), SearchOptions{
 		Query: "Something they don't have",
 	})
 
@@ -22,7 +22,7 @@ func TestBuilder_SearchEmpty(t *testing.T) {
 }
 
 func TestBuilder_Search(t *testing.T) {
-	got, err := (&Builder{httpClient: menou.DefaultClient}).Search(SearchOptions{
+	got, err := (&Builder{httpClient: menou.DefaultClient}).Search(t.Context(), SearchOptions{
 		Query: "Spice and Wolf",
 	})
 
