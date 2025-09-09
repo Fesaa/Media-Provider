@@ -42,7 +42,7 @@ var defaultCoverFactory CoverFactory = func(volume string) (*Cover, bool) { retu
 func (m *manga) getCoverBytes(ctx context.Context, fileName string) ([]byte, error) {
 	url := fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", m.id, fileName)
 
-	if b, err := m.cache.GetWithContext(ctx, url); err == nil {
+	if b, err := m.cache.GetWithContext(ctx, url); err == nil && b != nil {
 		return b, nil
 	}
 
