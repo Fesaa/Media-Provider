@@ -38,7 +38,8 @@ func NewRedisCacheStorage(ctx context.Context, log zerolog.Logger, clientName, r
 
 	if err := rds.Ping(ctx).Err(); err != nil {
 		span.RecordError(err)
-		log.Fatal().Err(err).Msg("failed to connect to redis")
+		span.End()                                             // fatal exists, manually end the span
+		log.Fatal().Err(err).Msg("failed to connect to redis") //nolint: gocritic
 	}
 
 	return &redisWrapper{

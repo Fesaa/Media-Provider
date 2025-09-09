@@ -759,7 +759,7 @@ func TestReplaceCover(t *testing.T) {
 		},
 		GetChapterImagesFunc: func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
 			// They have a system with random servers
-			return tempRepo(t, io.Discard).GetChapterImages(ctx, id)
+			return tempRepo(t, io.Discard, ctx).GetChapterImages(ctx, id)
 		}})
 
 	select {
@@ -833,7 +833,7 @@ func TestReplaceCoverDestructionLover(t *testing.T) {
 		},
 		GetChapterImagesFunc: func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
 			// They have a system with random servers
-			return tempRepo(t, io.Discard).GetChapterImages(ctx, id)
+			return tempRepo(t, io.Discard, ctx).GetChapterImages(ctx, id)
 		}})
 
 	select {

@@ -42,7 +42,8 @@ func main() {
 	utils.Must(c.Invoke(setupOtel))
 
 	ctx := context.Background()
-	ctx, _ = tracing.TracerMain.Start(ctx, tracing.SpanApplicationStart)
+	// span.End is called in startApp
+	ctx, _ = tracing.TracerMain.Start(ctx, tracing.SpanApplicationStart) //nolint: spancheck
 	utils.Must(c.Provide(utils.Identity(ctx)))
 
 	utils.Must(c.Provide(db.DatabaseProvider))
