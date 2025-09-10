@@ -33,6 +33,7 @@ const (
 	SpanServicesCache            = "services.cache"
 	SpanServicesContentSearch    = "services.content.search"
 	SpanServicesSubscriptionTask = "services.subscription.task"
+	SpanServicesOIDCTokenRefresh = "services.auth.oidc.token_refresh"
 
 	SpanApplicationStart = "application.start"
 	SpanUpdateVersion    = "application.start.version_update"

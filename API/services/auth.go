@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -77,6 +78,8 @@ type cookieAuthService struct {
 	log        zerolog.Logger
 	storage    CacheService
 
+	httpClient *http.Client
+
 	oidcSettings payload.OidcSettings
 	oidcProvider *oidc.Provider
 	oauth2Config *oauth2.Config
@@ -113,6 +116,7 @@ func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, err
 		storage:        params.Storage,
 		cfg:            params.Config,
 		cookiesRefresh: utils.NewSafeMap[int, bool](),
+		httpClient:     params.HttpClient.Client,
 		log:            params.Log.With().Str("handler", "cookie-auth-service").Logger(),
 	}
 
@@ -391,21 +395,24 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 	return err == nil
 }
 
-func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
+func (s *cookieAuthService) refreshToken(fiberCtx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
+	ctx, span := tracing.TracerServices.Start(fiberCtx.UserContext(), tracing.SpanServicesOIDCTokenRefresh)
+	defer span.End()
+
 	s.cookiesRefresh.Set(tokens.UserId, true)
 	defer s.cookiesRefresh.Delete(tokens.UserId)
 
-	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.UserId, tokens.RefreshToken)
+	newTokens, err := s.refreshOIDCToken(ctx, tokens.UserId, tokens.RefreshToken)
 	if err != nil {
-		s.Logout(ctx)
+		s.Logout(fiberCtx)
 		return fmt.Errorf("failed to refresh OIDC tokens: %w", err)
 	}
 
-	if err = s.storage.DeleteWithContext(ctx.UserContext(), oldKey); err != nil {
+	if err = s.storage.DeleteWithContext(ctx, oldKey); err != nil {
 		s.log.Warn().Err(err).Msg("failed to delete old token")
 	}
 
-	if err = s.setCookies(ctx, newTokens); err != nil {
+	if err = s.setCookies(fiberCtx, newTokens); err != nil {
 		return fmt.Errorf("failed to set cookies: %w", err)
 	}
 
@@ -466,6 +473,9 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 }
 
 func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId int, refreshToken string) (*OIDCTokens, error) {
+	span := trace.SpanFromContext(ctx)
+
+	ctx = oidc.ClientContext(ctx, s.httpClient)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
@@ -479,6 +489,7 @@ func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId int, re
 
 	newToken, err := s.oauth2Config.TokenSource(ctx, token).Token()
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to refresh token: %w", err)
 	}
 
