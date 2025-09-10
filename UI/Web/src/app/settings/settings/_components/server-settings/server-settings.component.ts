@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, effect, inject} from '@angular/core';
 import {CacheType, CacheTypes, Config} from '../../../../_models/config';
 import {
   FormBuilder,
@@ -14,6 +14,8 @@ import {SettingsService} from "../../../../_services/settings.service";
 import {SettingsItemComponent} from "../../../../shared/form/settings-item/settings-item.component";
 import {SettingsSwitchComponent} from "../../../../shared/form/settings-switch/settings-switch.component";
 import {DefaultValuePipe} from "../../../../_pipes/default-value.pipe";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {debounceTime, distinctUntilChanged, filter, map, switchMap, tap} from "rxjs";
 
 @Component({
   selector: 'app-server-settings',
@@ -34,6 +36,7 @@ export class ServerSettingsComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly cdRef = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
   config = this.settingsService.config;
 
@@ -76,6 +79,22 @@ export class ServerSettingsComponent {
         }),
       });
       this.cdRef.detectChanges();
+
+      this.settingsForm.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef),
+        distinctUntilChanged(),
+        debounceTime(100),
+        map(() => this.settingsForm?.getRawValue()),
+        filter((dto) => { // Don't auto save when critical OIDC info changes
+          if (!dto) return false;
+
+          const oidc = this.config()?.oidc;
+          if (!oidc) return false;
+
+          return dto.oidc.authority === oidc.authority && dto.oidc.clientSecret === oidc.clientSecret;
+        }),
+        tap(() => this.save(false))
+      ).subscribe();
     });
   }
 
@@ -86,7 +105,7 @@ export class ServerSettingsComponent {
     return control instanceof FormControl ? control : null;
   }
 
-  save() {
+  save(toastOnSuccess: boolean = true) {
     if (!this.settingsForm) {
       return;
     }
@@ -112,7 +131,9 @@ export class ServerSettingsComponent {
 
     this.settingsService.updateConfig(dto).subscribe({
       next: () => {
-        this.toastService.successLoco("settings.server.toasts.save.success");
+        if (toastOnSuccess) {
+          this.toastService.successLoco("settings.server.toasts.save.success");
+        }
       },
       error: (error) => {
         console.error(error);
