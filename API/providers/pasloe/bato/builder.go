@@ -31,7 +31,7 @@ func (b *Builder) Logger() zerolog.Logger {
 
 func (b *Builder) Normalize(ctx context.Context, t []SearchResult) []payload.Info {
 	return utils.Map(t, func(t SearchResult) payload.Info {
-		if err := b.cache.Set(t.Id, []byte(t.ImageUrl), b.cache.DefaultExpiration()); err != nil {
+		if err := b.cache.SetWithContext(ctx, t.Id, []byte(t.ImageUrl), b.cache.DefaultExpiration()); err != nil {
 			b.log.Warn().Err(err).Str("id", t.Id).Msg("failed to cache image")
 		}
 		return payload.Info{
