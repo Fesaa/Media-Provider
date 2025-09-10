@@ -48,10 +48,10 @@ func (sr *subscriptionRoutes) getAll(ctx *fiber.Ctx, allUsers bool) ([]models.Su
 	allUsers = allUsers && user.HasRole(models.ManageSubscriptions)
 
 	if allUsers {
-		return sr.SubscriptionService.All()
+		return sr.SubscriptionService.All(ctx.UserContext())
 	}
 
-	return sr.SubscriptionService.AllForUser(user.ID)
+	return sr.SubscriptionService.AllForUser(ctx.UserContext(), user.ID)
 }
 
 func (sr *subscriptionRoutes) providers(ctx *fiber.Ctx) error {
@@ -82,7 +82,7 @@ func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id int) error {
 	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
-	sub, err := sr.SubscriptionService.Get(id)
+	sub, err := sr.SubscriptionService.Get(ctx.UserContext(), id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
 		return InternalError(err)
@@ -118,7 +118,7 @@ func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id int) error {
 	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
-	sub, err := sr.SubscriptionService.Get(id)
+	sub, err := sr.SubscriptionService.Get(ctx.UserContext(), id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
 		return InternalError(err)
@@ -142,7 +142,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
-	cur, err := sr.SubscriptionService.Get(sub.ID)
+	cur, err := sr.SubscriptionService.Get(ctx.UserContext(), sub.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
 		return InternalError(err)
@@ -152,7 +152,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 		return Forbidden()
 	}
 
-	if err = sr.SubscriptionService.Update(sub); err != nil {
+	if err = sr.SubscriptionService.Update(ctx.UserContext(), sub); err != nil {
 		log.Error().Err(err).Msg("Failed to update subscription")
 		return InternalError(err)
 	}
@@ -173,7 +173,7 @@ func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error
 	// Force authenticated user
 	sub.Owner = user.ID
 
-	subscription, err := sr.SubscriptionService.Add(sub)
+	subscription, err := sr.SubscriptionService.Add(ctx.UserContext(), sub)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to add subscription")
 		return InternalError(err)
@@ -205,7 +205,7 @@ func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id int) error {
 	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
-	cur, err := sr.SubscriptionService.Get(id)
+	cur, err := sr.SubscriptionService.Get(ctx.UserContext(), id)
 	if err != nil {
 		return InternalError(err)
 	}
@@ -214,7 +214,7 @@ func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id int) error {
 		return Forbidden()
 	}
 
-	if err = sr.SubscriptionService.Delete(id); err != nil {
+	if err = sr.SubscriptionService.Delete(ctx.UserContext(), id); err != nil {
 		log.Error().Err(err).Msg("Failed to delete subscription")
 		return InternalError(err)
 	}

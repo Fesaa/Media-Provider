@@ -32,6 +32,7 @@ const (
 	SpanServicesTranslocoLoading = "services.transloco.loading"
 	SpanServicesCache            = "services.cache"
 	SpanServicesContentSearch    = "services.content.search"
+	SpanServicesSubscriptionTask = "services.subscription.task"
 
 	SpanApplicationStart = "application.start"
 	SpanUpdateVersion    = "application.start.version_update"

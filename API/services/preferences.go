@@ -72,7 +72,7 @@ func (p *preferencesService) Update(ctx context.Context, preference payload.Pref
 	}
 
 	if cur.SubscriptionRefreshHour != preference.SubscriptionRefreshHour {
-		if err = p.subscriptionService.UpdateTask(preference.SubscriptionRefreshHour); err != nil {
+		if err = p.subscriptionService.UpdateTask(ctx, preference.SubscriptionRefreshHour); err != nil {
 			return err
 		}
 	}
