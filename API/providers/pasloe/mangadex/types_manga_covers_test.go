@@ -19,7 +19,7 @@ var coverReq = payload.DownloadRequest{
 func TestManga_CoverSkipWrongFormatAndFirstAsDefault(t *testing.T) {
 	m := tempManga(t, coverReq, io.Discard, &mockRepository{
 		GetCoverImagesFunc: func(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error) {
-			return tempRepo(t, io.Discard).GetCoverImages(ctx, id, offset...)
+			return tempRepo(t, io.Discard, ctx).GetCoverImages(ctx, id, offset...)
 		},
 	})
 
@@ -32,7 +32,7 @@ func TestManga_CoverSkipWrongFormatAndFirstAsDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	factory := m.getCoverFactoryLang(covers)
+	factory := m.getCoverFactoryLang(t.Context(), covers)
 	if factory == nil {
 		t.Fatal("Cover factory not found")
 	}

@@ -1,6 +1,7 @@
 package nyaa
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -27,7 +28,7 @@ func (b *Builder) Logger() zerolog.Logger {
 	return b.log
 }
 
-func (b *Builder) Normalize(torrents []types.Torrent) []payload.Info {
+func (b *Builder) Normalize(ctx context.Context, torrents []types.Torrent) []payload.Info {
 	torrentsInfo := make([]payload.Info, len(torrents))
 	for i, t := range torrents {
 		torrentsInfo[i] = payload.Info{
@@ -50,7 +51,7 @@ func (b *Builder) Normalize(torrents []types.Torrent) []payload.Info {
 	return torrentsInfo
 }
 
-func (b *Builder) Transform(s payload.SearchRequest) nyaa.SearchOptions {
+func (b *Builder) Transform(ctx context.Context, s payload.SearchRequest) nyaa.SearchOptions {
 	so := nyaa.SearchOptions{}
 	so.Query = url.QueryEscape(s.Query)
 	so.Provider = "nyaa"
@@ -72,7 +73,7 @@ func (b *Builder) Transform(s payload.SearchRequest) nyaa.SearchOptions {
 	return so
 }
 
-func (b *Builder) Search(opts nyaa.SearchOptions) ([]types.Torrent, error) {
+func (b *Builder) Search(ctx context.Context, opts nyaa.SearchOptions) ([]types.Torrent, error) {
 	search, err := nyaa.Search(opts)
 	if err != nil {
 		return nil, err

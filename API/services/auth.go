@@ -8,18 +8,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gofiber/fiber/v2"
 	fiberutils "github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
@@ -72,6 +78,8 @@ type cookieAuthService struct {
 	log        zerolog.Logger
 	storage    CacheService
 
+	httpClient *http.Client
+
 	oidcSettings payload.OidcSettings
 	oidcProvider *oidc.Provider
 	oauth2Config *oauth2.Config
@@ -83,15 +91,22 @@ type cookieAuthService struct {
 type cookieAuthServiceParams struct {
 	dig.In
 
+	Ctx        context.Context
 	UnitOfWork *db.UnitOfWork
 	Service    SettingsService
 	Storage    CacheService
 	Config     *config.Config
 	Log        zerolog.Logger
+	HttpClient *menou.Client
 }
 
 func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, error) {
-	settings, err := params.Service.GetSettingsDto(context.Background())
+	ctx := oidc.ClientContext(params.Ctx, params.HttpClient.Client)
+	ctx, span := tracing.TracerServices.Start(ctx, tracing.SpanSetupService,
+		trace.WithAttributes(attribute.String("service.name", "CookieAuthService")))
+	defer span.End()
+
+	settings, err := params.Service.GetSettingsDto(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -101,22 +116,23 @@ func CookieAuthServiceProvider(params cookieAuthServiceParams) (AuthService, err
 		storage:        params.Storage,
 		cfg:            params.Config,
 		cookiesRefresh: utils.NewSafeMap[int, bool](),
+		httpClient:     params.HttpClient.Client,
 		log:            params.Log.With().Str("handler", "cookie-auth-service").Logger(),
 	}
 
-	if err = s.setupOIDC(settings); err != nil {
+	if err = s.setupOIDC(ctx, settings); err != nil {
 		return nil, fmt.Errorf("failed to setup OIDC: %w", err)
 	}
 
 	return s, nil
 }
 
-func (s *cookieAuthService) setupOIDC(settings payload.Settings) error {
+func (s *cookieAuthService) setupOIDC(ctx context.Context, settings payload.Settings) error {
 	if !settings.Oidc.Enabled() {
 		return nil
 	}
 
-	provider, err := oidc.NewProvider(context.Background(), settings.Oidc.Authority)
+	provider, err := oidc.NewProvider(ctx, settings.Oidc.Authority)
 	if err != nil {
 		return fmt.Errorf("failed to create OIDC provider: %w", err)
 	}
@@ -200,7 +216,7 @@ func (s *cookieAuthService) Logout(ctx *fiber.Ctx) string {
 	}
 
 	logoutUrl := s.getSessionLogoutUrl(ctx, token) // Must happen before we delete the tokens
-	if err := s.storage.Delete(token); err != nil {
+	if err := s.storage.DeleteWithContext(ctx.UserContext(), token); err != nil {
 		s.log.Warn().Err(err).Msg("failed to delete token during logout")
 	}
 
@@ -212,7 +228,7 @@ func (s *cookieAuthService) getSessionLogoutUrl(ctx *fiber.Ctx, token string) st
 		return ""
 	}
 
-	tokens, err := s.getOidcTokens(token)
+	tokens, err := s.getOidcTokens(ctx.UserContext(), token)
 	if err != nil {
 		s.log.Error().Err(err).Str("token", token).Msg("failed to get token")
 	}
@@ -328,9 +344,9 @@ func (s *cookieAuthService) HandleOIDCCallback(ctx *fiber.Ctx) error {
 	return nil
 }
 
-func (s *cookieAuthService) deleteToken(authenticationFaield bool, token string) {
-	if authenticationFaield {
-		if err := s.storage.Delete(token); err != nil {
+func (s *cookieAuthService) deleteToken(ctx context.Context, authenticationFailed bool, token string) {
+	if authenticationFailed {
+		if err := s.storage.DeleteWithContext(ctx, token); err != nil {
 			s.log.Warn().Err(err).Str("token", token).Msg("failed to delete token")
 		}
 	}
@@ -341,9 +357,9 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 	if token == "" {
 		return false
 	}
-	defer s.deleteToken(success, token)
+	defer s.deleteToken(ctx.UserContext(), success, token)
 
-	tokens, err := s.getOidcTokens(token)
+	tokens, err := s.getOidcTokens(ctx.UserContext(), token)
 	if err != nil {
 		return false
 	}
@@ -361,7 +377,7 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 		return false
 	}
 
-	SetInContext(ctx, UserKey, *user)
+	contextkey.SetInContext(ctx, contextkey.User, *user)
 
 	expiresSoon := tokens.ExpiresIn.Add(-30 * time.Second).Before(time.Now().UTC())
 	if !expiresSoon {
@@ -379,21 +395,24 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 	return err == nil
 }
 
-func (s *cookieAuthService) refreshToken(ctx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
+func (s *cookieAuthService) refreshToken(fiberCtx *fiber.Ctx, oldKey string, tokens *OIDCTokens) error {
+	ctx, span := tracing.TracerServices.Start(fiberCtx.UserContext(), tracing.SpanServicesOIDCTokenRefresh)
+	defer span.End()
+
 	s.cookiesRefresh.Set(tokens.UserId, true)
 	defer s.cookiesRefresh.Delete(tokens.UserId)
 
-	newTokens, err := s.refreshOIDCToken(ctx.UserContext(), tokens.UserId, tokens.RefreshToken)
+	newTokens, err := s.refreshOIDCToken(ctx, tokens.UserId, tokens.RefreshToken)
 	if err != nil {
-		s.Logout(ctx)
+		s.Logout(fiberCtx)
 		return fmt.Errorf("failed to refresh OIDC tokens: %w", err)
 	}
 
-	if err = s.storage.Delete(oldKey); err != nil {
+	if err = s.storage.DeleteWithContext(ctx, oldKey); err != nil {
 		s.log.Warn().Err(err).Msg("failed to delete old token")
 	}
 
-	if err = s.setCookies(ctx, newTokens); err != nil {
+	if err = s.setCookies(fiberCtx, newTokens); err != nil {
 		return fmt.Errorf("failed to set cookies: %w", err)
 	}
 
@@ -454,6 +473,9 @@ func (s *cookieAuthService) verifyOIDCToken(ctx context.Context, tokenString str
 }
 
 func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId int, refreshToken string) (*OIDCTokens, error) {
+	span := trace.SpanFromContext(ctx)
+
+	ctx = oidc.ClientContext(ctx, s.httpClient)
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
@@ -467,6 +489,7 @@ func (s *cookieAuthService) refreshOIDCToken(ctx context.Context, userId int, re
 
 	newToken, err := s.oauth2Config.TokenSource(ctx, token).Token()
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("failed to refresh token: %w", err)
 	}
 
@@ -502,8 +525,8 @@ func (s *cookieAuthService) setCookies(ctx *fiber.Ctx, tokens *OIDCTokens) error
 	return nil
 }
 
-func (s *cookieAuthService) getOidcTokens(token string) (*OIDCTokens, error) {
-	data, err := s.storage.Get(token)
+func (s *cookieAuthService) getOidcTokens(ctx context.Context, token string) (*OIDCTokens, error) {
+	data, err := s.storage.GetWithContext(ctx, token)
 	if err != nil {
 		return nil, err
 	}
@@ -527,7 +550,7 @@ func (s *cookieAuthService) storeOidcToken(ctx context.Context, tokens *OIDCToke
 		return "", err
 	}
 
-	if err = s.storage.Set(token, data, 30*24*time.Hour); err != nil {
+	if err = s.storage.SetWithContext(ctx, token, data, 30*24*time.Hour); err != nil {
 		return "", err
 	}
 
@@ -586,6 +609,6 @@ func (a *apiKeyAuthService) isAuthenticated(ctx *fiber.Ctx) (bool, error) {
 		return false, err
 	}
 
-	SetInContext(ctx, UserKey, *user)
+	contextkey.SetInContext(ctx, contextkey.User, *user)
 	return true, nil
 }

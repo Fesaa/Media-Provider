@@ -7,6 +7,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/spf13/afero"
 	"go.uber.org/dig"
@@ -33,7 +34,7 @@ func RegisterIoRoutes(ior ioRoutes) {
 }
 
 func (ior *ioRoutes) listDirs(ctx *fiber.Ctx, req payload.ListDirsRequest) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	settings, err := ior.SettingsService.GetSettingsDto(ctx.UserContext())
 	if err != nil {
@@ -63,7 +64,7 @@ type createDirRequest struct {
 }
 
 func (ior *ioRoutes) createDir(ctx *fiber.Ctx, req createDirRequest) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	if strings.Contains(req.NewDir, "..") || strings.Contains(req.BaseDir, "..") {
 		log.Warn().Str("newDir", req.NewDir).Str("baseDir", req.BaseDir).

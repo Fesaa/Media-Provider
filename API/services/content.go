@@ -1,12 +1,14 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 )
@@ -21,7 +23,7 @@ var (
 )
 
 type ContentService interface {
-	Search(payload.SearchRequest) ([]payload.Info, error)
+	Search(context.Context, payload.SearchRequest) ([]payload.Info, error)
 	Download(payload.DownloadRequest) error
 	DownloadSubscription(*models.Subscription, ...bool) error
 	Stop(payload.StopRequest) error
@@ -63,7 +65,7 @@ type Client interface {
 }
 
 type ProviderAdapter interface {
-	Search(payload.SearchRequest) ([]payload.Info, error)
+	Search(context.Context, payload.SearchRequest) ([]payload.Info, error)
 	DownloadMetadata() payload.DownloadMetadata
 	Client() Client
 }
@@ -103,7 +105,10 @@ func (s *contentService) DownloadMetadata(provider models.Provider) (payload.Dow
 	return adapter.DownloadMetadata(), nil
 }
 
-func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, error) {
+func (s *contentService) Search(ctx context.Context, req payload.SearchRequest) ([]payload.Info, error) {
+	ctx, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesContentSearch)
+	defer span.End()
+
 	s.log.Trace().Str("req", fmt.Sprintf("%+v", req)).Msg("searching")
 	start := time.Now()
 	defer func(start time.Time) {
@@ -125,7 +130,7 @@ func (s *contentService) Search(req payload.SearchRequest) ([]payload.Info, erro
 		}
 
 		searchStart := time.Now()
-		search, err := adapter.Search(req)
+		search, err := adapter.Search(ctx, req)
 		searchDuration := time.Since(searchStart)
 		if err != nil {
 			s.log.Warn().Any("provider", provider).Err(err).Msg("searching failed")

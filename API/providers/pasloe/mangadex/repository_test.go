@@ -1,6 +1,7 @@
 package mangadex
 
 import (
+	"context"
 	"io"
 	"testing"
 
@@ -18,11 +19,12 @@ import (
 
 var loadedTags = false
 
-func tempRepo(t *testing.T, w io.Writer) Repository {
+func tempRepo(t *testing.T, w io.Writer, ctx context.Context) Repository {
 	t.Helper()
-	return NewRepository(repositoryParams{
+	return NewRepository(repositoryParams{ //nolint: contextcheck
 		HttpClient: menou.DefaultClient,
 		Cache:      mock.Cache{},
+		Ctx:        ctx,
 	}, zerolog.New(w))
 }
 

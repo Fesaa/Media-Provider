@@ -1,6 +1,7 @@
 package yts
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,7 +29,7 @@ func (o SearchOptions) toURL() string {
 	return fmt.Sprintf(URL, url.QueryEscape(o.Query), o.Page, o.SortBy)
 }
 
-func (b *Builder) Search(options SearchOptions) (*SearchResult, error) {
+func (b *Builder) Search(ctx context.Context, options SearchOptions) (*SearchResult, error) {
 	uri := options.toURL()
 	req, err := b.httpClient.Get(uri)
 	if err != nil {

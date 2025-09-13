@@ -9,9 +9,12 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 )
 
@@ -35,9 +38,14 @@ type repositoryParams struct {
 
 	HttpClient *menou.Client `name:"http-retry"`
 	Cache      services.CacheService
+	Ctx        context.Context
 }
 
 func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
+	ctx, span := tracing.TracerServices.Start(params.Ctx, tracing.SetupRepository,
+		trace.WithAttributes(attribute.String("repository.name", "Mangadex")))
+	defer span.End()
+
 	r := &repository{
 		httpClient: params.HttpClient,
 		cache:      params.Cache,
@@ -45,39 +53,23 @@ func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 		tags:       utils.NewSafeMap[string, string](),
 	}
 
-	go func() {
-		if err := r.loadTags(); err != nil {
-			r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
-		} else {
-			r.log.Debug().Int("size", r.tags.Len()).Msg("loaded tags")
-		}
-	}()
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	if err := r.loadTags(ctx); err != nil {
+		r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
+	} else {
+		r.log.Debug().Int("size", r.tags.Len()).Msg("loaded tags")
+	}
 
 	return r
 }
 
-func (r *repository) loadTags() error {
+func (r *repository) loadTags(ctx context.Context) error {
 	tagURL := URL + "/manga/tag"
 
-	resp, err := r.httpClient.Get(tagURL)
-	if err != nil {
-		return fmt.Errorf("loadTags Get: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("loadTags status: %s", resp.Status)
-	}
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("loadTags readAll: %w", err)
-	}
-
 	var tagResponse TagResponse
-	err = json.Unmarshal(body, &tagResponse)
-	if err != nil {
-		return fmt.Errorf("loadTags unmarshal: %w", err)
+	if err := r.do(ctx, tagURL, &tagResponse, r.cache.DefaultExpiration()); err != nil {
+		return err
 	}
 
 	for _, tag := range tagResponse.Data {
@@ -178,8 +170,11 @@ func (r *repository) GetCoverImages(ctx context.Context, id string, offset ...in
 	return &searchResponse, nil
 }
 
-func (r *repository) do(ctx context.Context, url string, out any) error {
-	if v, err := r.cache.Get(url); err == nil && v != nil {
+func (r *repository) do(ctx context.Context, url string, out any, exp ...time.Duration) error {
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeCachedDownload)
+	defer span.End()
+
+	if v, err := r.cache.GetWithContext(ctx, url); err == nil && v != nil {
 		if err = json.Unmarshal(v, out); err == nil {
 			return nil
 		}
@@ -208,7 +203,7 @@ func (r *repository) do(ctx context.Context, url string, out any) error {
 		return err
 	}
 
-	if err = r.cache.Set(url, data, time.Minute*5); err != nil {
+	if err = r.cache.SetWithContext(ctx, url, data, utils.OrDefault(exp, time.Minute*5)); err != nil {
 		r.log.Debug().Err(err).Str("key", url).Msg("failed to set cache for outgoing mangadex request")
 	}
 	return nil

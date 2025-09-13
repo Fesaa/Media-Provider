@@ -6,6 +6,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
@@ -36,8 +37,8 @@ func RegisterNotificationRoutes(nr notificationRoutes) {
 }
 
 func (nr *notificationRoutes) all(ctx *fiber.Ctx, after time.Time) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
-	user := services.GetFromContext(ctx, services.UserKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 	notifications, err := nr.NotificationService.GetNotifications(ctx.UserContext(), user, after)
 
 	if err != nil {
@@ -49,7 +50,7 @@ func (nr *notificationRoutes) all(ctx *fiber.Ctx, after time.Time) error {
 }
 
 func (nr *notificationRoutes) recent(ctx *fiber.Ctx, limit int) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	amount := utils.Clamp(limit, 1, 10)
 	nots, err := nr.UnitOfWork.Notifications.Recent(ctx.UserContext(), amount, models.GroupContent)
@@ -62,7 +63,7 @@ func (nr *notificationRoutes) recent(ctx *fiber.Ctx, limit int) error {
 }
 
 func (nr *notificationRoutes) amount(ctx *fiber.Ctx) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	size, err := nr.UnitOfWork.Notifications.Unread(ctx.UserContext())
 	if err != nil {
@@ -73,31 +74,31 @@ func (nr *notificationRoutes) amount(ctx *fiber.Ctx) error {
 }
 
 func (nr *notificationRoutes) read(ctx *fiber.Ctx, id int) error {
-	user := services.GetFromContext(ctx, services.UserKey)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 	err := nr.NotificationService.MarkRead(ctx.UserContext(), user, id)
 	return nr.handleServiceError(ctx, err)
 }
 
 func (nr *notificationRoutes) readMany(ctx *fiber.Ctx, ids []int) error {
-	user := services.GetFromContext(ctx, services.UserKey)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 	err := nr.NotificationService.MarkReadMany(ctx.UserContext(), user, ids)
 	return nr.handleServiceError(ctx, err)
 }
 
 func (nr *notificationRoutes) unread(ctx *fiber.Ctx, id int) error {
-	user := services.GetFromContext(ctx, services.UserKey)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 	err := nr.NotificationService.MarkUnRead(ctx.UserContext(), user, id)
 	return nr.handleServiceError(ctx, err)
 }
 
 func (nr *notificationRoutes) deleteMany(ctx *fiber.Ctx, ids []int) error {
-	user := services.GetFromContext(ctx, services.UserKey)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 	err := nr.NotificationService.DeleteMany(ctx.UserContext(), user, ids)
 	return nr.handleServiceError(ctx, err)
 }
 
 func (nr *notificationRoutes) delete(ctx *fiber.Ctx, id int) error {
-	user := services.GetFromContext(ctx, services.UserKey)
+	user := contextkey.GetFromContext(ctx, contextkey.User)
 	err := nr.NotificationService.Delete(ctx.UserContext(), user, id)
 	return nr.handleServiceError(ctx, err)
 }

@@ -161,7 +161,6 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 		dto.Metadata.FirstInstalledVersion = setting.Value
 	case models.InstallDate:
 		dto.Metadata.InstallDate, err = time.Parse(time.DateTime, setting.Value)
-
 	}
 
 	return err

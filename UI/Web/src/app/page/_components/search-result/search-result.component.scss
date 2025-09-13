@@ -41,7 +41,7 @@
   font-size: 1.1rem;
   font-weight: bold;
   line-height: 1.4;
-  color: white;
+  color: var(--text-light) !important; // Wrapped in a element, need to make sure it doesn't override
   padding: 0.4rem 0.6rem;
   border-radius: 4px;
   white-space: nowrap;

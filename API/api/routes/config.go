@@ -5,6 +5,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/dig"
@@ -42,7 +43,7 @@ func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {
 }
 
 func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	dto, err := cr.SettingsService.GetSettingsDto(ctx.UserContext())
 	if err != nil {
@@ -57,7 +58,7 @@ func (cr *configRoutes) getOidcConfig(ctx *fiber.Ctx) error {
 }
 
 func (cr *configRoutes) updateConfig(ctx *fiber.Ctx, settings payload.Settings) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	if err := cr.SettingsService.UpdateSettingsDto(ctx.UserContext(), settings); err != nil {
 		log.Error().Err(err).Msg("failed to update config")

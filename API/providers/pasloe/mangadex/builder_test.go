@@ -113,7 +113,7 @@ func TestBuilder_Transform(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &Builder{}
-			if got := b.Transform(tt.args); !reflect.DeepEqual(got, tt.want) {
+			if got := b.Transform(t.Context(), tt.args); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Transform() = %v, want %v", got, tt.want)
 			}
 		})
@@ -123,7 +123,7 @@ func TestBuilder_Transform(t *testing.T) {
 func TestBuilder_NormalizeNil(t *testing.T) {
 	b := &Builder{}
 
-	got := b.Normalize(nil)
+	got := b.Normalize(t.Context(), nil)
 	if got == nil {
 		t.Fatal("Normalize(nil) returned nil")
 	}
@@ -139,6 +139,7 @@ func TestBuilder_Normalize(t *testing.T) {
 	repo := NewRepository(repositoryParams{
 		HttpClient: menou.DefaultClient,
 		Cache:      mock.Cache{},
+		Ctx:        t.Context(),
 	}, zerolog.New(io.Discard))
 
 	res, err := repo.SearchManga(t.Context(), SearchOptions{Query: RainbowsAfterStorms})
@@ -146,7 +147,7 @@ func TestBuilder_Normalize(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got := b.Normalize(res)
+	got := b.Normalize(t.Context(), res)
 
 	if len(got) != len(res.Data) {
 		t.Fatalf("Normalize(%+v): got %+v, expected %+v", res, got, res.Data)

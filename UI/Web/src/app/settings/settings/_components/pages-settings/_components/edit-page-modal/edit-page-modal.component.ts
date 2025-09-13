@@ -151,6 +151,8 @@ export class EditPageModalComponent implements OnInit {
       m.type = parseInt(m.type+'');
     });
     page.sortValue = this.page().sortValue;
+    page.providers = this.selectedProviders();
+
 
     const action$ = this.page().ID === 0
       ? this.pageService.new(page)

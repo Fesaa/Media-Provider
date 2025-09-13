@@ -120,6 +120,7 @@ func (u userRepository) GetByAPIKey(ctx context.Context, key string) (*models.Us
 }
 
 func (u userRepository) Create(ctx context.Context, user models.User) error {
+	user.ID = 0
 	return u.db.WithContext(ctx).Create(&user).Error
 }
 

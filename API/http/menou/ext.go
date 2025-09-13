@@ -9,6 +9,14 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+func (c *Client) GetWithContext(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return c.Do(req)
+}
+
 func (c *Client) WrapInDoc(ctx context.Context, url string, f ...func(*http.Request) error) (*goquery.Document, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

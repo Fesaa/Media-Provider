@@ -15,7 +15,7 @@ func TestBuilder_Transform(t *testing.T) {
 		Page:   1,
 	}
 
-	got := (&Builder{}).Transform(payload.SearchRequest{
+	got := (&Builder{}).Transform(t.Context(), payload.SearchRequest{
 		Provider: []models.Provider{models.YTS},
 		Query:    "We live in time",
 		Modifiers: map[string][]string{

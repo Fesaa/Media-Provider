@@ -39,7 +39,7 @@ func TestBuilder_Normalize(t *testing.T) {
 		},
 	}
 
-	got := b.Normalize(data)
+	got := b.Normalize(t.Context(), data)
 
 	if len(got) != len(data) {
 		t.Errorf("got %d results, want %d", len(got), len(data))
@@ -66,7 +66,7 @@ func TestBuilder_Transform(t *testing.T) {
 	b := &Builder{}
 
 	want := SearchOptions{Query: WebToonName}
-	got := b.Transform(payload.SearchRequest{
+	got := b.Transform(t.Context(), payload.SearchRequest{
 		Provider:  []models.Provider{models.WEBTOON},
 		Query:     WebToonName,
 		Modifiers: nil,

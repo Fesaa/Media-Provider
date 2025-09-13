@@ -20,7 +20,7 @@ func tempBuilder(w io.Writer) *Builder {
 func TestBuilder_Search(t *testing.T) {
 	b := tempBuilder(io.Discard)
 
-	data, err := b.Search(SearchOptions{
+	data, err := b.Search(t.Context(), SearchOptions{
 		Category: ALL,
 		Query:    "Modern Love S01",
 		Page:     1,
@@ -59,7 +59,7 @@ func TestBuilder_Search(t *testing.T) {
 func TestBuilder_Transform(t *testing.T) {
 	b := tempBuilder(io.Discard)
 
-	got := b.Transform(payload.SearchRequest{
+	got := b.Transform(t.Context(), payload.SearchRequest{
 		Provider:  []models.Provider{models.LIME},
 		Query:     "Modern Love S01",
 		Modifiers: nil,
@@ -75,7 +75,7 @@ func TestBuilder_Transform(t *testing.T) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 
-	got = b.Transform(payload.SearchRequest{
+	got = b.Transform(t.Context(), payload.SearchRequest{
 		Provider: []models.Provider{models.LIME},
 		Query:    "Modern Love S01",
 		Modifiers: map[string][]string{

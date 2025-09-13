@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Fesaa/Media-Provider/comicinfo"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/comicinfo"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -759,7 +759,7 @@ func TestReplaceCover(t *testing.T) {
 		},
 		GetChapterImagesFunc: func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
 			// They have a system with random servers
-			return tempRepo(t, io.Discard).GetChapterImages(ctx, id)
+			return tempRepo(t, io.Discard, ctx).GetChapterImages(ctx, id)
 		}})
 
 	select {
@@ -833,7 +833,7 @@ func TestReplaceCoverDestructionLover(t *testing.T) {
 		},
 		GetChapterImagesFunc: func(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
 			// They have a system with random servers
-			return tempRepo(t, io.Discard).GetChapterImages(ctx, id)
+			return tempRepo(t, io.Discard, ctx).GetChapterImages(ctx, id)
 		}})
 
 	select {

@@ -1,19 +1,24 @@
 package limetorrents
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 )
 
-const BaseUrl string = "https://www.limetorrents.lol"
-const SearchUrl string = BaseUrl + "/search/%s/%s/%d/"
+var (
+	BaseUrl   = utils.NonEmpty(config.LimeBaseUrl, "https://www.limetorrents.fun")
+	SearchUrl = BaseUrl + "/search/%s/%s/%d/"
+)
 
-func (b *Builder) Search(searchOptions SearchOptions) ([]SearchResult, error) {
+func (b *Builder) Search(ctx context.Context, searchOptions SearchOptions) ([]SearchResult, error) {
 	searchUrl := formatUrl(searchOptions)
 
 	doc, err := b.getSearch(searchUrl)

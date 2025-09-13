@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/dig"
@@ -24,7 +25,7 @@ func RegisterPreferencesRoutes(pr preferencesRoute) {
 }
 
 func (pr *preferencesRoute) get(ctx *fiber.Ctx) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	pref, err := pr.Pref.GetDto(ctx.UserContext())
 	if err != nil {
@@ -35,7 +36,7 @@ func (pr *preferencesRoute) get(ctx *fiber.Ctx) error {
 }
 
 func (pr *preferencesRoute) update(ctx *fiber.Ctx, pref payload.PreferencesDto) error {
-	log := services.GetFromContext(ctx, services.LoggerKey)
+	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 
 	if err := pr.Pref.Update(ctx.UserContext(), pref); err != nil {
 		log.Error().Err(err).Msg("Failed to update preferences")

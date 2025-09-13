@@ -52,6 +52,7 @@ func (p pagesRepository) GetPage(ctx context.Context, id int) (*models.Page, err
 }
 
 func (p pagesRepository) Create(ctx context.Context, page *models.Page) error {
+	page.ID = 0
 	return p.db.WithContext(ctx).Create(page).Error
 }
 

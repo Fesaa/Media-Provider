@@ -1,14 +1,16 @@
 package manual
 
 import (
+	"context"
+
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )
 
-func UpdateUserRoles(db *gorm.DB, log zerolog.Logger) error {
-	var defaultUser models.User
-	if err := db.Find(&defaultUser, "original = ?", true).Error; err != nil {
+func UpdateUserRoles(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+	defaultUser, err := getDefaultUser(ctx, db)
+	if err != nil {
 		return err
 	}
 
@@ -16,5 +18,5 @@ func UpdateUserRoles(db *gorm.DB, log zerolog.Logger) error {
 
 	defaultUser.Roles = models.AllRoles
 
-	return db.Save(&defaultUser).Error
+	return db.WithContext(ctx).Save(&defaultUser).Error
 }

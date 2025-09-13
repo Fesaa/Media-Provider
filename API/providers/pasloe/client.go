@@ -22,14 +22,16 @@ import (
 
 func New(s services.SettingsService, container *dig.Container, log zerolog.Logger,
 	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
-	unitOfWork *db.UnitOfWork, transLoco services.TranslocoService, fs afero.Afero,
+	unitOfWork *db.UnitOfWork, transLoco services.TranslocoService, fs afero.Afero, ctx context.Context,
 ) (core.Client, error) {
-	settings, err := s.GetSettingsDto(context.Background())
+	settings, err := s.GetSettingsDto(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	clientCtx, cancel := context.WithCancel(context.Background())
+	// The context above is the application start. Create a new one for pasloe
+	clientCtx := context.Background()
+	ctx, cancel := context.WithCancel(clientCtx) // Derived ctx for queues
 
 	return &client{
 		registry:   newRegistry(container),
@@ -44,9 +46,10 @@ func New(s services.SettingsService, container *dig.Container, log zerolog.Logge
 		content:        utils.NewSafeMap[string, core.Downloadable](),
 		providerQueues: utils.NewSafeMap[models.Provider, *ProviderQueue](),
 		rootDir:        settings.RootDir,
-		ctx:            clientCtx,
+		ctx:            ctx,
 		cancel:         cancel,
 		deletionWg:     &sync.WaitGroup{},
+		clientCtx:      clientCtx,
 	}, nil
 }
 
@@ -70,6 +73,8 @@ type client struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
 	deletionWg *sync.WaitGroup
+	// clientCtx is a child of ctx that should be used for operation made by the client
+	clientCtx context.Context
 }
 
 // getOrCreateProviderQueue returns the existing queue for the provider, or creates a new one if none found
@@ -198,7 +203,7 @@ func (c *client) Shutdown() error {
 }
 
 func (c *client) alwaysLog() bool {
-	p, err := c.unitOfWork.Preferences.GetPreferences(c.ctx)
+	p, err := c.unitOfWork.Preferences.GetPreferences(c.clientCtx)
 	if err != nil {
 		c.log.Error().Err(err).Msg("failed to retrieve preferences, falling back to default behaviour")
 		return false
@@ -232,7 +237,7 @@ func (c *client) logContentCompletion(content core.Downloadable) {
 		body += c.transLoco.GetTranslation("content-line", path.Base(newContent))
 	}
 
-	c.notifier(content.Request()).Notify(c.ctx, models.NewNotification().
+	c.notifier(content.Request()).Notify(c.clientCtx, models.NewNotification().
 		WithTitle(c.transLoco.GetTranslation("download-finished-title")).
 		WithSummary(summary).
 		WithBody(body).
@@ -421,7 +426,7 @@ func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...er
 	if joinedErr == nil {
 		return
 	}
-	c.notify.Notify(c.ctx, models.NewNotification().
+	c.notify.Notify(c.clientCtx, models.NewNotification().
 		WithTitle(c.transLoco.GetTranslation("cleanup-errors-title")).
 		WithSummary(c.transLoco.GetTranslation("cleanup-errors-summary", content.Title())).
 		WithBody(joinedErr.Error()).

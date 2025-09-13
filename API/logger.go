@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"os"
 	"path"
@@ -10,9 +11,17 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+var otelShutDown func(context.Context) error
 
 func LogProvider(cfg *config.Config) zerolog.Logger {
 	zerolog.DurationFieldUnit = time.Second
@@ -86,4 +95,50 @@ func consoleWriter() zerolog.ConsoleWriter {
 	cw.NoColor = true
 	cw.Out = io.MultiWriter(os.Stdout, fileWriter())
 	return cw
+}
+
+func setupOtel(log zerolog.Logger) error {
+	ctx := context.Background()
+	log = log.With().Str("handler", "otel").Logger()
+
+	if config.OtelEndpoint == "" {
+		log.Debug().Msg("No external Otel endpoint configured")
+		return nil
+	}
+
+	log.Debug().Str("endpoint", config.OtelEndpoint).Msg("Setting up Open Telemetry")
+
+	options := []otlptracehttp.Option{
+		otlptracehttp.WithEndpointURL(config.OtelEndpoint),
+		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
+	}
+
+	if config.Development && !strings.HasPrefix(config.OtelEndpoint, "https") {
+		options = append(options, otlptracehttp.WithInsecure())
+	}
+
+	if config.OtelAuth != "" {
+		options = append(options, otlptracehttp.WithHeaders(map[string]string{
+			"Authorization": config.OtelAuth,
+		}))
+	}
+
+	exporter, err := otlptracehttp.New(ctx, options...)
+	if err != nil {
+		return err
+	}
+
+	res, err := resource.New(ctx, resource.WithAttributes(semconv.ServiceName(metadata.Identifier)))
+	if err != nil {
+		return err
+	}
+
+	tp := trace.NewTracerProvider(
+		trace.WithBatcher(exporter),
+		trace.WithResource(res),
+	)
+
+	otel.SetTracerProvider(tp)
+	otelShutDown = tp.Shutdown
+	return nil
 }

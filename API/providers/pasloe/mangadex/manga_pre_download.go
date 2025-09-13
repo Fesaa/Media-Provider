@@ -42,7 +42,7 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 				m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
 				m.coverFactory = defaultCoverFactory
 			} else {
-				m.coverFactory = m.getCoverFactoryLang(covers)
+				m.coverFactory = m.getCoverFactoryLang(ctx, covers)
 			}
 		}
 	}()

@@ -1,12 +1,14 @@
 package mangadex
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 )
 
 type MangaCoverResponse Response[[]MangaCoverData]
@@ -37,9 +39,14 @@ type CoverFactory func(volume string) (*Cover, bool)
 
 var defaultCoverFactory CoverFactory = func(volume string) (*Cover, bool) { return nil, false }
 
-func (m *manga) getCoverBytes(fileName string) ([]byte, error) {
+func (m *manga) getCoverBytes(ctx context.Context, fileName string) ([]byte, error) {
 	url := fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", m.id, fileName)
-	resp, err := m.httpClient.Get(url)
+
+	if b, err := m.cache.GetWithContext(ctx, url); err == nil && b != nil {
+		return b, nil
+	}
+
+	resp, err := m.httpClient.GetWithContext(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -57,19 +64,27 @@ func (m *manga) getCoverBytes(fileName string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if err = m.cache.SetWithContext(ctx, url, data, m.cache.DefaultExpiration()); err != nil {
+		m.Log.Warn().Err(err).Msg("Failed to cache response")
+	}
+
 	return data, nil
 }
 
-func (m *manga) getCoverFactoryLang(coverResp *MangaCoverResponse) CoverFactory {
+func (m *manga) getCoverFactoryLang(ctx context.Context, coverResp *MangaCoverResponse) CoverFactory {
 	if len(coverResp.Data) == 0 {
 		return defaultCoverFactory
 	}
 
-	covers, firstCover, lastCover := m.processCovers(coverResp)
+	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeCovers)
+	defer span.End()
+
+	covers, firstCover, lastCover := m.processCovers(ctx, coverResp)
 	return m.constructCoverFactory(covers, firstCover, lastCover)
 }
 
-func (m *manga) processCovers(coverResp *MangaCoverResponse) (map[string]*Cover, *Cover, *Cover) {
+func (m *manga) processCovers(ctx context.Context, coverResp *MangaCoverResponse) (map[string]*Cover, *Cover, *Cover) {
 	covers := make(map[string]*Cover)
 	var firstCover, lastCover, firstCoverLang, lastCoverLang *Cover
 
@@ -79,7 +94,7 @@ func (m *manga) processCovers(coverResp *MangaCoverResponse) (map[string]*Cover,
 			continue
 		}
 
-		coverBytes, err := m.getCoverBytes(cover.Attributes.FileName)
+		coverBytes, err := m.getCoverBytes(ctx, cover.Attributes.FileName)
 		if err != nil {
 			m.Log.Err(err).Str("fileName", cover.Attributes.FileName).Msg("Failed to get cover")
 			continue

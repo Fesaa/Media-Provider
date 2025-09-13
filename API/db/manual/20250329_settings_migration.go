@@ -1,6 +1,7 @@
 package manual
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -9,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func MigrateSettings(db *gorm.DB, log zerolog.Logger) error {
+func MigrateSettings(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 	cfg, err := config.Load()
 	if err != nil {
 		return err
@@ -43,7 +44,7 @@ func MigrateSettings(db *gorm.DB, log zerolog.Logger) error {
 	}
 
 	for _, setting := range settings {
-		if err = db.Create(&setting).Error; err != nil {
+		if err = db.WithContext(ctx).Create(&setting).Error; err != nil {
 			return err
 		}
 	}

@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/internal/comicinfo"
 )
 
 type SearchOptions struct {

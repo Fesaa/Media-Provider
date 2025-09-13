@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"strconv"
@@ -21,26 +22,54 @@ var (
 	// SkipTagsOnFailure will skip tag writing if preferences fail to load
 	SkipTagsOnFailure = boolFeature("SKIP_TAGS_ON_FAILURE")
 
-	NoHttpLog      = boolFeature("NO_HTTP_LOG")
+	// NoHttpLog skip http altogether, regardless of log levels
+	NoHttpLog = boolFeature("NO_HTTP_LOG")
+	// ReducedHttpLog log success responses on trace instead of info
 	ReducedHttpLog = boolFeature("REDUCED_HTTP_LOG")
-	Development    = boolFeature("DEVELOPMENT") || boolFeature("DEV")
-	Docker         = boolFeature("DOCKER")
-	DatabaseDsn    = stringFeature("DATABASE_DSN")
-	Language       = stringFeature("LANGUAGE")
-	ConfigDir      = stringFeature("CONFIG_DIR")
-	ConfigFile     = stringFeature("CONFIG_FILE")
-	TrustedIps     = arrayFeature("TRUSTED_IPS", stringFeature)
+	// Development Enable the dev environment
+	Development = boolFeature("DEVELOPMENT") || boolFeature("DEV")
+	// Docker set when running in docker
+	Docker = boolFeature("DOCKER")
+	// DatabaseDsn override database dsn. Required to be sqlite still
+	DatabaseDsn = stringFeature("DATABASE_DSN")
+	// Language set the fallback language
+	Language = stringFeature("LANGUAGE")
+	// ConfigDir Media-Providers config directory
+	ConfigDir = stringFeature("CONFIG_DIR")
+	// ConfigFile Media-Providers config fle
+	ConfigFile = stringFeature("CONFIG_FILE")
+	// TrustedIps passed to fibers trusted ips. Defaults to [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7, ::1/128]
+	TrustedIps = arrayFeature("TRUSTED_IPS", []string{
+		"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7", "::1/128",
+	})
+	// LimeBaseUrl override the hardcoded lime url
+	LimeBaseUrl = stringFeature("LIME_BASE_URL")
+
+	// OtelEndpoint is the endpoint to report traces to. Passed with otlptracehttp.WithEndpointURL
+	OtelEndpoint = stringFeature("OTEL_ENDPOINT")
+	// OtelAuth is the value for the Authorization header
+	OtelAuth = stringFeature("OTEL_AUTH")
 )
 
-func arrayFeature[T any](key string, f func(string, ...string) T) []T {
-	val, ok := envOrValue(key, nil)
+func arrayFeature[T any](key string, orValue ...[]T) []T {
+	val, ok := os.LookupEnv(key)
 	if !ok {
+		if len(orValue) > 0 {
+			return orValue[0]
+		}
+
 		return []T{}
 	}
 
+	conv := utils.MustReturn(utils.GetConvertor[T]())
+
 	parts := strings.Split(val, ",")
 	return utils.MaybeMap(parts, func(s string) (T, bool) {
-		parsedValue := f(key, s)
+		parsedValue, err := conv(s)
+		if err != nil {
+			panic(fmt.Errorf("[Feature:%s] error converting %s to T: %w", key, s, err))
+		}
+
 		if reflect.ValueOf(parsedValue).IsZero() {
 			var zero T
 			return zero, false
@@ -50,18 +79,25 @@ func arrayFeature[T any](key string, f func(string, ...string) T) []T {
 	})
 }
 
-func boolFeature(key string, orValue ...string) bool {
-	val, ok := envOrValue(key, orValue)
+func boolFeature(key string, orValue ...bool) bool {
+	val, ok := os.LookupEnv(key)
 	if !ok {
+		if len(orValue) > 0 {
+			return orValue[0]
+		}
+
 		return false
 	}
 
 	return strings.ToLower(val) == "true"
 }
 
-func intFeature(key string, orValue ...string) int {
-	val, ok := envOrValue(key, orValue)
+func intFeature(key string, orValue ...int) int {
+	val, ok := os.LookupEnv(key)
 	if !ok {
+		if len(orValue) > 0 {
+			return orValue[0]
+		}
 		return 0
 	}
 
@@ -73,16 +109,12 @@ func intFeature(key string, orValue ...string) int {
 }
 
 func stringFeature(key string, orValue ...string) string {
-	val, ok := envOrValue(key, orValue)
+	val, ok := os.LookupEnv(key)
 	if !ok {
+		if len(orValue) > 0 {
+			return orValue[0]
+		}
 		return ""
 	}
 	return val
-}
-
-func envOrValue(key string, orValue []string) (string, bool) {
-	if len(orValue) > 0 {
-		return orValue[0], true
-	}
-	return os.LookupEnv(key)
 }

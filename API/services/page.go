@@ -49,9 +49,12 @@ func (ps *pageService) UpdateOrCreate(ctx context.Context, page *models.Page) er
 		Error
 	// Must return gorm.ErrRecordNotFound
 	if err == nil || !errors.Is(err, gorm.ErrRecordNotFound) {
-		ps.log.Error().Str("other", other.Title).Err(err).
-			Msg("Unwanted error, or found matching sort value, resetting to default value")
-		// While this should never happen, forcefully reset the sort is better than having the page be un-editable.
+		if page.ID > 0 {
+			// While this should never happen, forcefully reset the sort is better than having the page be un-editable.
+			ps.log.Error().Str("other", other.Title).Err(err).
+				Msg("Unwanted error, or found matching sort value, resetting to default value")
+		}
+
 		page.SortValue = DefaultPageSort
 	}
 
@@ -72,6 +75,10 @@ func (ps *pageService) UpdateOrCreate(ctx context.Context, page *models.Page) er
 		} else {
 			page.SortValue = 0 // First page being inserted
 		}
+	}
+
+	if page.ID < 0 {
+		return ps.unitOfWork.Pages.Create(ctx, page)
 	}
 
 	return ps.unitOfWork.Pages.Update(ctx, page)

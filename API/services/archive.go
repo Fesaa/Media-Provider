@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/Fesaa/Media-Provider/comicinfo"
+	"github.com/Fesaa/Media-Provider/internal/comicinfo"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
 )

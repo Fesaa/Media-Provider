@@ -39,6 +39,7 @@ func testClient(t *testing.T, options ...utils.Option[*client]) core.Client {
 	must(t, cont.Provide(utils.Identity(menou.DefaultClient)))
 	must(t, cont.Provide(utils.Identity(cont)))
 	must(t, cont.Provide(utils.Identity(zerolog.Nop())))
+	must(t, cont.Provide(utils.Identity(t.Context())))
 	must(t, cont.Provide(func() services.SignalRService { return &mock.SignalR{} }))
 	must(t, cont.Provide(func() services.NotificationService { return &mock.Notifications{} }))
 	must(t, cont.Provide(func() services.TranslocoService { return &mock.Transloco{} }))

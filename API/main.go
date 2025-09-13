@@ -12,6 +12,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
@@ -23,6 +24,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 )
 
@@ -37,6 +39,12 @@ func main() {
 	utils.Must(c.Provide(services.ValidatorProvider))
 	utils.Must(c.Provide(utils.Identity(mapper.NewMapper())))
 	utils.Must(c.Invoke(validateConfig))
+	utils.Must(c.Invoke(setupOtel))
+
+	ctx := context.Background()
+	// span.End is called in startApp
+	ctx, _ = tracing.TracerMain.Start(ctx, tracing.SpanApplicationStart) //nolint: spancheck
+	utils.Must(c.Provide(utils.Identity(ctx)))
 
 	utils.Must(c.Provide(db.DatabaseProvider))
 	utils.Must(c.Provide(db.NewUnitOfWork))
@@ -75,7 +83,10 @@ func main() {
 	utils.Must(c.Invoke(startApp))
 }
 
-func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.Config) {
+func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.Config, ctx context.Context) {
+	span := trace.SpanFromContext(ctx)
+	span.End()
+
 	log.WithLevel(zerolog.NoLevel).Str("handler", "core").
 		Str("Version", metadata.Version.String()).
 		Str("CommitHash", metadata.CommitHash).
@@ -105,6 +116,12 @@ func graceFullShutdown(app *fiber.App, log zerolog.Logger, pasloe core.Client, y
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
+
+	if otelShutDown != nil {
+		if err := otelShutDown(ctx); err != nil {
+			log.Error().Str("handler", "core").Err(err).Msg("Failed to shut down Open Telemetry")
+		}
+	}
 
 	var wg sync.WaitGroup
 

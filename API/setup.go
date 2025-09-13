@@ -13,12 +13,15 @@ import (
 	"github.com/Fesaa/Media-Provider/api"
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
+	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/contrib/fiberzerolog"
+	"github.com/gofiber/contrib/otelfiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -30,6 +33,8 @@ import (
 	fiberutils "github.com/gofiber/fiber/v2/utils"
 	"github.com/rs/zerolog"
 	"github.com/spf13/afero"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 )
 
@@ -60,13 +65,14 @@ func applicationProvider(params appParams) *fiber.App {
 	}
 
 	app.
+		Use(otelfiber.Middleware(otelfiber.WithServerName(metadata.Identifier))).
 		Use(limiter.New(limiter.Config{
 			Max:               1000,
 			Expiration:        time.Minute,
 			LimiterMiddleware: limiter.SlidingWindow{},
 		})).
 		Use(requestid.New(requestid.Config{
-			ContextKey: services.RequestIdKey.Value(),
+			ContextKey: contextkey.RequestId.Value(),
 			Generator:  fiberutils.UUIDv4,
 		})).
 		Use(encryptcookie.New(encryptcookie.Config{
@@ -121,15 +127,8 @@ func applicationProvider(params appParams) *fiber.App {
 		}))
 	}
 
-	app.Use(func(c *fiber.Ctx) error {
-		services.SetInContext(c, services.ServiceProviderKey, params.Container)
-
-		requestId := services.GetFromContext(c, services.RequestIdKey)
-		log := httpLogger.With().Str(services.RequestIdKey.Value(), requestId).Logger()
-		services.SetInContext(c, services.LoggerKey, log)
-
-		return c.Next()
-	})
+	app.Use(contextkey.Middleware(params.Container, httpLogger)).
+		Use(MiddlewareTracingSetRequestId)
 
 	scope := c.Scope("init::api")
 	utils.Must(scope.Provide(utils.Identity(app.Group(baseUrl))))
@@ -149,10 +148,13 @@ func registerCallback(app *fiber.App) {
 	})
 }
 
-func updateInstalledVersion(ss services.SettingsService, log zerolog.Logger) error {
+func updateInstalledVersion(ss services.SettingsService, log zerolog.Logger, ctx context.Context) error {
+	ctx, span := tracing.TracerMain.Start(ctx, tracing.SpanUpdateVersion)
+	defer span.End()
+
 	log = log.With().Str("handler", "core").Logger()
 
-	settings, err := ss.GetSettingsDto(context.Background())
+	settings, err := ss.GetSettingsDto(ctx)
 	if err != nil {
 		return err
 	}
@@ -170,7 +172,7 @@ func updateInstalledVersion(ss services.SettingsService, log zerolog.Logger) err
 			Str("actualVersion", metadata.Version.String()).
 			Msg("Installed version is newer, want is going on? Bringing back to sync!")
 	}
-	return ss.UpdateCurrentVersion(context.Background())
+	return ss.UpdateCurrentVersion(ctx)
 }
 
 func updateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero) error {
@@ -222,4 +224,13 @@ func updateBaseUrlInIndex(cfg *config.Config, log zerolog.Logger, fs afero.Afero
 	}
 
 	return nil
+}
+
+func MiddlewareTracingSetRequestId(c *fiber.Ctx) error {
+	span := trace.SpanFromContext(c.UserContext())
+	requestId := contextkey.GetFromContext(c, contextkey.RequestId)
+
+	span.SetAttributes(attribute.String("request.id", requestId))
+
+	return c.Next()
 }
