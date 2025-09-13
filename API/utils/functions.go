@@ -147,6 +147,13 @@ func MustReturn[T any](result T, err error) T {
 	return result
 }
 
+func MustReturn2[T any](_ any, result T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 func MustHave[T any](result T, ok bool) T {
 	if !ok {
 		panic("MustHave[T] was not true")

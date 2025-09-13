@@ -108,11 +108,22 @@ func setupOtel(log zerolog.Logger) error {
 
 	log.Debug().Str("endpoint", config.OtelEndpoint).Msg("Setting up Open Telemetry")
 
-	exporter, err := otlptracehttp.New(ctx,
+	options := []otlptracehttp.Option{
 		otlptracehttp.WithEndpointURL(config.OtelEndpoint),
 		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
-		otlptracehttp.WithInsecure(),
-	)
+	}
+
+	if config.Development && !strings.HasPrefix(config.OtelEndpoint, "https") {
+		options = append(options, otlptracehttp.WithInsecure())
+	}
+
+	if config.OtelAuth != "" {
+		options = append(options, otlptracehttp.WithHeaders(map[string]string{
+			"Authorization": config.OtelAuth,
+		}))
+	}
+
+	exporter, err := otlptracehttp.New(ctx, options...)
 	if err != nil {
 		return err
 	}

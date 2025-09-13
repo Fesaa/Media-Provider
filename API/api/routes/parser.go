@@ -2,8 +2,6 @@ package routes
 
 import (
 	"fmt"
-	"strconv"
-	"time"
 
 	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
@@ -128,7 +126,7 @@ func newIdPathParam() param[int] {
 }
 
 func withParam[T any](param param[T], handler func(*fiber.Ctx, T) error) fiber.Handler {
-	convFunc := utils.MustReturn(getConvertor[T]())
+	convFunc := utils.MustReturn(utils.GetConvertor[T]())
 
 	return func(c *fiber.Ctx) error {
 		paramValue := param.GetValue(c)
@@ -156,8 +154,8 @@ func convert[T any](v string, def T, conv func(string) (T, error)) (T, error) {
 func withParam2[T1, T2 any](
 	param1 param[T1], param2 param[T2],
 	handler func(*fiber.Ctx, T1, T2) error) fiber.Handler {
-	convFunc1 := utils.MustReturn(getConvertor[T1]())
-	convFunc2 := utils.MustReturn(getConvertor[T2]())
+	convFunc1 := utils.MustReturn(utils.GetConvertor[T1]())
+	convFunc2 := utils.MustReturn(utils.GetConvertor[T2]())
 
 	return func(c *fiber.Ctx) error {
 		paramValue1 := param1.GetValue(c)
@@ -187,9 +185,9 @@ func withParam2[T1, T2 any](
 func withParam3[T1, T2, T3 any](
 	param1 param[T1], param2 param[T2], param3 param[T3],
 	handler func(*fiber.Ctx, T1, T2, T3) error) fiber.Handler {
-	convFunc1 := utils.MustReturn(getConvertor[T1]())
-	convFunc2 := utils.MustReturn(getConvertor[T2]())
-	convFunc3 := utils.MustReturn(getConvertor[T3]())
+	convFunc1 := utils.MustReturn(utils.GetConvertor[T1]())
+	convFunc2 := utils.MustReturn(utils.GetConvertor[T2]())
+	convFunc3 := utils.MustReturn(utils.GetConvertor[T3]())
 
 	return func(c *fiber.Ctx) error {
 		paramValue1 := param1.GetValue(c)
@@ -224,89 +222,4 @@ func withParam3[T1, T2, T3 any](
 
 		return handler(c, value1, value2, value3)
 	}
-}
-
-func getConvertor[T any]() (func(string) (T, error), error) {
-	var zero T
-
-	switch any(zero).(type) {
-	case int:
-		return func(s string) (T, error) {
-			val, err := strconv.Atoi(s)
-			if err != nil {
-				return zero, err
-			}
-			return any(val).(T), nil
-		}, nil
-	case int64:
-		return func(s string) (T, error) {
-			val, err := strconv.ParseInt(s, 10, 64)
-			if err != nil {
-				return zero, err
-			}
-			return any(val).(T), nil
-		}, nil
-	case int32:
-		return func(s string) (T, error) {
-			val, err := strconv.ParseInt(s, 10, 32)
-			if err != nil {
-				return zero, err
-			}
-			return any(int32(val)).(T), nil
-		}, nil
-	case uint:
-		return func(s string) (T, error) {
-			val, err := strconv.ParseUint(s, 10, 0)
-			if err != nil {
-				return zero, err
-			}
-			return any(int(val)).(T), nil
-		}, nil
-	case uint64:
-		return func(s string) (T, error) {
-			val, err := strconv.ParseUint(s, 10, 64)
-			if err != nil {
-				return zero, err
-			}
-			return any(val).(T), nil
-		}, nil
-	case float32:
-		return func(s string) (T, error) {
-			val, err := strconv.ParseFloat(s, 32)
-			if err != nil {
-				return zero, err
-			}
-			return any(float32(val)).(T), nil
-		}, nil
-	case float64:
-		return func(s string) (T, error) {
-			val, err := strconv.ParseFloat(s, 64)
-			if err != nil {
-				return zero, err
-			}
-			return any(val).(T), nil
-		}, nil
-	case bool:
-		return func(s string) (T, error) {
-			val, err := strconv.ParseBool(s)
-			if err != nil {
-				return zero, err
-			}
-			return any(val).(T), nil
-		}, nil
-	case string:
-		return func(s string) (T, error) {
-			return any(s).(T), nil
-		}, nil
-	case time.Time:
-		return func(s string) (T, error) {
-			t, err := time.Parse(time.RFC3339, s)
-			if err != nil {
-				return zero, err
-			}
-			return any(t).(T), nil
-		}, nil
-	}
-
-	return nil, fmt.Errorf("unknown type %T", any(zero))
 }
