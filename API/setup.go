@@ -65,7 +65,6 @@ func applicationProvider(params appParams) *fiber.App {
 	}
 
 	app.
-		Use(otelfiber.Middleware(otelfiber.WithServerName(metadata.Identifier))).
 		Use(limiter.New(limiter.Config{
 			Max:               1000,
 			Expiration:        time.Minute,
@@ -96,10 +95,10 @@ func applicationProvider(params appParams) *fiber.App {
 	app.Use(prometheus.Middleware)
 
 	httpLogger := params.Log.With().Str("handler", "http").Logger()
-	if !config.NoHttpLog {
-		dontLog := []string{"/", "/api/metrics"}
-		dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2", ".json"}
+	dontLog := []string{"/", "/api/metrics"}
+	dontLogExt := []string{".js", ".html", ".css", ".svg", ".woff2", ".json"}
 
+	if !config.NoHttpLog {
 		app.Use(fiberzerolog.New(fiberzerolog.Config{
 			Logger: &httpLogger,
 			Next: func(c *fiber.Ctx) bool {
@@ -127,7 +126,13 @@ func applicationProvider(params appParams) *fiber.App {
 		}))
 	}
 
-	app.Use(contextkey.Middleware(params.Container, httpLogger)).
+	app.Use(otelfiber.Middleware(
+		otelfiber.WithServerName(metadata.Identifier),
+		otelfiber.WithNext(func(ctx *fiber.Ctx) bool {
+			return slices.Contains(dontLogExt, path.Ext(ctx.Path()))
+		}),
+	)).
+		Use(contextkey.Middleware(params.Container, httpLogger)).
 		Use(MiddlewareTracingSetRequestId)
 
 	scope := c.Scope("init::api")
