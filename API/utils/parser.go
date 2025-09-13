@@ -9,7 +9,7 @@ import (
 
 // GetConvertor returns a method that converse a string to the desired type. Not all types are supported, check
 // implementation details
-func GetConvertor[T any]() (func(string) (T, error), error) {
+func GetConvertor[T any]() (func(string) (T, error), error) { //nolint: gocognit
 	var zero T
 
 	switch any(zero).(type) {

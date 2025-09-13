@@ -26,7 +26,7 @@ var (
 	NoHttpLog = boolFeature("NO_HTTP_LOG")
 	// ReducedHttpLog log success responses on trace instead of info
 	ReducedHttpLog = boolFeature("REDUCED_HTTP_LOG")
-	// Development Enable the dev enviorment
+	// Development Enable the dev environment
 	Development = boolFeature("DEVELOPMENT") || boolFeature("DEV")
 	// Docker set when running in docker
 	Docker = boolFeature("DOCKER")
