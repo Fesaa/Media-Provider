@@ -315,6 +315,9 @@
           "summary": "Content marked as ready for download, will begin as soon as possible"
         }
       }
+    },
+    "manual-add": {
+      "title": "Manually add content"
     }
   },
 

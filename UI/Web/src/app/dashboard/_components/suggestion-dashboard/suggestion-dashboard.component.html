@@ -10,15 +10,22 @@
   </div>
 
   <ul class="d-flex flex-column align-items-start justify-content-start gap-2 mt-2 list-unstyled">
-    @for (page of pageService.pages(); track $index) {
+    @for (option of options(); track $index) {
       <li class="d-flex align-items-center text-center gap-2">
         <i class="fa fa-angles-right"></i>
-        <a
-          [routerLink]="['/page']"
-          [queryParams]="{ index: page.ID }"
-        >
-          {{ page.title }}
-        </a>
+
+        @if (option.action) {
+          <a (click)="option.action()">
+            {{ option.title }}
+          </a>
+        } @else {
+          <a
+            [routerLink]="['/page']"
+            [queryParams]="{ index: option.ID }"
+          >
+            {{ option.title }}
+          </a>
+        }
       </li>
     } @empty {
       <li class="d-flex align-items-center text-center gap-2">

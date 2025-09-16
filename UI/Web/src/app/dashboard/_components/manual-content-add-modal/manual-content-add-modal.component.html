@@ -1,0 +1,22 @@
+<ng-container *transloco="let t;prefix:'dashboard.manual-add'">
+  <div class="modal-container">
+
+    <div class="modal-header">
+      <h1>{{ t('title') }}</h1>
+    </div>
+
+    <div class="modal-body scrollable-modal">
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="close()">
+        {{t('cancel')}}
+      </button>
+      <button class="btn btn-secondary" (click)="submit()">
+        {{t('set-filter')}}
+      </button>
+    </div>
+  </div>
+
+</ng-container>
