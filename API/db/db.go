@@ -2,7 +2,9 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"path"
+	"strings"
 
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/manual"
@@ -13,16 +15,18 @@ import (
 	"github.com/glebarez/sqlite"
 	"github.com/rs/zerolog"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 func DatabaseProvider(ctx context.Context, log zerolog.Logger) (*gorm.DB, error) {
+	log = log.With().Str("handler", "db").Logger()
+
 	ctx, span := mptracing.TracerDb.Start(ctx, mptracing.SpanSetupDb)
 	defer span.End()
 
-	dsn := utils.OrElse(config.DatabaseDsn, path.Join(config.Dir, "media-provider.db"))
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(getDialector(log), &gorm.Config{
 		Logger:               gormLogger(log),
 		FullSaveAssociations: true,
 	})
@@ -34,7 +38,7 @@ func DatabaseProvider(ctx context.Context, log zerolog.Logger) (*gorm.DB, error)
 		tracing.WithRecordStackTrace(),
 		tracing.WithoutQueryVariables(),
 		tracing.WithAttributes(semconv.ServiceName(metadata.Identifier)),
-		tracing.WithDBSystem("sqlite"),
+		tracing.WithDBSystem(config.DbProvider),
 	))
 	if err != nil {
 		return nil, err
@@ -65,4 +69,18 @@ func migrate(ctx context.Context, db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func getDialector(log zerolog.Logger) gorm.Dialector {
+	dsn := utils.OrElse(config.DatabaseDsn, path.Join(config.Dir, "media-provider.db"))
+
+	log.Debug().Str("dialect", config.DbProvider).Msg("Using dialect")
+	switch strings.ToLower(config.DbProvider) {
+	case "sqlite":
+		return sqlite.Open(dsn)
+	case "postgres":
+		return postgres.Open(dsn)
+	}
+
+	panic(fmt.Errorf("unknown database provider: %s", config.DbProvider))
 }
