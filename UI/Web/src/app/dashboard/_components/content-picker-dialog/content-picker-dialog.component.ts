@@ -150,7 +150,7 @@ export class ContentPickerDialogComponent implements OnInit {
         this.toastService.successLoco(
           'dashboard.content-picker.toasts.success',
           {},
-          { amount: ids.length, title: this.info.name }
+          { amount: ids.length, title: this.info().name }
         );
       },
       error: err => {

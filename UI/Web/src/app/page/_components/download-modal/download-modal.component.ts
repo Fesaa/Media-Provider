@@ -40,7 +40,8 @@ export class DownloadModalComponent implements OnInit {
   private readonly modal = inject(NgbActiveModal);
 
   info = model.required<SearchInfo>();
-  page = model.required<Page>();
+  defaultDir = model.required<string>();
+  rootDir = model.required<string>();
   metadata = model.required<DownloadMetadata>();
 
   generalDef = computed(() =>
@@ -54,17 +55,14 @@ export class DownloadModalComponent implements OnInit {
 
   ngOnInit(): void {
     const info = this.info();
-    const page = this.page();
     const metadata = this.metadata();
-
-    const defaultDir = page.dirs.length === 0 ? '' : page.dirs[0];
 
     // Not used in form, but required in download request
     this.downloadForm.addControl('id', new FormControl(info.InfoHash));
     this.downloadForm.addControl('provider', new FormControl(info.Provider));
     this.downloadForm.addControl('title', new FormControl(info.Name, []));
 
-    this.downloadForm.addControl('dir', new FormControl(defaultDir, [Validators.required]));
+    this.downloadForm.addControl('dir', new FormControl(this.defaultDir(), [Validators.required]));
 
     const downloadMetadata = new FormGroup<any>({
       startImmediately: new FormControl(true),
@@ -122,7 +120,7 @@ export class DownloadModalComponent implements OnInit {
   }
 
   async pickDirectory() {
-    const dir = await this.modalService.getDirectory(this.page().customRootDir, {
+    const dir = await this.modalService.getDirectory(this.rootDir(), {
       copy: true,
       filter: true,
       create: true,

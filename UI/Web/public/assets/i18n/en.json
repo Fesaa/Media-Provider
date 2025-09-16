@@ -89,6 +89,10 @@
       "allow_non_matching_scanlation_group": {
         "label": "Scanlation group fallback",
         "tooltip": "Use chapters from different scanlation groups, default to true"
+      },
+      "assign_empty_volumes": {
+        "label": "Assign empty volumes",
+        "tooltip": "Assign volume 1 to chapters without a volume, if at least one other volume is present"
       }
     }
   },
@@ -311,6 +315,17 @@
           "summary": "Content marked as ready for download, will begin as soon as possible"
         }
       }
+    },
+    "manual-add": {
+      "title": "Manually add content",
+      "id-label": "Content id",
+      "id-tooltip": "Torrent hash, or site specific id",
+      "name-label": "Name",
+      "name-tooltip": "",
+      "provider-label": "Provider",
+      "provider-tooltip": "Torrent providers are interchangeable here, other need to be correct",
+      "cancel": "cancel",
+      "next": "Next"
     }
   },
 

@@ -22,6 +22,9 @@ import {BadgeComponent} from "../shared/_component/badge/badge.component";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {ContentPickerDialogComponent} from "./_components/content-picker-dialog/content-picker-dialog.component";
 import {DefaultModalOptions} from "../_models/default-modal-options";
+import {
+  ManualContentAddModalComponent
+} from "./_components/manual-content-add-modal/manual-content-add-modal.component";
 
 @Component({
   selector: 'app-dashboard',
@@ -199,5 +202,9 @@ export class DashboardComponent implements OnInit {
 
   itemTrackBy(idx: number, item: InfoStat): string {
     return `${item.id}`
+  }
+
+  manualAdd() {
+    this.modalService.open(ManualContentAddModalComponent, DefaultModalOptions);
   }
 }

@@ -27,7 +27,7 @@
                           <button class="btn btn-primary me-2" (click)="pickDirectory()">
                             <i class="fa fa-folder"></i>
                           </button>
-                          <span>{{control.value}}</span>
+                          <span>{{control.value | defaultValue}}</span>
                         </div>
                       </ng-template>
                       <ng-template #edit>
@@ -84,7 +84,7 @@
       <button type="button" class="btn btn-secondary" (click)="close()">
         {{t('cancel')}}
       </button>
-      <button type="button" class="btn btn-primary" (click)="download()">
+      <button type="button" class="btn btn-primary" (click)="download()" [disabled]="!downloadForm.valid">
         <span>{{ t('download')}}</span>
       </button>
     </div>

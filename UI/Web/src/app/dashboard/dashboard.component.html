@@ -7,6 +7,13 @@
       <app-recently-downloaded></app-recently-downloaded>
     } @else {
       <div class="pt-1 pt-md-3 m-3">
+
+        <div class="d-flex flex-grow-1 justify-content-end mb-2">
+          <button class="btn btn-secondary" (click)="manualAdd()">
+            {{t('manual-add.title')}}
+          </button>
+        </div>
+
         <app-table
           [items]="dashboardItems()"
           [trackByIdFunc]="itemTrackBy"

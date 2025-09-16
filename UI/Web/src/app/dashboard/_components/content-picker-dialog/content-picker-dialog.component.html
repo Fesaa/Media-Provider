@@ -78,7 +78,7 @@
       </div>
     </div>
 
-    <label class="form-check-label flex-grow-1 mb-0 cursor-pointer">
+    <label class="form-check-label flex-grow-1 mb-0 cursor-pointer" (click)="toggle(data); $event.stopPropagation()">
       <div class="d-flex align-items-center justify-content-between w-100">
         <div class="d-flex align-items-center gap-2">
           @if (depth > 0) {

@@ -55,6 +55,11 @@ func (b *Builder) Transform(ctx context.Context, request payload.SearchRequest) 
 		so.Genres = genres
 	}
 
+	ignoredGenres, ok := request.Modifiers[IgnoredGenresTag]
+	if ok {
+		so.IgnoredGenres = ignoredGenres
+	}
+
 	origLang, ok := request.Modifiers[OriginalLangTag]
 	if ok {
 		so.OriginalLang = origLang
@@ -99,6 +104,11 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Key:      core.TitleOverride,
 				Advanced: true,
 				FormType: payload.TEXT,
+			},
+			{
+				Key:      core.AssignEmptyVolumes,
+				Advanced: true,
+				FormType: payload.SWITCH,
 			},
 		},
 	}
