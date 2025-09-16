@@ -317,7 +317,15 @@
       }
     },
     "manual-add": {
-      "title": "Manually add content"
+      "title": "Manually add content",
+      "id-label": "Content id",
+      "id-tooltip": "Torrent hash, or site specific id",
+      "name-label": "Name",
+      "name-tooltip": "",
+      "provider-label": "Provider",
+      "provider-tooltip": "Torrent providers are interchangeable here, other need to be correct",
+      "cancel": "cancel",
+      "next": "Next"
     }
   },
 
