@@ -122,6 +122,7 @@ func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto pa
 	case models.InstalledVersion:
 	case models.FirstInstalledVersion:
 	case models.InstallDate:
+	case models.DbDriver:
 		break // Do not update
 	}
 
@@ -161,6 +162,8 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 		dto.Metadata.FirstInstalledVersion = setting.Value
 	case models.InstallDate:
 		dto.Metadata.InstallDate, err = time.Parse(time.DateTime, setting.Value)
+	case models.DbDriver:
+		break // Do not use
 	}
 
 	return err

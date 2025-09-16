@@ -45,15 +45,27 @@ func DatabaseProvider(ctx context.Context, log zerolog.Logger) (*gorm.DB, error)
 	}
 
 	if err = migrate(ctx, db); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("migrate: %w", err)
+	}
+
+	if err = cleanup(log, db); err != nil {
+		return nil, fmt.Errorf("cleanup: %w", err)
+	}
+
+	if err = migrateDrivers(ctx, log, db); err != nil {
+		return nil, fmt.Errorf("migrateDrivers: %w", err)
+	}
+
+	if err = setDbDriver(ctx, db); err != nil {
+		return nil, fmt.Errorf("setDbDriver: %w", err)
 	}
 
 	if err = manualMigration(ctx, db, log.With().Str("handler", "migrations").Logger()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("manualMigration: %w", err)
 	}
 
 	if err = manual.SyncSettings(db.WithContext(ctx), log.With().Str("handler", "settings").Logger()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("manualSyncSettings: %w", err)
 	}
 
 	return db, nil

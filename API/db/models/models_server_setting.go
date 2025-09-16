@@ -18,6 +18,7 @@ const (
 	InstalledVersion
 	FirstInstalledVersion
 	InstallDate
+	DbDriver
 )
 
 type ServerSetting struct {
