@@ -105,6 +105,11 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Advanced: true,
 				FormType: payload.TEXT,
 			},
+			{
+				Key:      core.AssignEmptyVolumes,
+				Advanced: true,
+				FormType: payload.SWITCH,
+			},
 		},
 	}
 }

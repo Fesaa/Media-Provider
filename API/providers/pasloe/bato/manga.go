@@ -75,6 +75,30 @@ func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, err
 	return m.repository.ChapterImages(ctx, chapter.Id)
 }
 
+func (m *manga) CustomizeAllChapters() []Chapter {
+	assignEmptyVolumes := m.Req.GetBool(core.AssignEmptyVolumes, false)
+	if !assignEmptyVolumes {
+		return m.SeriesInfo.Chapters
+	}
+
+	hasVolumes := utils.Any(m.SeriesInfo.Chapters, func(chapter Chapter) bool {
+		return chapter.Volume != ""
+	})
+
+	if !hasVolumes {
+		return m.SeriesInfo.Chapters
+	}
+
+	mappedChapters := utils.Map(m.SeriesInfo.Chapters, func(chapter Chapter) Chapter {
+		if chapter.Volume == "" && chapter.Chapter != "" {
+			chapter.Volume = "1"
+		}
+		return chapter
+	})
+
+	return mappedChapters
+}
+
 func (m *manga) Provider() models.Provider {
 	return models.BATO
 }
