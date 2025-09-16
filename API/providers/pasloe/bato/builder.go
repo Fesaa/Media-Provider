@@ -55,6 +55,11 @@ func (b *Builder) Transform(ctx context.Context, request payload.SearchRequest) 
 		so.Genres = genres
 	}
 
+	ignoredGenres, ok := request.Modifiers[IgnoredGenresTag]
+	if ok {
+		so.IgnoredGenres = ignoredGenres
+	}
+
 	origLang, ok := request.Modifiers[OriginalLangTag]
 	if ok {
 		so.OriginalLang = origLang

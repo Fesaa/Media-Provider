@@ -10,6 +10,7 @@ import (
 type SearchOptions struct {
 	Query              string
 	Genres             []string
+	IgnoredGenres      []string
 	OriginalLang       []string
 	TranslatedLang     []string
 	OriginalWorkStatus []Publication

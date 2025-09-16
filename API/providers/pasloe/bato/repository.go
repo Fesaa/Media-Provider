@@ -21,6 +21,7 @@ const (
 
 	QueryTag          = "word"
 	GenresTag         = "genres"
+	IgnoredGenresTag  = "ignored_genres"
 	OriginalLangTag   = "orig"
 	TranslatedLangTag = "lang"
 	StatusTag         = "status"
@@ -134,6 +135,11 @@ func searchUrl(options SearchOptions) string {
 
 	if len(options.Genres) > 0 {
 		q.Add(GenresTag, strings.Join(options.Genres, ","))
+	}
+
+	if len(options.IgnoredGenres) > 0 {
+		cur := q.Get(GenresTag)
+		q.Set(GenresTag, cur+"|"+strings.Join(options.IgnoredGenres, ","))
 	}
 
 	if len(options.OriginalLang) > 0 {
