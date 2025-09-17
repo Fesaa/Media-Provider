@@ -18,8 +18,35 @@ type Preference struct {
 	DynastyGenreTags        []Tag               `json:"dynastyGenreTags" gorm:"many2many:preference_dynasty_genre_tags"`
 	BlackListedTags         []Tag               `json:"blackListedTags" gorm:"many2many:preference_black_list_tags"`
 	WhiteListedTags         []Tag               `json:"whiteListedTags" gorm:"many2many:preference_white_list_tags"`
-	AgeRatingMappings       []AgeRatingMap      `json:"ageRatingMappings" gorm:"many2many:preference_age_rating_mappings"`
+	AgeRatingMappings       []AgeRatingMap      `json:"ageRatingMappings"`
 	TagMappings             []TagMap            `json:"tagMappings"`
+}
+
+type Tag struct {
+	Model
+
+	Name           string `json:"name"`
+	NormalizedName string `json:"normalizedName"`
+}
+
+type AgeRatingMap struct {
+	Model
+
+	PreferenceID       int
+	TagID              int
+	Tag                Tag                 `json:"tag" gorm:"foreignKey:TagID;references:ID"`
+	ComicInfoAgeRating comicinfo.AgeRating `json:"comicInfoAgeRating"`
+	// MetronAgeRating    metroninfo.AgeRating `json:"metronAgeRating"`
+}
+
+type TagMap struct {
+	Model
+
+	PreferenceID int
+	OriginID     int
+	Origin       Tag `json:"origin" gorm:"foreignKey:OriginID;references:ID"`
+	DestID       int
+	Dest         Tag `json:"dest" gorm:"foreignKey:DestID;references:ID"`
 }
 
 type CoverFallbackMethod int
@@ -44,16 +71,6 @@ func (tags Tags) Contains(tag string) bool {
 		}
 	}
 	return false
-}
-
-type Tag struct {
-	Model
-
-	PreferenceID   int
-	AgeRatingMapID int
-
-	Name           string `json:"name"`
-	NormalizedName string `json:"normalizedName"`
 }
 
 func NewTag(name string) Tag {
@@ -94,25 +111,6 @@ func (arm AgeRatingMappings) GetAgeRating(tag string) (comicinfo.AgeRating, bool
 	}
 
 	return "", false
-}
-
-type AgeRatingMap struct {
-	Model
-
-	PreferenceID       int
-	Tag                Tag                 `json:"tag"`
-	ComicInfoAgeRating comicinfo.AgeRating `json:"comicInfoAgeRating"`
-	// MetronAgeRating    metroninfo.AgeRating `json:"metronAgeRating"`
-}
-
-type TagMap struct {
-	Model
-
-	PreferenceID int
-	OriginID     int
-	Origin       Tag `json:"origin" gorm:"foreignKey:OriginID;references:ID"`
-	DestID       int
-	Dest         Tag `json:"dest" gorm:"foreignKey:DestID;references:ID"`
 }
 
 type TagMaps []TagMap
