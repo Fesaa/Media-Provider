@@ -67,7 +67,7 @@ func SubscriptionServiceProvider(unitOfWork *db.UnitOfWork, provider ContentServ
 	}
 
 	if err := service.OnStartUp(ctx); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SubscriptionService OnStartUp: %w", err)
 	}
 
 	return service, nil
@@ -187,7 +187,6 @@ func (s *subscriptionService) Update(ctx context.Context, sub models.Subscriptio
 	}
 
 	cur.Info.Title = sub.Info.Title
-	cur.Info.Description = sub.Info.Description
 	cur.Info.BaseDir = sub.Info.BaseDir
 	cur.RefreshFrequency = sub.RefreshFrequency
 	cur.Provider = sub.Provider

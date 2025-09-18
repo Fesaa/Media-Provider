@@ -3,6 +3,7 @@ package manual
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/internal/comicinfo"
@@ -322,4 +323,62 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 
 		return nil
 	})
+}
+
+type subscriptionInfo struct {
+	models.Model
+
+	SubscriptionId int
+
+	Title            string    `json:"title"`
+	Description      string    `json:"description"`
+	BaseDir          string    `json:"baseDir"`
+	LastCheck        time.Time `json:"lastCheck"`
+	LastCheckSuccess bool      `json:"lastCheckSuccess"`
+	NextExecution    time.Time `json:"nextExecution"`
+}
+
+func SubscriptionCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+	var subscriptions []models.Subscription
+	var infos []subscriptionInfo
+
+	if err := db.WithContext(ctx).Find(&subscriptions).Error; err != nil {
+		return err
+	}
+
+	if err := db.WithContext(ctx).Find(&infos).Error; err != nil {
+		return allowNoTable(err)
+	}
+
+	subscriptionDict := make(map[int]*models.Subscription)
+	for _, s := range subscriptions {
+		subscriptionDict[s.ID] = &s
+	}
+
+	for _, info := range infos {
+		s, ok := subscriptionDict[info.SubscriptionId]
+		if !ok {
+			log.Warn().Int("id", info.ID).Msg("Subscription info without subscription not migrating")
+			continue
+		}
+
+		s.Info = models.SubscriptionInfo{
+			Title:            info.Title,
+			BaseDir:          info.BaseDir,
+			LastCheck:        info.LastCheck,
+			LastCheckSuccess: info.LastCheckSuccess,
+			NextExecution:    info.NextExecution,
+		}
+	}
+
+	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, s := range subscriptionDict {
+			if err := tx.Save(s).Error; err != nil {
+				return err
+			}
+		}
+
+		return tx.Migrator().DropTable("subscription_infos")
+	})
+
 }

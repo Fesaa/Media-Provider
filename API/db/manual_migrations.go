@@ -84,6 +84,10 @@ var manualMigrations = []migration{
 		name: "20250918_SeedUserPreferences",
 		f:    manual.SetDefaultUserPreferences,
 	},
+	{
+		name: "20250919_SubscriptionCompactor",
+		f:    manual.SubscriptionCompactor,
+	},
 }
 
 func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
