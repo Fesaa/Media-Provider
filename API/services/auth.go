@@ -370,6 +370,7 @@ func (s *cookieAuthService) isAuthenticated(ctx *fiber.Ctx) (success bool) {
 	}
 
 	if tokens.AccessToken == "" { // Local auth only stores user id
+		contextkey.SetInContext(ctx, contextkey.User, *user)
 		return true
 	}
 
