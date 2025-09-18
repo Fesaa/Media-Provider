@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog"
@@ -129,8 +130,8 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 		Description: doc.Find(".description p").Text(),
 		CoverUrl:    DOMAIN + doc.Find(".thumbnail").AttrOr("src", ""),
 		Status:      SeriesStatus(strings.TrimPrefix(doc.Find(".tag-title small").Last().Text(), "— ")),
-		Tags:        goquery.Map(doc.Find(".tag-tags a"), toTag),
-		Authors:     goquery.Map(doc.Find(".tag-title a"), toAuthor),
+		Tags:        utils.Filter(goquery.Map(doc.Find(".tag-tags a"), toTag), core.NoneEmptyTag),
+		Authors:     utils.Filter(goquery.Map(doc.Find(".tag-title a"), toAuthor), core.NoneEmptyTag),
 		Chapters:    r.readChapters(doc.Find(".chapter-list")),
 	}
 
@@ -215,14 +216,19 @@ func (r *repository) selectionToSearchData(_ int, sel *goquery.Selection) Search
 		return strings.TrimPrefix(ref, "/series/")
 	}()
 
-	sd.Tags = goquery.Map(sel.Find(".tags a"), toTag)
-	sd.Authors = goquery.Map(sel.Find("a"), toAuthor)
+	sd.Tags = utils.Filter(goquery.Map(sel.Find(".tags a"), toTag), core.NoneEmptyTag)
+	sd.Authors = utils.Filter(goquery.Map(sel.Find("a"), toAuthor), core.NoneEmptyTag)
 
 	return sd
 }
 
 func toAuthor(_ int, s *goquery.Selection) Author {
-	href := strings.TrimPrefix(s.AttrOr("href", ""), "/authors/")
+	const authorPrefix = "/authors/"
+	if !strings.HasPrefix(s.AttrOr("href", ""), authorPrefix) {
+		return Author{}
+	}
+
+	href := strings.TrimPrefix(s.AttrOr("href", ""), authorPrefix)
 
 	return Author{
 		DisplayName: s.Text(),
@@ -231,7 +237,12 @@ func toAuthor(_ int, s *goquery.Selection) Author {
 }
 
 func toTag(_ int, s *goquery.Selection) Tag {
-	href := strings.TrimPrefix(s.AttrOr("href", ""), "/tags/")
+	const tagPrefix = "/tags/"
+	if !strings.HasPrefix(s.AttrOr("href", ""), tagPrefix) {
+		return Tag{}
+	}
+
+	href := strings.TrimPrefix(s.AttrOr("href", ""), tagPrefix)
 
 	return Tag{
 		DisplayName: s.Text(),

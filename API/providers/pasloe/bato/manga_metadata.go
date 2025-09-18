@@ -3,6 +3,7 @@ package bato
 import (
 	"context"
 	"fmt"
+	"math"
 	"path"
 	"strconv"
 	"strings"
@@ -74,8 +75,8 @@ func (m *manga) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.Comic
 		ci.AgeRating = ar
 	}
 
-	if m.SeriesInfo.PublicationStatus == PublicationCompleted && m.SeriesInfo.BatoUploadStatus == PublicationCompleted {
-		ci.Count = m.ChapterCount()
+	if count, ok := m.getCiStatus(); ok {
+		ci.Count = count
 		m.NotifySubscriptionExhausted(ctx, fmt.Sprintf("%d Chapters", ci.Count))
 	}
 
@@ -83,13 +84,31 @@ func (m *manga) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.Comic
 
 }
 
-func (m *manga) ChapterCount() int {
-	c := 0
-	for _, ch := range m.SeriesInfo.Chapters {
-		if v, err := strconv.Atoi(ch.Chapter); err == nil {
-			c = max(c, v)
+func (m *manga) getCiStatus() (int, bool) {
+	if m.SeriesInfo.PublicationStatus != PublicationCompleted && m.SeriesInfo.BatoUploadStatus != PublicationCompleted {
+		return 0, false
+	}
+
+	var highestVolume float64 = 0
+	var highestChapter float64 = 0
+
+	for _, chapter := range m.SeriesInfo.Chapters {
+		if chapter.Volume != "" {
+			highestVolume = math.Max(highestVolume, chapter.VolumeFloat())
+		}
+
+		if chapter.Chapter != "" {
+			highestChapter = math.Max(highestChapter, chapter.ChapterFloat())
 		}
 	}
 
-	return c
+	if highestVolume != 0 {
+		return int(highestVolume), true
+	}
+
+	if highestChapter != 0 {
+		return int(highestChapter), true
+	}
+
+	return 0, false
 }

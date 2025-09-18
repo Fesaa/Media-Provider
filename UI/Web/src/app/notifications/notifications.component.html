@@ -38,7 +38,7 @@
         <th class="table-header-cell">
           <div class="d-flex justify-content-between align-items-center">
             <span>{{ t('actions.label') }}</span>
-            <!-- TODO: Checkbox -->
+            <input class="form-check-input" type="checkbox" [checked]="allSelected()" (click)="toggleAll()">
           </div>
         </th>
       </tr>
@@ -95,7 +95,8 @@
             </button>
           </div>
 
-          <!-- TODO: Checkbox -->
+
+          <input class="form-check-input" type="checkbox" [checked]="tracker.lookup().has(notification.ID)" (click)="toggleSelect(notification)">
 
         </div>
       </td>

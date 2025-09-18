@@ -3,7 +3,9 @@ name: Validate - Tests
 on:
   pull_request:
     branches:
-      - master
+      - main
+    paths:
+      - API
   workflow_call:
 
 jobs:

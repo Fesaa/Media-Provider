@@ -35,7 +35,16 @@
                           <button class="btn btn-primary me-2" (click)="pickDirectory()">
                             <i class="fa fa-folder"></i>
                           </button>
-                          <input formControlName="dir" id="dir" class="form-control flex-grow-1">
+
+                          @if (dirs().length > 0) {
+                            <select class="form-select" formControlName="dir">
+                              @for (dir of dirs(); track $index) {
+                                <option [value]="dir">{{ dir }}</option>
+                              }
+                            </select>
+                          } @else {
+                            <input formControlName="dir" id="dir" class="form-control flex-grow-1">
+                          }
                         </div>
                       </ng-template>
                     </app-settings-item>

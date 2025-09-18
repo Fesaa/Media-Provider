@@ -102,7 +102,6 @@ export class AccountSettingsComponent {
       if (!other) return null;
 
       const same = control.value === other.value;
-      console.log(same)
       if (same) return null;
 
       return {'sameAs': {'other': name, 'otherValue': other.value}}
