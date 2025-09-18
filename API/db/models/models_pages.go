@@ -51,7 +51,7 @@ type Page struct {
 	SortValue     int            `json:"sortValue"`
 	Providers     pq.Int64Array  `gorm:"type:integer[]" json:"providers"`
 	Modifiers     []Modifier     `json:"modifiers"`
-	Dirs          pq.StringArray `gorm:"type:text[]" json:"dirs"`
+	Dirs          pq.StringArray `gorm:"type:string[]" json:"dirs"`
 	CustomRootDir string         `json:"customRootDir"`
 }
 
