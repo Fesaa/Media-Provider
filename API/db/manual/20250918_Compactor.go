@@ -175,7 +175,7 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 	var ageRatingMappings []ageRatingMapping
 
 	if err := db.WithContext(ctx).Table("preferences").First(&preference).Error; err != nil {
-		return err
+		return allowNoTable(err)
 	}
 
 	if err := db.WithContext(ctx).Find(&tags).Error; err != nil {

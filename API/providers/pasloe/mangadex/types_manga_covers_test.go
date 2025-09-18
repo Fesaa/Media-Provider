@@ -23,7 +23,7 @@ func TestManga_CoverSkipWrongFormatAndFirstAsDefault(t *testing.T) {
 		},
 	})
 
-	m.Preference = &models.Preference{
+	m.Preference = &models.UserPreferences{
 		CoverFallbackMethod: models.CoverFallbackFirst,
 	}
 

@@ -180,7 +180,13 @@ func (c *Core[C, S]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
 		return "", false
 	}
 
-	tags = c.MapTags(c.Preference.TagMappings, tags)
+	tagMappings := utils.Map(c.Preference.TagMappings, func(t models.TagMapping) models.TagMapping {
+		return models.TagMapping{
+			OriginTag:      utils.Normalize(t.OriginTag),
+			DestinationTag: t.DestinationTag,
+		}
+	})
+	tags = c.MapTags(tagMappings, tags)
 
 	mappings := c.Preference.AgeRatingMappings
 	weights := utils.MaybeMap(tags, func(t Tag) (int, bool) {

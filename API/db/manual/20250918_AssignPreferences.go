@@ -16,7 +16,7 @@ func AssignPreferencesToFirstAdmin(ctx context.Context, db *gorm.DB, log zerolog
 
 	var preferences models.UserPreferences
 	if err = db.WithContext(ctx).First(&preferences).Error; err != nil {
-		return err
+		return allowNoRecord(err) // Tests may not have preferences loaded, default preferences will be assigned later
 	}
 
 	preferences.UserID = firstAdmin.ID

@@ -13,7 +13,7 @@ import (
 func TestManga_AgeRating(t *testing.T) {
 	type test struct {
 		name     string
-		arm      []models.AgeRatingMap
+		arm      []models.AgeRatingMapping
 		tags     []TagData
 		mangadex ContentRating
 		wanted   comicinfo.AgeRating
@@ -28,12 +28,9 @@ func TestManga_AgeRating(t *testing.T) {
 		},
 		{
 			name: "Mangadex highest",
-			arm: []models.AgeRatingMap{
+			arm: []models.AgeRatingMapping{
 				{
-					Tag: models.Tag{
-						Name:           "MyTag",
-						NormalizedName: "mytag",
-					},
+					Tag:                "MyTag",
 					ComicInfoAgeRating: comicinfo.AgeRatingTeen,
 				},
 			},
@@ -51,12 +48,9 @@ func TestManga_AgeRating(t *testing.T) {
 		},
 		{
 			name: "Should overwrite",
-			arm: []models.AgeRatingMap{
+			arm: []models.AgeRatingMapping{
 				{
-					Tag: models.Tag{
-						Name:           "MyTag",
-						NormalizedName: "mytag",
-					},
+					Tag:                "MyTag",
 					ComicInfoAgeRating: comicinfo.AgeRatingMAPlus15,
 				},
 			},
@@ -77,7 +71,7 @@ func TestManga_AgeRating(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := tempManga(t, req(), io.Discard, &mockRepository{})
-			m.Preference = &models.Preference{
+			m.Preference = &models.UserPreferences{
 				AgeRatingMappings: tt.arm,
 			}
 			m.SeriesInfo = &MangaSearchData{

@@ -270,7 +270,7 @@ func (m *manga) writeTagsAndGenres(ctx context.Context, ci *comicinfo.ComicInfo)
 		return
 	}
 
-	blackList := m.Preference.BlackList
+	blackList := utils.Map(m.Preference.BlackList, utils.Normalize)
 
 	tagAllowed := func(tag TagData, name string) bool {
 		if m.Preference == nil {
@@ -281,7 +281,7 @@ func (m *manga) writeTagsAndGenres(ctx context.Context, ci *comicinfo.ComicInfo)
 			return false
 		}
 
-		if slices.Contains(blackList, tag.Id) {
+		if slices.Contains(blackList, utils.Normalize(tag.Id)) {
 			return false
 		}
 		return true

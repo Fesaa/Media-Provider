@@ -2,6 +2,7 @@ package manual
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -25,6 +26,13 @@ func getDefaultUser(ctx context.Context, db *gorm.DB) (models.User, error) {
 
 func allowNoTable(err error) error {
 	if strings.Contains(err.Error(), "no such table:") {
+		return nil
+	}
+	return err
+}
+
+func allowNoRecord(err error) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
 	return err

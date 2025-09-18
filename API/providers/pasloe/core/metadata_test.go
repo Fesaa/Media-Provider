@@ -11,10 +11,10 @@ import (
 
 func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 	type fields struct {
-		genres     models.Tags
-		blacklist  models.Tags
-		whitelist  models.Tags
-		mappings   []models.TagMap
+		genres     []string
+		blacklist  []string
+		whitelist  []string
+		mappings   []models.TagMapping
 		includeAll bool
 	}
 
@@ -28,7 +28,7 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 		{
 			name: "Tag is genre and allowed",
 			fields: fields{
-				genres: models.Tags{models.NewTag("genre1")},
+				genres: []string{"genre1"},
 			},
 			tags:  []Tag{NewStringTag("genre1")},
 			wantG: "genre1",
@@ -37,8 +37,8 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 		{
 			name: "Tag is blacklist - excluded from both",
 			fields: fields{
-				blacklist: models.Tags{models.NewTag("badtag")},
-				genres:    models.Tags{models.NewTag("badtag")},
+				blacklist: []string{"badtag"},
+				genres:    []string{"badtag"},
 			},
 			tags:  []Tag{NewStringTag("badtag")},
 			wantG: "",
@@ -47,7 +47,7 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 		{
 			name: "Tag is whitelist and not genre - becomes tag",
 			fields: fields{
-				whitelist: models.Tags{models.NewTag("tag1")},
+				whitelist: []string{"tag1"},
 			},
 			tags:  []Tag{NewStringTag("tag1")},
 			wantG: "",
@@ -65,9 +65,9 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 		{
 			name: "Mix of genre, tag, blacklist and unmatched",
 			fields: fields{
-				genres:     models.Tags{models.NewTag("genre1")},
-				whitelist:  models.Tags{models.NewTag("tag1")},
-				blacklist:  models.Tags{models.NewTag("badtag")},
+				genres:     []string{"genre1"},
+				whitelist:  []string{"tag1"},
+				blacklist:  []string{"badtag"},
 				includeAll: true,
 			},
 			tags: []Tag{
@@ -82,13 +82,13 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 		{
 			name: "test map",
 			fields: fields{
-				genres:    models.Tags{models.NewTag("genre2")},
-				blacklist: models.Tags{models.NewTag("badtag")},
-				whitelist: models.Tags{models.NewTag("tag1")},
-				mappings: []models.TagMap{
+				genres:    []string{"genre2"},
+				blacklist: []string{"badtag"},
+				whitelist: []string{"tag1"},
+				mappings: []models.TagMapping{
 					{
-						Origin: models.NewTag("genre1"),
-						Dest:   models.NewTag("genre2"),
+						OriginTag:      "genre1",
+						DestinationTag: "genre2",
 					},
 				},
 			},
@@ -109,11 +109,11 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 			}
 
 			base := testBase(t, r, io.Discard, ProviderMock{})
-			base.Preference = &models.Preference{
-				DynastyGenreTags: tt.fields.genres,
-				BlackListedTags:  tt.fields.blacklist,
-				WhiteListedTags:  tt.fields.whitelist,
-				TagMappings:      tt.fields.mappings,
+			base.Preference = &models.UserPreferences{
+				GenreList:   tt.fields.genres,
+				BlackList:   tt.fields.blacklist,
+				WhiteList:   tt.fields.whitelist,
+				TagMappings: tt.fields.mappings,
 			}
 
 			gotG, gotT := base.GetGenreAndTags(t.Context(), tt.tags)
@@ -130,8 +130,8 @@ func TestDownloadBase_GetGenreAndTags(t *testing.T) {
 func TestManga_GetAgeRating(t *testing.T) {
 	type test struct {
 		name        string
-		arm         []models.AgeRatingMap
-		mappings    []models.TagMap
+		arm         []models.AgeRatingMapping
+		mappings    []models.TagMapping
 		seriesTags  []Tag
 		chapterTags []Tag
 		want        bool
@@ -145,12 +145,9 @@ func TestManga_GetAgeRating(t *testing.T) {
 		},
 		{
 			name: "Series Age Rating",
-			arm: []models.AgeRatingMap{
+			arm: []models.AgeRatingMapping{
 				{
-					Tag: models.Tag{
-						Name:           "MyTag",
-						NormalizedName: "mytag",
-					},
+					Tag:                "MyTag",
 					ComicInfoAgeRating: comicinfo.AgeRatingTeen,
 				},
 			},
@@ -163,19 +160,13 @@ func TestManga_GetAgeRating(t *testing.T) {
 		},
 		{
 			name: "Chapter Age Rating",
-			arm: []models.AgeRatingMap{
+			arm: []models.AgeRatingMapping{
 				{
-					Tag: models.Tag{
-						Name:           "MyTag",
-						NormalizedName: "mytag",
-					},
+					Tag:                "MyTag",
 					ComicInfoAgeRating: comicinfo.AgeRatingTeen,
 				},
 				{
-					Tag: models.Tag{
-						Name:           "MyOtherTag",
-						NormalizedName: "myothertag",
-					},
+					Tag:                "MyOtherTag",
 					ComicInfoAgeRating: comicinfo.AgeRatingMAPlus15,
 				},
 			},
@@ -190,19 +181,16 @@ func TestManga_GetAgeRating(t *testing.T) {
 		},
 		{
 			name: "test with map",
-			arm: []models.AgeRatingMap{
+			arm: []models.AgeRatingMapping{
 				{
-					Tag: models.Tag{
-						Name:           "MyTag",
-						NormalizedName: "mytag",
-					},
+					Tag:                "MyTag",
 					ComicInfoAgeRating: comicinfo.AgeRatingTeen,
 				},
 			},
-			mappings: []models.TagMap{
+			mappings: []models.TagMapping{
 				{
-					Origin: models.NewTag("MyOtherTag"),
-					Dest:   models.NewTag("MyTag"),
+					OriginTag:      "MyOtherTag",
+					DestinationTag: "MyTag",
 				},
 			},
 			seriesTags: []Tag{
@@ -216,7 +204,7 @@ func TestManga_GetAgeRating(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			base := testBase(t, req(), io.Discard, ProviderMock{})
-			base.Preference = &models.Preference{
+			base.Preference = &models.UserPreferences{
 				AgeRatingMappings: tt.arm,
 				TagMappings:       tt.mappings,
 			}

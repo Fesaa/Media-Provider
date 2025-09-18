@@ -5,18 +5,18 @@ import (
 )
 
 type Preferences struct {
-	Model models.Preference
+	Model models.UserPreferences
 }
 
-func (p *Preferences) Get() (*models.Preference, error) {
+func (p *Preferences) Get() (*models.UserPreferences, error) {
 	return &p.Model, nil
 }
 
-func (p *Preferences) GetComplete() (*models.Preference, error) {
+func (p *Preferences) GetComplete() (*models.UserPreferences, error) {
 	return &p.Model, nil
 }
 
-func (p *Preferences) Update(pref models.Preference) error {
+func (p *Preferences) Update(pref models.UserPreferences) error {
 	p.Model = pref
 	return nil
 }
