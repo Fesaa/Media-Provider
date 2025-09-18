@@ -1,4 +1,5 @@
 *.db
+*.db.copy
 node_modules/
 generated/
 temp/

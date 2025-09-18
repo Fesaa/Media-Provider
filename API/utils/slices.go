@@ -27,9 +27,14 @@ func Contains[E comparable](s []E, s2 []E) bool {
 	return false
 }
 
+// Distinct returns a non-nil slice containing unique elements as defined by f
 func Distinct[E any, K comparable](s []E, f func(E) K) []E {
+	if len(s) == 0 {
+		return []E{}
+	}
+
 	lookup := map[K]struct{}{}
-	var out []E
+	out := make([]E, 0)
 
 	for _, t := range s {
 		key := f(t)
