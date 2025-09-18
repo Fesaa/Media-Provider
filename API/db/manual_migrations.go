@@ -67,10 +67,6 @@ var manualMigrations = []migration{
 		name: "20250907_MigrateMetadata",
 		f:    manual.MigrateMetadataToSettings,
 	},
-	{
-		name: "20250908_AssignMissingRelations",
-		f:    manual.AssignMissingRelations,
-	},
 }
 
 func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {

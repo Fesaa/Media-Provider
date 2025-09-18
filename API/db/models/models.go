@@ -11,8 +11,8 @@ var MODELS = []any{
 	&ManualMigration{},
 	&Preference{},
 	&Notification{},
-	&Tag{},
 	&AgeRatingMap{},
+	&Tag{},
 	&TagMap{},
 	&ServerSetting{},
 }

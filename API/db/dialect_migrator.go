@@ -86,14 +86,6 @@ func migrateDrivers(ctx context.Context, log zerolog.Logger, db *gorm.DB) error 
 		}
 	}()
 
-	if err = migrate(ctx, oldDb); err != nil {
-		return fmt.Errorf("failed to migrate old driver: %w", err)
-	}
-
-	if err = manualMigration(ctx, oldDb, log); err != nil {
-		return fmt.Errorf("migrateDrivers manual migration: %w", err)
-	}
-
 	if err = cleanup(log, oldDb); err != nil {
 		return fmt.Errorf("migrateDrivers cleanup old db: %w", err)
 	}

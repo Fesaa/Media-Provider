@@ -42,6 +42,7 @@ func MigrateTags(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 
 	toTag := func(s string) models.Tag {
 		return models.Tag{
+			PreferenceID:   p.ID,
 			Name:           s,
 			NormalizedName: utils.Normalize(s),
 		}
