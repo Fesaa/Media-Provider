@@ -49,7 +49,7 @@ type User struct {
 	// Will not be updated in the UpdateUser method, should be set on creation. And only for the first account
 	Original   bool
 	ExternalId sql.NullString  `gorm:"unique,nullable"`
-	SqlRoles   json.RawMessage `gorm:"roles"`
+	SqlRoles   json.RawMessage `gorm:"roles" json:"-"`
 	Roles      Roles           `gorm:"-"`
 	Pages      pq.Int32Array   `gorm:"type:integer[]"`
 }
