@@ -177,6 +177,7 @@
 
     "title-label": "Title",
     "title-tooltip": "The name of the modifier, displayed in the page form",
+    "value-label": "Value",
     "key-label": "Key",
     "key-tooltip": "The key as defined on the wiki, if this is incorrect the modifier will not do anything",
     "type-label": "Type",

@@ -15,8 +15,6 @@ type PreferencesRepository interface {
 	GetPreferences(context.Context, int) (*models.UserPreferences, error)
 	// Update saves the given models.UserPreferences
 	Update(context.Context, *models.UserPreferences) error
-	// Flush flushes the cached values of GetPreferences
-	Flush() error
 }
 
 type preferencesRepository struct {
@@ -60,11 +58,11 @@ func (p *preferencesRepository) GetPreferences(ctx context.Context, userId int) 
 }
 
 func (p *preferencesRepository) Update(ctx context.Context, pref *models.UserPreferences) error {
-	return p.db.WithContext(ctx).Save(pref).Error
-}
+	if err := p.db.WithContext(ctx).Save(pref).Error; err != nil {
+		return err
+	}
 
-func (p *preferencesRepository) Flush() error {
-	p.cache.Clear()
+	p.cache.Delete(pref.UserID)
 	return nil
 }
 

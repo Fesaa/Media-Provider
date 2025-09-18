@@ -76,7 +76,7 @@ func PageCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 	}
 
 	for _, m := range modifierDict {
-		p, ok := pageDict[m.ID]
+		p, ok := pageDict[m.PageID]
 		if !ok {
 			log.Warn().Int("id", m.ID).Msg("Modifier without page found, won't be migrated")
 			continue
@@ -234,7 +234,7 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 
 	ageRatingMapsDict := make(map[int]ageRatingMap)
 	for _, t := range ageRatingMaps {
-		ageRatingMapsDict[t.ID] = ageRatingMap{}
+		ageRatingMapsDict[t.ID] = t
 	}
 
 	filter := func(mappings []mapping) []tag {

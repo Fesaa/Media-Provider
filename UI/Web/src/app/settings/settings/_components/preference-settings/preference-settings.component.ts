@@ -105,8 +105,8 @@ export class PreferenceSettingsComponent implements OnInit {
 
   private tagMappingToFormGroup(tm: TagMap) {
     return new FormGroup({
-      origin: new FormControl(tm.originTag, Validators.required),
-      dest: new FormControl(tm.destinationTag, Validators.required),
+      originTag: new FormControl(tm.originTag, Validators.required),
+      destinationTag: new FormControl(tm.destinationTag, Validators.required),
     })
   }
 

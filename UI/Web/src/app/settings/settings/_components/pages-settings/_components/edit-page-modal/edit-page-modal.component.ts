@@ -20,7 +20,7 @@ import {BadgeComponent} from "../../../../../../shared/_component/badge/badge.co
 import {TypeaheadComponent, TypeaheadSettings} from "../../../../../../type-ahead/typeahead.component";
 import {ProviderNamePipe} from "../../../../../../_pipes/provider-name.pipe";
 import {of} from "rxjs";
-import {CdkDragDrop, CdkDragHandle} from "@angular/cdk/drag-drop";
+import {CdkDragDrop, CdkDragHandle, moveItemInArray} from "@angular/cdk/drag-drop";
 import {TableComponent} from "../../../../../../shared/_component/table/table.component";
 import {EditPageModifierModalComponent} from "../edit-page-modifier-modal/edit-page-modifier-modal.component";
 import {DefaultModalOptions} from "../../../../../../_models/default-modal-options";
@@ -197,14 +197,9 @@ export class EditPageModalComponent implements OnInit {
   }
 
   sortModifiers($event: CdkDragDrop<AbstractControl[], any>) {
-    const prev = this.modifiersFormArray.at($event.previousIndex);
-    const cur = this.modifiersFormArray.at($event.currentIndex)
-
-    this.modifiersFormArray.removeAt($event.previousIndex);
-    this.modifiersFormArray.removeAt($event.currentIndex);
-
-    this.modifiersFormArray.insert($event.currentIndex, prev);
-    this.modifiersFormArray.insert($event.previousIndex, cur);
+    const controls = this.modifiersFormArray.controls;
+    moveItemInArray(controls, $event.previousIndex, $event.currentIndex)
+    this.modifiersFormArray.patchValue(controls);
   }
 
   modifierTrack(idx: number, m: AbstractControl) {
