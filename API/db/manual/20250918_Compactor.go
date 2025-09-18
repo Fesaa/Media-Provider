@@ -234,7 +234,7 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 
 	ageRatingMapsDict := make(map[int]ageRatingMap)
 	for _, t := range ageRatingMaps {
-		ageRatingMapsDict[t.ID] = ageRatingMap{}
+		ageRatingMapsDict[t.ID] = t
 	}
 
 	filter := func(mappings []mapping) []tag {
