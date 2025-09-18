@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Fesaa/Media-Provider/internal/comicinfo"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
@@ -33,6 +34,13 @@ type UserPreferences struct {
 }
 
 func (p *UserPreferences) BeforeSave(tx *gorm.DB) (err error) {
+	p.GenreList = utils.Distinct(p.GenreList, utils.IdentityFunc[string]())
+	p.BlackList = utils.Distinct(p.BlackList, utils.IdentityFunc[string]())
+	p.WhiteList = utils.Distinct(p.WhiteList, utils.IdentityFunc[string]())
+	p.TagMappings = utils.Distinct(p.TagMappings, func(e TagMapping) string {
+		return e.DestinationTag
+	})
+
 	p.AgeRatingMappingsSql, err = json.Marshal(p.AgeRatingMappings)
 	if err != nil {
 		return

@@ -12,24 +12,6 @@
           <a ngbNavLink>{{t('general-tab')}}</a>
           <ng-template ngbNavContent>
             <div class="col-md-12 col-sm-12 pt-4">
-              @if (preferencesForm.get('subscriptionRefreshHour'); as control) {
-                <app-settings-item [control]="control" [title]="t('sub-refresh.label')" [tooltip]="t('sub-refresh.tooltip')">
-                  <ng-template #view>{{control.value}}</ng-template>
-                  <ng-template #edit>
-                    <input
-                      type="number"
-                      class="form-control"
-                      id="subscriptionRefreshHour"
-                      formControlName="subscriptionRefreshHour"
-                      [min]="0"
-                      [max]="23"
-                    />
-                  </ng-template>
-                </app-settings-item>
-              }
-            </div>
-
-            <div class="col-md-12 col-sm-12 pt-4">
               @if (preferencesForm.get('logEmptyDownloads'); as control) {
                 <app-settings-switch [control]="control" [title]="t('logEmptyDownloads-label')" [tooltip]="t('logEmptyDownloads-tooltip')" >
                   <ng-template #switch>

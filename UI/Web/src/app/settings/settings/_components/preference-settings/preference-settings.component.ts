@@ -59,13 +59,12 @@ export class PreferenceSettingsComponent implements OnInit {
       this.preferences.set(preferences);
 
       this.preferencesForm = this.fb.group({
-        subscriptionRefreshHour: [preferences.subscriptionRefreshHour, [Validators.required, Validators.min(0), Validators.max(23)]],
         logEmptyDownloads: new FormControl(preferences.logEmptyDownloads),
         convertToWebp: new FormControl(preferences.convertToWebp),
         coverFallbackMethod: [preferences.coverFallbackMethod],
-        blackList: new FormControl(preferences.blackListedTags.join(',')),
-        whiteList: new FormControl(preferences.whiteListedTags.join(',')),
-        tagToGenre: new FormControl(preferences.dynastyGenreTags.join(',')),
+        blackList: new FormControl(preferences.blackList.join(',')),
+        whiteList: new FormControl(preferences.whiteList.join(',')),
+        genreList: new FormControl(preferences.genreList.join(',')),
         ageRatingMappings: new FormArray(preferences.ageRatingMappings.map(agm => this.ageRateMappingToFormGroup(agm))),
         tagMappings: new FormArray(preferences.tagMappings.map(agm => this.tagMappingToFormGroup(agm))),
       });
@@ -99,15 +98,15 @@ export class PreferenceSettingsComponent implements OnInit {
 
   addTagMapping() {
     this.tagMappingsArray.push(this.tagMappingToFormGroup({
-      dest: '',
-      origin: ''
+      destinationTag: '',
+      originTag: ''
     }));
   }
 
   private tagMappingToFormGroup(tm: TagMap) {
     return new FormGroup({
-      origin: new FormControl(tm.origin, Validators.required),
-      dest: new FormControl(tm.dest, Validators.required),
+      origin: new FormControl(tm.originTag, Validators.required),
+      dest: new FormControl(tm.destinationTag, Validators.required),
     })
   }
 
@@ -133,26 +132,20 @@ export class PreferenceSettingsComponent implements OnInit {
     const preferences = this.preferences();
     const formValue = this.preferencesForm.value;
 
-    const data = {
+    return {
       ...preferences,
       ...formValue,
       coverFallbackMethod: parseInt(formValue.coverFallbackMethod),
-      blackListedTags: (formValue.blackList as string)
+      blackList: (formValue.blackList as string)
         .split(',').map((item: string) => item.trim())
         .filter((t: string) => t.length > 0),
-      whiteListedTags: (formValue.whiteList as string)
+      whiteList: (formValue.whiteList as string)
         .split(',').map((item: string) => item.trim())
         .filter((t: string) => t.length > 0),
-      dynastyGenreTags: (formValue.tagToGenre as string)
+      genreList: (formValue.genreList as string)
         .split(',').map((item: string) => item.trim())
         .filter((t: string) => t.length > 0),
     };
-
-    data.blackList = undefined;
-    data.whiteList = undefined;
-    data.tagToGenre = undefined;
-
-    return data;
   }
 
   breakString(s: string) {

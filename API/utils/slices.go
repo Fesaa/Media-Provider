@@ -26,3 +26,18 @@ func Contains[E comparable](s []E, s2 []E) bool {
 	}
 	return false
 }
+
+func Distinct[E any, K comparable](s []E, f func(E) K) []E {
+	lookup := map[K]struct{}{}
+	var out []E
+
+	for _, t := range s {
+		key := f(t)
+		if _, ok := lookup[key]; ok {
+			continue
+		}
+		lookup[key] = struct{}{}
+		out = append(out, t)
+	}
+	return out
+}
