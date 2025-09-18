@@ -124,7 +124,7 @@ type Core[C Chapter, S Series[C]] struct {
 	ToDownloadUserSelected []string
 
 	unitOfWork *db.UnitOfWork
-	Preference *models.Preference
+	Preference *models.UserPreferences
 
 	// Amount of chapters downloaded
 	ContentDownloaded int
@@ -396,7 +396,7 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 
 	start := time.Now()
 
-	p, err := c.unitOfWork.Preferences.GetPreferencesComplete(ctx)
+	p, err := c.unitOfWork.Preferences.GetPreferences(ctx, c.Req.OwnerId)
 	if err != nil {
 		c.Log.Error().Err(err).Msg("unable to get preferences, some features may not work")
 	}

@@ -72,11 +72,23 @@ func (t *stringTagWithScope) IsGenre() bool {
 	return t.genre
 }
 
+func mapTag(mappings []models.TagMapping, tag string) string {
+	tagN := utils.Normalize(tag)
+
+	for _, m := range mappings {
+		if m.OriginTag == tagN {
+			return m.DestinationTag
+		}
+	}
+
+	return tag
+}
+
 // MapTags transforms all tags as configured by the tag mappings. This method keeps scoped tags, scoped
-func (c *Core[C, S]) MapTags(mappings models.TagMaps, tags []Tag) []Tag {
+func (c *Core[C, S]) MapTags(mappings []models.TagMapping, tags []Tag) []Tag {
 	return utils.Map(tags, func(t Tag) Tag {
-		val := mappings.MapTag(t.Value())
-		id := mappings.MapTag(t.Identifier())
+		val := mapTag(mappings, t.Value())
+		id := mapTag(mappings, t.Identifier())
 
 		if scoped, ok := t.(ScopedTag); ok {
 			return NewStringTagWithIdAndGenre(val, id, scoped.IsGenre())
@@ -97,15 +109,20 @@ func (c *Core[C, S]) MapTags(mappings models.TagMaps, tags []Tag) []Tag {
 //   - It is not mapped as a genre.
 //   - It is either in the whitelist or the request has IncludeNotMatchedTagsKey set to true.
 func (c *Core[C, S]) GetGenreAndTags(ctx context.Context, tags []Tag) (string, string) {
-	var genres, blackList, whitelist models.Tags
-	var tagMappings models.TagMaps
+	var genres, blackList, whitelist []string
+	var tagMappings []models.TagMapping
 	preferencesLoaded := c.Preference != nil
 
 	if preferencesLoaded {
-		genres = c.Preference.DynastyGenreTags
-		blackList = c.Preference.BlackListedTags
-		whitelist = c.Preference.WhiteListedTags
-		tagMappings = c.Preference.TagMappings
+		genres = utils.Map(c.Preference.GenreList, utils.Normalize)
+		blackList = utils.Map(c.Preference.BlackList, utils.Normalize)
+		whitelist = utils.Map(c.Preference.WhiteList, utils.Normalize)
+		tagMappings = utils.Map(c.Preference.TagMappings, func(t models.TagMapping) models.TagMapping {
+			return models.TagMapping{
+				OriginTag:      utils.Normalize(t.OriginTag),
+				DestinationTag: t.DestinationTag,
+			}
+		})
 	} else {
 		c.Log.Warn().Msg("No genres or tags will be set, blacklist couldn't be loaded")
 		c.WarnPreferencesFailedToLoad(ctx)
@@ -116,8 +133,9 @@ func (c *Core[C, S]) GetGenreAndTags(ctx context.Context, tags []Tag) (string, s
 
 	tags = c.MapTags(tagMappings, tags)
 
-	tagContains := func(slice models.Tags, tag Tag) bool {
-		return slice.Contains(tag.Value()) || slice.Contains(tag.Identifier())
+	tagContains := func(slice []string, tag Tag) bool {
+		return slices.Contains(slice, utils.Normalize(tag.Value())) ||
+			slices.Contains(slice, utils.Normalize(tag.Identifier()))
 	}
 
 	forceGenre := func(tag Tag) bool {
@@ -162,11 +180,17 @@ func (c *Core[C, S]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
 		return "", false
 	}
 
-	tags = c.MapTags(c.Preference.TagMappings, tags)
+	tagMappings := utils.Map(c.Preference.TagMappings, func(t models.TagMapping) models.TagMapping {
+		return models.TagMapping{
+			OriginTag:      utils.Normalize(t.OriginTag),
+			DestinationTag: t.DestinationTag,
+		}
+	})
+	tags = c.MapTags(tagMappings, tags)
 
-	var mappings models.AgeRatingMappings = c.Preference.AgeRatingMappings
+	mappings := c.Preference.AgeRatingMappings
 	weights := utils.MaybeMap(tags, func(t Tag) (int, bool) {
-		ar, ok := mappings.GetAgeRating(t.Value())
+		ar, ok := GetAgeRating(mappings, utils.Normalize(t.Value()))
 		if !ok {
 			return 0, false
 		}
@@ -179,4 +203,21 @@ func (c *Core[C, S]) GetAgeRating(tags []Tag) (comicinfo.AgeRating, bool) {
 	}
 
 	return comicinfo.IndexToAgeRating[slices.Max(weights)], true
+}
+
+func GetAgeRating(arm []models.AgeRatingMapping, tag string) (comicinfo.AgeRating, bool) {
+	ageRating := -1
+	for _, ageRatingMapping := range arm {
+		if utils.Normalize(ageRatingMapping.Tag) != tag {
+			continue
+		}
+
+		ageRating = max(ageRating, comicinfo.AgeRatingIndex[ageRatingMapping.ComicInfoAgeRating])
+	}
+
+	if ageRating > -1 {
+		return comicinfo.IndexToAgeRating[ageRating], true
+	}
+
+	return "", false
 }

@@ -37,7 +37,7 @@ type subscriptionsRepository struct {
 
 func (r subscriptionsRepository) All(ctx context.Context) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
-	result := r.db.WithContext(ctx).Preload("Info").Find(&subscriptions)
+	result := r.db.WithContext(ctx).Find(&subscriptions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -47,7 +47,6 @@ func (r subscriptionsRepository) All(ctx context.Context) ([]models.Subscription
 func (r subscriptionsRepository) AllForUser(ctx context.Context, userID int) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
 	result := r.db.WithContext(ctx).
-		Preload("Info").
 		Where(&models.Subscription{Owner: userID}).
 		Find(&subscriptions)
 	if result.Error != nil {
@@ -58,7 +57,7 @@ func (r subscriptionsRepository) AllForUser(ctx context.Context, userID int) ([]
 
 func (r subscriptionsRepository) Get(ctx context.Context, id int) (*models.Subscription, error) {
 	var subscription models.Subscription
-	result := r.db.WithContext(ctx).Preload("Info").First(&subscription, id)
+	result := r.db.WithContext(ctx).First(&subscription, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -68,7 +67,6 @@ func (r subscriptionsRepository) Get(ctx context.Context, id int) (*models.Subsc
 func (r subscriptionsRepository) GetForUser(ctx context.Context, subID int, userID int) (models.Subscription, error) {
 	var subscription models.Subscription
 	result := r.db.WithContext(ctx).
-		Preload("Info").
 		Where(&models.Subscription{Owner: userID}).
 		First(&subscription, subID)
 	return subscription, result.Error
@@ -77,7 +75,6 @@ func (r subscriptionsRepository) GetForUser(ctx context.Context, subID int, user
 func (r subscriptionsRepository) GetByContentID(ctx context.Context, contentID string) (*models.Subscription, error) {
 	var subscription models.Subscription
 	result := r.db.WithContext(ctx).
-		Preload("Info").
 		Where(&models.Subscription{ContentId: contentID}).
 		First(&subscription)
 
@@ -93,7 +90,6 @@ func (r subscriptionsRepository) GetByContentID(ctx context.Context, contentID s
 func (r subscriptionsRepository) GetByContentIDForUser(ctx context.Context, contentID string, userID int) (*models.Subscription, error) {
 	var subscription models.Subscription
 	result := r.db.WithContext(ctx).
-		Preload("Info").
 		Where(&models.Subscription{ContentId: contentID, Owner: userID}).
 		First(&subscription)
 
@@ -116,15 +112,11 @@ func (r subscriptionsRepository) New(ctx context.Context, subscription models.Su
 }
 
 func (r subscriptionsRepository) Update(ctx context.Context, subscription models.Subscription) error {
-	return r.db.WithContext(ctx).
-		Session(&gorm.Session{FullSaveAssociations: true}).
-		Save(&subscription).Error
+	return r.db.WithContext(ctx).Save(&subscription).Error
 }
 
 func (r subscriptionsRepository) Delete(ctx context.Context, id int) error {
-	return r.db.WithContext(ctx).
-		Select("Info").
-		Delete(&models.Subscription{Model: models.Model{ID: id}}).Error
+	return r.db.WithContext(ctx).Delete(&models.Subscription{Model: models.Model{ID: id}}).Error
 }
 
 func NewSubscriptionsRepository(db *gorm.DB, m mapper.IMapper) SubscriptionsRepository {

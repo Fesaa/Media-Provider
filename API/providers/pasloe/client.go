@@ -202,8 +202,8 @@ func (c *client) Shutdown() error {
 	return nil
 }
 
-func (c *client) alwaysLog() bool {
-	p, err := c.unitOfWork.Preferences.GetPreferences(c.clientCtx)
+func (c *client) alwaysLog(userId int) bool {
+	p, err := c.unitOfWork.Preferences.GetPreferences(c.clientCtx, userId)
 	if err != nil {
 		c.log.Error().Err(err).Msg("failed to retrieve preferences, falling back to default behaviour")
 		return false
@@ -213,7 +213,7 @@ func (c *client) alwaysLog() bool {
 }
 
 func (c *client) logContentCompletion(content core.Downloadable) {
-	alwaysLog := c.alwaysLog()
+	alwaysLog := c.alwaysLog(content.Request().OwnerId)
 
 	if len(content.GetNewContent()) == 0 && !alwaysLog {
 		return

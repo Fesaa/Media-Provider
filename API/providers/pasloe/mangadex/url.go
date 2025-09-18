@@ -3,6 +3,8 @@ package mangadex
 import (
 	"fmt"
 	"net/url"
+
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
 const URL = "https://api.mangadex.org"
@@ -29,12 +31,12 @@ func (r *repository) searchMangaURL(s SearchOptions) (string, error) {
 
 	if len(includedTagIds) > 0 {
 		base = addRange(base, "includedTags", includedTagIds)
-		base += "&includedTagsMode=OR"
+		base += "&includedTagsMode=" + utils.NonEmpty(s.IncludeTagsMode, "AND")
 	}
 
 	if len(excludedTagIds) > 0 {
 		base = addRange(base, "excludedTags", excludedTagIds)
-		base += "&excludedTagsMode=OR"
+		base += "&excludedTagsMode=" + utils.NonEmpty(s.ExcludedTagsMode, "OR")
 	}
 
 	base = addRange(base, "status", s.Status)

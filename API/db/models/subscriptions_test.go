@@ -131,16 +131,13 @@ func TestSubscription_ShouldRefresh(t *testing.T) {
 }
 
 func TestSubscription_Normalize(t *testing.T) {
-	mockPreferences := mockPreferences{}
-	mockPreferences.preferences = Preference{SubscriptionRefreshHour: 10}
-
 	sub := Subscription{
 		Info: SubscriptionInfo{
 			LastCheck: time.Date(2023, 10, 27, 15, 30, 0, 0, time.Local),
 		},
 	}
 
-	sub.Normalize(mockPreferences.preferences.SubscriptionRefreshHour)
+	sub.Normalize(10)
 
 	expected := time.Date(2023, 10, 27, 10, 0, 0, 0, time.Local)
 	if sub.Info.LastCheck != expected {
@@ -156,22 +153,4 @@ func TestSubscription_normalize(t *testing.T) {
 	if normalizedTime != expectedTime {
 		t.Errorf("normalize time mismatch: expected %v, got %v", expectedTime, normalizedTime)
 	}
-}
-
-type mockPreferences struct {
-	preferences Preference
-	err         error
-}
-
-func (m *mockPreferences) GetComplete() (*Preference, error) {
-	return &m.preferences, m.err
-}
-
-func (m *mockPreferences) Update(pref Preference) error {
-	m.preferences = pref
-	return m.err
-}
-
-func (m *mockPreferences) Get() (*Preference, error) {
-	return &m.preferences, m.err
 }

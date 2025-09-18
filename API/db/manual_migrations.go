@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/Fesaa/Media-Provider/db/manual"
@@ -27,14 +28,14 @@ var manualMigrations = []migration{
 		name: "20250112_SubscriptionDurationChanges",
 		f:    manual.SubscriptionDurationChanges,
 	},
-	{
+	/*{
 		name: "20250112_InsertDefaultPreferences",
 		f:    manual.InsertDefaultPreferences,
 	},
 	{
 		name: "20250215_MigrateTags",
 		f:    manual.MigrateTags,
-	},
+	},*/
 	{
 		name: "20250326_SubscriptionNextExec",
 		f:    manual.SubscriptionNextExec,
@@ -67,6 +68,30 @@ var manualMigrations = []migration{
 		name: "20250907_MigrateMetadata",
 		f:    manual.MigrateMetadataToSettings,
 	},
+	{
+		name: "20250918_PageCompactor",
+		f:    manual.PageCompactor,
+	},
+	{
+		name: "20250918_PreferenceCompactor",
+		f:    manual.PreferenceCompactor,
+	},
+	{
+		name: "20250918_AssignPreferencesToDefaultUser",
+		f:    manual.AssignPreferencesToFirstAdmin,
+	},
+	{
+		name: "20250918_SeedUserPreferences",
+		f:    manual.SetDefaultUserPreferences,
+	},
+	{
+		name: "20250919_SubscriptionCompactor",
+		f:    manual.SubscriptionCompactor,
+	},
+	{
+		name: "20250919_DropMetadataRows",
+		f:    manual.DropMetadataRows,
+	},
 }
 
 func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
@@ -75,7 +100,7 @@ func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error
 
 	var migrations []models.ManualMigration
 	if err := db.WithContext(ctx).Find(&migrations).Error; err != nil {
-		return err
+		return fmt.Errorf("failed loading existing manual migrations: %w", err)
 	}
 
 	success := utils.MaybeMap(migrations, func(t models.ManualMigration) (string, bool) {
@@ -103,7 +128,7 @@ func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error
 
 			err := m.f(ctx, tx, migrationLogger)
 			if err != nil {
-				errorTally = append(errorTally, err)
+				errorTally = append(errorTally, fmt.Errorf("failed running manual migration %s: %w", m.name, err))
 			}
 
 			model := models.ManualMigration{
@@ -114,16 +139,16 @@ func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error
 			err = tx.Save(&model).Error
 			if err != nil {
 				migrationLogger.Warn().Err(err).Msg("Failed to save manual migration")
-				errorTally = append(errorTally, err)
+				errorTally = append(errorTally, fmt.Errorf("failed running manual migration %s: %w", m.name, err))
 			}
 
 			if len(errorTally) > 0 {
 				err = tx.Rollback().Error
 				if err != nil {
 					migrationLogger.Warn().Err(err).Msg("Failed to rollback manual migration")
+					errorTally = append(errorTally, fmt.Errorf("failed rolling back manual migration %s: %w", m.name, err))
 				}
 
-				errorTally = append(errorTally, err)
 				return errors.Join(errorTally...)
 			}
 

@@ -12,8 +12,8 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
+	metadata2 "github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
-	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
@@ -65,7 +65,6 @@ func main() {
 	utils.Must(c.Provide(services.SubscriptionServiceProvider))
 	utils.Must(c.Provide(services.SignalRServiceProvider))
 	utils.Must(c.Provide(services.NotificationServiceProvider))
-	utils.Must(c.Provide(services.PreferenceServiceProvider))
 	utils.Must(c.Provide(services.ImageServiceProvider))
 	utils.Must(c.Provide(services.CacheServiceProvider))
 	utils.Must(c.Provide(services.DirectoryServiceProvider))
@@ -88,9 +87,9 @@ func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.
 	span.End()
 
 	log.WithLevel(zerolog.NoLevel).Str("handler", "core").
-		Str("Version", metadata.Version.String()).
-		Str("CommitHash", metadata.CommitHash).
-		Str("BuildTimestamp", metadata.BuildTimestamp).
+		Str("Version", metadata2.Version.String()).
+		Str("CommitHash", metadata2.CommitHash).
+		Str("BuildTimestamp", metadata2.BuildTimestamp).
 		Str("GoVersion", runtime.Version()).
 		Str("GOOS", runtime.GOOS).
 		Str("GOARCH", runtime.GOARCH).

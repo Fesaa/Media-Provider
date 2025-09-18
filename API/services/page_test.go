@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -19,7 +20,7 @@ func tempPageService(t *testing.T) PageService {
 
 	database, err := db.DatabaseProvider(t.Context(), log)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal(fmt.Errorf("create temp database failed: %w", err))
 	}
 	t.Cleanup(func() {
 		d, err := database.DB()

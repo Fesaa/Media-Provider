@@ -9,8 +9,8 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/manual"
 	"github.com/Fesaa/Media-Provider/db/models"
+	"github.com/Fesaa/Media-Provider/internal/metadata"
 	mptracing "github.com/Fesaa/Media-Provider/internal/tracing"
-	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/glebarez/sqlite"
 	"github.com/rs/zerolog"
@@ -45,15 +45,15 @@ func DatabaseProvider(ctx context.Context, log zerolog.Logger) (*gorm.DB, error)
 	}
 
 	if err = migrate(ctx, db); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to migrate db: %w", err)
 	}
 
 	if err = manualMigration(ctx, db, log.With().Str("handler", "migrations").Logger()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed manual migrations: %w", err)
 	}
 
 	if err = manual.SyncSettings(db.WithContext(ctx), log.With().Str("handler", "settings").Logger()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to sync settings: %w", err)
 	}
 
 	return db, nil

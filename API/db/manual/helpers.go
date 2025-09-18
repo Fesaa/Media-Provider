@@ -2,6 +2,8 @@ package manual
 
 import (
 	"context"
+	"errors"
+	"strings"
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"gorm.io/gorm"
@@ -20,4 +22,18 @@ func getDefaultUser(ctx context.Context, db *gorm.DB) (models.User, error) {
 	var defaultUser models.User
 	err := db.WithContext(ctx).Find(&defaultUser, "original = ?", true).Error
 	return defaultUser, err
+}
+
+func allowNoTable(err error) error {
+	if strings.Contains(err.Error(), "no such table:") {
+		return nil
+	}
+	return err
+}
+
+func allowNoRecord(err error) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil
+	}
+	return err
 }

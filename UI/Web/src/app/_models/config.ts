@@ -6,7 +6,8 @@ export type Config = {
   maxConcurrentImages: number;
   disableIpv6: boolean;
   rootDir: string;
-  oidc: OidcConfig
+  oidc: OidcConfig;
+  subscriptionRefreshHour: number;
 }
 
 export type OidcConfig = {

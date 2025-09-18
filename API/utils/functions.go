@@ -167,6 +167,12 @@ func Identity[T any](t T) func() T {
 	}
 }
 
+func IdentityFunc[T any]() func(T) T {
+	return func(t T) T {
+		return t
+	}
+}
+
 func Stringify(i int) string {
 	return fmt.Sprintf("%d", i)
 }

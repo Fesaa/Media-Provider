@@ -55,6 +55,7 @@ export class ServerSettingsComponent {
       disablePasswordLogin: FormControl<boolean>;
       autoLogin:FormControl <boolean>;
     }>
+    subscriptionRefreshHour: FormControl<number>;
   }> | undefined;
 
   constructor() {
@@ -77,6 +78,7 @@ export class ServerSettingsComponent {
           autoLogin: this.fb.control(config.oidc.autoLogin),
           clientSecret: this.fb.control(config.oidc.clientSecret),
         }),
+        subscriptionRefreshHour: this.fb.control(config.subscriptionRefreshHour),
       });
       this.cdRef.detectChanges();
 
