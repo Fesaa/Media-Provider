@@ -76,6 +76,7 @@ func getOldDb(ctx context.Context, db *gorm.DB, fs afero.Afero, log zerolog.Logg
 func migrateDrivers(ctx context.Context, log zerolog.Logger, db *gorm.DB, fs afero.Afero) error {
 	log = log.With().Str("handler", "db-driver-migrations").Logger()
 	if db.Migrator().HasTable("server_settings") {
+		log.Debug().Str("driver", db.Dialector.Name()).Msg("Database is populated, no migrations will be ran")
 		return nil
 	}
 
