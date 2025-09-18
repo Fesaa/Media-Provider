@@ -1,4 +1,4 @@
-import {Component, computed, inject, OnInit, signal} from '@angular/core';
+import {Component, computed, effect, inject, OnInit, signal} from '@angular/core';
 import {NotificationService} from "../_services/notification.service";
 import {GroupWeight, Notification} from "../_models/notifications";
 import {ToastService} from "../_services/toast.service";
@@ -13,6 +13,7 @@ import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
 import {NotificationInfoModalComponent} from "./_components/notification-info-modal/notification-info-modal.component";
 import {DefaultModalOptions} from "../_models/default-modal-options";
 import {debounce, debounceTime, distinctUntilChanged, map, switchMap, tap} from "rxjs";
+import {Tracker} from "../shared/data-structures/tracker";
 
 @Component({
   selector: 'app-notifications',
@@ -34,6 +35,8 @@ export class NotificationsComponent implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
 
   notifications = signal<Notification[]>([]);
+  tracker = new Tracker<Notification, number>((n) => n.ID);
+  allSelected = computed(() => this.notifications().length === this.tracker.items().length);
 
   sortedNotifications = computed(() => {
     const notifications = this.notifications();
@@ -52,9 +55,6 @@ export class NotificationsComponent implements OnInit {
   timeAgoForm = this.fb.group({
     timeAgo: this.fb.control<number>(999_999_999),
   });
-
-  selectedNotifications: number[] = [];
-  allCheck: boolean = false;
 
   timeAgoOptions = [
     {
@@ -100,19 +100,15 @@ export class NotificationsComponent implements OnInit {
   }
 
   toggleAll() {
-    if (this.allCheck) {
-      this.selectedNotifications = this.notifications().map(n => n.ID)
+    if (this.allSelected()) {
+      this.tracker.reset();
     } else {
-      this.selectedNotifications = []
+      this.tracker.addAll(this.notifications());
     }
   }
 
-  toggleSelect(id: number) {
-    if (this.selectedNotifications.indexOf(id) === -1) {
-      this.selectedNotifications.push(id);
-    } else {
-      this.selectedNotifications = this.selectedNotifications.filter(i => i !== id);
-    }
+  toggleSelect(notification: Notification) {
+    this.tracker.toggle(notification)
   }
 
   show(n: Notification) {
@@ -153,33 +149,32 @@ export class NotificationsComponent implements OnInit {
   }
 
   async readSelected() {
-    // Filter out read notifications
-    this.selectedNotifications = this.selectedNotifications.filter(n => {
+    const toRead = this.tracker.items().filter(n => {
       const not = this.notifications().find(n => n.ID === n.ID);
       return not && !not.read
-    })
+    }).map(n => n.ID)
 
-    if (this.selectedNotifications.length === 0) {
+    if (toRead.length === 0) {
       this.toastService.warningLoco("notifications.toasts.no-selected");
       return;
     }
 
     if (!await this.modalService.confirm({
-      question: translate('notifications.confirm-read-many', {amount: this.selectedNotifications.length})
+      question: translate('notifications.confirm-read-many', {amount: toRead.length})
     })) {
       return;
     }
 
-    this.notificationService.readMany(this.selectedNotifications).subscribe({
+    this.notificationService.readMany(toRead).subscribe({
       next: () => {
-        this.toastService.successLoco("notifications.toasts.read-many-success", {amount: this.selectedNotifications.length})
+        this.toastService.successLoco("notifications.toasts.read-many-success", {amount: toRead.length})
         this.notifications.set(this.notifications().map(n => {
-          if (this.selectedNotifications.includes(n.ID)) {
+          if (toRead.includes(n.ID)) {
             n.read = true;
           }
           return n;
         }))
-        this.selectedNotifications = [];
+        this.tracker.reset();
       },
       error: err => {
         this.toastService.genericError(err.error.message);
@@ -188,23 +183,23 @@ export class NotificationsComponent implements OnInit {
   }
 
   async deleteSelected() {
-    if (this.selectedNotifications.length === 0) {
+    if (this.tracker.ids().length === 0) {
       this.toastService.warningLoco("notifications.toasts.no-selected");
       return;
     }
 
     if (!await this.modalService.confirm({
-      question: translate('notifications.confirm-delete-many', {amount: this.selectedNotifications.length})
+      question: translate('notifications.confirm-delete-many', {amount: this.tracker.ids().length})
     })) {
       return;
     }
 
-    this.notificationService.deleteMany(this.selectedNotifications).subscribe({
+    this.notificationService.deleteMany(this.tracker.ids()).subscribe({
       next: () => {
-        this.toastService.successLoco("notifications.toasts.delete-success", {amount: this.selectedNotifications.length})
-        this.notifications.set(this.notifications().
-        filter(n => !this.selectedNotifications.includes(n.ID)))
-        this.selectedNotifications = [];
+        this.toastService.successLoco("notifications.toasts.delete-success", {amount: this.tracker.ids().length});
+
+        this.notifications.set(this.notifications().filter(n => !this.tracker.ids().includes(n.ID)));
+        this.tracker.reset();
       },
       error: err => {
         this.toastService.genericError(err.error.message);
