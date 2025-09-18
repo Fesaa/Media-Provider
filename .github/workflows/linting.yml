@@ -1,12 +1,11 @@
 name: Validate - Linter
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
+    paths:
+      - API
 
 jobs:
   linter:
