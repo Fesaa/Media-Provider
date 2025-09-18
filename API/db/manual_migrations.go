@@ -88,6 +88,10 @@ var manualMigrations = []migration{
 		name: "20250919_SubscriptionCompactor",
 		f:    manual.SubscriptionCompactor,
 	},
+	{
+		name: "20250919_DropMetadataRows",
+		f:    manual.DropMetadataRows,
+	},
 }
 
 func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {

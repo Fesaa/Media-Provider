@@ -305,7 +305,7 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("preference_dynasty_genre_tags"); err != nil {
+		if err := tx.Migrator().DropTable("preference_black_list_tags"); err != nil {
 			return err
 		}
 
@@ -381,4 +381,8 @@ func SubscriptionCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger)
 		return tx.Migrator().DropTable("subscription_infos")
 	})
 
+}
+
+func DropMetadataRows(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+	return db.WithContext(ctx).Migrator().DropTable("metadata_rows")
 }
