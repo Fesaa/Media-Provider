@@ -51,7 +51,7 @@ func ImageServiceProvider(log zerolog.Logger, unitOfWork *db.UnitOfWork) ImageSe
 }
 
 func (i *imageService) ConvertToWebp(ctx context.Context, data []byte) ([]byte, bool) {
-	ctx, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesImagesWebp)
+	_, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesImagesWebp)
 	defer span.End()
 
 	img, format, err := image.Decode(bytes.NewReader(data))

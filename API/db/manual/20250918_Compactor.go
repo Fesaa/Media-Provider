@@ -163,7 +163,7 @@ type ageRatingMapping struct {
 	AgeRatingMapID int
 }
 
-func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) error { //nolint: gocognit
 	var preference oldPreference
 	var tags []tag
 	var ageRatingMaps []ageRatingMap
