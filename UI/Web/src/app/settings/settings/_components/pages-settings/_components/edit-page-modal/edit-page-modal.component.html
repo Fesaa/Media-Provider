@@ -136,6 +136,12 @@
                   </td>
                 </ng-template>
 
+                <ng-template #empty>
+                  <div class="p-2 d-flex justify-content-end">
+                    <button class="btn btn-secondary ms-2"(click)="addModifier()"><i class="fa fa-plus"></i></button>
+                  </div>
+                </ng-template>
+
               </app-table>
 
             </ng-template>

@@ -49,13 +49,17 @@
           <div class="row pt-4 align-items-center" [formGroup]="valueForm">
 
             <div class="col-md-4 col-sm-12">
-              @if (valueForm.get('key'); as control) {
-                <input type="text" formControlName="key" class="form-control">
+              @if (valueForm.get('value'); as control) {
+                <app-settings-item [control]="control" [title]="t('value-label')" [isEditMode]="true" [showEdit]="false">
+                  <ng-template #edit><input type="text" formControlName="value" class="form-control"></ng-template>
+                </app-settings-item>
               }
             </div>
             <div class="col-md-4 col-sm-12">
-              @if (valueForm.get('value'); as control) {
-                <input type="text" formControlName="value" class="form-control">
+              @if (valueForm.get('key'); as control) {
+                <app-settings-item [control]="control" [title]="t('key-label')" [isEditMode]="true" [showEdit]="false">
+                  <ng-template #edit><input type="text" formControlName="key" class="form-control"></ng-template>
+                </app-settings-item>
               }
             </div>
             <div class="col-md-4 col-sm-12 d-flex justify-content-between align-items-center">
