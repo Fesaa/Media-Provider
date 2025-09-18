@@ -14,12 +14,16 @@ func AssignSubscriptionsToUser(ctx context.Context, db *gorm.DB, log zerolog.Log
 		return err
 	}
 
-	log.Debug().Str("user", defaultUser.Name).Msg("Assigning subscriptions to user")
-
 	var subs []models.Subscription
 	if err = db.WithContext(ctx).Find(&subs).Error; err != nil {
 		return err
 	}
+
+	if len(subs) == 0 {
+		return nil
+	}
+
+	log.Debug().Str("user", defaultUser.Name).Msg("Assigning subscriptions to user")
 
 	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, sub := range subs {

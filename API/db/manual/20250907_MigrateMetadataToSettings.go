@@ -2,7 +2,6 @@ package manual
 
 import (
 	"context"
-	"strings"
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/db/repository"
@@ -12,6 +11,10 @@ import (
 )
 
 func MigrateMetadataToSettings(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+	if !ensureTablesExist(ctx, db, "metadata_rows") {
+		return nil
+	}
+
 	type row struct {
 		Key   int
 		Value string
@@ -20,10 +23,6 @@ func MigrateMetadataToSettings(ctx context.Context, db *gorm.DB, log zerolog.Log
 	var rows []row
 	err := db.WithContext(ctx).Table("metadata_rows").Find(&rows).Error
 	if err != nil {
-		if strings.Contains(err.Error(), "no such table: metadata_rows") {
-			return nil
-		}
-
 		log.Error().Err(err).Msg("Failed to fetch metadata rows")
 		return err
 	}

@@ -30,7 +30,7 @@ var (
 	Development = boolFeature("DEVELOPMENT") || boolFeature("DEV")
 	// Docker set when running in docker
 	Docker = boolFeature("DOCKER")
-	// DatabaseDsn override database dsn. Required to be sqlite still
+	// DatabaseDsn override database dsn. Only takes effect for postgres
 	DatabaseDsn = stringFeature("DATABASE_DSN")
 	// DbProvider can be postgres or sqlite
 	DbProvider = stringFeature("DATABASE_DRIVER", "sqlite")

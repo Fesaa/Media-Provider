@@ -35,6 +35,10 @@ type modifierValue struct {
 
 // PageCompactor will compact all modifiers and modifier values into a json column for pages
 func PageCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+	if !ensureTablesExist(ctx, db, "modifiers", "modifier_values") {
+		return nil
+	}
+
 	var pages []models.Page
 	var modifiers []modifier
 	var modifierValues []modifierValue
@@ -44,11 +48,11 @@ func PageCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 	}
 
 	if err := db.WithContext(ctx).Find(&modifiers).Error; err != nil {
-		return allowNoTable(err)
+		return err
 	}
 
 	if err := db.WithContext(ctx).Find(&modifierValues).Error; err != nil {
-		return allowNoTable(err)
+		return err
 	}
 
 	modifierDict := make(map[int]*modifier)
@@ -165,6 +169,22 @@ type ageRatingMapping struct {
 }
 
 func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) error { //nolint: gocognit
+	var (
+		TablePreferences       = "preferences"
+		TableTags              = "tags"
+		TableAgeRatingMaps     = "ageRatingMaps"
+		TableTagsMaps          = "tagsMaps"
+		TableGenreTags         = "preference_dynasty_genre_tags"
+		TableBlackList         = "preference_black_list_tags"
+		TableWhiteList         = "preference_white_list_tags"
+		TableAgeRatingMappings = "preference_age_rating_mappings"
+	)
+
+	if !ensureTablesExist(ctx, db, TablePreferences, TableTags, TableAgeRatingMaps, TableTags, TableGenreTags,
+		TableBlackList, TableWhiteList, TableAgeRatingMappings) {
+		return nil
+	}
+
 	var preference oldPreference
 	var tags []tag
 	var ageRatingMaps []ageRatingMap
@@ -175,36 +195,36 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 	var whiteListMappings []mapping
 	var ageRatingMappings []ageRatingMapping
 
-	if err := db.WithContext(ctx).Table("preferences").First(&preference).Error; err != nil {
-		return allowNoTable(err)
+	if err := db.WithContext(ctx).Table(TablePreferences).First(&preference).Error; err != nil {
+		return err
 	}
 
 	if err := db.WithContext(ctx).Find(&tags).Error; err != nil {
-		return allowNoTable(err)
+		return err
 	}
 
 	if err := db.WithContext(ctx).Find(&ageRatingMaps).Error; err != nil {
-		return allowNoTable(err)
+		return err
 	}
 
 	if err := db.WithContext(ctx).Find(&tagMaps).Error; err != nil {
-		return allowNoTable(err)
+		return err
 	}
 
-	if err := db.WithContext(ctx).Table("preference_dynasty_genre_tags").Find(&genreMappings).Error; err != nil {
-		return allowNoTable(err)
+	if err := db.WithContext(ctx).Table(TableGenreTags).Find(&genreMappings).Error; err != nil {
+		return err
 	}
 
-	if err := db.WithContext(ctx).Table("preference_black_list_tags").Find(&blackListMappings).Error; err != nil {
-		return allowNoTable(err)
+	if err := db.WithContext(ctx).Table(TableBlackList).Find(&blackListMappings).Error; err != nil {
+		return err
 	}
 
-	if err := db.WithContext(ctx).Table("preference_white_list_tags").Find(&whiteListMappings).Error; err != nil {
-		return allowNoTable(err)
+	if err := db.WithContext(ctx).Table(TableWhiteList).Find(&whiteListMappings).Error; err != nil {
+		return err
 	}
 
-	if err := db.WithContext(ctx).Table("preference_age_rating_mappings").Find(&ageRatingMappings).Error; err != nil {
-		return allowNoTable(err)
+	if err := db.WithContext(ctx).Table(TableAgeRatingMappings).Find(&ageRatingMappings).Error; err != nil {
+		return err
 	}
 
 	tagsDict := make(map[int]tag)
@@ -289,35 +309,35 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("age_rating_maps"); err != nil {
+		if err := tx.Migrator().DropTable(TableAgeRatingMaps); err != nil {
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("preference_dynasty_genre_tags"); err != nil {
+		if err := tx.Migrator().DropTable(TableGenreTags); err != nil {
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("preference_white_list_tags"); err != nil {
+		if err := tx.Migrator().DropTable(TableWhiteList); err != nil {
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("preference_age_rating_mappings"); err != nil {
+		if err := tx.Migrator().DropTable(TableAgeRatingMappings); err != nil {
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("preference_black_list_tags"); err != nil {
+		if err := tx.Migrator().DropTable(blackListMappings); err != nil {
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("preferences"); err != nil {
+		if err := tx.Migrator().DropTable(TablePreferences); err != nil {
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("tags"); err != nil {
+		if err := tx.Migrator().DropTable(TableTags); err != nil {
 			return err
 		}
 
-		if err := tx.Migrator().DropTable("tag_maps"); err != nil {
+		if err := tx.Migrator().DropTable(TableTagsMaps); err != nil {
 			return err
 		}
 
@@ -339,6 +359,10 @@ type subscriptionInfo struct {
 }
 
 func SubscriptionCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+	if !ensureTablesExist(ctx, db, "subscription_infos") {
+		return nil
+	}
+
 	var subscriptions []models.Subscription
 	var infos []subscriptionInfo
 
@@ -347,7 +371,7 @@ func SubscriptionCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger)
 	}
 
 	if err := db.WithContext(ctx).Find(&infos).Error; err != nil {
-		return allowNoTable(err)
+		return err
 	}
 
 	subscriptionDict := make(map[int]*models.Subscription)

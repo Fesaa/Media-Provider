@@ -19,6 +19,7 @@ const (
 	FirstInstalledVersion
 	InstallDate
 	SubscriptionRefreshHour
+	DbDriver
 )
 
 type ServerSetting struct {

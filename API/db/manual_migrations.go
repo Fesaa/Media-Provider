@@ -11,6 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"gorm.io/gorm"
 )
 
@@ -94,7 +95,7 @@ var manualMigrations = []migration{
 	},
 }
 
-func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
+func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger, fs afero.Afero) error {
 	ctx, span := tracing.TracerDb.Start(ctx, tracing.SpanManualMigrations)
 	defer span.End()
 
@@ -117,6 +118,9 @@ func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error
 	})
 
 	log.Debug().Int("total", len(migrations)).Int("todo", len(toDo)).Msg("migrations to run")
+	if len(toDo) == 0 {
+		return nil
+	}
 
 	for _, m := range toDo {
 		err := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {

@@ -14,6 +14,10 @@ func UpdateUserRoles(ctx context.Context, db *gorm.DB, log zerolog.Logger) error
 		return err
 	}
 
+	if defaultUser.ID == 0 {
+		return nil
+	}
+
 	log.Debug().Str("user", defaultUser.Name).Msg("Adding all roles to original user")
 
 	defaultUser.Roles = models.AllRoles

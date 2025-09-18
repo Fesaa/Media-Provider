@@ -68,7 +68,6 @@ func main() {
 	utils.Must(c.Provide(services.ImageServiceProvider))
 	utils.Must(c.Provide(services.CacheServiceProvider))
 	utils.Must(c.Provide(services.DirectoryServiceProvider))
-	utils.Must(c.Provide(services.FileServiceProvider))
 	utils.Must(c.Provide(services.ArchiveServiceProvider))
 	utils.Must(c.Provide(services.SettingsServiceProvider))
 	utils.Must(c.Provide(applicationProvider))
