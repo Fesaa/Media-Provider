@@ -2,6 +2,7 @@ package dynasty
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"path"
 	"strconv"
@@ -107,6 +108,7 @@ func (m *manga) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.Comic
 
 	if count, ok := m.getCiStatus(); ok {
 		ci.Count = count
+		m.NotifySubscriptionExhausted(ctx, fmt.Sprintf("%d Chapters", ci.Count))
 	}
 
 	ci.Writer = strings.Join(utils.Map(m.SeriesInfo.Authors, func(t Author) string {
