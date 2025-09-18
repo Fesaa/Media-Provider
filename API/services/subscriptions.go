@@ -39,6 +39,7 @@ type subscriptionService struct {
 	cronService    CronService
 	contentService ContentService
 	notifier       NotificationService
+	settings       SettingsService
 	transloco      TranslocoService
 
 	unitOfWork *db.UnitOfWork
@@ -49,7 +50,7 @@ type subscriptionService struct {
 
 func SubscriptionServiceProvider(unitOfWork *db.UnitOfWork, provider ContentService,
 	log zerolog.Logger, cronService CronService, notifier NotificationService,
-	transloco TranslocoService, ctx context.Context,
+	transloco TranslocoService, ctx context.Context, settings SettingsService,
 ) (SubscriptionService, error) {
 	ctx, span := tracing.TracerServices.Start(ctx, tracing.SpanSetupService,
 		trace.WithAttributes(attribute.String("service.name", "SubscriptionService")))
@@ -58,6 +59,7 @@ func SubscriptionServiceProvider(unitOfWork *db.UnitOfWork, provider ContentServ
 	service := &subscriptionService{
 		cronService:    cronService,
 		contentService: provider,
+		settings:       settings,
 		notifier:       notifier,
 		transloco:      transloco,
 		unitOfWork:     unitOfWork,
@@ -77,19 +79,19 @@ func (s *subscriptionService) OnStartUp(ctx context.Context) error {
 		return err
 	}
 
-	pref, err := s.unitOfWork.Preferences.GetPreferences(ctx)
+	settings, err := s.settings.GetSettingsDto(ctx)
 	if err != nil {
 		return err
 	}
 
 	for _, sub := range subs {
-		sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
+		sub.Info.NextExecution = sub.NextExecution(settings.SubscriptionRefreshHour)
 		if err = s.unitOfWork.Subscriptions.Update(ctx, sub); err != nil {
 			return err
 		}
 	}
 
-	return s.UpdateTask(ctx, pref.SubscriptionRefreshHour)
+	return s.UpdateTask(ctx, settings.SubscriptionRefreshHour)
 }
 
 func (s *subscriptionService) orFromPreferences(ctx context.Context, hours ...int) (int, error) {
@@ -97,12 +99,12 @@ func (s *subscriptionService) orFromPreferences(ctx context.Context, hours ...in
 		return hours[0], nil
 	}
 
-	pref, err := s.unitOfWork.Preferences.GetPreferences(ctx)
+	settings, err := s.settings.GetSettingsDto(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	return pref.SubscriptionRefreshHour, nil
+	return settings.SubscriptionRefreshHour, nil
 }
 
 func (s *subscriptionService) UpdateTask(ctx context.Context, hours ...int) error {
@@ -151,14 +153,15 @@ func (s *subscriptionService) Add(ctx context.Context, sub models.Subscription) 
 		return nil, errors.New("subscription already exists")
 	}
 
-	pref, err := s.unitOfWork.Preferences.GetPreferences(ctx)
+	settings, err := s.settings.GetSettingsDto(ctx)
 	if err != nil {
 		return nil, err
 	}
-	sub.Normalize(pref.SubscriptionRefreshHour)
+
+	sub.Normalize(settings.SubscriptionRefreshHour)
 	sub.Info.LastCheck = time.Now()
 	sub.Info.LastCheckSuccess = true
-	sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
+	sub.Info.NextExecution = sub.NextExecution(settings.SubscriptionRefreshHour)
 
 	newSub, err := s.unitOfWork.Subscriptions.New(ctx, sub)
 	if err != nil {
@@ -178,7 +181,7 @@ func (s *subscriptionService) Update(ctx context.Context, sub models.Subscriptio
 		return errors.New("subscription doesn't exist")
 	}
 
-	pref, err := s.unitOfWork.Preferences.GetPreferences(ctx)
+	settings, err := s.settings.GetSettingsDto(ctx)
 	if err != nil {
 		return err
 	}
@@ -190,8 +193,8 @@ func (s *subscriptionService) Update(ctx context.Context, sub models.Subscriptio
 	cur.Provider = sub.Provider
 	cur.Payload = sub.Payload
 
-	cur.Normalize(pref.SubscriptionRefreshHour)
-	cur.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
+	cur.Normalize(settings.SubscriptionRefreshHour)
+	cur.Info.NextExecution = sub.NextExecution(settings.SubscriptionRefreshHour)
 	s.log.Debug().Time("nextExecution", sub.Info.NextExecution).
 		Msg("subscription will run next on")
 

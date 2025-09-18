@@ -119,6 +119,8 @@ func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto pa
 		if dto.Oidc.ClientSecret != strings.Repeat("*", len(setting.Value)) {
 			setting.Value = dto.Oidc.ClientSecret
 		}
+	case models.SubscriptionRefreshHour:
+		setting.Value = strconv.Itoa(dto.SubscriptionRefreshHour)
 	case models.InstalledVersion:
 	case models.FirstInstalledVersion:
 	case models.InstallDate:
@@ -161,6 +163,8 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 		dto.Metadata.FirstInstalledVersion = setting.Value
 	case models.InstallDate:
 		dto.Metadata.InstallDate, err = time.Parse(time.DateTime, setting.Value)
+	case models.SubscriptionRefreshHour:
+		dto.SubscriptionRefreshHour, err = strconv.Atoi(setting.Value)
 	}
 
 	return err

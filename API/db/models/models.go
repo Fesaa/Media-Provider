@@ -7,9 +7,7 @@ var MODELS = []any{
 	&SubscriptionInfo{},
 	&Page{},
 	&ManualMigration{},
-	&Preference{},
+	&UserPreferences{},
 	&Notification{},
-	&Tag{},
-	&TagMap{},
 	&ServerSetting{},
 }

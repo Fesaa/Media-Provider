@@ -65,7 +65,6 @@ func main() {
 	utils.Must(c.Provide(services.SubscriptionServiceProvider))
 	utils.Must(c.Provide(services.SignalRServiceProvider))
 	utils.Must(c.Provide(services.NotificationServiceProvider))
-	utils.Must(c.Provide(services.PreferenceServiceProvider))
 	utils.Must(c.Provide(services.ImageServiceProvider))
 	utils.Must(c.Provide(services.CacheServiceProvider))
 	utils.Must(c.Provide(services.DirectoryServiceProvider))

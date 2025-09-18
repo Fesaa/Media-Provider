@@ -27,14 +27,14 @@ var manualMigrations = []migration{
 		name: "20250112_SubscriptionDurationChanges",
 		f:    manual.SubscriptionDurationChanges,
 	},
-	{
+	/*{
 		name: "20250112_InsertDefaultPreferences",
 		f:    manual.InsertDefaultPreferences,
 	},
 	{
 		name: "20250215_MigrateTags",
 		f:    manual.MigrateTags,
-	},
+	},*/
 	{
 		name: "20250326_SubscriptionNextExec",
 		f:    manual.SubscriptionNextExec,
@@ -70,6 +70,18 @@ var manualMigrations = []migration{
 	{
 		name: "20250918_PageCompactor",
 		f:    manual.PageCompactor,
+	},
+	{
+		name: "20250918_PreferenceCompactor",
+		f:    manual.PreferenceCompactor,
+	},
+	{
+		name: "20250918_AssignPreferencesToDefaultUser",
+		f:    manual.AssignPreferencesToFirstAdmin,
+	},
+	{
+		name: "20250918_SeedUserPreferences",
+		f:    manual.SetDefaultUserPreferences,
 	},
 }
 

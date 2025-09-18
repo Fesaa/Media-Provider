@@ -18,6 +18,7 @@ const (
 	InstalledVersion
 	FirstInstalledVersion
 	InstallDate
+	SubscriptionRefreshHour
 )
 
 type ServerSetting struct {

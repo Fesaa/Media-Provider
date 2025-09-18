@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/internal/comicinfo"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -271,18 +270,18 @@ func (m *manga) writeTagsAndGenres(ctx context.Context, ci *comicinfo.ComicInfo)
 		return
 	}
 
-	var blackList models.Tags = m.Preference.BlackListedTags
+	blackList := m.Preference.BlackList
 
 	tagAllowed := func(tag TagData, name string) bool {
 		if m.Preference == nil {
 			return false
 		}
 
-		if blackList.Contains(name) {
+		if slices.Contains(blackList, utils.Normalize(name)) {
 			return false
 		}
 
-		if blackList.Contains(tag.Id) {
+		if slices.Contains(blackList, tag.Id) {
 			return false
 		}
 		return true

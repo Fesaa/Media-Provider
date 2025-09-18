@@ -54,16 +54,6 @@ func (i *imageService) ConvertToWebp(ctx context.Context, data []byte) ([]byte, 
 	ctx, span := tracing.TracerServices.Start(ctx, tracing.SpanServicesImagesWebp)
 	defer span.End()
 
-	p, err := i.unitOfWork.Preferences.GetPreferences(ctx)
-	if err != nil {
-		i.log.Warn().Err(err).Msg("pref.Get() failed, not converting to webp")
-		return data, false
-	}
-
-	if !p.ConvertToWebp {
-		return data, false
-	}
-
 	img, format, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		span.RecordError(err)
