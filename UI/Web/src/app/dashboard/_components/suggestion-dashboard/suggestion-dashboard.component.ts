@@ -39,6 +39,10 @@ export class SuggestionDashboardComponent {
       };
     });
 
+    if (options.length === 0) {
+      return options // Ensure we display the load defaults
+    }
+
     options.push({
       ID: -1,
       title: translate('dashboard.manual-add.title'),
