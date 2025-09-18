@@ -37,15 +37,15 @@ func setDbDriver(ctx context.Context, db *gorm.DB) error {
 	return settings.Update(ctx, all)
 }
 
-func checkDriverMigrationEligibility(ctx context.Context, db *gorm.DB) error {
+func checkDriverMigrationEligibility(ctx context.Context, db *gorm.DB) (bool, error) {
 	if !db.Migrator().HasTable("server_settings") {
-		return nil
+		return false, nil
 	}
 
 	settings := repository.NewSettingsRepository(db, nil)
 	all, err := settings.GetAll(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	currentDriver := utils.Find(all, func(setting models.ServerSetting) bool {
@@ -53,12 +53,12 @@ func checkDriverMigrationEligibility(ctx context.Context, db *gorm.DB) error {
 	})
 
 	if currentDriver == nil {
-		return nil
+		return true, nil
 	}
 
 	// Starting with same driver
 	if currentDriver.Value == strings.ToLower(config.DbProvider) {
-		return nil
+		return false, nil
 	}
 
 	panic(fmt.Errorf("migrating into an existing database is not supported"))
@@ -102,7 +102,7 @@ func getOldDb(ctx context.Context, db *gorm.DB, fs afero.Afero, log zerolog.Logg
 
 func migrateDrivers(ctx context.Context, log zerolog.Logger, db *gorm.DB, fs afero.Afero) error {
 	log = log.With().Str("handler", "db-driver-migrations").Logger()
-	if err := checkDriverMigrationEligibility(ctx, db); err != nil {
+	if ok, err := checkDriverMigrationEligibility(ctx, db); err != nil || !ok {
 		return err
 	}
 
