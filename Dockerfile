@@ -22,7 +22,7 @@ COPY ./API ./
 ARG COMMIT_HASH
 ARG BUILD_TIMESTAMP
 
-RUN go build -o /media-provider -ldflags "-linkmode external -extldflags '-static' -X github.com/Fesaa/Media-Provider/metadata.CommitHash=${COMMIT_HASH} -X github.com/Fesaa/Media-Provider/metadata.BuildTimestamp=${BUILD_TIMESTAMP}"
+RUN go build -o /media-provider -ldflags "-linkmode external -extldflags '-static' -X github.com/Fesaa/Media-Provider/internal/metadata.CommitHash=${COMMIT_HASH} -X github.com/Fesaa/Media-Provider/internal/metadata.BuildTimestamp=${BUILD_TIMESTAMP}"
 
 FROM alpine:latest
 

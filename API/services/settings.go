@@ -11,7 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/metadata"
+	"github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 )

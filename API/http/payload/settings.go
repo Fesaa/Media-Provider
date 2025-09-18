@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/metadata"
+	"github.com/Fesaa/Media-Provider/internal/metadata"
 )
 
 type Settings struct {

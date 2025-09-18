@@ -14,8 +14,8 @@ import (
 	"github.com/Fesaa/Media-Provider/api/routes"
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/internal/contextkey"
+	metadata2 "github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
-	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
@@ -127,7 +127,7 @@ func applicationProvider(params appParams) *fiber.App {
 	}
 
 	app.Use(otelfiber.Middleware(
-		otelfiber.WithServerName(metadata.Identifier),
+		otelfiber.WithServerName(metadata2.Identifier),
 		otelfiber.WithNext(func(ctx *fiber.Ctx) bool {
 			return slices.Contains(dontLogExt, path.Ext(ctx.Path()))
 		}),
@@ -166,15 +166,15 @@ func updateInstalledVersion(ss services.SettingsService, log zerolog.Logger, ctx
 
 	cur := settings.Metadata
 
-	if cur.Version.Equal(metadata.Version) {
+	if cur.Version.Equal(metadata2.Version) {
 		log.Trace().Msg("no version changes")
 		return nil
 	}
 
-	if cur.Version.Newer(metadata.Version) {
+	if cur.Version.Newer(metadata2.Version) {
 		log.Warn().
 			Str("installedVersion", cur.Version.String()).
-			Str("actualVersion", metadata.Version.String()).
+			Str("actualVersion", metadata2.Version.String()).
 			Msg("Installed version is newer, want is going on? Bringing back to sync!")
 	}
 	return ss.UpdateCurrentVersion(ctx)
