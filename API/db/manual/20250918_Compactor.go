@@ -172,8 +172,8 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 	var (
 		TablePreferences       = "preferences"
 		TableTags              = "tags"
-		TableAgeRatingMaps     = "ageRatingMaps"
-		TableTagsMaps          = "tagsMaps"
+		TableAgeRatingMaps     = "age_rating_maps"
+		TableTagsMaps          = "tag_maps"
 		TableGenreTags         = "preference_dynasty_genre_tags"
 		TableBlackList         = "preference_black_list_tags"
 		TableWhiteList         = "preference_white_list_tags"
@@ -302,10 +302,13 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 			return err
 		}
 
-		if err := tx.Create(&models.ServerSetting{
-			Key:   models.SubscriptionRefreshHour,
-			Value: fmt.Sprintf("%d", preference.SubscriptionRefreshHour),
-		}).Error; err != nil {
+		res := tx.Where(models.ServerSetting{Key: models.SubscriptionRefreshHour}).
+			Save(&models.ServerSetting{
+				Key:   models.SubscriptionRefreshHour,
+				Value: fmt.Sprintf("%d", preference.SubscriptionRefreshHour),
+			})
+
+		if err := res.Error; err != nil {
 			return err
 		}
 
@@ -325,7 +328,7 @@ func PreferenceCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 			return err
 		}
 
-		if err := tx.Migrator().DropTable(blackListMappings); err != nil {
+		if err := tx.Migrator().DropTable(TableBlackList); err != nil {
 			return err
 		}
 
