@@ -80,6 +80,7 @@ export class SearchResultComponent implements OnInit{
     component.metadata.set(metadata);
     component.defaultDir.set(defaultDir);
     component.rootDir.set(page.customRootDir);
+    component.dirs.set(page.dirs);
     component.info.set(this.searchResult());
   }
 
