@@ -12,7 +12,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
-	metadata2 "github.com/Fesaa/Media-Provider/internal/metadata"
+	"github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
@@ -86,9 +86,9 @@ func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.
 	span.End()
 
 	log.WithLevel(zerolog.NoLevel).Str("handler", "core").
-		Str("Version", metadata2.Version.String()).
-		Str("CommitHash", metadata2.CommitHash).
-		Str("BuildTimestamp", metadata2.BuildTimestamp).
+		Str("Version", metadata.Version.String()).
+		Str("CommitHash", metadata.CommitHash).
+		Str("BuildTimestamp", metadata.BuildTimestamp).
 		Str("GoVersion", runtime.Version()).
 		Str("GOOS", runtime.GOOS).
 		Str("GOARCH", runtime.GOARCH).
