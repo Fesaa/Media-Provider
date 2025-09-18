@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="mp"
+                 name="Media Provider"
+                 start-page="starter-topic.md">
+
+    <toc-element topic="starter-topic.md"/>
+    <toc-element topic="Introduction.md"/>
+    <toc-element topic="Usage.md"/>
+    <toc-element toc-title="Configuration">
+        <toc-element topic="Preferences.md"/>
+        <toc-element topic="Server.md"/>
+        <toc-element topic="Users.md"/>
+    </toc-element>
+    <toc-element toc-title="Downloaders">
+        <toc-element topic="Pasloe.md"/>
+        <toc-element topic="Yoitsu-Torrents.md"/>
+    </toc-element>
+    <toc-element toc-title="Providers">
+        <toc-element topic="Mangadex.md"/>
+        <toc-element topic="Bato.md">
+        </toc-element>
+        <toc-element topic="Dynasty.md"/>
+        <toc-element topic="Webtoon.md"/>
+        <toc-element topic="Torrents.md"/>
+    </toc-element>
+</instance-profile>
