@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/spf13/afero"
 	"testing"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -18,7 +19,7 @@ func tempPageService(t *testing.T) PageService {
 	tempDir := t.TempDir()
 	config.Dir = tempDir
 
-	database, err := db.DatabaseProvider(t.Context(), log)
+	database, err := db.DatabaseProvider(t.Context(), log, afero.Afero{Fs: afero.NewOsFs()})
 	if err != nil {
 		t.Fatal(fmt.Errorf("create temp database failed: %w", err))
 	}
