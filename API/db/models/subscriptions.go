@@ -11,12 +11,13 @@ type Subscription struct {
 	Model
 
 	Owner            int                     `json:"owner"`
-	Provider         Provider                `json:"provider" gorm:"type:int"`
+	Provider         Provider                `gorm:"type:int" json:"provider"`
 	ContentId        string                  `json:"contentId"`
-	RefreshFrequency RefreshFrequency        `json:"refreshFrequency" gorm:"type:int"`
-	Info             SubscriptionInfo        `json:"info"`
+	RefreshFrequency RefreshFrequency        `gorm:"type:int" json:"refreshFrequency"`
+	InfoSql          json.RawMessage         `gorm:"type:jsonb" json:"-"`
+	Info             SubscriptionInfo        `gorm:"-" json:"info"`
 	Metadata         json.RawMessage         `gorm:"type:jsonb" json:"-"`
-	Payload          DownloadRequestMetadata `json:"metadata" gorm:"-:all"`
+	Payload          DownloadRequestMetadata `gorm:"-" json:"metadata"`
 }
 
 type DownloadRequestMetadata struct {
@@ -26,15 +27,32 @@ type DownloadRequestMetadata struct {
 
 func (s *Subscription) BeforeSave(tx *gorm.DB) (err error) {
 	s.Metadata, err = json.Marshal(s.Payload.Extra)
+	if err != nil {
+		return
+	}
+
+	s.InfoSql, err = json.Marshal(s.Info)
 	return
 }
 
 func (s *Subscription) AfterFind(tx *gorm.DB) (err error) {
 	s.Payload.StartImmediately = true
-	if s.Metadata == nil {
-		return
+
+	if s.Metadata != nil {
+		err = json.Unmarshal(s.Metadata, &s.Payload.Extra)
+		if err != nil {
+			return
+		}
 	}
-	return json.Unmarshal(s.Metadata, &s.Payload.Extra)
+
+	if s.InfoSql != nil {
+		err = json.Unmarshal(s.InfoSql, &s.Info)
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }
 
 func (s *Subscription) shouldRefresh(old *Subscription) bool {
@@ -74,12 +92,7 @@ func (s *Subscription) NextExecution(hour int) time.Time {
 }
 
 type SubscriptionInfo struct {
-	Model
-
-	SubscriptionId int
-
 	Title            string    `json:"title"`
-	Description      string    `json:"description"`
 	BaseDir          string    `json:"baseDir"`
 	LastCheck        time.Time `json:"lastCheck"`
 	LastCheckSuccess bool      `json:"lastCheckSuccess"`

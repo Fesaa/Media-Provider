@@ -12,8 +12,8 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
-	"github.com/Fesaa/Media-Provider/metadata"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
@@ -65,11 +65,9 @@ func main() {
 	utils.Must(c.Provide(services.SubscriptionServiceProvider))
 	utils.Must(c.Provide(services.SignalRServiceProvider))
 	utils.Must(c.Provide(services.NotificationServiceProvider))
-	utils.Must(c.Provide(services.PreferenceServiceProvider))
 	utils.Must(c.Provide(services.ImageServiceProvider))
 	utils.Must(c.Provide(services.CacheServiceProvider))
 	utils.Must(c.Provide(services.DirectoryServiceProvider))
-	utils.Must(c.Provide(services.FileServiceProvider))
 	utils.Must(c.Provide(services.ArchiveServiceProvider))
 	utils.Must(c.Provide(services.SettingsServiceProvider))
 	utils.Must(c.Provide(applicationProvider))

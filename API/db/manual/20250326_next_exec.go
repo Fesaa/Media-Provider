@@ -2,6 +2,7 @@ package manual
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/rs/zerolog"
@@ -19,14 +20,19 @@ func SubscriptionNextExec(ctx context.Context, db *gorm.DB, log zerolog.Logger) 
 		return res.Error
 	}
 
-	var pref models.Preference
-	res = db.WithContext(ctx).Find(&pref)
+	var set models.ServerSetting
+	res = db.WithContext(ctx).Find(&set, &models.ServerSetting{Key: models.SubscriptionRefreshHour})
 	if res.Error != nil {
 		return res.Error
 	}
 
+	subscriptionRefreshHour, err := strconv.Atoi(set.Value)
+	if err != nil {
+		return err
+	}
+
 	for _, sub := range subscriptions {
-		sub.Info.NextExecution = sub.NextExecution(pref.SubscriptionRefreshHour)
+		sub.Info.NextExecution = sub.NextExecution(subscriptionRefreshHour)
 		if err := db.WithContext(ctx).Save(&sub).Error; err != nil {
 			return err
 		}

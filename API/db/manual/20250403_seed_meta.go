@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/Fesaa/Media-Provider/metadata"
+	"github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )

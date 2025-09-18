@@ -682,21 +682,8 @@ func TestTagsBlackList(t *testing.T) {
 	m.language = "en"
 
 	chpt := chapter()
-	m.Preference = &models.Preference{
-		BlackListedTags: []models.Tag{
-			{
-				Name:           "Blacklisted Genre",
-				NormalizedName: "blacklistedgenre",
-			},
-			{
-				Name:           "Blacklisted Tag",
-				NormalizedName: "blacklistedtag",
-			},
-			{
-				Name:           "ABC",
-				NormalizedName: "abc",
-			},
-		},
+	m.Preference = &models.UserPreferences{
+		BlackList: []string{"Blacklisted Genre", "Blacklisted Tag", "ABC"},
 	}
 
 	m.SeriesInfo = mangaResp()

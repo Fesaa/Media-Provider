@@ -11,7 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/metadata"
+	"github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 )
@@ -119,9 +119,12 @@ func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto pa
 		if dto.Oidc.ClientSecret != strings.Repeat("*", len(setting.Value)) {
 			setting.Value = dto.Oidc.ClientSecret
 		}
+	case models.SubscriptionRefreshHour:
+		setting.Value = strconv.Itoa(dto.SubscriptionRefreshHour)
 	case models.InstalledVersion:
 	case models.FirstInstalledVersion:
 	case models.InstallDate:
+	case models.DbDriver:
 		break // Do not update
 	}
 
@@ -161,6 +164,10 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 		dto.Metadata.FirstInstalledVersion = setting.Value
 	case models.InstallDate:
 		dto.Metadata.InstallDate, err = time.Parse(time.DateTime, setting.Value)
+	case models.SubscriptionRefreshHour:
+		dto.SubscriptionRefreshHour, err = strconv.Atoi(setting.Value)
+	case models.DbDriver:
+		break // ignore
 	}
 
 	return err

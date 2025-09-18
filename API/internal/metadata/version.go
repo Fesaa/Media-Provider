@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -8,7 +9,7 @@ import (
 )
 
 const (
-	Version SemanticVersion = "0.3.4"
+	Version SemanticVersion = "0.3.5"
 )
 
 type SemanticVersion string
@@ -42,7 +43,7 @@ func compareSemanticVersions(v1, v2 string) int {
 	parts2 := strings.Split(v2, ".")
 
 	if len(parts1) != 3 || len(parts2) != 3 {
-		panic("invalid version string")
+		panic(fmt.Sprintf("invalid version string: %s <-> %s", v1, v2))
 	}
 
 	major1 := utils.MustReturn(strconv.Atoi(parts1[0]))

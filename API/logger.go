@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/config"
-	"github.com/Fesaa/Media-Provider/metadata"
+	"github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"

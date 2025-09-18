@@ -3,9 +3,9 @@ export type Preferences = {
   logEmptyDownloads: boolean,
   convertToWebp: boolean,
   coverFallbackMethod: CoverFallbackMethod,
-  dynastyGenreTags: string[],
-  blackListedTags: string[],
-  whiteListedTags: string[],
+  genreList: string[],
+  blackList: string[],
+  whiteList: string[],
   ageRatingMappings: AgeRatingMap[],
   tagMappings: TagMap[],
 };
@@ -23,8 +23,8 @@ export const CoverFallbackMethods = [
 ]
 
 export type TagMap = {
-  origin: string,
-  dest: string,
+  originTag: string,
+  destinationTag: string,
 }
 
 export type AgeRatingMap = {

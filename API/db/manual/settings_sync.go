@@ -49,6 +49,10 @@ var defaults = []models.ServerSetting{
 		Key:   models.OidcAutoLogin,
 		Value: "false",
 	},
+	{
+		Key:   models.SubscriptionRefreshHour,
+		Value: "23",
+	},
 }
 
 func SyncSettings(db *gorm.DB, log zerolog.Logger) error {
