@@ -25,6 +25,10 @@ type Tag interface {
 	Identifier() string
 }
 
+func NoneEmptyTag[T Tag](t T) bool {
+	return len(t.Value()) > 0
+}
+
 type ScopedTag interface {
 	IsGenre() bool
 }

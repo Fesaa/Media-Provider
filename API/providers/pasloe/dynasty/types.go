@@ -17,15 +17,15 @@ type SearchData struct {
 	Tags    []Tag
 }
 
-type Author Identifiable
+type Author = Identifiable
 
-type Tag Identifiable
+type Tag = Identifiable
 
-func (i Tag) Value() string {
+func (i Identifiable) Value() string {
 	return i.DisplayName
 }
 
-func (i Tag) Identifier() string {
+func (i Identifiable) Identifier() string {
 	return i.Id
 }
 
