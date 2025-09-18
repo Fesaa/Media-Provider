@@ -3,7 +3,9 @@ package mangadex
 type SearchOptions struct {
 	Query                  string
 	IncludedTags           []string
+	IncludeTagsMode        string
 	ExcludedTags           []string
+	ExcludedTagsMode       string
 	Status                 []string
 	ContentRating          []string
 	PublicationDemographic []string

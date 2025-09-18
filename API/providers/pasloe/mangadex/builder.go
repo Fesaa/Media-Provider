@@ -80,10 +80,28 @@ func (b *Builder) Transform(ctx context.Context, s payload.SearchRequest) Search
 	if ok {
 		ms.IncludedTags = iT
 	}
+
+	iTms, ok := s.Modifiers["includeTagsMode"]
+	if ok && len(iT) > 0 {
+		iTm := iTms[0]
+		if iTm == "AND" || iTm == "OR" {
+			ms.IncludeTagsMode = iTm
+		}
+	}
+
 	eT, ok := s.Modifiers["excludeTags"]
 	if ok {
 		ms.ExcludedTags = eT
 	}
+
+	eTms, ok := s.Modifiers["excludeTagsMode"]
+	if ok && len(eTms) > 0 {
+		eTm := eTms[0]
+		if eTm == "AND" || eTm == "OR" {
+			ms.ExcludedTagsMode = eTm
+		}
+	}
+
 	st, ok := s.Modifiers["status"]
 	if ok {
 		ms.Status = st
