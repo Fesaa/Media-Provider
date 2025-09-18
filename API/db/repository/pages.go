@@ -26,9 +26,7 @@ type pagesRepository struct {
 
 func (p pagesRepository) GetAllPages(ctx context.Context) ([]models.Page, error) {
 	var pages []models.Page
-	res := p.db.WithContext(ctx).Preload("Modifiers", func(db *gorm.DB) *gorm.DB {
-		return db.Order("sort ASC")
-	}).Preload("Modifiers.Values").Find(&pages)
+	res := p.db.WithContext(ctx).Find(&pages)
 	if res.Error != nil {
 		return nil, res.Error
 	}
@@ -38,9 +36,7 @@ func (p pagesRepository) GetAllPages(ctx context.Context) ([]models.Page, error)
 
 func (p pagesRepository) GetPage(ctx context.Context, id int) (*models.Page, error) {
 	var page models.Page
-	result := p.db.WithContext(ctx).Preload("Modifiers", func(db *gorm.DB) *gorm.DB {
-		return db.Order("sort ASC")
-	}).Preload("Modifiers.Values").First(&page, id)
+	result := p.db.WithContext(ctx).First(&page, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -57,40 +53,14 @@ func (p pagesRepository) Create(ctx context.Context, page *models.Page) error {
 }
 
 func (p pagesRepository) Update(ctx context.Context, page *models.Page) error {
-	return p.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(page).Error; err != nil {
-			return err
-		}
-
-		if err := tx.Model(&page).Association("Modifiers").Replace(page.Modifiers); err != nil {
-			return err
-		}
-
-		for _, modifier := range page.Modifiers {
-			if err := tx.Model(&modifier).Association("Values").Replace(modifier.Values); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	return p.db.WithContext(ctx).Save(page).Error
 }
 
 func (p pagesRepository) UpdateMany(ctx context.Context, pages []models.Page) error {
 	return p.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, page := range pages {
-			if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(page).Error; err != nil {
+			if err := tx.Save(&page).Error; err != nil {
 				return err
-			}
-
-			if err := tx.Model(&page).Association("Modifiers").Replace(page.Modifiers); err != nil {
-				return err
-			}
-
-			for _, modifier := range page.Modifiers {
-				if err := tx.Model(&modifier).Association("Values").Replace(modifier.Values); err != nil {
-					return err
-				}
 			}
 		}
 

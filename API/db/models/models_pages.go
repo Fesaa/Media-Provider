@@ -1,7 +1,10 @@
 package models
 
 import (
+	"encoding/json"
+
 	"github.com/lib/pq"
+	"gorm.io/gorm"
 )
 
 type Provider int
@@ -46,13 +49,28 @@ func (p Provider) String() string {
 type Page struct {
 	Model
 
-	Title         string         `json:"title"`
-	Icon          string         `json:"icon"`
-	SortValue     int            `json:"sortValue"`
-	Providers     pq.Int64Array  `gorm:"type:integer[]" json:"providers"`
-	Modifiers     []Modifier     `json:"modifiers"`
-	Dirs          pq.StringArray `gorm:"type:string[]" json:"dirs"`
-	CustomRootDir string         `json:"customRootDir"`
+	Title         string          `json:"title"`
+	Icon          string          `json:"icon"`
+	SortValue     int             `json:"sortValue"`
+	Providers     pq.Int64Array   `gorm:"type:integer[]" json:"providers"`
+	ModifierData  json.RawMessage `gorm:"type:jsonb" json:"-"`
+	Modifiers     []Modifier      `gorm:"-" json:"modifiers"`
+	Dirs          pq.StringArray  `gorm:"type:string[]" json:"dirs"`
+	CustomRootDir string          `json:"customRootDir"`
+}
+
+func (p *Page) BeforeSave(tx *gorm.DB) (err error) {
+	p.ModifierData, err = json.Marshal(p.Modifiers)
+	return
+}
+
+func (p *Page) AfterFind(tx *gorm.DB) (err error) {
+	if p.ModifierData == nil {
+		p.Modifiers = []Modifier{}
+		return
+	}
+
+	return json.Unmarshal(p.ModifierData, &p.Modifiers)
 }
 
 type ModifierType int
@@ -60,25 +78,19 @@ type ModifierType int
 const (
 	DROPDOWN ModifierType = iota + 1
 	MULTI
+	Switch
 )
 
 type Modifier struct {
-	Model
-
-	PageID int
-
 	Title  string          `json:"title"`
 	Type   ModifierType    `json:"type"`
 	Key    string          `json:"key"`
 	Values []ModifierValue `json:"values"`
-	Sort   int
+	Sort   int             `json:"sort"`
 }
 
 type ModifierValue struct {
-	Model
-
-	ModifierID int
-	Key        string `json:"key"`
-	Value      string `json:"value"`
-	Default    bool   `json:"default"`
+	Key     string `json:"key"`
+	Value   string `json:"value"`
+	Default bool   `json:"default"`
 }

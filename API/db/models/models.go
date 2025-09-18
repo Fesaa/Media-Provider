@@ -6,8 +6,6 @@ var MODELS = []any{
 	&Subscription{},
 	&SubscriptionInfo{},
 	&Page{},
-	&Modifier{},
-	&ModifierValue{},
 	&ManualMigration{},
 	&Preference{},
 	&Notification{},
