@@ -1,7 +1,9 @@
 import {computed, Directive, DOCUMENT, effect, ElementRef, inject, input, model, OnInit} from '@angular/core';
 import {SettingsService} from "../_services/settings.service";
 
-const DAY = 1000 * 60 * 60 * 24;
+const HOUR = 1000 * 60 * 60;
+const DAY = HOUR * 24;
+const WEEK = DAY * 7;
 
 @Directive({
   selector: '[appUpdateBadge]'
@@ -15,18 +17,34 @@ export class UpdateBadgeDirective implements OnInit {
   metadata = computed(() => this.settingsService.config()?.metadata)
   shouldDisplay = computed(() => {
     const metadata = this.metadata();
-    const version = this.version();
+    const versions = this.versions().split(",");
 
     if (!metadata) return false;
 
-    if (metadata.version !== version) return false;
+    if (!versions.includes(metadata.version)) return false;
 
-    return new Date().getTime() - new Date(metadata.lastUpdateDate).getTime() < DAY;
+    return new Date().getTime() - new Date(metadata.lastUpdateDate).getTime() < this.displayTime();
   });
 
+  /**
+   * id to identify the badge
+   * @default randomly generated one
+   */
   id = model<string>();
-  version = input.required<string>();
+  /**
+   * Versions comma seperated, for which the badge should be displayed
+   */
+  versions = input.required<string>();
+  /**
+   * Position of the badge
+   * @default top right
+   */
   badgePosition = input<'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'>('top-right');
+  /**
+   * Time in milliseconds indicating how long after server update the badge should be displayed
+   * @default 1 day
+   */
+  displayTime = input(DAY);
 
   constructor() {
     effect(() => {
@@ -174,7 +192,7 @@ export class UpdateBadgeDirective implements OnInit {
     }
 
     // non secure connections
-    return 'id-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now().toString(36);
+    return 'id-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now().toString(36);
   }
 
 }
