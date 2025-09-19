@@ -45,13 +45,10 @@ export class UpdateBadgeDirective implements OnInit {
   }
 
   ngOnInit(): void {
-    // Ensure parent element has relative positioning for badge positioning
-    const parentElement = this.elementRef.nativeElement.parentElement;
-    if (parentElement) {
-      const computedStyle = window.getComputedStyle(parentElement);
-      if (computedStyle.position === 'static') {
-        parentElement.style.position = 'relative';
-      }
+    const host = this.elementRef.nativeElement as HTMLElement;
+    const computedStyle = window.getComputedStyle(host);
+    if (computedStyle.position === 'static') {
+      host.style.position = 'relative';
     }
   }
 
@@ -64,16 +61,13 @@ export class UpdateBadgeDirective implements OnInit {
       return;
     }
 
-    const parentElement = this.elementRef.nativeElement.parentElement;
-    if (!parentElement) return;
-
     const badge = this.document.createElement('div');
     badge.id = id;
     badge.className = 'update-badge';
     badge.textContent = 'New!';
 
     this.applyBadgeStyles(badge);
-    parentElement.appendChild(badge);
+    this.elementRef.nativeElement.appendChild(badge);
 
     requestAnimationFrame(() => {
       badge.style.opacity = '1';
