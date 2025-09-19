@@ -136,20 +136,20 @@ func MustInvoke[T any](c Invoker) T {
 
 func Must(err error) {
 	if err != nil {
-		panic(err)
+		panic(NewDetailedError(err))
 	}
 }
 
 func MustReturn[T any](result T, err error) T {
 	if err != nil {
-		panic(err)
+		panic(NewDetailedError(err))
 	}
 	return result
 }
 
 func MustReturn2[T any](_ any, result T, err error) T {
 	if err != nil {
-		panic(err)
+		panic(NewDetailedError(err))
 	}
 	return result
 }
