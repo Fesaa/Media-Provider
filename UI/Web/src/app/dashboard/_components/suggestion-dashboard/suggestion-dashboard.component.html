@@ -15,13 +15,14 @@
         <i class="fa fa-angles-right"></i>
 
         @if (option.action) {
-          <a (click)="option.action()">
+          <a (click)="option.action()" appUpdateBadge [version]="option.version ?? ''">
             {{ option.title }}
           </a>
         } @else {
           <a
             [routerLink]="['/page']"
             [queryParams]="{ index: option.ID }"
+            appUpdateBadge [version]="option.version ?? ''"
           >
             {{ option.title }}
           </a>

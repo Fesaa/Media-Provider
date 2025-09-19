@@ -196,7 +196,7 @@
     "loading": "loading...",
     "edit": "Edit",
     "close": "Close",
-    "cancel": "cancel",
+    "cancel": "Cancel",
     "confirm": "confirm",
     "download": "Download",
     "filter": "filter",
@@ -325,7 +325,7 @@
       "name-tooltip": "",
       "provider-label": "Provider",
       "provider-tooltip": "Torrent providers are interchangeable here, other need to be correct",
-      "cancel": "cancel",
+      "cancel": "{{shared.cancel}}",
       "next": "Next"
     }
   },
