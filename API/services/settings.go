@@ -46,7 +46,7 @@ func (s *settingsService) UpdateCurrentVersion(ctx context.Context) error {
 			return err
 		}
 
-		return s.unitOfWork.Settings.Update(ctx, []models.ServerSetting{{
+		return unitOfWork.Settings.Update(ctx, []models.ServerSetting{{
 			Key:   models.LastUpdateDate,
 			Value: time.Now().Format(time.DateTime),
 		}})
