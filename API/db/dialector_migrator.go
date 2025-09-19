@@ -92,7 +92,7 @@ func migrateDrivers(ctx context.Context, log zerolog.Logger, db *gorm.DB, fs afe
 	}()
 
 	// Ensure old db is up to date
-	if err = migrate(ctx, oldDb, log, fs); err != nil {
+	if err = migrate(ctx, oldDb, log); err != nil {
 		return fmt.Errorf("failed to migrate old database: %w", err)
 	}
 

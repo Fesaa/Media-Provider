@@ -174,11 +174,11 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 	case models.FirstInstalledVersion:
 		dto.Metadata.FirstInstalledVersion = setting.Value
 	case models.InstallDate:
-		dto.Metadata.InstallDate, err = time.Parse(time.DateTime, setting.Value)
+		dto.Metadata.InstallDate, err = time.Parse(time.RFC3339, setting.Value)
 	case models.SubscriptionRefreshHour:
 		dto.SubscriptionRefreshHour, err = strconv.Atoi(setting.Value)
 	case models.LastUpdateDate:
-		dto.Metadata.LastUpdateDate, err = time.Parse(time.DateTime, setting.Value)
+		dto.Metadata.LastUpdateDate, err = time.Parse(time.RFC3339, setting.Value)
 	case models.DbDriver:
 		break // ignore
 	}

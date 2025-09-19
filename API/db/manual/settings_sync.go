@@ -57,7 +57,7 @@ var defaults = []models.ServerSetting{
 	},
 	{
 		Key:   models.LastUpdateDate,
-		Value: time.Now().Format(time.DateTime),
+		Value: time.Now().Format(time.RFC3339),
 	},
 }
 
