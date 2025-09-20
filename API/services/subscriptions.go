@@ -191,6 +191,7 @@ func (s *subscriptionService) Update(ctx context.Context, sub models.Subscriptio
 	cur.RefreshFrequency = sub.RefreshFrequency
 	cur.Provider = sub.Provider
 	cur.Payload = sub.Payload
+	cur.LastDownloadDir = sub.LastDownloadDir
 
 	cur.Normalize(settings.SubscriptionRefreshHour)
 	cur.NextExecution = sub.GetNextExecution(settings.SubscriptionRefreshHour)

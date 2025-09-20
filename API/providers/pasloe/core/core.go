@@ -412,8 +412,8 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 			c.Log.Error().Err(err).Msg("An error occurred while updating subscription directories. Cancelling download")
 			if err = c.Client.RemoveDownload(payload.StopRequest{Provider: c.Req.Provider, Id: c.Id()}); err != nil {
 				c.Log.Error().Err(err).Msg("error while cleaning up")
-				return
 			}
+			return
 		}
 	}
 
