@@ -51,13 +51,11 @@ export class SearchResultComponent implements OnInit{
       contentId: this.searchResult().InfoHash,
       provider: this.searchResult().Provider,
       refreshFrequency: RefreshFrequency.Week,
-      info: {
-        title: this.searchResult().Name,
-        baseDir: this.page().dirs[0],
-        lastCheck: null!,
-        lastCheckSuccess: null!,
-        nextExecution: null!,
-      },
+      title: this.searchResult().Name,
+      baseDir: this.page().dirs[0],
+      lastCheck: null!,
+      lastCheckSuccess: null!,
+      nextExecution: null!,
       metadata: {
         startImmediately: true,
         extra: {}
