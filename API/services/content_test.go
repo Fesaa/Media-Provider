@@ -118,10 +118,8 @@ func TestContentService_DownloadSub(t *testing.T) {
 	sub := models.Subscription{
 		Provider:  models.MANGADEX,
 		ContentId: "de900fd3-c94c-4148-bbcb-ca56eaeb57a4",
-		Info: models.SubscriptionInfo{
-			BaseDir: "Manga",
-			Title:   "Spice And Wolf",
-		},
+		BaseDir:   "Manga",
+		Title:     "Spice And Wolf",
 	}
 
 	if err := cs.DownloadSubscription(&sub); err != nil {

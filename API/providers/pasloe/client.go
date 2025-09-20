@@ -165,7 +165,7 @@ func (c *client) RemoveDownload(req payload.StopRequest) error {
 
 			if content.Request().IsSubscription {
 				sub := content.Request().Sub
-				sub.Info.LastDownloadDir = path.Join(c.GetBaseDir(), strings.TrimSpace(content.GetDownloadDir()))
+				sub.LastDownloadDir = path.Join(c.GetBaseDir(), strings.TrimSpace(content.GetDownloadDir()))
 
 				if err := c.unitOfWork.Subscriptions.Update(c.ctx, *sub); err != nil {
 					c.log.Error().Err(err).Msg("Failed to update subscription")

@@ -163,8 +163,8 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription, isSub ..
 	return s.Download(payload.DownloadRequest{
 		Provider:         sub.Provider,
 		Id:               sub.ContentId,
-		BaseDir:          sub.Info.BaseDir,
-		TempTitle:        sub.Info.Title,
+		BaseDir:          sub.BaseDir,
+		TempTitle:        sub.Title,
 		DownloadMetadata: sub.Payload,
 		OwnerId:          sub.Owner,
 

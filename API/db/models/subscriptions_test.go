@@ -132,16 +132,14 @@ func TestSubscription_ShouldRefresh(t *testing.T) {
 
 func TestSubscription_Normalize(t *testing.T) {
 	sub := Subscription{
-		Info: SubscriptionInfo{
-			LastCheck: time.Date(2023, 10, 27, 15, 30, 0, 0, time.Local),
-		},
+		LastCheck: time.Date(2023, 10, 27, 15, 30, 0, 0, time.Local),
 	}
 
 	sub.Normalize(10)
 
 	expected := time.Date(2023, 10, 27, 10, 0, 0, 0, time.Local)
-	if sub.Info.LastCheck != expected {
-		t.Errorf("Normalize time mismatch: expected %v, got %v", expected, sub.Info.LastCheck)
+	if sub.LastCheck != expected {
+		t.Errorf("Normalize time mismatch: expected %v, got %v", expected, sub.LastCheck)
 	}
 }
 

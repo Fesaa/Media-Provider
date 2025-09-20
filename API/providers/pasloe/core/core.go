@@ -155,7 +155,7 @@ func (c *Core[C, S]) DisplayInformation() DisplayInformation {
 	return DisplayInformation{
 		Name: func() string {
 			if c.Req.IsSubscription && c.Req.Sub != nil {
-				return c.Req.Sub.Info.Title
+				return c.Req.Sub.Title
 			}
 			return c.impl.Title()
 		}(),
@@ -462,14 +462,14 @@ func (c *Core[C, S]) ensureSubscriptionDirectoryIsUpToDate(ctx context.Context) 
 		return nil
 	}
 
-	if c.Req.Sub.Info.LastDownloadDir == "" {
+	if c.Req.Sub.LastDownloadDir == "" {
 		c.Log.Debug().Msg("No previous download directory known, updating to current")
-		c.Req.Sub.Info.LastDownloadDir = c.GetDownloadDir()
+		c.Req.Sub.LastDownloadDir = c.GetDownloadDir()
 		return c.unitOfWork.Subscriptions.Update(ctx, *c.Req.Sub)
 	}
 
 	var (
-		oldDir = path.Join(c.Client.GetBaseDir(), c.Req.Sub.Info.LastDownloadDir)
+		oldDir = path.Join(c.Client.GetBaseDir(), c.Req.Sub.LastDownloadDir)
 		newDir = path.Join(c.Client.GetBaseDir(), c.GetDownloadDir())
 	)
 

@@ -163,7 +163,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 func (sr *subscriptionRoutes) new(ctx *fiber.Ctx, sub models.Subscription) error {
 	log := contextkey.GetFromContext(ctx, contextkey.Logger)
 	user := contextkey.GetFromContext(ctx, contextkey.User)
-	sub.Info.BaseDir = path.Clean(sub.Info.BaseDir)
+	sub.BaseDir = path.Clean(sub.BaseDir)
 
 	if err := sr.validatorSubscription(sub); err != nil {
 		log.Error().Err(err).Msg("Failed to validate subscription")
