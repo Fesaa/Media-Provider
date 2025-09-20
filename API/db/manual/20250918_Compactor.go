@@ -389,13 +389,11 @@ func SubscriptionCompactor(ctx context.Context, db *gorm.DB, log zerolog.Logger)
 			continue
 		}
 
-		s.Info = models.SubscriptionInfo{
-			Title:            info.Title,
-			BaseDir:          info.BaseDir,
-			LastCheck:        info.LastCheck,
-			LastCheckSuccess: info.LastCheckSuccess,
-			NextExecution:    info.NextExecution,
-		}
+		s.Title = info.Title
+		s.BaseDir = info.BaseDir
+		s.LastCheck = info.LastCheck
+		s.LastCheckSuccess = info.LastCheckSuccess
+		s.NextExecution = info.NextExecution
 	}
 
 	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {

@@ -56,11 +56,10 @@ export class EditSubscriptionModalComponent implements OnInit {
     this.subscriptionForm.addControl('provider', new FormControl(subscription.provider));
     this.subscriptionForm.addControl('contentId', new FormControl(subscription.contentId));
     this.subscriptionForm.addControl('refreshFrequency', new FormControl(subscription.refreshFrequency));
-    this.subscriptionForm.addControl('info', new FormGroup({
-      title: new FormControl(subscription.info.title),
-      description: new FormControl(subscription.info.description),
-      baseDir: new FormControl(subscription.info.baseDir),
-    }));
+    this.subscriptionForm.addControl('title', new FormControl(subscription.title));
+    this.subscriptionForm.addControl('description', new FormControl(subscription.description));
+    this.subscriptionForm.addControl('baseDir', new FormControl(subscription.baseDir));
+    this.subscriptionForm.addControl('lastDownloadDir', new FormControl(subscription.lastDownloadDir));
 
     const metadataFormGroup = new FormGroup<any>({
       startImmediately: new FormControl(subscription.metadata.startImmediately),
@@ -150,10 +149,10 @@ export class EditSubscriptionModalComponent implements OnInit {
 
     actions$.subscribe({
       next: () => {
-        this.toastService.successLoco(`subscriptions.toasts.${kind}.success`, {name: sub.info.title});
+        this.toastService.successLoco(`subscriptions.toasts.${kind}.success`, {name: sub.title});
       },
       error: err => {
-        this.toastService.errorLoco(`subscriptions.toasts.${kind}.error`, {name: sub.info.title}, {msg: err.error.message});
+        this.toastService.errorLoco(`subscriptions.toasts.${kind}.error`, {name: sub.title}, {msg: err.error.message});
       }
     }).add(() => this.close())
   }

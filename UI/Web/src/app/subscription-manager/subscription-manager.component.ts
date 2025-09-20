@@ -58,9 +58,9 @@ export class SubscriptionManagerComponent implements OnInit {
     const subs = this.subscriptions();
 
     if (!filter) return subs;
-    
+
     const normalizedFilter = this.utilityService.normalize(filter);
-    return subs.filter(s => this.utilityService.normalize(s.info.title).includes(normalizedFilter));
+    return subs.filter(s => this.utilityService.normalize(s.title).includes(normalizedFilter));
   })
 
   constructor() {
@@ -122,17 +122,17 @@ export class SubscriptionManagerComponent implements OnInit {
 
     this.subscriptionService.runOnce(sub.ID).subscribe({
       next: () => {
-        this.toastService.successLoco("subscriptions.toasts.run-once.success", {}, {name: sub.info.title});
+        this.toastService.successLoco("subscriptions.toasts.run-once.success", {}, {name: sub.title});
       },
       error: (err) => {
-        this.toastService.errorLoco("subscriptions.toasts.run-once.error", {name: sub.info.title}, {msg: err.error.message});
+        this.toastService.errorLoco("subscriptions.toasts.run-once.error", {name: sub.title}, {msg: err.error.message});
       }
     })
   }
 
   async delete(sub: Subscription) {
     if (!await this.modalService.confirm({
-      question: translate("subscriptions.confirm-delete", {title: sub.info.title})
+      question: translate("subscriptions.confirm-delete", {title: sub.title})
     })) {
       return;
     }
@@ -141,10 +141,10 @@ export class SubscriptionManagerComponent implements OnInit {
     this.subscriptionService.delete(sub.ID).subscribe({
       next: () => {
         this.subscriptions.update(subs => subs.filter(s => s.ID !== sub.ID));
-        this.toastService.successLoco("subscriptions.toasts.delete.success", {name: sub.info.title});
+        this.toastService.successLoco("subscriptions.toasts.delete.success", {name: sub.title});
       },
       error: err => {
-        this.toastService.errorLoco("subscriptions.toasts.delete.error", {name: sub.info.title}, {msg: err.error.message});
+        this.toastService.errorLoco("subscriptions.toasts.delete.error", {name: sub.title}, {msg: err.error.message});
       }
     })
   }

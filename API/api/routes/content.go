@@ -3,6 +3,7 @@ package routes
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
@@ -81,6 +82,10 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) e
 	if req.BaseDir == "" {
 		log.Warn().Msg("trying to download to empty baseDir, returning error.")
 		return BadRequest(errors.New(cr.Transloco.GetTranslation("base-dir-not-empty")))
+	}
+
+	if strings.Contains(req.BaseDir, "..") {
+		return BadRequest()
 	}
 
 	req.OwnerId = user.ID
