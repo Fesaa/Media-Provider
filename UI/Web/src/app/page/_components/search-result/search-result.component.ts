@@ -53,6 +53,7 @@ export class SearchResultComponent implements OnInit{
       refreshFrequency: RefreshFrequency.Week,
       title: this.searchResult().Name,
       baseDir: this.page().dirs[0],
+      lastDownloadDir: '',
       lastCheck: null!,
       lastCheckSuccess: null!,
       nextExecution: null!,

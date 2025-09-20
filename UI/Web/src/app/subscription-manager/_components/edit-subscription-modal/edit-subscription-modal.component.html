@@ -35,7 +35,7 @@
                         </div>
                       </ng-template>
                       <ng-template #edit>
-                        <input formControlName="title" id="dir" class="form-control flex-grow-1">
+                        <input formControlName="title" id="title" class="form-control flex-grow-1">
                       </ng-template>
                     </app-settings-item>
                   }
@@ -54,14 +54,14 @@
                       </ng-template>
                       <ng-template #edit>
                         <div class="d-flex align-items-center">
-                          <input formControlName="contentId" id="dir" class="form-control flex-grow-1">
+                          <input formControlName="contentId" id="contentId" class="form-control flex-grow-1">
                         </div>
                       </ng-template>
                     </app-settings-item>
                   }
                 </div>
 
-                <div class="col-md-12 col-sm-12 pt-4">
+                <div class="col-md-6 col-sm-12 pt-4">
                   @if (subscriptionForm.get('baseDir'); as control) {
                     <app-settings-item [control]="control" [title]="t('base-dir-label')">
                       <ng-template #view>
@@ -78,6 +78,21 @@
                             <i class="fa fa-folder"></i>
                           </button>
                           <input formControlName="baseDir" id="dir" class="form-control flex-grow-1">
+                        </div>
+                      </ng-template>
+                    </app-settings-item>
+                  }
+                </div>
+
+                <div class="col-md-6 col-sm-12 pt-4">
+                  @if (subscriptionForm.get('lastDownloadDir'); as control) {
+                    <app-settings-item [control]="control" [title]="t('last-download-dir-label')" [tooltip]="t('last-download-dir-tooltip')">
+                      <ng-template #view>
+                        <span>{{control.value | defaultValue}}</span>
+                      </ng-template>
+                      <ng-template #edit>
+                        <div class="d-flex align-items-center">
+                          <input formControlName="lastDownloadDir" id="lastDownloadDir" class="form-control flex-grow-1">
                         </div>
                       </ng-template>
                     </app-settings-item>

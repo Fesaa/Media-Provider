@@ -59,6 +59,7 @@ export class EditSubscriptionModalComponent implements OnInit {
     this.subscriptionForm.addControl('title', new FormControl(subscription.title));
     this.subscriptionForm.addControl('description', new FormControl(subscription.description));
     this.subscriptionForm.addControl('baseDir', new FormControl(subscription.baseDir));
+    this.subscriptionForm.addControl('lastDownloadDir', new FormControl(subscription.lastDownloadDir));
 
     const metadataFormGroup = new FormGroup<any>({
       startImmediately: new FormControl(subscription.metadata.startImmediately),

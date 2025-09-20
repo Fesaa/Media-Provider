@@ -9,6 +9,7 @@ export type Subscription = {
   title: string;
   description?: string;
   baseDir: string;
+  lastDownloadDir: string;
   lastCheck: Date;
   lastCheckSuccess: boolean;
   nextExecution: Date;
