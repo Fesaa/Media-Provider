@@ -84,7 +84,7 @@ func (cr *contentRoutes) Download(ctx *fiber.Ctx, req payload.DownloadRequest) e
 		return BadRequest(errors.New(cr.Transloco.GetTranslation("base-dir-not-empty")))
 	}
 
-	if strings.Contains("..", req.BaseDir) {
+	if strings.Contains(req.BaseDir, "..") {
 		return BadRequest()
 	}
 
