@@ -94,6 +94,7 @@ func (s *Subscription) NextExecution(hour int) time.Time {
 type SubscriptionInfo struct {
 	Title            string    `json:"title"`
 	BaseDir          string    `json:"baseDir"`
+	LastDownloadDir  string    `json:"lastDownloadDir"`
 	LastCheck        time.Time `json:"lastCheck"`
 	LastCheckSuccess bool      `json:"lastCheckSuccess"`
 	NextExecution    time.Time `json:"nextExecution"`
