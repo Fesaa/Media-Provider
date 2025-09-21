@@ -30,23 +30,32 @@ export class AppComponent implements OnInit {
       if (event.type !== EventType.Notification) return;
 
       const notification = (event as Event<Notification>).data;
+      const title = this.stripHtml(notification.title);
+      const summary = this.stripHtml(notification.summary);
 
       switch (notification.colour) {
         case NotificationColour.Primary:
-          this.toastr.success(notification.title, notification.summary);
+          this.toastr.success(title, summary);
           break;
         case NotificationColour.Secondary:
-          this.toastr.info(notification.title, notification.summary);
+          this.toastr.info(title, summary);
           break;
         case NotificationColour.Error:
-          this.toastr.error(notification.title, notification.summary);
+          this.toastr.error(title, summary);
           break;
         case NotificationColour.Warn:
-          this.toastr.warning(notification.title, notification.summary);
+          this.toastr.warning(title, summary);
           break;
       }
     });
   }
+
+  stripHtml(html: string): string {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || '';
+  }
+
 
   @HostListener('window:resize')
   @HostListener('window:orientationchange')
