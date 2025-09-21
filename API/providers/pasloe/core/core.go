@@ -407,7 +407,8 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 		return
 	}
 
-	if c.Req.IsSubscription {
+	// We use the nil check rather than isSub as subs triggered by the one time flow. You go over this logic
+	if c.Req.Sub != nil {
 		if err = c.ensureSubscriptionDirectoryIsUpToDate(ctx); err != nil {
 			c.Log.Error().Err(err).Msg("An error occurred while updating subscription directories. Cancelling download")
 			if err = c.Client.RemoveDownload(payload.StopRequest{Provider: c.Req.Provider, Id: c.Id()}); err != nil {
@@ -458,7 +459,7 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 }
 
 func (c *Core[C, S]) ensureSubscriptionDirectoryIsUpToDate(ctx context.Context) error {
-	if !c.Req.IsSubscription {
+	if c.Req.Sub == nil {
 		return nil
 	}
 
