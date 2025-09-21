@@ -463,16 +463,16 @@ func (c *Core[C, S]) ensureSubscriptionDirectoryIsUpToDate(ctx context.Context) 
 		return nil
 	}
 
-	if c.Req.Sub.LastDownloadDir == "" {
-		c.Log.Debug().Msg("No previous download directory known, updating to current")
-		c.Req.Sub.LastDownloadDir = c.GetDownloadDir()
-		return c.unitOfWork.Subscriptions.Update(ctx, *c.Req.Sub)
-	}
-
 	var (
-		oldDir = path.Join(c.Client.GetBaseDir(), c.Req.Sub.LastDownloadDir)
+		oldDir = c.Req.Sub.LastDownloadDir
 		newDir = path.Join(c.Client.GetBaseDir(), c.GetDownloadDir())
 	)
+
+	if c.Req.Sub.LastDownloadDir == "" {
+		c.Log.Debug().Msg("No previous download directory known, updating to current")
+		c.Req.Sub.LastDownloadDir = newDir
+		return c.unitOfWork.Subscriptions.Update(ctx, *c.Req.Sub)
+	}
 
 	if oldDir == newDir {
 		return nil
