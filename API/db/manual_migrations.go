@@ -11,7 +11,6 @@ import (
 	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
-	"github.com/spf13/afero"
 	"gorm.io/gorm"
 )
 
@@ -99,7 +98,7 @@ var manualMigrations = []migration{
 	},
 }
 
-func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger, fs afero.Afero) error {
+func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 	ctx, span := tracing.TracerDb.Start(ctx, tracing.SpanManualMigrations)
 	defer span.End()
 

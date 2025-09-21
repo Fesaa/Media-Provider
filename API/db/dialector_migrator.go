@@ -92,7 +92,7 @@ func migrateDrivers(ctx context.Context, log zerolog.Logger, db *gorm.DB, fs afe
 	}()
 
 	// Ensure old db is up to date
-	if err = migrate(ctx, oldDb, log, fs); err != nil {
+	if err = migrate(ctx, oldDb, log); err != nil {
 		return fmt.Errorf("failed to migrate old database: %w", err)
 	}
 
@@ -142,8 +142,18 @@ func migrateModel(ctx context.Context, log zerolog.Logger, oldDb, newDb *gorm.DB
 			end = recordCount
 		}
 
-		batch := recordsValue.Slice(i, end).Interface()
+		slice := recordsValue.Slice(i, end)
 
+		for j := 0; j < slice.Len(); j++ {
+			record := slice.Index(j).Addr().Interface()
+			val := reflect.ValueOf(record).Elem()
+			idField := val.FieldByName("ID")
+			if idField.IsValid() && idField.CanSet() && idField.Kind() == reflect.Int {
+				idField.SetInt(0)
+			}
+		}
+
+		batch := slice.Interface()
 		if err := newDb.WithContext(ctx).Create(batch).Error; err != nil {
 			return fmt.Errorf("failed to insert batch %d-%d: %w", i, end-1, err)
 		}

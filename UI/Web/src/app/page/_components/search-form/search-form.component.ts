@@ -31,27 +31,8 @@ export class SearchFormComponent {
     this.searchForm = this.fb.group({query: ['']});
 
     effect(() => {
-      this.setupModifierControls();
-      this.setDefaultValues();
       this.searchForm.get('query')?.setValue('');
-    });
-  }
-
-  private setupModifierControls(): void {
-    const currentModifiers = this.modifiers();
-
-    Object.keys(this.searchForm.controls).forEach(key => {
-      if (key.startsWith('modifier_')) {
-        this.searchForm.removeControl(key);
-      }
-    });
-
-    currentModifiers.forEach(modifier => {
-      const controlName = `modifier_${modifier.key}`;
-
-      if (modifier.type === ModifierType.DROPDOWN) {
-        this.searchForm.addControl(controlName, new FormControl(''));
-      }
+      this.setDefaultValues();
     });
   }
 
@@ -67,10 +48,6 @@ export class SearchFormComponent {
       }
 
       defaultSelections[modifier.key] = Array.isArray(defaults) ? defaults.map(mv => mv.key) : [defaults.key];
-      if (modifier.type === ModifierType.DROPDOWN) {
-        const controlName = `modifier_${modifier.key}`;
-        this.searchForm.get(controlName)?.setValue((defaults as ModifierValue).key);
-      }
     });
 
     this.modifierSelections.set(defaultSelections);
@@ -147,5 +124,7 @@ export class SearchFormComponent {
     this.searchSubmitted.emit(searchRequest);
   }
 
-  trackModifier = (index: number, modifier: Modifier) => modifier.ID;
+  trackModifier = (index: number, modifier: Modifier) => {
+    return `${this.title()}_${index}_${modifier.title}`
+  };
 }

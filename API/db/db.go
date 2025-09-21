@@ -49,7 +49,7 @@ func DatabaseProvider(ctx context.Context, log zerolog.Logger, fs afero.Afero) (
 			return fmt.Errorf("failed to migrate drivers: %w", err)
 		}
 
-		if err = migrate(ctx, tx, log, fs); err != nil {
+		if err = migrate(ctx, tx, log); err != nil {
 			return fmt.Errorf("failed to migrate: %w", err)
 		}
 
@@ -67,7 +67,7 @@ func DatabaseProvider(ctx context.Context, log zerolog.Logger, fs afero.Afero) (
 	return db, nil
 }
 
-func migrate(ctx context.Context, db *gorm.DB, log zerolog.Logger, fs afero.Afero) error {
+func migrate(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {
 	ctx, span := mptracing.TracerDb.Start(ctx, mptracing.SpanMigrations)
 	defer span.End()
 
@@ -75,7 +75,7 @@ func migrate(ctx context.Context, db *gorm.DB, log zerolog.Logger, fs afero.Afer
 		return fmt.Errorf("failed to migrate db: %w", err)
 	}
 
-	if err := manualMigration(ctx, db, log.With().Str("handler", "migrations").Logger(), fs); err != nil {
+	if err := manualMigration(ctx, db, log.With().Str("handler", "migrations").Logger()); err != nil {
 		return fmt.Errorf("failed manual migrations: %w", err)
 	}
 

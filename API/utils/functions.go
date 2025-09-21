@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -136,20 +137,20 @@ func MustInvoke[T any](c Invoker) T {
 
 func Must(err error) {
 	if err != nil {
-		panic(err)
+		panic(PrettyErrorString(err))
 	}
 }
 
 func MustReturn[T any](result T, err error) T {
 	if err != nil {
-		panic(err)
+		panic(PrettyErrorString(err))
 	}
 	return result
 }
 
 func MustReturn2[T any](_ any, result T, err error) T {
 	if err != nil {
-		panic(err)
+		panic(PrettyErrorString(err))
 	}
 	return result
 }
@@ -237,4 +238,18 @@ func Count[T any](array []T, f func(T) bool) int {
 		}
 	}
 	return i
+}
+
+func PrettyErrorString(err error) string {
+	if err == nil {
+		return "No error."
+	}
+
+	var b strings.Builder
+	b.WriteString("Error trace:\n")
+	for i := 1; err != nil; i++ {
+		b.WriteString(fmt.Sprintf("  [%d] %v\n", i, err))
+		err = errors.Unwrap(err)
+	}
+	return b.String()
 }
