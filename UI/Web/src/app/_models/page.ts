@@ -10,7 +10,6 @@ export type Page = {
 }
 
 export type Modifier = {
-  ID: number;
   title: string;
   key: string;
   type: ModifierType;

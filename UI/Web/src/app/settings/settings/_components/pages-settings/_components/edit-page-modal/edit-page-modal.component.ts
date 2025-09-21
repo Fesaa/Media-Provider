@@ -192,7 +192,6 @@ export class EditPageModalComponent implements OnInit {
       key: '',
       type: ModifierType.DROPDOWN,
       values: [],
-      ID: 0,
     }));
   }
 
