@@ -6,17 +6,14 @@ export type Subscription = {
   provider: Provider;
   contentId: string;
   refreshFrequency: RefreshFrequency;
-  info: SubscriptionInfo;
-  metadata: DownloadRequestMetadata;
-}
-
-export type SubscriptionInfo = {
   title: string;
   description?: string;
   baseDir: string;
+  lastDownloadDir: string;
   lastCheck: Date;
   lastCheckSuccess: boolean;
   nextExecution: Date;
+  metadata: DownloadRequestMetadata;
 }
 
 export enum RefreshFrequency {

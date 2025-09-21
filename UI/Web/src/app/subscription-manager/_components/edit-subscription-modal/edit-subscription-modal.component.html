@@ -5,9 +5,9 @@
     <div class="modal-header">
       <h5 class="modal-title fw-semibold">
         @if (subscription().ID === -1) {
-          {{t('new-sub-title', {name: subscription().info.title})}}
+          {{t('new-sub-title', {name: subscription().title})}}
         } @else {
-          {{t('title', {name: subscription().info.title})}}
+          {{t('title', {name: subscription().title})}}
         }
       </h5>
       <button type="button" class="btn-close" [attr.aria-label]="t('close')" (click)="close()">
@@ -27,7 +27,7 @@
               <div class="row">
 
                 <div class="col-md-12 col-sm-12">
-                  @if (subscriptionForm.get('info.title'); as control) {
+                  @if (subscriptionForm.get('title'); as control) {
                     <app-settings-item [control]="control" [title]="t('title-label')" [tooltip]="t('title-tooltip')">
                       <ng-template #view>
                         <div class="d-flex align-items-center">
@@ -35,9 +35,7 @@
                         </div>
                       </ng-template>
                       <ng-template #edit>
-                        <div class="d-flex align-items-center" formGroupName="info">
-                          <input formControlName="title" id="dir" class="form-control flex-grow-1">
-                        </div>
+                        <input formControlName="title" id="title" class="form-control flex-grow-1">
                       </ng-template>
                     </app-settings-item>
                   }
@@ -56,15 +54,15 @@
                       </ng-template>
                       <ng-template #edit>
                         <div class="d-flex align-items-center">
-                          <input formControlName="contentId" id="dir" class="form-control flex-grow-1">
+                          <input formControlName="contentId" id="contentId" class="form-control flex-grow-1">
                         </div>
                       </ng-template>
                     </app-settings-item>
                   }
                 </div>
 
-                <div class="col-md-12 col-sm-12 pt-4">
-                  @if (subscriptionForm.get('info.baseDir'); as control) {
+                <div class="col-md-6 col-sm-12 pt-4">
+                  @if (subscriptionForm.get('baseDir'); as control) {
                     <app-settings-item [control]="control" [title]="t('base-dir-label')">
                       <ng-template #view>
                         <div class="d-flex align-items-center">
@@ -75,11 +73,26 @@
                         </div>
                       </ng-template>
                       <ng-template #edit>
-                        <div class="d-flex align-items-center" formGroupName="info">
+                        <div class="d-flex align-items-center">
                           <button class="btn btn-primary me-2" (click)="pickDirectory()">
                             <i class="fa fa-folder"></i>
                           </button>
                           <input formControlName="baseDir" id="dir" class="form-control flex-grow-1">
+                        </div>
+                      </ng-template>
+                    </app-settings-item>
+                  }
+                </div>
+
+                <div class="col-md-6 col-sm-12 pt-4">
+                  @if (subscriptionForm.get('lastDownloadDir'); as control) {
+                    <app-settings-item [control]="control" [title]="t('last-download-dir-label')" [tooltip]="t('last-download-dir-tooltip')">
+                      <ng-template #view>
+                        <span>{{control.value | defaultValue}}</span>
+                      </ng-template>
+                      <ng-template #edit>
+                        <div class="d-flex align-items-center">
+                          <input formControlName="lastDownloadDir" id="lastDownloadDir" class="form-control flex-grow-1">
                         </div>
                       </ng-template>
                     </app-settings-item>

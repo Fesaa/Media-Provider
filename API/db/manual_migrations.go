@@ -93,6 +93,10 @@ var manualMigrations = []migration{
 		name: "20250919_DropMetadataRows",
 		f:    manual.DropMetadataRows,
 	},
+	{
+		name: "20250920_FlattenSubscriptions",
+		f:    manual.FlattenSubscription,
+	},
 }
 
 func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger, fs afero.Afero) error {

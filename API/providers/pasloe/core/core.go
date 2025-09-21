@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"math"
 	"path"
 	"slices"
@@ -154,7 +155,7 @@ func (c *Core[C, S]) DisplayInformation() DisplayInformation {
 	return DisplayInformation{
 		Name: func() string {
 			if c.Req.IsSubscription && c.Req.Sub != nil {
-				return c.Req.Sub.Info.Title
+				return c.Req.Sub.Title
 			}
 			return c.impl.Title()
 		}(),
@@ -406,6 +407,16 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 		return
 	}
 
+	if c.Req.IsSubscription {
+		if err = c.ensureSubscriptionDirectoryIsUpToDate(ctx); err != nil {
+			c.Log.Error().Err(err).Msg("An error occurred while updating subscription directories. Cancelling download")
+			if err = c.Client.RemoveDownload(payload.StopRequest{Provider: c.Req.Provider, Id: c.Id()}); err != nil {
+				c.Log.Error().Err(err).Msg("error while cleaning up")
+			}
+			return
+		}
+	}
+
 	ctx, span = tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeContentFilter)
 	defer span.End()
 
@@ -444,6 +455,46 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 
 	c.Log.Debug().Int("all", len(data)).Int("filtered", len(c.ToDownload)).
 		Dur("elapsed", time.Since(start)).Msg("downloaded content filtered")
+}
+
+func (c *Core[C, S]) ensureSubscriptionDirectoryIsUpToDate(ctx context.Context) error {
+	if !c.Req.IsSubscription {
+		return nil
+	}
+
+	if c.Req.Sub.LastDownloadDir == "" {
+		c.Log.Debug().Msg("No previous download directory known, updating to current")
+		c.Req.Sub.LastDownloadDir = c.GetDownloadDir()
+		return c.unitOfWork.Subscriptions.Update(ctx, *c.Req.Sub)
+	}
+
+	var (
+		oldDir = path.Join(c.Client.GetBaseDir(), c.Req.Sub.LastDownloadDir)
+		newDir = path.Join(c.Client.GetBaseDir(), c.GetDownloadDir())
+	)
+
+	if oldDir == newDir {
+		return nil
+	}
+
+	c.Log.Warn().
+		Str("prev-dir", oldDir).
+		Str("current-dir", newDir).
+		Msg("Download directory out of sync for subscription, moving content")
+
+	ok, err := c.fs.DirExists(newDir)
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		c.Log.Error().
+			Str("dir", newDir).
+			Msg("New directory already exists, cannot move old content, aborting download")
+		return fs.ErrExist
+	}
+
+	return c.fs.Rename(oldDir, newDir)
 }
 
 func (c *Core[C, S]) DownloadContent(ctx context.Context) {

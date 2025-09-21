@@ -2,6 +2,8 @@ package dynasty
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"path"
 	"strconv"
 	"strings"
@@ -104,6 +106,11 @@ func (m *manga) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.Comic
 		ci.Format = "Special"
 	}
 
+	if count, ok := m.getCiStatus(); ok {
+		ci.Count = count
+		m.NotifySubscriptionExhausted(ctx, fmt.Sprintf("%d Chapters", ci.Count))
+	}
+
 	ci.Writer = strings.Join(utils.Map(m.SeriesInfo.Authors, func(t Author) string {
 		return t.DisplayName
 	}), ",")
@@ -118,4 +125,33 @@ func (m *manga) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.Comic
 	}
 
 	return ci
+}
+
+func (m *manga) getCiStatus() (int, bool) {
+	if m.SeriesInfo.Status != Completed {
+		return 0, false
+	}
+
+	var highestVolume float64 = 0
+	var highestChapter float64 = 0
+
+	for _, chapter := range m.SeriesInfo.Chapters {
+		if chapter.Volume != "" {
+			highestVolume = math.Max(highestVolume, chapter.VolumeFloat())
+		}
+
+		if chapter.Chapter != "" {
+			highestChapter = math.Max(highestChapter, chapter.ChapterFloat())
+		}
+	}
+
+	if highestVolume != 0 {
+		return int(highestVolume), true
+	}
+
+	if highestChapter != 0 {
+		return int(highestChapter), true
+	}
+
+	return 0, false
 }

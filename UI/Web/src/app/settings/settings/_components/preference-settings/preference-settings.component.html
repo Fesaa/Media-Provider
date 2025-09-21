@@ -35,7 +35,7 @@
               }
             </div>
 
-            <div class="col-md-12 col-sm-12 pt-4">
+            <div class="col-md-12 col-sm-12 py-4">
 
               @if (preferencesForm.get('coverFallbackMethod'); as control) {
                 <app-settings-item [control]="control" [title]="t('cover-fallback-method')">
@@ -139,7 +139,7 @@
                 rows="3"
                 id="tagToGenre"
                 class="form-control"
-                formControlName="tagToGenre"
+                formControlName="genreList"
               ></textarea>
                   </ng-template>
                 </app-settings-item>

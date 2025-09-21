@@ -32,7 +32,7 @@ func SubscriptionNextExec(ctx context.Context, db *gorm.DB, log zerolog.Logger) 
 	}
 
 	for _, sub := range subscriptions {
-		sub.Info.NextExecution = sub.NextExecution(subscriptionRefreshHour)
+		sub.NextExecution = sub.GetNextExecution(subscriptionRefreshHour)
 		if err := db.WithContext(ctx).Save(&sub).Error; err != nil {
 			return err
 		}

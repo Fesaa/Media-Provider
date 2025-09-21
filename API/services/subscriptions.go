@@ -85,7 +85,7 @@ func (s *subscriptionService) OnStartUp(ctx context.Context) error {
 	}
 
 	for _, sub := range subs {
-		sub.Info.NextExecution = sub.NextExecution(settings.SubscriptionRefreshHour)
+		sub.NextExecution = sub.GetNextExecution(settings.SubscriptionRefreshHour)
 		if err = s.unitOfWork.Subscriptions.Update(ctx, sub); err != nil {
 			return err
 		}
@@ -159,9 +159,9 @@ func (s *subscriptionService) Add(ctx context.Context, sub models.Subscription) 
 	}
 
 	sub.Normalize(settings.SubscriptionRefreshHour)
-	sub.Info.LastCheck = time.Now()
-	sub.Info.LastCheckSuccess = true
-	sub.Info.NextExecution = sub.NextExecution(settings.SubscriptionRefreshHour)
+	sub.LastCheck = time.Now()
+	sub.LastCheckSuccess = true
+	sub.NextExecution = sub.GetNextExecution(settings.SubscriptionRefreshHour)
 
 	newSub, err := s.unitOfWork.Subscriptions.New(ctx, sub)
 	if err != nil {
@@ -186,15 +186,16 @@ func (s *subscriptionService) Update(ctx context.Context, sub models.Subscriptio
 		return err
 	}
 
-	cur.Info.Title = sub.Info.Title
-	cur.Info.BaseDir = sub.Info.BaseDir
+	cur.Title = sub.Title
+	cur.BaseDir = sub.BaseDir
 	cur.RefreshFrequency = sub.RefreshFrequency
 	cur.Provider = sub.Provider
 	cur.Payload = sub.Payload
+	cur.LastDownloadDir = sub.LastDownloadDir
 
 	cur.Normalize(settings.SubscriptionRefreshHour)
-	cur.Info.NextExecution = sub.NextExecution(settings.SubscriptionRefreshHour)
-	s.log.Debug().Time("nextExecution", sub.Info.NextExecution).
+	cur.NextExecution = sub.GetNextExecution(settings.SubscriptionRefreshHour)
+	s.log.Debug().Time("nextExecution", sub.NextExecution).
 		Msg("subscription will run next on")
 
 	return s.unitOfWork.Subscriptions.Update(ctx, *cur)
@@ -228,7 +229,7 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 		counter := 0
 		now := time.Now()
 		for _, sub := range subs {
-			nextExec := sub.Info.NextExecution.In(time.Local)
+			nextExec := sub.NextExecution.In(time.Local)
 			if !utils.IsSameDay(now, nextExec) {
 				s.log.Debug().Time("nextExec", nextExec).
 					Time("now", now).Msg("next execution is on a different date. Skipping")
@@ -250,9 +251,9 @@ func (s *subscriptionService) handleSub(ctx context.Context, sub models.Subscrip
 	defer span.End()
 
 	err := s.contentService.DownloadSubscription(&sub)
-	sub.Info.LastCheck = time.Now()
-	sub.Info.LastCheckSuccess = err == nil
-	sub.Info.NextExecution = sub.NextExecution(hour)
+	sub.LastCheck = time.Now()
+	sub.LastCheckSuccess = err == nil
+	sub.NextExecution = sub.GetNextExecution(hour)
 
 	if err != nil {
 		s.log.Error().Err(err).
@@ -261,7 +262,7 @@ func (s *subscriptionService) handleSub(ctx context.Context, sub models.Subscrip
 			Msg("failed to download content")
 		s.notifier.Notify(ctx, models.NewNotification().
 			WithTitle(s.transloco.GetTranslation("failed-sub")).
-			WithBody(s.transloco.GetTranslation("failed-start-sub-download", sub.Info.Title, err)).
+			WithBody(s.transloco.GetTranslation("failed-start-sub-download", sub.Title, err)).
 			WithGroup(models.GroupError).
 			WithColour(models.Error).
 			WithRequiredRoles(models.ManageSubscriptions).

@@ -14,8 +14,12 @@ type Subscription struct {
 	Provider         Provider                `gorm:"type:int" json:"provider"`
 	ContentId        string                  `json:"contentId"`
 	RefreshFrequency RefreshFrequency        `gorm:"type:int" json:"refreshFrequency"`
-	InfoSql          json.RawMessage         `gorm:"type:jsonb" json:"-"`
-	Info             SubscriptionInfo        `gorm:"-" json:"info"`
+	Title            string                  `json:"title"`
+	BaseDir          string                  `json:"baseDir"`
+	LastDownloadDir  string                  `json:"lastDownloadDir"`
+	LastCheck        time.Time               `json:"lastCheck"`
+	LastCheckSuccess bool                    `json:"lastCheckSuccess"`
+	NextExecution    time.Time               `json:"nextExecution"`
 	Metadata         json.RawMessage         `gorm:"type:jsonb" json:"-"`
 	Payload          DownloadRequestMetadata `gorm:"-" json:"metadata"`
 }
@@ -27,32 +31,17 @@ type DownloadRequestMetadata struct {
 
 func (s *Subscription) BeforeSave(tx *gorm.DB) (err error) {
 	s.Metadata, err = json.Marshal(s.Payload.Extra)
-	if err != nil {
-		return
-	}
-
-	s.InfoSql, err = json.Marshal(s.Info)
 	return
 }
 
 func (s *Subscription) AfterFind(tx *gorm.DB) (err error) {
 	s.Payload.StartImmediately = true
 
-	if s.Metadata != nil {
-		err = json.Unmarshal(s.Metadata, &s.Payload.Extra)
-		if err != nil {
-			return
-		}
+	if s.Metadata == nil {
+		return
 	}
 
-	if s.InfoSql != nil {
-		err = json.Unmarshal(s.InfoSql, &s.Info)
-		if err != nil {
-			return
-		}
-	}
-
-	return
+	return json.Unmarshal(s.Metadata, &s.Payload.Extra)
 }
 
 func (s *Subscription) shouldRefresh(old *Subscription) bool {
@@ -60,15 +49,15 @@ func (s *Subscription) shouldRefresh(old *Subscription) bool {
 }
 
 func (s *Subscription) Normalize(hour int) {
-	s.Info.LastCheck = s.normalize(s.Info.LastCheck, hour)
+	s.LastCheck = s.normalize(s.LastCheck, hour)
 }
 
 func (s *Subscription) normalize(t time.Time, hour int) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), hour, 0, 0, 0, time.Local)
 }
 
-func (s *Subscription) NextExecution(hour int) time.Time {
-	diff := time.Since(s.Info.LastCheck)
+func (s *Subscription) GetNextExecution(hour int) time.Time {
+	diff := time.Since(s.LastCheck)
 
 	if diff > s.RefreshFrequency.asDuration() {
 		next := s.normalize(time.Now(), hour)
@@ -89,14 +78,6 @@ func (s *Subscription) NextExecution(hour int) time.Time {
 	}
 
 	return next
-}
-
-type SubscriptionInfo struct {
-	Title            string    `json:"title"`
-	BaseDir          string    `json:"baseDir"`
-	LastCheck        time.Time `json:"lastCheck"`
-	LastCheckSuccess bool      `json:"lastCheckSuccess"`
-	NextExecution    time.Time `json:"nextExecution"`
 }
 
 type RefreshFrequency int

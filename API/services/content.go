@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/db/models"
@@ -162,8 +163,8 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription, isSub ..
 	return s.Download(payload.DownloadRequest{
 		Provider:         sub.Provider,
 		Id:               sub.ContentId,
-		BaseDir:          sub.Info.BaseDir,
-		TempTitle:        sub.Info.Title,
+		BaseDir:          sub.BaseDir,
+		TempTitle:        sub.Title,
 		DownloadMetadata: sub.Payload,
 		OwnerId:          sub.Owner,
 
@@ -173,6 +174,8 @@ func (s *contentService) DownloadSubscription(sub *models.Subscription, isSub ..
 }
 
 func (s *contentService) Download(req payload.DownloadRequest) error {
+	req.BaseDir = path.Clean(req.BaseDir)
+
 	adapter, ok := s.providers.Get(req.Provider)
 	if !ok {
 		return ErrProviderNotSupported

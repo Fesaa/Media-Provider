@@ -31,18 +31,18 @@
           target="_blank"
           rel="noopener noreferrer"
         >
-          {{ sub.info.title }}
+          {{ sub.title }}
         </a>
       </th>
 
-      <th class="table-cell">{{ sub.info.nextExecution | utcToLocalTime: 'short' }}</th>
+      <th class="table-cell">{{ sub.nextExecution | utcToLocalTime: 'short' }}</th>
 
       <th class="table-cell">
         <app-badge
-          [colour]="sub.info.lastCheckSuccess ? 'primary' : 'error'"
-          [ngbTooltip]="(sub.info.lastCheck | date: 'yyyy-MM-dd HH:mm:ss') ?? t('unknown')"
+          [colour]="sub.lastCheckSuccess ? 'primary' : 'error'"
+          [ngbTooltip]="(sub.lastCheck | date: 'yyyy-MM-dd HH:mm:ss') ?? t('unknown')"
         >
-          {{ sub.info.lastCheckSuccess ? t('success') : t('failing') }}
+          {{ sub.lastCheckSuccess ? t('success') : t('failing') }}
         </app-badge>
       </th>
 
