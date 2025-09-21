@@ -1,27 +1,42 @@
-package pasloe
+package common
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
-	"github.com/Fesaa/Media-Provider/services"
 	"github.com/rs/zerolog"
 )
+
+var (
+	ErrQueueFull = errors.New("queue is full")
+)
+
+type QueueItem interface {
+	State() payload.ContentState
+	Logger() *zerolog.Logger
+	DownloadContent(context.Context)
+	LoadMetadata(context.Context)
+}
+
+type ProviderQueue interface {
+	AddToLoadingQueue(QueueItem) error
+	AddToDownloadQueue(QueueItem) error
+	Shutdown()
+}
 
 // ProviderQueue represents the queue for each separate provider. The queue has just one internal worker
 // This worker will always empty out the loadingQueue, then the downloadQueue.
 // Each queue has a max capacity of 100. The worker is started automatically after creation
-type ProviderQueue struct {
-	log    zerolog.Logger
-	client core.Client
+type providerQueue struct {
+	log zerolog.Logger
 
 	providerName  models.Provider
-	loadingQueue  chan core.Downloadable
-	downloadQueue chan core.Downloadable
+	loadingQueue  chan QueueItem
+	downloadQueue chan QueueItem
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -31,20 +46,18 @@ type ProviderQueue struct {
 func NewProviderQueue(
 	provider models.Provider,
 	parentCtx context.Context,
-	client core.Client,
 	log zerolog.Logger,
-) *ProviderQueue {
+) ProviderQueue {
 
 	ctx, cancel := context.WithCancel(parentCtx)
 
-	pq := &ProviderQueue{
+	pq := &providerQueue{
 		providerName:  provider,
-		loadingQueue:  make(chan core.Downloadable, 100),
-		downloadQueue: make(chan core.Downloadable, 100),
+		loadingQueue:  make(chan QueueItem, 100),
+		downloadQueue: make(chan QueueItem, 100),
 		ctx:           ctx,
 		cancel:        cancel,
 		log:           log.With().Any("provider", provider).Logger(),
-		client:        client,
 	}
 
 	go pq.startWorkers()
@@ -53,7 +66,7 @@ func NewProviderQueue(
 }
 
 // startWorkers starts the work, also manages the WaitGroup
-func (pq *ProviderQueue) startWorkers() {
+func (pq *providerQueue) startWorkers() {
 	pq.wg.Add(1)
 	defer pq.wg.Done()
 
@@ -61,7 +74,7 @@ func (pq *ProviderQueue) startWorkers() {
 }
 
 // worker processes items with loading priority over downloading
-func (pq *ProviderQueue) worker() {
+func (pq *providerQueue) worker() {
 	pq.log.Debug().Msg("worker started")
 	defer pq.log.Debug().Msg("worker stopped")
 
@@ -88,15 +101,12 @@ func (pq *ProviderQueue) worker() {
 }
 
 // processLoadInfo handles loading information for content, this is a blocking operation
-func (pq *ProviderQueue) processLoadInfo(content core.Downloadable) {
+func (pq *providerQueue) processLoadInfo(content QueueItem) {
 	if content == nil {
 		return
 	}
 
-	log := pq.log.With().
-		Str("id", content.Id()).
-		Str("title", content.Title()).
-		Logger()
+	log := content.Logger()
 
 	log.Debug().Msg("starting load info")
 
@@ -115,31 +125,31 @@ func (pq *ProviderQueue) processLoadInfo(content core.Downloadable) {
 }
 
 // AddToLoadingQueue adds content to the loading queue
-func (pq *ProviderQueue) AddToLoadingQueue(content core.Downloadable) error {
+func (pq *providerQueue) AddToLoadingQueue(content QueueItem) error {
 	select {
 	case pq.loadingQueue <- content:
 		return nil
 	case <-pq.ctx.Done():
 		return pq.ctx.Err()
 	default:
-		return services.ErrQueueFull
+		return ErrQueueFull
 	}
 }
 
 // AddToDownloadQueue adds content to the download queue (for ready content)
-func (pq *ProviderQueue) AddToDownloadQueue(content core.Downloadable) error {
+func (pq *providerQueue) AddToDownloadQueue(content QueueItem) error {
 	select {
 	case pq.downloadQueue <- content:
 		return nil
 	case <-pq.ctx.Done():
 		return pq.ctx.Err()
 	default:
-		return services.ErrQueueFull
+		return ErrQueueFull
 	}
 }
 
 // Shutdown gracefully shuts down the provider queue, has a hard limit of 30s
-func (pq *ProviderQueue) Shutdown() {
+func (pq *providerQueue) Shutdown() {
 	pq.log.Debug().Msg("shutting down provider queue")
 
 	pq.cancel()

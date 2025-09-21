@@ -20,7 +20,6 @@ var (
 	ErrContentNotFound      = errors.New("content not found")
 	ErrUnknownMessageType   = errors.New("unknown message type")
 	ErrWrongState           = errors.New("message not allowed in current state")
-	ErrQueueFull            = errors.New("queue is full")
 )
 
 type ContentService interface {

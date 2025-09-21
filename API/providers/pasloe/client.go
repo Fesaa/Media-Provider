@@ -12,6 +12,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/common"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -44,7 +45,7 @@ func New(s services.SettingsService, container *dig.Container, log zerolog.Logge
 		fs:         fs,
 
 		content:        utils.NewSafeMap[string, core.Downloadable](),
-		providerQueues: utils.NewSafeMap[models.Provider, *ProviderQueue](),
+		providerQueues: utils.NewSafeMap[models.Provider, common.ProviderQueue](),
 		rootDir:        settings.RootDir,
 		ctx:            ctx,
 		cancel:         cancel,
@@ -67,7 +68,7 @@ type client struct {
 	rootDir string
 
 	content        utils.SafeMap[string, core.Downloadable]
-	providerQueues utils.SafeMap[models.Provider, *ProviderQueue]
+	providerQueues utils.SafeMap[models.Provider, common.ProviderQueue]
 	mu             sync.RWMutex
 
 	ctx        context.Context
@@ -79,7 +80,7 @@ type client struct {
 
 // getOrCreateProviderQueue returns the existing queue for the provider, or creates a new one if none found
 // this defers the worker threads for each provider until they're used
-func (c *client) getOrCreateProviderQueue(provider models.Provider) *ProviderQueue {
+func (c *client) getOrCreateProviderQueue(provider models.Provider) common.ProviderQueue {
 	if pq, ok := c.providerQueues.Get(provider); ok {
 		return pq
 	}
@@ -92,7 +93,7 @@ func (c *client) getOrCreateProviderQueue(provider models.Provider) *ProviderQue
 		return pq
 	}
 
-	pq := NewProviderQueue(provider, c.ctx, c, c.log)
+	pq := common.NewProviderQueue(provider, c.ctx, c.log)
 	c.providerQueues.Set(provider, pq)
 	return pq
 
@@ -193,7 +194,7 @@ func (c *client) Shutdown() error {
 
 	c.cancel()
 
-	c.providerQueues.ForEach(func(k models.Provider, v *ProviderQueue) {
+	c.providerQueues.ForEach(func(k models.Provider, v common.ProviderQueue) {
 		v.Shutdown()
 	})
 
