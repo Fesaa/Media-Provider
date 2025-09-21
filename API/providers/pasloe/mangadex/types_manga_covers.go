@@ -9,6 +9,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 )
 
 type MangaCoverResponse Response[[]MangaCoverData]
@@ -38,6 +39,22 @@ type Cover struct {
 type CoverFactory func(volume string) (*Cover, bool)
 
 var defaultCoverFactory CoverFactory = func(volume string) (*Cover, bool) { return nil, false }
+
+func (m *manga) CustomizePreDownloadHook(ctx context.Context) {
+	if !m.Req.GetBool(core.IncludeCover, true) {
+		m.coverFactory = defaultCoverFactory
+		return
+	}
+
+	covers, err := m.repository.GetCoverImages(ctx, m.id)
+	if err != nil || covers == nil {
+		m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
+		m.coverFactory = defaultCoverFactory
+		return
+	}
+
+	m.coverFactory = m.getCoverFactoryLang(ctx, covers)
+}
 
 func (m *manga) getCoverBytes(ctx context.Context, fileName string) ([]byte, error) {
 	url := fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", m.id, fileName)

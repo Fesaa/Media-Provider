@@ -120,6 +120,10 @@ func (c *Core[C, S]) startDownload(ctx context.Context) {
 
 	c.filterContentByUserSelection()
 
+	if hook, ok := c.impl.(PreDownloadHook); ok {
+		hook.CustomizePreDownloadHook(ctx)
+	}
+
 	c.Log.Info().
 		Int("all", len(data)).
 		Int("toDownload", len(c.ToDownload)).
