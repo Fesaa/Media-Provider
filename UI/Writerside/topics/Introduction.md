@@ -20,4 +20,4 @@ services:
 
 ### Env variables
 Most of the config can, and should, be done via the UI. However, some more advanced settings (called features) are set
-via environment variables. A full list with explanation can be found on [GitHub](https://github.com/Fesaa/Media-Provider/blob/master/API/config/features.go).
+via environment variables. A full list with explanation can be found on [GitHub](https://github.com/Fesaa/Media-Provider/blob/main/API/config/features.go).

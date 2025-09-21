@@ -21,6 +21,7 @@ Once you've found the content you'd like to acquire you have two options
         Download the content as a one-off. You can always decide where to save you download, and if you'd like to start it
         immediately. Some providers offer extra options while downloading. See their respective documentation for details.
         <img alt="search_result_example.png" height="300" src="download_options_example.png" width="700"/>
+        Disable <code>Start download immediately</code>  to pick which files/chapters you'd like to download.
     </tab>
     <tab title="Subscribe">
         Some providers also allow you to subscribe to their content. Media Provider will then periodically (daily, weekly, monthly).

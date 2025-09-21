@@ -9,6 +9,7 @@
     <toc-element topic="starter-topic.md"/>
     <toc-element topic="Introduction.md"/>
     <toc-element topic="Usage.md"/>
+    <toc-element topic="Subscriptions.md"/>
     <toc-element toc-title="Configuration">
         <toc-element topic="Preferences.md"/>
         <toc-element topic="Server.md"/>

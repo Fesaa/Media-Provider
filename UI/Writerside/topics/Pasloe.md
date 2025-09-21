@@ -10,7 +10,7 @@ is a series with chapters. These chapters will be packed in each their own <code
 
 ## File system structure
 
-Pasloe saves series under a specific format, changing files names, and to a lesser extent location may confuse the software
+Pasloe saves series under a specific format. Changing files names, and to a lesser extent location may confuse the software
 and cause chapters to be re-downloaded. Pasloe does not yet read <code>ComicInfo.xml</code>.
 
 Series will be downloaded as follows
@@ -39,7 +39,7 @@ Content downloaded via pasloe (Manga's) will include a <code>ComicInfo.xml</code
 See <a href="Preferences.md">Preferences</a> on how to configure and manipulate this metadata.
 
 <warning>
-    Not all providers have the same amount of metadata support, quality and correctly are up to the upstream data.
+    Not all providers have the same amount of metadata support, quality and correctness are up to the upstream data.
 </warning>
 
 ## Download speed
