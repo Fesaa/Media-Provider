@@ -96,6 +96,9 @@ func (m *manga) processCovers(ctx context.Context, coverResp *MangaCoverResponse
 
 		coverBytes, err := m.getCoverBytes(ctx, cover.Attributes.FileName)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return nil, nil, nil
+			}
 			m.Log.Err(err).Str("fileName", cover.Attributes.FileName).Msg("Failed to get cover")
 			continue
 		}
