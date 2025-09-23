@@ -230,6 +230,11 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 		chpt.Title = strings.TrimSpace(uriEl.Text())
 	}
 
+	translatorEl := s.Find("div.avatar > div > a").First()
+	if translatorEl != nil && translatorEl.AttrOr("href", "") != "" {
+		chpt.Translator = strings.TrimPrefix(translatorEl.AttrOr("href", ""), "/u/")
+	}
+
 	return chpt
 }
 

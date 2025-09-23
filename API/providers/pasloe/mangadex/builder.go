@@ -132,7 +132,7 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Options:       languages,
 			},
 			{
-				Key:      ScanlationGroupKey,
+				Key:      core.ScanlationGroupKey,
 				Advanced: true,
 				FormType: payload.TEXT,
 			},

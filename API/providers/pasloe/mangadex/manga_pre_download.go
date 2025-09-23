@@ -35,16 +35,6 @@ func (m *manga) LoadInfo(ctx context.Context) chan struct{} {
 
 		m.chapters = m.FilterChapters(chapters)
 		m.SetSeriesStatus()
-
-		if m.Req.GetBool(core.IncludeCover, true) {
-			covers, err := m.repository.GetCoverImages(ctx, m.id)
-			if err != nil || covers == nil {
-				m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
-				m.coverFactory = defaultCoverFactory
-			} else {
-				m.coverFactory = m.getCoverFactoryLang(ctx, covers)
-			}
-		}
 	}()
 	return out
 }
@@ -77,7 +67,7 @@ func (m *manga) SetSeriesStatus() {
 }
 
 func (m *manga) FilterChapters(c *ChapterSearchResponse) ChapterSearchResponse {
-	scanlation := m.Req.GetStringOrDefault(ScanlationGroupKey, "")
+	scanlation := m.Req.GetStringOrDefault(core.ScanlationGroupKey, "")
 	allowNonMatching := m.Req.GetBool(AllowNonMatchingScanlationGroupKey, true)
 
 	chaptersMap := utils.GroupBy(c.Data, func(v ChapterSearchData) string {

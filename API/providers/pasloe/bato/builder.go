@@ -110,6 +110,11 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Advanced: true,
 				FormType: payload.SWITCH,
 			},
+			{
+				Key:      core.ScanlationGroupKey,
+				Advanced: true,
+				FormType: payload.TEXT,
+			},
 		},
 	}
 }

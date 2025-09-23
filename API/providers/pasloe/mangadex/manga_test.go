@@ -756,6 +756,9 @@ func TestReplaceCover(t *testing.T) {
 		t.Fatal("m.LoadInfo() timeout")
 	}
 
+	// This runs the cover generation
+	m.CustomizePreDownloadHook(t.Context())
+
 	chapterSeven := utils.Find(m.chapters.Data, func(data ChapterSearchData) bool {
 		return data.Attributes.Chapter == "7"
 	})
@@ -829,6 +832,8 @@ func TestReplaceCoverDestructionLover(t *testing.T) {
 	case <-time.After(waitTimeOut):
 		t.Fatal("m.LoadInfo() timeout")
 	}
+
+	m.CustomizePreDownloadHook(t.Context())
 
 	chapterFive := utils.Find(m.chapters.Data, func(data ChapterSearchData) bool {
 		return data.Attributes.Chapter == "5"

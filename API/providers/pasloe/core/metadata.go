@@ -18,6 +18,7 @@ const (
 	UpdateCover              string = "update_cover"
 	TitleOverride            string = "title_override"
 	AssignEmptyVolumes       string = "assign_empty_volumes"
+	ScanlationGroupKey       string = "scanlation_group"
 )
 
 type Tag interface {

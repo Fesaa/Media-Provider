@@ -144,7 +144,7 @@ func migrateModel(ctx context.Context, log zerolog.Logger, oldDb, newDb *gorm.DB
 
 		slice := recordsValue.Slice(i, end)
 
-		for j := 0; j < slice.Len(); j++ {
+		for j := range slice.Len() {
 			record := slice.Index(j).Addr().Interface()
 			val := reflect.ValueOf(record).Elem()
 			idField := val.FieldByName("ID")

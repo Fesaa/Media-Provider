@@ -90,10 +90,11 @@ type Author struct {
 }
 
 type Chapter struct {
-	Id      string
-	Title   string
-	Volume  string
-	Chapter string
+	Id         string
+	Title      string
+	Volume     string
+	Chapter    string
+	Translator string
 }
 
 func (c Chapter) GetChapter() string {
