@@ -76,20 +76,34 @@ func (m *manga) ContentUrls(ctx context.Context, chapter Chapter) ([]string, err
 }
 
 func (m *manga) CustomizeAllChapters() []Chapter {
-	assignEmptyVolumes := m.Req.GetBool(core.AssignEmptyVolumes, false)
-	if !assignEmptyVolumes {
-		return m.SeriesInfo.Chapters
+	chapters := m.SeriesInfo.Chapters
+
+	if group, ok := m.Req.GetString(core.ScanlationGroupKey); ok {
+		m.Log.Debug().Str("translator", group).Msg("Filtering chapters for translator")
+		chapters = utils.Filter(chapters, func(chapter Chapter) bool {
+			return chapter.Translator == group
+		})
+
+		if len(chapters) == 0 {
+			m.Log.Warn().Str("translator", group).Msg("No chapters were found after filtering on translator")
+			return chapters
+		}
 	}
 
-	hasVolumes := utils.Any(m.SeriesInfo.Chapters, func(chapter Chapter) bool {
+	assignEmptyVolumes := m.Req.GetBool(core.AssignEmptyVolumes, false)
+	if !assignEmptyVolumes {
+		return chapters
+	}
+
+	hasVolumes := utils.Any(chapters, func(chapter Chapter) bool {
 		return chapter.Volume != ""
 	})
 
 	if !hasVolumes {
-		return m.SeriesInfo.Chapters
+		return chapters
 	}
 
-	mappedChapters := utils.Map(m.SeriesInfo.Chapters, func(chapter Chapter) Chapter {
+	mappedChapters := utils.Map(chapters, func(chapter Chapter) Chapter {
 		if chapter.Volume == "" && chapter.Chapter != "" {
 			chapter.Volume = "1"
 		}

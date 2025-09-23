@@ -67,7 +67,7 @@ func (m *manga) SetSeriesStatus() {
 }
 
 func (m *manga) FilterChapters(c *ChapterSearchResponse) ChapterSearchResponse {
-	scanlation := m.Req.GetStringOrDefault(ScanlationGroupKey, "")
+	scanlation := m.Req.GetStringOrDefault(core.ScanlationGroupKey, "")
 	allowNonMatching := m.Req.GetBool(AllowNonMatchingScanlationGroupKey, true)
 
 	chaptersMap := utils.GroupBy(c.Data, func(v ChapterSearchData) string {
