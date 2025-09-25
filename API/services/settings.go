@@ -37,10 +37,20 @@ func SettingsServiceProvider(unitOfWork *db.UnitOfWork, log zerolog.Logger) Sett
 }
 
 func (s *settingsService) UpdateCurrentVersion(ctx context.Context) error {
-	return s.unitOfWork.Settings.Update(ctx, []models.ServerSetting{{
-		Key:   models.InstalledVersion,
-		Value: metadata.Version.String(),
-	}})
+	return s.unitOfWork.Transaction(func(unitOfWork *db.UnitOfWork) error {
+		err := unitOfWork.Settings.Update(ctx, []models.ServerSetting{{
+			Key:   models.InstalledVersion,
+			Value: metadata.Version.String(),
+		}})
+		if err != nil {
+			return err
+		}
+
+		return unitOfWork.Settings.Update(ctx, []models.ServerSetting{{
+			Key:   models.LastUpdateDate,
+			Value: time.Now().Format(time.DateTime),
+		}})
+	})
 }
 
 func (s *settingsService) GetSettingsDto(ctx context.Context) (payload.Settings, error) {
@@ -125,6 +135,7 @@ func (s *settingsService) serializeSetting(setting *models.ServerSetting, dto pa
 	case models.FirstInstalledVersion:
 	case models.InstallDate:
 	case models.DbDriver:
+	case models.LastUpdateDate:
 		break // Do not update
 	}
 
@@ -163,9 +174,11 @@ func (s *settingsService) parseSetting(setting models.ServerSetting, dto *payloa
 	case models.FirstInstalledVersion:
 		dto.Metadata.FirstInstalledVersion = setting.Value
 	case models.InstallDate:
-		dto.Metadata.InstallDate, err = time.Parse(time.DateTime, setting.Value)
+		dto.Metadata.InstallDate, err = time.Parse(time.RFC3339, setting.Value)
 	case models.SubscriptionRefreshHour:
 		dto.SubscriptionRefreshHour, err = strconv.Atoi(setting.Value)
+	case models.LastUpdateDate:
+		dto.Metadata.LastUpdateDate, err = time.Parse(time.RFC3339, setting.Value)
 	case models.DbDriver:
 		break // ignore
 	}

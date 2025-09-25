@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 
@@ -93,6 +92,10 @@ var manualMigrations = []migration{
 		f:    manual.DropMetadataRows,
 	},
 	{
+		name: "20250919_UpdateTimeFormats",
+		f:    manual.UpdateTimeFormats,
+	},
+	{
 		name: "20250920_FlattenSubscriptions",
 		f:    manual.FlattenSubscription,
 	},
@@ -131,32 +134,15 @@ func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error
 			migrationLogger := log.With().Str("migration", m.name).Logger()
 
 			migrationLogger.WithLevel(zerolog.FatalLevel).Msg("Running manual migration. This is not an error")
-			var errorTally []error
 
 			err := m.f(ctx, tx, migrationLogger)
 			if err != nil {
-				errorTally = append(errorTally, fmt.Errorf("failed running manual migration %s: %w", m.name, err))
+				return fmt.Errorf("failed running manual migration %s: %w", m.name, err)
 			}
 
-			model := models.ManualMigration{
-				Name:    m.name,
-				Success: len(errorTally) == 0,
-			}
-
-			err = tx.Save(&model).Error
-			if err != nil {
+			if err = tx.Save(&models.ManualMigration{Name: m.name, Success: true}).Error; err != nil {
 				migrationLogger.Warn().Err(err).Msg("Failed to save manual migration")
-				errorTally = append(errorTally, fmt.Errorf("failed running manual migration %s: %w", m.name, err))
-			}
-
-			if len(errorTally) > 0 {
-				err = tx.Rollback().Error
-				if err != nil {
-					migrationLogger.Warn().Err(err).Msg("Failed to rollback manual migration")
-					errorTally = append(errorTally, fmt.Errorf("failed rolling back manual migration %s: %w", m.name, err))
-				}
-
-				return errors.Join(errorTally...)
+				return fmt.Errorf("failed running manual migration %s: %w", m.name, err)
 			}
 
 			migrationLogger.WithLevel(zerolog.FatalLevel).Msg("Finished running manual migration. This is not an error")

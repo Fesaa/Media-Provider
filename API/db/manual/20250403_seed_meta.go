@@ -27,7 +27,7 @@ func InitialMetadata(ctx context.Context, db *gorm.DB, log zerolog.Logger) error
 	})
 	rows = append(rows, models.ServerSetting{
 		Key:   models.InstallDate,
-		Value: time.Now().Format(time.DateTime),
+		Value: time.Now().Format(time.RFC3339),
 	})
 	rows = append(rows, models.ServerSetting{
 		Key:   models.InstalledVersion,

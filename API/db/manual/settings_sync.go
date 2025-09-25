@@ -1,6 +1,8 @@
 package manual
 
 import (
+	"time"
+
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -52,6 +54,10 @@ var defaults = []models.ServerSetting{
 	{
 		Key:   models.SubscriptionRefreshHour,
 		Value: "23",
+	},
+	{
+		Key:   models.LastUpdateDate,
+		Value: time.Now().Format(time.RFC3339),
 	},
 }
 

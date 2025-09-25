@@ -123,7 +123,13 @@ export class ServerSettingsComponent {
       return;
     }
 
-    const dto: Config = this.settingsForm.getRawValue();
+    const metadata = this.config()?.metadata;
+    if (!metadata) return;
+
+    const dto: Config = {
+      metadata,
+      ...this.settingsForm.getRawValue(),
+    };
     dto.maxConcurrentImages = parseInt(String(dto.maxConcurrentImages))
     dto.maxConcurrentTorrents = parseInt(String(dto.maxConcurrentTorrents))
 

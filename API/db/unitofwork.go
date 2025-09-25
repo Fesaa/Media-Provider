@@ -1,6 +1,8 @@
 package db
 
 import (
+	"database/sql"
+
 	"github.com/Fesaa/Media-Provider/db/repository"
 	"github.com/devfeel/mapper"
 	"gorm.io/gorm"
@@ -8,8 +10,9 @@ import (
 
 type UnitOfWork struct {
 	db *gorm.DB
-	tx *gorm.DB
 	m  mapper.IMapper
+
+	isTx bool
 
 	Pages         repository.PagesRepository
 	Subscriptions repository.SubscriptionsRepository
@@ -20,10 +23,8 @@ type UnitOfWork struct {
 }
 
 func NewUnitOfWork(db *gorm.DB, m mapper.IMapper) *UnitOfWork {
-	tx := db.Begin()
 	return &UnitOfWork{
 		db:            db,
-		tx:            tx,
 		m:             m,
 		Pages:         repository.NewPagesRepository(db, m),
 		Subscriptions: repository.NewSubscriptionsRepository(db, m),
@@ -38,48 +39,34 @@ func (uow *UnitOfWork) DB() *gorm.DB {
 	return uow.db
 }
 
-/**
-TODO: This is part of the more complex rewrite towards a more .NET approach
-	And safer DB handling
+// Transaction passed a new UnitOfWork wrapped inside a gorm Transaction
+func (uow *UnitOfWork) Transaction(f func(*UnitOfWork) error) error {
+	return uow.db.Transaction(func(tx *gorm.DB) error {
+		tempUnitOfWork := NewUnitOfWork(tx, uow.m)
+		return f(tempUnitOfWork)
+	})
+}
 
-// Commit commits the current transaction, then starts a new one
+func (uow *UnitOfWork) Begin(opts ...*sql.TxOptions) *UnitOfWork {
+	tx := uow.db.Begin(opts...)
+	unitOfWork := NewUnitOfWork(tx, uow.m)
+
+	unitOfWork.isTx = true
+	return unitOfWork
+}
+
 func (uow *UnitOfWork) Commit() error {
-	if err := uow.tx.Commit().Error; err != nil {
-		return err
+	if !uow.isTx {
+		return gorm.ErrInvalidTransaction
 	}
 
-	return uow.begin()
+	return uow.db.Commit().Error
 }
 
-// Rollback rolls the current transaction back, then starts a new one
 func (uow *UnitOfWork) Rollback() error {
-	if err := uow.tx.Rollback().Error; err != nil {
-		return err
+	if !uow.isTx {
+		return gorm.ErrInvalidTransaction
 	}
 
-	return uow.begin()
+	return uow.db.Rollback().Error
 }
-
-// Begin starts a new transaction
-func (uow *UnitOfWork) begin() error {
-	tx := uow.db.Begin()
-	m := uow.m
-
-	uow.tx = tx
-	uow.Pages = repository.NewPagesRepository(tx, m)
-	uow.Subscriptions = repository.NewSubscriptionsRepository(tx, m)
-	uow.Preferences = repository.NewPreferencesRepository(tx, m)
-	uow.Notifications = repository.NewNotificationsRepository(tx, m)
-	uow.Settings = repository.NewSettingsRepository(tx, m)
-	uow.Users = repository.NewUserRepository(tx, m)
-	return nil
-}
-
-// Close rolls back the current transaction if it's still open
-func (uow *UnitOfWork) Close() error {
-	if uow.tx != nil {
-		return uow.tx.Rollback().Error
-	}
-	return nil
-}
-**/
