@@ -19,7 +19,7 @@ import (
 )
 
 func setDbDriver(ctx context.Context, db *gorm.DB) error {
-	settings := repository.NewSettingsRepository(db, nil)
+	settings := repository.NewSettingsRepository(db)
 	all, err := settings.GetAll(ctx)
 	if err != nil {
 		return err

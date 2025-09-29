@@ -6,7 +6,6 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/devfeel/mapper"
 	"gorm.io/gorm"
 )
 
@@ -18,9 +17,8 @@ type PreferencesRepository interface {
 }
 
 type preferencesRepository struct {
-	db     *gorm.DB
-	mapper mapper.IMapper
-	cache  utils.SafeMap[int, utils.CachedItem[*models.UserPreferences]]
+	db    *gorm.DB
+	cache utils.SafeMap[int, utils.CachedItem[*models.UserPreferences]]
 }
 
 func getFromCache(cache utils.SafeMap[int, utils.CachedItem[*models.UserPreferences]], key int) *models.UserPreferences {
@@ -66,10 +64,9 @@ func (p *preferencesRepository) Update(ctx context.Context, pref *models.UserPre
 	return nil
 }
 
-func NewPreferencesRepository(db *gorm.DB, m mapper.IMapper) PreferencesRepository {
+func NewPreferencesRepository(db *gorm.DB) PreferencesRepository {
 	return &preferencesRepository{
-		db:     db,
-		mapper: m,
-		cache:  utils.NewSafeMap[int, utils.CachedItem[*models.UserPreferences]](),
+		db:    db,
+		cache: utils.NewSafeMap[int, utils.CachedItem[*models.UserPreferences]](),
 	}
 }

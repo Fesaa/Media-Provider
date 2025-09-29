@@ -4,13 +4,11 @@ import (
 	"database/sql"
 
 	"github.com/Fesaa/Media-Provider/db/repository"
-	"github.com/devfeel/mapper"
 	"gorm.io/gorm"
 )
 
 type UnitOfWork struct {
 	db *gorm.DB
-	m  mapper.IMapper
 
 	isTx bool
 
@@ -22,16 +20,15 @@ type UnitOfWork struct {
 	Users         repository.UserRepository
 }
 
-func NewUnitOfWork(db *gorm.DB, m mapper.IMapper) *UnitOfWork {
+func NewUnitOfWork(db *gorm.DB) *UnitOfWork {
 	return &UnitOfWork{
 		db:            db,
-		m:             m,
-		Pages:         repository.NewPagesRepository(db, m),
-		Subscriptions: repository.NewSubscriptionsRepository(db, m),
-		Preferences:   repository.NewPreferencesRepository(db, m),
-		Notifications: repository.NewNotificationsRepository(db, m),
-		Settings:      repository.NewSettingsRepository(db, m),
-		Users:         repository.NewUserRepository(db, m),
+		Pages:         repository.NewPagesRepository(db),
+		Subscriptions: repository.NewSubscriptionsRepository(db),
+		Preferences:   repository.NewPreferencesRepository(db),
+		Notifications: repository.NewNotificationsRepository(db),
+		Settings:      repository.NewSettingsRepository(db),
+		Users:         repository.NewUserRepository(db),
 	}
 }
 
@@ -42,14 +39,14 @@ func (uow *UnitOfWork) DB() *gorm.DB {
 // Transaction passed a new UnitOfWork wrapped inside a gorm Transaction
 func (uow *UnitOfWork) Transaction(f func(*UnitOfWork) error) error {
 	return uow.db.Transaction(func(tx *gorm.DB) error {
-		tempUnitOfWork := NewUnitOfWork(tx, uow.m)
+		tempUnitOfWork := NewUnitOfWork(tx)
 		return f(tempUnitOfWork)
 	})
 }
 
 func (uow *UnitOfWork) Begin(opts ...*sql.TxOptions) *UnitOfWork {
 	tx := uow.db.Begin(opts...)
-	unitOfWork := NewUnitOfWork(tx, uow.m)
+	unitOfWork := NewUnitOfWork(tx)
 
 	unitOfWork.isTx = true
 	return unitOfWork

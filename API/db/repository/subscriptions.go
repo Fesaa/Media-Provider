@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/devfeel/mapper"
 	"gorm.io/gorm"
 )
 
@@ -31,8 +30,7 @@ type SubscriptionsRepository interface {
 }
 
 type subscriptionsRepository struct {
-	db     *gorm.DB
-	mapper mapper.IMapper
+	db *gorm.DB
 }
 
 func (r subscriptionsRepository) All(ctx context.Context) ([]models.Subscription, error) {
@@ -119,6 +117,6 @@ func (r subscriptionsRepository) Delete(ctx context.Context, id int) error {
 	return r.db.WithContext(ctx).Delete(&models.Subscription{Model: models.Model{ID: id}}).Error
 }
 
-func NewSubscriptionsRepository(db *gorm.DB, m mapper.IMapper) SubscriptionsRepository {
-	return &subscriptionsRepository{db: db, mapper: m}
+func NewSubscriptionsRepository(db *gorm.DB) SubscriptionsRepository {
+	return &subscriptionsRepository{db: db}
 }

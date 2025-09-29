@@ -7,7 +7,6 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/devfeel/mapper"
 	"gorm.io/gorm"
 )
 
@@ -46,8 +45,7 @@ type UserRepository interface {
 }
 
 type userRepository struct {
-	db     *gorm.DB
-	mapper mapper.IMapper
+	db *gorm.DB
 }
 
 func (u userRepository) GetAllUsers(ctx context.Context) ([]models.User, error) {
@@ -185,6 +183,6 @@ func (u userRepository) Delete(ctx context.Context, userId int) error {
 	return u.db.WithContext(ctx).Unscoped().Delete(&models.User{}, "id = ?", userId).Error
 }
 
-func NewUserRepository(db *gorm.DB, m mapper.IMapper) UserRepository {
-	return &userRepository{db: db, mapper: m}
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return &userRepository{db: db}
 }
