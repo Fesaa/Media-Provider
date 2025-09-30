@@ -63,7 +63,8 @@ func arrayFeature[T any](key string, orValue ...[]T) []T {
 		return []T{}
 	}
 
-	conv := utils.MustReturn(utils.GetConvertor[T]())
+	var zero T
+	conv := utils.MustReturn(utils.GetConvertor[T](reflect.TypeOf(zero).Kind()))
 
 	parts := strings.Split(val, ",")
 	return utils.MaybeMap(parts, func(s string) (T, bool) {
