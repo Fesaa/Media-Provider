@@ -72,12 +72,7 @@ type manga struct {
 }
 
 func (m *manga) CoreExt() core.Ext[ChapterSearchData, *MangaSearchData] {
-	return core.Ext[ChapterSearchData, *MangaSearchData]{
-		IoTaskFunc:         common.ImageIoTask[ChapterSearchData, *MangaSearchData],
-		ContentCleanupFunc: common.CbzCleanupFunc[ChapterSearchData, *MangaSearchData],
-		IsContentFunc:      common.IsCbz,
-		VolumeFunc:         common.GetVolumeFromComicInfo[ChapterSearchData, *MangaSearchData],
-	}
+	return common.CbzExt[ChapterSearchData, *MangaSearchData]()
 }
 
 func (m *manga) CustomizeAllChapters() []ChapterSearchData {

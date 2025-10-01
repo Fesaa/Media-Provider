@@ -49,12 +49,7 @@ type webtoon struct {
 }
 
 func (w *webtoon) CoreExt() core.Ext[Chapter, *Series] {
-	return core.Ext[Chapter, *Series]{
-		IoTaskFunc:         common.ImageIoTask[Chapter, *Series],
-		ContentCleanupFunc: common.CbzCleanupFunc[Chapter, *Series],
-		IsContentFunc:      common.IsCbz,
-		VolumeFunc:         common.GetVolumeFromComicInfo[Chapter, *Series],
-	}
+	return common.CbzExt[Chapter, *Series]()
 }
 
 func (w *webtoon) Title() string {
