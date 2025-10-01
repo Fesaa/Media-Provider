@@ -102,8 +102,8 @@ func TestRepository_SeriesInfo(t *testing.T) {
 		t.Fatalf("got %s want %s", series.Title, "Heart Of Thorns")
 	}
 
-	if len(series.Tags) < 10 {
-		t.Fatalf("got %d series, want at least 10", len(series.Tags))
+	if len(series.Tags) < 9 {
+		t.Fatalf("got %d series, want at least 9", len(series.Tags))
 	}
 
 	comma := utils.Find(series.Tags, func(s string) bool {

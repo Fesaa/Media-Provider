@@ -35,6 +35,7 @@ func (c *Core[C, S]) hasBeenAssignedVolume(chapter C, content Content) bool {
 	volume, err := c.impl.CoreExt().VolumeFunc(c, content)
 	if err != nil {
 		l.Warn().Err(err).Str("path", fullPath).Msg("unable to read volume from disk")
+		return false
 	}
 
 	if volume == chapter.GetVolume() {

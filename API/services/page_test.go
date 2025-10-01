@@ -2,13 +2,13 @@ package services
 
 import (
 	"fmt"
-	"github.com/spf13/afero"
 	"testing"
+
+	"github.com/spf13/afero"
 
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/devfeel/mapper"
 	"github.com/rs/zerolog"
 )
 
@@ -30,7 +30,7 @@ func tempPageService(t *testing.T) PageService {
 		}
 		d.Close()
 	})
-	return PageServiceProvider(db.NewUnitOfWork(database, mapper.NewMapper()), log)
+	return PageServiceProvider(db.NewUnitOfWork(database), log)
 }
 
 func TestPageService_LoadDefaultPages(t *testing.T) {

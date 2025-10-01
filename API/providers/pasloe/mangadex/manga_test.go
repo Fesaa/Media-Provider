@@ -106,6 +106,7 @@ func tempManga(t *testing.T, req payload.DownloadRequest, w io.Writer, repo Repo
 	must(scope.Provide(func() *db.UnitOfWork { return nil }))
 	must(scope.Provide(services.ImageServiceProvider))
 	must(scope.Provide(services.ArchiveServiceProvider))
+	must(scope.Provide(services.DirectoryServiceProvider))
 
 	return New(scope).(*manga)
 }
@@ -516,7 +517,7 @@ func TestManga_ShouldDownload(t *testing.T) {
 			chapter:    chapter,
 			command:    nil,
 			want:       false,
-			logInclude: "unable to read comic info in zip",
+			logInclude: "unable to read volume from disk",
 			after:      nil,
 		},
 		{

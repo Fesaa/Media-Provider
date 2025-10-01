@@ -13,7 +13,7 @@ import (
 func GetConvertor[T any](t reflect.Kind) (func(string) (T, error), error) { //nolint: gocognit
 	var zero T
 
-	switch t {
+	switch t { //nolint:exhaustive
 	case reflect.Int:
 		return func(s string) (T, error) {
 			val, err := strconv.Atoi(s)

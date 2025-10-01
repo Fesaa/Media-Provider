@@ -87,15 +87,12 @@ type MockContent struct {
 	loadInfoChan            chan struct{}
 }
 
-func NewMockContent(scope *dig.Scope) *MockContent {
-	mc := &MockContent{}
-	base := core.New[ID, ID](scope, "mock-content", mc)
-	mc.Core = base
-	return mc
-}
-
 func (m *MockContent) Id() string {
 	return m.mockId
+}
+
+func (m *MockContent) CoreExt() core.Ext[ID, ID] {
+	return core.Ext[ID, ID]{}
 }
 
 func (m *MockContent) Title() string {
@@ -135,34 +132,6 @@ func (m *MockContent) ContentList() []payload.ListContentData {
 	return m.mockContentList
 }
 
-func (m *MockContent) ContentDir(t ID) string {
-	if m.mockContentDirFunc != nil {
-		return m.mockContentDirFunc(t)
-	}
-	return t.GetId()
-}
-
-func (m *MockContent) ContentPath(t ID) string {
-	if m.mockContentPathFunc != nil {
-		return m.mockContentPathFunc(t)
-	}
-	return t.GetId()
-}
-
-func (m *MockContent) ContentKey(t ID) string {
-	if m.mockContentKeyFunc != nil {
-		return m.mockContentKeyFunc(t)
-	}
-	return t.GetId()
-}
-
-func (m *MockContent) ContentLogger(t ID) zerolog.Logger {
-	if m.mockContentLoggerFunc != nil {
-		return m.mockContentLoggerFunc(t)
-	}
-	return zerolog.Nop()
-}
-
 func (m *MockContent) ContentUrls(ctx context.Context, t ID) ([]string, error) {
 	if m.mockContentUrlsFunc != nil {
 		return m.mockContentUrlsFunc(ctx, t)
@@ -181,18 +150,4 @@ func (m *MockContent) DownloadContent(ctx context.Context) {
 	if m.mockDownloadContentFunc != nil {
 		m.mockDownloadContentFunc(ctx)
 	}
-}
-
-func (m *MockContent) IsContent(s string) bool {
-	if m.mockIsContentFunc != nil {
-		return m.mockIsContentFunc(s)
-	}
-	return true
-}
-
-func (m *MockContent) ShouldDownload(t ID) bool {
-	if m.mockShouldDownloadFunc != nil {
-		return m.mockShouldDownloadFunc(t)
-	}
-	return true
 }

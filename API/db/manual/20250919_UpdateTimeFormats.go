@@ -35,7 +35,7 @@ func updateTimeFormatForKey(ctx context.Context, db *gorm.DB, key models.Setting
 
 	t, err := time.Parse(time.DateTime, setting.Value)
 	if err != nil {
-		return nil
+		return nil //nolint:nilerr
 	}
 
 	setting.Value = t.Format(time.RFC3339)

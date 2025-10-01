@@ -44,6 +44,8 @@ func (p param[T]) GetValue(ctx *fiber.Ctx) string {
 		return ctx.Params(p.Name)
 	case queryParam:
 		return ctx.Query(p.Name)
+	case bodyParam:
+		return ""
 	}
 
 	return ""
@@ -239,13 +241,13 @@ func withParams(handler any, params ...any) fiber.Handler {
 
 	funcValue := reflect.ValueOf(handler)
 	if funcValue.IsZero() || !funcValue.IsValid() {
-		panic(fmt.Sprintf("handler did not have a function"))
+		panic("handler did not have a function")
 	}
 
 	return func(c *fiber.Ctx) error {
 		args := make([]reflect.Value, len(params)+1)
 
-		for i := range len(params) {
+		for i := range params {
 			ret := convs[i].Call([]reflect.Value{reflect.ValueOf(c)})
 			arg := ret[0].Interface()
 			if err, ok := ret[1].Interface().(error); ok && err != nil {
