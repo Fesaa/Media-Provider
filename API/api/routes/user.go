@@ -38,6 +38,7 @@ type userRoutes struct {
 	Notify          services.NotificationService
 	Transloco       services.TranslocoService
 	SettingsService services.SettingsService
+	UserService     services.UserService
 }
 
 func RegisterUserRoutes(ur userRoutes) {
@@ -70,8 +71,8 @@ func RegisterUserRoutes(ur userRoutes) {
 	user.Use(hasRole(models.ManageUsers)).
 		Get("/all", ur.users).
 		Post("/update", withBodyValidation(ur.updateUser)).
-		Delete("/:id", withParam(newIdPathParam(), ur.deleteUser)).
-		Post("/reset/:id", withParam(newIdPathParam(), ur.generateResetPassword))
+		Delete("/:id", withParams(ur.deleteUser, newIdPathParam())).
+		Post("/reset/:id", withParams(ur.generateResetPassword, newIdPathParam()))
 }
 
 func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest payload.UpdatePasswordRequest) error {
@@ -251,7 +252,7 @@ func (ur *userRoutes) logoutUser(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) oidcLogin(ctx *fiber.Ctx) error {
-	url, err := ur.Auth.GetOIDCLoginURL(ctx)
+	url, err := ur.UserService.OidcLoginUrl(ctx)
 	if err != nil {
 		return InternalError(err)
 	}

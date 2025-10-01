@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
@@ -12,34 +13,12 @@ import (
 // withBody parser the body in the request for you. Keep in mind that this is a terminal operation, no further next
 // are called
 func withBody[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		log := contextkey.GetFromContext(c, contextkey.Logger)
-
-		var body T
-		if err := c.BodyParser(&body); err != nil {
-			log.Error().Err(err).Str("path", c.Path()).Msg("Failed to parse body")
-			return BadRequest(err)
-		}
-
-		return handler(c, body)
-	}
+	return withParams(handler, newBodyParam[T]())
 }
 
 // withBodyValidation behaves like withBody, but also runs the body through the validator
 func withBodyValidation[T any](handler func(*fiber.Ctx, T) error) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		log := contextkey.GetFromContext(c, contextkey.Logger)
-		serviceProvider := contextkey.GetFromContext(c, contextkey.ServiceProvider)
-		validator := utils.MustInvoke[services.ValidationService](serviceProvider)
-
-		var body T
-		if err := validator.ValidateCtx(c, &body); err != nil {
-			log.Error().Err(err).Str("path", c.Path()).Msg("Failed to validate body")
-			return BadRequest(err)
-		}
-
-		return handler(c, body)
-	}
+	return withParams(handler, newValidatedBodyParam[T]())
 }
 
 type paramType int
@@ -47,6 +26,7 @@ type paramType int
 const (
 	pathParam paramType = iota
 	queryParam
+	bodyParam
 )
 
 type param[T any] struct {
@@ -55,6 +35,7 @@ type param[T any] struct {
 	AllowEmpty   bool
 	DefaultValue T
 	Message      string
+	Convertor    convertor[T]
 }
 
 func (p param[T]) GetValue(ctx *fiber.Ctx) string {
@@ -63,6 +44,8 @@ func (p param[T]) GetValue(ctx *fiber.Ctx) string {
 		return ctx.Params(p.Name)
 	case queryParam:
 		return ctx.Query(p.Name)
+	case bodyParam:
+		return ""
 	}
 
 	return ""
@@ -70,11 +53,39 @@ func (p param[T]) GetValue(ctx *fiber.Ctx) string {
 
 type paramOption[T any] func(*param[T])
 
+type convertor[T any] func(ctx *fiber.Ctx) (T, error)
+
+func withDefaultConvertor[T any](kind reflect.Kind) paramOption[T] {
+	return func(p *param[T]) {
+		var empty T
+		convFunc := utils.MustReturn(utils.GetConvertor[T](kind))
+
+		p.Convertor = func(c *fiber.Ctx) (T, error) {
+			paramValue := p.GetValue(c)
+			if paramValue == "" && !p.AllowEmpty {
+				return empty, BadRequest(fmt.Errorf("required parameter %s not present", p.Name))
+			}
+
+			value, err := convert(paramValue, p.DefaultValue, convFunc)
+			if err != nil {
+				return empty, BadRequest(err)
+			}
+
+			return value, nil
+		}
+	}
+}
+
 func newParam[T any](name string, options ...paramOption[T]) param[T] {
 	p := param[T]{Name: name}
 
 	for _, option := range options {
 		option(&p)
+	}
+
+	if p.Convertor == nil {
+		var empty T
+		withDefaultConvertor[T](reflect.ValueOf(empty).Kind())(&p)
 	}
 
 	return p
@@ -93,6 +104,38 @@ func newQueryParam[T any](name string, options ...paramOption[T]) param[T] {
 	})
 
 	return newParam[T](name, options...)
+}
+
+func newBodyParam[T any](options ...paramOption[T]) param[T] {
+	options = append(options, func(p *param[T]) {
+		p.Type = bodyParam
+		p.Convertor = func(c *fiber.Ctx) (T, error) {
+			var body T
+			if err := c.BodyParser(&body); err != nil {
+				return body, BadRequest(err)
+			}
+			return body, nil
+		}
+	})
+
+	return newParam[T]("", options...)
+}
+
+func newValidatedBodyParam[T any](options ...paramOption[T]) param[T] {
+	options = append(options, func(p *param[T]) {
+		p.Type = bodyParam
+		p.Convertor = func(c *fiber.Ctx) (T, error) {
+			var body T
+			serviceProvider := contextkey.GetFromContext(c, contextkey.ServiceProvider)
+			validator := utils.MustInvoke[services.ValidationService](serviceProvider)
+			if err := validator.ValidateCtx(c, &body); err != nil {
+				return body, BadRequest(err)
+			}
+			return body, nil
+		}
+	})
+
+	return newParam[T]("", options...)
 }
 
 func withAllowEmpty[T any](defs ...T) paramOption[T] {
@@ -117,30 +160,72 @@ func withMessage[T any](msg string) paramOption[T] {
 	}
 }
 
+// withStructConvertor registers a custom convertor. Reflection based if no impl is provided.
+// You need to add withAllowEmpty **before** withStructConvertor if the fields are allowed to be empty
+// Structs may set the query tag to customize which query param is used
+func withStructConvertor[T any](f ...func(ctx *fiber.Ctx) (T, error)) paramOption[T] {
+	return func(p *param[T]) {
+		if len(f) > 0 {
+			p.Convertor = f[0]
+			return
+		}
+
+		var zero T
+		obj := reflect.ValueOf(zero)
+		if obj.Type().Kind() == reflect.Ptr {
+			obj = obj.Elem()
+		}
+
+		if obj.Type().Kind() != reflect.Struct {
+			panic(fmt.Sprintf("expected struct, got %T", zero))
+		}
+
+		var params []param[any]
+		for i := range obj.NumField() {
+			opts := []paramOption[any]{withDefaultConvertor[any](obj.Field(i).Kind())}
+			if p.AllowEmpty {
+				fieldType := obj.Field(i).Type()
+				opts = append(opts, withAllowEmpty[any](reflect.Zero(fieldType)))
+			}
+
+			fieldName := utils.NonEmpty(obj.Type().Field(i).Tag.Get("query"), obj.Type().Field(i).Name)
+			fieldParam := newQueryParam[any](fieldName, opts...)
+			params = append(params, fieldParam)
+		}
+
+		p.Convertor = func(c *fiber.Ctx) (T, error) {
+			var t T
+
+			tVal := reflect.ValueOf(&t).Elem()
+			for i, fieldParam := range params {
+				v, err := fieldParam.Convertor(c)
+				if err != nil {
+					return t, BadRequest(err)
+				}
+
+				field := tVal.Field(i)
+				if field.CanSet() {
+					if rv, ok := v.(reflect.Value); ok {
+						field.Set(rv)
+					} else {
+						field.Set(reflect.ValueOf(v))
+					}
+				} else {
+					return t, InternalError(fmt.Errorf("cannot set field %d", i))
+				}
+			}
+
+			return t, nil
+		}
+	}
+}
+
 func newIdQueryParam() param[int] {
 	return newQueryParam[int]("id")
 }
 
 func newIdPathParam() param[int] {
 	return newPathParam[int]("id")
-}
-
-func withParam[T any](param param[T], handler func(*fiber.Ctx, T) error) fiber.Handler {
-	convFunc := utils.MustReturn(utils.GetConvertor[T]())
-
-	return func(c *fiber.Ctx) error {
-		paramValue := param.GetValue(c)
-		if paramValue == "" && !param.AllowEmpty {
-			return BadRequest(fmt.Errorf("required parameter %s not present", param.Name))
-		}
-
-		value, err := convert(paramValue, param.DefaultValue, convFunc)
-		if err != nil {
-			return BadRequest(err)
-		}
-
-		return handler(c, value)
-	}
 }
 
 func convert[T any](v string, def T, conv func(string) (T, error)) (T, error) {
@@ -151,75 +236,95 @@ func convert[T any](v string, def T, conv func(string) (T, error)) (T, error) {
 	return conv(v)
 }
 
-func withParam2[T1, T2 any](
-	param1 param[T1], param2 param[T2],
-	handler func(*fiber.Ctx, T1, T2) error) fiber.Handler {
-	convFunc1 := utils.MustReturn(utils.GetConvertor[T1]())
-	convFunc2 := utils.MustReturn(utils.GetConvertor[T2]())
+func withParams(handler any, params ...any) fiber.Handler {
+	convs := setupConvertors(handler, params...)
+
+	funcValue := reflect.ValueOf(handler)
+	if funcValue.IsZero() || !funcValue.IsValid() {
+		panic("handler did not have a function")
+	}
 
 	return func(c *fiber.Ctx) error {
-		paramValue1 := param1.GetValue(c)
-		if paramValue1 == "" && !param1.AllowEmpty {
-			return BadRequest(fmt.Errorf("required parameter %s not present", param1.Name))
+		args := make([]reflect.Value, len(params)+1)
+
+		for i := range params {
+			ret := convs[i].Call([]reflect.Value{reflect.ValueOf(c)})
+			arg := ret[0].Interface()
+			if err, ok := ret[1].Interface().(error); ok && err != nil {
+				return fmt.Errorf("param %d conversion failed: %w", i, err)
+			}
+
+			if v, ok := arg.(reflect.Value); ok {
+				args[i+1] = v
+			} else {
+				args[i+1] = reflect.ValueOf(arg)
+			}
 		}
 
-		paramValue2 := param2.GetValue(c)
-		if paramValue2 == "" && !param2.AllowEmpty {
-			return BadRequest(fmt.Errorf("required parameter %s not present", param2.Name))
-		}
-
-		value1, err := convert(paramValue1, param1.DefaultValue, convFunc1)
-		if err != nil {
-			return BadRequest(err)
-		}
-
-		value2, err := convert(paramValue2, param2.DefaultValue, convFunc2)
-		if err != nil {
-			return BadRequest(err)
-		}
-
-		return handler(c, value1, value2)
+		args[0] = reflect.ValueOf(c)
+		ret := funcValue.Call(args)
+		err, _ := ret[0].Interface().(error)
+		return err
 	}
 }
 
-func withParam3[T1, T2, T3 any](
-	param1 param[T1], param2 param[T2], param3 param[T3],
-	handler func(*fiber.Ctx, T1, T2, T3) error) fiber.Handler {
-	convFunc1 := utils.MustReturn(utils.GetConvertor[T1]())
-	convFunc2 := utils.MustReturn(utils.GetConvertor[T2]())
-	convFunc3 := utils.MustReturn(utils.GetConvertor[T3]())
-
-	return func(c *fiber.Ctx) error {
-		paramValue1 := param1.GetValue(c)
-		if paramValue1 == "" && !param1.AllowEmpty {
-			return BadRequest(fmt.Errorf("required parameter %s not present", param1.Name))
-		}
-
-		paramValue2 := param2.GetValue(c)
-		if paramValue2 == "" && !param2.AllowEmpty {
-			return BadRequest(fmt.Errorf("required parameter %s not present", param2.Name))
-		}
-
-		paramValue3 := param3.GetValue(c)
-		if paramValue3 == "" && !param3.AllowEmpty {
-			return BadRequest(fmt.Errorf("required parameter %s not present", param2.Name))
-		}
-
-		value1, err := convert(paramValue1, param1.DefaultValue, convFunc1)
-		if err != nil {
-			return BadRequest(err)
-		}
-
-		value2, err := convert(paramValue2, param2.DefaultValue, convFunc2)
-		if err != nil {
-			return BadRequest(err)
-		}
-
-		value3, err := convert(paramValue3, param3.DefaultValue, convFunc3)
-		if err != nil {
-			return BadRequest(err)
-		}
-
-		return handler(c, value1, value2, value3)
+func setupConvertors(handler any, params ...any) []reflect.Value {
+	f := reflect.TypeOf(handler)
+	if f.Kind() != reflect.Func {
+		panic(fmt.Sprintf("expected function, got %T", handler))
 	}
+	if f.NumIn() != len(params)+1 {
+		panic(fmt.Sprintf("Handler expected %d args, got %d params", len(params)+1, f.NumIn()))
+	}
+	if f.NumOut() != 1 {
+		panic(fmt.Sprintf("Expected handler to return 1 args, got %d", f.NumOut()))
+	}
+
+	if f.In(0) != reflect.TypeOf((*fiber.Ctx)(nil)) {
+		panic(fmt.Sprintf("Handlers' first parameter must be *fiber.Ctx, got %s", f.In(0)))
+	}
+
+	if !f.Out(0).Implements(reflect.TypeOf((*error)(nil)).Elem()) {
+		panic(fmt.Sprintf("Handlers' return type must be error, got %s", f.Out(0)))
+	}
+
+	convs := make([]reflect.Value, len(params))
+	for i, p := range params {
+		conv := reflect.ValueOf(p).FieldByName("Convertor")
+		if !conv.IsValid() {
+			panic(fmt.Sprintf("%s param did not have a expected Convertor", p))
+		}
+
+		if conv.Kind() != reflect.Func {
+			panic(fmt.Sprintf("expected function, got %s", conv.Kind().String()))
+		}
+
+		convType := conv.Type()
+		if convType.NumIn() != 1 {
+			panic(fmt.Sprintf("param %d Convertor: expected 1 input, got %d", i, convType.NumIn()))
+		}
+		if convType.In(0) != reflect.TypeOf((*fiber.Ctx)(nil)) {
+			panic(fmt.Sprintf("param %d Convertor: input must be *fiber.Ctx, got %s", i, convType.In(0)))
+		}
+		if convType.NumOut() != 2 {
+			panic(fmt.Sprintf("param %d Convertor: expected 2 outputs, got %d", i, convType.NumOut()))
+		}
+		if !convType.Out(1).Implements(reflect.TypeOf((*error)(nil)).Elem()) {
+			panic(fmt.Sprintf("param %d Convertor: second return must be error, got %s", i, convType.Out(1)))
+		}
+
+		handlerParamType := f.In(i + 1)
+		convertorReturnType := convType.Out(0)
+
+		if convertorReturnType != handlerParamType {
+			panic(fmt.Sprintf(
+				"param %d type mismatch: handler expects %s, but Convertor returns %s",
+				i, handlerParamType, convertorReturnType,
+			))
+		}
+
+		convs[i] = conv
+	}
+
+	return convs
 }

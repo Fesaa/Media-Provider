@@ -11,7 +11,7 @@
 
   <ul class="d-flex flex-column align-items-start justify-content-start gap-2 mt-2 list-unstyled">
     @for (option of options(); track $index) {
-      <li class="d-flex align-items-center text-center gap-2">
+      <li class="d-flex align-items-center text-center gap-2" appUpdateBadge [versions]="option.version ?? ''">
         <i class="fa fa-angles-right"></i>
 
         @if (option.action) {

@@ -221,10 +221,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Valid query parameter int",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test", withParam(newQueryParam[int]("id"), func(c *fiber.Ctx, id int) error {
+				app.Get("/test", withParams(func(c *fiber.Ctx, id int) error {
 					assert.Equal(t, int(123), id)
 					return c.JSON(fiber.Map{"id": id})
-				}))
+				}, newQueryParam[int]("id")))
 			},
 			url:            "/test?id=123",
 			expectedStatus: 200,
@@ -233,10 +233,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Valid path parameter int",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test/:id", withParam(newPathParam[int]("id"), func(c *fiber.Ctx, id int) error {
+				app.Get("/test/:id", withParams(func(c *fiber.Ctx, id int) error {
 					assert.Equal(t, int(456), id)
 					return c.JSON(fiber.Map{"id": id})
-				}))
+				}, newPathParam[int]("id")))
 			},
 			url:            "/test/456",
 			expectedStatus: 200,
@@ -245,10 +245,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Valid query parameter string",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test", withParam(newQueryParam[string]("name"), func(c *fiber.Ctx, name string) error {
+				app.Get("/test", withParams(func(c *fiber.Ctx, name string) error {
 					assert.Equal(t, "john", name)
 					return c.JSON(fiber.Map{"name": name})
-				}))
+				}, newQueryParam[string]("name")))
 			},
 			url:            "/test?name=john",
 			expectedStatus: 200,
@@ -257,10 +257,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Valid query parameter int",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test", withParam(newQueryParam[int]("age"), func(c *fiber.Ctx, age int) error {
+				app.Get("/test", withParams(func(c *fiber.Ctx, age int) error {
 					assert.Equal(t, 25, age)
 					return c.JSON(fiber.Map{"age": age})
-				}))
+				}, newQueryParam[int]("age")))
 			},
 			url:            "/test?age=25",
 			expectedStatus: 200,
@@ -269,10 +269,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Valid query parameter bool",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test", withParam(newQueryParam[bool]("active"), func(c *fiber.Ctx, active bool) error {
+				app.Get("/test", withParams(func(c *fiber.Ctx, active bool) error {
 					assert.True(t, active)
 					return c.JSON(fiber.Map{"active": active})
-				}))
+				}, newQueryParam[bool]("active")))
 			},
 			url:            "/test?active=true",
 			expectedStatus: 200,
@@ -281,10 +281,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Missing required parameter",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test", withParam(newQueryParam[int]("id"), func(c *fiber.Ctx, id int) error {
+				app.Get("/test", withParams(func(c *fiber.Ctx, id int) error {
 					t.Error("Handler should not be called with missing parameter")
 					return nil
-				}))
+				}, newQueryParam[int]("id")))
 			},
 			url:            "/test",
 			expectedStatus: 400,
@@ -292,10 +292,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Invalid parameter format",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test", withParam(newQueryParam[int]("id"), func(c *fiber.Ctx, id int) error {
+				app.Get("/test", withParams(func(c *fiber.Ctx, id int) error {
 					t.Error("Handler should not be called with invalid parameter")
 					return nil
-				}))
+				}, newQueryParam[int]("id")))
 			},
 			url:            "/test?id=invalid",
 			expectedStatus: 400,
@@ -303,10 +303,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Parameter with default value - empty",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test", withParam(newQueryParam[int]("id", withAllowEmpty[int](999)), func(c *fiber.Ctx, id int) error {
+				app.Get("/test", withParams(func(c *fiber.Ctx, id int) error {
 					assert.Equal(t, int(999), id)
 					return c.JSON(fiber.Map{"id": id})
-				}))
+				}, newQueryParam[int]("id", withAllowEmpty[int](999))))
 			},
 			url:            "/test",
 			expectedStatus: 200,
@@ -315,10 +315,10 @@ func TestWithParam(t *testing.T) {
 		{
 			name: "Parameter with default value - provided",
 			setupRoute: func(app *fiber.App) {
-				app.Get("/test", withParam(newQueryParam[int]("id", withAllowEmpty[int](999)), func(c *fiber.Ctx, id int) error {
+				app.Get("/test", withParams(func(c *fiber.Ctx, id int) error {
 					assert.Equal(t, int(123), id)
 					return c.JSON(fiber.Map{"id": id})
-				}))
+				}, newQueryParam[int]("id", withAllowEmpty[int](999))))
 			},
 			url:            "/test?id=123",
 			expectedStatus: 200,

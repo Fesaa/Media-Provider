@@ -5,7 +5,6 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/db/repository"
-	"github.com/devfeel/mapper"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )
@@ -49,7 +48,7 @@ func MigrateMetadataToSettings(ctx context.Context, db *gorm.DB, log zerolog.Log
 		}
 	}
 
-	repo := repository.NewSettingsRepository(db, mapper.NewMapper())
+	repo := repository.NewSettingsRepository(db)
 
 	return repo.Update(ctx, settingRows)
 }

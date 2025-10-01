@@ -116,6 +116,7 @@ func req() payload.DownloadRequest {
 type ProviderMock struct {
 	title      string
 	contentDir string
+	coreExt    Ext[ChapterMock, SeriesMock]
 }
 
 func (p ProviderMock) Title() string {
@@ -142,7 +143,11 @@ func (p ProviderMock) WriteContentMetaData(ctx context.Context, t ChapterMock) e
 	panic("implement me")
 }
 
-func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider ProviderMock) *Core[ChapterMock, *SeriesMock] {
+func (p ProviderMock) CoreExt() Ext[ChapterMock, SeriesMock] {
+	return p.coreExt
+}
+
+func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider ProviderMock) *Core[ChapterMock, SeriesMock] {
 	t.Helper()
 	must := func(err error) {
 		if err != nil {
@@ -172,8 +177,9 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider P
 	must(scope.Provide(utils.Identity(afero.Afero{Fs: afero.NewMemMapFs()})))
 	must(scope.Provide(services.ArchiveServiceProvider))
 	must(scope.Provide(services.ImageServiceProvider))
+	must(scope.Provide(services.DirectoryServiceProvider))
 	must(scope.Provide(func() *db.UnitOfWork { return nil }))
-	return New[ChapterMock, *SeriesMock](scope, "test", provider)
+	return New[ChapterMock, SeriesMock](scope, "test", provider)
 }
 
 func TestContentList_EmptyChapters(t *testing.T) {

@@ -26,12 +26,12 @@ type notificationRoutes struct {
 
 func RegisterNotificationRoutes(nr notificationRoutes) {
 	nr.Router.Group("/notifications", nr.Auth.Middleware).
-		Get("/all", withParam(newQueryParam("after", withAllowEmpty(time.Time{})), nr.all)).
-		Get("/recent", withParam(newQueryParam("limit", withAllowEmpty(5)), nr.recent)).
+		Get("/all", withParams(nr.all, newQueryParam("after", withAllowEmpty(time.Time{})))).
+		Get("/recent", withParams(nr.recent, newQueryParam("limit", withAllowEmpty(5)))).
 		Get("/amount", nr.amount).
-		Post("/:id/read", withParam(newIdPathParam(), nr.read)).
-		Post("/:id/unread", withParam(newIdPathParam(), nr.unread)).
-		Delete("/:id", withParam(newIdPathParam(), nr.delete)).
+		Post("/:id/read", withParams(nr.read, newIdPathParam())).
+		Post("/:id/unread", withParams(nr.unread, newIdPathParam())).
+		Delete("/:id", withParams(nr.delete, newIdPathParam())).
 		Post("/many", withBody(nr.readMany)).
 		Post("/many/delete", withBody(nr.deleteMany))
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/internal/comicinfo"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/common"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -45,6 +46,10 @@ type webtoon struct {
 	fs              afero.Afero
 
 	searchInfo *SearchData
+}
+
+func (w *webtoon) CoreExt() core.Ext[Chapter, *Series] {
+	return common.CbzExt[Chapter, *Series]()
 }
 
 func (w *webtoon) Title() string {

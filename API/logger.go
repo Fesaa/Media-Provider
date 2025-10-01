@@ -13,6 +13,7 @@ import (
 	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -56,10 +57,14 @@ func LogProvider(cfg *config.Config) zerolog.Logger {
 	// Application logger logs everything, zerolog.GlobalLevel is only source of truth.
 	// Allows for updating the log level without restarting the application
 	zerolog.SetGlobalLevel(cfg.Logging.Level)
-	return ctx.
+	logger := ctx.
 		Timestamp().
 		Logger().
 		Level(zerolog.TraceLevel)
+
+	// Overwrite default logger
+	log.Logger = logger
+	return logger
 }
 
 func callerMarshal(pc uintptr, file string, line int) string {

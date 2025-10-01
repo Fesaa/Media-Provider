@@ -24,6 +24,7 @@ type Metadata struct {
 	Version               metadata.SemanticVersion `json:"version"`
 	FirstInstalledVersion string                   `json:"firstInstalledVersion"`
 	InstallDate           time.Time                `json:"installDate"`
+	LastUpdateDate        time.Time                `json:"lastUpdateDate"`
 }
 
 type OidcSettings struct {

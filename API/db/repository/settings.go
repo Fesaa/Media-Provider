@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/devfeel/mapper"
 	"gorm.io/gorm"
 )
 
@@ -14,8 +13,7 @@ type SettingsRepository interface {
 }
 
 type settingsRepository struct {
-	db     *gorm.DB
-	mapper mapper.IMapper
+	db *gorm.DB
 }
 
 func (s settingsRepository) GetAll(ctx context.Context) ([]models.ServerSetting, error) {
@@ -37,6 +35,6 @@ func (s settingsRepository) Update(ctx context.Context, settings []models.Server
 	})
 }
 
-func NewSettingsRepository(db *gorm.DB, m mapper.IMapper) SettingsRepository {
-	return &settingsRepository{db: db, mapper: m}
+func NewSettingsRepository(db *gorm.DB) SettingsRepository {
+	return &settingsRepository{db: db}
 }

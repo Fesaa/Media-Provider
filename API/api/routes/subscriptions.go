@@ -5,6 +5,7 @@ import (
 	"path"
 	"slices"
 
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
@@ -27,18 +28,19 @@ type subscriptionRoutes struct {
 	SubscriptionService services.SubscriptionService
 	ContentService      services.ContentService
 	Transloco           services.TranslocoService
+	UnitOfWork          *db.UnitOfWork
 }
 
 func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
 	sr.Router.Group("/subscriptions", sr.Auth.Middleware).
 		Get("/providers", sr.providers).
-		Get("/all", withParam(newQueryParam("allUsers", withAllowEmpty(false)), sr.all)).
-		Get("/:id", withParam(newIdPathParam(), sr.get)).
-		Post("/run-once/:id", withParam(newIdPathParam(), sr.runOnce)).
+		Get("/all", withParams(sr.all, newQueryParam("allUsers", withAllowEmpty(false)))).
+		Get("/:id", withParams(sr.get, newIdPathParam())).
+		Post("/run-once/:id", withParams(sr.runOnce, newIdPathParam())).
 		Post("/update", withBody(sr.update)).
 		Post("/new", withBody(sr.new)).
-		Post("/run-all", withParam(newQueryParam("allUsers", withAllowEmpty(false)), sr.runAll)).
-		Delete("/:id", withParam(newIdPathParam(), sr.delete))
+		Post("/run-all", withParams(sr.runAll, newQueryParam("allUsers", withAllowEmpty(false)))).
+		Delete("/:id", withParams(sr.delete, newIdPathParam()))
 }
 
 // getAll returns all subscriptions for the authenticated user. Or globally if allUsers ir true and the
@@ -48,10 +50,10 @@ func (sr *subscriptionRoutes) getAll(ctx *fiber.Ctx, allUsers bool) ([]models.Su
 	allUsers = allUsers && user.HasRole(models.ManageSubscriptions)
 
 	if allUsers {
-		return sr.SubscriptionService.All(ctx.UserContext())
+		return sr.UnitOfWork.Subscriptions.All(ctx.UserContext())
 	}
 
-	return sr.SubscriptionService.AllForUser(ctx.UserContext(), user.ID)
+	return sr.UnitOfWork.Subscriptions.AllForUser(ctx.UserContext(), user.ID)
 }
 
 func (sr *subscriptionRoutes) providers(ctx *fiber.Ctx) error {
@@ -82,7 +84,7 @@ func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id int) error {
 	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
-	sub, err := sr.SubscriptionService.Get(ctx.UserContext(), id)
+	sub, err := sr.UnitOfWork.Subscriptions.Get(ctx.UserContext(), id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
 		return InternalError(err)
@@ -118,7 +120,7 @@ func (sr *subscriptionRoutes) get(ctx *fiber.Ctx, id int) error {
 	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
-	sub, err := sr.SubscriptionService.Get(ctx.UserContext(), id)
+	sub, err := sr.UnitOfWork.Subscriptions.Get(ctx.UserContext(), id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
 		return InternalError(err)
@@ -142,7 +144,7 @@ func (sr *subscriptionRoutes) update(ctx *fiber.Ctx, sub models.Subscription) er
 	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
-	cur, err := sr.SubscriptionService.Get(ctx.UserContext(), sub.ID)
+	cur, err := sr.UnitOfWork.Subscriptions.Get(ctx.UserContext(), sub.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscription")
 		return InternalError(err)
@@ -205,7 +207,7 @@ func (sr *subscriptionRoutes) delete(ctx *fiber.Ctx, id int) error {
 	user := contextkey.GetFromContext(ctx, contextkey.User)
 	allowAny := user.HasRole(models.ManageSubscriptions)
 
-	cur, err := sr.SubscriptionService.Get(ctx.UserContext(), id)
+	cur, err := sr.UnitOfWork.Subscriptions.Get(ctx.UserContext(), id)
 	if err != nil {
 		return InternalError(err)
 	}

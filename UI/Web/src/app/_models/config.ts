@@ -8,6 +8,7 @@ export type Config = {
   rootDir: string;
   oidc: OidcConfig;
   subscriptionRefreshHour: number;
+  metadata: Metadata;
 }
 
 export type OidcConfig = {
@@ -36,3 +37,10 @@ export const CacheTypes = [{
   value: CacheType.REDIS,
   key: 'redis',
 }];
+
+export type Metadata = {
+  version: string;
+  firstInstalledVersion: string;
+  installDate: Date;
+  lastUpdateDate: Date;
+}

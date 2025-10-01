@@ -6,7 +6,6 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
-	"github.com/devfeel/mapper"
 	"gorm.io/gorm"
 )
 
@@ -38,8 +37,7 @@ type NotificationsRepository interface {
 }
 
 type notificationsRepository struct {
-	db     *gorm.DB
-	mapper mapper.IMapper
+	db *gorm.DB
 }
 
 func (r notificationsRepository) Get(ctx context.Context, id int) (models.Notification, error) {
@@ -135,6 +133,6 @@ func (r notificationsRepository) Unread(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-func NewNotificationsRepository(db *gorm.DB, m mapper.IMapper) NotificationsRepository {
-	return &notificationsRepository{db: db, mapper: m}
+func NewNotificationsRepository(db *gorm.DB) NotificationsRepository {
+	return &notificationsRepository{db: db}
 }

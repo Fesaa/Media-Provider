@@ -8,11 +8,13 @@ import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {ModalService} from "../../../_services/modal.service";
 import {ManualContentAddModalComponent} from "../manual-content-add-modal/manual-content-add-modal.component";
 import {DefaultModalOptions} from "../../../_models/default-modal-options";
+import {UpdateBadgeDirective} from "../../../_directives/update-badge.directive";
 
 interface Option {
   ID: number,
   title: string,
   action?: () => void,
+  version?: string,
 }
 
 @Component({
@@ -20,6 +22,7 @@ interface Option {
   imports: [
     RouterLink,
     TranslocoDirective,
+    UpdateBadgeDirective
   ],
   templateUrl: './suggestion-dashboard.component.html',
   styleUrl: './suggestion-dashboard.component.scss',
@@ -47,6 +50,7 @@ export class SuggestionDashboardComponent {
       ID: -1,
       title: translate('dashboard.manual-add.title'),
       action: this.manualAdd.bind(this),
+      version: "0.3.6",
     })
 
     return options;

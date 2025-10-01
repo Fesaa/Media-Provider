@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/Fesaa/Media-Provider/internal/tracing"
-	"github.com/Fesaa/Media-Provider/utils"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -32,7 +30,7 @@ func (c *Core[C, S]) loadContentOnDisk() {
 }
 
 func (c *Core[C, S]) readDirectoryForContent(p string) ([]Content, error) {
-	entries, err := c.fs.ReadDir(path.Join(c.Client.GetBaseDir(), p))
+	entries, err := c.Fs.ReadDir(path.Join(c.Client.GetBaseDir(), p))
 	if err != nil {
 		return nil, err
 	}
@@ -46,12 +44,6 @@ func (c *Core[C, S]) readDirectoryForContent(p string) ([]Content, error) {
 			}
 			out = append(out, dirContent...)
 			continue
-		}
-
-		if !strings.HasSuffix(entry.Name(), ".cbz") {
-			c.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
-			continue
-
 		}
 
 		content, matches := c.IsContent(entry.Name())
@@ -96,32 +88,9 @@ func (c *Core[C, S]) IOWorker(ctx context.Context, id string) {
 		default:
 		}
 
-		data := task.data
-		ok := false
-
-		p, err := c.unitOfWork.Preferences.GetPreferences(ctx, c.Req.OwnerId)
-		if err == nil && p.ConvertToWebp {
-			data, ok = c.imageService.ConvertToWebp(ctx, task.data)
-		}
-
-		ext := utils.Ternary(ok, ".webp", utils.Ext(task.dTask.url))
-		filePath := path.Join(task.path, fmt.Sprintf("page %s"+ext, utils.PadInt(task.dTask.idx, 4)))
-
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
-		if err := c.fs.WriteFile(filePath, data, 0755); err != nil {
-			select {
-			case <-ctx.Done():
-				log.Debug().Err(err).Msg("ignoring write error due to cancellation")
-				return
-			default:
-			}
-			log.Error().Err(err).Msg("error writing file")
-			c.abortDownload(fmt.Errorf("error writing file %s: %w", filePath, err))
+		err := c.impl.CoreExt().IoTaskFunc(c, ctx, log, task)
+		if err != nil {
+			c.abortDownload(fmt.Errorf("unable to run task '%v': %w", task.Path, err))
 			return
 		}
 	}

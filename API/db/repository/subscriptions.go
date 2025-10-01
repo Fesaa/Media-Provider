@@ -5,15 +5,19 @@ import (
 	"errors"
 
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/devfeel/mapper"
+	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
 )
 
 type SubscriptionsRepository interface {
 	// All returns all subscriptions
 	All(context.Context) ([]models.Subscription, error)
+	// AllPaginated returns all subscriptions, with a give offset and max amount
+	AllPaginated(context.Context, utils.UserParams) (utils.PagedList[models.Subscription], error)
 	// AllForUser returns all subscriptions for a given user
 	AllForUser(context.Context, int) ([]models.Subscription, error)
+	// AllForUserPaginated returns all subscriptions for a given user, with a give offset and max amount
+	AllForUserPaginated(context.Context, int, utils.UserParams) (utils.PagedList[models.Subscription], error)
 	// Get retrieves a subscription by ID
 	Get(context.Context, int) (*models.Subscription, error)
 	// GetForUser retrieves a subscription by ID and user
@@ -31,8 +35,7 @@ type SubscriptionsRepository interface {
 }
 
 type subscriptionsRepository struct {
-	db     *gorm.DB
-	mapper mapper.IMapper
+	db *gorm.DB
 }
 
 func (r subscriptionsRepository) All(ctx context.Context) ([]models.Subscription, error) {
@@ -44,6 +47,11 @@ func (r subscriptionsRepository) All(ctx context.Context) ([]models.Subscription
 	return subscriptions, nil
 }
 
+func (r subscriptionsRepository) AllPaginated(ctx context.Context, params utils.UserParams) (utils.PagedList[models.Subscription], error) {
+	query := r.db.WithContext(ctx).Model(&models.Subscription{}).Order("title asc")
+	return utils.NewPageListFromUserParams[models.Subscription](ctx, query, params)
+}
+
 func (r subscriptionsRepository) AllForUser(ctx context.Context, userID int) ([]models.Subscription, error) {
 	var subscriptions []models.Subscription
 	result := r.db.WithContext(ctx).
@@ -53,6 +61,11 @@ func (r subscriptionsRepository) AllForUser(ctx context.Context, userID int) ([]
 		return nil, result.Error
 	}
 	return subscriptions, nil
+}
+
+func (r subscriptionsRepository) AllForUserPaginated(ctx context.Context, userID int, params utils.UserParams) (utils.PagedList[models.Subscription], error) {
+	query := r.db.WithContext(ctx).Model(&models.Subscription{}).Where(&models.Subscription{Owner: userID}).Order("title asc")
+	return utils.NewPageListFromUserParams[models.Subscription](ctx, query, params)
 }
 
 func (r subscriptionsRepository) Get(ctx context.Context, id int) (*models.Subscription, error) {
@@ -119,6 +132,6 @@ func (r subscriptionsRepository) Delete(ctx context.Context, id int) error {
 	return r.db.WithContext(ctx).Delete(&models.Subscription{Model: models.Model{ID: id}}).Error
 }
 
-func NewSubscriptionsRepository(db *gorm.DB, m mapper.IMapper) SubscriptionsRepository {
-	return &subscriptionsRepository{db: db, mapper: m}
+func NewSubscriptionsRepository(db *gorm.DB) SubscriptionsRepository {
+	return &subscriptionsRepository{db: db}
 }

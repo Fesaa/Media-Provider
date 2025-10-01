@@ -17,12 +17,6 @@ import (
 )
 
 type SubscriptionService interface {
-	// Get the subscription with ID
-	Get(context.Context, int) (*models.Subscription, error)
-	// All returns all active subscriptions
-	All(context.Context) ([]models.Subscription, error)
-	// AllForUser returns all active subscriptions for the given user
-	AllForUser(context.Context, int) ([]models.Subscription, error)
 	// Add a new subscription, saved to DB and starts the cron job
 	// Subscription is normalized in the process
 	Add(context.Context, models.Subscription) (*models.Subscription, error)
@@ -131,18 +125,6 @@ func (s *subscriptionService) UpdateTask(ctx context.Context, hours ...int) erro
 	return nil
 }
 
-func (s *subscriptionService) All(ctx context.Context) ([]models.Subscription, error) {
-	return s.unitOfWork.Subscriptions.All(ctx)
-}
-
-func (s *subscriptionService) AllForUser(ctx context.Context, userId int) ([]models.Subscription, error) {
-	return s.unitOfWork.Subscriptions.AllForUser(ctx, userId)
-}
-
-func (s *subscriptionService) Get(ctx context.Context, id int) (*models.Subscription, error) {
-	return s.unitOfWork.Subscriptions.Get(ctx, id)
-}
-
 func (s *subscriptionService) Add(ctx context.Context, sub models.Subscription) (*models.Subscription, error) {
 	existing, err := s.unitOfWork.Subscriptions.GetByContentID(ctx, sub.ContentId)
 	if err != nil {
@@ -213,7 +195,7 @@ func (s *subscriptionService) subscriptionTask(hour int) gocron.Task {
 
 		s.log.Debug().Msg("running subscription task")
 
-		subs, err := s.All(ctx)
+		subs, err := s.unitOfWork.Subscriptions.All(ctx)
 		if err != nil {
 			s.log.Error().Err(err).Msg("failed to get subscriptions")
 			s.notifier.Notify(ctx, models.NewNotification().

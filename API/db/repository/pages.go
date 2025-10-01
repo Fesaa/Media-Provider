@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/Fesaa/Media-Provider/db/models"
-	"github.com/devfeel/mapper"
 	"gorm.io/gorm"
 )
 
@@ -20,8 +19,7 @@ type PagesRepository interface {
 }
 
 type pagesRepository struct {
-	db     *gorm.DB
-	mapper mapper.IMapper
+	db *gorm.DB
 }
 
 func (p pagesRepository) GetAllPages(ctx context.Context) ([]models.Page, error) {
@@ -72,6 +70,6 @@ func (p pagesRepository) Delete(ctx context.Context, id int) error {
 	return p.db.WithContext(ctx).Delete(&models.Page{}, id).Error
 }
 
-func NewPagesRepository(db *gorm.DB, m mapper.IMapper) PagesRepository {
-	return &pagesRepository{db: db, mapper: m}
+func NewPagesRepository(db *gorm.DB) PagesRepository {
+	return &pagesRepository{db: db}
 }

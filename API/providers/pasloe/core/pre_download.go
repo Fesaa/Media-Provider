@@ -2,16 +2,15 @@ package core
 
 import (
 	"path"
-	"strconv"
 )
 
 func (c *Core[C, S]) ShouldDownload(chapter C) bool {
 	// Backwards compatibility check if volume has been downloaded
-	if _, ok := c.GetContentByName(c.VolumeDir(chapter) + ".cbz"); ok {
+	if _, ok := c.GetContentByName(c.VolumeDir(chapter)); ok {
 		return false
 	}
 
-	content, ok := c.GetContentByName(c.ContentFileName(chapter) + ".cbz")
+	content, ok := c.GetContentByName(c.ContentFileName(chapter))
 	if !ok {
 		content, ok = c.GetContentByVolumeAndChapter(chapter.GetVolume(), chapter.GetChapter())
 		if !ok {
@@ -33,18 +32,18 @@ func (c *Core[C, S]) hasBeenAssignedVolume(chapter C, content Content) bool {
 	l := c.ContentLogger(chapter)
 	fullPath := path.Join(c.Client.GetBaseDir(), content.Path)
 
-	ci, err := c.archiveService.GetComicInfo(fullPath)
+	volume, err := c.impl.CoreExt().VolumeFunc(c, content)
 	if err != nil {
-		l.Warn().Err(err).Str("path", fullPath).Msg("unable to read comic info in zip")
+		l.Warn().Err(err).Str("path", fullPath).Msg("unable to read volume from disk")
 		return false
 	}
 
-	if strconv.Itoa(ci.Volume) == chapter.GetVolume() {
+	if volume == chapter.GetVolume() {
 		l.Trace().Str("path", fullPath).Msg("Volume on disk matches, not replacing")
 		return false
 	}
 
-	l.Debug().Int("onDiskVolume", ci.Volume).Str("path", fullPath).
+	l.Debug().Str("onDiskVolume", volume).Str("path", fullPath).
 		Msg("Loose chapter has been assigned to a volume, replacing")
 	return true
 }
@@ -64,7 +63,7 @@ func (m *manga) hasOutdatedCover(chapter ChapterSearchData, content core.Content
 		return false
 	}
 
-	coverOnDisk, err := m.archiveService.GetCover(fullPath)
+	coverOnDisk, err := m.ArchiveService.GetCover(fullPath)
 	if err != nil {
 		l.Debug().Err(err).Str("path", fullPath).Bool("firstPage", firstPage).
 			Msg("unable to read cover, may be first page")
@@ -78,19 +77,19 @@ func (m *manga) hasOutdatedCover(chapter ChapterSearchData, content core.Content
 
 func (m *manga) coverShouldBeReplaced(chapter ChapterSearchData, wantedCover, coverOnDisk []byte) bool {
 	l := m.ContentLogger(chapter)
-	wantedImg, err := m.imageService.ToImage(wantedCover)
+	wantedImg, err := m.ImageService.ToImage(wantedCover)
 	if err != nil {
 		l.Warn().Err(err).Msg("unable to convert wanted cover to image")
 		return false
 	}
 
-	onDiskImg, err := m.imageService.ToImage(coverOnDisk)
+	onDiskImg, err := m.ImageService.ToImage(coverOnDisk)
 	if err != nil {
 		l.Warn().Err(err).Msg("unable to convert on disk cover to image")
 		return false
 	}
 
-	similar := m.imageService.Similar(onDiskImg, wantedImg)
+	similar := m.ImageService.Similar(onDiskImg, wantedImg)
 	if similar > 0.85 {
 		l.Trace().Float64("similar", similar).Msg("on disk image is similar to wanted image, not re-downloading")
 		return false

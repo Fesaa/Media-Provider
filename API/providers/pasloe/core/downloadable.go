@@ -30,6 +30,8 @@ type Downloadable interface {
 	GetNewContent() []string
 	// GetToRemoveContent returns the full (relative) path of old content that has to be removed
 	GetToRemoveContent() []string
+	// CleanupNewContent takes a path from GetNewContent to clean up
+	CleanupNewContent(string) error
 
 	// LoadMetadata loads all required metadata to start the download , this method blocks until complete or cancelled
 	LoadMetadata(ctx context.Context)
@@ -42,12 +44,28 @@ type Downloadable interface {
 	FailedDownloads() int
 }
 
-type DownloadInfoProvider[T any] interface {
+type DownloadInfoProvider[C Chapter, S Series[C]] interface {
 	Provider() models.Provider
 	Title() string
 	RefUrl() string
-	LoadInfo(ctx context.Context) chan struct{}
+	LoadInfo(context.Context) chan struct{}
 
-	ContentUrls(ctx context.Context, t T) ([]string, error)
-	WriteContentMetaData(ctx context.Context, t T) error
+	ContentUrls(context.Context, C) ([]string, error)
+	WriteContentMetaData(context.Context, C) error
+	CoreExt() Ext[C, S]
+}
+
+type IOTaskFunc[C Chapter, S Series[C]] func(*Core[C, S], context.Context, zerolog.Logger, IOTask) error
+
+type CleanupFunc[C Chapter, S Series[C]] func(*Core[C, S], string) error
+
+type IsContentFunc func(string) (Content, bool)
+
+type VolumeFunc[C Chapter, S Series[C]] func(*Core[C, S], Content) (string, error)
+
+type Ext[C Chapter, S Series[C]] struct {
+	IoTaskFunc         IOTaskFunc[C, S]
+	ContentCleanupFunc CleanupFunc[C, S]
+	IsContentFunc      IsContentFunc
+	VolumeFunc         VolumeFunc[C, S]
 }

@@ -69,7 +69,7 @@ func (c *Core[C, S]) DownloadAndWrite(ctx context.Context, url string, filePath 
 		return err
 	}
 
-	if err = c.fs.WriteFile(filePath, data, 0755); err != nil {
+	if err = c.Fs.WriteFile(filePath, data, 0755); err != nil {
 		return err
 	}
 

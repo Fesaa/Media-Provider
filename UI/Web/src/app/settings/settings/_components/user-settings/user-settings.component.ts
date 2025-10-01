@@ -92,7 +92,7 @@ export class UserSettingsComponent implements OnInit {
 
   async deleteUser(user: UserDto) {
     if (!await this.modalService.confirm({
-      question: translate("settings.user.confirm-delete", {name: user.name})
+      question: translate("settings.users.confirm-delete", {name: user.name})
     })) {
       return;
     }

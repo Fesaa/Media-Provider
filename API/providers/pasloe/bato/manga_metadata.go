@@ -85,7 +85,7 @@ func (m *manga) comicInfo(ctx context.Context, chapter Chapter) *comicinfo.Comic
 }
 
 func (m *manga) getCiStatus() (int, bool) {
-	if m.SeriesInfo.PublicationStatus != PublicationCompleted && m.SeriesInfo.BatoUploadStatus != PublicationCompleted {
+	if m.SeriesInfo.PublicationStatus != PublicationCompleted || m.SeriesInfo.BatoUploadStatus != PublicationCompleted {
 		return 0, false
 	}
 
