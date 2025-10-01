@@ -6,11 +6,11 @@ import (
 
 func (c *Core[C, S]) ShouldDownload(chapter C) bool {
 	// Backwards compatibility check if volume has been downloaded
-	if _, ok := c.GetContentByName(c.VolumeDir(chapter) + ".cbz"); ok {
+	if _, ok := c.GetContentByName(c.VolumeDir(chapter)); ok {
 		return false
 	}
 
-	content, ok := c.GetContentByName(c.ContentFileName(chapter) + ".cbz")
+	content, ok := c.GetContentByName(c.ContentFileName(chapter))
 	if !ok {
 		content, ok = c.GetContentByVolumeAndChapter(chapter.GetVolume(), chapter.GetChapter())
 		if !ok {

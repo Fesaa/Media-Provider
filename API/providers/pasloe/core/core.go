@@ -206,7 +206,7 @@ func (c *Core[C, S]) ExistingContentNames() []string {
 
 func (c *Core[C, S]) GetContentByName(name string) (Content, bool) {
 	for _, content := range c.ExistingContent {
-		if content.Name == name {
+		if path.Base(content.Name) == name { // ignore file ext
 			return content, true
 		}
 	}

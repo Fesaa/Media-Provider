@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"go.opentelemetry.io/otel/attribute"
@@ -45,12 +44,6 @@ func (c *Core[C, S]) readDirectoryForContent(p string) ([]Content, error) {
 			}
 			out = append(out, dirContent...)
 			continue
-		}
-
-		if !strings.HasSuffix(entry.Name(), ".cbz") {
-			c.Log.Trace().Str("file", entry.Name()).Msg("skipping non content file")
-			continue
-
 		}
 
 		content, matches := c.IsContent(entry.Name())
