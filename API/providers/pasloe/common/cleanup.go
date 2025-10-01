@@ -7,5 +7,5 @@ func CbzCleanupFunc[C core.Chapter, S core.Series[C]](c *core.Core[C, S], path s
 		return err
 	}
 
-	return c.Fs.Remove(path)
+	return c.Fs.RemoveAll(path)
 }
