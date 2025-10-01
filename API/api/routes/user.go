@@ -38,6 +38,7 @@ type userRoutes struct {
 	Notify          services.NotificationService
 	Transloco       services.TranslocoService
 	SettingsService services.SettingsService
+	UserService     services.UserService
 }
 
 func RegisterUserRoutes(ur userRoutes) {
@@ -251,7 +252,7 @@ func (ur *userRoutes) logoutUser(ctx *fiber.Ctx) error {
 }
 
 func (ur *userRoutes) oidcLogin(ctx *fiber.Ctx) error {
-	url, err := ur.Auth.GetOIDCLoginURL(ctx)
+	url, err := ur.UserService.OidcLoginUrl(ctx)
 	if err != nil {
 		return InternalError(err)
 	}
