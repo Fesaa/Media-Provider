@@ -224,7 +224,7 @@ func (u *userService) OidcLoginUrl(ctx *fiber.Ctx) (string, error) {
 	}
 
 	b := make([]byte, 32)
-	_, _ = rand.Read(b) //nolint:nilerr Read does not error
+	_, _ = rand.Read(b) // Read does not return errors
 	state := base64.URLEncoding.EncodeToString(b)
 
 	ctx.Cookie(&fiber.Cookie{
