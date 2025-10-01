@@ -9,7 +9,6 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/services"
-	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/dig"
 )
@@ -35,10 +34,7 @@ type subscriptionRoutes struct {
 func RegisterSubscriptionRoutes(sr subscriptionRoutes) {
 	sr.Router.Group("/subscriptions", sr.Auth.Middleware).
 		Get("/providers", sr.providers).
-		Get("/all", withParams(
-			sr.all,
-			newQueryParam("allUsers", withAllowEmpty(false)),
-			newQueryParam("", withAllowEmpty[utils.UserParams](), withStructConvertor[utils.UserParams]()))).
+		Get("/all", withParams(sr.all, newQueryParam("allUsers", withAllowEmpty(false)))).
 		Get("/:id", withParams(sr.get, newIdPathParam())).
 		Post("/run-once/:id", withParams(sr.runOnce, newIdPathParam())).
 		Post("/update", withBody(sr.update)).
@@ -107,19 +103,10 @@ func (sr *subscriptionRoutes) runOnce(ctx *fiber.Ctx, id int) error {
 	return ctx.Status(fiber.StatusAccepted).JSON(fiber.Map{})
 }
 
-func (sr *subscriptionRoutes) all(ctx *fiber.Ctx, allUsers bool, userParams utils.UserParams) error {
+func (sr *subscriptionRoutes) all(ctx *fiber.Ctx, allUsers bool) error {
 	log := contextkey.GetFromContext(ctx, contextkey.Logger)
-	user := contextkey.GetFromContext(ctx, contextkey.User)
-	allUsers = allUsers && user.HasRole(models.ManageSubscriptions)
 
-	var subs utils.PagedList[models.Subscription]
-	var err error
-	if allUsers {
-		subs, err = sr.UnitOfWork.Subscriptions.AllPaginated(ctx.UserContext(), userParams)
-	} else {
-		subs, err = sr.UnitOfWork.Subscriptions.AllForUserPaginated(ctx.UserContext(), user.ID, userParams)
-	}
-
+	subs, err := sr.getAll(ctx, allUsers)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get subscriptions")
 		return InternalError(err)

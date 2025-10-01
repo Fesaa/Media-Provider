@@ -272,25 +272,25 @@ func setupConvertors(handler any, params ...any) []reflect.Value {
 		panic(fmt.Sprintf("expected function, got %T", handler))
 	}
 	if f.NumIn() != len(params)+1 {
-		panic(fmt.Sprintf("expected %d args, got %d", len(params)+1, f.NumIn()))
+		panic(fmt.Sprintf("Handler expected %d args, got %d params", len(params)+1, f.NumIn()))
 	}
 	if f.NumOut() != 1 {
-		panic(fmt.Sprintf("expected 1 args, got %d", f.NumOut()))
+		panic(fmt.Sprintf("Expected handler to return 1 args, got %d", f.NumOut()))
 	}
 
 	if f.In(0) != reflect.TypeOf((*fiber.Ctx)(nil)) {
-		panic(fmt.Sprintf("first parameter must be *fiber.Ctx, got %s", f.In(0)))
+		panic(fmt.Sprintf("Handlers' first parameter must be *fiber.Ctx, got %s", f.In(0)))
 	}
 
 	if !f.Out(0).Implements(reflect.TypeOf((*error)(nil)).Elem()) {
-		panic(fmt.Sprintf("return type must be error, got %s", f.Out(0)))
+		panic(fmt.Sprintf("Handlers' return type must be error, got %s", f.Out(0)))
 	}
 
 	convs := make([]reflect.Value, len(params))
 	for i, p := range params {
 		conv := reflect.ValueOf(p).FieldByName("Convertor")
 		if !conv.IsValid() {
-			panic(fmt.Sprintf("param did not have a expected Convertor"))
+			panic(fmt.Sprintf("%s param did not have a expected Convertor", p))
 		}
 
 		if conv.Kind() != reflect.Func {
