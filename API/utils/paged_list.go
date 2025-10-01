@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -22,6 +23,7 @@ type PagedList[T any] struct {
 	Items       []T `json:"items"`
 	CurrentPage int `json:"currentPage"`
 	PageSize    int `json:"pageSize"`
+	TotalPages  int `json:"totalPages"`
 }
 
 func NewPageListFromUserParams[T any](ctx context.Context, query *gorm.DB, params UserParams) (PagedList[T], error) {
@@ -47,6 +49,7 @@ func NewPagedList[T any](ctx context.Context, query *gorm.DB, page, pageSize int
 	pg := PagedList[T]{
 		CurrentPage: page,
 		PageSize:    pageSize,
+		TotalPages:  int(math.Ceil(float64(count) / float64(pageSize))),
 	}
 
 	offSet := page * pageSize

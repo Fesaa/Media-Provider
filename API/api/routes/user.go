@@ -70,8 +70,8 @@ func RegisterUserRoutes(ur userRoutes) {
 	user.Use(hasRole(models.ManageUsers)).
 		Get("/all", ur.users).
 		Post("/update", withBodyValidation(ur.updateUser)).
-		Delete("/:id", withParam(newIdPathParam(), ur.deleteUser)).
-		Post("/reset/:id", withParam(newIdPathParam(), ur.generateResetPassword))
+		Delete("/:id", withParams(ur.deleteUser, newIdPathParam())).
+		Post("/reset/:id", withParams(ur.generateResetPassword, newIdPathParam()))
 }
 
 func (ur *userRoutes) updatePassword(ctx *fiber.Ctx, updatePasswordRequest payload.UpdatePasswordRequest) error {

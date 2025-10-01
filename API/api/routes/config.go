@@ -26,7 +26,7 @@ func RegisterConfigRoutes(cr configRoutes) {
 		Get("/oidc", cr.getOidcConfig).
 		Use(cr.Auth.Middleware).
 		Get("/", cr.getConfig).
-		Post("/", withBody(cr.updateConfig))
+		Post("/", withParams(cr.updateConfig, newBodyParam[payload.Settings]()))
 }
 
 func (cr *configRoutes) getConfig(ctx *fiber.Ctx) error {

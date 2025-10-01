@@ -34,7 +34,7 @@ func RegisterContentRoutes(cr contentRoutes) {
 		Post("/search", cr.Cache, withBodyValidation(cr.Search)).
 		Post("/download", withBodyValidation(cr.Download)).
 		Post("/stop", withBodyValidation(cr.Stop)).
-		Get("/stats", withParam(newQueryParam("all", withAllowEmpty(false)), cr.Stats)).
+		Get("/stats", withParams(cr.Stats, newQueryParam("all", withAllowEmpty(false)))).
 		Post("/message", withBody(cr.Message))
 }
 

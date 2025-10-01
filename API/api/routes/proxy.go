@@ -30,17 +30,17 @@ type proxyRoutes struct {
 
 func RegisterProxyRoutes(pr proxyRoutes) {
 	pr.Router.Group("/proxy", pr.Auth.Middleware, pr.Cache).
-		Get("/mangadex/covers/:id/:filename", withParam2(
+		Get("/mangadex/covers/:id/:filename", withParams(
+			pr.MangaDexCoverProxy,
 			newPathParam[string]("id"),
-			newPathParam[string]("filename"),
-			pr.MangaDexCoverProxy)).
-		Get("/webtoon/covers/:date/:id/:filename", withParam3(
+			newPathParam[string]("filename"))).
+		Get("/webtoon/covers/:date/:id/:filename", withParams(
+			pr.WebToonCoverProxy,
 			newPathParam[string]("date"),
 			newPathParam[string]("id"),
 			newPathParam[string]("filename"),
-			pr.WebToonCoverProxy,
 		)).
-		Get("/bato/covers/:id", withParam(newPathParam[string]("id"), pr.BatoCoverProxy))
+		Get("/bato/covers/:id", withParams(pr.BatoCoverProxy, newPathParam[string]("id")))
 }
 
 func (pr *proxyRoutes) mangadexUrl(id, fileName string) string {

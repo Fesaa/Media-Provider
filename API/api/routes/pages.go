@@ -30,16 +30,16 @@ func RegisterPageRoutes(pr pageRoutes) {
 	pages := pr.Router.Group("/pages", pr.Auth.Middleware)
 	pages.
 		Get("/", pr.pages).
-		Get("/download-metadata", withParam(newQueryParam("provider",
-			withMessage[int](pr.Transloco.GetTranslation("no-provider"))), pr.DownloadMetadata)).
-		Get("/:id", withParam(newIdPathParam(), pr.page))
+		Get("/download-metadata", withParams(pr.DownloadMetadata, newQueryParam("provider",
+			withMessage[int](pr.Transloco.GetTranslation("no-provider"))))).
+		Get("/:id", withParams(pr.page, newIdPathParam()))
 
 	pages.Use(hasRole(models.ManagePages)).
 		Post("/new", withBodyValidation(pr.updatePage)).
 		Post("/update", withBodyValidation(pr.updatePage)).
 		Post("/order", withBody(pr.orderPages)).
 		Post("/load-default", pr.loadDefault).
-		Delete("/:id", withParam(newIdPathParam(), pr.deletePage))
+		Delete("/:id", withParams(pr.deletePage, newIdPathParam()))
 }
 
 func (pr *pageRoutes) pages(ctx *fiber.Ctx) error {
