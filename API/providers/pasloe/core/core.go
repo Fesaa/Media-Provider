@@ -29,7 +29,7 @@ const (
 	togglePreferencesFailed     = "toggle_blacklist_failed"
 )
 
-func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider DownloadInfoProvider[C]) *Core[C, S] {
+func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider DownloadInfoProvider[C, S]) *Core[C, S] {
 	var base *Core[C, S]
 
 	utils.Must(scope.Invoke(func(
@@ -45,6 +45,7 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 		fs afero.Afero,
 		httpClient *menou.Client,
 		settingsService services.SettingsService,
+		dirService services.DirectoryService,
 	) error {
 
 		settings, err := settingsService.GetSettingsDto(context.Background())
@@ -66,10 +67,11 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 			SignalR:        signalR,
 			Notifier:       notification,
 			TransLoco:      transLoco,
-			archiveService: archiveService,
-			imageService:   imageService,
-			unitOfWork:     unitOfWork,
-			fs:             fs,
+			ArchiveService: archiveService,
+			ImageService:   imageService,
+			DirService:     dirService,
+			UnitOfWork:     unitOfWork,
+			Fs:             fs,
 			httpClient:     httpClient,
 		}
 
@@ -88,7 +90,7 @@ type Content struct {
 }
 
 type Core[C Chapter, S Series[C]] struct {
-	impl DownloadInfoProvider[C]
+	impl DownloadInfoProvider[C, S]
 
 	Client         Client
 	Log            zerolog.Logger
@@ -96,9 +98,10 @@ type Core[C Chapter, S Series[C]] struct {
 	SignalR        services.SignalRService
 	Notifier       services.NotificationService
 	TransLoco      services.TranslocoService
-	archiveService services.ArchiveService
-	imageService   services.ImageService
-	fs             afero.Afero
+	ArchiveService services.ArchiveService
+	ImageService   services.ImageService
+	DirService     services.DirectoryService
+	Fs             afero.Afero
 	httpClient     *menou.Client
 
 	id        string
@@ -124,7 +127,7 @@ type Core[C Chapter, S Series[C]] struct {
 	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
 	ToDownloadUserSelected []string
 
-	unitOfWork *db.UnitOfWork
+	UnitOfWork *db.UnitOfWork
 	Preference *models.UserPreferences
 
 	// Amount of chapters downloaded
@@ -246,6 +249,10 @@ func (c *Core[C, S]) GetNewContentNamed() []string {
 
 func (c *Core[C, S]) GetNewContent() []string {
 	return c.HasDownloaded
+}
+
+func (c *Core[C, S]) CleanupNewContent(path string) error {
+	return c.impl.CoreExt().ContentCleanupFunc(c, path)
 }
 
 func (c *Core[C, S]) GetToRemoveContent() []string {
@@ -397,7 +404,7 @@ func (c *Core[C, S]) LoadMetadata(ctx context.Context) {
 
 	start := time.Now()
 
-	p, err := c.unitOfWork.Preferences.GetPreferences(ctx, c.Req.OwnerId)
+	p, err := c.UnitOfWork.Preferences.GetPreferences(ctx, c.Req.OwnerId)
 	if err != nil {
 		c.Log.Error().Err(err).Msg("unable to get preferences, some features may not work")
 	}
@@ -471,7 +478,7 @@ func (c *Core[C, S]) ensureSubscriptionDirectoryIsUpToDate(ctx context.Context) 
 	if c.Req.Sub.LastDownloadDir == "" {
 		c.Log.Debug().Msg("No previous download directory known, updating to current")
 		c.Req.Sub.LastDownloadDir = newDir
-		return c.unitOfWork.Subscriptions.Update(ctx, *c.Req.Sub)
+		return c.UnitOfWork.Subscriptions.Update(ctx, *c.Req.Sub)
 	}
 
 	if oldDir == newDir {
@@ -483,7 +490,7 @@ func (c *Core[C, S]) ensureSubscriptionDirectoryIsUpToDate(ctx context.Context) 
 		Str("current-dir", newDir).
 		Msg("Download directory out of sync for subscription, moving content")
 
-	ok, err := c.fs.DirExists(newDir)
+	ok, err := c.Fs.DirExists(newDir)
 	if err != nil {
 		return err
 	}
@@ -495,7 +502,7 @@ func (c *Core[C, S]) ensureSubscriptionDirectoryIsUpToDate(ctx context.Context) 
 		return fs.ErrExist
 	}
 
-	return c.fs.Rename(oldDir, newDir)
+	return c.Fs.Rename(oldDir, newDir)
 }
 
 func (c *Core[C, S]) DownloadContent(ctx context.Context) {

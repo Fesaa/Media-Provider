@@ -3,8 +3,6 @@ package core
 import (
 	"fmt"
 	"path"
-	"path/filepath"
-	"regexp"
 	"slices"
 	"strconv"
 
@@ -138,35 +136,6 @@ func (c *Core[C, S]) OneShotFileName(chapter C) string {
 	return finalOneShotPath
 }
 
-var (
-	contentVolumeAndChapterRegex = regexp.MustCompile(".* (?:Vol\\. ([\\d\\.]+)) (?:Ch)\\. ([\\d\\.]+).cbz")
-	contentChapterRegex          = regexp.MustCompile(".* Ch\\. ([\\d\\.]+).cbz")
-	contentVolumeRegex           = regexp.MustCompile(".* Vol\\. ([\\d\\.]+).cbz")
-)
-
 func (c *Core[C, S]) IsContent(name string) (Content, bool) {
-	matches := contentVolumeAndChapterRegex.FindStringSubmatch(name)
-	if len(matches) == 3 {
-		return Content{
-			Volume:  utils.TrimLeadingZero(matches[1]),
-			Chapter: utils.TrimLeadingZero(matches[2]),
-		}, true
-	}
-
-	matches = contentVolumeRegex.FindStringSubmatch(name)
-	if len(matches) == 2 {
-		return Content{
-			Volume: utils.TrimLeadingZero(matches[1]),
-		}, true
-	}
-
-	matches = contentChapterRegex.FindStringSubmatch(name)
-	if len(matches) == 2 {
-		return Content{
-			Chapter: utils.TrimLeadingZero(matches[1]),
-		}, true
-	}
-
-	// Fallback to simple ext check
-	return Content{}, filepath.Ext(name) == ".cbz"
+	return c.impl.CoreExt().IsContentFunc(name)
 }

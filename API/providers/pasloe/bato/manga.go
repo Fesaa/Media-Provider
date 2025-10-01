@@ -7,6 +7,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/common"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/spf13/afero"
@@ -33,6 +34,15 @@ type manga struct {
 
 	repository Repository
 	fs         afero.Afero
+}
+
+func (m *manga) CoreExt() core.Ext[Chapter, *Series] {
+	return core.Ext[Chapter, *Series]{
+		IoTaskFunc:         common.ImageIoTask[Chapter, *Series],
+		ContentCleanupFunc: common.CbzCleanupFunc[Chapter, *Series],
+		IsContentFunc:      common.IsCbz,
+		VolumeFunc:         common.GetVolumeFromComicInfo[Chapter, *Series],
+	}
 }
 
 func (m *manga) Title() string {

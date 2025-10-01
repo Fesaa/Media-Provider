@@ -112,7 +112,7 @@ func TestCore_loadContentOnDisk(t *testing.T) {
 			core := testBase(t, req(), io.Discard, ProviderMock{})
 
 			write := func(s string) {
-				utils.Must(core.fs.WriteFile(s, []byte{}, 0))
+				utils.Must(core.Fs.WriteFile(s, []byte{}, 0))
 			}
 			utils.ForEach(tt.files, write)
 

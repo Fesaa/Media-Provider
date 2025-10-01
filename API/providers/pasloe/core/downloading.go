@@ -171,7 +171,7 @@ func (c *Core[C, S]) downloadContent(ctx context.Context, chapter C) error {
 	defer dCtx.Cancel()
 
 	contentPath := c.ContentPath(chapter)
-	if err = c.fs.MkdirAll(contentPath, 0755); err != nil {
+	if err = c.Fs.MkdirAll(contentPath, 0755); err != nil {
 		return err
 	}
 
@@ -268,14 +268,14 @@ type DownloadContext[C Chapter, S Series[C]] struct {
 }
 
 type DownloadTask struct {
-	idx int
-	url string
+	Idx int
+	Url string
 }
 
 type IOTask struct {
-	data  []byte
-	path  string
-	dTask DownloadTask
+	Data  []byte
+	Path  string
+	DTask DownloadTask
 }
 
 // CancelWithError queue the given error into the ErrCh, and call cancel if it succeeded. Otherwise, do nothing
@@ -377,28 +377,28 @@ func (d *DownloadContext[C, S]) processDownloads(ctx context.Context, log zerolo
 			return failedTasks
 		}
 
-		log.Trace().Int("idx", task.idx).Str("url", task.url).Bool("isRetry", isRetry).
+		log.Trace().Int("idx", task.Idx).Str("url", task.Url).Bool("isRetry", isRetry).
 			Msg("downloading page")
 
-		data, err := d.Core.Download(ctx, task.url)
+		data, err := d.Core.Download(ctx, task.Url)
 		if err != nil {
-			span.RecordError(err, trace.WithAttributes(attribute.String("url", task.url)))
+			span.RecordError(err, trace.WithAttributes(attribute.String("url", task.Url)))
 			if d.IsCancelled() {
 				return failedTasks
 			}
 
 			if isRetry {
-				log.Error().Err(err).Int("idx", task.idx).Str("url", task.url).
+				log.Error().Err(err).Int("idx", task.Idx).Str("url", task.Url).
 					Msg("retry download failed, ending content download")
 
-				d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.url, err))
+				d.CancelWithError(fmt.Errorf("final download failed on url %s; %w", task.Url, err))
 				return failedTasks
 			}
 
 			failedTasks = append(failedTasks, task)
 			atomic.AddInt64(&d.Core.failedDownloads, 1)
 
-			log.Warn().Err(err).Int("idx", task.idx).Str("url", task.url).
+			log.Warn().Err(err).Int("idx", task.Idx).Str("url", task.Url).
 				Msg("download has failed for a page for the first time, trying page again at the end")
 			continue
 		}

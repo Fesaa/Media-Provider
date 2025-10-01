@@ -367,15 +367,14 @@ func (c *client) cleanup(content core.Downloadable) {
 	defer c.signalR.DeleteContent(content.Request().OwnerId, content.Id())
 
 	l := c.log.With().Str("contentId", content.Id()).Logger()
-	newContent := content.GetNewContent()
-	if len(newContent) == 0 {
+	if len(content.GetNewContent()) == 0 {
 		return
 	}
 
 	start := time.Now()
 
 	cleanupErrs := c.removeOldContent(content, l)
-	cleanupErrs = append(cleanupErrs, c.zipAndRemoveNewContent(newContent, l)...)
+	cleanupErrs = append(cleanupErrs, c.newContentCleanup(content, l)...)
 
 	if len(cleanupErrs) > 0 {
 		l.Error().Errs("errors", cleanupErrs).Msg("errors encountered during cleanup")
@@ -402,27 +401,20 @@ func (c *client) removeOldContent(content core.Downloadable, l zerolog.Logger) (
 	return cleanupErrs
 }
 
-func (c *client) zipAndRemoveNewContent(newContent []string, l zerolog.Logger) (cleanupErrs []error) {
+func (c *client) newContentCleanup(content core.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
 	start := time.Now()
 
-	for _, contentPath := range newContent {
+	for _, contentPath := range content.GetNewContent() {
 		l.Trace().Str("path", contentPath).Msg("Zipping file")
 
-		if err := c.dirService.ZipToCbz(contentPath); err != nil {
-			l.Error().Err(err).Str("path", contentPath).Msg("error while zipping dir")
-			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while zipping dir %s: %w", contentPath, err))
-			continue
-		}
-
-		if err := c.fs.RemoveAll(contentPath); err != nil {
-			l.Error().Err(err).Str("path", contentPath).Msg("error while deleting new content directory")
-			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while deleting new content directory %s: %w", contentPath, err))
-			continue
+		if err := content.CleanupNewContent(contentPath); err != nil {
+			l.Error().Err(err).Str("path", contentPath).Msg("error while cleaning new content up")
+			cleanupErrs = append(cleanupErrs, fmt.Errorf("error while cleaning new content up: %w", err))
 		}
 	}
 
-	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(newContent)).
-		Msg("finished zipping newly downloaded content")
+	l.Debug().Dur("elapsed", time.Since(start)).Int("size", len(content.GetNewContent())).
+		Msg("finished cleaning newly downloaded content")
 	return cleanupErrs
 }
 

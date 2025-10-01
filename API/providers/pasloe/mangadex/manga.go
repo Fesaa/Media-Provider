@@ -7,6 +7,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/common"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -68,6 +69,15 @@ type manga struct {
 	hasWarned bool
 
 	language string
+}
+
+func (m *manga) CoreExt() core.Ext[ChapterSearchData, *MangaSearchData] {
+	return core.Ext[ChapterSearchData, *MangaSearchData]{
+		IoTaskFunc:         common.ImageIoTask[ChapterSearchData, *MangaSearchData],
+		ContentCleanupFunc: common.CbzCleanupFunc[ChapterSearchData, *MangaSearchData],
+		IsContentFunc:      common.IsCbz,
+		VolumeFunc:         common.GetVolumeFromComicInfo[ChapterSearchData, *MangaSearchData],
+	}
 }
 
 func (m *manga) CustomizeAllChapters() []ChapterSearchData {
