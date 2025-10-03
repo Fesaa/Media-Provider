@@ -179,7 +179,7 @@ func testBase(t *testing.T, req payload.DownloadRequest, w io.Writer, provider P
 	must(scope.Provide(services.ImageServiceProvider))
 	must(scope.Provide(services.DirectoryServiceProvider))
 	must(scope.Provide(func() *db.UnitOfWork { return nil }))
-	return New[ChapterMock, SeriesMock](scope, "test", provider)
+	return utils.MustReturn(New[ChapterMock, SeriesMock](scope, "test", provider))
 }
 
 func TestContentList_EmptyChapters(t *testing.T) {

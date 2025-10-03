@@ -20,22 +20,25 @@ import (
 	"go.uber.org/dig"
 )
 
-func New(scope *dig.Scope) core.Downloadable {
+func New(scope *dig.Scope) (core.Downloadable, error) {
 	var wt *webtoon
 
-	utils.Must(scope.Invoke(func(
+	err := scope.Invoke(func(
 		req payload.DownloadRequest, repository Repository,
 		markdownService services.MarkdownService, fs afero.Afero,
-	) {
+	) error {
 		wt = &webtoon{
 			repository:      repository,
 			markdownService: markdownService,
 			fs:              fs,
 		}
 
-		wt.Core = core.New[Chapter, *Series](scope, "webtoon", wt)
-	}))
-	return wt
+		var err error
+		wt.Core, err = core.New[Chapter, *Series](scope, "webtoon", wt)
+		return err
+	})
+
+	return wt, err
 }
 
 type webtoon struct {

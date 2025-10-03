@@ -38,7 +38,10 @@ func (m mockRegistry) Create(c core.Client, req payload.DownloadRequest) (core.D
 		block.mockAll = []ID{"a", "b"}
 	}
 
-	base := core.New[ID, ID](scope, "", block)
+	base, err := core.New[ID, ID](scope, "", block)
+	if err != nil {
+		return nil, err
+	}
 	block.Core = base
 	return block, nil
 }
