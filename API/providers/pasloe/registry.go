@@ -20,14 +20,14 @@ type Registry interface {
 }
 
 type registry struct {
-	r         map[models.Provider]func(scope *dig.Scope) core.Downloadable
+	r         map[models.Provider]func(scope *dig.Scope) (core.Downloadable, error)
 	mu        sync.RWMutex
 	container *dig.Container
 }
 
 func newRegistry(container *dig.Container) Registry {
 	r := &registry{
-		r:         make(map[models.Provider]func(scope *dig.Scope) core.Downloadable),
+		r:         make(map[models.Provider]func(scope *dig.Scope) (core.Downloadable, error)),
 		mu:        sync.RWMutex{},
 		container: container,
 	}
@@ -40,7 +40,7 @@ func newRegistry(container *dig.Container) Registry {
 	return r
 }
 
-func (r *registry) Register(provider models.Provider, fn func(scope *dig.Scope) core.Downloadable) {
+func (r *registry) Register(provider models.Provider, fn func(scope *dig.Scope) (core.Downloadable, error)) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.r[provider] = fn
@@ -59,5 +59,5 @@ func (r *registry) Create(c core.Client, req payload.DownloadRequest) (core.Down
 	utils.Must(scope.Provide(utils.Identity(c)))
 	utils.Must(scope.Provide(utils.Identity(req)))
 
-	return fn(scope), nil
+	return fn(scope)
 }

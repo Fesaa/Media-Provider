@@ -29,6 +29,9 @@ func TestBuilder_Search(t *testing.T) {
 		if strings.Contains(err.Error(), "403") {
 			t.Skipf("Skipping test, cannot reach")
 		}
+		if strings.Contains(err.Error(), "tls: failed to verify certificate:") {
+			t.Skipf("Skipping test, tls error")
+		}
 		t.Fatal(err)
 	}
 

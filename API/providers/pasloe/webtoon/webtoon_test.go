@@ -85,7 +85,7 @@ func tempWebtoon(t *testing.T, w io.Writer) *webtoon {
 	must(scope.Provide(services.ImageServiceProvider))
 	must(scope.Provide(services.DirectoryServiceProvider))
 
-	web := New(scope)
+	web := utils.MustReturn(New(scope))
 	return web.(*webtoon)
 }
 

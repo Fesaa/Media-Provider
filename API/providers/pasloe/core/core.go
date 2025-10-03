@@ -29,10 +29,10 @@ const (
 	togglePreferencesFailed     = "toggle_blacklist_failed"
 )
 
-func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider DownloadInfoProvider[C, S]) *Core[C, S] {
+func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider DownloadInfoProvider[C, S]) (*Core[C, S], error) {
 	var base *Core[C, S]
 
-	utils.Must(scope.Invoke(func(
+	err := scope.Invoke(func(
 		req payload.DownloadRequest,
 		client Client,
 		log zerolog.Logger,
@@ -76,9 +76,13 @@ func New[C Chapter, S Series[C]](scope *dig.Scope, handler string, provider Down
 		}
 
 		return nil
-	}))
+	})
 
-	return base
+	if err != nil {
+		return nil, err
+	}
+
+	return base, nil
 }
 
 type Content struct {

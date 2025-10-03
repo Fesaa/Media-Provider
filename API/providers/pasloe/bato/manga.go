@@ -14,19 +14,21 @@ import (
 	"go.uber.org/dig"
 )
 
-func New(scope *dig.Scope) core.Downloadable {
+func New(scope *dig.Scope) (core.Downloadable, error) {
 	var m *manga
 
-	utils.Must(scope.Invoke(func(req payload.DownloadRequest, repository Repository, fs afero.Afero) {
+	err := scope.Invoke(func(req payload.DownloadRequest, repository Repository, fs afero.Afero) error {
 		m = &manga{
 			repository: repository,
 			fs:         fs,
 		}
 
-		m.Core = core.New[Chapter, *Series](scope, "bato", m)
-	}))
+		var err error
+		m.Core, err = core.New[Chapter, *Series](scope, "bato", m)
+		return err
+	})
 
-	return m
+	return m, err
 }
 
 type manga struct {
