@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
@@ -78,6 +79,11 @@ func FlattenSubscription(ctx context.Context, db *gorm.DB, log zerolog.Logger) e
 			}
 		}
 
-		return tx.Migrator().DropColumn("subscriptions", "info_sql")
+		// Sqlite has a NPE
+		if config.DbProvider == "postgres" {
+			return tx.Migrator().DropColumn("subscriptions", "info_sql")
+		}
+
+		return nil
 	})
 }

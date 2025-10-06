@@ -14,6 +14,11 @@ func (c *Core[C, S]) ShouldDownload(chapter C) bool {
 	if !ok {
 		content, ok = c.GetContentByVolumeAndChapter(chapter.GetVolume(), chapter.GetChapter())
 		if !ok {
+			// Some providers, *dynasty*, have terrible naming schemes for specials.
+			if c.Req.GetBool(SkipVolumeWithoutChapter, false) && chapter.GetVolume() != "" {
+				return chapter.GetChapter() != ""
+			}
+
 			return true
 		}
 	}

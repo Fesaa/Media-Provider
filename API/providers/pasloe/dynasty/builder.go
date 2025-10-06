@@ -80,6 +80,11 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Advanced: true,
 				FormType: payload.TEXT,
 			},
+			{
+				Key:      core.SkipVolumeWithoutChapter,
+				Advanced: true,
+				FormType: payload.SWITCH,
+			},
 		},
 	}
 }

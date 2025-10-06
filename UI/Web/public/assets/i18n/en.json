@@ -93,6 +93,10 @@
       "assign_empty_volumes": {
         "label": "Assign empty volumes",
         "tooltip": "Assign volume 1 to chapters without a volume, if at least one other volume is present"
+      },
+      "skip_volume_without_chapter": {
+        "label": "Skip volumes without chapter",
+        "tooltip": "Do not download chapters that are assigned a volume, but do not have a chapter marker"
       }
     }
   },

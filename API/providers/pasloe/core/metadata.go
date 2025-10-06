@@ -19,6 +19,7 @@ const (
 	TitleOverride            string = "title_override"
 	AssignEmptyVolumes       string = "assign_empty_volumes"
 	ScanlationGroupKey       string = "scanlation_group"
+	SkipVolumeWithoutChapter string = "skip_volume_without_chapter"
 )
 
 type Tag interface {

@@ -4,10 +4,15 @@ import (
 	"encoding/json"
 
 	"github.com/lib/pq"
+	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )
 
 type Provider int
+
+func (p Provider) MarshalZerologObject(e *zerolog.Event) {
+	e.Str("provider", p.String())
+}
 
 const (
 	NYAA Provider = iota + 2
