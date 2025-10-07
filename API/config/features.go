@@ -51,6 +51,9 @@ var (
 	OtelEndpoint = stringFeature("OTEL_ENDPOINT")
 	// OtelAuth is the value for the Authorization header
 	OtelAuth = stringFeature("OTEL_AUTH")
+
+	// EnablePprof registers a pprof endpoint to debug issues at runtime
+	EnablePprof = boolFeature("ENABLE_PPROF")
 )
 
 func arrayFeature[T any](key string, orValue ...[]T) []T {
@@ -74,7 +77,6 @@ func arrayFeature[T any](key string, orValue ...[]T) []T {
 		}
 
 		if reflect.ValueOf(parsedValue).IsZero() {
-			var zero T
 			return zero, false
 		}
 
