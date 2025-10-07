@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -25,6 +26,8 @@ import (
 	"github.com/spf13/afero"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
+
+	_ "net/http/pprof"
 )
 
 func main() {
@@ -102,6 +105,17 @@ func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.
 			log.Fatal().Str("handler", "core").Err(err).Msg("Failed to start Media-Provider")
 		}
 	}()
+
+	if config.EnablePprof {
+		go func() {
+			log.Warn().Str("handler", "core").
+				Str("adrr", "::6060").
+				Msg("pprof is being registered as a handler, ensure your application is secured sufficiently. Private information may leak")
+			if err := http.ListenAndServe(":6060", nil); err != nil {
+				log.Fatal().Str("handler", "core").Err(err).Msg("Failed to start pprof")
+			}
+		}()
+	}
 
 	<-quit
 	utils.Must(c.Invoke(graceFullShutdown))
