@@ -397,17 +397,12 @@ func (m *manga) getChapterCover(ctx context.Context, chapter ChapterSearchData) 
 		return nil, false
 	}
 
-	coverBytes, isFirstPage, err := m.getBetterChapterCover(ctx, chapter, cover)
-	if err != nil {
-		l.Warn().Err(err).Msg("an error occurred when trying to compare cover with the first page. Falling back")
-		coverBytes = cover.Bytes
-	}
-	return coverBytes, isFirstPage
+	return m.getBetterChapterCover(ctx, chapter, cover)
 }
 
 // getBetterChapterCover check if a higher quality cover is used inside chapters. Returns true
 // when the Cover returned if the first page of the chapter passed as an argument
-func (m *manga) getBetterChapterCover(ctx context.Context, chapter ChapterSearchData, currentCover *Cover) ([]byte, bool, error) {
+func (m *manga) getBetterChapterCover(ctx context.Context, chapter ChapterSearchData, currentCover *Cover) ([]byte, bool) {
 	replaced := false
 	if chapter.Attributes.Volume != "" {
 		chapters := utils.GroupBy(m.chapters.Data, func(v ChapterSearchData) string {
@@ -428,27 +423,35 @@ func (m *manga) getBetterChapterCover(ctx context.Context, chapter ChapterSearch
 		}
 	}
 
+	actualCover, err := m.getCoverBytes(ctx, currentCover.Data.Attributes.FileName)
+	if err != nil {
+		m.Log.Warn().Err(err).
+			Str("chapter", chapter.Attributes.Chapter).
+			Msg("failed to retrieve cover image")
+		return nil, false
+	}
+
 	res, err := m.repository.GetChapterImages(ctx, chapter.Id)
 	if err != nil {
-		return nil, false, err
+		return actualCover, false
 	}
 
 	images := res.FullImageUrls()
 
 	if len(images) == 0 {
-		return currentCover.Bytes, false, nil
+		return actualCover, false
 	}
 
 	candidateBytes, err := m.Download(ctx, images[0])
 	if err != nil {
-		return nil, false, err
+		return actualCover, false
 	}
 
-	better, replacedBytes, err := m.imageService.Better(currentCover.Bytes, candidateBytes)
+	better, replacedBytes, err := m.imageService.Better(actualCover, candidateBytes)
 	if err != nil {
-		return nil, false, err
+		return actualCover, false
 	}
 
 	// If the chapter was replaced, should still write the cover
-	return better, !replaced && replacedBytes, nil
+	return better, !replaced && replacedBytes
 }

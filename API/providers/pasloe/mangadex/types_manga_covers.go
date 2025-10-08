@@ -32,8 +32,7 @@ type MangaCoverAttributes struct {
 }
 
 type Cover struct {
-	Bytes []byte
-	Data  MangaCoverData
+	Data MangaCoverData
 }
 
 type CoverFactory func(volume string) (*Cover, bool)
@@ -128,8 +127,7 @@ func (m *manga) processCovers(ctx context.Context, coverResp *MangaCoverResponse
 		}
 
 		_cover := &Cover{
-			Bytes: coverBytes,
-			Data:  cover,
+			Data: cover,
 		}
 
 		if cover.Attributes.Locale == m.language {
@@ -174,14 +172,14 @@ func (m *manga) constructCoverFactory(covers map[string]*Cover, firstCover, last
 	}()
 
 	return func(volume string) (*Cover, bool) {
-		url, ok := covers[volume]
-		if !ok && fallbackCover != nil && len(fallbackCover.Bytes) != 0 {
+		cover, ok := covers[volume]
+		if !ok && fallbackCover != nil {
 			return fallbackCover, true
 		}
 		if !ok {
 			return nil, false
 		}
 
-		return url, true
+		return cover, true
 	}
 }
