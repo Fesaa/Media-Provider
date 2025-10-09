@@ -171,6 +171,10 @@ func (m mockClient) Content(s string) Content {
 	return nil
 }
 
+func (m mockClient) Shutdown() error {
+	return nil
+}
+
 type providerAdapterMock struct {
 }
 
@@ -214,5 +218,9 @@ func (s slowMockClient) RemoveDownload(request payload.StopRequest) error {
 }
 
 func (s slowMockClient) Content(s2 string) Content {
+	return nil
+}
+
+func (m slowMockClient) Shutdown() error {
 	return nil
 }

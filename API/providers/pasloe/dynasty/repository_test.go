@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
 )
@@ -38,14 +40,14 @@ func TestRepository_SearchSeries(t *testing.T) {
 
 	serie := series[0]
 
-	if utils.Find(serie.Tags, func(tag Tag) bool {
-		return tag.DisplayName == "Yuri"
+	if utils.Find(serie.Tags, func(tag publication.Tag) bool {
+		return tag.Value == "Yuri"
 	}) == nil {
 		t.Fatalf("SearchSeries: expected tag with display name 'Yuri', got nil")
 	}
 
-	if utils.Find(serie.Authors, func(author Author) bool {
-		return author.DisplayName == "Kanbayashi Makoto"
+	if utils.Find(serie.Authors, func(author publication.Person) bool {
+		return author.Name == "Kanbayashi Makoto"
 	}) == nil {
 		t.Fatalf("SearchSeries: expected author with display name 'Kanbayashi Makoto', got nil")
 	}
@@ -56,7 +58,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	info, err := repo.SeriesInfo(t.Context(), "sailor_girlfriend")
+	info, err := repo.SeriesInfo(t.Context(), "sailor_girlfriend", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatalf("SeriesInfo: %v", err)
 	}
@@ -65,7 +67,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 		t.Fatalf("SeriesInfo: expected 5 chapters, got %d", len(info.Chapters))
 	}
 
-	if info.Status != Completed {
+	if info.Status != publication.StatusCompleted {
 		t.Fatalf("SeriesInfo: expected Completed status, got %s", info.Status)
 	}
 
@@ -93,8 +95,8 @@ func TestRepository_SeriesInfo(t *testing.T) {
 		t.Fatalf("SeriesInfo: expected %s got %s", want, lastChapter.Title)
 	}
 
-	if utils.Find(lastChapter.Tags, func(tag Tag) bool {
-		return tag.DisplayName == "Drunk"
+	if utils.Find(lastChapter.Tags, func(tag publication.Tag) bool {
+		return tag.Value == "Drunk"
 	}) == nil {
 		t.Fatalf("SeriesInfo: Expected last chapter to have tag Drunk got %+v", lastChapter.Tags)
 	}
@@ -106,7 +108,7 @@ func TestRepository_SeriesInfoWithVolumes(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	info, err := repo.SeriesInfo(t.Context(), "canaries_dream_of_shining_stars")
+	info, err := repo.SeriesInfo(t.Context(), "canaries_dream_of_shining_stars", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatalf("SeriesInfo: %v", err)
 	}
@@ -133,7 +135,9 @@ func TestRepository_ChapterImages(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	images, err := repo.ChapterImages(t.Context(), "canaries_dream_of_shining_stars_ch01")
+	images, err := repo.ChapterUrls(t.Context(), publication.Chapter{
+		Id: "canaries_dream_of_shining_stars_ch01",
+	})
 	if err != nil {
 		if strings.Contains(err.Error(), "status code error: 503") {
 			t.Skipf("Skipping test as 3rd party server error")
@@ -152,7 +156,7 @@ func TestRepository_SearchSeriesOneShotChapters(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	res, err := repo.SeriesInfo(t.Context(), ShiawaseTrimmingId)
+	res, err := repo.SeriesInfo(t.Context(), ShiawaseTrimmingId, payload.DownloadRequest{})
 	if err != nil {
 		if strings.Contains(err.Error(), "status code error: 503") {
 			t.Skipf("Skipping test as 3rd party server error")
@@ -175,8 +179,8 @@ func TestRepository_SearchSeriesOneShotChapters(t *testing.T) {
 		t.Errorf("SeriesInfo: expected empty chapter got Vol. %s Ch. %s", firstChapter.Volume, firstChapter.Chapter)
 	}
 
-	if len(firstChapter.Authors) != 2 {
-		t.Errorf("SeriesInfo: expected 2 authors, got %d", len(firstChapter.Authors))
+	if len(firstChapter.People) != 2 {
+		t.Errorf("SeriesInfo: expected 2 authors, got %d", len(firstChapter.People))
 	}
 
 	if len(firstChapter.Tags) != 1 {
