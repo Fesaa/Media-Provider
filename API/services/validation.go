@@ -17,11 +17,14 @@ type validationService struct {
 	log       zerolog.Logger
 }
 
-func ValidatorProvider() *validator.Validate {
+func ValidatorProvider() (*validator.Validate, error) {
 	val := validator.New()
-	utils.Must(val.RegisterValidation("provider", isValidProvider))
-	utils.Must(val.RegisterValidation("diff", diffValidator))
-	return val
+	err := utils.Errs(
+		val.RegisterValidation("provider", isValidProvider),
+		val.RegisterValidation("diff", diffValidator),
+	)
+
+	return val, err
 }
 
 func ValidationServiceProvider(val *validator.Validate, log zerolog.Logger) ValidationService {

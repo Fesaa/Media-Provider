@@ -30,24 +30,34 @@ func newRegistry(container *dig.Container) Registry {
 func (r *registry) Create(c publication.Client, req payload.DownloadRequest) (publication.Publication, error) {
 	scope := r.container.Scope("pasloe::registry::create")
 
-	utils.Must(scope.Provide(utils.Identity(c)))
-	utils.Must(scope.Provide(utils.Identity(req)))
-	// TODO: This needs to be updated if we have stuff other than cbz
-	utils.Must(scope.Provide(utils.Identity(publication.CbzExt())))
+	err := utils.Errs(
+		scope.Provide(publication.New),
+		scope.Provide(utils.Identity(c)),
+		scope.Provide(utils.Identity(req)),
+		// TODO: This needs to be updated if we have stuff other than cbz
+		scope.Provide(utils.Identity(publication.CbzExt())),
+	)
+
+	if err != nil {
+		return nil, err
+	}
 
 	switch req.Provider { //nolint: exhaustive
 	case models.BATO:
-		utils.ProviderAs[bato.Repository, publication.Repository](scope, bato.NewRepository)
+		err = utils.ProviderAs[bato.Repository, publication.Repository](scope, bato.NewRepository)
 	case models.DYNASTY:
-		utils.ProviderAs[dynasty.Repository, publication.Repository](scope, dynasty.NewRepository)
+		err = utils.ProviderAs[dynasty.Repository, publication.Repository](scope, dynasty.NewRepository)
 	case models.MANGADEX:
-		utils.ProviderAs[mangadex.Repository, publication.Repository](scope, mangadex.NewRepository)
+		err = utils.ProviderAs[mangadex.Repository, publication.Repository](scope, mangadex.NewRepository)
 	case models.WEBTOON:
-		utils.ProviderAs[webtoon.Repository, publication.Repository](scope, webtoon.NewRepository)
+		err = utils.ProviderAs[webtoon.Repository, publication.Repository](scope, webtoon.NewRepository)
 	default:
 		return nil, services.ErrProviderNotSupported
 	}
 
-	utils.Must(scope.Provide(publication.New))
+	if err != nil {
+		return nil, err
+	}
+
 	return utils.MayInvoke[publication.Publication](scope)
 }
