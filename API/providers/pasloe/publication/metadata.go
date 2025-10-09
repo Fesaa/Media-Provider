@@ -67,7 +67,7 @@ func (p *publication) buildComicInfoForChapter(ctx context.Context, chapter Chap
 		ci.Web += fmt.Sprintf(",%s", p.series.RefUrl)
 	}
 
-	tags := append(p.series.Tags, chapter.Tags...)
+	tags := append(p.series.Tags, chapter.Tags...) //nolint: gocritic
 	ci.Genre, ci.Tags = p.GetGenreAndTags(ctx, tags)
 	if ar, ok := p.GetAgeRating(tags); ok {
 		ci.AgeRating = ar

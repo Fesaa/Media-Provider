@@ -221,6 +221,6 @@ func (s slowMockClient) Content(s2 string) Content {
 	return nil
 }
 
-func (m slowMockClient) Shutdown() error {
+func (s slowMockClient) Shutdown() error {
 	return nil
 }

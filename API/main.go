@@ -27,7 +27,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/dig"
 
-	_ "net/http/pprof"
+	_ "net/http/pprof" //nolint: gosec
 )
 
 func main() {
@@ -111,7 +111,7 @@ func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.
 			log.Warn().Str("handler", "core").
 				Str("adrr", "::6060").
 				Msg("pprof is being registered as a handler, ensure your application is secured sufficiently. Private information may leak")
-			if err := http.ListenAndServe(":6060", nil); err != nil {
+			if err := http.ListenAndServe(":6060", nil); err != nil { //nolint: gosec
 				log.Fatal().Str("handler", "core").Err(err).Msg("Failed to start pprof")
 			}
 		}()

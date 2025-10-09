@@ -298,7 +298,7 @@ func (p *publication) downloadChapter(ctx context.Context, chapter Chapter) erro
 
 	// TODO: Reset progress
 
-	pl.StartDownloadWorkers()
+	pl.StartDownloadWorkers() //nolint: contextcheck
 
 	pl.DownloadWg.Wait()
 	pl.log.Debug().Dur("elapsed", time.Since(start)).Msg("Finished downloading")

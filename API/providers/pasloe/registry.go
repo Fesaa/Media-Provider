@@ -35,7 +35,7 @@ func (r *registry) Create(c publication.Client, req payload.DownloadRequest) (pu
 	// TODO: This needs to be updated if we have stuff other than cbz
 	utils.Must(scope.Provide(utils.Identity(publication.CbzExt())))
 
-	switch req.Provider {
+	switch req.Provider { //nolint: exhaustive
 	case models.BATO:
 		utils.ProviderAs[bato.Repository, publication.Repository](scope, bato.NewRepository)
 	case models.DYNASTY:

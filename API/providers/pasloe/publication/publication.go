@@ -403,12 +403,13 @@ func (p *publication) loadSeriesInfo(ctx context.Context) error {
 	defer span.End()
 
 	start := time.Now()
-	defer p.log.Debug().Dur("duration", time.Since(start)).Msg("loaded series info")
 
 	series, err := p.repository.SeriesInfo(ctx, p.Id(), p.req)
 	if err != nil {
 		return err
 	}
+
+	p.log.Debug().Dur("duration", time.Since(start)).Msg("loaded series info")
 
 	p.series = &series
 	p.log = p.log.With().Str("title", p.Title()).Logger()
