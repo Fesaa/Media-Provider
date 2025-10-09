@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -18,27 +22,31 @@ import (
 	"go.uber.org/dig"
 )
 
+const timeLayout = "2006-01-02T15:04:05Z07:00"
+
 type Repository interface {
-	GetManga(ctx context.Context, id string) (*GetMangaResponse, error)
 	SearchManga(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error)
-	GetChapters(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error)
-	GetChapterImages(ctx context.Context, id string) (*ChapterImageSearchResponse, error)
-	GetCoverImages(ctx context.Context, id string, offset ...int) (*MangaCoverResponse, error)
+	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
 }
 
 type repository struct {
-	httpClient *menou.Client
-	cache      services.CacheService
-	log        zerolog.Logger
-	tags       utils.SafeMap[string, string]
+	httpClient   *menou.Client
+	cache        services.CacheService
+	imageService services.ImageService
+	unitOfWork   *db.UnitOfWork
+	log          zerolog.Logger
+	tags         utils.SafeMap[string, string]
 }
 
 type repositoryParams struct {
 	dig.In
 
-	HttpClient *menou.Client `name:"http-retry"`
-	Cache      services.CacheService
-	Ctx        context.Context
+	HttpClient   *menou.Client `name:"http-retry"`
+	Cache        services.CacheService
+	ImageService services.ImageService
+	UnitOfWork   *db.UnitOfWork
+	Ctx          context.Context
 }
 
 func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
@@ -47,10 +55,12 @@ func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 	defer span.End()
 
 	r := &repository{
-		httpClient: params.HttpClient,
-		cache:      params.Cache,
-		log:        log.With().Str("handler", "mangadex-repository").Logger(),
-		tags:       utils.NewSafeMap[string, string](),
+		httpClient:   params.HttpClient,
+		cache:        params.Cache,
+		imageService: params.ImageService,
+		unitOfWork:   params.UnitOfWork,
+		log:          log.With().Str("handler", "mangadex-repository").Logger(),
+		tags:         utils.NewSafeMap[string, string](),
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
@@ -62,6 +72,198 @@ func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 	}
 
 	return r
+}
+
+func (r *repository) SearchManga(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error) {
+	url, err := r.searchMangaURL(options)
+	if err != nil {
+		return nil, err
+	}
+
+	var searchResponse MangaSearchResponse
+	if err = r.do(ctx, url, &searchResponse); err != nil {
+		return nil, err
+	}
+	return &searchResponse, nil
+}
+
+func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error) {
+	m, err := r.GetManga(ctx, id)
+	if err != nil {
+		return publication.Series{}, err
+	}
+
+	chapters, err := r.GetChapters(ctx, id)
+	if err != nil {
+		return publication.Series{}, err
+	}
+
+	lang := req.GetStringOrDefault(LanguageKey, "en")
+	altTitle := utils.OrDefault(m.Data.Attributes.LangAltTitles(lang), "")
+	chapters = r.FilterChapters(lang, req, chapters)
+
+	tags := utils.MaybeMap(m.Data.Attributes.Tags, func(t TagData) (publication.Tag, bool) {
+		tag, ok := t.Attributes.Name[lang]
+		if !ok {
+			return publication.Tag{}, false
+		}
+
+		return publication.Tag{
+			Value:      tag,
+			Identifier: t.Id,
+			IsGenre:    t.Attributes.Group == "genre",
+		}, true
+	})
+
+	return publication.Series{
+		Id:                id,
+		Title:             m.Data.Attributes.LangTitle(lang),
+		AltTitle:          altTitle,
+		Description:       m.Data.Attributes.LangDescription(lang),
+		RefUrl:            m.Data.RefUrl(),
+		Status:            toPublicationStatus(m.Data.Attributes.Status),
+		TranslationStatus: utils.Settable[publication.Status]{},
+		Year:              m.Data.Attributes.Year,
+		OriginalLanguage:  m.Data.Attributes.OriginalLanguage,
+		ContentRating:     m.Data.Attributes.ContentRating.ComicInfoAgeRating(),
+		Tags:              tags,
+		People:            m.Data.People(),
+		Links:             m.Data.FormattedLinks(),
+		Chapters:          utils.Map(chapters.Data, r.mapChapter),
+	}, nil
+}
+
+func (r *repository) mapChapter(data ChapterSearchData) publication.Chapter {
+
+	var releaseDate *time.Time
+	if data.Attributes.PublishedAt != "" {
+		t, err := time.Parse(timeLayout, data.Attributes.PublishedAt)
+		if err != nil {
+			r.log.Warn().Err(err).Msg("failed to parse published time")
+			releaseDate = &time.Time{}
+		} else {
+			releaseDate = &t
+		}
+	}
+
+	translator := utils.MaybeMap(data.Relationships, func(r Relationship) (string, bool) {
+		if r.Type != "scanlation_group" && r.Type != "user" {
+			return "", false
+		}
+
+		return r.Id, true
+	})
+
+	return publication.Chapter{
+		Id:          data.Id,
+		Title:       data.Attributes.Title,
+		Volume:      data.Attributes.Volume,
+		Chapter:     data.Attributes.Chapter,
+		CoverUrl:    "",
+		ReleaseDate: releaseDate,
+		Translator:  translator,
+		Tags:        nil,
+		People:      nil,
+	}
+}
+
+func (r *repository) FilterChapters(lang string, req payload.DownloadRequest, c *ChapterSearchResponse) *ChapterSearchResponse {
+	scanlation := req.GetStringOrDefault(publication.ScanlationGroupKey, "")
+	allowNonMatching := req.GetBool(AllowNonMatchingScanlationGroupKey, true)
+
+	chaptersMap := utils.GroupBy(c.Data, func(v ChapterSearchData) string {
+		return v.Attributes.Chapter
+	})
+
+	newData := make([]ChapterSearchData, 0)
+	for chapterMarker, chapters := range chaptersMap {
+		// OneShots are handled later
+		if chapterMarker == "" {
+			continue
+		}
+
+		chapter, ok := utils.FindOk(chapters, r.chapterSearchFunc(lang, scanlation, true))
+
+		// Retry by skipping scanlation check
+		if !ok && scanlation != "" && allowNonMatching {
+			chapter, ok = utils.FindOk(chapters, r.chapterSearchFunc(lang, "", true))
+		}
+
+		if ok {
+			newData = append(newData, chapter)
+		}
+	}
+
+	if req.GetBool(publication.DownloadOneShotKey) {
+		// OneShots do not have a chapter, so will be mapped under the empty string
+		if chapters, ok := chaptersMap[""]; ok {
+			newData = append(newData, utils.Filter(chapters, r.chapterSearchFunc(lang, scanlation, false))...)
+		}
+	}
+
+	c.Data = newData
+	return c
+}
+
+func (r *repository) chapterSearchFunc(lang, scanlation string, skipOneShot bool) func(ChapterSearchData) bool {
+	return func(data ChapterSearchData) bool {
+		if data.Attributes.TranslatedLanguage != lang {
+			return false
+		}
+		// Skip over official publisher chapters, we cannot download these from mangadex
+		if data.Attributes.ExternalUrl != "" {
+			return false
+		}
+
+		if data.Attributes.Chapter == "" && skipOneShot {
+			return false
+		}
+
+		if scanlation == "" {
+			return true
+		}
+
+		return slices.ContainsFunc(data.Relationships, func(relationship Relationship) bool {
+			if relationship.Type != "scanlation_group" && relationship.Type != "user" {
+				return false
+			}
+
+			return relationship.Id == scanlation
+		})
+	}
+}
+
+func (r *repository) PreDownloadHook(p publication.Publication, ctx context.Context) error {
+	r.log.Debug().Msg("loading covers for chapters")
+
+	covers, err := r.GetCoverImages(ctx, p.Request().Id)
+	if err != nil {
+		return err
+	}
+
+	lang := p.Request().GetStringOrDefault(LanguageKey, "en")
+	coverFactory := r.getCoverFactory(ctx, p.Request().OwnerId, p.Request().Id, lang, covers)
+
+	p.UpdateSeriesInfo(func(series *publication.Series) {
+		series.Chapters = utils.Map(series.Chapters, func(chapter publication.Chapter) publication.Chapter {
+			if url, ok := coverFactory(chapter.Volume); ok {
+				chapter.Url = url
+			}
+			return chapter
+		})
+	})
+
+	return nil
+}
+
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+	url := chapterImageUrl(chapter.Id)
+	r.log.Trace().Str("id", chapter.Id).Str("url", url).Msg("GetChapterImages")
+	var searchResponse ChapterImageSearchResponse
+	if err := r.do(ctx, url, &searchResponse); err != nil {
+		return nil, err
+	}
+	return searchResponse.FullImageUrls(), nil
 }
 
 func (r *repository) loadTags(ctx context.Context) error {
@@ -107,19 +309,6 @@ func (r *repository) GetManga(ctx context.Context, id string) (*GetMangaResponse
 	return &getMangaResponse, nil
 }
 
-func (r *repository) SearchManga(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error) {
-	url, err := r.searchMangaURL(options)
-	if err != nil {
-		return nil, err
-	}
-
-	var searchResponse MangaSearchResponse
-	if err = r.do(ctx, url, &searchResponse); err != nil {
-		return nil, err
-	}
-	return &searchResponse, nil
-}
-
 func (r *repository) GetChapters(ctx context.Context, id string, offset ...int) (*ChapterSearchResponse, error) {
 	url := chapterURL(id, offset...)
 	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapters")
@@ -137,16 +326,6 @@ func (r *repository) GetChapters(ctx context.Context, id string, offset ...int) 
 		return &searchResponse, nil
 	}
 
-	return &searchResponse, nil
-}
-
-func (r *repository) GetChapterImages(ctx context.Context, id string) (*ChapterImageSearchResponse, error) {
-	url := chapterImageUrl(id)
-	r.log.Trace().Str("id", id).Str("url", url).Msg("GetChapterImages")
-	var searchResponse ChapterImageSearchResponse
-	if err := r.do(ctx, url, &searchResponse); err != nil {
-		return nil, err
-	}
 	return &searchResponse, nil
 }
 

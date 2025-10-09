@@ -63,6 +63,7 @@ type Client interface {
 	RemoveDownload(payload.StopRequest) error
 	// Content returns the Content associated with the passed id. If none is found, returns nil
 	Content(string) Content
+	Shutdown() error
 }
 
 type ProviderAdapter interface {

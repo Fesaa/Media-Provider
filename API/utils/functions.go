@@ -124,6 +124,10 @@ type Invoker interface {
 	Invoke(function interface{}, opts ...dig.InvokeOption) (err error)
 }
 
+type Provider interface {
+	Provide(constructor interface{}, opts ...dig.ProvideOption) error
+}
+
 // MustInvoke tries construction T with the given Container
 // Ensure the needed method has been Provider to the Container
 func MustInvoke[T any](c Invoker) T {
@@ -132,6 +136,21 @@ func MustInvoke[T any](c Invoker) T {
 		t = myT
 	}))
 	return t
+}
+
+func MayInvoke[T any](c Invoker) (T, error) {
+	var t T
+	err := c.Invoke(func(myT T) {
+		t = myT
+	})
+	return t, err
+}
+
+func ProviderAs[T, U any](c Provider, f any) {
+	Must(c.Provide(f))
+	Must(c.Provide(func(t T) U {
+		return any(t).(U)
+	}))
 }
 
 func Must(err error) {

@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gofiber/fiber/v2"
@@ -33,8 +35,8 @@ var (
 
 type Repository interface {
 	Search(ctx context.Context, options SearchOptions) ([]SearchData, error)
-	LoadImages(ctx context.Context, chapter Chapter) ([]string, error)
-	SeriesInfo(ctx context.Context, id string) (*Series, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
+	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
 }
 
 type repository struct {
@@ -50,7 +52,7 @@ func NewRepository(httpClient *menou.Client, log zerolog.Logger) Repository {
 }
 
 func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchData, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, searchUrl(options.Query), addHeader)
+	doc, err := r.httpClient.WrapInDoc(ctx, searchUrl(options.Query), r.HttpGetHook)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +78,8 @@ func (r *repository) extractSeries(_ int, s *goquery.Selection) SearchData {
 	}
 }
 
-func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, chapter.Url, addHeader)
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+	doc, err := r.httpClient.WrapInDoc(ctx, chapter.Url, r.HttpGetHook)
 	if err != nil {
 		return nil, err
 	}
@@ -97,29 +99,38 @@ func (r *repository) LoadImages(ctx context.Context, chapter Chapter) ([]string,
 	return filteredUrls, nil
 }
 
-func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
+func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error) {
 	seriesStartUrl := fmt.Sprintf(EpisodeList, id)
-	doc, err := r.httpClient.WrapInDoc(ctx, seriesStartUrl, addHeader)
+	doc, err := r.httpClient.WrapInDoc(ctx, seriesStartUrl, r.HttpGetHook)
 	if err != nil {
-		return nil, err
+		return publication.Series{}, err
 	}
 
-	series := &Series{}
+	series := publication.Series{}
 	info := doc.Find(".detail_header .info")
-	series.Genre = info.Find(".genre").Text()
-	series.Name = info.Find(".subj").Text()
-	series.Authors = extractAuthors(info.Find(".author_area"))
+	series.Tags = []publication.Tag{
+		{
+			Value:   info.Find(".genre").Text(),
+			IsGenre: true,
+		},
+	}
+	series.Title = info.Find(".subj").Text()
+	series.People = extractAuthors(info.Find(".author_area"))
 
 	detail := doc.Find(".detail")
 	series.Description = detail.Find(".summary").Text()
-	series.Completed = strings.Contains(detail.Find(".day_info").Text(), "COMPLETED")
+
+	if strings.Contains(detail.Find(".day_info").Text(), "COMPLETED") {
+		series.Status = publication.StatusCompleted
+	}
+
 	series.Chapters = append(series.Chapters, extractChapters(doc)...)
 
 	pages := utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
 	for index := 1; len(pages) > index; index++ {
-		doc, err = r.httpClient.WrapInDoc(ctx, Domain+pages[index], addHeader)
+		doc, err = r.httpClient.WrapInDoc(ctx, Domain+pages[index], r.HttpGetHook)
 		if err != nil {
-			return nil, err
+			return publication.Series{}, err
 		}
 
 		if index == len(pages)-1 && len(pages) > 10 {
@@ -136,12 +147,17 @@ func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error)
 	return series, nil
 }
 
+func (r *repository) HttpGetHook(req *http.Request) error {
+	req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
+	return nil
+}
+
 func searchUrl(keyword string) string {
 	keyword = strings.TrimSpace(rg.ReplaceAllString(keyword, " "))
 	return fmt.Sprintf(SearchUrl, url.QueryEscape(keyword))
 }
 
-func extractAuthors(sel *goquery.Selection) []string {
+func extractAuthors(sel *goquery.Selection) []publication.Person {
 	sel.Find("button").Remove()
 
 	authors := goquery.Map(sel.Find("a"), func(_ int, s *goquery.Selection) string {
@@ -151,17 +167,20 @@ func extractAuthors(sel *goquery.Selection) []string {
 	plainTextAuthors := strings.ReplaceAll(sel.Text(), "...", "")
 	authors = append(authors, strings.Split(plainTextAuthors, ",")...)
 
-	return utils.Map(authors, strings.TrimSpace)
+	return utils.Map(authors, func(s string) publication.Person {
+		return publication.Person{
+			Name: strings.TrimSpace(s),
+		}
+	})
 }
 
-func extractChapters(doc *goquery.Document) []Chapter {
-	return goquery.Map(doc.Find("#_listUl li a"), func(_ int, s *goquery.Selection) Chapter {
-		chapter := Chapter{}
+func extractChapters(doc *goquery.Document) []publication.Chapter {
+	return goquery.Map(doc.Find("#_listUl li a"), func(_ int, s *goquery.Selection) publication.Chapter {
+		chapter := publication.Chapter{}
 		chapter.Url = s.AttrOr("href", "")
-		chapter.ImageUrl = s.Find("span img").AttrOr("src", "")
+		chapter.CoverUrl = s.Find("span img").AttrOr("src", "")
 		chapter.Title = s.Find(".subj span").Text()
-		chapter.Date = s.Find(".date").Text()
-		chapter.Number = func() string {
+		chapter.Chapter = func() string {
 			num := s.Find(".tx").Text()
 			if len(num) > 0 && num[0] == '#' {
 				return num[1:]
@@ -170,11 +189,6 @@ func extractChapters(doc *goquery.Document) []Chapter {
 		}()
 		return chapter
 	})
-}
-
-func addHeader(req *http.Request) error {
-	req.Header.Add(fiber.HeaderReferer, "https://www.webtoons.com/")
-	return nil
 }
 
 func notEmpty(s string) bool {

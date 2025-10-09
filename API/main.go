@@ -17,7 +17,7 @@ import (
 	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/providers"
 	"github.com/Fesaa/Media-Provider/providers/pasloe"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
@@ -121,7 +121,7 @@ func startApp(c *dig.Container, app *fiber.App, log zerolog.Logger, cfg *config.
 	utils.Must(c.Invoke(graceFullShutdown))
 }
 
-func graceFullShutdown(app *fiber.App, log zerolog.Logger, pasloe core.Client, yoitsu yoitsu.Client) {
+func graceFullShutdown(app *fiber.App, log zerolog.Logger, pasloe publication.Client, yoitsu yoitsu.Client) {
 	log.Info().Str("handler", "core").
 		Msg("Shutting down gracefully, giving services 1 minute to shut down nicely")
 

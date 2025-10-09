@@ -12,7 +12,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -23,7 +23,7 @@ import (
 func New(s services.SettingsService, container *dig.Container, log zerolog.Logger,
 	dirService services.DirectoryService, signalR services.SignalRService, notify services.NotificationService,
 	unitOfWork *db.UnitOfWork, transLoco services.TranslocoService, fs afero.Afero, ctx context.Context,
-) (core.Client, error) {
+) (publication.Client, error) {
 	settings, err := s.GetSettingsDto(ctx)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func New(s services.SettingsService, container *dig.Container, log zerolog.Logge
 		transLoco:  transLoco,
 		fs:         fs,
 
-		content:        utils.NewSafeMap[string, core.Downloadable](),
+		content:        utils.NewSafeMap[string, publication.Publication](),
 		providerQueues: utils.NewSafeMap[models.Provider, *ProviderQueue](),
 		rootDir:        settings.RootDir,
 		ctx:            ctx,
@@ -66,7 +66,7 @@ type client struct {
 
 	rootDir string
 
-	content        utils.SafeMap[string, core.Downloadable]
+	content        utils.SafeMap[string, publication.Publication]
 	providerQueues utils.SafeMap[models.Provider, *ProviderQueue]
 	mu             sync.RWMutex
 
@@ -197,7 +197,7 @@ func (c *client) Shutdown() error {
 		v.Shutdown()
 	})
 
-	c.content.ForEach(func(k string, v core.Downloadable) {
+	c.content.ForEach(func(k string, v publication.Publication) {
 		if err := c.RemoveDownload(payload.StopRequest{Id: k, DeleteFiles: true, Provider: v.Provider()}); err != nil {
 			c.log.Warn().Err(err).Msg("failed to remove download")
 		}
@@ -221,7 +221,7 @@ func (c *client) alwaysLog(userId int) bool {
 	return p.LogEmptyDownloads
 }
 
-func (c *client) logContentCompletion(content core.Downloadable) {
+func (c *client) logContentCompletion(content publication.Publication) {
 	alwaysLog := c.alwaysLog(content.Request().OwnerId)
 
 	if len(content.GetNewContent()) == 0 && !alwaysLog {
@@ -232,7 +232,7 @@ func (c *client) logContentCompletion(content core.Downloadable) {
 
 	di := content.DisplayInformation()
 
-	summary = c.transLoco.GetTranslation("download-finished", content.GetInfo().RefUrl, di.Name, len(content.GetNewContent()))
+	summary = c.transLoco.GetTranslation("download-finished", content.GetInfo().RefUrl, di, len(content.GetNewContent()))
 	if len(content.GetToRemoveContent()) > 0 {
 		summary += c.transLoco.GetTranslation("re-downloads", len(content.GetToRemoveContent()))
 	}
@@ -257,7 +257,7 @@ func (c *client) logContentCompletion(content core.Downloadable) {
 		Build())
 }
 
-func (c *client) GetCurrentDownloads() []core.Downloadable {
+func (c *client) GetCurrentDownloads() []publication.Publication {
 	return c.content.Values()
 }
 
@@ -272,7 +272,7 @@ func (c *client) notifier(req payload.DownloadRequest) services.Notifier {
 	return c.signalR
 }
 
-func (c *client) deleteFiles(content core.Downloadable) {
+func (c *client) deleteFiles(content publication.Publication) {
 	defer c.signalR.DeleteContent(content.Request().OwnerId, content.Id())
 
 	downloadDir := strings.TrimSpace(content.GetDownloadDir())
@@ -299,7 +299,7 @@ func (c *client) deleteFiles(content core.Downloadable) {
 	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished removing newly downloaded files")
 }
 
-func (c *client) deleteNewContent(content core.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
+func (c *client) deleteNewContent(content publication.Publication, l zerolog.Logger) (cleanupErrs []error) {
 	for _, contentPath := range content.GetNewContent() {
 		l.Trace().Str("path", contentPath).Msg("deleting new content dir")
 
@@ -363,11 +363,12 @@ func (c *client) deleteEmptyDirectories(dir string, l zerolog.Logger) (cleanupEr
 	return cleanupErrs
 }
 
-func (c *client) cleanup(content core.Downloadable) {
+func (c *client) cleanup(content publication.Publication) {
 	defer c.signalR.DeleteContent(content.Request().OwnerId, content.Id())
 
 	l := c.log.With().Str("contentId", content.Id()).Logger()
 	if len(content.GetNewContent()) == 0 {
+		l.Debug().Msg("no new content to delete")
 		return
 	}
 
@@ -384,7 +385,7 @@ func (c *client) cleanup(content core.Downloadable) {
 	l.Debug().Dur("elapsed", time.Since(start)).Msg("finished cleanup")
 }
 
-func (c *client) removeOldContent(content core.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
+func (c *client) removeOldContent(content publication.Publication, l zerolog.Logger) (cleanupErrs []error) {
 	start := time.Now()
 
 	for _, contentPath := range content.GetToRemoveContent() {
@@ -401,7 +402,7 @@ func (c *client) removeOldContent(content core.Downloadable, l zerolog.Logger) (
 	return cleanupErrs
 }
 
-func (c *client) newContentCleanup(content core.Downloadable, l zerolog.Logger) (cleanupErrs []error) {
+func (c *client) newContentCleanup(content publication.Publication, l zerolog.Logger) (cleanupErrs []error) {
 	start := time.Now()
 
 	for _, contentPath := range content.GetNewContent() {
@@ -418,7 +419,7 @@ func (c *client) newContentCleanup(content core.Downloadable, l zerolog.Logger) 
 	return cleanupErrs
 }
 
-func (c *client) notifyCleanUpError(content core.Downloadable, cleanupErrs ...error) {
+func (c *client) notifyCleanUpError(content publication.Publication, cleanupErrs ...error) {
 	if len(cleanupErrs) == 0 {
 		return
 	}
