@@ -127,6 +127,7 @@ func New(
 
 		toggles:               utils.NewToggles[string](),
 		hasDuplicatedChapters: utils.Settable[bool]{},
+		speedTracker:          utils.NewSpeedTracker(0),
 	}, nil
 }
 
@@ -161,10 +162,11 @@ type publication struct {
 	existingContent []Content // Content already on disk before download started
 	toRemoveContent []string  // content on disk that has to be removed as it has been redownloaded
 
-	// ToDownloadUserSelected are the ids of the content selected by the user to download in the UI
+	// toDownloadUserSelected are the ids of the content selected by the user to download in the UI
 	toDownloadUserSelected []string
 
 	failedDownloads int64
+	speedTracker    *utils.SpeedTracker
 
 	cancel context.CancelFunc
 	// Wait group used to track chapters being downloaded

@@ -7,6 +7,7 @@ package publication
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 
@@ -31,10 +32,11 @@ func (p *publication) GetInfo() payload.InfoStat {
 		RefUrl:       refUrl,
 		Size:         p.readableSize(),
 		Downloading:  p.state == payload.ContentStateDownloading,
-		Progress:     0, // TODO: Track progress
+		Progress:     int64(math.Floor(p.speedTracker.Progress())),
 		SpeedType:    payload.IMAGES,
-		Speed:        0, // TODO: Track speed
-		DownloadDir:  p.GetDownloadDir(),
+		Speed:        int64(math.Floor(p.speedTracker.Speed())),
+		//Estimated:    int64(p.speedTracker.EstimatedTimeRemaining()),
+		DownloadDir: p.GetDownloadDir(),
 	}
 }
 

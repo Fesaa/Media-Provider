@@ -140,10 +140,11 @@ func (pl *pipeline) processDownloads(ctx context.Context, log zerolog.Logger, ch
 			continue
 		}
 
-		// TODO: increment downloaded task for progressing
 		if pl.isCancelled() {
 			return failedTasks
 		}
+
+		pl.Publication.speedTracker.IncrementIntermediate()
 
 		select {
 		case pl.Publication.iOWorkCh <- ioTask{data, pl.Publication.ContentPath(pl.Chapter), task}:
@@ -214,13 +215,15 @@ func (p *publication) startDownloadPipeline(ctx context.Context) {
 		Str("into", p.GetDownloadDir()).
 		Msg("downloading content")
 
+	p.speedTracker = utils.NewSpeedTracker(len(p.toDownload))
+
 	start := time.Now()
 
 	p.wg = &sync.WaitGroup{}
 	p.ioWg = &sync.WaitGroup{}
 	p.iOWorkCh = make(chan ioTask, p.maxImages*2) // Allow for some buffer as I/O may be slower than downloading (webp)
 
-	// TODO: SignalR progress updater
+	go p.signalRUpdateLoop(ctx)
 	p.StartIOWorkers(ctx)
 
 	if err := p.processDownloads(ctx, p.wg); err != nil {
@@ -258,8 +261,6 @@ func (p *publication) processDownloads(ctx context.Context, wg *sync.WaitGroup) 
 				return err
 			}
 		}
-
-		// TODO: Send out progress update
 	}
 
 	return nil
@@ -294,9 +295,8 @@ func (p *publication) downloadChapter(ctx context.Context, chapter Chapter) erro
 	pl.log.Debug().Int("size", len(pl.Urls)).Msg("starting download")
 	start := time.Now()
 
+	p.speedTracker.SetIntermediate(len(pl.Urls))
 	go pl.ProduceUrls()
-
-	// TODO: Reset progress
 
 	pl.StartDownloadWorkers() //nolint: contextcheck
 
@@ -313,7 +313,9 @@ func (p *publication) downloadChapter(ctx context.Context, chapter Chapter) erro
 		time.Sleep(1 * time.Second)
 	}
 
-	// TODO: Increment #chapters downloaded
+	// Reset chapter progress and increment series progress
+	p.speedTracker.ClearIntermediate()
+	p.speedTracker.Increment()
 	return nil
 }
 
@@ -427,4 +429,20 @@ func (p *publication) abortDownload(ctx context.Context, reason error) {
 	if err := p.client.RemoveDownload(req); err != nil {
 		p.log.Error().Err(err).Msg("unable to remove download")
 	}
+}
+
+func (p *publication) signalRUpdateLoop(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				p.signalR.UpdateContentInfo(p.Request().OwnerId, p.GetInfo())
+			}
+		}
+	}()
 }
