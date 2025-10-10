@@ -199,8 +199,8 @@ func (p *publication) GetGenreAndTags(ctx context.Context, tags []Tag) (string, 
 		})
 	}
 
-	filteredGenres := filterTags(tags, tagAllowedAsGenre)
-	filteredTags := filterTags(tags, tagAllowedAsTag)
+	filteredGenres := utils.Distinct(filterTags(tags, tagAllowedAsGenre), utils.IdentityFunc[string]())
+	filteredTags := utils.Distinct(filterTags(tags, tagAllowedAsTag), utils.IdentityFunc[string]())
 
 	return strings.Join(filteredGenres, ", "), strings.Join(filteredTags, ", ")
 }
