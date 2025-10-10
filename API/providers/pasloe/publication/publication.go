@@ -413,6 +413,10 @@ func (p *publication) loadSeriesInfo(ctx context.Context) error {
 
 	p.log.Debug().Dur("duration", time.Since(start)).Msg("loaded series info")
 
+	if series.Title == "" {
+		return fmt.Errorf("no title found in series info")
+	}
+
 	p.series = &series
 	p.log = p.log.With().Str("title", p.Title()).Logger()
 

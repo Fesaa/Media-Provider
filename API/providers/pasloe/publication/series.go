@@ -195,6 +195,10 @@ func NonEmptyTag(t Tag) bool {
 	return t.Value != "" || t.Identifier != ""
 }
 
+func NonEmptyPerson(p Person) bool {
+	return p.Name != ""
+}
+
 type Status string
 
 const (

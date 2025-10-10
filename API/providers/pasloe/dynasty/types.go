@@ -1,13 +1,12 @@
 package dynasty
 
 import (
-	"strings"
-
 	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 )
 
 type SearchOptions struct {
-	Query string
+	Query         string
+	AllowChapters bool
 }
 
 type SearchData struct {
@@ -18,10 +17,7 @@ type SearchData struct {
 }
 
 func (s *SearchData) RefUrl() string {
-	if strings.HasPrefix(s.Id, "/series/") {
-		return DOMAIN + s.Id
-	}
-	return DOMAIN + "/series/" + s.Id
+	return DOMAIN + s.Id
 }
 
 type SeriesStatus string

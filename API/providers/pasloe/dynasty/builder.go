@@ -50,7 +50,8 @@ func (b *Builder) Normalize(ctx context.Context, mangas []SearchData) []payload.
 
 func (b *Builder) Transform(ctx context.Context, s payload.SearchRequest) SearchOptions {
 	return SearchOptions{
-		Query: s.Query,
+		Query:         s.Query,
+		AllowChapters: s.Modifiers.GetBool("AllowChapters", false),
 	}
 }
 

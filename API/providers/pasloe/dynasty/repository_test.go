@@ -3,6 +3,7 @@ package dynasty
 import (
 	"bytes"
 	"io"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -17,7 +18,7 @@ import (
 const (
 	// For tests with special non-chapter; https://dynasty-scans.com/series/shiawase_trimming
 	ShiawaseTrimming   = "Shiawase Trimming"
-	ShiawaseTrimmingId = "shiawase_trimming"
+	ShiawaseTrimmingId = "/series/shiawase_trimming"
 )
 
 func tempRepository(w io.Writer) Repository {
@@ -58,7 +59,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	info, err := repo.SeriesInfo(t.Context(), "sailor_girlfriend", payload.DownloadRequest{})
+	info, err := repo.SeriesInfo(t.Context(), "/series/sailor_girlfriend", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatalf("SeriesInfo: %v", err)
 	}
@@ -108,7 +109,7 @@ func TestRepository_SeriesInfoWithVolumes(t *testing.T) {
 	var buf bytes.Buffer
 	repo := tempRepository(&buf)
 
-	info, err := repo.SeriesInfo(t.Context(), "canaries_dream_of_shining_stars", payload.DownloadRequest{})
+	info, err := repo.SeriesInfo(t.Context(), "/series/canaries_dream_of_shining_stars", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatalf("SeriesInfo: %v", err)
 	}
@@ -187,4 +188,46 @@ func TestRepository_SearchSeriesOneShotChapters(t *testing.T) {
 		t.Errorf("SeriesInfo: expected 1 tags, got %d", len(firstChapter.Tags))
 	}
 
+}
+
+func TestRepository_ChapterInfo(t *testing.T) {
+	time.Sleep(1 * time.Second)
+	var buf bytes.Buffer
+	repo := tempRepository(&buf)
+
+	s, err := repo.SeriesInfo(t.Context(), "/chapters/assorted_yujin_x_tenma_drawings_p_o_p_o", payload.DownloadRequest{})
+	if err != nil {
+		if strings.Contains(err.Error(), "status code error: 503") {
+			t.Skipf("Skipping test as 3rd party server error")
+		}
+		t.Fatalf("SeriesInfo: %v", err)
+	}
+
+	want := "Assorted Yujin x Tenma Drawings (p o p o)"
+	got := s.Title
+	if want != got {
+		t.Errorf("SeriesInfo: expected %s got %s", want, got)
+	}
+
+	if len(s.Chapters) != 1 {
+		t.Errorf("SeriesInfo: expected 1 chapter, got %d", len(s.Chapters))
+	}
+
+	want = "Me-A Scans"
+	got = s.Chapters[0].Translator[0]
+	if want != got {
+		t.Errorf("SeriesInfo: expected %s got %s", want, got)
+	}
+
+	tags := utils.Map(s.Tags, func(t publication.Tag) string {
+		return t.Value
+	})
+
+	if !slices.Contains(tags, "Height gap") {
+		t.Errorf("SeriesInfo: expected %s tags to contain height gap", tags)
+	}
+
+	if s.Year != 2021 {
+		t.Errorf("SeriesInfo: expected 2021, got %d", s.Year)
+	}
 }

@@ -241,6 +241,10 @@ func (p *publication) startDownloadPipeline(ctx context.Context) {
 	p.SetState(payload.ContentStateCleanup)
 	p.ioWg.Wait()
 
+	// Prevent waiting on them again
+	p.wg = nil
+	p.ioWg = nil
+
 	p.log.Info().Dur("elapsed", time.Since(start)).Msg("Finished downloading content")
 	p.StopDownload()
 }
@@ -336,6 +340,7 @@ func (p *publication) newPipeline(ctx context.Context, chapter Chapter) (*pipeli
 
 	urls, err := p.repository.ChapterUrls(ctx, chapter)
 	if err != nil {
+		pl.log.Error().Err(err).Msg("failed to fetch chapter urls")
 		return nil, err
 	}
 
@@ -418,7 +423,7 @@ func (p *publication) abortDownload(ctx context.Context, reason error) {
 		DeleteFiles: true,
 	}
 
-	p.notificationService.Notify(ctx, models.NewNotification().
+	p.notificationService.Notify(context.TODO(), models.NewNotification().
 		WithTitle("Failed download").
 		WithSummary(fmt.Sprintf("%s failed to download", p.Title())).
 		WithBody(fmt.Sprintf("Download failed for %s, because %v", p.Title(), reason)).
