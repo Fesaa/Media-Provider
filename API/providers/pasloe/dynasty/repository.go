@@ -139,14 +139,10 @@ func (r *repository) parseChapterPageAsSeries(id string, doc *goquery.Document) 
 		Id:                id,
 		Title:             doc.Find("#chapter-title b").Text(),
 		AltTitle:          doc.Find(".aliases b").Text(),
-		Description:       "",
-		CoverUrl:          DOMAIN + doc.Find(".thumbnail").AttrOr("src", ""),
 		RefUrl:            DOMAIN + id,
 		Status:            toPublicationStatus(strings.TrimPrefix(doc.Find(".tag-title small").Last().Text(), "— ")),
 		TranslationStatus: utils.Settable[publication.Status]{},
 		Year:              year,
-		OriginalLanguage:  "",
-		ContentRating:     "",
 		Tags:              utils.Filter(goquery.Map(doc.Find("#chapter-details .tags a"), toTag), publication.NonEmptyTag),
 		People:            utils.Filter(goquery.Map(doc.Find("#chapter-title a"), toAuthor), publication.NonEmptyPerson),
 		Links:             nil,
@@ -154,11 +150,7 @@ func (r *repository) parseChapterPageAsSeries(id string, doc *goquery.Document) 
 			{
 				Id:          strings.TrimPrefix(id, "/chapters/"),
 				Title:       doc.Find("#chapter-title b").Text(),
-				Volume:      "",
-				Chapter:     "",
-				CoverUrl:    "",
 				Url:         DOMAIN + id,
-				Summary:     "",
 				ReleaseDate: releaseTime,
 				Translator: doc.Find(".scanlators a").Map(func(i int, selection *goquery.Selection) string {
 					return selection.Text()
