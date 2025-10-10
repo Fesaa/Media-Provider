@@ -107,6 +107,8 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 					}
 					return m, foundDefault || m.Default
 				})
+		} else if mod.Type == models.Switch { // Switch modifiers do not have preset values
+			mod.Values = make([]models.ModifierValue, 0)
 		}
 
 		return mod

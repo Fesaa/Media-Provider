@@ -22,12 +22,24 @@
         <div class="row">
           @for (modifier of modifiers(); track trackModifier($index, modifier)) {
             <div class="col-md-6 mb-3">
-              <app-type-ahead
-                [settings]="constructTypeaheadSettings(modifier)"
-                (selectedData)="onModifierSelection(modifier, $event)"
-              >
-                <ng-template #label>{{modifier.title}}</ng-template>
-              </app-type-ahead>
+              @if (modifier.type === ModifierType.SWITCH) {
+                <div class="form-check form-switch d-flex align-items-center">
+                  <input
+                    (change)="onModifierSwitchChange(modifier, $event)"
+                    type="checkbox"
+                    class="form-check-input"
+                    [id]="modifier.key"
+                  />
+                  <label class="form-check-label ms-2 user-select-none" [for]="modifier.key">{{modifier.title}}</label>
+                </div>
+              } @else {
+                <app-type-ahead
+                  [settings]="constructTypeaheadSettings(modifier)"
+                  (selectedData)="onModifierSelection(modifier, $event)"
+                >
+                  <ng-template #label>{{modifier.title}}</ng-template>
+                </app-type-ahead>
+              }
             </div>
           }
         </div>

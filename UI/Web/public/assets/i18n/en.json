@@ -193,7 +193,8 @@
   },
   "modifier-type-pipe": {
     "multi": "Multi select",
-    "dropdown": "Dropdown"
+    "dropdown": "Dropdown",
+    "switch": "Switch"
   },
 
   "shared": {

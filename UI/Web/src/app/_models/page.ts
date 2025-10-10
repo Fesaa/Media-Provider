@@ -74,9 +74,10 @@ export const AllProviders = Object.values(Provider).filter(value => typeof value
 export enum ModifierType {
   DROPDOWN = 1,
   MULTI,
+  SWITCH
 }
 
-export const AllModifierTypes = [ModifierType.DROPDOWN, ModifierType.MULTI]
+export const AllModifierTypes = [ModifierType.DROPDOWN, ModifierType.MULTI, ModifierType.SWITCH]
 
 export type DownloadMetadata = {
   definitions: DownloadMetadataDefinition[];
