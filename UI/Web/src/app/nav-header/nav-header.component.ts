@@ -2,10 +2,10 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  computed, effect,
+  computed, effect, ElementRef,
   HostListener, inject,
   OnInit,
-  signal
+  signal, ViewChild
 } from '@angular/core';
 import {PageService} from "../_services/page.service";
 import {ActivatedRoute, RouterLink} from "@angular/router";
@@ -18,6 +18,7 @@ import {User} from "../_models/user";
 import {Page} from "../_models/page";
 import {AsyncPipe, TitleCasePipe} from "@angular/common";
 import {animate, style, transition, trigger} from "@angular/animations";
+import {fromEvent} from "rxjs";
 
 interface NavItem {
   label: string;
@@ -72,6 +73,8 @@ export class NavHeaderComponent implements OnInit {
   private readonly signalR = inject(SignalRService);
   private readonly transLoco = inject(TranslocoService);
 
+  @ViewChild('mobileDrawer') mobileDrawerElement!: ElementRef<HTMLDivElement>;
+
   notifications = signal(0);
   currentUser = this.accountService.currentUser;
   pageItems = signal<Page[]>([]);
@@ -125,6 +128,16 @@ export class NavHeaderComponent implements OnInit {
         this.notifications.update(n => Math.max(0, n - amount));
       }
     });
+  }
+
+  @HostListener('document:touchend', ['$event'])
+  onDocumentClick(event: Event) {
+    if (!this.isMobileMenuOpen()) return;
+
+    const clickedElement = event.target as Node;
+    if (!this.mobileDrawerElement.nativeElement.contains(clickedElement)) {
+      this.isMobileMenuOpen.set(false);
+    }
   }
 
   loadPages() {
