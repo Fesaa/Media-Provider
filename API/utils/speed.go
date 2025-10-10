@@ -11,7 +11,7 @@ type SpeedTracker struct {
 
 	lastCheck time.Time
 	startTime time.Time
-	max       int
+	maxItem   int
 	cur       int
 
 	// For tracking intermediate progress of current work item
@@ -20,10 +20,10 @@ type SpeedTracker struct {
 }
 
 // NewSpeedTracker creates a new speed tracker with a maximum number of items
-func NewSpeedTracker(max int) *SpeedTracker {
+func NewSpeedTracker(maxItem int) *SpeedTracker {
 	now := time.Now()
 	return &SpeedTracker{
-		max:       max,
+		maxItem:   maxItem,
 		lastCheck: now,
 		startTime: now,
 	}
@@ -55,7 +55,7 @@ func (s *SpeedTracker) Progress() float64 {
 	cur := s.cur
 	s.lock.RUnlock()
 
-	if s.max == 0 {
+	if s.maxItem == 0 {
 		return 0
 	}
 
@@ -65,11 +65,11 @@ func (s *SpeedTracker) Progress() float64 {
 	// Add fractional progress from intermediate tracker
 	s.intermediateLock.RLock()
 	if s.intermediate != nil {
-		intermediateProgress = s.intermediate.Progress() / float64(s.max)
+		intermediateProgress = s.intermediate.Progress() / float64(s.maxItem)
 	}
 	s.intermediateLock.RUnlock()
 
-	return (progress/float64(s.max))*100 + intermediateProgress
+	return (progress/float64(s.maxItem))*100 + intermediateProgress
 }
 
 // Speed returns items per second
@@ -95,11 +95,11 @@ func (s *SpeedTracker) IntermediateSpeed() float64 {
 }
 
 // SetIntermediate sets the intermediate progress tracker for the current work item
-func (s *SpeedTracker) SetIntermediate(max int) {
+func (s *SpeedTracker) SetIntermediate(maxItem int) {
 	s.intermediateLock.Lock()
 	defer s.intermediateLock.Unlock()
 
-	s.intermediate = NewSpeedTracker(max)
+	s.intermediate = NewSpeedTracker(maxItem)
 }
 
 // ClearIntermediate removes the intermediate tracker (call when work item completes)
@@ -115,5 +115,5 @@ func (s *SpeedTracker) EstimatedTimeRemaining() float64 {
 		return 0
 	}
 
-	return float64(s.max-s.cur) * s.Speed()
+	return float64(s.maxItem-s.cur) * s.Speed()
 }

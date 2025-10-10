@@ -17,7 +17,7 @@ func TestProgress(t *testing.T) {
 	}
 
 	// 50% progress
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		tracker.Increment()
 	}
 	if progress := tracker.Progress(); progress != 50 {
@@ -25,7 +25,7 @@ func TestProgress(t *testing.T) {
 	}
 
 	// 100% progress
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		tracker.Increment()
 	}
 	if progress := tracker.Progress(); progress != 100 {
@@ -45,7 +45,7 @@ func TestProgressWithIntermediate(t *testing.T) {
 	}
 
 	// Increment intermediate by 50 (50% of intermediate)
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		tracker.IncrementIntermediate()
 	}
 	// Progress should be 50% of 1 item out of 10 = 5%
@@ -55,7 +55,7 @@ func TestProgressWithIntermediate(t *testing.T) {
 	}
 
 	// Complete intermediate (100/100)
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		tracker.IncrementIntermediate()
 	}
 	// Progress should be 100% of 1 item out of 10 = 10%
@@ -74,7 +74,7 @@ func TestProgressNeverDecreases(t *testing.T) {
 	tracker.SetIntermediate(100)
 
 	// Increment intermediate to 81.40%
-	for i := 0; i < 81; i++ {
+	for range 81 {
 		tracker.IncrementIntermediate()
 	}
 
@@ -108,10 +108,10 @@ func TestProgressMonotonicallyIncreasing(t *testing.T) {
 
 	var lastProgress float64 = 0
 
-	for item := 0; item < 10; item++ {
+	for item := range 10 {
 		tracker.SetIntermediate(50)
 
-		for intermediate := 0; intermediate < 50; intermediate++ {
+		for intermediate := range 50 {
 			tracker.IncrementIntermediate()
 
 			progress := tracker.Progress()

@@ -423,6 +423,7 @@ func (p *publication) abortDownload(ctx context.Context, reason error) {
 		DeleteFiles: true,
 	}
 
+	//nolint: contextcheck
 	p.notificationService.Notify(context.TODO(), models.NewNotification().
 		WithTitle("Failed download").
 		WithSummary(fmt.Sprintf("%s failed to download", p.Title())).

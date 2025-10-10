@@ -99,7 +99,7 @@ func (pr *pageRoutes) updatePage(ctx *fiber.Ctx, page models.Page) error {
 		mod.Sort = i
 
 		// Ensure only one modifier value has the default state
-		if mod.Type == models.DROPDOWN {
+		if mod.Type == models.DROPDOWN { //nolint: staticcheck
 			mod.Values = utils.MapWithState(mod.Values, false,
 				func(m models.ModifierValue, foundDefault bool) (models.ModifierValue, bool) {
 					if foundDefault {
