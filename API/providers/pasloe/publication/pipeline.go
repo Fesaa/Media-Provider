@@ -167,14 +167,29 @@ type ioTask struct {
 	Task downloadTask
 }
 
+func (p *publication) getChapterById(id string) (Chapter, bool) {
+	idx := slices.IndexFunc(p.series.Chapters, func(chapter Chapter) bool {
+		return chapter.Id == id
+	})
+
+	if idx == -1 {
+		p.log.Warn().Str("chapter", id).Int("idx", idx).Msg("chapter not found")
+		return Chapter{}, false
+	}
+
+	return p.series.Chapters[idx], true
+}
+
 func (p *publication) filterContentByUserSelection() {
 	if len(p.toDownloadUserSelected) == 0 {
+		// Update chapters in case p.Series was updated since
+
 		return
 	}
 
 	curSize := len(p.toDownload)
-	p.toDownload = utils.Filter(p.series.Chapters, func(chapter Chapter) bool {
-		return slices.Contains(p.toDownloadUserSelected, chapter.Id)
+	p.toDownload = utils.MaybeMap(p.series.Chapters, func(chapter Chapter) (string, bool) {
+		return chapter.Id, slices.Contains(p.toDownloadUserSelected, chapter.Id)
 	})
 
 	p.log.Debug().Int("size", curSize).Int("newSize", len(p.toDownload)).
@@ -184,8 +199,13 @@ func (p *publication) filterContentByUserSelection() {
 		return
 	}
 
-	paths := utils.Map(p.toDownload, func(chapter Chapter) string {
-		return p.ContentPath(chapter) + ".cbz"
+	paths := utils.MaybeMap(p.toDownload, func(id string) (string, bool) {
+		chapter, ok := p.getChapterById(id)
+		if !ok {
+			return "", false
+		}
+
+		return p.ContentPath(chapter) + ".cbz", true
 	})
 	p.toRemoveContent = utils.Filter(p.toRemoveContent, func(path string) bool {
 		return slices.Contains(paths, path)
@@ -251,7 +271,12 @@ func (p *publication) startDownloadPipeline(ctx context.Context) {
 
 // processDownloads loops through all chapters to download, and downloads them. Returning early when one fails
 func (p *publication) processDownloads(ctx context.Context, wg *sync.WaitGroup) error {
-	for _, chapter := range p.toDownload {
+	for _, chapterId := range p.toDownload {
+		chapter, ok := p.getChapterById(chapterId)
+		if !ok {
+			continue
+		}
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()

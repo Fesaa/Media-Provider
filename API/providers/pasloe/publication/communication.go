@@ -157,7 +157,7 @@ func (p *publication) willBeDownloaded(chapter Chapter) bool {
 		return slices.Contains(p.toDownloadUserSelected, chapter.Id)
 	}
 
-	return utils.Find(p.toDownload, func(c Chapter) bool {
-		return c.Id == chapter.Id
+	return utils.Find(p.toDownload, func(id string) bool {
+		return id == chapter.Id
 	}) != nil
 }

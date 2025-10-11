@@ -247,7 +247,7 @@ func (r *repository) PreDownloadHook(p publication.Publication, ctx context.Cont
 	p.UpdateSeriesInfo(func(series *publication.Series) {
 		series.Chapters = utils.Map(series.Chapters, func(chapter publication.Chapter) publication.Chapter {
 			if url, ok := coverFactory(chapter.Volume); ok {
-				chapter.Url = url
+				chapter.CoverUrl = url
 			}
 			return chapter
 		})

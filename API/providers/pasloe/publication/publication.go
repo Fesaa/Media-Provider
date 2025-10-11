@@ -157,7 +157,7 @@ type publication struct {
 	// forcing us to use volumes in the file name
 	hasDuplicatedChapters utils.Settable[bool]
 
-	toDownload      []Chapter // All chapters that need to be downloaded
+	toDownload      []string  // All chapters id that need to be downloaded
 	hasDownloaded   []string  // path of files on disk we've already downloaded
 	existingContent []Content // Content already on disk before download started
 	toRemoveContent []string  // content on disk that has to be removed as it has been redownloaded
@@ -500,7 +500,9 @@ func (p *publication) filterAlreadyDownloadedContent(ctx context.Context) (time.
 		return time.Since(start), err
 	}
 
-	p.toDownload = utils.Filter(p.series.Chapters, p.ShouldDownload)
+	p.toDownload = utils.MaybeMap(p.series.Chapters, func(chapter Chapter) (string, bool) {
+		return chapter.Id, p.ShouldDownload(chapter)
+	})
 	return time.Since(start), nil
 }
 
@@ -628,8 +630,9 @@ func (p *publication) DownloadContent(ctx context.Context) {
 }
 
 func (p *publication) GetNewContentNamed() []string {
-	return utils.Map(p.toDownload, func(c Chapter) string {
-		return c.Label()
+	return utils.MaybeMap(p.toDownload, func(id string) (string, bool) {
+		chapter, ok := p.getChapterById(id)
+		return chapter.Label(), ok
 	})
 }
 
