@@ -57,7 +57,7 @@ export class TableComponent<T> implements OnInit {
     // Reset current page if total page changes and becomes smaller
     effect(() => {
       if (this.currentPage() > this.totalPages()) {
-        this.currentPage.set(0);
+        this.currentPage.set(1);
       }
     });
   }
