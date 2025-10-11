@@ -1,4 +1,4 @@
-import {Component, computed, effect, inject, signal} from '@angular/core';
+import {Component, computed, effect, ElementRef, HostListener, inject, signal, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {NavService} from '../../_services/nav.service';
 import {AccountService} from '../../_services/account.service';
@@ -51,6 +51,8 @@ export class SettingsComponent {
 
   readonly SettingsID = SettingsID;
 
+  @ViewChild('mobileConfig') mobileDrawerElement!: ElementRef<HTMLDivElement>;
+
   user = signal<User | null>(null);
   selected = signal<SettingsID>(SettingsID.Account);
   showMobileConfig = signal(false);
@@ -94,6 +96,16 @@ export class SettingsComponent {
     effect(() => {
       this.router.navigate([], { fragment: this.selected() });
     });
+  }
+
+  @HostListener('document:touchend', ['$event'])
+  onDocumentClick(event: Event) {
+    if (!this.showMobileConfig()) return;
+
+    const clickedElement = event.target as Node;
+    if (!this.mobileDrawerElement.nativeElement.contains(clickedElement)) {
+      this.showMobileConfig.set(false);
+    }
   }
 
   toggleMobile() {

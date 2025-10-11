@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/utils"
 	"gorm.io/gorm"
 )
 
@@ -25,8 +26,8 @@ type Subscription struct {
 }
 
 type DownloadRequestMetadata struct {
-	StartImmediately bool                `json:"startImmediately"`
-	Extra            map[string][]string `json:"extra,omitempty"`
+	StartImmediately bool           `json:"startImmediately"`
+	Extra            utils.SmartMap `json:"extra,omitempty"`
 }
 
 func (s *Subscription) BeforeSave(tx *gorm.DB) (err error) {

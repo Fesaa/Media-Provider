@@ -8,7 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/internal/contextkey"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/gofiber/fiber/v2"
@@ -22,7 +22,7 @@ type contentRoutes struct {
 	Cache  fiber.Handler `name:"cache"`
 	Auth   services.AuthService
 	YS     yoitsu.Client
-	PS     core.Client
+	PS     publication.Client
 
 	Val            services.ValidationService
 	ContentService services.ContentService

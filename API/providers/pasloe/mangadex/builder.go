@@ -8,7 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -17,7 +17,7 @@ import (
 type Builder struct {
 	log        zerolog.Logger
 	httpClient *menou.Client
-	ps         core.Client
+	ps         publication.Client
 	repository Repository
 }
 
@@ -132,26 +132,26 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 				Options:       languages,
 			},
 			{
-				Key:      core.ScanlationGroupKey,
+				Key:      publication.ScanlationGroupKey,
 				Advanced: true,
 				FormType: payload.TEXT,
 			},
 			{
-				Key:      core.DownloadOneShotKey,
+				Key:      publication.DownloadOneShotKey,
 				FormType: payload.SWITCH,
 			},
 			{
-				Key:           core.IncludeCover,
+				Key:           publication.IncludeCover,
 				FormType:      payload.SWITCH,
 				DefaultOption: "true",
 			},
 			{
-				Key:      core.UpdateCover,
+				Key:      publication.UpdateCover,
 				Advanced: true,
 				FormType: payload.SWITCH,
 			},
 			{
-				Key:      core.TitleOverride,
+				Key:      publication.TitleOverride,
 				Advanced: true,
 				FormType: payload.TEXT,
 			},
@@ -169,7 +169,7 @@ func (b *Builder) Client() services.Client {
 	return b.ps
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps core.Client, repository Repository) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps publication.Client, repository Repository) *Builder {
 	return &Builder{log.With().Str("handler", "mangadex-provider").Logger(),
 		httpClient, ps, repository}
 }

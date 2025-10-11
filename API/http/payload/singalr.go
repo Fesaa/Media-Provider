@@ -22,7 +22,7 @@ type ContentSizeUpdate struct {
 type ContentProgressUpdate struct {
 	ContentId string    `json:"contentId"`
 	Progress  int64     `json:"progress"`
-	Estimated *int64    `json:"estimated,omitempty"`
+	Estimated int64     `json:"estimated,omitempty"`
 	SpeedType SpeedType `json:"speed_type"`
 	Speed     int64     `json:"speed"`
 }

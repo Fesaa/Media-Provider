@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Fesaa/Media-Provider/internal/comicinfo"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/go-metroninfo"
 )
@@ -63,18 +64,6 @@ type MangaSearchData struct {
 	Language string `json:"-"`
 }
 
-func (a *MangaSearchData) GetId() string {
-	return a.Id
-}
-
-func (a *MangaSearchData) GetTitle() string {
-	return a.Attributes.LangTitle(a.Language)
-}
-
-func (a *MangaSearchData) AllChapters() []ChapterSearchData {
-	panic("mangadex does not support getting chapters from the series")
-}
-
 func (a *MangaSearchData) RefUrl() string {
 	return fmt.Sprintf("https://mangadex.org/title/%s/", a.Id)
 }
@@ -95,29 +84,28 @@ func (a *MangaSearchData) CoverURL() string {
 	return ""
 }
 
-func (a *MangaSearchData) Authors() []string {
-	return utils.MaybeMap(a.Relationships, func(t Relationship) (string, bool) {
-		if t.Type != "author" {
-			return "", false
-		}
-
-		if name, ok := t.Attributes["name"].(string); ok {
-			return name, true
-		}
-		return "", false
-	})
+var relationMappings = map[string]comicinfo.Roles{
+	"author": {comicinfo.Writer},
+	"artist": {comicinfo.Colorist},
 }
 
-func (a *MangaSearchData) Artists() []string {
-	return utils.MaybeMap(a.Relationships, func(t Relationship) (string, bool) {
-		if t.Type != "artist" {
-			return "", false
+func (a *MangaSearchData) People() []publication.Person {
+	return utils.MaybeMap(a.Relationships, func(r Relationship) (publication.Person, bool) {
+		name, ok := r.Attributes["name"].(string)
+		if !ok {
+			return publication.Person{}, false
 		}
 
-		if name, ok := t.Attributes["name"].(string); ok {
-			return name, true
+		for k, v := range relationMappings {
+			if r.Type == k {
+				return publication.Person{
+					Name:  name,
+					Roles: v,
+				}, false
+			}
 		}
-		return "", false
+
+		return publication.Person{}, false
 	})
 }
 
@@ -223,6 +211,21 @@ const (
 	StatusHiatus    MangaStatus = "hiatus"
 	StatusCancelled MangaStatus = "cancelled"
 )
+
+func toPublicationStatus(status MangaStatus) publication.Status {
+	switch status {
+	case StatusOngoing:
+		return publication.StatusOngoing
+	case StatusCompleted:
+		return publication.StatusCompleted
+	case StatusHiatus:
+		return publication.StatusPaused
+	case StatusCancelled:
+		return publication.StatusCancelled
+	}
+
+	return ""
+}
 
 type ContentRating string
 

@@ -26,6 +26,17 @@ func NonEmpty(s ...string) string {
 	return ""
 }
 
+func NonEmptyFunc[T comparable](f func(T) T, s ...T) T {
+	var zero T
+	for _, v := range s {
+		if f(v) == zero {
+			return v
+		}
+	}
+
+	return zero
+}
+
 // Normalize removes all non-alphanumerical numbers, and then lowercases the result
 func Normalize(s string) string {
 	return strings.ToLower(re.ReplaceAllString(s, ""))

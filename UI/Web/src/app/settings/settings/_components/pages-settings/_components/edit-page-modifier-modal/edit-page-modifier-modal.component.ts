@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, inject, model} from '@angular/core';
 import {NgbActiveModal} from "@ng-bootstrap/ng-bootstrap";
-import {AllModifierTypes} from "../../../../../../_models/page";
+import {AllModifierTypes, ModifierType} from "../../../../../../_models/page";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {SettingsItemComponent} from "../../../../../../shared/form/settings-item/settings-item.component";
@@ -52,4 +52,5 @@ export class EditPageModifierModalComponent {
   }
 
   protected readonly AllModifierTypes = AllModifierTypes;
+  protected readonly ModifierType = ModifierType;
 }

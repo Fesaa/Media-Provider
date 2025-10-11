@@ -9,7 +9,6 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/internal/tracing"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
 )
 
 type MangaCoverResponse Response[[]MangaCoverData]
@@ -31,46 +30,24 @@ type MangaCoverAttributes struct {
 	Version     int    `json:"version"`
 }
 
-type Cover struct {
-	Bytes []byte
-	Data  MangaCoverData
-}
+// CoverFactory returns the url for the given volume
+type CoverFactory func(volume string) (string, bool)
 
-type CoverFactory func(volume string) (*Cover, bool)
+var defaultCoverFactory CoverFactory = func(volume string) (string, bool) { return "", false }
 
-var defaultCoverFactory CoverFactory = func(volume string) (*Cover, bool) { return nil, false }
-
-func (m *manga) CustomizePreDownloadHook(ctx context.Context) {
-	if !m.Req.GetBool(core.IncludeCover, true) {
-		m.coverFactory = defaultCoverFactory
-		return
-	}
-
-	covers, err := m.repository.GetCoverImages(ctx, m.id)
-	if err != nil || covers == nil {
-		m.Log.Warn().Err(err).Msg("error while loading manga coverFactory, ignoring")
-		m.coverFactory = defaultCoverFactory
-		return
-	}
-
-	m.coverFactory = m.getCoverFactoryLang(ctx, covers)
-}
-
-func (m *manga) getCoverBytes(ctx context.Context, fileName string) ([]byte, error) {
-	url := fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", m.id, fileName)
-
-	if b, err := m.cache.GetWithContext(ctx, url); err == nil && b != nil {
+func (r *repository) getCoverBytes(ctx context.Context, url string) ([]byte, error) {
+	if b, err := r.cache.GetWithContext(ctx, url); err == nil && b != nil {
 		return b, nil
 	}
 
-	resp, err := m.httpClient.GetWithContext(ctx, url)
+	resp, err := r.httpClient.GetWithContext(ctx, url)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
-			m.Log.Warn().Err(err).Msg("Failed to close response body")
+			r.log.Warn().Err(err).Msg("Failed to close response body")
 		}
 	}(resp.Body)
 	if resp.StatusCode != http.StatusOK {
@@ -82,14 +59,14 @@ func (m *manga) getCoverBytes(ctx context.Context, fileName string) ([]byte, err
 		return nil, err
 	}
 
-	if err = m.cache.SetWithContext(ctx, url, data, m.cache.DefaultExpiration()); err != nil {
-		m.Log.Warn().Err(err).Msg("Failed to cache response")
+	if err = r.cache.SetWithContext(ctx, url, data, r.cache.DefaultExpiration()); err != nil {
+		r.log.Warn().Err(err).Msg("Failed to cache response")
 	}
 
 	return data, nil
 }
 
-func (m *manga) getCoverFactoryLang(ctx context.Context, coverResp *MangaCoverResponse) CoverFactory {
+func (r *repository) getCoverFactory(ctx context.Context, userId int, id string, lang string, coverResp *MangaCoverResponse) CoverFactory {
 	if len(coverResp.Data) == 0 {
 		return defaultCoverFactory
 	}
@@ -97,44 +74,42 @@ func (m *manga) getCoverFactoryLang(ctx context.Context, coverResp *MangaCoverRe
 	ctx, span := tracing.TracerPasloe.Start(ctx, tracing.SpanPasloeCovers)
 	defer span.End()
 
-	covers, firstCover, lastCover := m.processCovers(ctx, coverResp)
-	return m.constructCoverFactory(covers, firstCover, lastCover)
+	covers, firstCover, lastCover := r.processCovers(ctx, id, lang, coverResp)
+	return r.constructCoverFactory(ctx, userId, covers, firstCover, lastCover)
 }
 
-func (m *manga) processCovers(ctx context.Context, coverResp *MangaCoverResponse) (map[string]*Cover, *Cover, *Cover) {
-	covers := make(map[string]*Cover)
-	var firstCover, lastCover, firstCoverLang, lastCoverLang *Cover
+func (r *repository) processCovers(ctx context.Context, id string, lang string, coverResp *MangaCoverResponse) (map[string]string, string, string) {
+	covers := make(map[string]string)
+	var firstCover, lastCover, firstCoverLang, lastCoverLang string
 
 	for _, cover := range coverResp.Data {
 		// Don't download non-matching locale's again if a cover is already present
-		if _, ok := covers[cover.Attributes.Volume]; ok && cover.Attributes.Locale != m.language {
+		if _, ok := covers[cover.Attributes.Volume]; ok && cover.Attributes.Locale != lang {
 			continue
 		}
 
-		coverBytes, err := m.getCoverBytes(ctx, cover.Attributes.FileName)
+		url := fmt.Sprintf("https://uploads.mangadex.org/covers/%s/%s.512.jpg", id, cover.Attributes.FileName)
+		coverBytes, err := r.getCoverBytes(ctx, url)
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
-				return nil, nil, nil
+				return nil, "", ""
 			}
-			m.Log.Err(err).Str("fileName", cover.Attributes.FileName).Msg("Failed to get cover")
+			r.log.Err(err).Str("fileName", cover.Attributes.FileName).Msg("Failed to get cover")
 			continue
 		}
 
 		// Cover is too small for Kavita. Looks weird
-		if !m.imageService.IsCover(coverBytes) {
-			m.Log.Debug().Str("id", cover.Id).Str("volume", cover.Attributes.Volume).
+		if !r.imageService.IsCover(coverBytes) {
+			r.log.Debug().Str("id", cover.Id).Str("volume", cover.Attributes.Volume).
 				Str("desc", cover.Attributes.Description).Msg("cover failed the ImageService.IsCover check. not using")
 			continue
 		}
 
-		_cover := &Cover{
-			Bytes: coverBytes,
-			Data:  cover,
-		}
+		_cover := url
 
-		if cover.Attributes.Locale == m.language {
+		if cover.Attributes.Locale == lang {
 			covers[cover.Attributes.Volume] = _cover
-			if firstCoverLang == nil {
+			if firstCoverLang == "" {
 				firstCoverLang = _cover
 			}
 			lastCoverLang = _cover
@@ -142,46 +117,48 @@ func (m *manga) processCovers(ctx context.Context, coverResp *MangaCoverResponse
 			covers[cover.Attributes.Volume] = _cover
 		}
 
-		if firstCover == nil {
+		if firstCover == "" {
 			firstCover = _cover
 		}
 		lastCover = _cover
 	}
 
-	if firstCoverLang != nil {
+	if firstCoverLang != "" {
 		firstCover = firstCoverLang
 	}
-	if lastCoverLang != nil {
+	if lastCoverLang != "" {
 		lastCover = lastCoverLang
 	}
 	return covers, firstCover, lastCover
 }
 
-func (m *manga) constructCoverFactory(covers map[string]*Cover, firstCover, lastCover *Cover) CoverFactory {
-	fallbackCover := func() *Cover {
-		if m.Preference == nil {
-			return nil
+func (r *repository) constructCoverFactory(ctx context.Context, userId int, covers map[string]string, firstCover, lastCover string) CoverFactory {
+	fallbackCover := func() string {
+		p, err := r.unitOfWork.Preferences.GetPreferences(ctx, userId)
+		if err != nil {
+			return ""
 		}
-		switch m.Preference.CoverFallbackMethod {
+
+		switch p.CoverFallbackMethod {
 		case models.CoverFallbackFirst:
 			return firstCover
 		case models.CoverFallbackLast:
 			return lastCover
 		case models.CoverFallbackNone:
-			return nil
+			return ""
 		}
 		return firstCover
 	}()
 
-	return func(volume string) (*Cover, bool) {
-		url, ok := covers[volume]
-		if !ok && fallbackCover != nil && len(fallbackCover.Bytes) != 0 {
+	return func(volume string) (string, bool) {
+		cover, ok := covers[volume]
+		if !ok && fallbackCover != "" {
 			return fallbackCover, true
 		}
 		if !ok {
-			return nil, false
+			return "", false
 		}
 
-		return url, true
+		return cover, true
 	}
 }

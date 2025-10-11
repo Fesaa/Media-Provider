@@ -71,7 +71,7 @@
     </nav>
 
     @if (isMobileMenuOpen()) {
-      <div class="mobile-drawer" @drawerAnimation>
+      <div class="mobile-drawer" @drawerAnimation #mobileDrawer>
         <div class="drawer-header">
           <button (click)="toggleMobileMenu()">✕</button>
         </div>

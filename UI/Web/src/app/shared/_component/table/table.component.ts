@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  ContentChild,
+  ContentChild, effect,
   EventEmitter,
   input,
   OnInit,
@@ -52,6 +52,15 @@ export class TableComponent<T> implements OnInit {
     const end = start + this.pageSize();
     return this.items().slice(start, end);
   });
+
+  constructor() {
+    // Reset current page if total page changes and becomes smaller
+    effect(() => {
+      if (this.currentPage() > this.totalPages()) {
+        this.currentPage.set(1);
+      }
+    });
+  }
 
   range = (n: number) => Array.from({ length: n}, (_, i) => i);
 

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -16,8 +18,8 @@ func tempRepository(w io.Writer) Repository {
 	return NewRepository(menou.DefaultClient, log, services.MarkdownServiceProvider(log))
 }
 
-func getChapter(series Series, chapter string, volume ...string) *Chapter {
-	return utils.Find(series.Chapters, func(c Chapter) bool {
+func getChapter(series publication.Series, chapter string, volume ...string) *publication.Chapter {
+	return utils.Find(series.Chapters, func(c publication.Chapter) bool {
 		if len(volume) > 0 {
 			return c.Volume == volume[0] && c.Chapter == chapter
 		}
@@ -64,7 +66,7 @@ func TestRepository_Search(t *testing.T) {
 func TestRepository_SeriesInfo2(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	series, err := repo.SeriesInfo(t.Context(), "139300-see-you-in-my-19th-life")
+	series, err := repo.SeriesInfo(t.Context(), "139300-see-you-in-my-19th-life", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +75,7 @@ func TestRepository_SeriesInfo2(t *testing.T) {
 		t.Errorf("got %s, want %s", series.Id, series.Id)
 	}
 
-	empty := utils.Find(series.Chapters, func(c Chapter) bool {
+	empty := utils.Find(series.Chapters, func(c publication.Chapter) bool {
 		return c.Chapter == "" && c.Volume == "" && c.Title == ""
 	})
 
@@ -85,7 +87,7 @@ func TestRepository_SeriesInfo2(t *testing.T) {
 func TestRepository_SeriesInfo(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	series, err := repo.SeriesInfo(t.Context(), "172024-heart-of-thorns")
+	series, err := repo.SeriesInfo(t.Context(), "172024-heart-of-thorns", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,19 +108,19 @@ func TestRepository_SeriesInfo(t *testing.T) {
 		t.Fatalf("got %d series, want at least 9", len(series.Tags))
 	}
 
-	comma := utils.Find(series.Tags, func(s string) bool {
-		return s == ","
+	comma := utils.Find(series.Tags, func(s publication.Tag) bool {
+		return s.Value == ","
 	})
 
 	if comma != nil {
-		t.Fatalf("got %s want nil", *comma)
+		t.Fatalf("got %v want nil", *comma)
 	}
 
 	if series.Chapters[0].Volume != "" {
 		t.Fatalf("got %s want nil", series.Chapters[0].Volume)
 	}
 
-	lilyClub := utils.Find(series.Authors, func(s Author) bool {
+	lilyClub := utils.Find(series.People, func(s publication.Person) bool {
 		return s.Name == "Lily Club (橘姬社)"
 	})
 
@@ -126,7 +128,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 		t.Fatalf("got no Lily Club")
 	}
 
-	cleaned := utils.Find(series.Authors, func(s Author) bool {
+	cleaned := utils.Find(series.People, func(s publication.Person) bool {
 		return s.Name == "狐泥"
 	})
 
@@ -134,7 +136,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 		t.Fatalf("got no cleaned Authors")
 	}
 
-	notCleaned := utils.Find(series.Authors, func(s Author) bool {
+	notCleaned := utils.Find(series.People, func(s publication.Person) bool {
 		return strings.Contains(s.Name, "(Story&Art)")
 	})
 
@@ -146,7 +148,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 
 func TestRepository_SeriesInfo_ChapterDecimals(t *testing.T) {
 	repo := tempRepository(io.Discard)
-	series, err := repo.SeriesInfo(t.Context(), "99749-still-sick-official")
+	series, err := repo.SeriesInfo(t.Context(), "99749-still-sick-official", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +158,7 @@ func TestRepository_SeriesInfo_ChapterDecimals(t *testing.T) {
 		t.Fatalf("got %d series, want %d", len(series.Chapters), want)
 	}
 
-	groupByChapter := utils.GroupBy(series.Chapters, func(chapter Chapter) string {
+	groupByChapter := utils.GroupBy(series.Chapters, func(chapter publication.Chapter) string {
 		return chapter.Chapter
 	})
 
@@ -177,7 +179,7 @@ func TestRepository_SeriesInfo_ChapterDecimals(t *testing.T) {
 func TestRepository_SeriesInfoFullyAnchoredTitles(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	series, err := repo.SeriesInfo(t.Context(), "149409-romance-of-the-stars-official")
+	series, err := repo.SeriesInfo(t.Context(), "149409-romance-of-the-stars-official", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +213,7 @@ func TestRepository_SeriesInfoFullyAnchoredTitles(t *testing.T) {
 func TestRepository_SeriesWithVolume(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	series, err := repo.SeriesInfo(t.Context(), "133980-little-mushroom")
+	series, err := repo.SeriesInfo(t.Context(), "133980-little-mushroom", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,7 +234,7 @@ func TestRepository_SeriesWithVolume(t *testing.T) {
 func TestRepository_SeriesInfoEpisodesAndSeasons(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	series, err := repo.SeriesInfo(t.Context(), "148408-mage-demon-queen-official")
+	series, err := repo.SeriesInfo(t.Context(), "148408-mage-demon-queen-official", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -264,7 +266,9 @@ func TestRepository_SeriesInfoEpisodesAndSeasons(t *testing.T) {
 func TestRepository_ChapterImages(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
-	images, err := repo.ChapterImages(t.Context(), "172024-heart-of-thorns/3343778-ch_77")
+	images, err := repo.ChapterUrls(t.Context(), publication.Chapter{
+		Id: "172024-heart-of-thorns/3343778-ch_77",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

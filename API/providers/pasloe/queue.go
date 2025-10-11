@@ -7,7 +7,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/rs/zerolog"
 )
@@ -17,11 +17,11 @@ import (
 // Each queue has a max capacity of 100. The worker is started automatically after creation
 type ProviderQueue struct {
 	log    zerolog.Logger
-	client core.Client
+	client publication.Client
 
 	providerName  models.Provider
-	loadingQueue  chan core.Downloadable
-	downloadQueue chan core.Downloadable
+	loadingQueue  chan publication.Publication
+	downloadQueue chan publication.Publication
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -31,7 +31,7 @@ type ProviderQueue struct {
 func NewProviderQueue(
 	provider models.Provider,
 	parentCtx context.Context,
-	client core.Client,
+	client publication.Client,
 	log zerolog.Logger,
 ) *ProviderQueue {
 
@@ -39,8 +39,8 @@ func NewProviderQueue(
 
 	pq := &ProviderQueue{
 		providerName:  provider,
-		loadingQueue:  make(chan core.Downloadable, 100),
-		downloadQueue: make(chan core.Downloadable, 100),
+		loadingQueue:  make(chan publication.Publication, 100),
+		downloadQueue: make(chan publication.Publication, 100),
 		ctx:           ctx,
 		cancel:        cancel,
 		log:           log.With().Any("provider", provider).Logger(),
@@ -81,14 +81,13 @@ func (pq *ProviderQueue) worker() {
 		case content := <-pq.loadingQueue: // Safeguard in case of edge cases
 			pq.processLoadInfo(content)
 		case content := <-pq.downloadQueue:
-			content.Logger().Trace().Msg("starting download")
 			content.DownloadContent(pq.ctx)
 		}
 	}
 }
 
 // processLoadInfo handles loading information for content, this is a blocking operation
-func (pq *ProviderQueue) processLoadInfo(content core.Downloadable) {
+func (pq *ProviderQueue) processLoadInfo(content publication.Publication) {
 	if content == nil {
 		return
 	}
@@ -115,7 +114,7 @@ func (pq *ProviderQueue) processLoadInfo(content core.Downloadable) {
 }
 
 // AddToLoadingQueue adds content to the loading queue
-func (pq *ProviderQueue) AddToLoadingQueue(content core.Downloadable) error {
+func (pq *ProviderQueue) AddToLoadingQueue(content publication.Publication) error {
 	select {
 	case pq.loadingQueue <- content:
 		return nil
@@ -127,7 +126,7 @@ func (pq *ProviderQueue) AddToLoadingQueue(content core.Downloadable) error {
 }
 
 // AddToDownloadQueue adds content to the download queue (for ready content)
-func (pq *ProviderQueue) AddToDownloadQueue(content core.Downloadable) error {
+func (pq *ProviderQueue) AddToDownloadQueue(content publication.Publication) error {
 	select {
 	case pq.downloadQueue <- content:
 		return nil

@@ -1,4 +1,4 @@
-package common
+package publication
 
 import (
 	"testing"
@@ -56,7 +56,7 @@ func TestCore_IsContent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			content, got := IsCbz(tt.diskName)
+			content, got := isCbz(tt.diskName)
 
 			if got != tt.want {
 				t.Errorf("IsContent() = %v, want %v", got, tt.want)

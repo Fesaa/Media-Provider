@@ -335,7 +335,7 @@ func (t *torrentImpl) GetInfo() payload.InfoStat {
 	}
 }
 
-func (t *torrentImpl) Progress() (int64, *int64, int64) {
+func (t *torrentImpl) Progress() (int64, int64, int64) {
 	c := t.t.Stats().BytesReadData
 	bytesRead := c.Int64()
 	bytesDiff := bytesRead - t.lastRead
@@ -345,12 +345,11 @@ func (t *torrentImpl) Progress() (int64, *int64, int64) {
 	t.lastTime = time.Now()
 
 	size := t.size()
-	estimated := func() *int64 {
+	estimated := func() int64 {
 		if speed == 0 {
-			return nil
+			return 0
 		}
-		es := (size - bytesRead) / speed
-		return &es
+		return (size - bytesRead) / speed
 	}()
 
 	return utils.Percent(t.t.BytesCompleted(), size), estimated, speed

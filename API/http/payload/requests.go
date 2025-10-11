@@ -1,17 +1,14 @@
 package payload
 
 import (
-	"strconv"
-	"strings"
-
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/utils"
 )
 
 type SearchRequest struct {
-	Provider  []models.Provider   `json:"provider" validate:"required,min=1,dive,provider"`
-	Query     string              `json:"query"`
-	Modifiers map[string][]string `json:"modifiers,omitempty" validate:"dive,keys,required,endkeys,dive,required"`
+	Provider  []models.Provider `json:"provider" validate:"required,min=1,dive,provider"`
+	Query     string            `json:"query"`
+	Modifiers utils.SmartMap    `json:"modifiers,omitempty" validate:"dive,keys,required,endkeys,dive,required"`
 }
 
 type DownloadRequest struct {
@@ -34,77 +31,35 @@ func (r DownloadRequest) IncludesMetadataSlice(keys []string) bool {
 
 // IncludesMetadata returns true if the request includes metadata for all passed keys, false otherwise
 func (r DownloadRequest) IncludesMetadata(keys ...string) bool {
-	for _, key := range keys {
-		if _, ok := r.DownloadMetadata.Extra[key]; !ok {
-			return false
-		}
-	}
-	return true
+	return r.DownloadMetadata.Extra.HasKeys(keys...)
 }
 
 // GetStrings returns the metadata associated with the key as a slice of strings
 // An empty slice will return false
 func (r DownloadRequest) GetStrings(key string) ([]string, bool) {
-	values, ok := r.DownloadMetadata.Extra[key]
-	values = utils.Filter(values, func(s string) bool {
-		return len(s) > 0
-	})
-	return values, ok && len(values) > 0
+	return r.DownloadMetadata.Extra.GetStrings(key)
 }
 
 // GetString returns the metadata associated with the key as a string,
 // an empty string is returned if not present
 func (r DownloadRequest) GetString(key string, fallback ...string) (string, bool) {
-	values, ok := r.GetStrings(key)
-	if !ok {
-		if len(fallback) > 0 {
-			return fallback[0], true
-		}
-		return "", false
-	}
-
-	return values[0], true
+	return r.DownloadMetadata.Extra.GetString(key, fallback...)
 }
 
 func (r DownloadRequest) GetStringOrDefault(key string, fallback string) string {
-	s, ok := r.GetString(key)
-	if !ok {
-		return fallback
-	}
-	return s
+	return r.DownloadMetadata.Extra.GetStringOrDefault(key, fallback)
 }
 
 // GetInt returns the metadata associated with the key as an int,
 // zero is returned if the value is not present or if conversion failed
 func (r DownloadRequest) GetInt(key string, fallback ...int) (int, error) {
-	val, ok := r.GetString(key)
-	if !ok {
-		if len(fallback) > 0 {
-			return fallback[0], nil
-		}
-		return 0, nil
-	}
-	i, err := strconv.Atoi(val)
-	if err != nil {
-		if len(fallback) > 0 {
-			return fallback[0], nil
-		}
-		return 0, err
-	}
-	return i, nil
+	return r.DownloadMetadata.Extra.GetInt(key, fallback...)
 }
 
 // GetBool returns the metadata associated with the key as a bool,
 // returns true if the value is equal to "true" while ignoring case
 func (r DownloadRequest) GetBool(key string, fallback ...bool) bool {
-	val, ok := r.GetString(key)
-	if !ok {
-		if len(fallback) > 0 {
-			return fallback[0]
-		}
-		return false
-	}
-	return strings.ToLower(val) == "true"
+	return r.DownloadMetadata.Extra.GetBool(key, fallback...)
 }
 
 type StopRequest struct {

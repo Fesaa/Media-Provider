@@ -1,4 +1,4 @@
-package core
+package publication
 
 import (
 	"context"
@@ -9,26 +9,26 @@ import (
 	"time"
 )
 
-func (c *Core[C, S]) Download(ctx context.Context, url string, tryAgain ...bool) ([]byte, error) {
+func (p *publication) Download(ctx context.Context, url string, tryAgain ...bool) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if customizer, ok := c.impl.(DownloadCustomizer); ok {
-		if err := customizer.CustomizeRequest(req); err != nil {
+	if hook, ok := p.repository.(HttpGetHook); ok {
+		if err = hook.HttpGetHook(req); err != nil {
 			return nil, err
 		}
 	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func(Body io.ReadCloser) {
 		if err = Body.Close(); err != nil {
-			c.Log.Warn().Err(err).Msg("error closing body")
+			p.log.Warn().Err(err).Msg("error closing body")
 		}
 	}(resp.Body)
 
@@ -58,18 +58,18 @@ func (c *Core[C, S]) Download(ctx context.Context, url string, tryAgain ...bool)
 		d = time.Minute
 	}
 
-	c.Log.Warn().Dur("sleeping_for", d).Msg("Hit rate limit, sleeping")
+	p.log.Warn().Dur("sleeping_for", d).Msg("Hit rate limit, sleeping")
 	time.Sleep(d)
-	return c.Download(ctx, url, false)
+	return p.Download(ctx, url, false)
 }
 
-func (c *Core[C, S]) DownloadAndWrite(ctx context.Context, url string, filePath string, tryAgain ...bool) error {
-	data, err := c.Download(ctx, url, tryAgain...)
+func (p *publication) DownloadAndWrite(ctx context.Context, url string, filePath string, tryAgain ...bool) error {
+	data, err := p.Download(ctx, url, tryAgain...)
 	if err != nil {
 		return err
 	}
 
-	if err = c.Fs.WriteFile(filePath, data, 0755); err != nil {
+	if err = p.fs.WriteFile(filePath, data, 0755); err != nil {
 		return err
 	}
 

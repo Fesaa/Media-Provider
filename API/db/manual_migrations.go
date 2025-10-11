@@ -99,6 +99,10 @@ var manualMigrations = []migration{
 		name: "20250920_FlattenSubscriptions",
 		f:    manual.FlattenSubscription,
 	},
+	{
+		name: "20251010_MigrateDynastySubscriptionIDs",
+		f:    manual.MigrateDynastySubscriptionIds,
+	},
 }
 
 func manualMigration(ctx context.Context, db *gorm.DB, log zerolog.Logger) error {

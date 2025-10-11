@@ -20,31 +20,33 @@ import (
 	"go.uber.org/dig"
 )
 
-func RegisterProviders(s services.ContentService, container *dig.Container) {
+func RegisterProviders(s services.ContentService, container *dig.Container) error {
 	scope := container.Scope("content-providers")
 
-	utils.Must(container.Provide(webtoon.NewRepository))
-	utils.Must(container.Provide(mangadex.NewRepository))
-	utils.Must(container.Provide(dynasty.NewRepository))
-	utils.Must(container.Provide(bato.NewRepository))
+	return utils.Errs(
+		container.Provide(webtoon.NewRepository),
+		container.Provide(mangadex.NewRepository),
+		container.Provide(dynasty.NewRepository),
+		container.Provide(bato.NewRepository),
 
-	utils.Must(scope.Provide(yts.NewBuilder))
-	utils.Must(scope.Provide(subsplease.NewBuilder))
-	utils.Must(scope.Provide(limetorrents.NewBuilder))
-	utils.Must(scope.Provide(webtoon.NewBuilder))
-	utils.Must(scope.Provide(mangadex.NewBuilder))
-	utils.Must(scope.Provide(dynasty.NewBuilder))
-	utils.Must(scope.Provide(nyaa.NewBuilder))
-	utils.Must(scope.Provide(bato.NewBuilder))
+		scope.Provide(yts.NewBuilder),
+		scope.Provide(subsplease.NewBuilder),
+		scope.Provide(limetorrents.NewBuilder),
+		scope.Provide(webtoon.NewBuilder),
+		scope.Provide(mangadex.NewBuilder),
+		scope.Provide(dynasty.NewBuilder),
+		scope.Provide(nyaa.NewBuilder),
+		scope.Provide(bato.NewBuilder),
 
-	utils.Must(registerProviderAdapter[*yts.Builder](s, scope))
-	utils.Must(registerProviderAdapter[*subsplease.Builder](s, scope))
-	utils.Must(registerProviderAdapter[*limetorrents.Builder](s, scope))
-	utils.Must(registerProviderAdapter[*webtoon.Builder](s, scope))
-	utils.Must(registerProviderAdapter[*mangadex.Builder](s, scope))
-	utils.Must(registerProviderAdapter[*dynasty.Builder](s, scope))
-	utils.Must(registerProviderAdapter[*nyaa.Builder](s, scope))
-	utils.Must(registerProviderAdapter[*bato.Builder](s, scope))
+		registerProviderAdapter[*yts.Builder](s, scope),
+		registerProviderAdapter[*subsplease.Builder](s, scope),
+		registerProviderAdapter[*limetorrents.Builder](s, scope),
+		registerProviderAdapter[*webtoon.Builder](s, scope),
+		registerProviderAdapter[*mangadex.Builder](s, scope),
+		registerProviderAdapter[*dynasty.Builder](s, scope),
+		registerProviderAdapter[*nyaa.Builder](s, scope),
+		registerProviderAdapter[*bato.Builder](s, scope),
+	)
 }
 
 type defaultProviderAdapter[T any, S any] struct {

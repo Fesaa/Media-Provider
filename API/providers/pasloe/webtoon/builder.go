@@ -5,7 +5,7 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -14,7 +14,7 @@ import (
 type Builder struct {
 	log        zerolog.Logger
 	repository Repository
-	ps         core.Client
+	ps         publication.Client
 }
 
 func (b *Builder) Provider() models.Provider {
@@ -55,12 +55,12 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{
 		Definitions: []payload.DownloadMetadataDefinition{
 			{
-				Key:           core.IncludeCover,
+				Key:           publication.IncludeCover,
 				FormType:      payload.SWITCH,
 				DefaultOption: "true",
 			},
 			{
-				Key:      core.TitleOverride,
+				Key:      publication.TitleOverride,
 				Advanced: true,
 				FormType: payload.TEXT,
 			},
@@ -72,7 +72,7 @@ func (b *Builder) Client() services.Client {
 	return b.ps
 }
 
-func NewBuilder(log zerolog.Logger, ps core.Client, repository Repository) *Builder {
+func NewBuilder(log zerolog.Logger, ps publication.Client, repository Repository) *Builder {
 	return &Builder{
 		log:        log.With().Str("handler", "webtoon-provider").Logger(),
 		repository: repository,

@@ -133,7 +133,8 @@ func TestWithBody(t *testing.T) {
 	}
 
 	// It's fine to re-use
-	validationService := services.ValidationServiceProvider(services.ValidatorProvider(), zerolog.Nop())
+	validationService := services.ValidationServiceProvider(utils.MustReturn(services.ValidatorProvider()), zerolog.Nop())
+
 	container := dig.New()
 	utils.Must(container.Provide(utils.Identity(validationService)))
 

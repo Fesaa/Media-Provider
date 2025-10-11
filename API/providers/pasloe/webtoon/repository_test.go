@@ -43,7 +43,7 @@ func TestRepository_LoadImages(t *testing.T) {
 	}
 
 	time.Sleep(1 * time.Second)
-	got, err := repo.LoadImages(context.Background(), chpt)
+	got, err := repo.ChapterImages(context.Background(), chpt)
 	if err != nil {
 		if strings.Contains(err.Error(), "429") {
 			t.Skipf("skipping due to rate limit")

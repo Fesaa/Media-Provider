@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/internal/comicinfo"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
@@ -62,8 +64,8 @@ var (
 
 type Repository interface {
 	Search(ctx context.Context, options SearchOptions) ([]SearchResult, error)
-	SeriesInfo(ctx context.Context, id string) (Series, error)
-	ChapterImages(ctx context.Context, id string) ([]string, error)
+	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
 }
 
 func NewRepository(httpClient *menou.Client, logger zerolog.Logger, markdown services.MarkdownService) Repository {
@@ -113,13 +115,15 @@ func (r *repository) selectionToSearchResult(_ int, sel *goquery.Selection) Sear
 	return sr
 }
 
-func extractSeperatedList(sel *goquery.Selection, sep string) []string {
-	res := sel.Map(func(i int, s *goquery.Selection) string {
-		return strings.TrimSpace(s.Text())
+func extractSeperatedList(sel *goquery.Selection, sep string) []publication.Tag {
+	res := goquery.Map(sel, func(i int, s *goquery.Selection) publication.Tag {
+		return publication.Tag{
+			Value: strings.TrimSpace(s.Text()),
+		}
 	})
 
-	return utils.Filter(res, func(s string) bool {
-		return s != sep
+	return utils.Filter(res, func(s publication.Tag) bool {
+		return s.Value != sep
 	})
 
 }
@@ -163,25 +167,31 @@ func searchUrl(options SearchOptions) string {
 	return uri.String()
 }
 
-func (r *repository) SeriesInfo(ctx context.Context, id string) (Series, error) {
+func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error) {
 	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, id))
 	if err != nil {
-		return Series{}, err
+		return publication.Series{}, err
 	}
 
 	info := doc.Find("div.mt-3.grow.grid.gap-3.grid-cols-1")
 
-	return Series{
+	tss := utils.Settable[publication.Status]{}
+	if ts := toPublicationStatus(strings.ToLower(info.Find("div.space-y-2 > div > span.font-bold.uppercase").Eq(1).Text())); ts != "" {
+		tss.Set(ts)
+	}
+
+	return publication.Series{
 		Id:                id,
 		CoverUrl:          doc.Find("main > div > div > div > img").AttrOr("src", ""),
 		Title:             cleanTitle(info.Find("div > h3 a.link.link-hover").First().Text()),
-		OriginalTitle:     info.Find("div > div > span").First().Text(),
-		Authors:           goquery.Map(info.Find("div.text-sm > a.link.link-hover.link-primary"), mapAuthor),
+		AltTitle:          info.Find("div > div > span").First().Text(),
+		People:            goquery.Map(info.Find("div.text-sm > a.link.link-hover.link-primary"), mapAuthor),
 		Tags:              extractSeperatedList(info.Find("div.space-y-2 > div.flex.items-center.flex-wrap > span > span"), ","),
-		PublicationStatus: Publication(strings.ToLower(info.Find("div.space-y-2 > div > span.font-bold.uppercase").First().Text())),
-		BatoUploadStatus:  Publication(strings.ToLower(info.Find("div.space-y-2 > div > span.font-bold.uppercase").Eq(1).Text())),
-		Summary:           r.markdown.SanitizeHtml(doc.Find(`meta[name="description"]`).First().AttrOr("content", "")),
-		WebLinks:          info.Find("div.limit-html div.limit-html-p a").Map(mapToContent),
+		Status:            toPublicationStatus(strings.ToLower(info.Find("div.space-y-2 > div > span.font-bold.uppercase").First().Text())),
+		TranslationStatus: tss,
+		Description:       r.markdown.SanitizeHtml(doc.Find(`meta[name="description"]`).First().AttrOr("content", "")),
+		Links:             info.Find("div.limit-html div.limit-html-p a").Map(mapToContent),
+		RefUrl:            fmt.Sprintf("%s/title/%s", Domain, id),
 		Chapters:          goquery.Map(doc.Find(`[name="chapter-list"] astro-slot > div`), r.readChapters),
 	}, nil
 }
@@ -196,26 +206,26 @@ func cleanTitle(title string) string {
 	return strings.TrimSpace(title)
 }
 
-func mapAuthor(_ int, sel *goquery.Selection) Author {
+func mapAuthor(_ int, sel *goquery.Selection) publication.Person {
 	cleaned := mapToContent(-1, sel)
 
-	for v, role := range AuthorMappings {
+	for v, roles := range AuthorMappings {
 		if strings.Contains(cleaned, v) {
-			return Author{
+			return publication.Person{
 				Name:  strings.ReplaceAll(cleaned, v, ""),
-				Roles: role,
+				Roles: roles,
 			}
 		}
 	}
 
-	return Author{
+	return publication.Person{
 		Name:  cleaned,
 		Roles: comicinfo.Roles{comicinfo.Writer},
 	}
 }
 
-func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
-	chpt := Chapter{}
+func (r *repository) readChapters(_ int, s *goquery.Selection) publication.Chapter {
+	chpt := publication.Chapter{}
 
 	uriEl := s.Find("div > a.link-hover.link-primary").First()
 	chpt.Id = strings.TrimPrefix(uriEl.AttrOr("href", ""), "/title/")
@@ -232,7 +242,7 @@ func (r *repository) readChapters(_ int, s *goquery.Selection) Chapter {
 
 	translatorEl := s.Find("div.avatar > div > a").First()
 	if translatorEl != nil && translatorEl.AttrOr("href", "") != "" {
-		chpt.Translator = strings.TrimPrefix(translatorEl.AttrOr("href", ""), "/u/")
+		chpt.Translator = []string{strings.TrimPrefix(translatorEl.AttrOr("href", ""), "/u/")}
 	}
 
 	return chpt
@@ -276,8 +286,8 @@ func extractTitle(s string) string {
 	return strings.TrimSpace(s[idx+1:])
 }
 
-func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, id))
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, chapter.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -305,12 +315,12 @@ func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, er
 	}
 
 	if len(imageProps.ImageFiles) != 2 {
-		return nil, fmt.Errorf("no image props found for %s", id)
+		return nil, fmt.Errorf("no image props found for %s", chapter.Id)
 	}
 
 	imagePropsString, ok := imageProps.ImageFiles[1].(string)
 	if !ok {
-		return nil, fmt.Errorf("no image props found for %s, was not a string", id)
+		return nil, fmt.Errorf("no image props found for %s, was not a string", chapter.Id)
 	}
 
 	var imageFiles [][]any
@@ -326,7 +336,7 @@ func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, er
 
 		out[i], ok = imageFiles[i][1].(string)
 		if !ok {
-			return nil, fmt.Errorf("no image props found for %s, was not a string", id)
+			return nil, fmt.Errorf("no image props found for %s, was not a string", chapter.Id)
 		}
 	}
 
