@@ -11,6 +11,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db"
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/contextkey"
 	"github.com/Fesaa/Media-Provider/internal/metadata"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -18,21 +19,34 @@ import (
 
 type SettingsService interface {
 	GetSettingsDto(context.Context) (payload.Settings, error)
+	// UpdateSettingsDto updates the current settings
 	UpdateSettingsDto(context.Context, payload.Settings) error
 	UpdateCurrentVersion(ctx context.Context) error
 }
 
 type settingsService struct {
-	unitOfWork *db.UnitOfWork
-	log        zerolog.Logger
+	unitOfWork          *db.UnitOfWork
+	subscriptionService SubscriptionService
+	signalR             SignalRService
+	transLoco           TranslocoService
+	log                 zerolog.Logger
 
 	cachedSettings utils.CachedItem[payload.Settings]
 }
 
-func SettingsServiceProvider(unitOfWork *db.UnitOfWork, log zerolog.Logger) SettingsService {
+func SettingsServiceProvider(
+	unitOfWork *db.UnitOfWork,
+	subService SubscriptionService,
+	signalR SignalRService,
+	transLoco TranslocoService,
+	log zerolog.Logger,
+) SettingsService {
 	return &settingsService{
-		unitOfWork: unitOfWork,
-		log:        log.With().Str("handler", "settings-service").Logger(),
+		unitOfWork:          unitOfWork,
+		subscriptionService: subService,
+		signalR:             signalR,
+		transLoco:           transLoco,
+		log:                 log.With().Str("handler", "settings-service").Logger(),
 	}
 }
 
@@ -77,6 +91,11 @@ func (s *settingsService) GetSettingsDto(ctx context.Context) (payload.Settings,
 }
 
 func (s *settingsService) UpdateSettingsDto(ctx context.Context, dto payload.Settings) error {
+	cur, err := s.GetSettingsDto(ctx)
+	if err != nil {
+		return err
+	}
+
 	settings, err := s.unitOfWork.Settings.GetAll(ctx)
 	if err != nil {
 		return err
@@ -96,6 +115,20 @@ func (s *settingsService) UpdateSettingsDto(ctx context.Context, dto payload.Set
 	if err = s.unitOfWork.Settings.Update(ctx, settings); err != nil {
 		return err
 	}
+
+	if cur.SubscriptionRefreshHour != dto.SubscriptionRefreshHour {
+		if err = s.subscriptionService.UpdateTask(ctx, dto.SubscriptionRefreshHour); err != nil {
+			s.log.Error().Err(err).Msg("failed to update subscription refresh hour")
+			s.signalR.Notify(ctx, models.NewNotification().
+				WithTitle(s.transLoco.GetTranslation("failed-to-register-sub-task-title")).
+				WithSummary(s.transLoco.GetTranslation("failed-to-register-sub-task-summary")).
+				WithOwner(contextkey.GetFromCtxOrDefault(ctx, contextkey.User).ID).
+				WithGroup(models.GroupError).
+				WithColour(models.Error).
+				Build())
+		}
+	}
+
 	s.cachedSettings.SetExpired()
 	return nil
 }
