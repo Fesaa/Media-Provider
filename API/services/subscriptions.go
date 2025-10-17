@@ -25,8 +25,8 @@ type SubscriptionService interface {
 	// Delete the subscription with ID
 	Delete(context.Context, int) error
 
-	// UpdateTask recreates the underlying cronjob. Generally only called when the hour to run susbcriptions changes
-	UpdateTask(ctx context.Context, hour ...int) error
+	// UpdateHour recreates the underlying cronjob. Generally only called when the hour to run subscriptions changes
+	UpdateHour(ctx context.Context) error
 }
 
 type subscriptionService struct {
@@ -67,6 +67,10 @@ func SubscriptionServiceProvider(unitOfWork *db.UnitOfWork, provider ContentServ
 	return service, nil
 }
 
+func (s *subscriptionService) UpdateHour(ctx context.Context) error {
+	return s.OnStartUp(ctx)
+}
+
 func (s *subscriptionService) OnStartUp(ctx context.Context) error {
 	subs, err := s.unitOfWork.Subscriptions.All(ctx)
 	if err != nil {
@@ -78,11 +82,18 @@ func (s *subscriptionService) OnStartUp(ctx context.Context) error {
 		return err
 	}
 
-	for _, sub := range subs {
-		sub.NextExecution = sub.GetNextExecution(settings.SubscriptionRefreshHour)
-		if err = s.unitOfWork.Subscriptions.Update(ctx, sub); err != nil {
-			return err
+	err = s.unitOfWork.Transaction(func(unitOfWork *db.UnitOfWork) error {
+		for _, sub := range subs {
+			sub.NextExecution = sub.GetNextExecution(settings.SubscriptionRefreshHour)
+			if err = unitOfWork.Subscriptions.Update(ctx, sub); err != nil {
+				return err
+			}
 		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return s.UpdateTask(ctx, settings.SubscriptionRefreshHour)

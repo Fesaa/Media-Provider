@@ -75,7 +75,7 @@ func (cr *configRoutes) updateConfig(ctx *fiber.Ctx, dto payload.Settings) error
 	}
 
 	if cur.SubscriptionRefreshHour != dto.SubscriptionRefreshHour {
-		if err = cr.SubscriptionService.UpdateTask(ctx.UserContext(), dto.SubscriptionRefreshHour); err != nil {
+		if err = cr.SubscriptionService.UpdateHour(ctx.UserContext()); err != nil {
 			log.Error().Err(err).Msg("failed to update subscription refresh hour")
 			cr.SignalR.Notify(ctx.UserContext(), models.NewNotification().
 				WithTitle(cr.TransLoco.GetTranslation("failed-to-register-sub-task-title")).
