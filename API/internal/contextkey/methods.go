@@ -17,7 +17,7 @@ func (ctx ContextKey[T]) Value() string {
 // The fiber.Ctx.UserContext is also updated with the same value
 func SetInContext[T any](ctx *fiber.Ctx, key ContextKey[T], value T) {
 	ctx.Locals(key.Value(), value)
-	ctx.SetUserContext(context.WithValue(ctx.UserContext(), key.Value(), value))
+	ctx.SetUserContext(context.WithValue(ctx.UserContext(), key, value))
 }
 
 // GetFromContextSafe returns the value of the context, or zero, false if not present
