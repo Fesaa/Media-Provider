@@ -18,7 +18,7 @@ import {User} from "../_models/user";
 import {Page} from "../_models/page";
 import {AsyncPipe, TitleCasePipe} from "@angular/common";
 import {animate, style, transition, trigger} from "@angular/animations";
-import {fromEvent} from "rxjs";
+import {catchError, filter, fromEvent, of, take, tap, timeout} from "rxjs";
 
 interface NavItem {
   label: string;
@@ -95,12 +95,16 @@ export class NavHeaderComponent implements OnInit {
       const user = this.currentUser();
       if (!user) return;
 
-      this.transLoco.events$.subscribe(event => {
-        if (event.type === "translationLoadSuccess") {
+      this.transLoco.events$.pipe(
+        filter(e => e.type === "translationLoadSuccess"),
+        take(1),
+        timeout(1000),
+        catchError(() => of(null)),
+        tap(() => {
           this.loadPages();
           this.setAccountItems(user);
-        }
-      });
+        })
+      ).subscribe();
 
       this.notificationService.amount().subscribe(amount => {
         this.notifications.set(amount);
