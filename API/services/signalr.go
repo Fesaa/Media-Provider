@@ -9,7 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/philippseith/signalr"
 	"github.com/rs/zerolog"
-	"go.uber.org/dig"
 )
 
 const (
@@ -34,34 +33,48 @@ type SignalRService interface {
 	Notify(context.Context, models.Notification)
 }
 
-type SignalRParams struct {
-	dig.In
-	Log  zerolog.Logger
-	Auth AuthService
-}
-
 type signalrService struct {
 	signalr.Hub
 
 	app    *fiber.App
 	server signalr.Server
-	auth   AuthService
 	log    zerolog.Logger
 
 	connectionHappened bool
 	clients            utils.SafeMap[int, string]
 }
 
-func SignalRServiceProvider(params SignalRParams) SignalRService {
+func SignalRServiceProvider(log zerolog.Logger) SignalRService {
 	return &signalrService{
-		auth:    params.Auth,
 		clients: utils.NewSafeMap[int, string](),
-		log:     params.Log.With().Str("handler", "signalR-service").Logger(),
+		log:     log.With().Str("handler", "signalR-service").Logger(),
 	}
 }
 
-func RegisterSignalREndPoint(service SignalRService, app *fiber.App) error {
-	return (service.(*signalrService)).setup(app)
+func RegisterSignalREndPoint(service SignalRService, app *fiber.App, auth AuthService) error {
+	s := service.(*signalrService)
+
+	server, err := signalr.NewServer(context.Background(), signalr.UseHub(s),
+		signalr.Logger(&kitLoggerAdapter{log: s.log}, false))
+	if err != nil {
+		return err
+	}
+
+	s.server = server
+	s.app = app
+
+	router := &muxAdapter{
+		app:     app,
+		signalr: s,
+		auth:    auth,
+	}
+
+	server.MapHTTP(func() signalr.MappableRouter {
+		return router
+	}, "/ws")
+
+	return nil
+
 }
 
 func (s *signalrService) OnConnected(string) {
@@ -151,21 +164,4 @@ func (s *signalrService) sendToUser(userId int, n models.Notification) {
 
 	s.Clients().Client(connId).Send(string(payload.EventTypeNotification), n)
 	s.Clients().Group(connId).Send(string(payload.EvenTypeNotificationAdd), fiber.Map{})
-}
-
-func (s *signalrService) setup(app *fiber.App) error {
-	server, err := signalr.NewServer(context.Background(), signalr.UseHub(s),
-		signalr.Logger(&kitLoggerAdapter{log: s.log}, false))
-	if err != nil {
-		return err
-	}
-
-	s.server = server
-	s.app = app
-
-	server.MapHTTP(func() signalr.MappableRouter {
-		return s
-	}, "/ws")
-
-	return nil
 }

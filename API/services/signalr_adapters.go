@@ -44,16 +44,22 @@ func (n kitLoggerAdapter) Log(keyvals ...interface{}) error {
 	return nil
 }
 
-func (s *signalrService) HandleFunc(path string, f func(w http.ResponseWriter, r *http.Request)) {
+type muxAdapter struct {
+	app     *fiber.App
+	signalr *signalrService
+	auth    AuthService
+}
+
+func (s *muxAdapter) HandleFunc(path string, f func(w http.ResponseWriter, r *http.Request)) {
 	s.app.Get(path, adaptor.HTTPHandlerFunc(f))
 	s.app.Post(path, adaptor.HTTPHandlerFunc(f))
 }
 
-func (s *signalrService) Handle(path string, _ http.Handler) {
-	s.app.Get(path, s.AccessTokenMapper, s.auth.Middleware, s.ConnectEndpoint)
+func (s *muxAdapter) Handle(path string, _ http.Handler) {
+	s.app.Get(path, s.AccessTokenMapper, s.auth.Middleware, s.signalr.ConnectEndpoint)
 }
 
-func (s *signalrService) AccessTokenMapper(ctx *fiber.Ctx) error {
+func (s *muxAdapter) AccessTokenMapper(ctx *fiber.Ctx) error {
 	token := ctx.Query("access_token")
 	if token != "" {
 		ctx.Request().Header.Set("Authorization", "Bearer "+token)

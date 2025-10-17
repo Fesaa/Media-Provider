@@ -8,7 +8,7 @@ import (
 )
 
 // Value returns the string value of the ContextKey, this should be used when setting or getting
-// from fiber.Ctx locals
+// from fiber.Ctx locals. context.Context keys should use the type
 func (ctx ContextKey[T]) Value() string {
 	return string(ctx)
 }
@@ -37,14 +37,14 @@ func GetFromContext[T any](ctx *fiber.Ctx, key ContextKey[T]) T {
 }
 
 func GetFromCtxSafe[T any](ctx context.Context, key ContextKey[T]) (T, bool) {
-	value, ok := ctx.Value(key.Value()).(T)
+	value, ok := ctx.Value(key).(T)
 	return value, ok
 }
 
 func GetFromCtx[T any](ctx context.Context, key ContextKey[T]) T {
 	value, ok := GetFromCtxSafe(ctx, key)
 	if !ok {
-		panic(fmt.Errorf("key %s not found in context", key.Value()))
+		panic(fmt.Errorf("key %s not found in context", key))
 	}
 	return value
 }
