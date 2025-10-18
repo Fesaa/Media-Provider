@@ -187,10 +187,10 @@ func (p *publication) Id() string {
 
 func (p *publication) Title() string {
 	if p.series != nil {
-		return p.series.Title
+		return utils.NonEmpty(p.req.GetStringOrDefault(TitleOverride, ""), p.series.Title)
 	}
 
-	return utils.NonEmpty(p.req.TempTitle, p.req.Id)
+	return utils.NonEmpty(p.req.GetStringOrDefault(TitleOverride, ""), p.req.TempTitle, p.req.Id)
 }
 
 func (p *publication) Provider() models.Provider {
@@ -240,7 +240,7 @@ func (p *publication) Cancel() {
 
 func (p *publication) GetDownloadDir() string {
 	if p.series != nil {
-		return path.Join(p.req.BaseDir, p.series.Title)
+		return path.Join(p.req.BaseDir, p.Title())
 	}
 
 	return p.req.BaseDir
