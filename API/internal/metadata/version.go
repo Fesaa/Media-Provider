@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Version SemanticVersion = "0.4.0"
+	Version SemanticVersion = "0.4.1"
 )
 
 type SemanticVersion string
