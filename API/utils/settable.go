@@ -7,6 +7,24 @@ type Settable[T any] struct {
 	set bool
 }
 
+// NewSettable returns a Settable with the first passed value. If no value is passed, returns a non set Settable
+func NewSettable[T any](v ...T) Settable[T] {
+	if len(v) == 0 {
+		return Settable[T]{}
+	}
+
+	return Settable[T]{val: v[0], set: true}
+}
+
+// NewSettableFromErr returns a set Settable only if err is nil
+func NewSettableFromErr[T any](value T, err error) Settable[T] {
+	if err != nil {
+		return Settable[T]{}
+	}
+
+	return Settable[T]{val: value, set: true}
+}
+
 // Set sets the value
 func (s *Settable[T]) Set(t T) {
 	s.set = true

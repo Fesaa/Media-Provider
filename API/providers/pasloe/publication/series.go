@@ -26,8 +26,8 @@ type Series struct {
 	Year              int
 	OriginalLanguage  string
 
-	highestVolume  utils.Settable[float64]
-	highestChapter utils.Settable[float64]
+	HighestVolume  utils.Settable[float64]
+	HighestChapter utils.Settable[float64]
 
 	ContentRating comicinfo.AgeRating
 	Tags          []Tag

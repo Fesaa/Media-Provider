@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
+	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 )
@@ -28,110 +29,45 @@ func tempRepo(t *testing.T, w io.Writer, ctx context.Context) Repository {
 	}, zerolog.New(w))
 }
 
-/*
 func TestRepository_GetManga(t *testing.T) {
-	r := tempRepo(t, io.Discard)
+	r := tempRepo(t, io.Discard, t.Context())
 
-	res, err := r.GetManga(context.Background(), RainbowsAfterStormsID)
+	series, err := r.SeriesInfo(t.Context(), RainbowsAfterStormsID, payload.DownloadRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if res.Data.Attributes.LangTitle("en") != RainbowsAfterStorms {
-		t.Errorf("got %s expected %s", res.Data.Attributes.LangTitle("en"), RainbowsAfterStorms)
+	if series.Title != RainbowsAfterStorms {
+		t.Errorf("got %s expected %s", series.Title, RainbowsAfterStorms)
 	}
 }
 
-func TestRepository_SearchManga(t *testing.T) {
-	r := tempRepo(t, io.Discard)
-	_, err := r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: true})
+func TestRepository_GetCorrectStatus(t *testing.T) {
+	r := tempRepo(t, io.Discard, t.Context())
+
+	// My Intern Bullied Me Again!
+	series, err := r.SeriesInfo(t.Context(), "c408ec80-586a-4d87-8bbc-e5e8d17a3898", payload.DownloadRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Second)
-	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: false, IncludedTags: []string{"Romance"}})
-	if err != nil {
-		t.Fatal(err)
+	want := float64(8)
+	got, ok := series.HighestVolume.Get()
+	if !ok {
+		t.Errorf("highest volume is not set, should have been")
 	}
 
-	time.Sleep(time.Second)
-	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: false, IncludedTags: []string{"FRYTGUHIJO"}})
-	if err == nil {
-		t.Fatal("expected error")
+	if want != got {
+		t.Errorf("HighestVolume: got %f want %f", got, want)
 	}
 
-	time.Sleep(time.Second)
-	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: true, IncludedTags: []string{"FRYTGUHIJO"}})
-	if err != nil {
-		t.Fatal(err)
+	want = float64(105)
+	got, ok = series.HighestChapter.Get()
+	if !ok {
+		t.Errorf("highest chapter is not set, should have been")
 	}
 
-	time.Sleep(time.Second)
-	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: false, ExcludedTags: []string{"Romance"}})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	time.Sleep(time.Second)
-	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: false, ExcludedTags: []string{"FRYTGUHIJO"}})
-	if err == nil {
-		t.Fatal("expected error")
-	}
-
-	time.Sleep(time.Second)
-	_, err = r.SearchManga(context.Background(), SearchOptions{SkipNotFoundTags: true, ExcludedTags: []string{"FRYTGUHIJO"}})
-	if err != nil {
-		t.Fatal(err)
+	if want != got {
+		t.Errorf("HighestChapter: got %f want %f", got, want)
 	}
 }
-
-func TestRepository_GetChapters(t *testing.T) {
-	r := tempRepo(t, io.Discard)
-	res, err := r.GetChapters(context.Background(), RainbowsAfterStormsID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(res.Data) != 372 {
-		t.Errorf("got %d expected %d", len(res.Data), 372)
-	}
-}
-
-func TestRepository_GetCoverImages(t *testing.T) {
-	r := tempRepo(t, io.Discard)
-
-	res, err := r.GetCoverImages(context.Background(), RainbowsAfterStormsID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(res.Data) != 13 {
-		t.Errorf("got %d expected %d", len(res.Data), 13)
-	}
-}
-
-func TestRepository_GetCoverImagesOffSet(t *testing.T) {
-	r := tempRepo(t, io.Discard)
-	res, err := r.GetCoverImages(context.Background(), RainbowsAfterStormsID, 13)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(res.Data) != 0 {
-		t.Errorf("got %d expected %d", len(res.Data), 0)
-	}
-}
-
-func TestRepository_GetChapterImages(t *testing.T) {
-	r := tempRepo(t, io.Discard)
-	res, err := r.GetChapterImages(context.Background(), RainbowsAfterStormsLastChapterID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(res.FullImageUrls()) != 22 {
-		t.Errorf("got %d expected %d", len(res.FullImageUrls()), 22)
-	}
-}
-*/

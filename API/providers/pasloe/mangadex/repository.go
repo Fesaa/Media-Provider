@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/Fesaa/Media-Provider/db"
@@ -123,6 +124,8 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 		RefUrl:            m.Data.RefUrl(),
 		Status:            toPublicationStatus(m.Data.Attributes.Status),
 		TranslationStatus: utils.Settable[publication.Status]{},
+		HighestVolume:     utils.NewSettableFromErr(strconv.ParseFloat(m.Data.Attributes.LastVolume, 64)),
+		HighestChapter:    utils.NewSettableFromErr(strconv.ParseFloat(m.Data.Attributes.LastChapter, 64)),
 		Year:              m.Data.Attributes.Year,
 		OriginalLanguage:  m.Data.Attributes.OriginalLanguage,
 		ContentRating:     m.Data.Attributes.ContentRating.ComicInfoAgeRating(),

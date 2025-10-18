@@ -77,14 +77,14 @@ func (p *publication) buildComicInfoForChapter(ctx context.Context, chapter Chap
 		ci.AgeRating = ar
 	}
 
-	count, ok := p.GetCiStatus()
+	count, ok, finished := p.GetCiStatus()
 
 	if !ok {
 		return ci
 	}
 
 	ci.Count = count
-	if p.toggles.Toggled(toggleSubscriptionExhausted) || !p.req.IsSubscription {
+	if p.toggles.Toggled(toggleSubscriptionExhausted) || !p.req.IsSubscription || !finished {
 		return ci
 	}
 
@@ -265,22 +265,21 @@ func GetAgeRating(arm []models.AgeRatingMapping, tag string) (comicinfo.AgeRatin
 	return "", false
 }
 
-func (p *publication) GetCiStatus() (int, bool) {
+// GetCiStatus returns
+//
+// int: Count to set in ComicInfo
+//
+// bool: If the count should be set
+//
+// bool: If all chapters have been downloaded
+func (p *publication) GetCiStatus() (int, bool, bool) {
 	if p.series.Status != StatusCompleted {
-		return 0, false
+		return 0, false, false
 	}
 
 	ts, ok := p.series.TranslationStatus.Get()
 	if ok && ts != StatusCompleted {
-		return 0, false
-	}
-
-	if hv, ok := p.series.highestVolume.Get(); ok {
-		return int(hv), true
-	}
-
-	if hc, ok := p.series.highestChapter.Get(); ok {
-		return int(hc), true
+		return 0, false, false
 	}
 
 	// Fallback to getting it from chapters
@@ -296,13 +295,22 @@ func (p *publication) GetCiStatus() (int, bool) {
 		}
 	}
 
+	if hv, ok := p.series.HighestVolume.Get(); ok {
+		return int(hv), true, highestVolume == hv
+	}
+
+	if hc, ok := p.series.HighestChapter.Get(); ok {
+		return int(hc), true, highestChapter == hc
+	}
+
+	// When returning count from highest found volume/chapter. Assume series has completed
 	if highestVolume != 0 {
-		return int(highestVolume), true
+		return int(highestVolume), true, true
 	}
 
 	if highestChapter != 0 {
-		return int(highestChapter), true
+		return int(highestChapter), true, true
 	}
 
-	return 0, false
+	return 0, false, false
 }
