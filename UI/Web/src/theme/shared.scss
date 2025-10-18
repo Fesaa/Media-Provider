@@ -23,6 +23,10 @@ a {
   text-decoration: none;
 }
 
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
 a:hover {
   color: var(--secundairy-color);
   cursor: pointer;

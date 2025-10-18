@@ -1,5 +1,7 @@
 package mangadex
 
+import "fmt"
+
 type SearchOptions struct {
 	Query                  string
 	IncludedTags           []string
@@ -26,4 +28,64 @@ type Relationship struct {
 	Type       string         `json:"type"`
 	Related    string         `json:"related,omitempty"`
 	Attributes map[string]any `json:"attributes,omitempty"`
+}
+
+type ChapterImageSearchResponse struct {
+	Result  string      `json:"result"`
+	BaseUrl string      `json:"baseUrl"`
+	Chapter ChapterInfo `json:"chapter"`
+}
+
+// FullImageUrls returns the urls for full quality
+func (s *ChapterImageSearchResponse) FullImageUrls() []string {
+	urls := make([]string, len(s.Chapter.Data))
+	for i, image := range s.Chapter.Data {
+		urls[i] = fmt.Sprintf("%s/data/%s/%s", s.BaseUrl, s.Chapter.Hash, image)
+	}
+	return urls
+}
+
+type ChapterInfo struct {
+	Hash      string   `json:"hash"`
+	Data      []string `json:"data"`
+	DataSaver []string `json:"dataSaver"`
+}
+
+type ChapterSearchResponse Response[[]ChapterSearchData]
+
+type ChapterSearchData struct {
+	Id            string            `json:"id"`
+	Type          string            `json:"type"`
+	Attributes    ChapterAttributes `json:"attributes"`
+	Relationships []Relationship    `json:"relationships"`
+}
+
+type ChapterAttributes struct {
+	Volume             string `json:"volume"`
+	Chapter            string `json:"chapter"`
+	Title              string `json:"title"`
+	TranslatedLanguage string `json:"translatedLanguage"`
+	ExternalUrl        string `json:"externalUrl"`
+	PublishedAt        string `json:"publishedAt"`
+	ReadableAt         string `json:"readableAt"`
+	CreatedAt          string `json:"createdAt"`
+	UpdatedAt          string `json:"updatedAt"`
+	Pages              int    `json:"pages"`
+	Version            int    `json:"version"`
+}
+
+type TagResponse Response[[]TagData]
+
+type TagData struct {
+	Id         string        `json:"id"`
+	Type       string        `json:"type"`
+	Attributes TagAttributes `json:"attributes"`
+}
+
+type TagAttributes struct {
+	Name          map[string]string `json:"name"`
+	Description   map[string]string `json:"description"`
+	Group         string            `json:"group"`
+	Version       int               `json:"version"`
+	Relationships []Relationship    `json:"relationships"`
 }

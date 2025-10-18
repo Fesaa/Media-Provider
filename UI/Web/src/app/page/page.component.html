@@ -1,7 +1,7 @@
 @if (page() !== undefined) {
   <div class="" *transloco="let t;prefix:'page'">
 
-    <div [class.hidden]="!showForm()">
+    <div [class.hidden]="!showForm()" class="mx-2">
       <app-search-form
         [title]="page()!.title"
         [modifiers]="page()!.modifiers"

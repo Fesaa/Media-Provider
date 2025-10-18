@@ -85,7 +85,7 @@ export class ServerSettingsComponent {
       this.settingsForm.valueChanges.pipe(
         takeUntilDestroyed(this.destroyRef),
         distinctUntilChanged(),
-        debounceTime(100),
+        debounceTime(400),
         map(() => this.settingsForm?.getRawValue()),
         filter((dto) => { // Don't auto save when critical OIDC info changes
           if (!dto) return false;

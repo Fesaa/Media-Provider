@@ -1,5 +1,5 @@
 import {Component, computed, effect, input, output, signal} from '@angular/core';
-import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {CommonModule} from '@angular/common';
 import {SearchRequest} from "../../../_models/search";
 import {Modifier, ModifierType, ModifierValue} from "../../../_models/page";
@@ -92,6 +92,16 @@ export class SearchFormComponent {
     return settings;
   }
 
+  onModifierSwitchChange(mod: Modifier, event: Event) {
+    const selected = (event.target as HTMLInputElement).checked;
+    const value: ModifierValue = {
+      key: selected ? 'true' : 'false',
+      value: selected ? 'true' : 'false',
+      default: false,
+    }
+    this.onModifierSelection(mod, value);
+  }
+
   onModifierSelection(mod: Modifier, event: ModifierValue[] | ModifierValue) {
     this.modifierSelections.update(s => {
       s[mod.key] = Array.isArray(event) ? event.map(mv => mv.key) : [event.key];
@@ -127,4 +137,5 @@ export class SearchFormComponent {
   trackModifier = (index: number, modifier: Modifier) => {
     return `${this.title()}_${index}_${modifier.title}`
   };
+  protected readonly ModifierType = ModifierType;
 }

@@ -18,6 +18,7 @@ import (
 
 type SettingsService interface {
 	GetSettingsDto(context.Context) (payload.Settings, error)
+	// UpdateSettingsDto updates the current settings
 	UpdateSettingsDto(context.Context, payload.Settings) error
 	UpdateCurrentVersion(ctx context.Context) error
 }
@@ -29,7 +30,10 @@ type settingsService struct {
 	cachedSettings utils.CachedItem[payload.Settings]
 }
 
-func SettingsServiceProvider(unitOfWork *db.UnitOfWork, log zerolog.Logger) SettingsService {
+func SettingsServiceProvider(
+	unitOfWork *db.UnitOfWork,
+	log zerolog.Logger,
+) SettingsService {
 	return &settingsService{
 		unitOfWork: unitOfWork,
 		log:        log.With().Str("handler", "settings-service").Logger(),
@@ -96,6 +100,7 @@ func (s *settingsService) UpdateSettingsDto(ctx context.Context, dto payload.Set
 	if err = s.unitOfWork.Settings.Update(ctx, settings); err != nil {
 		return err
 	}
+
 	s.cachedSettings.SetExpired()
 	return nil
 }

@@ -13,6 +13,8 @@ export class ModifierTypePipe implements PipeTransform {
         return translate('modifier-type-pipe.multi')
       case ModifierType.DROPDOWN:
         return translate('modifier-type-pipe.dropdown')
+      case ModifierType.SWITCH:
+        return translate('modifier-type-pipe.switch')
     }
   }
 

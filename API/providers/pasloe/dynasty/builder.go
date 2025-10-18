@@ -6,7 +6,7 @@ import (
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/rs/zerolog"
@@ -15,7 +15,7 @@ import (
 type Builder struct {
 	log        zerolog.Logger
 	httpClient *menou.Client
-	ps         core.Client
+	ps         publication.Client
 	repository Repository
 }
 
@@ -36,8 +36,8 @@ func (b *Builder) Normalize(ctx context.Context, mangas []SearchData) []payload.
 	for i, manga := range mangas {
 		info[i] = payload.Info{
 			Name: manga.Title,
-			Tags: utils.Map(manga.Tags, func(t Tag) payload.InfoTag {
-				return payload.Of(t.DisplayName, "")
+			Tags: utils.Map(manga.Tags, func(t publication.Tag) payload.InfoTag {
+				return payload.Of(t.Value, "")
 			}),
 			InfoHash: manga.Id,
 			RefUrl:   manga.RefUrl(),
@@ -50,7 +50,8 @@ func (b *Builder) Normalize(ctx context.Context, mangas []SearchData) []payload.
 
 func (b *Builder) Transform(ctx context.Context, s payload.SearchRequest) SearchOptions {
 	return SearchOptions{
-		Query: s.Query,
+		Query:         s.Query,
+		AllowChapters: s.Modifiers.GetBool("AllowChapters", false),
 	}
 }
 
@@ -62,26 +63,26 @@ func (b *Builder) DownloadMetadata() payload.DownloadMetadata {
 	return payload.DownloadMetadata{
 		Definitions: []payload.DownloadMetadataDefinition{
 			{
-				Key:      core.DownloadOneShotKey,
+				Key:      publication.DownloadOneShotKey,
 				FormType: payload.SWITCH,
 			},
 			{
-				Key:      core.IncludeNotMatchedTagsKey,
+				Key:      publication.IncludeNotMatchedTagsKey,
 				Advanced: true,
 				FormType: payload.SWITCH,
 			},
 			{
-				Key:           core.IncludeCover,
+				Key:           publication.IncludeCover,
 				FormType:      payload.SWITCH,
 				DefaultOption: "true",
 			},
 			{
-				Key:      core.TitleOverride,
+				Key:      publication.TitleOverride,
 				Advanced: true,
 				FormType: payload.TEXT,
 			},
 			{
-				Key:      core.SkipVolumeWithoutChapter,
+				Key:      publication.SkipVolumeWithoutChapter,
 				Advanced: true,
 				FormType: payload.SWITCH,
 			},
@@ -93,7 +94,7 @@ func (b *Builder) Client() services.Client {
 	return b.ps
 }
 
-func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps core.Client, repository Repository) *Builder {
+func NewBuilder(log zerolog.Logger, httpClient *menou.Client, ps publication.Client, repository Repository) *Builder {
 	return &Builder{log.With().Str("handler", "dynasty-provider").Logger(),
 		httpClient, ps, repository}
 }

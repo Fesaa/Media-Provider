@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/Fesaa/Media-Provider/http/menou"
-	"github.com/Fesaa/Media-Provider/providers/pasloe/core"
+	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog"
@@ -19,13 +20,13 @@ import (
 const (
 	DOMAIN = "https://dynasty-scans.com"
 
-	SEARCH  = DOMAIN + "/search?q=%s&classes[]=Series"
-	SERIES  = DOMAIN + "/series/%s"
-	CHAPTER = DOMAIN + "/chapters/%s"
+	SEARCH              = "https://dynasty-scans.com/search?q=%s&classes[]=Series"
+	ChapterSearchSuffix = "&classes[]=Chapter"
+	CHAPTER             = "https://dynasty-scans.com/chapters/%s"
 
-	RELEASEDATAFORMAT = "Jan 2 '06"
-
-	jsonOffset = 2
+	RELEASEDATAFORMAT  = "Jan 2 '06"
+	ChapterReleaseDate = "Jan 2, 2006"
+	jsonOffset         = 2
 )
 
 var (
@@ -35,8 +36,8 @@ var (
 
 type Repository interface {
 	SearchSeries(ctx context.Context, options SearchOptions) ([]SearchData, error)
-	SeriesInfo(ctx context.Context, id string) (*Series, error)
-	ChapterImages(ctx context.Context, id string) ([]string, error)
+	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
 }
 
 type repository struct {
@@ -51,8 +52,8 @@ func NewRepository(httpClient *menou.Client, log zerolog.Logger) Repository {
 	}
 }
 
-func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, chapterURL(id))
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf(CHAPTER, chapter.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ func (r *repository) ChapterImages(ctx context.Context, id string) ([]string, er
 	})
 
 	r.log.Trace().
-		Str("chapterId", id).
+		Str("chapterId", chapter.Id).
 		Strs("images", urls).
 		Int("amount", len(urls)).
 		Msg("found chapter image ids")
@@ -113,33 +114,76 @@ func (r *repository) extractImageIDs(sel *goquery.Selection) ([]string, error) {
 	}), nil
 }
 
-func chapterURL(id string) string {
-	return fmt.Sprintf(CHAPTER, id)
-}
-
-func (r *repository) SeriesInfo(ctx context.Context, id string) (*Series, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, seriesURL(id))
+func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error) {
+	doc, err := r.httpClient.WrapInDoc(ctx, DOMAIN+id)
 	if err != nil {
-		return nil, err
+		return publication.Series{}, err
 	}
 
-	series := &Series{
-		Id:          id,
-		Title:       doc.Find(".tag-title b").Text(),
-		AltTitle:    doc.Find(".aliases b").Text(),
-		Description: doc.Find(".description p").Text(),
-		CoverUrl:    DOMAIN + doc.Find(".thumbnail").AttrOr("src", ""),
-		Status:      SeriesStatus(strings.TrimPrefix(doc.Find(".tag-title small").Last().Text(), "— ")),
-		Tags:        utils.Filter(goquery.Map(doc.Find(".tag-tags a"), toTag), core.NoneEmptyTag),
-		Authors:     utils.Filter(goquery.Map(doc.Find(".tag-title a"), toAuthor), core.NoneEmptyTag),
-		Chapters:    r.readChapters(doc.Find(".chapter-list")),
+	if strings.HasPrefix(id, "/series/") {
+		return r.parseSeriesPage(id, doc), nil
 	}
 
-	return series, nil
+	return r.parseChapterPageAsSeries(id, doc), nil
 }
 
-func (r *repository) readChapters(chapterElement *goquery.Selection) []Chapter {
-	var chapters []Chapter
+func (r *repository) parseChapterPageAsSeries(id string, doc *goquery.Document) publication.Series {
+	year := 0
+	var releaseTime *time.Time
+	if t, err := time.Parse(ChapterReleaseDate, strings.TrimSpace(doc.Find("#chapter-details .released").Text())); err == nil {
+		year = t.Year()
+		releaseTime = &t
+	}
+
+	return publication.Series{
+		Id:                id,
+		Title:             doc.Find("#chapter-title b").Text(),
+		AltTitle:          doc.Find(".aliases b").Text(),
+		RefUrl:            DOMAIN + id,
+		Status:            toPublicationStatus(strings.TrimPrefix(doc.Find(".tag-title small").Last().Text(), "— ")),
+		TranslationStatus: utils.Settable[publication.Status]{},
+		Year:              year,
+		Tags:              utils.Filter(goquery.Map(doc.Find("#chapter-details .tags a"), toTag), publication.NonEmptyTag),
+		People:            utils.Filter(goquery.Map(doc.Find("#chapter-title a"), toAuthor), publication.NonEmptyPerson),
+		Links:             nil,
+		Chapters: []publication.Chapter{
+			{
+				Id:          strings.TrimPrefix(id, "/chapters/"),
+				Title:       doc.Find("#chapter-title b").Text(),
+				Url:         DOMAIN + id,
+				ReleaseDate: releaseTime,
+				Translator: doc.Find(".scanlators a").Map(func(i int, selection *goquery.Selection) string {
+					return selection.Text()
+				}),
+				Tags:   utils.Filter(goquery.Map(doc.Find("#chapter-details .tags a"), toTag), publication.NonEmptyTag),
+				People: utils.Filter(goquery.Map(doc.Find("#chapter-title a"), toAuthor), publication.NonEmptyPerson),
+			},
+		},
+	}
+}
+
+func (r *repository) parseSeriesPage(id string, doc *goquery.Document) publication.Series {
+	return publication.Series{
+		Id:                id,
+		Title:             doc.Find(".tag-title b").Text(),
+		AltTitle:          doc.Find(".aliases b").Text(),
+		Description:       doc.Find(".description p").Text(),
+		CoverUrl:          DOMAIN + doc.Find(".thumbnail").AttrOr("src", ""),
+		RefUrl:            DOMAIN + id,
+		Status:            toPublicationStatus(strings.TrimPrefix(doc.Find(".tag-title small").Last().Text(), "— ")),
+		TranslationStatus: utils.Settable[publication.Status]{},
+		Year:              0,
+		OriginalLanguage:  "",
+		ContentRating:     "",
+		Tags:              utils.Filter(goquery.Map(doc.Find(".tag-tags a"), toTag), publication.NonEmptyTag),
+		People:            nil,
+		Links:             nil,
+		Chapters:          r.readChapters(doc.Find(".chapter-list")),
+	}
+}
+
+func (r *repository) readChapters(chapterElement *goquery.Selection) []publication.Chapter {
+	var chapters []publication.Chapter
 	currentVolume := ""
 
 	chapterElement.Children().Each(func(_ int, s *goquery.Selection) {
@@ -174,26 +218,27 @@ func (r *repository) readChapters(chapterElement *goquery.Selection) []Chapter {
 			r.log.Warn().Err(err).Str("releaseDate", releaseDate.Text()).Msg("failed to parse release date")
 		}
 
-		chapters = append(chapters, Chapter{
+		chapters = append(chapters, publication.Chapter{
 			Id:          strings.TrimPrefix(titleElement.AttrOr("href", ""), "/chapters/"),
 			Title:       title,
 			Volume:      currentVolume,
 			Chapter:     chapter,
 			ReleaseDate: &releaseTime,
 			Tags:        tags,
-			Authors:     authors,
+			People:      authors,
 		})
 	})
 
 	return chapters
 }
 
-func seriesURL(id string) string {
-	return fmt.Sprintf(SERIES, id)
-}
-
 func (r *repository) SearchSeries(ctx context.Context, opt SearchOptions) ([]SearchData, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, searchURL(opt.Query))
+	searchUrl := fmt.Sprintf(SEARCH, url.QueryEscape(opt.Query))
+	if opt.AllowChapters {
+		searchUrl += ChapterSearchSuffix
+	}
+
+	doc, err := r.httpClient.WrapInDoc(ctx, searchUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -202,50 +247,45 @@ func (r *repository) SearchSeries(ctx context.Context, opt SearchOptions) ([]Sea
 	return goquery.Map(series, r.selectionToSearchData), nil
 }
 
-func searchURL(keyword string) string {
-	return fmt.Sprintf(SEARCH, url.QueryEscape(keyword))
-}
-
 func (r *repository) selectionToSearchData(_ int, sel *goquery.Selection) SearchData {
 	sd := SearchData{}
 
 	nameElement := sel.Find(".name").First()
 	sd.Title = nameElement.Text()
-	sd.Id = func() string {
-		ref := nameElement.AttrOr("href", "")
-		return strings.TrimPrefix(ref, "/series/")
-	}()
+	sd.Id = nameElement.AttrOr("href", "")
 
-	sd.Tags = utils.Filter(goquery.Map(sel.Find(".tags a"), toTag), core.NoneEmptyTag)
-	sd.Authors = utils.Filter(goquery.Map(sel.Find("a"), toAuthor), core.NoneEmptyTag)
+	sd.Tags = utils.Filter(goquery.Map(sel.Find(".tags a"), toTag), publication.NonEmptyTag)
+	sd.Authors = utils.Filter(goquery.Map(sel.Find("a"), toAuthor), func(person publication.Person) bool {
+		return person.Name != ""
+	})
 
 	return sd
 }
 
-func toAuthor(_ int, s *goquery.Selection) Author {
+func toAuthor(_ int, s *goquery.Selection) publication.Person {
 	const authorPrefix = "/authors/"
 	if !strings.HasPrefix(s.AttrOr("href", ""), authorPrefix) {
-		return Author{}
+		return publication.Person{}
 	}
 
 	href := strings.TrimPrefix(s.AttrOr("href", ""), authorPrefix)
 
-	return Author{
-		DisplayName: s.Text(),
-		Id:          href,
+	return publication.Person{
+		Name: s.Text(),
+		Url:  href,
 	}
 }
 
-func toTag(_ int, s *goquery.Selection) Tag {
+func toTag(_ int, s *goquery.Selection) publication.Tag {
 	const tagPrefix = "/tags/"
 	if !strings.HasPrefix(s.AttrOr("href", ""), tagPrefix) {
-		return Tag{}
+		return publication.Tag{}
 	}
 
 	href := strings.TrimPrefix(s.AttrOr("href", ""), tagPrefix)
 
-	return Tag{
-		DisplayName: s.Text(),
-		Id:          href,
+	return publication.Tag{
+		Value:      s.Text(),
+		Identifier: href,
 	}
 }

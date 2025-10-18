@@ -9,11 +9,12 @@ import (
 
 	"github.com/Fesaa/Media-Provider/db/models"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 )
 
-var service = ValidationServiceProvider(ValidatorProvider(), zerolog.New(zerolog.ConsoleWriter{}))
+var service = ValidationServiceProvider(utils.MustReturn(ValidatorProvider()), zerolog.New(zerolog.ConsoleWriter{}))
 
 func TestSearchRequest(t *testing.T) {
 	sr := payload.SearchRequest{

@@ -33,5 +33,8 @@
   "cleanup-errors-summary": "Errors occurred during cleanup for %s",
   "warn": "Warning",
   "long-on-disk-check": "Long content check for %s",
-  "long-on-disk-check-body": "It took %s to check for content on disk, consider checking your download settings"
+  "long-on-disk-check-body": "It took %s to check for content on disk, consider checking your download settings",
+
+  "failed-to-register-sub-task-title": "Subscription task failed to update",
+  "failed-to-register-sub-task-summary": "Restart your application to register to correct task, or retry"
 }
