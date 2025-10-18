@@ -22,7 +22,7 @@ func NewSettableFromErr[T any](value T, err error) Settable[T] {
 		return Settable[T]{}
 	}
 
-	return Settable[T]{val: value, set: false}
+	return Settable[T]{val: value, set: true}
 }
 
 // Set sets the value
