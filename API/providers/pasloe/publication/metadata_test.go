@@ -194,7 +194,7 @@ func makeChapters(volumes, chapters []string) []Chapter {
 	}
 
 	result := make([]Chapter, maxLen)
-	for i := 0; i < maxLen; i++ {
+	for i := range maxLen {
 		if i < len(volumes) {
 			result[i].Volume = volumes[i]
 		}
