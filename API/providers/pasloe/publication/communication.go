@@ -34,7 +34,7 @@ func (p *publication) GetInfo() payload.InfoStat {
 		Downloading:  p.state == payload.ContentStateDownloading,
 		Progress:     int64(math.Floor(p.speedTracker.Progress())),
 		SpeedType:    payload.IMAGES,
-		Speed:        int64(math.Floor(p.speedTracker.Speed())),
+		Speed:        int64(math.Floor(p.speedTracker.IntermediateSpeed())),
 		//Estimated:    int64(p.speedTracker.EstimatedTimeRemaining()),
 		DownloadDir: p.GetDownloadDir(),
 	}

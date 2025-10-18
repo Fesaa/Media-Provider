@@ -39,7 +39,7 @@ func (p *publication) buildComicInfoForChapter(ctx context.Context, chapter Chap
 
 	ci.Notes = fmt.Sprintf(comicInfoNote, p.Provider().String())
 
-	ci.Series = utils.NonEmpty(p.req.GetStringOrDefault(TitleOverride, ""), p.series.Title)
+	ci.Series = p.Title()
 	ci.AlternateSeries = p.series.AltTitle
 	ci.Summary = utils.NonEmpty(chapter.Summary, p.series.Description)
 	ci.Manga = comicinfo.MangaYes
