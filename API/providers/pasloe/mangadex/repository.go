@@ -175,13 +175,16 @@ func (r *repository) FilterChapters(lang string, req payload.DownloadRequest, c 
 	allowNonMatching := req.GetBool(AllowNonMatchingScanlationGroupKey, true)
 
 	chaptersMap := utils.GroupBy(c.Data, func(v ChapterSearchData) string {
-		return v.Attributes.Chapter
+		if v.Attributes.Chapter == "" { // group OneShots
+			return ""
+		}
+		return v.Attributes.Chapter + " - " + v.Attributes.Volume
 	})
 
 	newData := make([]ChapterSearchData, 0)
-	for chapterMarker, chapters := range chaptersMap {
+	for marker, chapters := range chaptersMap {
 		// OneShots are handled later
-		if chapterMarker == "" {
+		if marker == "" {
 			continue
 		}
 
