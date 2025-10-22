@@ -14,7 +14,7 @@ export class SubscriptionExternalUrlPipe implements PipeTransform {
       case Provider.WEBTOON:
         return "https://www.webtoons.com/episodeList?titleNo=" + contentId;
       case Provider.DYNASTY:
-        return "https://dynasty-scans.com/series/" + contentId;
+        return "https://dynasty-scans.com/" + contentId;
       case Provider.BATO:
         return "https://bato.to/title/" + contentId;
       default:
