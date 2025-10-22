@@ -1,5 +1,5 @@
 import {Component, EventEmitter, HostListener, inject, Input, OnInit, Output} from '@angular/core';
-import {ReplaySubject} from "rxjs";
+import {catchError, of, ReplaySubject, tap} from "rxjs";
 import {DirEntry} from "../../../_models/io";
 import {Stack} from "../../data-structures/stack";
 import {IoService} from "../../../_services/io.service";
@@ -61,10 +61,11 @@ export class DirectorySelectorComponent implements OnInit {
       return;
     }
 
-    this.query = '';
     this.currentRoot = entry.name;
     this.routeStack.push(entry.name);
-    this.loadChildren(this.routeStack.items.join('/'));
+    this.loadChildren(this.routeStack.items.join('/')).pipe(
+      tap(() => this.query = ''),
+    ).subscribe();
   }
 
   goBack() {
@@ -77,7 +78,7 @@ export class DirectorySelectorComponent implements OnInit {
     if (nextRoot) {
       this.currentRoot = nextRoot;
     }
-    this.loadChildren(this.routeStack.items.join('/'));
+    this.loadChildren(this.routeStack.items.join('/')).subscribe();
   }
 
   normalize(str: string): string {
@@ -99,7 +100,7 @@ export class DirectorySelectorComponent implements OnInit {
       next: () => {
         this.toastService.successLoco("directory-selector.toasts.create.success", {}, {name: this.newDirName})
         this.newDirName = '';
-        this.loadChildren(this.routeStack.items.join('/'));
+        this.loadChildren(this.routeStack.items.join('/')).subscribe();
       },
       error: (err) => {
         this.toastService.errorLoco("directory-selector.toasts.create.error", {}, {msg: err.error.message})
@@ -145,21 +146,22 @@ export class DirectorySelectorComponent implements OnInit {
   }
 
   private loadChildren(dir: string) {
-    this.ioService.ls(dir, this.showFiles).subscribe({
-      next: (entries) => {
+    return this.ioService.ls(dir, this.showFiles).pipe(
+      tap(entries => {
         this.entries = entries || [];
-      },
-      error: (err) => {
+      }),
+      catchError(err => {
         this.routeStack.pop();
         this.toastService.genericError(err.error.message);
-      }
-    })
+        return of(null);
+      })
+    )
   }
 
   ngOnInit(): void {
     this.currentRoot = this.root;
     this.routeStack.push(this.root);
-    this.loadChildren(this.root);
+    this.loadChildren(this.root).subscribe();
     this.isMobile = window.innerWidth < 768;
   }
 
