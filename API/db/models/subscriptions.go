@@ -23,6 +23,8 @@ type Subscription struct {
 	NextExecution    time.Time               `json:"nextExecution"`
 	Metadata         json.RawMessage         `gorm:"type:jsonb" json:"-"`
 	Payload          DownloadRequestMetadata `gorm:"-" json:"metadata"`
+	// The amount of consecutive downloads with no chapters downloaded
+	NoDownloadCount int `json:"noDownloadCount"`
 }
 
 type DownloadRequestMetadata struct {

@@ -179,6 +179,11 @@ func (s *subscriptionService) Update(ctx context.Context, sub models.Subscriptio
 		return err
 	}
 
+	// Reset no download count when refresh frequency changes
+	if cur.RefreshFrequency != sub.RefreshFrequency {
+		cur.NoDownloadCount = 0
+	}
+
 	cur.Title = sub.Title
 	cur.BaseDir = sub.BaseDir
 	cur.RefreshFrequency = sub.RefreshFrequency
