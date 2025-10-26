@@ -51,7 +51,7 @@ func NewRepository(httpClient *menou.Client, log zerolog.Logger) Repository {
 }
 
 func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchData, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf(SearchUrl, url.QueryEscape(options.Query)) , r.HttpGetHook)
+	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf(SearchUrl, url.QueryEscape(options.Query)), r.HttpGetHook)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,6 @@ func (r *repository) Search(ctx context.Context, options SearchOptions) ([]Searc
 func (r *repository) extractSeries(_ int, s *goquery.Selection) SearchData {
 	rating := s.Find("a").First().AttrOr("data-title-unsuitable-for-children", "false")
 	link := s.Find(".link._card_item").AttrOr("href", "")
-
 
 	return SearchData{
 		Id:              strings.TrimPrefix(link, Domain),
@@ -106,7 +105,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 	}
 
 	series := publication.Series{
-		Id: id,
+		Id:     id,
 		RefUrl: seriesStartUrl,
 	}
 	info := doc.Find(".detail_header .info")
@@ -132,7 +131,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 	r.log.Trace().Int("pages", len(pages)).Msg("traversing pages")
 
 	for index := 1; len(pages) > index; index++ {
-		pageUrl := Domain+pages[index]
+		pageUrl := Domain + pages[index]
 		r.log.Trace().Str("page", pageUrl).Msg("fetching page")
 
 		doc, err = r.httpClient.WrapInDoc(ctx, pageUrl, r.HttpGetHook)
@@ -180,17 +179,17 @@ func extractChapters(doc *goquery.Document) []publication.Chapter {
 	return goquery.Map(doc.Find("._episodeItem > a"), func(_ int, s *goquery.Selection) publication.Chapter {
 		chapterUrl := s.AttrOr("href", "")
 		chapter := publication.Chapter{
-			Id:          s.AttrOr("data-episode-no", chapterUrl),
-			Title:       s.Find(".subj span").Text(),
-			Chapter:     func() string {
+			Id:    s.AttrOr("data-episode-no", chapterUrl),
+			Title: s.Find(".subj span").Text(),
+			Chapter: func() string {
 				num := s.Find(".tx").Text()
 				if len(num) > 0 && num[0] == '#' {
 					return num[1:]
 				}
 				return num
 			}(),
-			CoverUrl:    s.Find("span img").AttrOr("src", ""),
-			Url:         chapterUrl,
+			CoverUrl: s.Find("span img").AttrOr("src", ""),
+			Url:      chapterUrl,
 		}
 		return chapter
 	})
