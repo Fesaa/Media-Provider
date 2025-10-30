@@ -24,7 +24,6 @@ const (
 	BaseUrl     = "https://www.webtoons.com/en/"
 	SearchUrl   = BaseUrl + "search?keyword=%s"
 	ImagePrefix = "https://webtoon-phinf.pstatic.net/"
-	EpisodeList = Domain + "/episodeList?titleNo=%s"
 )
 
 var (
@@ -47,30 +46,29 @@ type repository struct {
 func NewRepository(httpClient *menou.Client, log zerolog.Logger) Repository {
 	return &repository{
 		httpClient: httpClient,
-		log:        log,
+		log:        log.With().Str("handler", "webtoon-repository").Logger(),
 	}
 }
 
 func (r *repository) Search(ctx context.Context, options SearchOptions) ([]SearchData, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, searchUrl(options.Query), r.HttpGetHook)
+	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf(SearchUrl, url.QueryEscape(options.Query)), r.HttpGetHook)
 	if err != nil {
 		return nil, err
 	}
 
 	var results []SearchData
-	results = append(results, goquery.Map(doc.Find(".card_lst li"), r.extractSeries)...)
-	// results = append(results, goquery.Map(doc.Find(".challenge_lst ul li"), r.extractSeries)...) // Canvas
+	results = append(results, goquery.Map(doc.Find(".webtoon_list li"), r.extractSeries)...)
 	return results, nil
 }
 
 func (r *repository) extractSeries(_ int, s *goquery.Selection) SearchData {
-	id := s.Find("a").First().AttrOr("data-title-no", "")
 	rating := s.Find("a").First().AttrOr("data-title-unsuitable-for-children", "false")
+	link := s.Find(".link._card_item").AttrOr("href", "")
 
 	return SearchData{
-		Id:              id,
-		Name:            s.Find(".subj").Text(),
-		ReadCount:       s.Find("em.grade_num").Text(),
+		Id:              strings.TrimPrefix(link, Domain),
+		Name:            s.Find(".title").Text(),
+		ReadCount:       s.Find(".view_count").Text(),
 		ThumbnailMobile: s.Find("img").AttrOr("src", ""),
 		AuthorNameList:  utils.Map(strings.Split(s.Find(".author").Text(), "/"), strings.TrimSpace),
 		Genre:           s.Find(".genre").Text(),
@@ -100,13 +98,16 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 }
 
 func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error) {
-	seriesStartUrl := fmt.Sprintf(EpisodeList, id)
+	seriesStartUrl := Domain + id
 	doc, err := r.httpClient.WrapInDoc(ctx, seriesStartUrl, r.HttpGetHook)
 	if err != nil {
 		return publication.Series{}, err
 	}
 
-	series := publication.Series{}
+	series := publication.Series{
+		Id:     id,
+		RefUrl: seriesStartUrl,
+	}
 	info := doc.Find(".detail_header .info")
 	series.Tags = []publication.Tag{
 		{
@@ -114,7 +115,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 			IsGenre: true,
 		},
 	}
-	series.Title = info.Find(".subj").Text()
+	series.Title = strings.Trim(info.Find(".subj").Text(), "\n\t")
 	series.People = extractAuthors(info.Find(".author_area"))
 
 	detail := doc.Find(".detail")
@@ -127,8 +128,13 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 	series.Chapters = append(series.Chapters, extractChapters(doc)...)
 
 	pages := utils.Filter(goquery.Map(doc.Find(".paginate a"), href), notEmpty)
+	r.log.Trace().Int("pages", len(pages)).Msg("traversing pages")
+
 	for index := 1; len(pages) > index; index++ {
-		doc, err = r.httpClient.WrapInDoc(ctx, Domain+pages[index], r.HttpGetHook)
+		pageUrl := Domain + pages[index]
+		r.log.Trace().Str("page", pageUrl).Msg("fetching page")
+
+		doc, err = r.httpClient.WrapInDoc(ctx, pageUrl, r.HttpGetHook)
 		if err != nil {
 			return publication.Series{}, err
 		}
@@ -152,11 +158,6 @@ func (r *repository) HttpGetHook(req *http.Request) error {
 	return nil
 }
 
-func searchUrl(keyword string) string {
-	keyword = strings.TrimSpace(rg.ReplaceAllString(keyword, " "))
-	return fmt.Sprintf(SearchUrl, url.QueryEscape(keyword))
-}
-
 func extractAuthors(sel *goquery.Selection) []publication.Person {
 	sel.Find("button").Remove()
 
@@ -175,18 +176,21 @@ func extractAuthors(sel *goquery.Selection) []publication.Person {
 }
 
 func extractChapters(doc *goquery.Document) []publication.Chapter {
-	return goquery.Map(doc.Find("#_listUl li a"), func(_ int, s *goquery.Selection) publication.Chapter {
-		chapter := publication.Chapter{}
-		chapter.Url = s.AttrOr("href", "")
-		chapter.CoverUrl = s.Find("span img").AttrOr("src", "")
-		chapter.Title = s.Find(".subj span").Text()
-		chapter.Chapter = func() string {
-			num := s.Find(".tx").Text()
-			if len(num) > 0 && num[0] == '#' {
-				return num[1:]
-			}
-			return num
-		}()
+	return goquery.Map(doc.Find("._episodeItem > a"), func(_ int, s *goquery.Selection) publication.Chapter {
+		chapterUrl := s.AttrOr("href", "")
+		chapter := publication.Chapter{
+			Id:    s.AttrOr("data-episode-no", chapterUrl),
+			Title: s.Find(".subj span").Text(),
+			Chapter: func() string {
+				num := s.Find(".tx").Text()
+				if len(num) > 0 && num[0] == '#' {
+					return num[1:]
+				}
+				return num
+			}(),
+			CoverUrl: s.Find("span img").AttrOr("src", ""),
+			Url:      chapterUrl,
+		}
 		return chapter
 	})
 }

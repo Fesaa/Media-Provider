@@ -35,7 +35,7 @@ type TranslocoService interface {
 }
 
 type translocoService struct {
-	languages map[string]map[string]string
+	languages map[string]map[string]string // TODO: Do not hold them in memory like this
 	log       zerolog.Logger
 	fs        afero.Afero
 }

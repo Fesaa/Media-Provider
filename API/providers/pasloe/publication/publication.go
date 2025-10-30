@@ -379,6 +379,8 @@ func (p *publication) LoadMetadata(ctx context.Context) {
 		}
 	}
 
+	p.handleSubscriptionNoDownloadCount(ctx, len(p.toDownload) > 0)
+
 	if len(p.toDownload) == 0 && p.req.DownloadMetadata.StartImmediately {
 		p.log.Debug().Msg("no chapters found to download, stopping")
 		p.SetState(payload.ContentStateWaiting)
@@ -398,6 +400,34 @@ func (p *publication) LoadMetadata(ctx context.Context) {
 		Int("allChapters", len(p.series.Chapters)).
 		Int("toDownload", len(p.toDownload)).
 		Msg("loaded content info")
+}
+
+func (p *publication) handleSubscriptionNoDownloadCount(ctx context.Context, reset bool) {
+	if !p.req.IsSubscription {
+		return
+	}
+
+	if reset {
+		p.req.Sub.NoDownloadCount = 0
+	} else {
+		p.req.Sub.NoDownloadCount++
+	}
+
+	// Leave notifications for counts above 5, and only once every 5 days
+	if p.req.Sub.NoDownloadCount >= 5 && p.req.Sub.NoDownloadCount%5 == 0 {
+		p.notificationService.Notify(ctx, models.NewNotification().
+			WithTitle(p.translocoService.GetTranslation("sub-too-frequent")).
+			WithBody(p.translocoService.GetTranslation("sub-too-frequent-body", p.Title())).
+			WithGroup(models.GroupContent).
+			WithColour(models.Warning).
+			WithOwner(p.req.OwnerId).
+			WithRequiredRoles(models.ViewAllDownloads).
+			Build())
+	}
+
+	if err := p.unitOfWork.Subscriptions.Update(ctx, *p.req.Sub); err != nil {
+		p.log.Warn().Err(err).Msg("failed to update no download count for subscription")
+	}
 }
 
 func (p *publication) loadSeriesInfo(ctx context.Context) error {

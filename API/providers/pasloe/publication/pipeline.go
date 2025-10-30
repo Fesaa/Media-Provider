@@ -356,7 +356,7 @@ func (p *publication) newPipeline(ctx context.Context, chapter Chapter) (*pipeli
 		Cancel:      pipelineCancel,
 		Publication: p,
 		Chapter:     chapter,
-		RateLimiter: rate.NewLimiter(rate.Limit(p.maxImages), p.maxImages),
+		RateLimiter: rate.NewLimiter(rate.Limit(p.maxImages), 1),
 		DownloadWg:  &sync.WaitGroup{},
 		DownloadCh:  make(chan downloadTask, p.maxImages),
 		ErrCh:       make(chan error, 1),

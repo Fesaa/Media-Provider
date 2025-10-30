@@ -36,5 +36,7 @@
   "long-on-disk-check-body": "It took %s to check for content on disk, consider checking your download settings",
 
   "failed-to-register-sub-task-title": "Subscription task failed to update",
-  "failed-to-register-sub-task-summary": "Restart your application to register to correct task, or retry"
+  "failed-to-register-sub-task-summary": "Restart your application to register to correct task, or retry",
+  "sub-too-frequent": "Subscription task running too frequently",
+  "sub-too-frequent-body": "The subscription task %s has ran more than 5 times without downloading anything in a row. Consider lowering the download frequency"
 }
