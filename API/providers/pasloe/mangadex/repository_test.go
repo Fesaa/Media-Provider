@@ -7,18 +7,12 @@ import (
 
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
+	"github.com/Fesaa/Media-Provider/internal/comicinfo"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
+	"github.com/Fesaa/Media-Provider/utils"
 	"github.com/Fesaa/Media-Provider/utils/mock"
 	"github.com/rs/zerolog"
 )
-
-// Note: Sleeping quite a bit during test, to ensure we do not send
-// too many requests to MangeDex
-// Do NOT run these in parallel
-//
-// Repository.GetCoverImages's offset traversal isn't tested, I don't know
-// a manga with enough cover images
-
-var loadedTags = false
 
 func tempRepo(t *testing.T, w io.Writer, ctx context.Context) Repository {
 	t.Helper()
@@ -27,6 +21,28 @@ func tempRepo(t *testing.T, w io.Writer, ctx context.Context) Repository {
 		Cache:      mock.Cache{},
 		Ctx:        ctx,
 	}, zerolog.New(w))
+}
+
+func TestRepository_SeriesInfo_Writers(t *testing.T) {
+	r := tempRepo(t, io.Discard, t.Context())
+
+	series, err := r.SeriesInfo(t.Context(), "3adf74e1-ec07-4ad6-bdbb-0fdf6b4c5f53", payload.DownloadRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	lilyClub, ok := utils.FindOk(series.People, func(person publication.Person) bool {
+		return person.Roles.HasRole(comicinfo.Writer)
+	})
+
+	if !ok {
+		t.Fatal("could not find person")
+	}
+
+	if lilyClub.Name != "Lily Club (橘姬社)" {
+		t.Errorf("lily club name: %s", lilyClub.Name)
+	}
+
 }
 
 func TestRepository_GetManga(t *testing.T) {

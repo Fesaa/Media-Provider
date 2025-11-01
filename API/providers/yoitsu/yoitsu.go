@@ -320,6 +320,9 @@ func (y *yoitsu) cleanup(t Torrent, baseDir string) {
 			cleanupErrs = append(cleanupErrs, err)
 			return
 		}
+		if err = y.fs.Chmod(dest, 0755); err != nil {
+			y.log.Warn().Err(err).Str("src", src).Str("dest", dest).Msg("error while chmoding directory")
+		}
 	}
 
 	if len(info) == 1 && firstDirEntry.IsDir() {

@@ -109,12 +109,12 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 		RefUrl: seriesStartUrl,
 	}
 	info := doc.Find(".detail_header .info")
-	series.Tags = []publication.Tag{
-		{
-			Value:   info.Find(".genre").Text(),
+	series.Tags = goquery.Map(info.Find(".genre"), func(_ int, selection *goquery.Selection) publication.Tag {
+		return publication.Tag{
+			Value:   selection.Text(),
 			IsGenre: true,
-		},
-	}
+		}
+	})
 	series.Title = strings.Trim(info.Find(".subj").Text(), "\n\t")
 	series.People = extractAuthors(info.Find(".author_area"))
 

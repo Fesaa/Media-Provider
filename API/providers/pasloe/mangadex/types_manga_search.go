@@ -101,7 +101,7 @@ func (a *MangaSearchData) People() []publication.Person {
 				return publication.Person{
 					Name:  name,
 					Roles: v,
-				}, false
+				}, true
 			}
 		}
 
