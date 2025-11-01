@@ -133,6 +133,10 @@ func (ds *directoryService) MoveDirectoryContent(src, dest string) error {
 		if err = ds.fs.Rename(srcPath, destPath); err != nil {
 			return err
 		}
+
+		if err = ds.fs.Chmod(destPath, 0755); err != nil {
+			ds.log.Warn().Err(err).Str("src", srcPath).Str("dest", destPath).Msg("failed to chmod dest")
+		}
 	}
 
 	// Remove is on purpose as src should be empty now, not empty should return an error
