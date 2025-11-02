@@ -269,6 +269,11 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 	if err := r.do(ctx, url, &searchResponse); err != nil {
 		return nil, err
 	}
+
+	r.log.Debug().
+		Str("id", chapter.Id).
+		Str("baseUrl", searchResponse.BaseUrl).
+		Msg("chapter images will be retrieved from a home server")
 	return searchResponse.FullImageUrls(), nil
 }
 
