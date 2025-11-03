@@ -17,6 +17,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -259,6 +260,12 @@ func (r *repository) PreDownloadHook(p publication.Publication, ctx context.Cont
 		})
 	})
 
+	return nil
+}
+
+func (r *repository) HttpGetHook(req *http.Request) error {
+	req.Header.Add(fiber.HeaderReferer, "https://mangadex.org/")
+	req.Header.Add(fiber.HeaderOrigin, "https://mangadex.org/")
 	return nil
 }
 
