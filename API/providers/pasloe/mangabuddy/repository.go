@@ -134,7 +134,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 		Status:            publication.Status(strings.ToLower(getFirstMeta("Status"))),
 		TranslationStatus: utils.Settable[publication.Status]{},
 		Tags: utils.Map(getMeta("Genres"), func(t string) publication.Tag {
-			t = strings.Trim(t, "\n ")
+			t = strings.Trim(t, "\n ,")
 			return publication.Tag{
 				Value:      t,
 				Identifier: t,
