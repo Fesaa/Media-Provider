@@ -32,13 +32,14 @@ type Repository interface {
 	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error)
 }
 
+var tags utils.SafeMap[string, string]
+
 type repository struct {
 	httpClient   *menou.Client
 	cache        services.CacheService
 	imageService services.ImageService
 	unitOfWork   *db.UnitOfWork
 	log          zerolog.Logger
-	tags         utils.SafeMap[string, string]
 }
 
 type repositoryParams struct {
@@ -62,15 +63,17 @@ func NewRepository(params repositoryParams, log zerolog.Logger) Repository {
 		imageService: params.ImageService,
 		unitOfWork:   params.UnitOfWork,
 		log:          log.With().Str("handler", "mangadex-repository").Logger(),
-		tags:         utils.NewSafeMap[string, string](),
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-	if err := r.loadTags(ctx); err != nil {
-		r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
-	} else {
-		r.log.Debug().Int("size", r.tags.Len()).Msg("loaded tags")
+	if tags == nil {
+		tags = utils.NewSafeMap[string, string]()
+		ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+		defer cancel()
+		if err := r.loadTags(ctx); err != nil {
+			r.log.Error().Err(err).Msg("failed to load tags, some features may not work")
+		} else {
+			r.log.Debug().Int("size", tags.Len()).Msg("loaded tags")
+		}
 	}
 
 	return r
@@ -296,7 +299,7 @@ func (r *repository) loadTags(ctx context.Context) error {
 		if !ok {
 			continue
 		}
-		r.tags.Set(enName, tag.Id)
+		tags.Set(enName, tag.Id)
 	}
 	return nil
 }
@@ -304,7 +307,7 @@ func (r *repository) loadTags(ctx context.Context) error {
 func (r *repository) mapTags(in []string, skip bool) ([]string, error) {
 	mappedTags := make([]string, 0)
 	for _, tag := range in {
-		id, ok := r.tags.Get(tag)
+		id, ok := tags.Get(tag)
 		if !ok {
 			if skip {
 				continue
