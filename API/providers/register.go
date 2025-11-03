@@ -8,6 +8,7 @@ import (
 	"github.com/Fesaa/Media-Provider/internal/tracing"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/bato"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/mangabuddy"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
 	"github.com/Fesaa/Media-Provider/providers/yoitsu/limetorrents"
@@ -28,6 +29,7 @@ func RegisterProviders(s services.ContentService, container *dig.Container) erro
 		container.Provide(mangadex.NewRepository),
 		container.Provide(dynasty.NewRepository),
 		container.Provide(bato.NewRepository),
+		container.Provide(mangabuddy.NewRepository),
 
 		scope.Provide(yts.NewBuilder),
 		scope.Provide(subsplease.NewBuilder),
@@ -37,6 +39,7 @@ func RegisterProviders(s services.ContentService, container *dig.Container) erro
 		scope.Provide(dynasty.NewBuilder),
 		scope.Provide(nyaa.NewBuilder),
 		scope.Provide(bato.NewBuilder),
+		scope.Provide(mangabuddy.NewBuilder),
 
 		registerProviderAdapter[*yts.Builder](s, scope),
 		registerProviderAdapter[*subsplease.Builder](s, scope),
@@ -46,6 +49,7 @@ func RegisterProviders(s services.ContentService, container *dig.Container) erro
 		registerProviderAdapter[*dynasty.Builder](s, scope),
 		registerProviderAdapter[*nyaa.Builder](s, scope),
 		registerProviderAdapter[*bato.Builder](s, scope),
+		registerProviderAdapter[*mangabuddy.Builder](s, scope),
 	)
 }
 

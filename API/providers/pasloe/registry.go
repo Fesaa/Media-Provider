@@ -5,6 +5,7 @@ import (
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/bato"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/dynasty"
+	"github.com/Fesaa/Media-Provider/providers/pasloe/mangabuddy"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/mangadex"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/webtoon"
@@ -51,6 +52,8 @@ func (r *registry) Create(c publication.Client, req payload.DownloadRequest) (pu
 		err = utils.ProviderAs[mangadex.Repository, publication.Repository](scope, mangadex.NewRepository)
 	case models.WEBTOON:
 		err = utils.ProviderAs[webtoon.Repository, publication.Repository](scope, webtoon.NewRepository)
+	case models.MANGA_BUDDY:
+		err = utils.ProviderAs[mangabuddy.Repository, publication.Repository](scope, mangabuddy.NewRepository)
 	default:
 		return nil, services.ErrProviderNotSupported
 	}

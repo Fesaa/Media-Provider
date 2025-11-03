@@ -23,9 +23,10 @@ const (
 	WEBTOON
 	DYNASTY
 	BATO
+	MANGA_BUDDY
 
 	MinProvider = NYAA
-	MaxProvider = BATO
+	MaxProvider = MANGA_BUDDY
 )
 
 func (p Provider) String() string {
@@ -46,6 +47,8 @@ func (p Provider) String() string {
 		return "Dynasty"
 	case BATO:
 		return "Bato"
+	case MANGA_BUDDY:
+		return "MangaBuddy"
 	default:
 		return "Unknown Provider"
 	}
