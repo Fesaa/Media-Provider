@@ -17,6 +17,7 @@ import (
 	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
 	"github.com/Fesaa/Media-Provider/services"
 	"github.com/Fesaa/Media-Provider/utils"
+	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -262,6 +263,12 @@ func (r *repository) PreDownloadHook(p publication.Publication, ctx context.Cont
 	return nil
 }
 
+func (r *repository) HttpGetHook(req *http.Request) error {
+	req.Header.Add(fiber.HeaderReferer, "https://mangadex.org/")
+	req.Header.Add(fiber.HeaderOrigin, "https://mangadex.org/")
+	return nil
+}
+
 func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
 	url := chapterImageUrl(chapter.Id)
 	r.log.Trace().Str("id", chapter.Id).Str("url", url).Msg("GetChapterImages")
@@ -269,6 +276,11 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 	if err := r.do(ctx, url, &searchResponse); err != nil {
 		return nil, err
 	}
+
+	r.log.Debug().
+		Str("id", chapter.Id).
+		Str("baseUrl", searchResponse.BaseUrl).
+		Msg("chapter images will be retrieved from a home server")
 	return searchResponse.FullImageUrls(), nil
 }
 
