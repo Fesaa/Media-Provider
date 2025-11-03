@@ -26,7 +26,7 @@ type pipeline struct {
 
 	Publication *publication
 	Chapter     Chapter
-	Urls        []string
+	Urls        []DownloadUrl
 
 	RateLimiter *rate.Limiter
 	DownloadWg  *sync.WaitGroup
@@ -111,21 +111,23 @@ func (pl *pipeline) processDownloads(ctx context.Context, log zerolog.Logger, ch
 			return failedTasks
 		}
 
-		log.Trace().Int("idx", task.Idx).Str("url", task.Url).Msg("processing task")
+		url := utils.Ternary(isRetry, utils.NonEmpty(task.Url.FallbackUrl, task.Url.Url), task.Url.Url)
 
-		data, err := pl.Publication.Download(ctx, task.Url)
+		log.Trace().Int("idx", task.Idx).Str("url", url).Msg("processing task")
+
+		data, err := pl.Publication.Download(ctx, url)
 		if err != nil {
-			span.RecordError(err, trace.WithAttributes(attribute.String("url", task.Url)))
+			span.RecordError(err, trace.WithAttributes(attribute.String("url", url)))
 			if pl.isCancelled() {
 				return failedTasks
 			}
 
 			if isRetry {
-				log.Error().Err(err).Int("idx", task.Idx).Str("url", task.Url).
+				log.Error().Err(err).Int("idx", task.Idx).Str("url", url).
 					Msg("retry download failed, ending content download")
 
 				select {
-				case pl.ErrCh <- fmt.Errorf("final download failed on url %s; %w", task.Url, err):
+				case pl.ErrCh <- fmt.Errorf("final download failed on url %s; %w", url, err):
 					pl.Cancel()
 				default:
 				}
@@ -135,7 +137,7 @@ func (pl *pipeline) processDownloads(ctx context.Context, log zerolog.Logger, ch
 			failedTasks = append(failedTasks, task)
 			atomic.AddInt64(&pl.Publication.failedDownloads, 1)
 
-			log.Warn().Err(err).Int("idx", task.Idx).Str("url", task.Url).
+			log.Warn().Err(err).Int("idx", task.Idx).Str("url", url).
 				Msg("download has failed for the first time, retrying at the end")
 			continue
 		}
@@ -158,7 +160,7 @@ func (pl *pipeline) processDownloads(ctx context.Context, log zerolog.Logger, ch
 
 type downloadTask struct {
 	Idx int
-	Url string
+	Url DownloadUrl
 }
 
 type ioTask struct {

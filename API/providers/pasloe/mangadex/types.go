@@ -1,6 +1,10 @@
 package mangadex
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
+)
 
 type SearchOptions struct {
 	Query                  string
@@ -37,10 +41,14 @@ type ChapterImageSearchResponse struct {
 }
 
 // FullImageUrls returns the urls for full quality
-func (s *ChapterImageSearchResponse) FullImageUrls() []string {
-	urls := make([]string, len(s.Chapter.Data))
+func (s *ChapterImageSearchResponse) FullImageUrls() []publication.DownloadUrl {
+	urls := make([]publication.DownloadUrl, len(s.Chapter.Data))
 	for i, image := range s.Chapter.Data {
-		urls[i] = fmt.Sprintf("%s/data/%s/%s", s.BaseUrl, s.Chapter.Hash, image)
+		urls[i] = publication.DownloadUrl{
+			Url: fmt.Sprintf("%s/data/%s/%s", s.BaseUrl, s.Chapter.Hash, image),
+			// Mangadex is timing out on single chapter images. For these we'll get them from the fallback
+			FallbackUrl: fmt.Sprintf("%s/data/%s/%s", "https://uploads.mangadex.org", s.Chapter.Hash, image),
+		}
 	}
 	return urls
 }

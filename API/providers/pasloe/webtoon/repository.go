@@ -34,7 +34,7 @@ var (
 
 type Repository interface {
 	Search(ctx context.Context, options SearchOptions) ([]SearchData, error)
-	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error)
 	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
 }
 
@@ -76,7 +76,7 @@ func (r *repository) extractSeries(_ int, s *goquery.Selection) SearchData {
 	}
 }
 
-func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error) {
 	doc, err := r.httpClient.WrapInDoc(ctx, chapter.Url, r.HttpGetHook)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 		return nil, ErrMissingSource
 	}
 
-	return filteredUrls, nil
+	return utils.Map(filteredUrls, publication.AsDownloadUrl), nil
 }
 
 func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error) {

@@ -65,7 +65,7 @@ var (
 type Repository interface {
 	Search(ctx context.Context, options SearchOptions) ([]SearchResult, error)
 	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
-	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error)
 }
 
 func NewRepository(httpClient *menou.Client, logger zerolog.Logger, markdown services.MarkdownService) Repository {
@@ -286,7 +286,7 @@ func extractTitle(s string) string {
 	return strings.TrimSpace(s[idx+1:])
 }
 
-func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error) {
 	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, chapter.Id))
 	if err != nil {
 		return nil, err
@@ -340,7 +340,7 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 		}
 	}
 
-	return out, nil
+	return utils.Map(out, publication.AsDownloadUrl), nil
 }
 
 type ImageRenderProps struct {

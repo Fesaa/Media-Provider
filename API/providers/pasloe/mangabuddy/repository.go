@@ -34,7 +34,7 @@ var (
 type Repository interface {
 	Search(ctx context.Context, options SearchOptions) ([]payload.Info, error)
 	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
-	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error)
 }
 
 func NewRepository(httpClient *menou.Client, logger zerolog.Logger, markdown services.MarkdownService) Repository {
@@ -187,7 +187,7 @@ func (r *repository) extractVolumeAndChapter(id, s string) (string, string) {
 	return "", ""
 }
 
-func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error) {
 	doc, err := r.httpClient.WrapInDoc(ctx, domain+chapter.Id)
 	if err != nil {
 		return nil, err
@@ -202,7 +202,7 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 	})
 
 	scriptContent = strings.Trim(strings.ReplaceAll(scriptContent, "var chapImages = '", ""), "\n ';")
-	return strings.Split(scriptContent, ","), nil
+	return utils.Map(strings.Split(scriptContent, ","), publication.AsDownloadUrl), nil
 }
 
 func (r *repository) HttpGetHook(req *http.Request) error {
