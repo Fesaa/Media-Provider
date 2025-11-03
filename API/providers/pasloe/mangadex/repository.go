@@ -264,8 +264,7 @@ func (r *repository) PreDownloadHook(p publication.Publication, ctx context.Cont
 }
 
 func (r *repository) HttpGetHook(req *http.Request) error {
-	req.Header.Add(fiber.HeaderReferer, "https://mangadex.org/")
-	req.Header.Add(fiber.HeaderOrigin, "https://mangadex.org/")
+	req.Header.Add(fiber.HeaderOrigin, "https://mangadex.org")
 	return nil
 }
 

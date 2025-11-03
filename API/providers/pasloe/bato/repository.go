@@ -42,8 +42,8 @@ type volumeChapterMapping struct {
 //	But maybe not?
 var (
 	VolumeChapterRegexes = []volumeChapterMapping{
-		{regexp.MustCompile(`(?:(?:Volume|Vol\.?) (\d+)\s+)?(?:Chapter|Ch\.?) ([\d\\.]+)`), ""}, // Volume/Vol 1 Chapter/Ch 1.5
-		{regexp.MustCompile(`(?:\[S(\d+)] ?)?Episode ([\d\\.]+)`), ""},                          // [S1] Episode 5
+		{regexp.MustCompile(`(?:(?:Volume|Vol\.?) ?(\d+)\s+)?(?:Chapter|Ch\.?) ([\d\\.]+)`), ""}, // Volume/Vol 1 Chapter/Ch 1.5
+		{regexp.MustCompile(`(?:\[S(\d+)] ?)?Episode ([\d\\.]+)`), ""},                           // [S1] Episode 5
 	}
 	AuthorMappings = map[string]comicinfo.Roles{
 		"(Story&Art)": {comicinfo.Writer, comicinfo.Colorist},
