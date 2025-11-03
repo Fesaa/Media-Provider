@@ -48,7 +48,7 @@ func imageIoTask(p *publication, ctx context.Context, log zerolog.Logger, task i
 		data, ok = p.imageService.ConvertToWebp(ctx, task.Data)
 	}
 
-	ext := utils.Ternary(ok, ".webp", utils.Ext(task.Task.Url))
+	ext := utils.Ternary(ok, ".webp", utils.Ext(task.Task.Url.Url))
 	filePath := path.Join(task.Path, fmt.Sprintf("page %s"+ext, utils.PadInt(task.Task.Idx, 4)))
 
 	select {

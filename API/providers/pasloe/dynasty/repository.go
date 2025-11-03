@@ -37,7 +37,7 @@ var (
 type Repository interface {
 	SearchSeries(ctx context.Context, options SearchOptions) ([]SearchData, error)
 	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
-	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error)
 }
 
 type repository struct {
@@ -52,7 +52,7 @@ func NewRepository(httpClient *menou.Client, log zerolog.Logger) Repository {
 	}
 }
 
-func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error) {
 	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf(CHAPTER, chapter.Id))
 	if err != nil {
 		return nil, err
@@ -67,13 +67,12 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 		return nil, fmt.Errorf("could not find chapter image")
 	}
 
-	urls := utils.Map(imageIds, func(id string) string {
-		return DOMAIN + id
+	urls := utils.Map(imageIds, func(id string) publication.DownloadUrl {
+		return publication.AsDownloadUrl(DOMAIN + id)
 	})
 
 	r.log.Trace().
 		Str("chapterId", chapter.Id).
-		Strs("images", urls).
 		Int("amount", len(urls)).
 		Msg("found chapter image ids")
 	return urls, nil

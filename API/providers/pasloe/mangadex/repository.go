@@ -29,7 +29,7 @@ const timeLayout = "2006-01-02T15:04:05Z07:00"
 type Repository interface {
 	SearchManga(ctx context.Context, options SearchOptions) (*MangaSearchResponse, error)
 	SeriesInfo(ctx context.Context, id string, req payload.DownloadRequest) (publication.Series, error)
-	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error)
+	ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error)
 }
 
 type repository struct {
@@ -268,7 +268,7 @@ func (r *repository) HttpGetHook(req *http.Request) error {
 	return nil
 }
 
-func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]string, error) {
+func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error) {
 	url := chapterImageUrl(chapter.Id)
 	r.log.Trace().Str("id", chapter.Id).Str("url", url).Msg("GetChapterImages")
 	var searchResponse ChapterImageSearchResponse
