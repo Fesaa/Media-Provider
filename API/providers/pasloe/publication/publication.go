@@ -350,7 +350,7 @@ func (p *publication) LoadMetadata(ctx context.Context) {
 		if p.req.Sub.Payload.Extra.GetStringOrDefault(TitleOverride, "") == "" {
 			p.req.Sub.Payload.Extra.SetValue(TitleOverride, p.Title())
 			if err = p.unitOfWork.Subscriptions.Update(ctx, *p.req.Sub); err != nil {
-				p.log.Warn().Err(err).Msg("failed to update no download count for subscription")
+				p.log.Warn().Err(err).Msg("failed to set title override")
 			}
 		}
 
