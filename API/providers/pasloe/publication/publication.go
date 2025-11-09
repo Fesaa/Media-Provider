@@ -347,6 +347,13 @@ func (p *publication) LoadMetadata(ctx context.Context) {
 
 	// We use the nil check rather than isSub as subs triggered by the one time flow. You go over this logic
 	if p.req.Sub != nil {
+		if p.req.Sub.Payload.Extra.GetStringOrDefault(TitleOverride, "") == "" {
+			p.req.Sub.Payload.Extra.SetValue(TitleOverride, p.Title())
+			if err = p.unitOfWork.Subscriptions.Update(ctx, *p.req.Sub); err != nil {
+				p.log.Warn().Err(err).Msg("failed to update no download count for subscription")
+			}
+		}
+
 		if err = p.ensureSubscriptionDirectoryIsUpToDate(ctx); err != nil {
 			p.log.Error().Err(err).Msg("An error occurred while updating subscription directories. Cancelling download")
 			p.StopDownload()
