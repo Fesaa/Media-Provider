@@ -9,7 +9,10 @@ import (
 	"net/url"
 )
 
-const URL string = "https://yts.mx/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
+const (
+	BaseUrl = "https://yts.lt"
+	URL     = BaseUrl + "/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
+)
 
 type SearchOptions struct {
 	Query  string
