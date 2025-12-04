@@ -7,9 +7,15 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
-const URL string = "https://yts.mx/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
+var (
+	BaseUrl = utils.NonEmpty(config.YtsBaseUrl, "https://yts.lt")
+	URL     = BaseUrl + "/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
+)
 
 type SearchOptions struct {
 	Query  string

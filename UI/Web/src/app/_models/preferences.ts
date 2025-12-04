@@ -1,6 +1,7 @@
 export type Preferences = {
   subscriptionRefreshHour: number,
   logEmptyDownloads: boolean,
+  logSubNoDownloads: boolean,
   convertToWebp: boolean,
   coverFallbackMethod: CoverFallbackMethod,
   genreList: string[],

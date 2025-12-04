@@ -1,6 +1,6 @@
 import {Component, computed, effect, input, output, signal} from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
-import {CommonModule} from '@angular/common';
+
 import {SearchRequest} from "../../../_models/search";
 import {Modifier, ModifierType, ModifierValue} from "../../../_models/page";
 import {TranslocoDirective} from "@jsverse/transloco";
@@ -10,7 +10,7 @@ import {of} from "rxjs";
 @Component({
   selector: 'app-search-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslocoDirective, TypeaheadComponent],
+  imports: [ReactiveFormsModule, TranslocoDirective, TypeaheadComponent],
   templateUrl: './search-form.component.html',
   styleUrls: ['./search-form.component.scss']
 })

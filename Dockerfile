@@ -10,7 +10,7 @@ COPY UI/Web ./
 RUN npm run build
 
 
-FROM golang:1.25.1 AS go-stage
+FROM golang:1.25.5 AS go-stage
 
 WORKDIR /app
 

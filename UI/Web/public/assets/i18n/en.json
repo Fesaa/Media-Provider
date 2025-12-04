@@ -507,6 +507,8 @@
       "tags-mappings-tooltip": "Configure how tags are transformed before being processed by anything else.",
       "logEmptyDownloads-label": "Empty downloads notifications",
       "logEmptyDownloads-tooltip": "Get a notification when a subscription downloads 0 items",
+      "logSubNoDownloads-label": "Log repeated empty downloads",
+      "logSubNoDownloads-tooltip": "Get a notification when a subscription downloads 0 items 5 times in a row",
       "convertToWebp-label": "Webp conversion",
       "convertToWebp-tooltip": "Convert images to webp before downloading (pasloe)",
       "cover-fallback-method": "Cover to use as fallback",

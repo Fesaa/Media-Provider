@@ -347,6 +347,13 @@ func (p *publication) LoadMetadata(ctx context.Context) {
 
 	// We use the nil check rather than isSub as subs triggered by the one time flow. You go over this logic
 	if p.req.Sub != nil {
+		if p.req.Sub.Payload.Extra.GetStringOrDefault(TitleOverride, "") == "" {
+			p.req.Sub.Payload.Extra.SetValue(TitleOverride, p.Title())
+			if err = p.unitOfWork.Subscriptions.Update(ctx, *p.req.Sub); err != nil {
+				p.log.Warn().Err(err).Msg("failed to set title override")
+			}
+		}
+
 		if err = p.ensureSubscriptionDirectoryIsUpToDate(ctx); err != nil {
 			p.log.Error().Err(err).Msg("An error occurred while updating subscription directories. Cancelling download")
 			p.StopDownload()
@@ -414,7 +421,7 @@ func (p *publication) handleSubscriptionNoDownloadCount(ctx context.Context, res
 	}
 
 	// Leave notifications for counts above 5, and only once every 5 days
-	if p.req.Sub.NoDownloadCount >= 5 && p.req.Sub.NoDownloadCount%5 == 0 {
+	if p.req.Sub.NoDownloadCount >= 5 && p.req.Sub.NoDownloadCount%5 == 0 && p.preferences.LogEmptyDownloads {
 		p.notificationService.Notify(ctx, models.NewNotification().
 			WithTitle(p.translocoService.GetTranslation("sub-too-frequent")).
 			WithBody(p.translocoService.GetTranslation("sub-too-frequent-body", p.Title())).

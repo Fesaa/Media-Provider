@@ -7,6 +7,11 @@ import (
 
 type SmartMap map[string][]string
 
+// SetValue assigns the given values to the key
+func (r SmartMap) SetValue(key string, value ...string) {
+	r[key] = value
+}
+
 // HasKeys returns true if the request includes metadata for all passed keys, false otherwise
 func (r SmartMap) HasKeys(keys ...string) bool {
 	for _, key := range keys {
