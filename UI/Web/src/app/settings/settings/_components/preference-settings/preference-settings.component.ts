@@ -60,6 +60,7 @@ export class PreferenceSettingsComponent implements OnInit {
 
       this.preferencesForm = this.fb.group({
         logEmptyDownloads: new FormControl(preferences.logEmptyDownloads),
+        logSubNoDownloads: new FormControl(preferences.logSubNoDownloads),
         convertToWebp: new FormControl(preferences.convertToWebp),
         coverFallbackMethod: [preferences.coverFallbackMethod],
         blackList: new FormControl(preferences.blackList.join(',')),

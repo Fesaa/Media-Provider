@@ -31,6 +31,7 @@ type UserPreferences struct {
 	AgeRatingMappings    []AgeRatingMapping  `gorm:"-" json:"ageRatingMappings"`
 	TagMappingsSql       json.RawMessage     `gorm:"type:jsonb" json:"-"`
 	TagMappings          []TagMapping        `gorm:"-" json:"tagMappings"`
+	LogSubNoDownloads    bool                `json:"logSubNoDownloads" validate:"boolean"`
 }
 
 func (p *UserPreferences) BeforeSave(tx *gorm.DB) (err error) {

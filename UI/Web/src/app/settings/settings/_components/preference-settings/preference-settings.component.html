@@ -24,6 +24,18 @@
             </div>
 
             <div class="col-md-12 col-sm-12 pt-4">
+              @if (preferencesForm.get('logSubNoDownloads'); as control) {
+                <app-settings-switch [control]="control" [title]="t('logSubNoDownloads-label')" [tooltip]="t('logSubNoDownloads-tooltip')" >
+                  <ng-template #switch>
+                    <div class="form-switch form-check">
+                      <input class="form-check-input" type="checkbox" formControlName="logSubNoDownloads">
+                    </div>
+                  </ng-template>
+                </app-settings-switch>
+              }
+            </div>
+
+            <div class="col-md-12 col-sm-12 pt-4">
               @if (preferencesForm.get('convertToWebp'); as control) {
                 <app-settings-switch [control]="control" [title]="t('convertToWebp-label')" [tooltip]="t('convertToWebp-tooltip')" >
                   <ng-template #switch>

@@ -421,7 +421,7 @@ func (p *publication) handleSubscriptionNoDownloadCount(ctx context.Context, res
 	}
 
 	// Leave notifications for counts above 5, and only once every 5 days
-	if p.req.Sub.NoDownloadCount >= 5 && p.req.Sub.NoDownloadCount%5 == 0 {
+	if p.req.Sub.NoDownloadCount >= 5 && p.req.Sub.NoDownloadCount%5 == 0 && p.preferences.LogEmptyDownloads {
 		p.notificationService.Notify(ctx, models.NewNotification().
 			WithTitle(p.translocoService.GetTranslation("sub-too-frequent")).
 			WithBody(p.translocoService.GetTranslation("sub-too-frequent-body", p.Title())).
