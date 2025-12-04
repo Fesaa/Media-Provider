@@ -116,7 +116,7 @@ export class DirectorySelectorComponent implements OnInit {
     this.clipboard.copy(path);
   }
 
-  @HostListener('window:resize', ['$event'])
+  @HostListener('window:resize', [])
   onResize() {
     this.isMobile = window.innerWidth < 768;
   }

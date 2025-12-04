@@ -1,5 +1,5 @@
 import {Component, input} from '@angular/core';
-import {CommonModule} from '@angular/common';
+
 
 type SpinnerSize = 'small' | 'medium' | 'large';
 type SpinnerColour = 'primary' | 'secondary' | 'white';
@@ -7,7 +7,7 @@ type SpinnerColour = 'primary' | 'secondary' | 'white';
 @Component({
   selector: 'app-loading-spinner',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './loading-spinner.component.html',
   styleUrls: ['./loading-spinner.component.scss']
 })
