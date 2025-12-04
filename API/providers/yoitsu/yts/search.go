@@ -7,10 +7,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/Fesaa/Media-Provider/config"
+	"github.com/Fesaa/Media-Provider/utils"
 )
 
-const (
-	BaseUrl = "https://yts.lt"
+var (
+	BaseUrl = utils.NonEmpty(config.YtsBaseUrl, "https://yts.lt")
 	URL     = BaseUrl + "/api/v2/list_movies.json?query_term=%s&page=%d&sort_by=%s"
 )
 
