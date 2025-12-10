@@ -347,6 +347,11 @@ func (p *publication) LoadMetadata(ctx context.Context) {
 
 	// We use the nil check rather than isSub as subs triggered by the one time flow. You go over this logic
 	if p.req.Sub != nil {
+
+		if p.req.Sub.Payload.Extra == nil {
+			p.req.Sub.Payload.Extra = map[string][]string{}
+		}
+
 		if p.req.Sub.Payload.Extra.GetStringOrDefault(TitleOverride, "") == "" {
 			p.req.Sub.Payload.Extra.SetValue(TitleOverride, p.Title())
 			if err = p.unitOfWork.Subscriptions.Update(ctx, *p.req.Sub); err != nil {
