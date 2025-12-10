@@ -30,6 +30,8 @@ const (
 	UploadTag         = "upload"
 )
 
+var kServer = regexp.MustCompile(`(k[0-9]{2}\.[a-z]+\.org)`)
+
 // TODO: More flexibility with the default volume; Don't assign if no other volume has been found
 type volumeChapterMapping struct {
 	Regex         *regexp.Regexp
@@ -337,6 +339,12 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 		out[i], ok = imageFiles[i][1].(string)
 		if !ok {
 			return nil, fmt.Errorf("no image props found for %s, was not a string", chapter.Id)
+		}
+
+		// Hacky fix for Bato images not loading
+		matches := kServer.FindString(out[i])
+		if matches != "" {
+			out[i] = kServer.ReplaceAllString(out[i], "n11.mbznp.org")
 		}
 	}
 
