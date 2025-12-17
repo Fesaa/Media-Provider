@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/internal/comicinfo"
@@ -19,8 +20,6 @@ import (
 )
 
 const (
-	Domain = "https://bato.to"
-
 	QueryTag          = "word"
 	GenresTag         = "genres"
 	IgnoredGenresTag  = "ignored_genres"
@@ -29,8 +28,6 @@ const (
 	StatusTag         = "status"
 	UploadTag         = "upload"
 )
-
-var kServer = regexp.MustCompile(`(k[0-9]{2}\.[a-z]+\.org)`)
 
 // TODO: More flexibility with the default volume; Don't assign if no other volume has been found
 type volumeChapterMapping struct {
@@ -43,6 +40,10 @@ type volumeChapterMapping struct {
 //	Would be fun to have YAMLs for these. I think UI/DB is over the top for them
 //	But maybe not?
 var (
+	Domain = utils.NonEmpty(config.BatoBaseUrl, "https://bato.to")
+
+	kServer = regexp.MustCompile(`(k[0-9]{2}\.[a-z]+\.org)`)
+
 	VolumeChapterRegexes = []volumeChapterMapping{
 		{regexp.MustCompile(`(?:(?:Volume|Vol\.?) ?(\d+)\s+)?(?:Chapter|Ch\.?) ([\d\\.]+)`), ""}, // Volume/Vol 1 Chapter/Ch 1.5
 		{regexp.MustCompile(`(?:\[S(\d+)] ?)?Episode ([\d\\.]+)`), ""},                           // [S1] Episode 5

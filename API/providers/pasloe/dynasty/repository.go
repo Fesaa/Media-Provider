@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Fesaa/Media-Provider/config"
 	"github.com/Fesaa/Media-Provider/http/menou"
 	"github.com/Fesaa/Media-Provider/http/payload"
 	"github.com/Fesaa/Media-Provider/providers/pasloe/publication"
@@ -18,8 +19,6 @@ import (
 )
 
 const (
-	DOMAIN = "https://dynasty-scans.com"
-
 	SEARCH              = "https://dynasty-scans.com/search?q=%s&classes[]=Series"
 	ChapterSearchSuffix = "&classes[]=Chapter"
 	CHAPTER             = "https://dynasty-scans.com/chapters/%s"
@@ -30,6 +29,8 @@ const (
 )
 
 var (
+	DOMAIN = utils.NonEmpty(config.DynastyBaseUrl, "https://dynasty-scans.com")
+
 	chapterTitleRegex        = regexp.MustCompile(`Chapter\s+([\d.]+)(?::\s*(.+))?`)
 	chapterTitleRegexMatches = 3
 )
