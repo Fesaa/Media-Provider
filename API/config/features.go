@@ -47,7 +47,9 @@ var (
 	// LimeBaseUrl override the hardcoded lime url
 	LimeBaseUrl = stringFeature("LIME_BASE_URL")
 	// YtsBaseUrl override the hardcoded yts url
-	YtsBaseUrl = stringFeature("YTS_BASE_URL")
+	YtsBaseUrl     = stringFeature("YTS_BASE_URL")
+	BatoBaseUrl    = stringFeature("BATO_BASE_URL")
+	DynastyBaseUrl = stringFeature("DYNASTY_BASE_URL")
 
 	// OtelEndpoint is the endpoint to report traces to. Passed with otlptracehttp.WithEndpointURL
 	OtelEndpoint = stringFeature("OTEL_ENDPOINT")
