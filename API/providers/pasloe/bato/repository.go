@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/Fesaa/Media-Provider/config"
@@ -41,10 +40,9 @@ type volumeChapterMapping struct {
 //	Would be fun to have YAMLs for these. I think UI/DB is over the top for them
 //	But maybe not?
 var (
-	Domain = utils.NonEmpty(config.BatoBaseUrl, "https://bato.si")
+	Domain = utils.NonEmpty(config.BatoBaseUrl, "https://bato.to")
 
-	serverRegex = regexp.MustCompile("^https:\\/\\/[a-z0-9]+\\.[a-z0-9]+\\.org\\/media(?:\\/[a-z0-9_]+)+\\.webp$")
-	kServer     = regexp.MustCompile(`(k[0-9]{2}\.[a-z]+\.org)`)
+	kServer = regexp.MustCompile(`(k[0-9]{2}\.[a-z]+\.org)`)
 
 	VolumeChapterRegexes = []volumeChapterMapping{
 		{regexp.MustCompile(`(?:(?:Volume|Vol\.?) ?(\d+)\s+)?(?:Chapter|Ch\.?) ([\d\\.]+)`), ""}, // Volume/Vol 1 Chapter/Ch 1.5
@@ -185,7 +183,7 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 		tss.Set(ts)
 	}
 
-	series := publication.Series{
+	return publication.Series{
 		Id:                id,
 		CoverUrl:          doc.Find("main > div > div > div > img").AttrOr("src", ""),
 		Title:             cleanTitle(info.Find("div > h3 a.link.link-hover").First().Text()),
@@ -194,48 +192,11 @@ func (r *repository) SeriesInfo(ctx context.Context, id string, req payload.Down
 		Tags:              extractSeperatedList(info.Find("div.space-y-2 > div.flex.items-center.flex-wrap > span > span"), ","),
 		Status:            toPublicationStatus(strings.ToLower(info.Find("div.space-y-2 > div > span.font-bold.uppercase").First().Text())),
 		TranslationStatus: tss,
-		// They ruined it so much...
-		//Description:       r.markdown.SanitizeHtml(doc.Find(`meta[name="description"]`).First().AttrOr("content", "")),
-		Links:  info.Find("div.limit-html div.limit-html-p a").Map(mapToContent),
-		RefUrl: fmt.Sprintf("%s/title/%s", Domain, id),
-	}
-
-	chapters, err := r.getAllChapters(ctx, id, doc)
-	if err != nil {
-		return publication.Series{}, err
-	}
-
-	series.Chapters = chapters
-	return series, nil
-}
-
-func (r *repository) getAllChapters(ctx context.Context, id string, doc *goquery.Document) ([]publication.Chapter, error) {
-	totalChapterCount := doc.Find(`[data-name="chapter-list"] > div span`).First().Text()
-	if len(totalChapterCount) < 2 {
-		return nil, fmt.Errorf("total chapter count is too short")
-	}
-
-	chapterCount, err := strconv.ParseInt(totalChapterCount[1:len(totalChapterCount)-1], 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	chapters := make([]publication.Chapter, 0, chapterCount)
-
-	for len(chapters) < int(chapterCount) {
-		pagedUrl := fmt.Sprintf("%s/title/%s?start=%d", Domain, id, len(chapters)+1)
-
-		pagedDoc, err := r.httpClient.WrapInDoc(ctx, pagedUrl)
-		if err != nil {
-			return nil, err
-		}
-
-		pagedChapters := goquery.Map(pagedDoc.Find(`[data-name="chapter-list"] > div:nth-child(2) > div > div > div`), r.readChapters)
-
-		chapters = append(chapters, pagedChapters...)
-	}
-
-	return chapters, nil
+		Description:       r.markdown.SanitizeHtml(doc.Find(`meta[name="description"]`).First().AttrOr("content", "")),
+		Links:             info.Find("div.limit-html div.limit-html-p a").Map(mapToContent),
+		RefUrl:            fmt.Sprintf("%s/title/%s", Domain, id),
+		Chapters:          goquery.Map(doc.Find(`[name="chapter-list"] astro-slot > div`), r.readChapters),
+	}, nil
 }
 
 func cleanTitle(title string) string {
@@ -329,53 +290,6 @@ func extractTitle(s string) string {
 }
 
 func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error) {
-	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, chapter.Id))
-	if err != nil {
-		return nil, err
-	}
-
-	qwikJson := doc.Find(`script[type="qwik/json"]`).Text()
-
-	type objHolder struct {
-		Obj []any `json:"objs"`
-	}
-
-	var objs objHolder
-	if err = json.Unmarshal([]byte(qwikJson), &objs); err != nil {
-		return nil, err
-	}
-
-	var images []publication.DownloadUrl
-	for _, obj := range objs.Obj {
-		s, ok := obj.(string)
-		if !ok {
-			continue
-		}
-
-		if !strings.HasPrefix(s, "http") {
-			continue
-		}
-
-		if !serverRegex.MatchString(s) {
-			continue
-		}
-
-		matches := kServer.FindString(s)
-		if matches != "" {
-			s = kServer.ReplaceAllString(s, "n11.mbznp.org")
-		}
-
-		images = append(images, publication.DownloadUrl{
-			Url:         s,
-			FallbackUrl: s,
-		})
-
-	}
-
-	return images, nil
-}
-
-func (r *repository) ChapterUrlsOld(ctx context.Context, chapter publication.Chapter) ([]publication.DownloadUrl, error) {
 	doc, err := r.httpClient.WrapInDoc(ctx, fmt.Sprintf("%s/title/%s", Domain, chapter.Id))
 	if err != nil {
 		return nil, err
