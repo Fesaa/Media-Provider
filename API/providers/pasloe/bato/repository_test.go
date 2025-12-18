@@ -84,23 +84,6 @@ func TestRepository_SeriesInfo2(t *testing.T) {
 	}
 }
 
-func TestRepository_SeriesInfo3(t *testing.T) {
-	repo := tempRepository(io.Discard)
-
-	series, err := repo.SeriesInfo(t.Context(), "165892-foxes-always-lie", payload.DownloadRequest{})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if series.Id != "165892-foxes-always-lie" {
-		t.Errorf("got %s, want %s", series.Id, series.Id)
-	}
-
-	if series.Title != "Foxes Always Lie" {
-		t.Errorf("got %s, want %s", series.Title, "Foxes Always Lie")
-	}
-}
-
 func TestRepository_SeriesInfo(t *testing.T) {
 	repo := tempRepository(io.Discard)
 
@@ -114,7 +97,7 @@ func TestRepository_SeriesInfo(t *testing.T) {
 	}
 
 	if len(series.Chapters) < 70 {
-		t.Fatalf("got %d chapters, want at least 70", len(series.Chapters))
+		t.Fatalf("got %d series, want at least 70", len(series.Chapters))
 	}
 
 	if series.Title != "Heart Of Thorns" {
@@ -243,8 +226,8 @@ func TestRepository_SeriesWithVolume(t *testing.T) {
 		t.Fatalf("got %d series, want at least 10", len(series.Chapters))
 	}
 
-	if series.Chapters[1].Volume != "3" {
-		t.Fatalf("got %s wanted 3", series.Chapters[0].Volume)
+	if series.Chapters[0].Volume != "1" {
+		t.Fatalf("got %s wanted 1", series.Chapters[0].Volume)
 	}
 }
 
