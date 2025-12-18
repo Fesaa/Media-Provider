@@ -37,7 +37,6 @@ linters:
     - misspell
     - musttag
     - nakedret
-    - nestif
     - nilerr
     - nilnesserr
     - nolintlint
@@ -101,6 +100,7 @@ linters:
     - wrapcheck
     - wsl
     - unparam
+    - nestif
   settings:
     gosec:
       excludes:
