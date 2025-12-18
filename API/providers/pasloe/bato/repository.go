@@ -40,7 +40,7 @@ type volumeChapterMapping struct {
 //	Would be fun to have YAMLs for these. I think UI/DB is over the top for them
 //	But maybe not?
 var (
-	Domain = utils.NonEmpty(config.BatoBaseUrl, "https://bato.to")
+	Domain = utils.NonEmpty(config.BatoBaseUrl, "https://jto.to")
 
 	kServer = regexp.MustCompile(`(k[0-9]{2}\.[a-z]+\.org)`)
 
