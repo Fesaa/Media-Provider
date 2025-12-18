@@ -356,7 +356,7 @@ func (r *repository) ChapterUrls(ctx context.Context, chapter publication.Chapte
 			continue
 		}
 
-		if !serverRegex.Match([]byte(s)) {
+		if !serverRegex.MatchString(s) {
 			continue
 		}
 
